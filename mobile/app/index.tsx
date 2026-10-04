@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Alerte, Carte, Texte, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
+import { MesProduits } from '../src/MesProduits';
 import { MonPoste } from '../src/MonPoste';
 import { police } from '../src/polices';
 import { useSession } from '../src/session';
@@ -60,6 +61,7 @@ export default function Accueil() {
     >
       {roles.length === 0 && <Alerte type="info">{t('roles.aucun')}</Alerte>}
       <MonPoste />
+      <MesProduits />
       <Carte style={{ backgroundColor: p.orangeDoux, borderColor: marque.orange }}>
         <Texte variante="fort">{t('mobile.onglets.tournee')}</Texte>
         <Texte variante="discret" style={{ marginTop: 4 }}>

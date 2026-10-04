@@ -32,6 +32,17 @@ ATTENDU = {
     Action.AFFECTATIONS_GERER: {"admin_siege"},
     Action.APPAREILS_REVOQUER: {"admin_siege", "admin_pays"},
     Action.EXPLOITATION_LIRE: {"admin_technique", "admin_siege"},
+    Action.REFERENTIELS_GERER: {"admin_siege", "admin_pays"},
+    Action.REFERENTIELS_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+        "delegue",
+    },  # fmt: skip
     Action.PAYS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -87,6 +98,10 @@ REQUETES = {
         "/api/v1/utilisateurs/",
         {"identifiant": "nouveau.compte", "prenom": "N", "nom": "C"},
         201,
+    ),  # fmt: skip
+    Action.REFERENTIELS_LIRE: ("get", "/api/v1/referentiel/valeurs/", None, 200),
+    Action.REFERENTIELS_GERER: (
+        "post", "/api/v1/referentiel/valeurs/", {"liste": "specialite", "libelle": "Allergo"}, 201,
     ),  # fmt: skip
     # Routes qui désignent un objet : l'adresse dépend du jeu de données (fonction de `monde`).
     Action.ROLES_ATTRIBUER: (

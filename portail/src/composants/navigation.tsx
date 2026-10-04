@@ -5,6 +5,7 @@ import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import HomeRounded from '@mui/icons-material/HomeRounded';
+import MedicationRounded from '@mui/icons-material/MedicationRounded';
 import MonitorHeartRounded from '@mui/icons-material/MonitorHeartRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import PublicRounded from '@mui/icons-material/PublicRounded';
@@ -41,6 +42,15 @@ export const ENTREES: Entree[] = [
     section: 'administration',
     chemin: '/organisation',
     visible: peut('organisation.lire'),
+  },
+  {
+    cle: 'referentiels',
+    icone: <MedicationRounded />,
+    section: 'administration',
+    chemin: '/referentiels',
+    // Catalogue de l'encadrement et de l'administration ; le délégué voit ses produits
+    // sur le téléphone (« Mes produits »).
+    visible: (p) => peut('referentiels.lire')(p) && peut('organisation.lire')(p),
   },
   {
     cle: 'equipe',

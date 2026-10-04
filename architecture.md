@@ -536,7 +536,7 @@ erDiagram
 | `AffectationPays` | `utilisateur_id`, `pays_id`, `motif`, `debut`, `fin`, `accorde_par` | Siège uniquement |
 | `Appareil` | `utilisateur_id`, `identifiant_installation`, `plateforme`, `version_app`, `jeton_push`, `derniere_synchro`, `revoque_le` | Mise en œuvre 0.0.6 : `systeme`, `modele`, `dernier_contact` (connexion ou rafraîchissement) en attendant `derniere_synchro` (0.8) ; `jeton_push` en 0.8 |
 | `Division`, `Reseau` | `code`, `libelle`, `division_id` | — |
-| `ClasseTherapeutique`, `Produit` | `libelle`, `classe_id`, `actif` | `Portefeuille(reseau_id, produit_id)` |
+| `ClasseTherapeutique`, `Produit` | `libelle`, `classe_id`, `actif` | `Portefeuille(reseau_id, produit_id, debut, fin)` ; mise en œuvre 0.1.1 : les listes simples (types, spécialités, classes thérapeutiques, motifs d'écart) partagent l'entité `Valeur(liste, code, libelle, ordre, parent)` ; « actif » = non archivé |
 | `Zone`, `Secteur`, `Localite` | `libelle`, rattachements | — |
 | `Poste` | `type_poste` (`vm`, `vm_otc`, `kam`, `dermo`), `libelle`, réseaux (n–n), secteurs (n–n) | Peut être vacant |
 | `Occupation` | `poste_id`, `utilisateur_id`, `debut`, `fin`, `principal` | — |

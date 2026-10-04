@@ -479,6 +479,8 @@ describe('portail — administration 0.0.6 (USR-003, USR-004, USR-006, ORG-011)'
     actions: [
       'organisation.gerer',
       'organisation.lire',
+      'referentiels.lire',
+      'referentiels.gerer',
       'pays.lire',
       'utilisateurs.lire',
       'utilisateurs.gerer',
@@ -832,5 +834,175 @@ describe('portail — démonstration et apparence (0.0.9)', () => {
     expect(lireApparence()).toBe('sombre');
     ecrireApparence('systeme');
     expect(lireApparence()).toBe('systeme');
+  });
+});
+
+describe('portail — référentiels et portefeuilles (PRP-001, ORG-004)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const ADMIN_REF: Perimetre = {
+    ...PERIMETRE_DELEGUE,
+    roles: ['admin_pays'],
+    actions: ['organisation.lire', 'referentiels.lire', 'referentiels.gerer', 'pays.lire'],
+  };
+  const CV = { id: 'r1', code: 'CV', libelle: 'Cardio Vasculaire' };
+  const GYN = { id: 'r2', code: 'GYN', libelle: 'Gynécologie' };
+  const CLASSE = {
+    id: 'c1',
+    pays: 'SN',
+    liste: 'classe_therapeutique' as const,
+    code: 'antihypertenseurs',
+    libelle: 'Antihypertenseurs',
+    ordre: 1,
+    parent: null,
+    archive: false,
+    utilisations: 1,
+  };
+  const VALEURS = [
+    CLASSE,
+    {
+      ...CLASSE,
+      id: 'v1',
+      liste: 'type_prospect' as const,
+      code: 'medecin',
+      libelle: 'Médecin',
+      utilisations: 0,
+    },
+    {
+      ...CLASSE,
+      id: 'v2',
+      liste: 'specialite' as const,
+      code: 'cardiologie',
+      libelle: 'Cardiologie',
+      parent: 'v1',
+      utilisations: 0,
+    },
+  ];
+  const PRODUITS = [
+    {
+      id: 'p1',
+      pays: 'SN',
+      code: 'TENSIO5',
+      libelle: 'Tensiovar 5 mg',
+      classe: 'c1',
+      classe_libelle: 'Antihypertenseurs',
+      reseaux: [CV, GYN],
+      archive: false,
+    },
+    {
+      id: 'p2',
+      pays: 'SN',
+      code: 'FERRO',
+      libelle: 'Ferrogyn',
+      classe: null,
+      classe_libelle: null,
+      reseaux: [],
+      archive: false,
+    },
+  ];
+  const PORTEFEUILLES = [
+    {
+      reseau: CV,
+      division: 'Cardio-métabolique',
+      produits: [
+        {
+          id: 'p1',
+          code: 'TENSIO5',
+          libelle: 'Tensiovar 5 mg',
+          classe_libelle: 'Antihypertenseurs',
+        },
+      ],
+    },
+    { reseau: GYN, division: 'Santé de la femme', produits: [] },
+  ];
+
+  function clientRef() {
+    const referentiel = {
+      valeurs: vi.fn(async () => VALEURS),
+      produits: vi.fn(async () => PRODUITS),
+      portefeuilles: vi.fn(async () => PORTEFEUILLES),
+      creerValeur: vi.fn(async () => VALEURS[0]),
+      modifierValeur: vi.fn(async () => VALEURS[0]),
+      creerProduit: vi.fn(async () => PRODUITS[0]),
+      modifierProduit: vi.fn(async () => PRODUITS[0]),
+      archiver: vi.fn(async () => ({})),
+      reactiver: vi.fn(async () => ({})),
+      definirPortefeuille: vi.fn(async () => PORTEFEUILLES[1]),
+      monPortefeuille: vi.fn(async () => []),
+    };
+    const client = fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => ADMIN_REF),
+      referentiel: referentiel as unknown as ClientApi['referentiel'],
+    } as Partial<ClientApi>);
+    return { client, referentiel };
+  }
+
+  it('liste les produits avec leur classe et leurs réseaux, et les filtre (ORG-004 CA2)', async () => {
+    const { client } = clientRef();
+    rendre(client, '/referentiels');
+    expect(await screen.findByText('Tensiovar 5 mg')).toBeInTheDocument();
+    expect(screen.getAllByText('Cardio Vasculaire').length).toBeGreaterThan(0);
+    expect(screen.getByText('Hors portefeuille')).toBeInTheDocument();
+    // Recherche insensible aux accents et à la casse.
+    await saisir('Rechercher un produit ou un code', 'FERRÔ');
+    expect(screen.queryByText('Tensiovar 5 mg')).not.toBeInTheDocument();
+    expect(screen.getByText('Ferrogyn')).toBeInTheDocument();
+  });
+
+  it('crée un produit et le range dans des réseaux', async () => {
+    const { client, referentiel } = clientRef();
+    rendre(client, '/referentiels');
+    fireEvent.click(await screen.findByRole('button', { name: 'Nouveau produit' }));
+    await saisir(/^Nom du produit/, 'Glycomet 500 mg');
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    await vi.waitFor(() =>
+      expect(referentiel.creerProduit).toHaveBeenCalledWith(
+        expect.objectContaining({ libelle: 'Glycomet 500 mg', reseaux: [] }),
+      ),
+    );
+  });
+
+  it('gère le portefeuille d’un réseau', async () => {
+    const { client, referentiel } = clientRef();
+    rendre(client, '/referentiels');
+    fireEvent.click(await screen.findByRole('tab', { name: 'Portefeuilles' }));
+    expect(await screen.findByText('Portefeuille vide')).toBeInTheDocument();
+    const boutons = screen.getAllByRole('button', { name: 'Gérer le portefeuille' });
+    fireEvent.click(boutons[1]!);
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.click(within(dialogue).getByLabelText(/Ferrogyn/));
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Enregistrer' }));
+    await vi.waitFor(() =>
+      expect(referentiel.definirPortefeuille).toHaveBeenCalledWith('r2', ['p2']),
+    );
+  });
+
+  it('ajoute une valeur à une liste et archive au lieu de supprimer (PRP-001)', async () => {
+    const { client, referentiel } = clientRef();
+    rendre(client, '/referentiels');
+    fireEvent.click(await screen.findByRole('tab', { name: 'Listes de valeurs' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Spécialités/ }));
+    expect(await screen.findByText('Cardiologie')).toBeInTheDocument();
+    await saisir(/^Nouvelle valeur/, 'Allergologie');
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }));
+    await vi.waitFor(() =>
+      expect(referentiel.creerValeur).toHaveBeenCalledWith({
+        liste: 'specialite',
+        libelle: 'Allergologie',
+        parent: null,
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Archiver Cardiologie' }));
+    await vi.waitFor(() => expect(referentiel.archiver).toHaveBeenCalledWith('valeurs', 'v2'));
+  });
+
+  it('la page Référentiels ne présente aucune violation d’accessibilité détectable', async () => {
+    const { client } = clientRef();
+    const { container } = rendre(client, '/referentiels');
+    await screen.findByText('Tensiovar 5 mg');
+    expect(await violationsAccessibilite(container)).toEqual([]);
   });
 });

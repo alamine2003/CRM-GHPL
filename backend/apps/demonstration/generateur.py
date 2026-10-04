@@ -18,6 +18,7 @@ from apps.identite.models import Role, Utilisateur
 from apps.identite.services import attribuer_role, creer_utilisateur
 from apps.organisation import services as org
 from apps.organisation.models import TypePoste
+from apps.referentiel import services as ref
 from apps.socle.services import aujourdhui, creer_pays
 
 PRENOMS = [
@@ -68,6 +69,23 @@ ABREGES = {TypePoste.VM: "VM", TypePoste.VM_OTC: "OTC", TypePoste.KAM: "KAM",
            TypePoste.DERMO: "Dermo"}  # fmt: skip
 
 
+# Classes thérapeutiques par division, et terminaisons des noms de produits fictifs.
+CLASSES = {
+    "CARDIO": [("Antihypertenseurs", "tens"), ("Antidiabétiques", "glyx"),
+               ("Hypolipémiants", "lipra"), ("Anticoagulants", "coagine")],
+    "FEMME": [("Hormones", "estra"), ("Fer et vitamines", "ferol"), ("Fertilité", "fertil")],
+    "ANTI": [("Antibiotiques", "cilline"), ("Antipaludiques", "palune"),
+             ("Antiviraux", "virex")],
+    "GRAND": [("Antalgiques", "dolor"), ("Dermocosmétiques", "derma"),
+              ("Gastro-entérologie", "gastrol"), ("ORL et toux", "tussil"),
+              ("Pédiatrie", "kidia")],
+}  # fmt: skip
+SYLLABES = ["Va", "No", "Ze", "Ka", "Lu", "Mi", "Sa", "To", "Ri", "Be", "Do", "Fa", "Pe",
+            "Xa", "Qui", "Ro", "Ti", "Me", "La", "Cy"]  # fmt: skip
+DOSAGES = ["5 mg", "10 mg", "20 mg", "50 mg", "100 mg", "250 mg", "500 mg", "1 g", "sirop",
+           "crème", "gel", "comprimés", "sachets"]  # fmt: skip
+
+
 @dataclass
 class Volumes:
     reseaux_par_division: tuple[int, ...] = (5, 4, 4, 6)  # 19 réseaux
@@ -77,6 +95,7 @@ class Volumes:
     delegues: int = 207
     dm: int = 7
     sans_superviseur: int = 3
+    produits: int = 156  # dont la moitié environ sur plusieurs réseaux
 
     def reduits(self, facteur: float) -> "Volumes":
         def r(n):
@@ -90,6 +109,7 @@ class Volumes:
             delegues=r(self.delegues),
             dm=r(self.dm),
             sans_superviseur=r(self.sans_superviseur),
+            produits=max(12, r(self.produits)),
         )
 
 
@@ -106,7 +126,7 @@ def vider() -> None:
     vider cette base fictive, par le propriétaire des tables.
     """
     tables = []
-    for etiquette in ("socle", "identite", "organisation", "audit"):
+    for etiquette in ("socle", "identite", "organisation", "referentiel", "audit"):
         for modele in apps.get_app_config(etiquette).get_models(include_auto_created=True):
             tables.append(connection.ops.quote_name(modele._meta.db_table))
     with connection.cursor() as curseur:
@@ -208,6 +228,8 @@ class Generateur:
                  for i in range(nombre)]
             )  # fmt: skip
 
+        produits_crees = self.produits(pays, reseaux_par_division, volumes.produits)
+
         superviseurs = [self.personne(pays, Role.SUPERVISEUR) for _ in range(volumes.superviseurs)]
         self.premier(f"superviseur ({code})", superviseurs[0])
         delegues = [self.personne(pays, Role.DELEGUE) for _ in range(volumes.delegues)]
@@ -242,7 +264,42 @@ class Generateur:
             "superviseurs": len(superviseurs),
             "postes": len(postes),
             "delegues": len(delegues),
+            "produits": produits_crees,
         }
+
+    def produits(self, pays, reseaux_par_division, nombre: int) -> int:
+        """Produits fictifs classés par division, et portefeuilles de 6 à 25 produits par
+        réseau ; un produit sur deux environ est porté par plusieurs réseaux (prd.md §7.1)."""
+        a = self.alea
+        noms: set[str] = set()
+        par_division = []
+        for (code_div, _, _), reseaux in zip(DIVISIONS, reseaux_par_division, strict=True):
+            classes = [
+                (ref.creer_valeur(pays, "classe_therapeutique", libelle), fin)
+                for libelle, fin in CLASSES[code_div]
+            ]
+            produits = []
+            for _ in range(max(6, nombre // len(DIVISIONS))):
+                classe, fin = a.choice(classes)
+                nom = f"{a.choice(SYLLABES)}{a.choice(SYLLABES).lower()}{fin}"
+                libelle = f"{nom} {a.choice(DOSAGES)}"
+                if libelle in noms:
+                    continue
+                noms.add(libelle)
+                produits.append(ref.creer_produit(pays, libelle, classe=classe))
+            par_division.append((reseaux, produits))
+        for reseaux, produits in par_division:
+            portes = set()
+            for reseau in reseaux:
+                choix = a.sample(produits, k=min(len(produits), a.randint(6, 25)))
+                ref.definir_portefeuille(reseau, choix)
+                portes.update(p.pk for p in choix)
+            # Aucun produit orphelin : ceux qu'aucun réseau n'a tirés vont au premier.
+            orphelins = [p for p in produits if p.pk not in portes]
+            if orphelins:
+                courant = list(ref.produits_du_portefeuille([reseaux[0]], aujourdhui(pays)))
+                ref.definir_portefeuille(reseaux[0], courant + orphelins)
+        return len(noms)
 
     @transaction.atomic
     def tout(self, volumes: Volumes, pays_secondaires: tuple[str, ...] = ("TG",)) -> Bilan:

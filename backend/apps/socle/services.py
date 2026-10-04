@@ -51,6 +51,9 @@ def creer_pays(code: str, **surcharges: Any) -> Pays:
     pays = Pays(code=code, statut=Pays.Statut.ACTIF, **valeurs)
     pays.full_clean()
     pays.save()
+    from apps.referentiel.services import initialiser_pays
+
+    initialiser_pays(pays)
     _auditer("pays.creation", pays, details={"code": code})
     return pays
 

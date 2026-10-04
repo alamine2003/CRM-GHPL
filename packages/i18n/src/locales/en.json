@@ -121,7 +121,8 @@
     },
     "pays": "Countries",
     "profil": "My profile",
-    "exploitation": "Operations"
+    "exploitation": "Operations",
+    "referentiels": "Reference data"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -596,5 +597,93 @@
   "demonstration": {
     "bandeau": "Demo",
     "texte": "Fictitious data: no real people or institutions."
+  },
+  "referentiel": {
+    "titre": "Reference data",
+    "sousTitre": "Products, network portfolios and value lists · {{pays}}.",
+    "sousTitreConsolide": "Products and value lists across all countries.",
+    "choisirPays": "Choose a country to edit its reference data.",
+    "lectureSeule": "Read only: the country administrator maintains reference data.",
+    "onglets": {
+      "produits": "Products",
+      "portefeuilles": "Portfolios",
+      "listes": "Value lists"
+    },
+    "chiffres": {
+      "produits": "Active products",
+      "classes": "Therapeutic classes",
+      "reseauxCouverts": "Networks with a portfolio",
+      "multiReseaux": "In several networks",
+      "surTotal": "of {{total}}"
+    },
+    "produit": {
+      "nouveau": "New product",
+      "modifier": "Edit product",
+      "libelle": "Product name",
+      "code": "Code",
+      "codeAide": "Left empty, it is derived from the name.",
+      "classe": "Therapeutic class",
+      "sansClasse": "No class",
+      "reseaux": "Networks",
+      "reseauxAide": "A product can belong to several networks.",
+      "aucunReseau": "Not in a portfolio",
+      "rechercher": "Search a product or code",
+      "toutesClasses": "All classes",
+      "tousReseaux": "All networks",
+      "archives": "Show archived",
+      "vide": "No products yet",
+      "videTexte": "Add the laboratory's products, then place them in the network portfolios.",
+      "aucunResultat": "No matching product",
+      "nombre_one": "{{count}} product",
+      "nombre_other": "{{count}} products"
+    },
+    "portefeuille": {
+      "gerer": "Manage portfolio",
+      "titreDialogue": "Portfolio · {{reseau}}",
+      "aide": "Ticked products are offered to this network's reps from today; past reports keep theirs.",
+      "selection_one": "{{count}} product selected",
+      "selection_other": "{{count}} products selected",
+      "vide": "Empty portfolio",
+      "videTexte": "No products: this network's reps will have nothing to present.",
+      "aucunReseau": "No active network",
+      "aucunReseauTexte": "First create divisions and networks in Organisation.",
+      "plus": "+{{count}}",
+      "conseil": "6 to 25 products per network"
+    },
+    "listes": {
+      "type_prospect": "Prospect types",
+      "specialite": "Specialties",
+      "type_etablissement": "Institution types",
+      "classe_therapeutique": "Therapeutic classes",
+      "motif_ecart": "Deviation reasons"
+    },
+    "aides": {
+      "type_prospect": "Doctor, pharmacist, midwife… Each prospect record has one.",
+      "specialite": "Link a specialty to a prospect type to offer it only for that type.",
+      "type_etablissement": "Practice, hospital, pharmacy… Each institution has one.",
+      "classe_therapeutique": "Product classification (Cardio, Diabetes…).",
+      "motif_ecart": "Reasons a rep picks when a planned visit does not take place."
+    },
+    "valeur": {
+      "nouvelle": "New value",
+      "ajouter": "Add",
+      "libelle": "Label",
+      "renommer": "Rename",
+      "parent": "Prospect type",
+      "tousTypes": "All types",
+      "utilisee_one": "Used {{count}} time",
+      "utilisee_other": "Used {{count}} times",
+      "archivee": "Archived",
+      "archiver": "Archive",
+      "reactiver": "Restore",
+      "archiverAide": "Nothing is deleted: an archived value is no longer offered but stays readable where it was used.",
+      "vide": "Empty list"
+    },
+    "mesProduits": {
+      "titre": "My products",
+      "texte": "Your networks' portfolio, offered in your visit reports.",
+      "vide": "No products in your networks' portfolio.",
+      "reseau": "{{reseau}} · {{nombre}}"
+    }
   }
 }

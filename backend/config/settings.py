@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "apps.identite",
     "apps.perimetre",
     "apps.organisation",
+    "apps.referentiel",
     "apps.demonstration",
     "apps.audit",
 ]

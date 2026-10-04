@@ -121,7 +121,8 @@
     },
     "pays": "Pays",
     "profil": "Mon profil",
-    "exploitation": "Exploitation"
+    "exploitation": "Exploitation",
+    "referentiels": "Référentiels"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -596,5 +597,93 @@
   "demonstration": {
     "bandeau": "Démonstration",
     "texte": "Données fictives : aucune personne ni aucun établissement réels."
+  },
+  "referentiel": {
+    "titre": "Référentiels",
+    "sousTitre": "Produits, portefeuilles des réseaux et listes de valeurs · {{pays}}.",
+    "sousTitreConsolide": "Produits et listes de valeurs de tous les pays.",
+    "choisirPays": "Choisissez un pays pour modifier ses référentiels.",
+    "lectureSeule": "Consultation seule : l'administrateur pays tient les référentiels.",
+    "onglets": {
+      "produits": "Produits",
+      "portefeuilles": "Portefeuilles",
+      "listes": "Listes de valeurs"
+    },
+    "chiffres": {
+      "produits": "Produits actifs",
+      "classes": "Classes thérapeutiques",
+      "reseauxCouverts": "Réseaux avec portefeuille",
+      "multiReseaux": "Sur plusieurs réseaux",
+      "surTotal": "sur {{total}}"
+    },
+    "produit": {
+      "nouveau": "Nouveau produit",
+      "modifier": "Modifier le produit",
+      "libelle": "Nom du produit",
+      "code": "Code",
+      "codeAide": "Laissé vide, il est tiré du nom.",
+      "classe": "Classe thérapeutique",
+      "sansClasse": "Sans classe",
+      "reseaux": "Réseaux",
+      "reseauxAide": "Un produit peut appartenir à plusieurs réseaux.",
+      "aucunReseau": "Hors portefeuille",
+      "rechercher": "Rechercher un produit ou un code",
+      "toutesClasses": "Toutes les classes",
+      "tousReseaux": "Tous les réseaux",
+      "archives": "Afficher les archivés",
+      "vide": "Aucun produit pour l'instant",
+      "videTexte": "Ajoutez les produits du laboratoire puis rangez-les dans les portefeuilles des réseaux.",
+      "aucunResultat": "Aucun produit ne correspond",
+      "nombre_one": "{{count}} produit",
+      "nombre_other": "{{count}} produits"
+    },
+    "portefeuille": {
+      "gerer": "Gérer le portefeuille",
+      "titreDialogue": "Portefeuille · {{reseau}}",
+      "aide": "Les produits cochés sont proposés aux délégués de ce réseau à partir d'aujourd'hui ; les rapports passés gardent les leurs.",
+      "selection_one": "{{count}} produit sélectionné",
+      "selection_other": "{{count}} produits sélectionnés",
+      "vide": "Portefeuille vide",
+      "videTexte": "Aucun produit : les délégués de ce réseau n'auront rien à présenter.",
+      "aucunReseau": "Aucun réseau actif",
+      "aucunReseauTexte": "Créez d'abord les divisions et les réseaux dans Organisation.",
+      "plus": "+{{count}}",
+      "conseil": "6 à 25 produits par réseau"
+    },
+    "listes": {
+      "type_prospect": "Types de prospect",
+      "specialite": "Spécialités",
+      "type_etablissement": "Types d'établissement",
+      "classe_therapeutique": "Classes thérapeutiques",
+      "motif_ecart": "Motifs d'écart"
+    },
+    "aides": {
+      "type_prospect": "Médecin, pharmacien, sage-femme… Chaque fiche prospect en porte un.",
+      "specialite": "Rattachez une spécialité à un type de prospect pour ne la proposer qu'à lui.",
+      "type_etablissement": "Cabinet, hôpital, pharmacie… Chaque établissement en porte un.",
+      "classe_therapeutique": "Classement des produits (Cardio, Diabéto…).",
+      "motif_ecart": "Motifs qu'un délégué choisit quand une visite prévue n'a pas lieu."
+    },
+    "valeur": {
+      "nouvelle": "Nouvelle valeur",
+      "ajouter": "Ajouter",
+      "libelle": "Libellé",
+      "renommer": "Renommer",
+      "parent": "Type de prospect",
+      "tousTypes": "Tous les types",
+      "utilisee_one": "Utilisée {{count}} fois",
+      "utilisee_other": "Utilisée {{count}} fois",
+      "archivee": "Archivée",
+      "archiver": "Archiver",
+      "reactiver": "Réactiver",
+      "archiverAide": "Rien ne se supprime : une valeur archivée n'est plus proposée mais reste lisible là où elle a servi.",
+      "vide": "Liste vide"
+    },
+    "mesProduits": {
+      "titre": "Mes produits",
+      "texte": "Portefeuille de vos réseaux, proposé dans vos rapports de visite.",
+      "vide": "Aucun produit dans le portefeuille de vos réseaux.",
+      "reseau": "{{reseau}} · {{nombre}}"
+    }
   }
 }

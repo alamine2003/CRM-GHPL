@@ -79,6 +79,7 @@ function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
     deconnexion: jest.fn(async () => undefined),
     demanderReinitialisation: jest.fn(async () => undefined),
     informations: jest.fn(async () => ({ environnement: 'test' })),
+    referentiel: { monPortefeuille: jest.fn(async () => []) },
     ...surcharges,
   } as unknown as ClientApi;
 }
@@ -263,6 +264,35 @@ describe('mobile — session', () => {
     expect(await screen.findByText('VM Dakar Plateau')).toBeTruthy();
     expect(screen.getByText('Cardio')).toBeTruthy();
     expect(screen.getByText(/pas de superviseur/)).toBeTruthy();
+  });
+
+  it('montre les produits du portefeuille de ses réseaux (ORG-004 CA3)', async () => {
+    const produits = Array.from({ length: 10 }, (_, i) => ({
+      id: `p${i}`,
+      code: `P${i}`,
+      libelle: `Produit ${i}`,
+      classe_libelle: null,
+    }));
+    await rendre(
+      <Accueil />,
+      fauxClient({
+        reprendre: jest.fn(async () => JETONS),
+        referentiel: {
+          monPortefeuille: jest.fn(async () => [
+            {
+              reseau: { id: 'r1', code: 'CV', libelle: 'Cardio Vasculaire' },
+              division: 'Cardio',
+              produits,
+            },
+          ]),
+        },
+      } as unknown as Partial<ClientApi>),
+    );
+    expect(await screen.findByText('Mes produits')).toBeTruthy();
+    expect(screen.getByText('Produit 0')).toBeTruthy();
+    expect(screen.queryByText('Produit 9')).toBeNull();
+    await fireEvent.press(screen.getByText('+2'));
+    expect(screen.getByText('Produit 9')).toBeTruthy();
   });
 
   it('bascule en anglais et mémorise la langue sur le compte (USR-004)', async () => {

@@ -868,6 +868,186 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/referentiel/mon-portefeuille/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Produits que l'utilisateur présente : réseaux de ses postes (délégué, superviseur-visiteur)
+     *     et de son périmètre (DF, DM). Le rapport de visite n'en proposera pas d'autres (ORG-004 CA3).
+     */
+    get: operations['mon_portefeuille'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/referentiel/portefeuilles/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['portefeuilles'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/referentiel/portefeuilles/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['portefeuille_definir'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/referentiel/produits/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['produits_liste'];
+    put?: never;
+    post: operations['produit_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/referentiel/produits/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['produit_modifier'];
+    trace?: never;
+  };
+  '/api/v1/referentiel/produits/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['produit_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/referentiel/produits/{id}/reactiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['produit_reactiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/referentiel/valeurs/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['valeurs_liste'];
+    put?: never;
+    post: operations['valeur_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/referentiel/valeurs/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['valeur_modifier'];
+    trace?: never;
+  };
+  '/api/v1/referentiel/valeurs/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['valeur_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/referentiel/valeurs/{id}/reactiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['valeur_reactiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/roles/{id}/retirer/': {
     parameters: {
       query?: never;
@@ -1092,6 +1272,13 @@ export interface components {
       reseaux?: string[];
       secteurs?: string[];
     };
+    CreationProduit: {
+      libelle: string;
+      code?: string;
+      /** Format: uuid */
+      classe?: string | null;
+      reseaux?: string[];
+    };
     CreationReseau: {
       libelle: string;
       code: string;
@@ -1109,6 +1296,17 @@ export interface components {
       nom: string;
       courriel?: string;
       langue?: components['schemas']['LangueEnum'];
+    };
+    CreationValeur: {
+      liste: components['schemas']['ListeEnum'];
+      libelle: string;
+      code?: string;
+      ordre?: number;
+      /** Format: uuid */
+      parent?: string | null;
+    };
+    DefinitionPortefeuille: {
+      produits: string[];
     };
     DescriptionAppareil: {
       /** @description Tiré au hasard à l'installation de l'application. */
@@ -1217,6 +1415,20 @@ export interface components {
     Libelle: {
       libelle: string;
     };
+    /**
+     * @description * `type_prospect` - Types de prospect
+     *     * `specialite` - Spécialités
+     *     * `type_etablissement` - Types d'établissement
+     *     * `classe_therapeutique` - Classes thérapeutiques
+     *     * `motif_ecart` - Motifs d'écart
+     * @enum {string}
+     */
+    ListeEnum:
+      | 'type_prospect'
+      | 'specialite'
+      | 'type_etablissement'
+      | 'classe_therapeutique'
+      | 'motif_ecart';
     ModificationParametre: {
       valeur: unknown;
     };
@@ -1292,6 +1504,18 @@ export interface components {
       reseaux?: string[];
       secteurs?: string[];
     };
+    PatchedModificationProduit: {
+      libelle?: string;
+      /** Format: uuid */
+      classe?: string | null;
+      reseaux?: string[];
+    };
+    PatchedModificationValeur: {
+      libelle?: string;
+      ordre?: number;
+      /** Format: uuid */
+      parent?: string | null;
+    };
     Pays: {
       readonly code: string;
       readonly nom: string;
@@ -1344,6 +1568,12 @@ export interface components {
      * @enum {string}
      */
     PlateformeEnum: 'android' | 'ios' | 'web';
+    /** @description Portefeuille d'un réseau aujourd'hui. */
+    Portefeuille: {
+      reseau: components['schemas']['ReseauResume'];
+      division: string;
+      produits: components['schemas']['ProduitResume'][];
+    };
     /** @description Un poste avec son occupant et son superviseur du jour ; « vacant » sans occupant. */
     Poste: {
       /** Format: uuid */
@@ -1358,6 +1588,25 @@ export interface components {
       readonly superviseur: components['schemas']['Personne'] | null;
       readonly vacant: boolean;
       readonly archive: boolean;
+    };
+    Produit: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      code: string;
+      libelle: string;
+      /** Format: uuid */
+      classe: string | null;
+      classe_libelle?: string | null;
+      readonly reseaux: components['schemas']['ReseauResume'][];
+      readonly archive: boolean;
+    };
+    ProduitResume: {
+      /** Format: uuid */
+      readonly id: string;
+      code: string;
+      libelle: string;
+      classe_libelle?: string | null;
     };
     Rafraichissement: {
       /** @description Application mobile uniquement ; le portail utilise le cookie. */
@@ -1392,6 +1641,12 @@ export interface components {
       /** Format: uuid */
       division: string;
       readonly archive: boolean;
+    };
+    ReseauResume: {
+      /** Format: uuid */
+      id: string;
+      code: string;
+      libelle: string;
     };
     Resume: {
       /** Format: uuid */
@@ -1519,6 +1774,20 @@ export interface components {
        * Format: date-time
        */
       last_login?: string | null;
+    };
+    Valeur: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      liste: components['schemas']['ListeEnum'];
+      code: string;
+      libelle: string;
+      ordre?: number;
+      /** Format: uuid */
+      parent: string | null;
+      readonly archive: boolean;
+      /** @default 0 */
+      readonly utilisations: number;
     };
     Zone: {
       /** Format: uuid */
@@ -2964,6 +3233,310 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Pays'];
+        };
+      };
+    };
+  };
+  mon_portefeuille: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Portefeuille'][];
+        };
+      };
+    };
+  };
+  portefeuilles: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Portefeuille'][];
+        };
+      };
+    };
+  };
+  portefeuille_definir: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DefinitionPortefeuille'];
+        'application/x-www-form-urlencoded': components['schemas']['DefinitionPortefeuille'];
+        'multipart/form-data': components['schemas']['DefinitionPortefeuille'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Portefeuille'];
+        };
+      };
+    };
+  };
+  produits_liste: {
+    parameters: {
+      query?: {
+        actifs?: string;
+        classe?: string;
+        reseau?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Produit'][];
+        };
+      };
+    };
+  };
+  produit_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationProduit'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationProduit'];
+        'multipart/form-data': components['schemas']['CreationProduit'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Produit'];
+        };
+      };
+    };
+  };
+  produit_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationProduit'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationProduit'];
+        'multipart/form-data': components['schemas']['PatchedModificationProduit'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Produit'];
+        };
+      };
+    };
+  };
+  produit_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Produit'];
+        };
+      };
+    };
+  };
+  produit_reactiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Produit'];
+        };
+      };
+    };
+  };
+  valeurs_liste: {
+    parameters: {
+      query?: {
+        /** @description 1 : sans les archivées */
+        actifs?: string;
+        liste?:
+          | 'classe_therapeutique'
+          | 'motif_ecart'
+          | 'specialite'
+          | 'type_etablissement'
+          | 'type_prospect';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Valeur'][];
+        };
+      };
+    };
+  };
+  valeur_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationValeur'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationValeur'];
+        'multipart/form-data': components['schemas']['CreationValeur'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Valeur'];
+        };
+      };
+    };
+  };
+  valeur_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationValeur'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationValeur'];
+        'multipart/form-data': components['schemas']['PatchedModificationValeur'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Valeur'];
+        };
+      };
+    };
+  };
+  valeur_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Valeur'];
+        };
+      };
+    };
+  };
+  valeur_reactiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Valeur'];
         };
       };
     };

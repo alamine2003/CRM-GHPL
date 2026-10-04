@@ -29,6 +29,8 @@ class Action(StrEnum):
     AFFECTATIONS_GERER = "affectations.gerer"
     APPAREILS_REVOQUER = "appareils.revoquer"
     EXPLOITATION_LIRE = "exploitation.lire"
+    REFERENTIELS_LIRE = "referentiels.lire"
+    REFERENTIELS_GERER = "referentiels.gerer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -66,6 +68,14 @@ MATRICE: dict[Action, frozenset[str]] = {
     # État technique du service [H] : l'administrateur technique « exploite et surveille »
     # (prd.md §6.1) ; l'administrateur du siège le consulte aussi. Aucune donnée métier.
     Action.EXPLOITATION_LIRE: frozenset({Role.ADMIN_TECHNIQUE, Role.ADMIN_SIEGE}),
+    # « Gérer les référentiels (produits, spécialités, types) » : siège et administrateur pays,
+    # y compris le portefeuille de produits de chaque réseau (ORG-004).
+    Action.REFERENTIELS_GERER: frozenset({Role.ADMIN_SIEGE, Role.ADMIN_PAYS}),
+    # Consultation [H] : tous les rôles métier du pays s'en servent (listes de valeurs, produits
+    # de leur portefeuille pour les rapports, RG-033).
+    Action.REFERENTIELS_LIRE: frozenset(
+        SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
+    ),
 }
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.

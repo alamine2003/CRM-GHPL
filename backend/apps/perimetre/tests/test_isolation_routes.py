@@ -54,7 +54,15 @@ def senegal(monde):
         utilisateur=compte, client="portail", empreinte_rafraichissement="sn" * 32,
         expire_le=compte.date_joined.replace(year=2099),
     )  # fmt: skip
+    from apps.referentiel import services as ref
+
+    valeur = ref.creer_valeur(sn, "specialite", "Allergologie")
+    produit = ref.creer_produit(sn, "Vasculor")
+    ref.definir_portefeuille(reseau, [produit])
     return {
+        "valeur": valeur.pk, "valeur-archiver": valeur.pk, "valeur-reactiver": valeur.pk,
+        "produit": produit.pk, "produit-archiver": produit.pk, "produit-reactiver": produit.pk,
+        "portefeuille-reseau": reseau.pk,
         "session-revoquer": session_sn.pk,
         "utilisateur": compte.pk,
         "roles": compte.pk,
@@ -117,7 +125,8 @@ def test_aucune_route_n_ouvre_un_objet_d_un_autre_pays(monde, senegal):
 LISTES = ["/api/v1/utilisateurs/", "/api/v1/appareils/", "/api/v1/pays/",
           "/api/v1/organisation/divisions/", "/api/v1/organisation/reseaux/",
           "/api/v1/organisation/zones/", "/api/v1/organisation/secteurs/",
-          "/api/v1/organisation/postes/"]  # fmt: skip
+          "/api/v1/organisation/postes/", "/api/v1/referentiel/produits/",
+          "/api/v1/referentiel/portefeuilles/"]  # fmt: skip
 
 
 @pytest.mark.parametrize("liste", LISTES)

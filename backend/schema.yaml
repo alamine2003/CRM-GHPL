@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.0.9
+  version: 0.1.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -1455,6 +1455,333 @@ paths:
               schema:
                 $ref: '#/components/schemas/Pays'
           description: ''
+  /api/v1/referentiel/mon-portefeuille/:
+    get:
+      operationId: mon_portefeuille
+      description: |-
+        Produits que l'utilisateur présente : réseaux de ses postes (délégué, superviseur-visiteur)
+        et de son périmètre (DF, DM). Le rapport de visite n'en proposera pas d'autres (ORG-004 CA3).
+      tags:
+      - referentiel
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Portefeuille'
+          description: ''
+  /api/v1/referentiel/portefeuilles/:
+    get:
+      operationId: portefeuilles
+      tags:
+      - referentiel
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Portefeuille'
+          description: ''
+  /api/v1/referentiel/portefeuilles/{id}/:
+    put:
+      operationId: portefeuille_definir
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - referentiel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefinitionPortefeuille'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DefinitionPortefeuille'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DefinitionPortefeuille'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Portefeuille'
+          description: ''
+  /api/v1/referentiel/produits/:
+    get:
+      operationId: produits_liste
+      parameters:
+      - in: query
+        name: actifs
+        schema:
+          type: string
+      - in: query
+        name: classe
+        schema:
+          type: string
+      - in: query
+        name: reseau
+        schema:
+          type: string
+      tags:
+      - referentiel
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Produit'
+          description: ''
+    post:
+      operationId: produit_creer
+      tags:
+      - referentiel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationProduit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationProduit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationProduit'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produit'
+          description: ''
+  /api/v1/referentiel/produits/{id}/:
+    patch:
+      operationId: produit_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - referentiel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationProduit'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationProduit'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationProduit'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produit'
+          description: ''
+  /api/v1/referentiel/produits/{id}/archiver/:
+    post:
+      operationId: produit_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - referentiel
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produit'
+          description: ''
+  /api/v1/referentiel/produits/{id}/reactiver/:
+    post:
+      operationId: produit_reactiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - referentiel
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produit'
+          description: ''
+  /api/v1/referentiel/valeurs/:
+    get:
+      operationId: valeurs_liste
+      parameters:
+      - in: query
+        name: actifs
+        schema:
+          type: string
+        description: '1 : sans les archivées'
+      - in: query
+        name: liste
+        schema:
+          type: string
+          enum:
+          - classe_therapeutique
+          - motif_ecart
+          - specialite
+          - type_etablissement
+          - type_prospect
+      tags:
+      - referentiel
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Valeur'
+          description: ''
+    post:
+      operationId: valeur_creer
+      tags:
+      - referentiel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationValeur'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationValeur'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationValeur'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valeur'
+          description: ''
+  /api/v1/referentiel/valeurs/{id}/:
+    patch:
+      operationId: valeur_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - referentiel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationValeur'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationValeur'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationValeur'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valeur'
+          description: ''
+  /api/v1/referentiel/valeurs/{id}/archiver/:
+    post:
+      operationId: valeur_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - referentiel
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valeur'
+          description: ''
+  /api/v1/referentiel/valeurs/{id}/reactiver/:
+    post:
+      operationId: valeur_reactiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - referentiel
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Valeur'
+          description: ''
   /api/v1/roles/{id}/retirer/:
     post:
       operationId: role_retirer
@@ -1992,6 +2319,26 @@ components:
       required:
       - libelle
       - type_poste
+    CreationProduit:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 160
+        code:
+          type: string
+          maxLength: 40
+        classe:
+          type: string
+          format: uuid
+          nullable: true
+        reseaux:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - libelle
     CreationReseau:
       type: object
       properties:
@@ -2044,6 +2391,37 @@ components:
       - identifiant
       - nom
       - prenom
+    CreationValeur:
+      type: object
+      properties:
+        liste:
+          $ref: '#/components/schemas/ListeEnum'
+        libelle:
+          type: string
+          maxLength: 120
+        code:
+          type: string
+          maxLength: 40
+        ordre:
+          type: integer
+          minimum: 0
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - libelle
+      - liste
+    DefinitionPortefeuille:
+      type: object
+      properties:
+        produits:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - produits
     DescriptionAppareil:
       type: object
       properties:
@@ -2306,6 +2684,20 @@ components:
           maxLength: 120
       required:
       - libelle
+    ListeEnum:
+      enum:
+      - type_prospect
+      - specialite
+      - type_etablissement
+      - classe_therapeutique
+      - motif_ecart
+      type: string
+      description: |-
+        * `type_prospect` - Types de prospect
+        * `specialite` - Spécialités
+        * `type_etablissement` - Types d'établissement
+        * `classe_therapeutique` - Classes thérapeutiques
+        * `motif_ecart` - Motifs d'écart
     ModificationParametre:
       type: object
       properties:
@@ -2500,6 +2892,34 @@ components:
           items:
             type: string
             format: uuid
+    PatchedModificationProduit:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 160
+        classe:
+          type: string
+          format: uuid
+          nullable: true
+        reseaux:
+          type: array
+          items:
+            type: string
+            format: uuid
+    PatchedModificationValeur:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        ordre:
+          type: integer
+          minimum: 0
+        parent:
+          type: string
+          format: uuid
+          nullable: true
     Pays:
       type: object
       properties:
@@ -2637,6 +3057,22 @@ components:
         * `android` - Android
         * `ios` - iOS
         * `web` - Web
+    Portefeuille:
+      type: object
+      description: Portefeuille d'un réseau aujourd'hui.
+      properties:
+        reseau:
+          $ref: '#/components/schemas/ReseauResume'
+        division:
+          type: string
+        produits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduitResume'
+      required:
+      - division
+      - produits
+      - reseau
     Poste:
       type: object
       description: Un poste avec son occupant et son superviseur du jour ; « vacant
@@ -2692,6 +3128,65 @@ components:
       - type_libelle
       - type_poste
       - vacant
+    Produit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          maxLength: 40
+        libelle:
+          type: string
+          maxLength: 160
+        classe:
+          type: string
+          format: uuid
+          nullable: true
+        classe_libelle:
+          type: string
+          nullable: true
+        reseaux:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReseauResume'
+          readOnly: true
+        archive:
+          type: boolean
+          readOnly: true
+      required:
+      - archive
+      - classe
+      - code
+      - id
+      - libelle
+      - pays
+      - reseaux
+    ProduitResume:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          maxLength: 40
+        libelle:
+          type: string
+          maxLength: 160
+        classe_libelle:
+          type: string
+          nullable: true
+      required:
+      - code
+      - id
+      - libelle
     Rafraichissement:
       type: object
       properties:
@@ -2774,6 +3269,20 @@ components:
       - id
       - libelle
       - pays
+    ReseauResume:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        libelle:
+          type: string
+      required:
+      - code
+      - id
+      - libelle
     Resume:
       type: object
       properties:
@@ -3044,6 +3553,48 @@ components:
       - pays_principal
       - prenom
       - roles
+    Valeur:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        liste:
+          $ref: '#/components/schemas/ListeEnum'
+        code:
+          type: string
+          maxLength: 40
+        libelle:
+          type: string
+          maxLength: 120
+        ordre:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        archive:
+          type: boolean
+          readOnly: true
+        utilisations:
+          type: integer
+          readOnly: true
+          default: 0
+      required:
+      - archive
+      - code
+      - id
+      - libelle
+      - liste
+      - parent
+      - pays
+      - utilisations
     Zone:
       type: object
       properties:

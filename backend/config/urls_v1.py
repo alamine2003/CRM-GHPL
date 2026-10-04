@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularAPIView
 
 from apps.identite import vues_comptes as comptes
 from apps.organisation import vues as org
+from apps.referentiel import vues as ref
 from apps.socle import vues_exploitation as exploitation
 from apps.socle import vues_pays as pays
 from apps.socle.views import InformationsView
@@ -114,6 +115,40 @@ urlpatterns = [
         "organisation/perimetres-reseaux/<uuid:id>/terminer/",
         org.PerimetreReseauFinVue.as_view(),
         name="perimetre-reseau-terminer",
+    ),
+    # Référentiel du pays (PRP-001) et portefeuilles des réseaux (ORG-004)
+    path("referentiel/valeurs/", ref.ValeursVue.as_view(), name="valeurs"),
+    path("referentiel/valeurs/<uuid:id>/", ref.ValeurVue.as_view(), name="valeur"),
+    path(
+        "referentiel/valeurs/<uuid:id>/archiver/",
+        ref.ValeurArchivageVue.as_view(),
+        name="valeur-archiver",
+    ),
+    path(
+        "referentiel/valeurs/<uuid:id>/reactiver/",
+        ref.ValeurReactivationVue.as_view(),
+        name="valeur-reactiver",
+    ),
+    path("referentiel/produits/", ref.ProduitsVue.as_view(), name="produits"),
+    path("referentiel/produits/<uuid:id>/", ref.ProduitVue.as_view(), name="produit"),
+    path(
+        "referentiel/produits/<uuid:id>/archiver/",
+        ref.ProduitArchivageVue.as_view(),
+        name="produit-archiver",
+    ),
+    path(
+        "referentiel/produits/<uuid:id>/reactiver/",
+        ref.ProduitReactivationVue.as_view(),
+        name="produit-reactiver",
+    ),
+    path("referentiel/portefeuilles/", ref.PortefeuillesVue.as_view(), name="portefeuilles"),
+    path(
+        "referentiel/portefeuilles/<uuid:id>/",
+        ref.PortefeuilleReseauVue.as_view(),
+        name="portefeuille-reseau",
+    ),
+    path(
+        "referentiel/mon-portefeuille/", ref.MonPortefeuilleVue.as_view(), name="mon-portefeuille"
     ),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

@@ -2,6 +2,53 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.1] — Référentiels du pays et portefeuilles de produits ; design enrichi
+
+Premier jalon du cycle 0.1 « Référentiel ».
+
+### Ajouté — référentiels (PRP-001)
+
+- **Module `referentiel`** (architecture §7.1) : listes de valeurs par pays (types de prospect, spécialités, types d'établissement, classes thérapeutiques, motifs d'écart) et produits.
+- **Valeurs proposées à l'ouverture d'un pays**, dans sa langue :
+  - types de prospect et d'établissement du PRD (§14.1, §14.2) ;
+  - 15 spécialités médicales et 8 motifs d'écart [H], à confirmer par pays.
+
+  Les pays déjà ouverts les reçoivent par migration.
+- **Modifiables par l'administrateur pays** (CA1) : ajouter, renommer ; une spécialité peut dépendre d'un type de prospect. Le code reste stable quand le libellé change (imports, échanges).
+- **Rien ne se supprime** (CA2) : une valeur s'archive. Elle n'est plus proposée mais reste lisible là où elle a servi, et peut être réactivée. On n'archive pas une classe qui porte encore des produits actifs. Le nombre d'utilisations est affiché.
+- Créations, modifications, archivages et réactivations sont **audités** (AUD-001).
+
+### Ajouté — produits et portefeuilles (ORG-004)
+
+- **Produits** propres à chaque pays : nom, code, classe thérapeutique.
+- **Portefeuille daté** réseau ↔ produit :
+  - un produit peut appartenir à plusieurs réseaux (CA2) ;
+  - le portefeuille se gère par réseau ou par produit ;
+  - un ajout ou un retrait prend effet aujourd'hui, sans changer le passé ;
+  - chaque ajout et retrait est audité.
+- **Mon portefeuille** (`/api/v1/referentiel/mon-portefeuille/`) : les produits des réseaux des postes de l'utilisateur, et de son périmètre pour DF et DM. Le rapport de visite (0.5) ne proposera que ceux-là (CA3, RG-033).
+- Un réseau appartient toujours à une division (CA1, déjà en 0.0.5, désormais testé).
+- **Droits** : `referentiels.gerer` (siège, administrateur pays), `referentiels.lire` (tous les rôles métier du pays) ; tables protégées par la sécurité au niveau des lignes (ADR-003) ; nouvelles routes couvertes par les tests d'isolation.
+
+### Portail et mobile
+
+- **Page Référentiels**, en trois onglets :
+  - **Produits** : recherche insensible aux accents, filtres par classe et par réseau, couleur par classe thérapeutique, réseaux de chaque produit, produits hors portefeuille signalés, archivés sur demande ;
+  - **Portefeuilles** : une carte par réseau, regroupées par division, avec une jauge (6 à 25 produits conseillés) et un dialogue de sélection par classe ;
+  - **Listes de valeurs** : les cinq listes, ajout direct, renommage, archivage et réactivation.
+- Tuiles : produits actifs, classes, réseaux pourvus, produits sur plusieurs réseaux.
+- **Mobile — Mes produits** sur l'accueil : le portefeuille de ses réseaux, avec aperçu et dépliage.
+
+### Démonstration
+
+- 15 classes thérapeutiques et environ 156 produits fictifs au Sénégal. Chaque réseau porte un portefeuille de 6 à 25 produits, et un produit sur deux environ est sur plusieurs réseaux.
+
+### Reste à livrer
+
+- Fiches prospects et établissements qui utiliseront ces listes : 0.1.2 et 0.1.3.
+- Import du référentiel produits depuis BirdNotes : 0.1.8.
+- Proposition des seuls produits du portefeuille dans le rapport (ORG-004 CA3, partie rapport) : 0.5.
+
 ## [0.0.9] — Stabilisation et démonstration du cycle 0.0 ; design enrichi
 
 Neuvième et dernier jalon du cycle 0.0 « Fondations ».

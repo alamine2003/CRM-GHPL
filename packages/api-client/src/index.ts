@@ -18,13 +18,16 @@ import type {
   InitialisationDoubleAuth,
   Informations,
   Jetons,
+  ListeReferentiel,
   Moi,
   MonOrganisation,
   Occupation,
   Parametre,
   Pays,
   Perimetre,
+  Portefeuille,
   Poste,
+  Produit,
   Rattachement,
   Reseau,
   RoleAttribue,
@@ -36,6 +39,7 @@ import type {
   TypeClient,
   TypePoste,
   Utilisateur,
+  ValeurReferentiel,
   Zone,
 } from '@innov/api-types';
 
@@ -51,6 +55,7 @@ export type {
   InitialisationDoubleAuth,
   Informations,
   Jetons,
+  ListeReferentiel,
   Moi,
   MonOrganisation,
   MonPoste,
@@ -58,8 +63,11 @@ export type {
   Parametre,
   Pays,
   Perimetre,
+  Portefeuille,
   Personne,
   Poste,
+  Produit,
+  ProduitResume,
   Rattachement,
   Reseau,
   RoleAttribue,
@@ -71,6 +79,7 @@ export type {
   TypeClient,
   TypePoste,
   Utilisateur,
+  ValeurReferentiel,
   Zone,
 } from '@innov/api-types';
 
@@ -114,6 +123,21 @@ export interface NouveauPoste {
 }
 
 /** Stockage du jeton de rafraîchissement, pour l'application mobile uniquement. */
+export interface NouvelleValeur {
+  liste: ListeReferentiel;
+  libelle: string;
+  code?: string;
+  ordre?: number;
+  parent?: string | null;
+}
+
+export interface NouveauProduit {
+  libelle: string;
+  code?: string;
+  classe?: string | null;
+  reseaux?: string[];
+}
+
 export interface StockageRafraichissement {
   lire(): Promise<string | null>;
   ecrire(jeton: string | null): Promise<void>;
@@ -154,6 +178,7 @@ interface OptionsRequete {
 }
 
 const ORG = '/api/v1/organisation';
+const REF = '/api/v1/referentiel';
 
 export function creerClient(options: OptionsClient) {
   const base = options.baseUrl.replace(/\/$/, '');
@@ -348,6 +373,33 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { superviseur, ...(debut ? { debut } : {}) },
         }),
+    },
+    /** Référentiels du pays (PRP-001) et portefeuilles des réseaux (ORG-004). */
+    referentiel: {
+      valeurs: (liste?: ListeReferentiel) =>
+        requete<ValeurReferentiel[]>(`${REF}/valeurs/${liste ? `?liste=${liste}` : ''}`),
+      creerValeur: (valeur: NouvelleValeur) =>
+        requete<ValeurReferentiel>(`${REF}/valeurs/`, { methode: 'POST', corps: valeur }),
+      modifierValeur: (
+        id: string,
+        champs: { libelle?: string; ordre?: number; parent?: string | null },
+      ) => requete<ValeurReferentiel>(`${REF}/valeurs/${id}/`, { methode: 'PATCH', corps: champs }),
+      produits: () => requete<Produit[]>(`${REF}/produits/`),
+      creerProduit: (produit: NouveauProduit) =>
+        requete<Produit>(`${REF}/produits/`, { methode: 'POST', corps: produit }),
+      modifierProduit: (id: string, champs: Partial<NouveauProduit>) =>
+        requete<Produit>(`${REF}/produits/${id}/`, { methode: 'PATCH', corps: champs }),
+      archiver: (type: 'valeurs' | 'produits', id: string) =>
+        requete<unknown>(`${REF}/${type}/${id}/archiver/`, { methode: 'POST' }),
+      reactiver: (type: 'valeurs' | 'produits', id: string) =>
+        requete<unknown>(`${REF}/${type}/${id}/reactiver/`, { methode: 'POST' }),
+      portefeuilles: () => requete<Portefeuille[]>(`${REF}/portefeuilles/`),
+      definirPortefeuille: (reseau: string, produits: string[]) =>
+        requete<Portefeuille>(`${REF}/portefeuilles/${reseau}/`, {
+          methode: 'PUT',
+          corps: { produits },
+        }),
+      monPortefeuille: () => requete<Portefeuille[]>(`${REF}/mon-portefeuille/`),
     },
     /** Comptes du pays actif (USR-003). */
     utilisateurs: () => requete<Utilisateur[]>('/api/v1/utilisateurs/'),
