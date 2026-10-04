@@ -1,0 +1,35 @@
+# Pile de développement locale (architecture §20). Aucun secret réel ici.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: innov
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: innov
+    ports: ['127.0.0.1:5432:5432']
+    volumes: [db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U innov']
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports: ['127.0.0.1:6379:6379']
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DATABASE_URL: postgres://innov@db:5432/innov
+      ENVIRONNEMENT: developpement
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+    ports: ['127.0.0.1:8000:8000']
+    volumes: ['./backend:/app/backend', './VERSION:/app/VERSION:ro']
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  db:

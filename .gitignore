@@ -1,0 +1,35 @@
+# Dépendances et constructions
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+backend/staticfiles/
+*.mo
+
+# Expo / React Native
+.expo/
+mobile/android/
+mobile/ios/
+mobile/expo-env.d.ts
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Secrets et environnements locaux — jamais versionnés
+.env
+.env.*
+!.env.example
+
+# Divers
+.DS_Store
+*.log
+
+# Constructions locales
+.export-mobile/

@@ -1,0 +1,58 @@
+openapi: 3.0.3
+info:
+  title: INNOV CRM
+  version: 0.0.1
+  description: API du CRM multi-pays des délégués médicaux.
+paths:
+  /api/v1/informations/:
+    get:
+      operationId: informations
+      description: Informations publiques affichées sur le premier écran des clients.
+      tags:
+      - informations
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Informations'
+          description: ''
+components:
+  schemas:
+    Informations:
+      type: object
+      properties:
+        produit:
+          type: string
+        version:
+          type: string
+        environnement:
+          type: string
+        langue:
+          type: string
+          description: Langue retenue pour la réponse.
+        message:
+          type: string
+        langues:
+          type: array
+          items:
+            $ref: '#/components/schemas/Langue'
+      required:
+      - environnement
+      - langue
+      - langues
+      - message
+      - produit
+      - version
+    Langue:
+      type: object
+      properties:
+        code:
+          type: string
+        libelle:
+          type: string
+      required:
+      - code
+      - libelle

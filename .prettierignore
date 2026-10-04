@@ -1,0 +1,9 @@
+backend/
+node_modules/
+dist/
+coverage/
+.expo/
+mobile/android/
+mobile/ios/
+package-lock.json
+*.md

@@ -1,0 +1,19 @@
+# Traductions anglaises du service central INNOV CRM.
+# La langue source est le français.
+msgid ""
+msgstr ""
+"Project-Id-Version: INNOV CRM\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Français"
+msgstr "French"
+
+msgid "Anglais"
+msgstr "English"
+
+msgid "Bienvenue dans INNOV CRM."
+msgstr "Welcome to INNOV CRM."

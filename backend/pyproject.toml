@@ -1,0 +1,26 @@
+[project]
+name = "innov-crm-backend"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+testpaths = ["apps", "tests"]
+addopts = "--strict-markers"
+filterwarnings = [
+  "error",
+  # staticfiles/ n'existe qu'après collectstatic (image Docker).
+  "ignore:No directory at:UserWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+"tests/**" = ["S101"]

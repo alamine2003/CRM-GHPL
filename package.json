@@ -1,0 +1,36 @@
+{
+  "name": "innov-crm",
+  "private": true,
+  "description": "INNOV CRM — dépôt unique : portail, application mobile et paquets partagés. La version du produit est dans le fichier VERSION.",
+  "workspaces": [
+    "packages/*",
+    "portail",
+    "mobile"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0 && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "api:types": "openapi-typescript backend/schema.yaml -o packages/api-types/src/schema.d.ts && prettier --write packages/api-types/src/schema.d.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.9",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  }
+}

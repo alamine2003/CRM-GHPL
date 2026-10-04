@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  serveur:
+    name: Serveur (Django)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: innov
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: innov
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U innov" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://innov@localhost:5432/innov
+      ENVIRONNEMENT: test
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Outils système
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+      - run: pip install -r requirements-dev.txt
+      - name: Convention de version et CHANGELOG
+        run: ../scripts/verifier_version.sh
+      - name: Lint
+        run: ruff check . && ruff format --check .
+      - name: Traductions
+        run: python manage.py compilemessages
+      - name: Migrations à jour
+        run: python manage.py makemigrations --check --dry-run
+      - name: Tests (dont schéma OpenAPI à jour)
+        run: pytest -q
+
+  clients:
+    name: Portail, mobile et paquets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Types d'API à jour avec backend/schema.yaml
+        run: npm run api:types && git diff --exit-code -- packages/api-types
+      - name: Lint et format
+        run: npm run lint
+      - name: Types TypeScript
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Build du portail
+        run: npm run build -w portail
+      - name: Bundles mobiles Android et iOS
+        working-directory: mobile
+        run: npx expo export --platform android --platform ios --output-dir ../.export-mobile
+
+  secrets:
+    name: Analyse de secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  image:
+    name: Image Docker du serveur
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construire l'image
+        run: docker build -f backend/Dockerfile -t innov-backend:ci .

@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    ignore:
+      # Les versions d'Expo, React et React Native évoluent ensemble, une fois par cycle (RT-06).
+      - dependency-name: 'expo*'
+      - dependency-name: 'react'
+      - dependency-name: 'react-dom'
+      - dependency-name: 'react-native*'
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

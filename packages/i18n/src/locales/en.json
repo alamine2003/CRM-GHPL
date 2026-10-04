@@ -1,0 +1,23 @@
+{
+  "commun": {
+    "produit": "INNOV CRM",
+    "sousTitre": "Multi-country CRM for medical representatives",
+    "langue": "Language",
+    "langues": {
+      "fr": "Français",
+      "en": "English"
+    }
+  },
+  "accueil": {
+    "titre": "Welcome",
+    "introduction": "Plan, perform, report and validate every visit, in every country.",
+    "etatServeur": "Service status",
+    "serveurDisponible": "Service available",
+    "serveurIndisponible": "Service unreachable",
+    "verification": "Checking…",
+    "versionClient": "App version",
+    "versionServeur": "Service version",
+    "environnement": "Environment",
+    "reessayer": "Retry"
+  }
+}

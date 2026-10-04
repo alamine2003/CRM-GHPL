@@ -1,0 +1,23 @@
+{
+  "commun": {
+    "produit": "INNOV CRM",
+    "sousTitre": "CRM multi-pays des délégués médicaux",
+    "langue": "Langue",
+    "langues": {
+      "fr": "Français",
+      "en": "English"
+    }
+  },
+  "accueil": {
+    "titre": "Bienvenue",
+    "introduction": "Planifier, réaliser, rapporter et valider chaque visite, dans chaque pays.",
+    "etatServeur": "État du service",
+    "serveurDisponible": "Service disponible",
+    "serveurIndisponible": "Service injoignable",
+    "verification": "Vérification en cours…",
+    "versionClient": "Version de l'application",
+    "versionServeur": "Version du service",
+    "environnement": "Environnement",
+    "reessayer": "Réessayer"
+  }
+}
