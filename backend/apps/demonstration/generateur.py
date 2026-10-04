@@ -18,7 +18,9 @@ from apps.identite.models import Role, Utilisateur
 from apps.identite.services import attribuer_role, creer_utilisateur
 from apps.organisation import services as org
 from apps.organisation.models import TypePoste
+from apps.prospects.services import creer_prospect
 from apps.referentiel import services as ref
+from apps.referentiel.models import Valeur
 from apps.socle.services import aujourdhui, creer_pays
 
 PRENOMS = [
@@ -96,6 +98,7 @@ class Volumes:
     dm: int = 7
     sans_superviseur: int = 3
     produits: int = 156  # dont la moitié environ sur plusieurs réseaux
+    prospects: int = 1200
 
     def reduits(self, facteur: float) -> "Volumes":
         def r(n):
@@ -110,6 +113,7 @@ class Volumes:
             dm=r(self.dm),
             sans_superviseur=r(self.sans_superviseur),
             produits=max(12, r(self.produits)),
+            prospects=max(30, r(self.prospects)),
         )
 
 
@@ -265,7 +269,35 @@ class Generateur:
             "postes": len(postes),
             "delegues": len(delegues),
             "produits": produits_crees,
+            "prospects": self.prospects(pays, volumes.prospects, delegues[0]),
         }
+
+    def prospects(self, pays, nombre: int, delegue) -> int:
+        """Fiches fictives (DEM-001 CA2) : noms tirés des listes, aucun téléphone ni courriel ;
+        quelques fiches créées par un délégué attendent leur validation (PRP-006)."""
+        a = self.alea
+        valeurs = {(v.liste, v.code): v for v in Valeur.objects.filter(pays=pays)}
+        types = [("medecin", 0.7), ("pharmacien", 0.15), ("sage_femme", 0.07),
+                 ("infirmier", 0.05), ("chirurgien_dentiste", 0.03)]  # fmt: skip
+        specialites = [v for (liste, _), v in valeurs.items() if liste == "specialite"]
+        admin = Utilisateur.objects.filter(roles__role=Role.ADMIN_PAYS, roles__pays=pays).first()
+        for i in range(nombre):
+            code = a.choices([c for c, _ in types], [p for _, p in types])[0]
+            type_ = valeurs[("type_prospect", code)]
+            specialite = (
+                a.choice([s for s in specialites if s.parent_id == type_.pk])
+                if type_.enfants.exists()
+                else None
+            )
+            a_valider = i < 6
+            creer_prospect(
+                pays, delegue if a_valider else admin, actif=not a_valider,
+                civilite="dr" if code == "medecin" else "",
+                nom=a.choice(NOMS), prenom=a.choice(PRENOMS), type=type_,
+                specialite=specialite, potentiel=a.choices("ABC", [0.2, 0.35, 0.45])[0],
+                numero_ordre=f"DEMO-{pays.code}-{i + 1:05d}" if code == "medecin" else "",
+            )  # fmt: skip
+        return nombre
 
     def produits(self, pays, reseaux_par_division, nombre: int) -> int:
         """Produits fictifs classés par division, et portefeuilles de 6 à 25 produits par

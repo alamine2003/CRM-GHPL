@@ -1,0 +1,163 @@
+"""API des fiches prospects (PRP-002, PRP-006).
+
+Lecture : `prospects.lire` ; création : `prospects.creer` (administrateur pays, délégué) ;
+validation, modification de toute fiche, archivage : `prospects.gerer` (administrateur pays).
+"""
+
+from django.db.models import Count, Q
+from django.db.models.functions import Lower
+from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import status
+from rest_framework.response import Response
+
+from apps.identite.models import Role
+from apps.organisation.vues import _lire, _reference, pays_requis
+from apps.perimetre.matrice import SIEGE, Action
+from apps.perimetre.vues import VuePerimetre
+from apps.referentiel.models import Valeur
+from apps.socle.erreurs import ErreurMetier
+
+from . import serializers as s
+from . import services
+from .models import Potentiel, StatutFiche
+
+#: Résultats renvoyés par une recherche ; pagination complète en 0.1.6 (PRP-005).
+LIMITE = 100
+
+
+class VueProspects(VuePerimetre):
+    serializer_class = s.ProspectSerializer
+
+    def selection(self, perimetre):
+        return services.prospects_visibles(perimetre).select_related(
+            "pays", "type", "specialite", "cree_par"
+        )
+
+    def get_serializer_context(self):
+        contexte = super().get_serializer_context()
+        contexte["peut_modifier"] = lambda p: services.peut_modifier(self.perimetre, p)
+        return contexte
+
+    def detail(self, prospect, statut=status.HTTP_200_OK):
+        prospect = self.selection(self.perimetre).get(pk=prospect.pk)
+        return Response(self.get_serializer(prospect).data, status=statut)
+
+    def references(self, v: dict) -> dict:
+        """Identifiants du formulaire → valeurs du référentiel du pays actif."""
+        for champ in ("type", "specialite"):
+            if v.get(champ):
+                v[champ] = _reference(Valeur, self.perimetre, v[champ], "valeur_invalide")
+        return v
+
+
+class ProspectsVue(VueProspects):
+    actions = {"GET": Action.PROSPECTS_LIRE, "POST": Action.PROSPECTS_CREER}
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("q", str, required=False, description="Nom, téléphone, n° d'ordre"),
+            OpenApiParameter("statut", enum=StatutFiche.values, required=False),
+            OpenApiParameter("type", str, required=False),
+            OpenApiParameter("potentiel", enum=Potentiel.values, required=False),
+        ],
+        responses=s.ListeProspectsSerializer,
+        operation_id="prospects_liste",
+    )
+    def get(self, request):
+        qs = self.get_queryset()
+        p = request.query_params
+        statut = p.get("statut")
+        qs = qs.filter(statut=statut) if statut else qs.exclude(
+            statut__in=[StatutFiche.ARCHIVE, StatutFiche.FUSIONNE]
+        )  # fmt: skip
+        if p.get("type"):
+            qs = qs.filter(type_id=p["type"])
+        if p.get("potentiel"):
+            qs = qs.filter(potentiel=p["potentiel"])
+        qs = services.rechercher(qs, p.get("q", ""))
+        resultats = list(qs.order_by(Lower("nom"), Lower("prenom"))[:LIMITE])
+        return Response(
+            {
+                "total": qs.count(),
+                "limite": LIMITE,
+                "resultats": self.get_serializer(resultats, many=True).data,
+            }
+        )
+
+    @extend_schema(request=s.SaisieProspectSerializer, responses={201: s.ProspectSerializer},
+                   operation_id="prospect_creer")  # fmt: skip
+    def post(self, request):
+        v = self.references(_lire(s.SaisieProspectSerializer, request))
+        pays = pays_requis(self.perimetre)
+        actif = Role.ADMIN_PAYS in self.perimetre.roles
+        prospect = services.creer_prospect(pays, request.user, actif=actif, **v)
+        return self.detail(prospect, status.HTTP_201_CREATED)
+
+
+class ProspectVue(VueProspects):
+    actions = {"GET": Action.PROSPECTS_LIRE, "PATCH": Action.PROSPECTS_LIRE}
+
+    @extend_schema(responses=s.ProspectSerializer, operation_id="prospect_detail")
+    def get(self, request, id):
+        prospect = get_object_or_404(self.get_queryset(), pk=id)
+        if self.perimetre.roles & SIEGE:
+            # AUD-001 : consultation nominative d'une fiche par le siège.
+            services._auditer("consultation", prospect)
+        return self.detail(prospect)
+
+    @extend_schema(request=s.SaisieProspectSerializer, responses=s.ProspectSerializer,
+                   operation_id="prospect_modifier")  # fmt: skip
+    def patch(self, request, id):
+        prospect = get_object_or_404(self.get_queryset(), pk=id)
+        if not services.peut_modifier(self.perimetre, prospect):
+            raise ErreurMetier(
+                "modification_interdite",
+                _("Seul l'administrateur pays modifie une fiche commune."),
+                status.HTTP_403_FORBIDDEN,
+            )
+        v = self.references(_lire(s.SaisieProspectSerializer, request))
+        return self.detail(services.modifier_prospect(prospect, **v))
+
+
+class ProspectValidationVue(VueProspects):
+    actions = {"POST": Action.PROSPECTS_GERER}
+
+    @extend_schema(request=None, responses=s.ProspectSerializer, operation_id="prospect_valider")
+    def post(self, request, id):
+        prospect = get_object_or_404(self.get_queryset(), pk=id)
+        return self.detail(services.valider(prospect, request.user))
+
+
+class ProspectArchivageVue(VueProspects):
+    actions = {"POST": Action.PROSPECTS_GERER}
+
+    @extend_schema(request=s.ArchivageProspectSerializer, responses=s.ProspectSerializer,
+                   operation_id="prospect_archiver")  # fmt: skip
+    def post(self, request, id):
+        prospect = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.ArchivageProspectSerializer, request)
+        return self.detail(services.archiver(prospect, v.get("motif", "")))
+
+
+class SyntheseProspectsVue(VueProspects):
+    actions = {"GET": Action.PROSPECTS_LIRE}
+
+    @extend_schema(responses=s.SyntheseProspectsSerializer, operation_id="prospects_synthese")
+    def get(self, request):
+        qs = self.get_queryset()
+        moi = request.user
+        chiffres = qs.aggregate(
+            actifs=Count("id", filter=Q(statut=StatutFiche.ACTIF)),
+            a_valider=Count("id", filter=Q(statut=StatutFiche.A_VALIDER)),
+            mes_a_valider=Count("id", filter=Q(statut=StatutFiche.A_VALIDER, cree_par=moi)),
+        )
+        potentiels = dict(
+            qs.filter(statut=StatutFiche.ACTIF)
+            .values_list("potentiel")
+            .annotate(n=Count("id"))
+            .values_list("potentiel", "n")
+        )
+        chiffres["potentiels"] = {p: potentiels.get(p, 0) for p in Potentiel.values}
+        return Response(chiffres)

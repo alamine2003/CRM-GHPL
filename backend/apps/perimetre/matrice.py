@@ -31,6 +31,9 @@ class Action(StrEnum):
     EXPLOITATION_LIRE = "exploitation.lire"
     REFERENTIELS_LIRE = "referentiels.lire"
     REFERENTIELS_GERER = "referentiels.gerer"
+    PROSPECTS_LIRE = "prospects.lire"
+    PROSPECTS_CREER = "prospects.creer"
+    PROSPECTS_GERER = "prospects.gerer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -76,6 +79,17 @@ MATRICE: dict[Action, frozenset[str]] = {
     Action.REFERENTIELS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
     ),
+    # Fiches prospects (§14.4) : fiche commune à tout le pays ; la consultation nominative
+    # par le siège est auditée (AUD-001).
+    Action.PROSPECTS_LIRE: frozenset(
+        SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
+    ),
+    # « Créer un prospect ou un établissement » : administrateur pays et délégué (`a_valider`).
+    # Le superviseur « selon délégation de l'administrateur pays » [H] : pas encore ouvert.
+    Action.PROSPECTS_CREER: frozenset({Role.ADMIN_PAYS, Role.DELEGUE}),
+    # Valider, modifier toute fiche, archiver : l'administrateur pays, qui tranche aussi les
+    # doublons (§6.3).
+    Action.PROSPECTS_GERER: frozenset({Role.ADMIN_PAYS}),
 }
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.

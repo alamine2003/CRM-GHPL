@@ -59,7 +59,15 @@ def senegal(monde):
     valeur = ref.creer_valeur(sn, "specialite", "Allergologie")
     produit = ref.creer_produit(sn, "Vasculor")
     ref.definir_portefeuille(reseau, [produit])
+    from apps.prospects.services import creer_prospect
+    from apps.referentiel.models import Valeur
+
+    medecin = Valeur.objects.get(pays=sn, liste="type_prospect", code="pharmacien")
+    prospect = creer_prospect(sn, monde["admin.sn"], actif=True, nom="Ndiaye", type=medecin,
+                              potentiel="A")  # fmt: skip
     return {
+        "prospect": prospect.pk, "prospect-valider": prospect.pk,
+        "prospect-archiver": prospect.pk,
         "valeur": valeur.pk, "valeur-archiver": valeur.pk, "valeur-reactiver": valeur.pk,
         "produit": produit.pk, "produit-archiver": produit.pk, "produit-reactiver": produit.pk,
         "portefeuille-reseau": reseau.pk,
@@ -127,14 +135,17 @@ LISTES = ["/api/v1/utilisateurs/", "/api/v1/appareils/", "/api/v1/pays/",
           "/api/v1/organisation/zones/", "/api/v1/organisation/secteurs/",
           "/api/v1/organisation/postes/", "/api/v1/referentiel/produits/",
           "/api/v1/referentiel/portefeuilles/"]  # fmt: skip
+PAGINEES = ["/api/v1/prospects/"]
 
 
-@pytest.mark.parametrize("liste", LISTES)
+@pytest.mark.parametrize("liste", LISTES + PAGINEES)
 def test_aucune_liste_ne_contient_un_objet_d_un_autre_pays(monde, senegal, liste):
     reponse = client_de(monde["admin.tg"]).get(liste)
     assert reponse.status_code == 200
     # Le DF sénégalais affecté au Togo y figure légitimement (ORG-009) : son compte seulement.
-    objets = [o for o in reponse.json() if o.get("id") != str(monde["df.sn"].pk)]
+    corps = reponse.json()
+    corps = corps["resultats"] if isinstance(corps, dict) else corps
+    objets = [o for o in corps if o.get("id") != str(monde["df.sn"].pk)]
     texte = json.dumps(objets)
     identifiants_sn = {str(v) for v in senegal.values()}
     assert [i for i in identifiants_sn if i in texte] == []

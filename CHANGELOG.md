@@ -2,6 +2,55 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.2] — Fiches prospects et création par le délégué ; design enrichi
+
+Deuxième jalon du cycle 0.1 « Référentiel ».
+
+### Ajouté — fiches prospects (PRP-002)
+
+- **Module `prospects`** (architecture §7.1), fiche du §14.1 :
+  - identité : civilité, nom, prénom ;
+  - classement : type, spécialité, potentiel A/B/C ;
+  - coordonnées : numéro d'ordre professionnel, téléphones mobile et professionnel, courriel ;
+  - statut et auteur.
+- **CA1** : une fiche sans nom ni type est refusée ; la spécialité suit le type. Elle est obligatoire quand le pays a défini des spécialités pour ce type (médecin), et refusée si elle ne s'y applique pas.
+- **Normalisation**, base de la détection de doublons (0.1.7) :
+  - nom sans accents ni titre (« Dr Aïssatou N'Diaye » → « aissatou ndiaye ») ;
+  - téléphones au format international E.164, un numéro local étant lu dans le pays de la fiche ;
+  - numéro d'ordre unique dans le pays.
+- **Fiche commune** à tous les réseaux du pays (§14.4) ; **CA2** : la fiche affiche son potentiel. Ses établissements arrivent en 0.1.3 et les visites autorisées en 0.4.
+- **Recherche tolérante** aux accents, à la casse et aux titres (« dr ndiaye »), par téléphone ou numéro d'ordre. Filtres par statut, type et potentiel ; synthèse (fiches actives, à valider, répartition A/B/C). La pagination complète arrive en 0.1.6 ; d'ici là, 100 résultats au plus.
+- Toute création, modification (ancienne et nouvelle valeur), validation et tout archivage sont **audités**. La consultation nominative d'une fiche par le siège l'est aussi (AUD-001).
+- Rien ne se supprime : une fiche s'archive, avec un motif.
+
+### Ajouté — création par le délégué (PRP-006, RG-041)
+
+- Une fiche créée par un délégué est **`a_valider`** ; il peut la consulter et la corriger aussitôt (CA2 : la planification arrive en 0.2).
+- **CA1** : elle reste invisible des autres délégués, en liste comme par son identifiant, jusqu'à devenir `actif`.
+- L'administrateur pays la **valide** ; elle devient alors commune et seul l'administrateur la modifie. Les propositions de modification arrivent en 0.1.7, et le détecteur de doublons fera cette validation automatiquement.
+- Créée par l'administrateur pays, une fiche est aussitôt active.
+- **Droits** :
+  - `prospects.lire` : tous les rôles métier du pays ;
+  - `prospects.creer` : administrateur pays et délégué. Le superviseur « selon délégation » [H] n'est pas encore ouvert, et le siège n'a pas de prospects (RG-002) ;
+  - `prospects.gerer` (valider, modifier toute fiche, archiver) : administrateur pays.
+- Table protégée par la sécurité au niveau des lignes ; routes couvertes par les tests d'isolation et la matrice.
+- Une valeur du référentiel portée par une fiche compte comme utilisée (PRP-001 CA2).
+
+### Portail et mobile
+
+- **Page Prospects** :
+  - tuiles : fiches actives avec leur répartition A/B/C, à valider, potentiel A ;
+  - recherche instantanée et filtres ;
+  - lignes colorées par potentiel ;
+  - **fiche latérale** : identité, coordonnées cliquables, statut, actions Valider, Modifier, Archiver ; emplacements des établissements et des visites ;
+  - **saisie guidée** : spécialités filtrées par type, potentiel en un clic, aide sur la validation pour le délégué.
+- **Mobile — onglet Prospects** (n'est plus « bientôt ») : recherche dans les fiches communes, badge « À valider », création en quelques gestes (type, spécialité et potentiel en pastilles).
+
+### Démonstration
+
+- 1 200 fiches prospects fictives au Sénégal, dont 6 à valider créées par un délégué. Noms tirés des listes, sans téléphone ni courriel (DEM-001 CA2).
+- Liste triée par nom de famille.
+
 ## [0.1.1] — Référentiels du pays et portefeuilles de produits ; design enrichi
 
 Premier jalon du cycle 0.1 « Référentiel ».

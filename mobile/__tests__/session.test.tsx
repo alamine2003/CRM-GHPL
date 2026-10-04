@@ -5,6 +5,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import Connexion from '../app/connexion';
 import Accueil from '../app/index';
 import Profil from '../app/profil';
+import EcranProspects from '../app/prospects';
 import { FournisseurSession } from '../src/FournisseurSession';
 import i18n from '../src/i18n';
 import { oublierEnvironnement } from '../src/Demonstration';
@@ -293,6 +294,55 @@ describe('mobile — session', () => {
     expect(screen.queryByText('Produit 9')).toBeNull();
     await fireEvent.press(screen.getByText('+2'));
     expect(screen.getByText('Produit 9')).toBeTruthy();
+  });
+
+  it('cherche un prospect et en crée un au statut à valider (PRP-006)', async () => {
+    const fiche = {
+      id: 'p1',
+      civilite: 'dr',
+      nom: 'Ndiaye',
+      prenom: 'Awa',
+      type: 't1',
+      type_libelle: 'Médecin',
+      specialite: null,
+      specialite_libelle: null,
+      potentiel: 'A',
+      statut: 'a_valider',
+    };
+    const prospects = {
+      liste: jest.fn(async () => ({ total: 1, limite: 100, resultats: [fiche] })),
+      creer: jest.fn(async () => fiche),
+    };
+    const valeurs = [
+      { id: 't1', liste: 'type_prospect', libelle: 'Médecin', parent: null, archive: false },
+      { id: 's1', liste: 'specialite', libelle: 'Cardiologie', parent: 't1', archive: false },
+    ];
+    await rendre(
+      <EcranProspects />,
+      fauxClient({
+        reprendre: jest.fn(async () => JETONS),
+        perimetre: jest.fn(async () => ({
+          ...PERIMETRE,
+          actions: ['prospects.lire', 'prospects.creer'],
+        })),
+        prospects,
+        referentiel: {
+          valeurs: jest.fn(async () => valeurs),
+          monPortefeuille: jest.fn(async () => []),
+        },
+      } as unknown as Partial<ClientApi>),
+    );
+    expect(await screen.findByText('Dr Awa Ndiaye')).toBeTruthy();
+    expect(screen.getByText('À valider')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Nouveau prospect'));
+    await fireEvent.changeText(await screen.findByLabelText('Nom'), 'Sarr');
+    await fireEvent.press(await screen.findByText('Médecin'));
+    await fireEvent.press(await screen.findByText('Cardiologie'));
+    await fireEvent.press(screen.getByText('Créer la fiche'));
+    expect(prospects.creer).toHaveBeenCalledWith(
+      expect.objectContaining({ nom: 'Sarr', type: 't1', specialite: 's1', potentiel: 'B' }),
+    );
+    expect(await screen.findByText(/à valider par l'administrateur pays/)).toBeTruthy();
   });
 
   it('bascule en anglais et mémorise la langue sur le compte (USR-004)', async () => {

@@ -130,9 +130,14 @@ def modifier_valeur(valeur: Valeur, **champs) -> Valeur:
 
 
 def est_utilisee(objet) -> bool:
-    """Une valeur sert-elle ailleurs ? (PRP-001 CA2 ; les fiches prospects suivront en 0.1.2.)"""
+    """Une valeur sert-elle ailleurs ? (PRP-001 CA2.)"""
     if isinstance(objet, Valeur):
-        return objet.enfants.exists() or objet.produits.exists()
+        return (
+            objet.enfants.exists()
+            or objet.produits.exists()
+            or objet.prospects_du_type.exists()
+            or objet.prospects_de_la_specialite.exists()
+        )
     if isinstance(objet, Produit):
         return objet.portefeuilles.exists()
     return False

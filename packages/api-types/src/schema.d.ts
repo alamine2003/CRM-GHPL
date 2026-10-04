@@ -868,6 +868,86 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/prospects/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['prospects_liste'];
+    put?: never;
+    post: operations['prospect_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/prospects/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['prospect_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['prospect_modifier'];
+    trace?: never;
+  };
+  '/api/v1/prospects/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['prospect_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/prospects/{id}/valider/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['prospect_valider'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/prospects/synthese/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['prospects_synthese'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/referentiel/mon-portefeuille/': {
     parameters: {
       query?: never;
@@ -1227,13 +1307,26 @@ export interface components {
       /** Format: date-time */
       revoque_le?: string | null;
     };
+    ArchivageProspect: {
+      motif?: string;
+    };
     AttributionRole: {
       role: components['schemas']['RoleEnum'];
     };
+    /** @enum {unknown} */
+    BlankEnum: '';
     Changement: {
       actuel: string;
       nouveau: string;
     };
+    /**
+     * @description * `dr` - Dr
+     *     * `pr` - Pr
+     *     * `m` - M.
+     *     * `mme` - Mme
+     * @enum {string}
+     */
+    CiviliteEnum: 'dr' | 'pr' | 'm' | 'mme';
     /**
      * @description * `portail` - Portail web
      *     * `mobile` - Application mobile
@@ -1429,6 +1522,11 @@ export interface components {
       | 'type_etablissement'
       | 'classe_therapeutique'
       | 'motif_ecart';
+    ListeProspects: {
+      total: number;
+      limite: number;
+      resultats: components['schemas']['Prospect'][];
+    };
     ModificationParametre: {
       valeur: unknown;
     };
@@ -1516,6 +1614,20 @@ export interface components {
       /** Format: uuid */
       parent?: string | null;
     };
+    PatchedSaisieProspect: {
+      civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
+      nom?: string;
+      prenom?: string;
+      /** Format: uuid */
+      type?: string | null;
+      /** Format: uuid */
+      specialite?: string | null;
+      numero_ordre?: string;
+      telephone_mobile?: string;
+      telephone_pro?: string;
+      courriel?: string;
+      potentiel?: components['schemas']['PotentielEnum'];
+    };
     Pays: {
       readonly code: string;
       readonly nom: string;
@@ -1561,6 +1673,13 @@ export interface components {
       prenom: string;
       nom: string;
     };
+    PersonneResume: {
+      /** Format: uuid */
+      id: string;
+      identifiant: string;
+      prenom: string;
+      nom: string;
+    };
     /**
      * @description * `android` - Android
      *     * `ios` - iOS
@@ -1589,6 +1708,13 @@ export interface components {
       readonly vacant: boolean;
       readonly archive: boolean;
     };
+    /**
+     * @description * `A` - A
+     *     * `B` - B
+     *     * `C` - C
+     * @enum {string}
+     */
+    PotentielEnum: 'A' | 'B' | 'C';
     Produit: {
       /** Format: uuid */
       readonly id: string;
@@ -1607,6 +1733,32 @@ export interface components {
       code: string;
       libelle: string;
       classe_libelle?: string | null;
+    };
+    Prospect: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
+      nom: string;
+      prenom?: string;
+      /** Format: uuid */
+      type: string;
+      type_libelle: string;
+      /** Format: uuid */
+      specialite: string | null;
+      specialite_libelle?: string | null;
+      numero_ordre?: string;
+      telephone_mobile?: string;
+      telephone_pro?: string;
+      courriel?: string;
+      potentiel: components['schemas']['PotentielEnum'];
+      statut?: components['schemas']['StatutFicheEnum'];
+      cree_par: components['schemas']['PersonneResume'];
+      /** Format: date-time */
+      readonly cree_le: string;
+      /** Format: date-time */
+      valide_le?: string | null;
+      readonly modifiable: boolean;
     };
     Rafraichissement: {
       /** @description Application mobile uniquement ; le portail utilise le cookie. */
@@ -1689,6 +1841,20 @@ export interface components {
       | 'superviseur'
       | 'delegue'
       | 'admin_technique';
+    SaisieProspect: {
+      civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
+      nom?: string;
+      prenom?: string;
+      /** Format: uuid */
+      type?: string | null;
+      /** Format: uuid */
+      specialite?: string | null;
+      numero_ordre?: string;
+      telephone_mobile?: string;
+      telephone_pro?: string;
+      courriel?: string;
+      potentiel?: components['schemas']['PotentielEnum'];
+    };
     Secteur: {
       /** Format: uuid */
       readonly id: string;
@@ -1722,6 +1888,14 @@ export interface components {
      * @enum {string}
      */
     StatutEnum: 'actif' | 'suspendu' | 'archive';
+    /**
+     * @description * `a_valider` - À valider
+     *     * `actif` - Actif
+     *     * `archive` - Archivé
+     *     * `fusionne` - Fusionné
+     * @enum {string}
+     */
+    StatutFicheEnum: 'a_valider' | 'actif' | 'archive' | 'fusionne';
     StatutPays: {
       statut: components['schemas']['StatutEnum'];
     };
@@ -1733,6 +1907,14 @@ export interface components {
       postes: number;
       postes_vacants: number;
       postes_sans_superviseur: number;
+    };
+    SyntheseProspects: {
+      actifs: number;
+      a_valider: number;
+      mes_a_valider: number;
+      potentiels: {
+        [key: string]: number;
+      };
     };
     Transfert: {
       /** Format: uuid */
@@ -3233,6 +3415,171 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Pays'];
+        };
+      };
+    };
+  };
+  prospects_liste: {
+    parameters: {
+      query?: {
+        potentiel?: 'A' | 'B' | 'C';
+        /** @description Nom, téléphone, n° d'ordre */
+        q?: string;
+        statut?: 'a_valider' | 'actif' | 'archive' | 'fusionne';
+        type?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListeProspects'];
+        };
+      };
+    };
+  };
+  prospect_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SaisieProspect'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieProspect'];
+        'multipart/form-data': components['schemas']['SaisieProspect'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Prospect'];
+        };
+      };
+    };
+  };
+  prospect_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Prospect'];
+        };
+      };
+    };
+  };
+  prospect_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedSaisieProspect'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedSaisieProspect'];
+        'multipart/form-data': components['schemas']['PatchedSaisieProspect'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Prospect'];
+        };
+      };
+    };
+  };
+  prospect_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['ArchivageProspect'];
+        'application/x-www-form-urlencoded': components['schemas']['ArchivageProspect'];
+        'multipart/form-data': components['schemas']['ArchivageProspect'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Prospect'];
+        };
+      };
+    };
+  };
+  prospect_valider: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Prospect'];
+        };
+      };
+    };
+  };
+  prospects_synthese: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SyntheseProspects'];
         };
       };
     };

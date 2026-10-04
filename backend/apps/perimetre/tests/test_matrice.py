@@ -33,6 +33,18 @@ ATTENDU = {
     Action.APPAREILS_REVOQUER: {"admin_siege", "admin_pays"},
     Action.EXPLOITATION_LIRE: {"admin_technique", "admin_siege"},
     Action.REFERENTIELS_GERER: {"admin_siege", "admin_pays"},
+    Action.PROSPECTS_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+        "delegue",
+    },  # fmt: skip
+    Action.PROSPECTS_CREER: {"admin_pays", "delegue"},
+    Action.PROSPECTS_GERER: {"admin_pays"},
     Action.REFERENTIELS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -103,6 +115,8 @@ REQUETES = {
     Action.REFERENTIELS_GERER: (
         "post", "/api/v1/referentiel/valeurs/", {"liste": "specialite", "libelle": "Allergo"}, 201,
     ),  # fmt: skip
+    Action.PROSPECTS_LIRE: ("get", "/api/v1/prospects/", None, 200),
+    Action.PROSPECTS_CREER: ("post", "/api/v1/prospects/", lambda m: _fiche(m), 201),
     # Routes qui désignent un objet : l'adresse dépend du jeu de données (fonction de `monde`).
     Action.ROLES_ATTRIBUER: (
         "post", lambda m: f"/api/v1/utilisateurs/{m['sansrole.sn'].pk}/roles/",
@@ -115,6 +129,9 @@ REQUETES = {
     Action.AFFECTATIONS_GERER: (
         "post", lambda m: f"/api/v1/utilisateurs/{m['df.sn'].pk}/affectations/",
         {"pays": "TG", "role": "df", "motif": "Intérim du DF Togo"}, 201,
+    ),
+    Action.PROSPECTS_GERER: (
+        "post", lambda m: f"/api/v1/prospects/{_prospect_a_valider(m).pk}/valider/", {}, 200,
     ),
     Action.APPAREILS_REVOQUER: (
         "post", lambda m: f"/api/v1/appareils/{_telephone(m).pk}/revoquer/", {}, 200,
@@ -131,6 +148,22 @@ def _telephone(monde):
     )[0]  # fmt: skip
 
 
+def _fiche(monde):
+    from apps.referentiel.models import Valeur
+
+    pharmacien = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="pharmacien")
+    return {"nom": "Faye", "type": str(pharmacien.pk), "potentiel": "B"}
+
+
+def _prospect_a_valider(monde):
+    from apps.prospects.services import creer_prospect
+    from apps.referentiel.models import Valeur
+
+    pharmacien = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="pharmacien")
+    return creer_prospect(monde["sn"], monde["deleg.sn"], actif=False, nom="Kane",
+                          type=pharmacien, potentiel="C")  # fmt: skip
+
+
 def test_chaque_action_a_sa_requete():
     """Une nouvelle action sans requête représentative fait échouer la suite."""
     assert set(REQUETES) == set(MATRICE)
@@ -144,6 +177,7 @@ def test_chaque_role_chaque_action(monde, role, action):
     pays = "SN" if role in {"admin_siege", "direction_siege"} else None
     methode, url, corps, succes = REQUETES[action]
     url = url(monde) if callable(url) else url
+    corps = corps(monde) if callable(corps) else corps
     reponse = getattr(client_de(compte, pays), methode)(url, corps, format="json")
     if role in MATRICE[action]:
         assert reponse.status_code == succes, reponse.content

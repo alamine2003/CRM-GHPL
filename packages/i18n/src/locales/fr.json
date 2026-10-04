@@ -685,5 +685,96 @@
       "vide": "Aucun produit dans le portefeuille de vos réseaux.",
       "reseau": "{{reseau}} · {{nombre}}"
     }
+  },
+  "prospect": {
+    "titre": "Prospects",
+    "sousTitre": "Fiches communes des médecins, pharmaciens et autres professionnels de santé · {{pays}}.",
+    "sousTitreConsolide": "Fiches prospects de tous les pays.",
+    "choisirPays": "Choisissez un pays pour créer ou valider des fiches.",
+    "chiffres": {
+      "actifs": "Fiches actives",
+      "aValider": "À valider",
+      "mesAValider": "Mes fiches à valider",
+      "potentielA": "Potentiel A",
+      "repartition": "A {{a}} · B {{b}} · C {{c}}"
+    },
+    "nouveau": "Nouveau prospect",
+    "rechercher": "Nom, téléphone ou n° d'ordre",
+    "tousTypes": "Tous les types",
+    "tousPotentiels": "Tous les potentiels",
+    "filtres": {
+      "tous": "Toutes",
+      "a_valider": "À valider",
+      "actif": "Actives",
+      "archive": "Archivées"
+    },
+    "statuts": {
+      "a_valider": "À valider",
+      "actif": "Active",
+      "archive": "Archivée",
+      "fusionne": "Fusionnée"
+    },
+    "civilites": {
+      "dr": "Dr",
+      "pr": "Pr",
+      "m": "M.",
+      "mme": "Mme"
+    },
+    "potentiels": {
+      "A": "Potentiel A",
+      "B": "Potentiel B",
+      "C": "Potentiel C"
+    },
+    "champs": {
+      "civilite": "Civilité",
+      "nom": "Nom",
+      "prenom": "Prénom",
+      "type": "Type de prospect",
+      "specialite": "Spécialité",
+      "numeroOrdre": "N° d'ordre professionnel",
+      "numeroOrdreAide": "Identifiant fort : il évite les doublons.",
+      "telephoneMobile": "Téléphone mobile",
+      "telephonePro": "Téléphone professionnel",
+      "telephoneAide": "Un numéro local s'entend dans le pays de la fiche.",
+      "courriel": "Courriel",
+      "potentiel": "Potentiel"
+    },
+    "aides": {
+      "aValider": "Votre fiche sera « à valider » : vous pouvez l'utiliser tout de suite ; les autres délégués la verront une fois validée.",
+      "potentiel": "A : prescripteur majeur · B : régulier · C : occasionnel"
+    },
+    "nombre_one": "{{count}} fiche",
+    "nombre_other": "{{count}} fiches",
+    "limite": "{{limite}} premières fiches sur {{total}} : affinez la recherche.",
+    "vide": "Aucune fiche pour l'instant",
+    "videTexte": "Créez les fiches des prescripteurs du pays ; les délégués peuvent aussi en créer depuis leur téléphone.",
+    "aucunResultat": "Aucune fiche ne correspond",
+    "fiche": {
+      "identite": "Identité",
+      "coordonnees": "Coordonnées",
+      "etablissements": "Établissements",
+      "etablissementsTexte": "Les lieux d'exercice arrivent en version 0.1.3.",
+      "visites": "Mes visites",
+      "visitesTexte": "Vos visites et rapports sur ce prospect arriveront avec les visites (0.4).",
+      "creePar": "Créée par {{personne}} {{quand}}",
+      "valider": "Valider la fiche",
+      "validee": "Fiche validée : elle est désormais commune.",
+      "archiver": "Archiver",
+      "archiverTitre": "Archiver la fiche",
+      "motif": "Motif",
+      "archiverAide": "La fiche ne sera plus proposée ; son historique reste.",
+      "modifier": "Modifier",
+      "modifierTitre": "Modifier la fiche",
+      "communeAide": "Fiche commune : seul l'administrateur pays la modifie.",
+      "aucun": "Non renseigné"
+    },
+    "mobile": {
+      "titre": "Prospects",
+      "rechercher": "Rechercher un prospect",
+      "nouveau": "Nouveau",
+      "creer": "Créer la fiche",
+      "creee": "Fiche créée : à valider par l'administrateur pays.",
+      "retour": "Retour"
+    }
   }
 }

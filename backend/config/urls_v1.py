@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularAPIView
 
 from apps.identite import vues_comptes as comptes
 from apps.organisation import vues as org
+from apps.prospects import vues as prs
 from apps.referentiel import vues as ref
 from apps.socle import vues_exploitation as exploitation
 from apps.socle import vues_pays as pays
@@ -149,6 +150,18 @@ urlpatterns = [
     ),
     path(
         "referentiel/mon-portefeuille/", ref.MonPortefeuilleVue.as_view(), name="mon-portefeuille"
+    ),
+    # Fiches prospects (PRP-002, PRP-006)
+    path("prospects/", prs.ProspectsVue.as_view(), name="prospects"),
+    path("prospects/synthese/", prs.SyntheseProspectsVue.as_view(), name="prospects-synthese"),
+    path("prospects/<uuid:id>/", prs.ProspectVue.as_view(), name="prospect"),
+    path(
+        "prospects/<uuid:id>/valider/", prs.ProspectValidationVue.as_view(), name="prospect-valider"
+    ),
+    path(
+        "prospects/<uuid:id>/archiver/",
+        prs.ProspectArchivageVue.as_view(),
+        name="prospect-archiver",
     ),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

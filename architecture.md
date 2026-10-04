@@ -283,7 +283,7 @@ Volume estimé : < 10 Mo après la synchronisation initiale (NFR-004) [H].
 | `organisation` | Divisions, réseaux, zones, secteurs, postes, occupations, rattachements, périmètres DF/DM, remplacements | ORG-003 à ORG-008, ORG-013 |
 | `perimetre` | Moteur de périmètre : calcule ce qu'un utilisateur voit et peut faire | USR-002 |
 | `referentiel` | Types, spécialités, classes thérapeutiques, produits, portefeuilles, motifs d'écart, modèles de champs de rapport | PRP-001, ORG-004, RPT-008 |
-| `prospects` | Prospects, établissements, exercices, listes cibles, propositions de modification, doublons, fusions | PRP-002 à PRP-014 |
+| `prospects` | Prospects, établissements, exercices, listes cibles, propositions de modification, doublons, fusions | PRP-002 à PRP-014 ; mise en œuvre 0.1.2 : `Prospect` (nom normalisé et index trigramme, téléphones E.164, numéro d'ordre unique par pays), visibilité des fiches `a_valider` (RG-041) |
 | `planning` | Plannings, versions, passages, absences, contrôles, kilométrage | PLN-* |
 | `visites` | Visites, positions GPS, écarts, imprévues, conformité | VIS-* |
 | `rapports` | Rapports, versions, présentations, remises, prochaines actions, champs pays, validations, réouvertures | RPT-* |

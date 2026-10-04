@@ -17,7 +17,9 @@ import type {
   EtatExploitation,
   InitialisationDoubleAuth,
   Informations,
+  Civilite,
   Jetons,
+  ListeProspects,
   ListeReferentiel,
   Moi,
   MonOrganisation,
@@ -27,14 +29,18 @@ import type {
   Perimetre,
   Portefeuille,
   Poste,
+  Potentiel,
   Produit,
+  Prospect,
   Rattachement,
   Reseau,
   RoleAttribue,
   Secteur,
   SessionOuverte,
+  StatutFiche,
   StatutPays,
   SyntheseOrganisation,
+  SyntheseProspects,
   Transfert,
   TypeClient,
   TypePoste,
@@ -54,7 +60,9 @@ export type {
   EtatExploitation,
   InitialisationDoubleAuth,
   Informations,
+  Civilite,
   Jetons,
+  ListeProspects,
   ListeReferentiel,
   Moi,
   MonOrganisation,
@@ -66,15 +74,19 @@ export type {
   Portefeuille,
   Personne,
   Poste,
+  Potentiel,
   Produit,
+  Prospect,
   ProduitResume,
   Rattachement,
   Reseau,
   RoleAttribue,
   Secteur,
   SessionOuverte,
+  StatutFiche,
   StatutPays,
   SyntheseOrganisation,
+  SyntheseProspects,
   Transfert,
   TypeClient,
   TypePoste,
@@ -136,6 +148,26 @@ export interface NouveauProduit {
   code?: string;
   classe?: string | null;
   reseaux?: string[];
+}
+
+export interface FiltresProspects {
+  q?: string;
+  statut?: StatutFiche;
+  type?: string;
+  potentiel?: Potentiel;
+}
+
+export interface SaisieProspect {
+  civilite?: Civilite | '';
+  nom: string;
+  prenom?: string;
+  type: string | null;
+  specialite?: string | null;
+  numero_ordre?: string;
+  telephone_mobile?: string;
+  telephone_pro?: string;
+  courriel?: string;
+  potentiel: Potentiel;
 }
 
 export interface StockageRafraichissement {
@@ -400,6 +432,28 @@ export function creerClient(options: OptionsClient) {
           corps: { produits },
         }),
       monPortefeuille: () => requete<Portefeuille[]>(`${REF}/mon-portefeuille/`),
+    },
+    /** Fiches prospects (PRP-002, PRP-006). */
+    prospects: {
+      liste: (filtres: FiltresProspects = {}) => {
+        const params = new URLSearchParams(
+          Object.entries(filtres).filter((e): e is [string, string] => Boolean(e[1])),
+        ).toString();
+        return requete<ListeProspects>(`/api/v1/prospects/${params ? `?${params}` : ''}`);
+      },
+      synthese: () => requete<SyntheseProspects>('/api/v1/prospects/synthese/'),
+      detail: (id: string) => requete<Prospect>(`/api/v1/prospects/${id}/`),
+      creer: (fiche: SaisieProspect) =>
+        requete<Prospect>('/api/v1/prospects/', { methode: 'POST', corps: fiche }),
+      modifier: (id: string, champs: Partial<SaisieProspect>) =>
+        requete<Prospect>(`/api/v1/prospects/${id}/`, { methode: 'PATCH', corps: champs }),
+      valider: (id: string) =>
+        requete<Prospect>(`/api/v1/prospects/${id}/valider/`, { methode: 'POST' }),
+      archiver: (id: string, motif = '') =>
+        requete<Prospect>(`/api/v1/prospects/${id}/archiver/`, {
+          methode: 'POST',
+          corps: { motif },
+        }),
     },
     /** Comptes du pays actif (USR-003). */
     utilisateurs: () => requete<Utilisateur[]>('/api/v1/utilisateurs/'),

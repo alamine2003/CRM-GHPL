@@ -34,7 +34,13 @@ export const ENTREES: Entree[] = [
   { cle: 'accueil', icone: <HomeRounded />, section: 'activite', chemin: '/' },
   { cle: 'visites', icone: <FactCheckRounded />, section: 'activite', version: '0.4.1' },
   { cle: 'planning', icone: <CalendarMonthRounded />, section: 'activite', version: '0.2.1' },
-  { cle: 'prospects', icone: <PeopleAltRounded />, section: 'activite', version: '0.1.2' },
+  {
+    cle: 'prospects',
+    icone: <PeopleAltRounded />,
+    section: 'activite',
+    chemin: '/prospects',
+    visible: peut('prospects.lire'),
+  },
   { cle: 'pilotage', icone: <BarChartRounded />, section: 'activite', version: '0.7.1' },
   {
     cle: 'organisation',

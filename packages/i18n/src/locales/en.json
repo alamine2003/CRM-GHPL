@@ -685,5 +685,96 @@
       "vide": "No products in your networks' portfolio.",
       "reseau": "{{reseau}} · {{nombre}}"
     }
+  },
+  "prospect": {
+    "titre": "Prospects",
+    "sousTitre": "Shared records of doctors, pharmacists and other healthcare professionals · {{pays}}.",
+    "sousTitreConsolide": "Prospect records across all countries.",
+    "choisirPays": "Choose a country to create or validate records.",
+    "chiffres": {
+      "actifs": "Active records",
+      "aValider": "To validate",
+      "mesAValider": "My records to validate",
+      "potentielA": "Potential A",
+      "repartition": "A {{a}} · B {{b}} · C {{c}}"
+    },
+    "nouveau": "New prospect",
+    "rechercher": "Name, phone or licence no.",
+    "tousTypes": "All types",
+    "tousPotentiels": "All potentials",
+    "filtres": {
+      "tous": "All",
+      "a_valider": "To validate",
+      "actif": "Active",
+      "archive": "Archived"
+    },
+    "statuts": {
+      "a_valider": "To validate",
+      "actif": "Active",
+      "archive": "Archived",
+      "fusionne": "Merged"
+    },
+    "civilites": {
+      "dr": "Dr",
+      "pr": "Prof.",
+      "m": "Mr",
+      "mme": "Mrs"
+    },
+    "potentiels": {
+      "A": "Potential A",
+      "B": "Potential B",
+      "C": "Potential C"
+    },
+    "champs": {
+      "civilite": "Title",
+      "nom": "Last name",
+      "prenom": "First name",
+      "type": "Prospect type",
+      "specialite": "Specialty",
+      "numeroOrdre": "Professional licence no.",
+      "numeroOrdreAide": "A strong identifier: it prevents duplicates.",
+      "telephoneMobile": "Mobile phone",
+      "telephonePro": "Work phone",
+      "telephoneAide": "A local number is read in the record's country.",
+      "courriel": "Email",
+      "potentiel": "Potential"
+    },
+    "aides": {
+      "aValider": "Your record will be “to validate”: you can use it right away; other reps will see it once validated.",
+      "potentiel": "A: major prescriber · B: regular · C: occasional"
+    },
+    "nombre_one": "{{count}} record",
+    "nombre_other": "{{count}} records",
+    "limite": "First {{limite}} records of {{total}}: refine your search.",
+    "vide": "No records yet",
+    "videTexte": "Create the country's prescriber records; reps can also create them from their phone.",
+    "aucunResultat": "No matching record",
+    "fiche": {
+      "identite": "Identity",
+      "coordonnees": "Contact details",
+      "etablissements": "Institutions",
+      "etablissementsTexte": "Places of practice arrive in version 0.1.3.",
+      "visites": "My visits",
+      "visitesTexte": "Your visits and reports on this prospect will come with visits (0.4).",
+      "creePar": "Created by {{personne}} {{quand}}",
+      "valider": "Validate record",
+      "validee": "Record validated: it is now shared.",
+      "archiver": "Archive",
+      "archiverTitre": "Archive record",
+      "motif": "Reason",
+      "archiverAide": "The record will no longer be offered; its history remains.",
+      "modifier": "Edit",
+      "modifierTitre": "Edit record",
+      "communeAide": "Shared record: only the country administrator edits it.",
+      "aucun": "Not provided"
+    },
+    "mobile": {
+      "titre": "Prospects",
+      "rechercher": "Search a prospect",
+      "nouveau": "New",
+      "creer": "Create record",
+      "creee": "Record created: awaiting validation by the country administrator.",
+      "retour": "Back"
+    }
   }
 }

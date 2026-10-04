@@ -11,7 +11,7 @@ export function AVenir({
   icone,
   version,
 }: {
-  cle: 'semaine' | 'prospects' | 'chiffres';
+  cle: 'semaine' | 'chiffres';
   icone: keyof typeof MaterialIcons.glyphMap;
   version: string;
 }) {

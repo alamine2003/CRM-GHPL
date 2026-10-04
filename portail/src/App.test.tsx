@@ -1006,3 +1006,134 @@ describe('portail — référentiels et portefeuilles (PRP-001, ORG-004)', () =>
     expect(await violationsAccessibilite(container)).toEqual([]);
   });
 });
+
+describe('portail — prospects (PRP-002, PRP-006)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const TYPES = [
+    {
+      id: 't1',
+      pays: 'SN',
+      liste: 'type_prospect' as const,
+      code: 'medecin',
+      libelle: 'Médecin',
+      ordre: 1,
+      parent: null,
+      archive: false,
+      utilisations: 0,
+    },
+    {
+      id: 's1',
+      pays: 'SN',
+      liste: 'specialite' as const,
+      code: 'cardiologie',
+      libelle: 'Cardiologie',
+      ordre: 1,
+      parent: 't1',
+      archive: false,
+      utilisations: 0,
+    },
+  ];
+  const FICHE = {
+    id: 'p1',
+    pays: 'SN',
+    civilite: 'dr' as const,
+    nom: 'Ndiaye',
+    prenom: 'Aïssatou',
+    type: 't1',
+    type_libelle: 'Médecin',
+    specialite: 's1',
+    specialite_libelle: 'Cardiologie',
+    numero_ordre: 'SN-1',
+    telephone_mobile: '+221771234567',
+    telephone_pro: '',
+    courriel: '',
+    potentiel: 'A' as const,
+    statut: 'a_valider' as const,
+    cree_par: { id: 'u1', identifiant: 'gabriel.sn', prenom: 'Gabriel', nom: 'Sn' },
+    cree_le: '2026-10-04T08:00:00Z',
+    valide_le: null,
+    modifiable: true,
+  };
+
+  function clientProspects(perimetre: Perimetre) {
+    const prospects = {
+      liste: vi.fn(async () => ({ total: 1, limite: 100, resultats: [FICHE] })),
+      synthese: vi.fn(async () => ({
+        actifs: 12,
+        a_valider: 1,
+        mes_a_valider: 1,
+        potentiels: { A: 3, B: 4, C: 5 },
+      })),
+      detail: vi.fn(async () => FICHE),
+      creer: vi.fn(async () => FICHE),
+      modifier: vi.fn(async () => FICHE),
+      valider: vi.fn(async () => ({ ...FICHE, statut: 'actif' })),
+      archiver: vi.fn(async () => FICHE),
+    };
+    const referentiel = { valeurs: vi.fn(async () => TYPES) };
+    const client = fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => perimetre),
+      prospects: prospects as unknown as ClientApi['prospects'],
+      referentiel: referentiel as unknown as ClientApi['referentiel'],
+    } as Partial<ClientApi>);
+    return { client, prospects };
+  }
+  const ADMIN_P: Perimetre = {
+    ...PERIMETRE_DELEGUE,
+    roles: ['admin_pays'],
+    actions: ['prospects.lire', 'prospects.creer', 'prospects.gerer', 'pays.lire'],
+  };
+  const DELEGUE_P: Perimetre = {
+    ...PERIMETRE_DELEGUE,
+    actions: ['prospects.lire', 'prospects.creer', 'pays.lire'],
+  };
+
+  it('liste les fiches, recherche et ouvre une fiche avec son potentiel (PRP-002)', async () => {
+    const { client, prospects } = clientProspects(ADMIN_P);
+    rendre(client, '/prospects');
+    expect(await screen.findByText('Dr Aïssatou Ndiaye')).toBeInTheDocument();
+    expect(screen.getByText('A 3 · B 4 · C 5')).toBeInTheDocument();
+    await saisir("Nom, téléphone ou n° d'ordre", 'ndiaye');
+    await vi.waitFor(() =>
+      expect(prospects.liste).toHaveBeenCalledWith(expect.objectContaining({ q: 'ndiaye' })),
+    );
+    fireEvent.click(screen.getByText('Dr Aïssatou Ndiaye'));
+    expect(await screen.findByText('+221771234567')).toBeInTheDocument();
+    expect(screen.getByText('Potentiel A')).toBeInTheDocument();
+  });
+
+  it('l’administrateur pays valide une fiche à valider (RG-041)', async () => {
+    const { client, prospects } = clientProspects(ADMIN_P);
+    rendre(client, '/prospects');
+    fireEvent.click(await screen.findByText('Dr Aïssatou Ndiaye'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Valider la fiche' }));
+    await vi.waitFor(() => expect(prospects.valider).toHaveBeenCalledWith('p1'));
+  });
+
+  it('le délégué crée une fiche, prévenu qu’elle sera à valider (PRP-006)', async () => {
+    const { client, prospects } = clientProspects(DELEGUE_P);
+    rendre(client, '/prospects');
+    fireEvent.click(await screen.findByRole('button', { name: 'Nouveau prospect' }));
+    expect(await screen.findByText(/vous pouvez l'utiliser tout de suite/)).toBeInTheDocument();
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.change(within(dialogue).getByLabelText(/^Nom/), { target: { value: 'Sarr' } });
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Enregistrer' }));
+    await vi.waitFor(() =>
+      expect(prospects.creer).toHaveBeenCalledWith(
+        expect.objectContaining({ nom: 'Sarr', type: 't1', potentiel: 'B' }),
+      ),
+    );
+    expect(screen.queryByRole('button', { name: 'Valider la fiche' })).not.toBeInTheDocument();
+  });
+
+  it('la page Prospects ne présente aucune violation d’accessibilité détectable', async () => {
+    const { client } = clientProspects(ADMIN_P);
+    const { container } = rendre(client, '/prospects');
+    await screen.findByText('Dr Aïssatou Ndiaye');
+    expect(await violationsAccessibilite(container)).toEqual([]);
+  });
+});

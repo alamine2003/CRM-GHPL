@@ -53,7 +53,10 @@ class VueValeurs(VuePerimetre):
     def selection(self, perimetre):
         return perimetre.filtrer_par_pays(
             Valeur.objects.select_related("pays").annotate(
-                utilisations=Count("enfants", distinct=True) + Count("produits", distinct=True)
+                utilisations=Count("enfants", distinct=True)
+                + Count("produits", distinct=True)
+                + Count("prospects_du_type", distinct=True)
+                + Count("prospects_de_la_specialite", distinct=True)
             )
         )
 

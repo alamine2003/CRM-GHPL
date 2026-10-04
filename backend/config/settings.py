@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "apps.perimetre",
     "apps.organisation",
     "apps.referentiel",
+    "apps.prospects",
     "apps.demonstration",
     "apps.audit",
 ]
@@ -239,7 +240,11 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API du CRM multi-pays des délégués médicaux.",
     "VERSION": VERSION,
     "SERVE_INCLUDE_SCHEMA": False,
-    "ENUM_NAME_OVERRIDES": {"LangueEnum": "apps.socle.models.CHOIX_LANGUES"},
+    "ENUM_NAME_OVERRIDES": {
+        "LangueEnum": "apps.socle.models.CHOIX_LANGUES",
+        "StatutEnum": "apps.socle.models.Pays.Statut",
+        "StatutFicheEnum": "apps.prospects.models.StatutFiche",
+    },
 }
 
 SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.1.1
+  version: 0.1.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -1455,6 +1455,190 @@ paths:
               schema:
                 $ref: '#/components/schemas/Pays'
           description: ''
+  /api/v1/prospects/:
+    get:
+      operationId: prospects_liste
+      parameters:
+      - in: query
+        name: potentiel
+        schema:
+          type: string
+          enum:
+          - A
+          - B
+          - C
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Nom, téléphone, n° d'ordre
+      - in: query
+        name: statut
+        schema:
+          type: string
+          enum:
+          - a_valider
+          - actif
+          - archive
+          - fusionne
+      - in: query
+        name: type
+        schema:
+          type: string
+      tags:
+      - prospects
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListeProspects'
+          description: ''
+    post:
+      operationId: prospect_creer
+      tags:
+      - prospects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieProspect'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieProspect'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieProspect'
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prospect'
+          description: ''
+  /api/v1/prospects/{id}/:
+    get:
+      operationId: prospect_detail
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - prospects
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prospect'
+          description: ''
+    patch:
+      operationId: prospect_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - prospects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSaisieProspect'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSaisieProspect'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSaisieProspect'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prospect'
+          description: ''
+  /api/v1/prospects/{id}/archiver/:
+    post:
+      operationId: prospect_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - prospects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivageProspect'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivageProspect'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivageProspect'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prospect'
+          description: ''
+  /api/v1/prospects/{id}/valider/:
+    post:
+      operationId: prospect_valider
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - prospects
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prospect'
+          description: ''
+  /api/v1/prospects/synthese/:
+    get:
+      operationId: prospects_synthese
+      tags:
+      - prospects
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheseProspects'
+          description: ''
   /api/v1/referentiel/mon-portefeuille/:
     get:
       operationId: mon_portefeuille
@@ -2201,6 +2385,12 @@ components:
       - plateforme_libelle
       - prenom
       - revoque
+    ArchivageProspect:
+      type: object
+      properties:
+        motif:
+          type: string
+          maxLength: 200
     AttributionRole:
       type: object
       properties:
@@ -2208,6 +2398,9 @@ components:
           $ref: '#/components/schemas/RoleEnum'
       required:
       - role
+    BlankEnum:
+      enum:
+      - ''
     Changement:
       type: object
       properties:
@@ -2220,6 +2413,18 @@ components:
       required:
       - actuel
       - nouveau
+    CiviliteEnum:
+      enum:
+      - dr
+      - pr
+      - m
+      - mme
+      type: string
+      description: |-
+        * `dr` - Dr
+        * `pr` - Pr
+        * `m` - M.
+        * `mme` - Mme
     ClientEnum:
       enum:
       - portail
@@ -2698,6 +2903,21 @@ components:
         * `type_etablissement` - Types d'établissement
         * `classe_therapeutique` - Classes thérapeutiques
         * `motif_ecart` - Motifs d'écart
+    ListeProspects:
+      type: object
+      properties:
+        total:
+          type: integer
+        limite:
+          type: integer
+        resultats:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prospect'
+      required:
+      - limite
+      - resultats
+      - total
     ModificationParametre:
       type: object
       properties:
@@ -2920,6 +3140,44 @@ components:
           type: string
           format: uuid
           nullable: true
+    PatchedSaisieProspect:
+      type: object
+      properties:
+        civilite:
+          oneOf:
+          - $ref: '#/components/schemas/CiviliteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        nom:
+          type: string
+          maxLength: 80
+        prenom:
+          type: string
+          maxLength: 80
+        type:
+          type: string
+          format: uuid
+          nullable: true
+        specialite:
+          type: string
+          format: uuid
+          nullable: true
+        numero_ordre:
+          type: string
+          maxLength: 40
+        telephone_mobile:
+          type: string
+          maxLength: 30
+        telephone_pro:
+          type: string
+          maxLength: 30
+        courriel:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+        potentiel:
+          $ref: '#/components/schemas/PotentielEnum'
     Pays:
       type: object
       properties:
@@ -3047,6 +3305,23 @@ components:
       - identifiant
       - nom
       - prenom
+    PersonneResume:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        identifiant:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+      required:
+      - id
+      - identifiant
+      - nom
+      - prenom
     PlateformeEnum:
       enum:
       - android
@@ -3128,6 +3403,16 @@ components:
       - type_libelle
       - type_poste
       - vacant
+    PotentielEnum:
+      enum:
+      - A
+      - B
+      - C
+      type: string
+      description: |-
+        * `A` - A
+        * `B` - B
+        * `C` - C
     Produit:
       type: object
       properties:
@@ -3187,6 +3472,82 @@ components:
       - code
       - id
       - libelle
+    Prospect:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        civilite:
+          oneOf:
+          - $ref: '#/components/schemas/CiviliteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        nom:
+          type: string
+          maxLength: 80
+        prenom:
+          type: string
+          maxLength: 80
+        type:
+          type: string
+          format: uuid
+        type_libelle:
+          type: string
+        specialite:
+          type: string
+          format: uuid
+          nullable: true
+        specialite_libelle:
+          type: string
+          nullable: true
+        numero_ordre:
+          type: string
+          maxLength: 40
+        telephone_mobile:
+          type: string
+          maxLength: 20
+        telephone_pro:
+          type: string
+          maxLength: 20
+        courriel:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        potentiel:
+          $ref: '#/components/schemas/PotentielEnum'
+        statut:
+          $ref: '#/components/schemas/StatutFicheEnum'
+        cree_par:
+          $ref: '#/components/schemas/PersonneResume'
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        valide_le:
+          type: string
+          format: date-time
+          nullable: true
+        modifiable:
+          type: boolean
+          readOnly: true
+      required:
+      - cree_le
+      - cree_par
+      - id
+      - modifiable
+      - nom
+      - pays
+      - potentiel
+      - specialite
+      - type
+      - type_libelle
     Rafraichissement:
       type: object
       properties:
@@ -3349,6 +3710,44 @@ components:
         * `superviseur` - Superviseur
         * `delegue` - Délégué
         * `admin_technique` - Administrateur technique
+    SaisieProspect:
+      type: object
+      properties:
+        civilite:
+          oneOf:
+          - $ref: '#/components/schemas/CiviliteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        nom:
+          type: string
+          maxLength: 80
+        prenom:
+          type: string
+          maxLength: 80
+        type:
+          type: string
+          format: uuid
+          nullable: true
+        specialite:
+          type: string
+          format: uuid
+          nullable: true
+        numero_ordre:
+          type: string
+          maxLength: 40
+        telephone_mobile:
+          type: string
+          maxLength: 30
+        telephone_pro:
+          type: string
+          maxLength: 30
+        courriel:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+        potentiel:
+          $ref: '#/components/schemas/PotentielEnum'
     Secteur:
       type: object
       properties:
@@ -3427,6 +3826,18 @@ components:
         * `actif` - Actif
         * `suspendu` - Suspendu
         * `archive` - Archivé
+    StatutFicheEnum:
+      enum:
+      - a_valider
+      - actif
+      - archive
+      - fusionne
+      type: string
+      description: |-
+        * `a_valider` - À valider
+        * `actif` - Actif
+        * `archive` - Archivé
+        * `fusionne` - Fusionné
     StatutPays:
       type: object
       properties:
@@ -3459,6 +3870,24 @@ components:
       - reseaux
       - secteurs
       - zones
+    SyntheseProspects:
+      type: object
+      properties:
+        actifs:
+          type: integer
+        a_valider:
+          type: integer
+        mes_a_valider:
+          type: integer
+        potentiels:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - a_valider
+      - actifs
+      - mes_a_valider
+      - potentiels
     Transfert:
       type: object
       properties:
