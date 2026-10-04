@@ -5,7 +5,7 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Link as LienRouteur } from 'react-router';
 import { messageErreur, useSession } from '../contexteSession';
-import Cadre from './Cadre';
+import EcranPublic from '../composants/EcranPublic';
 
 export default function Connexion() {
   const { t } = useTranslation();
@@ -33,7 +33,7 @@ export default function Connexion() {
   }
 
   return (
-    <Cadre titre={t('connexion.titre')}>
+    <EcranPublic titre={t('connexion.titre')}>
       {etat.statut === 'anonyme' && etat.sessionExpiree && !erreur && (
         <Alert severity="info">{t('session.expiree')}</Alert>
       )}
@@ -87,6 +87,6 @@ export default function Connexion() {
       <Link component={LienRouteur} to="/mot-de-passe-oublie" sx={{ alignSelf: 'center' }}>
         {t('connexion.oublie')}
       </Link>
-    </Cadre>
+    </EcranPublic>
   );
 }

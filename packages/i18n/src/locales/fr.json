@@ -59,5 +59,65 @@
   },
   "erreurs": {
     "reseau": "Service injoignable. Vérifiez votre connexion et réessayez."
+  },
+  "navigation": {
+    "menu": "Menu",
+    "accueil": "Accueil",
+    "visites": "Visites et rapports",
+    "planning": "Planning",
+    "prospects": "Prospects",
+    "pilotage": "Pilotage",
+    "equipe": "Équipe",
+    "parametres": "Paramètres",
+    "bientot": "Bientôt",
+    "disponibleEn": "Disponible en version {{version}}"
+  },
+  "marque": {
+    "organisation": "Generic Healthcare",
+    "accroche": "L'activité terrain des délégués, planifiée, prouvée et validée.",
+    "atouts": {
+      "planifier": "Planifier la semaine et la faire approuver",
+      "visiter": "Visiter, même sans réseau, avec preuve GPS",
+      "valider": "Valider les rapports en quelques clics"
+    }
+  },
+  "feuilleRoute": {
+    "titre": "Avancement du produit",
+    "version": "Version {{version}}",
+    "cycle": "Cycle {{numero}} · {{nom}}",
+    "etape": "Étape {{etape}} sur 9",
+    "livrees": "{{livrees}} versions livrées sur {{total}} avant la 1.0.0",
+    "stable": "Version stable",
+    "cycles": {
+      "fondations": "Fondations",
+      "referentiel": "Référentiel",
+      "planning": "Planning",
+      "validationPlannings": "Validation des plannings",
+      "visites": "Exécution des visites",
+      "rapports": "Rapports de visite",
+      "validationRapports": "Validation des rapports",
+      "pilotage": "Pilotage",
+      "mobilite": "Mobilité",
+      "production": "Production"
+    }
+  },
+  "profil": {
+    "titre": "Mon compte",
+    "identifiant": "Identifiant",
+    "courriel": "Courriel",
+    "perimetre": "Périmètre",
+    "langue": "Langue",
+    "nonRenseigne": "Non renseigné"
+  },
+  "mobile": {
+    "onglets": {
+      "tournee": "Tournée",
+      "semaine": "Semaine",
+      "prospects": "Prospects",
+      "chiffres": "Mes chiffres"
+    },
+    "bienvenue": "Bienvenue",
+    "sousTitreConnexion": "Connectez-vous pour retrouver votre tournée.",
+    "prochainement": "Votre tournée et vos visites arrivent dans les prochaines versions."
   }
 }

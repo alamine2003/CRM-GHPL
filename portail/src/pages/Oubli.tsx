@@ -3,7 +3,7 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
 import { messageErreur, useSession } from '../contexteSession';
-import Cadre from './Cadre';
+import EcranPublic from '../composants/EcranPublic';
 
 export default function Oubli() {
   const { t } = useTranslation();
@@ -24,7 +24,7 @@ export default function Oubli() {
   }
 
   return (
-    <Cadre titre={t('oubli.titre')}>
+    <EcranPublic titre={t('oubli.titre')}>
       {envoye ? (
         <Alert severity="success">{t('oubli.envoye')}</Alert>
       ) : (
@@ -52,6 +52,6 @@ export default function Oubli() {
       <Link component={LienRouteur} to="/connexion" sx={{ alignSelf: 'center' }}>
         {t('oubli.retour')}
       </Link>
-    </Cadre>
+    </EcranPublic>
   );
 }

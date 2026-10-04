@@ -59,5 +59,65 @@
   },
   "erreurs": {
     "reseau": "Service unreachable. Check your connection and try again."
+  },
+  "navigation": {
+    "menu": "Menu",
+    "accueil": "Home",
+    "visites": "Visits and reports",
+    "planning": "Planning",
+    "prospects": "Prospects",
+    "pilotage": "Analytics",
+    "equipe": "Team",
+    "parametres": "Settings",
+    "bientot": "Soon",
+    "disponibleEn": "Available in version {{version}}"
+  },
+  "marque": {
+    "organisation": "Generic Healthcare",
+    "accroche": "Field activity of medical representatives, planned, proven and validated.",
+    "atouts": {
+      "planifier": "Plan the week and get it approved",
+      "visiter": "Visit, even offline, with GPS proof",
+      "valider": "Validate reports in a few clicks"
+    }
+  },
+  "feuilleRoute": {
+    "titre": "Product progress",
+    "version": "Version {{version}}",
+    "cycle": "Cycle {{numero}} · {{nom}}",
+    "etape": "Step {{etape}} of 9",
+    "livrees": "{{livrees}} of {{total}} versions delivered before 1.0.0",
+    "stable": "Stable version",
+    "cycles": {
+      "fondations": "Foundations",
+      "referentiel": "Master data",
+      "planning": "Planning",
+      "validationPlannings": "Planning approval",
+      "visites": "Visit execution",
+      "rapports": "Visit reports",
+      "validationRapports": "Report validation",
+      "pilotage": "Analytics",
+      "mobilite": "Mobility",
+      "production": "Production"
+    }
+  },
+  "profil": {
+    "titre": "My account",
+    "identifiant": "Username",
+    "courriel": "Email",
+    "perimetre": "Scope",
+    "langue": "Language",
+    "nonRenseigne": "Not provided"
+  },
+  "mobile": {
+    "onglets": {
+      "tournee": "Round",
+      "semaine": "Week",
+      "prospects": "Prospects",
+      "chiffres": "My figures"
+    },
+    "bienvenue": "Welcome",
+    "sousTitreConnexion": "Sign in to find your round.",
+    "prochainement": "Your round and visits arrive in the next versions."
   }
 }

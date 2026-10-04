@@ -8,6 +8,31 @@ export const marque = {
   bleuMarine2: '#243776',
   bleuMarine3: '#0F1A3D',
   orange: '#F26B1D',
+  orangeClair: '#FF9A4D',
+  /** Bleu de la marque lisible sur fond sombre (liens, focus en thème sombre). */
+  bleuClair: '#9DB0F0',
+} as const;
+
+/** Barre latérale du portail (maquette INNOV CRM). */
+export const barreLaterale = {
+  fond: '#1B2A5B',
+  fondSombre: '#0B1128',
+  texte: '#C9D2EC',
+  texteDiscret: '#8F9CC7',
+  survol: 'rgba(255,255,255,.06)',
+  actif: 'rgba(255,255,255,.10)',
+  separateur: 'rgba(255,255,255,.10)',
+  avatar: '#3B4E8F',
+} as const;
+
+/** Dégradé du logo « IC ». */
+export const degradeLogo = [marque.orange, marque.orangeClair] as const;
+
+/** Ombres des cartes (maquette INNOV CRM). */
+export const ombres = {
+  carte: '0 1px 2px rgba(20,30,70,.06), 0 4px 14px rgba(20,30,70,.05)',
+  carteSombre: '0 1px 2px rgba(0,0,0,.4)',
+  telephone: '0 20px 50px rgba(10,20,60,.35)',
 } as const;
 
 export interface Palette {
@@ -73,5 +98,6 @@ export const typographie = {
 } as const;
 
 export const rayon = 10;
+export const largeurBarreLaterale = 236;
 /** Taille minimale d'une zone tactile, en pixels (NFR-009). */
 export const zoneTactileMin = 44;

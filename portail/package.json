@@ -16,6 +16,7 @@
     "@innov/api-client": "*",
     "@innov/api-types": "*",
     "@innov/design": "*",
+    "@innov/domaine": "*",
     "@innov/i18n": "*",
     "@mui/icons-material": "^9.4.0",
     "@mui/material": "^9.4.0",

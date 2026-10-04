@@ -3,7 +3,7 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur, useSearchParams } from 'react-router';
 import { messageErreur, useSession } from '../contexteSession';
-import Cadre from './Cadre';
+import EcranPublic from '../composants/EcranPublic';
 
 export default function Reinitialisation() {
   const { t } = useTranslation();
@@ -31,7 +31,7 @@ export default function Reinitialisation() {
   }
 
   return (
-    <Cadre titre={t('reinitialisation.titre')}>
+    <EcranPublic titre={t('reinitialisation.titre')}>
       {!jeton ? (
         <Alert severity="warning">{t('reinitialisation.lienManquant')}</Alert>
       ) : succes ? (
@@ -76,6 +76,6 @@ export default function Reinitialisation() {
       <Link component={LienRouteur} to="/connexion" sx={{ alignSelf: 'center' }}>
         {t('oubli.retour')}
       </Link>
-    </Cadre>
+    </EcranPublic>
   );
 }

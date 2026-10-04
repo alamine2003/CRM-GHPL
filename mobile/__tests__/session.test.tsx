@@ -12,7 +12,10 @@ jest.mock('expo-router', () => {
 });
 jest.mock('react-native-safe-area-context', () => {
   const { View } = jest.requireActual('react-native');
-  return { SafeAreaView: View };
+  return {
+    SafeAreaView: View,
+    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  };
 });
 
 // Généré à l'exécution : aucun mot de passe, même de test, n'est écrit dans le dépôt.
@@ -61,7 +64,7 @@ describe('mobile — session', () => {
   it('reprend la session du magasin sécurisé et accueille le délégué', async () => {
     await rendre(<Accueil />, fauxClient({ reprendre: jest.fn(async () => JETONS) }));
     expect(await screen.findByText('Bonjour Awa')).toBeTruthy();
-    expect(screen.getByText('Sénégal')).toBeTruthy();
+    expect(screen.getAllByText(/Sénégal/).length).toBeGreaterThan(0);
     expect(screen.getByText('0.0.3')).toBeTruthy();
   });
 

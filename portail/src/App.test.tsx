@@ -75,7 +75,8 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
   it('reprend une session existante et affiche l’accueil personnalisé', async () => {
     rendre(fauxClient({ reprendre: vi.fn(async () => JETONS) }));
     expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
-    expect(screen.getByText('Sénégal')).toBeInTheDocument();
+    expect(screen.getAllByText('Sénégal').length).toBeGreaterThan(0);
+    expect(screen.getByText(/^Cycle 0\.\d · /)).toBeInTheDocument();
     expect(await screen.findByText('Service disponible')).toBeInTheDocument();
   });
 
@@ -87,7 +88,9 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
     expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
     expect(client.connexion).toHaveBeenCalledWith('awa.diallo', MDP);
-    fireEvent.click(screen.getByRole('button', { name: 'Se déconnecter' }));
+    // Écran étroit : la navigation est repliée dans le menu.
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Se déconnecter' }));
     expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeInTheDocument();
     expect(client.deconnexion).toHaveBeenCalled();
   });

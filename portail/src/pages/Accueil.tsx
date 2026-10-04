@@ -1,21 +1,118 @@
 import type { Moi } from '@innov/api-client';
-import { Button, Card, CardContent, Chip, Container, Stack, Typography } from '@mui/material';
+import { avancement } from '@innov/domaine';
+import CloudDoneRounded from '@mui/icons-material/CloudDoneRounded';
+import CloudOffRounded from '@mui/icons-material/CloudOffRounded';
+import RouteRounded from '@mui/icons-material/RouteRounded';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '../contexteSession';
 
 const VERSION_CLIENT = __INNOV_VERSION__;
 
-function Ligne({ libelle, valeur }: { libelle: string; valeur: string }) {
+function EnTeteCarte({ titre, action }: { titre: string; action?: ReactNode }) {
   return (
-    <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+    <Box
+      sx={{
+        px: 2.25,
+        py: 1.75,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 1,
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}
+    >
+      <Typography variant="h6" component="h2">
+        {titre}
+      </Typography>
+      {action}
+    </Box>
+  );
+}
+
+function Ligne({ libelle, valeur }: { libelle: string; valeur: ReactNode }) {
+  return (
+    <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between', py: 1.1 }}>
       <Typography sx={{ color: 'text.secondary' }}>{libelle}</Typography>
-      <Typography sx={{ fontWeight: 600 }}>{valeur}</Typography>
+      <Typography component="div" sx={{ fontWeight: 600, textAlign: 'right', minWidth: 0 }}>
+        {valeur}
+      </Typography>
     </Stack>
   );
 }
 
-export default function Accueil({ utilisateur }: { utilisateur: Moi }) {
+function FeuilleDeRoute() {
+  const { t } = useTranslation();
+  const a = avancement(VERSION_CLIENT);
+  const pourcentage = Math.round((a.livrees / a.total) * 100);
+  return (
+    <Card>
+      <EnTeteCarte
+        titre={t('feuilleRoute.titre')}
+        action={<Chip size="small" color="secondary" label={`v${a.version}`} />}
+      />
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: 2.5,
+              display: 'grid',
+              placeItems: 'center',
+              bgcolor: 'secondary.main',
+              color: '#FFFFFF',
+              flex: 'none',
+            }}
+          >
+            <RouteRounded />
+          </Box>
+          <Box>
+            <Typography sx={{ fontWeight: 700 }}>
+              {a.stable
+                ? t('feuilleRoute.stable')
+                : t('feuilleRoute.cycle', {
+                    numero: `0.${a.cycle}`,
+                    nom: t(`feuilleRoute.cycles.${a.codeCycle}`),
+                  })}
+            </Typography>
+            {!a.stable && (
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {t('feuilleRoute.etape', { etape: a.etape })}
+              </Typography>
+            )}
+          </Box>
+        </Stack>
+        <Box>
+          <LinearProgress
+            variant="determinate"
+            value={pourcentage}
+            color="secondary"
+            aria-label={t('feuilleRoute.titre')}
+          />
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+            {t('feuilleRoute.livrees', { livrees: a.livrees, total: a.total })}
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
+function EtatService() {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const informations = useQuery({
@@ -23,52 +120,112 @@ export default function Accueil({ utilisateur }: { utilisateur: Moi }) {
     queryFn: () => client.informations(),
     retry: false,
   });
-  const perimetre = utilisateur.pays_principal?.nom ?? t('session.siege');
+  const pastille = informations.isPending ? (
+    <Chip size="small" label={t('accueil.verification')} />
+  ) : informations.isSuccess ? (
+    <Chip
+      size="small"
+      color="success"
+      icon={<CloudDoneRounded />}
+      label={t('accueil.serveurDisponible')}
+    />
+  ) : (
+    <Chip
+      size="small"
+      color="error"
+      icon={<CloudOffRounded />}
+      label={t('accueil.serveurIndisponible')}
+    />
+  );
+  return (
+    <Card>
+      <EnTeteCarte titre={t('accueil.etatServeur')} action={pastille} />
+      <CardContent sx={{ py: 0.5 }}>
+        <Ligne libelle={t('accueil.versionClient')} valeur={VERSION_CLIENT} />
+        <Divider />
+        <Ligne
+          libelle={t('accueil.versionServeur')}
+          valeur={informations.isSuccess ? informations.data.version : '—'}
+        />
+        <Divider />
+        <Ligne
+          libelle={t('accueil.environnement')}
+          valeur={informations.isSuccess ? informations.data.environnement : '—'}
+        />
+        {informations.isError && (
+          <Button
+            variant="outlined"
+            fullWidth
+            sx={{ my: 1.5 }}
+            onClick={() => void informations.refetch()}
+          >
+            {t('accueil.reessayer')}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function MonCompte({ utilisateur }: { utilisateur: Moi }) {
+  const { t, i18n } = useTranslation();
+  return (
+    <Card>
+      <EnTeteCarte titre={t('profil.titre')} />
+      <CardContent sx={{ py: 0.5 }}>
+        <Ligne libelle={t('profil.identifiant')} valeur={utilisateur.identifiant} />
+        <Divider />
+        <Ligne
+          libelle={t('profil.courriel')}
+          valeur={utilisateur.courriel || t('profil.nonRenseigne')}
+        />
+        <Divider />
+        <Ligne
+          libelle={t('profil.perimetre')}
+          valeur={utilisateur.pays_principal?.nom ?? t('session.siege')}
+        />
+        <Divider />
+        <Ligne libelle={t('profil.langue')} valeur={t(`commun.langues.${i18n.language}`)} />
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function Accueil({ utilisateur }: { utilisateur: Moi }) {
+  const { t, i18n } = useTranslation();
+  const date = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: utilisateur.pays_principal?.fuseau,
+  }).format(new Date());
 
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 3, sm: 6 } }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        {t('session.bonjour', { prenom: utilisateur.prenom })}
-      </Typography>
-      <Typography sx={{ color: 'text.secondary', mb: 3 }}>{t('accueil.introduction')}</Typography>
-      <Card variant="outlined">
-        <CardContent>
-          <Stack spacing={1.5}>
-            <Stack
-              direction="row"
-              sx={{ justifyContent: 'space-between', alignItems: 'center', gap: 1 }}
-            >
-              <Typography variant="h6" component="h2">
-                {t('accueil.etatServeur')}
-              </Typography>
-              {informations.isPending ? (
-                <Chip label={t('accueil.verification')} />
-              ) : informations.isSuccess ? (
-                <Chip color="success" label={t('accueil.serveurDisponible')} />
-              ) : (
-                <Chip color="error" label={t('accueil.serveurIndisponible')} />
-              )}
-            </Stack>
-            <Ligne libelle={t('connexion.identifiant')} valeur={utilisateur.identifiant} />
-            <Ligne libelle={t('accueil.perimetre')} valeur={perimetre} />
-            <Ligne libelle={t('accueil.versionClient')} valeur={VERSION_CLIENT} />
-            {informations.isSuccess && (
-              <>
-                <Ligne libelle={t('accueil.versionServeur')} valeur={informations.data.version} />
-                <Ligne
-                  libelle={t('accueil.environnement')}
-                  valeur={informations.data.environnement}
-                />
-              </>
-            )}
-            {informations.isError && (
-              <Button variant="outlined" onClick={() => void informations.refetch()}>
-                {t('accueil.reessayer')}
-              </Button>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
-    </Container>
+    <Stack spacing={2.5}>
+      <Box>
+        <Typography variant="h4" component="h1">
+          {t('session.bonjour', { prenom: utilisateur.prenom })}
+        </Typography>
+        <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>
+          {date.charAt(0).toUpperCase() + date.slice(1)}
+          {' · '}
+          {t('accueil.introduction')}
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', md: '1.4fr 1fr' },
+          alignItems: 'start',
+        }}
+      >
+        <Stack spacing={2}>
+          <FeuilleDeRoute />
+          <EtatService />
+        </Stack>
+        <MonCompte utilisateur={utilisateur} />
+      </Box>
+    </Stack>
   );
 }
