@@ -1,5 +1,4 @@
-import ClearAllRounded from '@mui/icons-material/ClearAllRounded';
-import { Button, Chip, Pagination, Stack, Typography } from '@mui/material';
+import { Button, Chip, Pagination, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 export interface Puce {
@@ -31,7 +30,7 @@ export function PucesFiltres({
           onDelete={() => retirer(p.cle)}
         />
       ))}
-      <Button size="small" color="inherit" startIcon={<ClearAllRounded />} onClick={effacer}>
+      <Button size="small" color="inherit" onClick={effacer}>
         {t('recherche.toutEffacer')}
       </Button>
     </Stack>
@@ -51,6 +50,8 @@ export function BarrePagination({
   changer: (page: number) => void;
 }) {
   const { t, i18n } = useTranslation();
+  // Sur petit écran, moins de numéros : la flèche « suivante » ne passe plus à la ligne.
+  const etroit = !useMediaQuery(useTheme().breakpoints.up('sm'));
   const pages = Math.max(1, Math.ceil(total / taille));
   const debut = total === 0 ? 0 : (page - 1) * taille + 1;
   const fin = Math.min(total, page * taille);
@@ -71,7 +72,9 @@ export function BarrePagination({
           onChange={(_, p) => changer(p)}
           shape="rounded"
           color="primary"
-          siblingCount={1}
+          siblingCount={etroit ? 0 : 1}
+          boundaryCount={1}
+          size={etroit ? 'small' : 'medium'}
           getItemAriaLabel={(type, numero) =>
             type === 'page'
               ? t('recherche.page', { numero })

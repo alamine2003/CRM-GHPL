@@ -5,28 +5,13 @@ import type {
   RoleAttribue,
   Utilisateur,
 } from '@innov/api-client';
-import AddRounded from '@mui/icons-material/AddRounded';
-import BlockRounded from '@mui/icons-material/BlockRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
-import LogoutRounded from '@mui/icons-material/LogoutRounded';
-import PhonelinkLockRounded from '@mui/icons-material/PhonelinkLockRounded';
-import FlightTakeoffRounded from '@mui/icons-material/FlightTakeoffRounded';
-import GroupsRounded from '@mui/icons-material/GroupsRounded';
-import KeyRounded from '@mui/icons-material/KeyRounded';
-import LockOpenRounded from '@mui/icons-material/LockOpenRounded';
-import PersonOffRounded from '@mui/icons-material/PersonOffRounded';
-import PhoneAndroidRounded from '@mui/icons-material/PhoneAndroidRounded';
-import PhoneIphoneRounded from '@mui/icons-material/PhoneIphoneRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import SwapHorizRounded from '@mui/icons-material/SwapHorizRounded';
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Card,
-  Chip,
-  Divider,
   Drawer,
   IconButton,
   InputAdornment,
@@ -47,9 +32,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
-import { EnTetePage, EtatVide, GrilleTuiles, PastilleIcone, Tuile } from '../composants/Elements';
+import { BarreChiffres, Chiffre, EnTetePage, EtatVide, Section } from '../composants/Elements';
 import { aujourdhuiIso, dateCourte, depuis } from '../composants/formats';
-import { initiales } from '../composants/initiales';
 import { ErreurChargement } from '../composants/Erreurs';
 import { messageErreur, useSession } from '../contexteSession';
 
@@ -67,73 +51,41 @@ function Personne({
   detail: ReactNode;
 }) {
   return (
-    <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', minWidth: 0 }}>
-      <Avatar
-        sx={{ width: 34, height: 34, fontSize: 12, fontWeight: 700, bgcolor: 'primary.main' }}
-      >
-        {initiales(compte.prenom, compte.nom)}
-      </Avatar>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 700 }} noWrap>
-          {compte.prenom} {compte.nom}
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap component="p">
-          {detail}
-        </Typography>
-      </Box>
-    </Stack>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography sx={{ fontWeight: 600 }} noWrap>
+        {compte.prenom} {compte.nom}
+      </Typography>
+      <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap component="p">
+        {detail}
+      </Typography>
+    </Box>
   );
 }
 
 function PastillesRoles({ roles }: { roles: string[] }) {
   const { t } = useTranslation();
   if (!roles.length)
-    return <Chip size="small" color="warning" variant="outlined" label={t('equipe.aucunRole')} />;
-  return (
-    <Stack direction="row" sx={{ gap: 0.5, flexWrap: 'wrap' }}>
-      {roles.map((r) => (
-        <Chip key={r} size="small" color="primary" variant="outlined" label={t(`roles.${r}`)} />
-      ))}
-    </Stack>
-  );
+    return (
+      <Typography variant="body2" sx={{ color: 'warning.main', fontWeight: 500 }}>
+        {t('equipe.aucunRole')}
+      </Typography>
+    );
+  return <Typography variant="body2">{roles.map((r) => t(`roles.${r}`)).join(', ')}</Typography>;
 }
 
 function Etat({ actif }: { actif: boolean }) {
   const { t } = useTranslation();
   return (
-    <Chip
-      size="small"
-      color={actif ? 'success' : 'default'}
-      variant={actif ? 'filled' : 'outlined'}
-      label={actif ? t('equipe.actif') : t('equipe.suspendu')}
-      sx={{ justifySelf: 'start', width: 'fit-content' }}
-    />
+    <Typography
+      variant="body2"
+      sx={{ color: actif ? 'text.secondary' : 'error.main', fontWeight: actif ? 400 : 600 }}
+    >
+      {actif ? t('equipe.actif') : t('equipe.suspendu')}
+    </Typography>
   );
 }
 
 // --- Fiche d'un compte ----------------------------------------------------------------------
-
-function Section({
-  titre,
-  action,
-  children,
-}: {
-  titre: string;
-  action?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <Box>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="overline" sx={{ color: 'text.secondary' }}>
-          {titre}
-        </Typography>
-        {action}
-      </Stack>
-      {children}
-    </Box>
-  );
-}
 
 function FicheCompte({
   compte,
@@ -193,7 +145,7 @@ function FicheCompte({
       : t('equipe.fiche.depuis', { date: dateCourte(debut, i18n.language) });
 
   return (
-    <Stack spacing={2.5} sx={{ p: 3, width: { xs: '100vw', sm: 460 }, maxWidth: '100vw' }}>
+    <Stack spacing={2} sx={{ p: 2, width: { xs: '100vw', sm: 440 }, maxWidth: '100vw' }}>
       <Stack direction="row" sx={{ alignItems: 'flex-start', gap: 1 }}>
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           <Personne
@@ -205,9 +157,13 @@ function FicheCompte({
           <CloseRounded />
         </IconButton>
       </Stack>
-      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
         <Etat actif={compte.actif} />
-        {compte.pays_principal && <Chip size="small" label={compte.pays_principal.nom} />}
+        {compte.pays_principal && (
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            · {compte.pays_principal.nom}
+          </Typography>
+        )}
       </Stack>
       {message && <Alert severity={message.type}>{message.texte}</Alert>}
       {gerer && (
@@ -217,7 +173,6 @@ function FicheCompte({
               variant="outlined"
               color="error"
               size="small"
-              startIcon={<BlockRounded />}
               onClick={() => void agir(() => client.comptes.operation(compte.id, 'suspendre'))}
             >
               {t('equipe.fiche.suspendre')}
@@ -226,7 +181,6 @@ function FicheCompte({
             <Button
               variant="outlined"
               size="small"
-              startIcon={<LockOpenRounded />}
               onClick={() => void agir(() => client.comptes.operation(compte.id, 'reactiver'))}
             >
               {t('equipe.fiche.reactiver')}
@@ -235,7 +189,6 @@ function FicheCompte({
           <Button
             variant="outlined"
             size="small"
-            startIcon={<KeyRounded />}
             onClick={() =>
               void agir(
                 () => client.comptes.operation(compte.id, 'reinitialiser'),
@@ -246,7 +199,6 @@ function FicheCompte({
             {t('equipe.fiche.reinitialiser')}
           </Button>
           <Button
-            startIcon={<LogoutRounded />}
             variant="outlined"
             size="small"
             onClick={() =>
@@ -259,7 +211,6 @@ function FicheCompte({
             {t('equipe.fiche.fermerSessions')}
           </Button>
           <Button
-            startIcon={<PhonelinkLockRounded />}
             variant="outlined"
             size="small"
             color="warning"
@@ -274,12 +225,11 @@ function FicheCompte({
           </Button>
         </Stack>
       )}
-      <Divider />
       <Section
         titre={t('equipe.fiche.roles')}
         action={
           attribuer && (
-            <Button size="small" startIcon={<AddRounded />} onClick={() => setDialogue('role')}>
+            <Button size="small" onClick={() => setDialogue('role')}>
               {t('equipe.fiche.attribuer')}
             </Button>
           )
@@ -295,11 +245,9 @@ function FicheCompte({
                 direction="row"
                 sx={{ alignItems: 'center', gap: 1, opacity: role.actif ? 1 : 0.55 }}
               >
-                <Chip
-                  size="small"
-                  color={role.actif ? 'primary' : 'default'}
-                  label={`${t(`roles.${role.role}`)}${role.pays ? ` · ${role.pays}` : ''}`}
-                />
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {`${t(`roles.${role.role}`)}${role.pays ? ` · ${role.pays}` : ''}`}
+                </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary', flexGrow: 1 }}>
                   {periode(role.debut, role.fin)}
                 </Typography>
@@ -324,14 +272,12 @@ function FicheCompte({
       </Section>
       {compte.pays_principal && (
         <>
-          <Divider />
           <Section
             titre={t('equipe.fiche.affectations')}
             action={
               affecter && (
                 <Button
                   size="small"
-                  startIcon={<FlightTakeoffRounded />}
                   onClick={() => setDialogue('affectation')}
                 >
                   {t('equipe.fiche.accorder')}
@@ -341,12 +287,11 @@ function FicheCompte({
           >
             <Stack spacing={1}>
               {(affectations.data ?? []).map((a: Affectation) => (
-                <Card key={a.id} sx={{ p: 1.5 }}>
+                <Box key={a.id}>
                   <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-                    <Chip size="small" label={a.pays} color={a.active ? 'secondary' : 'default'} />
-                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
-                        {a.motif}
+                    <Box sx={{ flexGrow: 1, minWidth: 0, opacity: a.active ? 1 : 0.6 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+                        {a.pays} · {a.motif}
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                         {periode(a.debut, a.fin)}
@@ -362,7 +307,7 @@ function FicheCompte({
                       </Button>
                     )}
                   </Stack>
-                </Card>
+                </Box>
               ))}
               {affectations.isSuccess && !affectations.data.length && (
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -373,14 +318,12 @@ function FicheCompte({
           </Section>
           {(affecter || (transferts.data ?? []).length > 0) && (
             <>
-              <Divider />
               <Section
                 titre={t('equipe.fiche.transferts')}
                 action={
                   affecter && (
                     <Button
                       size="small"
-                      startIcon={<SwapHorizRounded />}
                       onClick={() => setDialogue('transfert')}
                     >
                       {t('equipe.fiche.transferer')}
@@ -702,19 +645,38 @@ function ListeComptes({
   const colonnes = consolide ? '1.6fr 1.6fr 0.8fr 1fr 0.7fr' : '1.6fr 1.8fr 1fr 0.7fr';
   if (!large) {
     return (
-      <Stack spacing={1.25}>
-        {comptes.map((c) => (
-          <Card key={c.id} sx={{ p: 2, cursor: 'pointer' }} onClick={() => ouvrir(c)}>
+      <Card>
+        {comptes.map((c, i) => (
+          <Box
+            key={c.id}
+            component="button"
+            onClick={() => ouvrir(c)}
+            sx={{
+              display: 'block',
+              width: '100%',
+              textAlign: 'left',
+              font: 'inherit',
+              color: 'inherit',
+              bgcolor: 'transparent',
+              border: 0,
+              borderTop: i ? 1 : 0,
+              borderColor: 'divider',
+              px: 2,
+              py: 1.25,
+              cursor: 'pointer',
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+          >
             <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 1 }}>
               <Personne compte={c} detail={c.identifiant} />
               <Etat actif={c.actif} />
             </Stack>
-            <Box sx={{ mt: 1.25 }}>
+            <Box sx={{ mt: 0.5 }}>
               <PastillesRoles roles={c.roles} />
             </Box>
-          </Card>
+          </Box>
         ))}
-      </Stack>
+      </Card>
     );
   }
   const enTete = consolide
@@ -728,9 +690,8 @@ function ListeComptes({
           display: 'grid',
           gridTemplateColumns: colonnes,
           gap: 2,
-          px: 2.25,
-          py: 1.25,
-          bgcolor: 'background.default',
+          px: 2,
+          py: 1,
           borderBottom: 1,
           borderColor: 'divider',
         }}
@@ -758,8 +719,9 @@ function ListeComptes({
             display: 'grid',
             gridTemplateColumns: colonnes,
             gap: 2,
-            px: 2.25,
-            py: 1.25,
+            px: 2,
+            py: 1,
+            minHeight: 52,
             alignItems: 'center',
             cursor: 'pointer',
             borderBottom: 1,
@@ -792,7 +754,6 @@ function ListeAppareils({ appareils, revoquer }: { appareils: Appareil[]; revoqu
     return (
       <Card>
         <EtatVide
-          icone={<PhoneAndroidRounded />}
           titre={t('appareils.vide')}
           texte={t('appareils.videTexte')}
         />
@@ -804,63 +765,59 @@ function ListeAppareils({ appareils, revoquer }: { appareils: Appareil[]; revoqu
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         {t('appareils.contactAide')}
       </Typography>
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 1.5,
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: '1fr 1fr 1fr' },
-        }}
-      >
-        {appareils.map((a) => (
-          <Card key={a.id} sx={{ p: 2, opacity: a.revoque ? 0.6 : 1 }}>
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-              <PastilleIcone
-                icone={a.plateforme === 'ios' ? <PhoneIphoneRounded /> : <PhoneAndroidRounded />}
-                ton={a.revoque ? 'error' : 'info'}
-              />
-              <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                <Typography sx={{ fontWeight: 700 }} noWrap>
-                  {a.modele || a.plateforme_libelle}
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-                  {a.prenom} {a.nom} · {a.identifiant}
-                </Typography>
-              </Box>
-            </Stack>
-            <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap', mt: 1.5 }}>
-              <Chip size="small" variant="outlined" label={a.systeme || a.plateforme_libelle} />
-              <Chip size="small" variant="outlined" label={`v${a.version_app || '?'}`} />
-              <Tooltip title={dateCourte(a.dernier_contact, i18n.language)}>
-                <Chip size="small" label={depuis(a.dernier_contact, i18n.language)} />
-              </Tooltip>
-            </Stack>
-            <Box sx={{ mt: 1.5 }}>
+      <Card>
+        {appareils.map((a, i) => (
+          <Stack
+            key={a.id}
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={{ xs: 1, sm: 2 }}
+            sx={{
+              px: 2,
+              py: 1.25,
+              alignItems: { sm: 'center' },
+              borderTop: i ? 1 : 0,
+              borderColor: 'divider',
+              opacity: a.revoque ? 0.6 : 1,
+            }}
+          >
+            <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+              <Typography sx={{ fontWeight: 600 }} noWrap>
+                {a.modele || a.plateforme_libelle}
+                <Box component="span" sx={{ fontWeight: 400, color: 'text.secondary' }}>
+                  {' · '}
+                  {a.prenom} {a.nom}
+                </Box>
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }} component="p">
+                {[
+                  a.systeme || a.plateforme_libelle,
+                  `v${a.version_app || '?'}`,
+                  a.identifiant,
+                ].join(' · ')}
+                {' · '}
+                <Tooltip title={dateCourte(a.dernier_contact, i18n.language)}>
+                  <span>{depuis(a.dernier_contact, i18n.language)}</span>
+                </Tooltip>
+              </Typography>
+            </Box>
+            <Box sx={{ flex: 'none' }}>
               {a.revoque ? (
-                <Chip
-                  size="small"
-                  color="error"
-                  icon={<BlockRounded />}
-                  label={t('appareils.revoqueLe', {
+                <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 600 }}>
+                  {t('appareils.revoqueLe', {
                     date: dateCourte(a.revoque_le, i18n.language),
                   })}
-                />
+                </Typography>
               ) : (
                 revoquer && (
-                  <Button
-                    size="small"
-                    color="error"
-                    variant="outlined"
-                    startIcon={<BlockRounded />}
-                    onClick={() => setCible(a)}
-                  >
+                  <Button size="small" color="error" onClick={() => setCible(a)}>
                     {t('appareils.revoquer')}
                   </Button>
                 )
               )}
             </Box>
-          </Card>
+          </Stack>
         ))}
-      </Box>
+      </Card>
       {cible && (
         <DialogueFormulaire
           ouvert
@@ -912,20 +869,14 @@ export default function Equipe({ perimetre }: { perimetre: Perimetre }) {
   const compteOuvert = liste.find((c) => c.id === ouvert) ?? null;
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2}>
       <EnTetePage
         titre={t('equipe.titre')}
-        sousTitre={
-          perimetre.pays_actif
-            ? t('equipe.sousTitre', { pays: perimetre.pays_actif.nom })
-            : t('equipe.sousTitreConsolide')
-        }
+        sousTitre={perimetre.pays_actif?.nom ?? t('pays.consolide')}
         actions={
           gerer && (
             <Button
               variant="contained"
-              color="secondary"
-              startIcon={<AddRounded />}
               onClick={() => setCreation(true)}
             >
               {t('equipe.nouveauCompte')}
@@ -933,32 +884,29 @@ export default function Equipe({ perimetre }: { perimetre: Perimetre }) {
           )
         }
       />
-      <GrilleTuiles>
-        <Tuile
+      <BarreChiffres>
+        <Chiffre
           libelle={t('equipe.chiffres.comptes')}
           valeur={comptes.data ? liste.length : <Skeleton width={40} />}
-          icone={<GroupsRounded />}
           detail={
             comptes.data
               ? t('equipe.chiffres.actifs', { count: liste.filter((c) => c.actif).length })
               : undefined
           }
         />
-        <Tuile
+        <Chiffre
           libelle={t('equipe.chiffres.sansRole')}
           valeur={
             comptes.data ? liste.filter((c) => !c.roles.length).length : <Skeleton width={40} />
           }
-          icone={<PersonOffRounded />}
           ton="warning"
         />
-        <Tuile
+        <Chiffre
           libelle={t('equipe.chiffres.suspendus')}
           valeur={comptes.data ? liste.filter((c) => !c.actif).length : <Skeleton width={40} />}
-          icone={<BlockRounded />}
           ton="error"
         />
-        <Tuile
+        <Chiffre
           libelle={t('equipe.chiffres.telephones')}
           valeur={
             appareils.data ? (
@@ -967,20 +915,14 @@ export default function Equipe({ perimetre }: { perimetre: Perimetre }) {
               <Skeleton width={40} />
             )
           }
-          icone={<PhoneAndroidRounded />}
-          ton="info"
         />
-      </GrilleTuiles>
+      </BarreChiffres>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={onglet}
           onChange={(_, v) => setOnglet(v)}
           textColor="inherit"
-          sx={{
-            '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minHeight: 44 },
-            '& .MuiTabs-indicator': { bgcolor: 'secondary.main', height: 3, borderRadius: 3 },
-          }}
         >
           <Tab value="comptes" label={t('equipe.onglets.comptes')} />
           <Tab value="appareils" label={t('equipe.onglets.appareils')} />
@@ -1024,9 +966,7 @@ export default function Equipe({ perimetre }: { perimetre: Perimetre }) {
                 exclusive
                 value={filtre}
                 onChange={(_, v: Filtre | null) => v && setFiltre(v)}
-                sx={{
-                  '& .MuiToggleButton-root': { textTransform: 'none', px: 1.5, fontWeight: 600 },
-                }}
+                sx={{ overflowX: 'auto', maxWidth: '100%' }}
               >
                 {(['tous', 'sansRole', 'suspendus'] as const).map((f) => (
                   <ToggleButton key={f} value={f}>
@@ -1043,7 +983,7 @@ export default function Equipe({ perimetre }: { perimetre: Perimetre }) {
               />
             ) : (
               <Card>
-                <EtatVide icone={<SearchRounded />} titre={t('equipe.vide')} />
+                <EtatVide titre={t('equipe.vide')} />
               </Card>
             )}
           </Stack>

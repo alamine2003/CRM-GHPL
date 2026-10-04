@@ -1,11 +1,11 @@
-import { degradeLogo, typographie } from '@innov/design';
+import { marque, typographie } from '@innov/design';
 import { Box } from '@mui/material';
 
 /** Monogramme de la marque, identique dans toutes les langues. */
 const MONOGRAMME = 'IC';
 
-/** Marque « IC » de la maquette : carré arrondi au dégradé orange. */
-export default function Logo({ taille = 34 }: { taille?: number }) {
+/** Marque « IC » : monogramme blanc sur orange plein, sans dégradé. */
+export default function Logo({ taille = 28 }: { taille?: number }) {
   return (
     <Box
       aria-hidden
@@ -13,14 +13,15 @@ export default function Logo({ taille = 34 }: { taille?: number }) {
         width: taille,
         height: taille,
         flex: 'none',
-        borderRadius: `${Math.round(taille * 0.27)}px`,
-        background: `linear-gradient(135deg, ${degradeLogo[0]}, ${degradeLogo[1]})`,
+        borderRadius: '6px',
+        bgcolor: marque.orange,
         display: 'grid',
         placeItems: 'center',
         color: '#FFFFFF',
         fontFamily: typographie.titres,
-        fontWeight: 800,
-        fontSize: taille * 0.4,
+        fontWeight: 700,
+        fontSize: taille * 0.42,
+        letterSpacing: '-0.02em',
       }}
     >
       {MONOGRAMME}

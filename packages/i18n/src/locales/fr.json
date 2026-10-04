@@ -106,7 +106,7 @@
   "navigation": {
     "menu": "Menu",
     "accueil": "Accueil",
-    "visites": "Visites et rapports",
+    "visites": "Visites",
     "planning": "Planning",
     "prospects": "Prospects",
     "pilotage": "Pilotage",
@@ -117,7 +117,8 @@
     "organisation": "Organisation",
     "sections": {
       "activite": "Activité",
-      "administration": "Administration"
+      "administration": "Administration",
+      "aVenir": "À venir"
     },
     "pays": "Pays",
     "profil": "Mon profil",
@@ -165,7 +166,8 @@
     "courriel": "Courriel",
     "perimetre": "Périmètre",
     "langue": "Langue",
-    "nonRenseigne": "Non renseigné"
+    "nonRenseigne": "Non renseigné",
+    "roles": "Rôles"
   },
   "mobile": {
     "onglets": {
@@ -706,7 +708,7 @@
     "sousTitreConsolide": "Fiches prospects de tous les pays.",
     "choisirPays": "Choisissez un pays pour créer ou valider des fiches.",
     "chiffres": {
-      "actifs": "Fiches actives",
+      "actifs": "Actives",
       "aValider": "À valider",
       "mesAValider": "Mes fiches à valider",
       "potentielA": "Potentiel A",
@@ -755,7 +757,8 @@
       "courriel": "Courriel",
       "potentiel": "Potentiel",
       "grade": "Grade",
-      "nomAide": "Enregistré en majuscules ; le titre (Dr, Pr) va dans la civilité."
+      "nomAide": "Enregistré en majuscules ; le titre (Dr, Pr) va dans la civilité.",
+      "statut": "Statut"
     },
     "aides": {
       "aValider": "Votre fiche sera « à valider » : vous pouvez l'utiliser tout de suite ; les autres délégués la verront une fois validée.",
@@ -803,10 +806,10 @@
     "tousSecteurs": "Tous les secteurs",
     "sansGps": "Sans GPS",
     "chiffres": {
-      "actifs": "Établissements actifs",
+      "actifs": "Actifs",
       "aValider": "À valider",
       "mesAValider": "Mes fiches à valider",
-      "sansCoordonnees": "Sans coordonnées GPS",
+      "sansCoordonnees": "Sans GPS",
       "sansCoordonneesDetail": "Contrôle de distance impossible",
       "secteurs": "Secteurs couverts"
     },
@@ -850,6 +853,11 @@
       "creer": "Créer l'établissement",
       "creee": "Établissement créé : à valider par l'administrateur pays.",
       "positionEnregistree": "Position enregistrée ({{metres}} m)"
+    },
+    "vue": "Affichage",
+    "vues": {
+      "liste": "Liste",
+      "carte": "Carte"
     }
   },
   "lieu": {
@@ -1031,7 +1039,8 @@
       "horsLigne": "Hors connexion : liste enregistrée sur ce téléphone le {{date}}.",
       "resume_one": "{{count}} prospect · {{visites}} visites par cycle de {{semaines}} semaines",
       "resume_other": "{{count}} prospects · {{visites}} visites par cycle de {{semaines}} semaines"
-    }
+    },
+    "poste": "Poste"
   },
   "recherche": {
     "filtres": "Filtres",
@@ -1056,6 +1065,7 @@
     "precedente": "Page précédente",
     "premiere": "Première page",
     "derniere": "Dernière page",
-    "voirPlus": "Voir plus ({{reste}} restants)"
+    "voirPlus": "Voir plus ({{reste}} restants)",
+    "filtresN": "Filtres · {{count}}"
   }
 }

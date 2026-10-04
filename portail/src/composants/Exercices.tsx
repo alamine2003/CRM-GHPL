@@ -1,12 +1,10 @@
 import type { Etablissement, Exercice, Prospect } from '@innov/api-client';
-import AddRounded from '@mui/icons-material/AddRounded';
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import StarOutlineRounded from '@mui/icons-material/StarOutlineRounded';
 import StarRounded from '@mui/icons-material/StarRounded';
 import {
   Autocomplete,
-  Avatar,
   Box,
   Button,
   Checkbox,
@@ -20,17 +18,14 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 import DialogueFormulaire from './Dialogue';
-import { PastilleIcone } from './Elements';
+import { Potentiel } from './Elements';
 import { aujourdhuiIso, dateCourte } from './formats';
-import IconeType from './IconeEtablissement';
-import { initiales } from './initiales';
 
 function useRafraichir() {
   const requetes = useQueryClient();
@@ -73,8 +68,7 @@ function ChoixEtablissement({
       loading={resultats.isFetching}
       noOptionsText={t('exercice.aucunEtablissement')}
       renderOption={({ key, ...props }, e) => (
-        <Box component="li" key={key} {...props} sx={{ gap: 1.5 }}>
-          <PastilleIcone icone={<IconeType code={e.type_code} />} taille={30} ton="secondary" />
+        <Box component="li" key={key} {...props}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {e.nom}
@@ -208,31 +202,24 @@ function LigneExercice({
     <Stack
       direction="row"
       spacing={1.5}
-      sx={(theme) => ({
+      sx={{
         alignItems: 'center',
-        p: 1.25,
-        borderRadius: 2.5,
-        border: 1,
-        borderColor: exercice.principal ? alpha(theme.palette.secondary.main, 0.5) : 'divider',
-        bgcolor: exercice.principal ? alpha(theme.palette.secondary.main, 0.05) : 'transparent',
-      })}
+        py: 1.25,
+        pl: 1.5,
+        borderTop: 1,
+        borderColor: 'divider',
+        boxShadow: (theme) =>
+          exercice.principal ? `inset 2px 0 0 ${theme.palette.secondary.main}` : 'none',
+        '&:first-of-type': { borderTop: 0 },
+      }}
     >
-      <PastilleIcone
-        icone={<IconeType code={e.type_code} />}
-        ton={exercice.principal ? 'secondary' : 'primary'}
-        taille={38}
-      />
       <Box sx={{ minWidth: 0, flexGrow: 1 }}>
         <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-          <Typography sx={{ fontWeight: 700 }}>{e.nom}</Typography>
+          <Typography sx={{ fontWeight: 600 }}>{e.nom}</Typography>
           {exercice.principal && (
-            <Chip
-              size="small"
-              color="secondary"
-              icon={<StarRounded />}
-              label={t('exercice.principal')}
-              sx={{ height: 22 }}
-            />
+            <Typography variant="caption" sx={{ color: 'secondary.main', fontWeight: 600 }}>
+              {t('exercice.principal')}
+            </Typography>
           )}
           {e.statut === 'a_valider' && (
             <Chip size="small" variant="outlined" label={t('prospect.statuts.a_valider')} />
@@ -301,12 +288,16 @@ export function LieuxExercice({ prospect }: { prospect: Prospect }) {
           {t('exercice.aucun')}
         </Typography>
       )}
-      {enCours.map((e) => (
-        <LigneExercice key={e.id} exercice={e} gerer={gerer} surTerminer={() => setFin(e)} />
-      ))}
+      {enCours.length > 0 && (
+        <Box>
+          {enCours.map((e) => (
+            <LigneExercice key={e.id} exercice={e} gerer={gerer} surTerminer={() => setFin(e)} />
+          ))}
+        </Box>
+      )}
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         {gerer ? (
-          <Button size="small" startIcon={<AddRounded />} onClick={() => setAjout(true)}>
+          <Button size="small" onClick={() => setAjout(true)}>
             {t('exercice.ajouter')}
           </Button>
         ) : (
@@ -373,10 +364,13 @@ export function ProspectsExercant({ etablissement }: { etablissement: string }) 
   return (
     <Stack spacing={1}>
       {enCours.map(({ id, prospect: p, principal, presence }) => (
-        <Stack key={id} direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
-          <Avatar sx={{ width: 32, height: 32, fontSize: 12, fontWeight: 700 }}>
-            {initiales(p.prenom ?? '', p.nom)}
-          </Avatar>
+        <Stack
+          key={id}
+          direction="row"
+          spacing={1.25}
+          sx={{ alignItems: 'center', py: 0.75, borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Potentiel valeur={p.potentiel} />
           <Box sx={{ minWidth: 0, flexGrow: 1 }}>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {[p.civilite ? t(`prospect.civilites.${p.civilite}`) : '', p.prenom, p.nom]
@@ -396,7 +390,6 @@ export function ProspectsExercant({ etablissement }: { etablissement: string }) 
               />
             </Tooltip>
           )}
-          <Chip size="small" variant="outlined" label={p.potentiel} sx={{ fontWeight: 800 }} />
         </Stack>
       ))}
       <Typography variant="caption" sx={{ color: 'text.secondary' }}>

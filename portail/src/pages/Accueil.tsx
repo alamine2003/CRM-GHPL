@@ -1,35 +1,19 @@
 import type { Moi, MonOrganisation, Perimetre } from '@innov/api-client';
-import { marque } from '@innov/design';
 import { avancement, CYCLES } from '@innov/domaine';
-import CloudDoneRounded from '@mui/icons-material/CloudDoneRounded';
-import CloudOffRounded from '@mui/icons-material/CloudOffRounded';
-import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
-import BadgeRounded from '@mui/icons-material/BadgeRounded';
-import MapRounded from '@mui/icons-material/MapRounded';
-import PersonOffRounded from '@mui/icons-material/PersonOffRounded';
-import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
-import CheckRounded from '@mui/icons-material/CheckRounded';
-import EmojiEventsRounded from '@mui/icons-material/EmojiEventsRounded';
-import RouteRounded from '@mui/icons-material/RouteRounded';
-import SupervisorAccountRounded from '@mui/icons-material/SupervisorAccountRounded';
 import {
   Alert,
   Box,
   Button,
   Card,
   CardContent,
-  Chip,
   Divider,
-  LinearProgress,
   Stack,
-  Tooltip,
   Typography,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
-import { EnTeteCarte, GrilleTuiles, Ligne, PastilleIcone, Tuile } from '../composants/Elements';
+import { BarreChiffres, Chiffre, EnTeteCarte, EnTetePage, Ligne } from '../composants/Elements';
 import { drapeau } from '../composants/formats';
 import { useSession } from '../contexteSession';
 
@@ -38,7 +22,6 @@ const VERSION_CLIENT = __INNOV_VERSION__;
 function FeuilleDeRoute() {
   const { t } = useTranslation();
   const a = avancement(VERSION_CLIENT);
-  const pourcentage = Math.round((a.livrees / a.total) * 100);
   const termine = !a.stable && a.etape === 9;
   const suivant = !a.stable && a.cycle !== null ? CYCLES[a.cycle + 1] : undefined;
   return (
@@ -46,110 +29,54 @@ function FeuilleDeRoute() {
       <EnTeteCarte
         titre={t('feuilleRoute.titre')}
         action={
-          <Chip
-            size="small"
-            color="secondary"
-            label={t('commun.versionCourte', { version: a.version })}
-          />
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {t('commun.versionCourte', { version: a.version })}
+          </Typography>
         }
       />
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: 2.5,
-              display: 'grid',
-              placeItems: 'center',
-              bgcolor: termine ? 'success.main' : 'secondary.main',
-              color: '#FFFFFF',
-              flex: 'none',
-            }}
-          >
-            {termine ? <EmojiEventsRounded /> : <RouteRounded />}
-          </Box>
-          <Box>
-            <Typography sx={{ fontWeight: 700 }}>
-              {a.stable
-                ? t('feuilleRoute.stable')
-                : termine
-                  ? t('feuilleRoute.cycleTermine', { numero: `0.${a.cycle}` })
-                  : t('feuilleRoute.cycle', {
-                      numero: `0.${a.cycle}`,
-                      nom: t(`feuilleRoute.cycles.${a.codeCycle}`),
-                    })}
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box>
+          <Typography sx={{ fontWeight: 600 }}>
+            {a.stable
+              ? t('feuilleRoute.stable')
+              : termine
+                ? t('feuilleRoute.cycleTermine', { numero: `0.${a.cycle}` })
+                : t('feuilleRoute.cycle', {
+                    numero: `0.${a.cycle}`,
+                    nom: t(`feuilleRoute.cycles.${a.codeCycle}`),
+                  })}
+          </Typography>
+          {!a.stable && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {termine && suivant
+                ? t('feuilleRoute.prochain', {
+                    numero: `0.${(a.cycle ?? 0) + 1}`,
+                    nom: t(`feuilleRoute.cycles.${suivant}`),
+                  })
+                : t('feuilleRoute.etape', { etape: a.etape })}
             </Typography>
-            {!a.stable && (
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {termine && suivant
-                  ? t('feuilleRoute.prochain', {
-                      numero: `0.${(a.cycle ?? 0) + 1}`,
-                      nom: t(`feuilleRoute.cycles.${suivant}`),
-                    })
-                  : t('feuilleRoute.etape', { etape: a.etape })}
-              </Typography>
-            )}
-          </Box>
-        </Stack>
+          )}
+        </Box>
         {!a.stable && (
           <Box
             role="img"
             aria-label={`${t('feuilleRoute.versionsDuCycle', { numero: `0.${a.cycle}` })} : ${t('feuilleRoute.etape', { etape: a.etape })}`}
-            sx={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: 0.5 }}
+            sx={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: '2px' }}
           >
             {Array.from({ length: 9 }, (_, i) => (
               <Box
                 key={i}
                 sx={{
-                  height: 8,
-                  borderRadius: 4,
-                  bgcolor:
-                    i + 1 < (a.etape ?? 0)
-                      ? 'secondary.main'
-                      : i + 1 === a.etape
-                        ? termine
-                          ? 'success.main'
-                          : 'secondary.light'
-                        : 'action.hover',
+                  height: 4,
+                  bgcolor: i + 1 <= (a.etape ?? 0) ? 'secondary.main' : 'divider',
                 }}
               />
             ))}
           </Box>
         )}
-        <Stack direction="row" sx={{ gap: 0.5, flexWrap: 'wrap' }}>
-          {CYCLES.map((code, i) => {
-            const fait = a.stable || i < (a.cycle ?? 0) || (termine && i === a.cycle);
-            const courant = !a.stable && !termine && i === a.cycle;
-            return (
-              <Tooltip key={code} title={t(`feuilleRoute.cycles.${code}`)}>
-                <Chip
-                  size="small"
-                  label={`0.${i}`}
-                  color={fait ? 'secondary' : 'default'}
-                  variant={fait ? 'filled' : 'outlined'}
-                  icon={fait ? <CheckRounded /> : undefined}
-                  sx={{
-                    fontWeight: 700,
-                    ...(courant && { borderColor: 'secondary.main', borderWidth: 2 }),
-                    ...(!fait && !courant && { color: 'text.secondary' }),
-                  }}
-                />
-              </Tooltip>
-            );
-          })}
-        </Stack>
-        <Box>
-          <LinearProgress
-            variant="determinate"
-            value={pourcentage}
-            color="secondary"
-            aria-label={t('feuilleRoute.titre')}
-          />
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-            {t('feuilleRoute.livrees', { livrees: a.livrees, total: a.total })}
-          </Typography>
-        </Box>
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          {t('feuilleRoute.livrees', { livrees: a.livrees, total: a.total })}
+        </Typography>
       </CardContent>
     </Card>
   );
@@ -163,22 +90,24 @@ function EtatService() {
     queryFn: () => client.informations(),
     retry: false,
   });
-  const pastille = informations.isPending ? (
-    <Chip size="small" label={t('accueil.verification')} />
-  ) : informations.isSuccess ? (
-    <Chip
-      size="small"
-      color="success"
-      icon={<CloudDoneRounded />}
-      label={t('accueil.serveurDisponible')}
-    />
-  ) : (
-    <Chip
-      size="small"
-      color="error"
-      icon={<CloudOffRounded />}
-      label={t('accueil.serveurIndisponible')}
-    />
+  const pastille = (
+    <Typography
+      variant="caption"
+      sx={{
+        fontWeight: 600,
+        color: informations.isPending
+          ? 'text.secondary'
+          : informations.isSuccess
+            ? 'success.main'
+            : 'error.main',
+      }}
+    >
+      {informations.isPending
+        ? t('accueil.verification')
+        : informations.isSuccess
+          ? t('accueil.serveurDisponible')
+          : t('accueil.serveurIndisponible')}
+    </Typography>
   );
   return (
     <Card>
@@ -232,6 +161,15 @@ function MonCompte({ utilisateur, perimetre }: { utilisateur: Moi; perimetre: Pe
         />
         <Divider />
         <Ligne libelle={t('profil.langue')} valeur={t(`commun.langues.${i18n.language}`)} />
+        {perimetre.roles.length > 0 && (
+          <>
+            <Divider />
+            <Ligne
+              libelle={t('profil.roles')}
+              valeur={perimetre.roles.map((role) => t(`roles.${role}`)).join(', ')}
+            />
+          </>
+        )}
       </CardContent>
     </Card>
   );
@@ -250,55 +188,10 @@ function Bandeau({ utilisateur, perimetre }: { utilisateur: Moi; perimetre: Peri
     perimetre.pays_actif?.nom ??
     (perimetre.vue_consolidee ? t('pays.consolide') : t('session.siege'));
   return (
-    <Box
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 3,
-        color: '#FFFFFF',
-        px: { xs: 2.5, md: 3.5 },
-        py: { xs: 2.5, md: 3 },
-        background: `linear-gradient(120deg, ${marque.bleuMarine3} 0%, ${marque.bleuMarine} 55%, ${marque.bleuMarine2} 100%)`,
-        // Motif discret de la maquette : deux disques orange en fond.
-        '&::before, &::after': {
-          content: '""',
-          position: 'absolute',
-          borderRadius: '50%',
-          background: `radial-gradient(circle, ${marque.orange} 0%, transparent 70%)`,
-          opacity: 0.35,
-        },
-        '&::before': { width: 260, height: 260, right: -60, top: -110 },
-        '&::after': { width: 160, height: 160, right: 140, bottom: -110, opacity: 0.18 },
-      }}
-    >
-      <Box sx={{ position: 'relative' }}>
-        <Typography variant="overline" sx={{ color: marque.orangeClair }}>
-          {date.charAt(0).toUpperCase() + date.slice(1)} · {lieu}
-        </Typography>
-        <Typography variant="h4" component="h1" sx={{ mt: 0.25 }}>
-          {t('session.bonjour', { prenom: utilisateur.prenom })}
-        </Typography>
-        <Typography sx={{ opacity: 0.8, mt: 0.75, maxWidth: 560 }}>
-          {t('accueil.introduction')}
-        </Typography>
-        {perimetre.roles.length > 0 && (
-          <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap', mt: 2 }}>
-            {perimetre.roles.map((role) => (
-              <Chip
-                key={role}
-                size="small"
-                label={t(`roles.${role}`)}
-                sx={{
-                  bgcolor: 'rgba(255,255,255,.14)',
-                  color: '#FFFFFF',
-                  border: '1px solid rgba(255,255,255,.18)',
-                }}
-              />
-            ))}
-          </Stack>
-        )}
-      </Box>
-    </Box>
+    <EnTetePage
+      titre={t('session.bonjour', { prenom: utilisateur.prenom })}
+      sousTitre={`${date.charAt(0).toUpperCase() + date.slice(1)} · ${lieu}`}
+    />
   );
 }
 
@@ -317,41 +210,31 @@ function ChiffresOrganisation({ perimetre }: { perimetre: Perimetre }) {
         <Typography variant="h6" component="h2">
           {t('accueil.chiffresOrganisation')}
         </Typography>
-        <Button
-          component={LienRouteur}
-          to="/organisation"
-          endIcon={<ArrowForwardRounded />}
-          size="small"
-        >
+        <Button component={LienRouteur} to="/organisation" size="small">
           {t('accueil.voirOrganisation')}
         </Button>
       </Stack>
-      <GrilleTuiles>
-        <Tuile
+      <BarreChiffres>
+        <Chiffre
           libelle={t('organisation.chiffres.postes')}
           valeur={s.postes}
-          icone={<BadgeRounded />}
         />
-        <Tuile
+        <Chiffre
           libelle={t('organisation.chiffres.vacants')}
           valeur={s.postes_vacants}
-          icone={<PersonOffRounded />}
           ton="warning"
         />
-        <Tuile
+        <Chiffre
           libelle={t('organisation.chiffres.sansSuperviseur')}
           valeur={s.postes_sans_superviseur}
-          icone={<SupervisorAccountRounded />}
           ton="error"
         />
-        <Tuile
+        <Chiffre
           libelle={t('organisation.chiffres.secteurs')}
           valeur={s.secteurs}
-          icone={<MapRounded />}
-          ton="info"
           detail={t('organisation.chiffres.zones', { count: s.zones })}
         />
-      </GrilleTuiles>
+      </BarreChiffres>
     </Stack>
   );
 }
@@ -377,11 +260,9 @@ function MonPoste({ perimetre }: { perimetre: Perimetre }) {
         titre={o.postes.length > 1 ? t('monPoste.titrePlusieurs') : t('monPoste.titre')}
         action={
           o.postes_supervises > 0 && (
-            <Chip
-              size="small"
-              color="secondary"
-              label={t('monPoste.postesSupervises', { count: o.postes_supervises })}
-            />
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {t('monPoste.postesSupervises', { count: o.postes_supervises })}
+            </Typography>
           )
         }
       />
@@ -393,14 +274,15 @@ function MonPoste({ perimetre }: { perimetre: Perimetre }) {
         )}
         {o.postes.map(({ occupation, type_poste, reseaux, secteurs, superviseur }) => (
           <Stack key={occupation.id} direction="row" spacing={1.5}>
-            <PastilleIcone icone={<BadgeRounded />} ton="secondary" />
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <Typography sx={{ fontWeight: 700 }} noWrap>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
+                <Typography sx={{ fontWeight: 600 }} noWrap>
                   {occupation.poste.libelle}
                 </Typography>
                 {o.postes.length > 1 && occupation.principal && (
-                  <Chip size="small" label={t('monPoste.principal')} />
+                  <Typography variant="caption" sx={{ color: 'secondary.main', fontWeight: 600 }}>
+                    {t('monPoste.principal')}
+                  </Typography>
                 )}
               </Stack>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -424,16 +306,10 @@ function MonPoste({ perimetre }: { perimetre: Perimetre }) {
           </Stack>
         ))}
         {o.reseaux.length > 0 && (
-          <Box>
-            <Typography variant="overline" sx={{ color: 'text.secondary' }}>
-              {t('monPoste.perimetreReseaux')}
-            </Typography>
-            <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap', mt: 0.5 }}>
-              {o.reseaux.map((p) => (
-                <Chip key={p.id} size="small" variant="outlined" label={p.reseau.libelle} />
-              ))}
-            </Stack>
-          </Box>
+          <Ligne
+            libelle={t('monPoste.perimetreReseaux')}
+            valeur={o.reseaux.map((p) => p.reseau.libelle).join(', ')}
+          />
         )}
       </CardContent>
     </Card>
@@ -490,15 +366,10 @@ function AFaire({ perimetre }: { perimetre: Perimetre }) {
                     flex: 'none',
                   }}
                 />
-                <Typography sx={{ flexGrow: 1, fontWeight: 600 }}>
+                <Typography sx={{ flexGrow: 1 }}>
                   {t(`accueil.${l.cle}`, { count: l.n })}
                 </Typography>
-                <Button
-                  component={LienRouteur}
-                  to={l.lien}
-                  size="small"
-                  endIcon={<ArrowForwardRounded />}
-                >
+                <Button component={LienRouteur} to={l.lien} size="small">
                   {t('commun.voir')}
                 </Button>
               </Stack>
@@ -522,7 +393,11 @@ function MonEquipe({ perimetre }: { perimetre: Perimetre }) {
     <Card>
       <EnTeteCarte
         titre={t('accueil.monEquipe')}
-        action={<Chip size="small" color="secondary" label={liste.length} />}
+        action={
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {liste.length}
+          </Typography>
+        }
       />
       <CardContent sx={{ py: 0.5 }}>
         {liste.length === 0 && (
@@ -534,13 +409,11 @@ function MonEquipe({ perimetre }: { perimetre: Perimetre }) {
           <Box key={poste.id}>
             {i > 0 && <Divider />}
             <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 1 }}>
-              <PastilleIcone
-                icone={<BadgeRounded />}
-                ton={poste.vacant ? 'warning' : 'primary'}
-                taille={32}
-              />
               <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                <Typography sx={{ fontWeight: 600 }} noWrap>
+                <Typography
+                  sx={{ fontWeight: 500, color: poste.vacant ? 'warning.main' : 'text.primary' }}
+                  noWrap
+                >
                   {poste.occupant
                     ? `${poste.occupant.prenom} ${poste.occupant.nom}`
                     : t('organisation.vacant')}
@@ -562,31 +435,32 @@ function LesPays() {
   const { client, choisirPays } = useSession();
   const pays = useQuery({ queryKey: ['pays', 'liste'], queryFn: () => client.pays.liste() });
   return (
-    <Stack spacing={1.5}>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" component="h2">
-          {t('accueil.lesPays')}
-        </Typography>
-        <Button component={LienRouteur} to="/pays" endIcon={<ArrowForwardRounded />} size="small">
-          {t('commun.voir')}
-        </Button>
-      </Stack>
+    <Card>
+      <EnTeteCarte
+        titre={t('accueil.lesPays')}
+        action={
+          <Button component={LienRouteur} to="/pays" size="small">
+            {t('commun.voir')}
+          </Button>
+        }
+      />
       <Box
         sx={{
           display: 'grid',
-          gap: 1.5,
-          gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' },
         }}
       >
         {(pays.data ?? [])
           .filter((p) => p.statut !== 'archive')
           .map((p) => (
-            <Card
+            <Box
               key={p.code}
               component="button"
               onClick={() => void choisirPays(p.code)}
               sx={{
-                p: 1.75,
+                px: 2,
+                py: 1.25,
+                minHeight: 48,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1.25,
@@ -594,52 +468,41 @@ function LesPays() {
                 textAlign: 'left',
                 font: 'inherit',
                 color: 'inherit',
-                bgcolor: 'background.paper',
-                transition: 'transform .15s, box-shadow .15s',
-                '&:hover': { transform: 'translateY(-2px)' },
+                bgcolor: 'transparent',
+                border: 0,
+                borderBottom: 1,
+                borderColor: 'divider',
+                '&:hover': { bgcolor: 'action.hover' },
               }}
             >
-              <Box aria-hidden sx={{ fontSize: 26, lineHeight: 1 }}>
+              <Box aria-hidden sx={{ fontSize: 20, lineHeight: 1 }}>
                 {drapeau(p.code)}
               </Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700 }} noWrap>
-                  {p.nom}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: p.statut === 'actif' ? 'success.main' : 'warning.main',
-                    fontWeight: 600,
-                  }}
-                >
-                  {t(`paysPage.statuts.${p.statut}`)}
-                </Typography>
-              </Box>
-            </Card>
+              <Typography sx={{ fontWeight: 500, flexGrow: 1, minWidth: 0 }} noWrap>
+                {p.nom}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: p.statut === 'actif' ? 'text.secondary' : 'warning.main' }}
+              >
+                {t(`paysPage.statuts.${p.statut}`)}
+              </Typography>
+            </Box>
           ))}
       </Box>
-    </Stack>
+    </Card>
   );
 }
 
 function MaSemaine() {
   const { t } = useTranslation();
   return (
-    <Card
-      sx={{
-        borderColor: 'secondary.main',
-        bgcolor: (th) => alpha(th.palette.secondary.main, 0.06),
-      }}
-    >
-      <CardContent sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-        <PastilleIcone icone={<CalendarMonthRounded />} ton="secondary" />
-        <Box>
-          <Typography sx={{ fontWeight: 700 }}>{t('accueil.semaine')}</Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-            {t('accueil.semaineTexte')}
-          </Typography>
-        </Box>
+    <Card>
+      <EnTeteCarte titre={t('accueil.semaine')} />
+      <CardContent>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {t('accueil.semaineTexte')}
+        </Typography>
       </CardContent>
     </Card>
   );
@@ -660,7 +523,7 @@ export default function Accueil({
   const terrain = a('delegue') || a('superviseur');
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2}>
       <Bandeau utilisateur={utilisateur} perimetre={perimetre} />
       {perimetre.roles.length === 0 && (
         <Alert severity="warning" role="alert">

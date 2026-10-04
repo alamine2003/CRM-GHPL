@@ -80,7 +80,6 @@ export default function Connexion() {
           <Button
             type="submit"
             variant="contained"
-            color="secondary"
             size="large"
             disabled={envoi || (secours ? code.length < 8 : code.length !== 6)}
           >
@@ -162,7 +161,7 @@ export default function Connexion() {
             },
           }}
         />
-        <Button type="submit" variant="contained" color="secondary" size="large" disabled={envoi}>
+        <Button type="submit" variant="contained" size="large" disabled={envoi}>
           {envoi ? t('connexion.enCours') : t('connexion.seConnecter')}
         </Button>
       </form>

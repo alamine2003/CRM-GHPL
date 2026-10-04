@@ -7,58 +7,36 @@ import type {
   SecteurSaisie,
   StatutFiche,
 } from '@innov/api-client';
-import AddRounded from '@mui/icons-material/AddRounded';
-import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
-import ArchiveRounded from '@mui/icons-material/ArchiveRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
-import EditRounded from '@mui/icons-material/EditRounded';
-import GpsFixedRounded from '@mui/icons-material/GpsFixedRounded';
-import HourglassTopRounded from '@mui/icons-material/HourglassTopRounded';
-import LocationOffRounded from '@mui/icons-material/LocationOffRounded';
-import MapRounded from '@mui/icons-material/MapRounded';
-import MyLocationRounded from '@mui/icons-material/MyLocationRounded';
-import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
-import PlaceRounded from '@mui/icons-material/PlaceRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import TaskAltRounded from '@mui/icons-material/TaskAltRounded';
-import ViewListRounded from '@mui/icons-material/ViewListRounded';
 import {
   Alert,
   Box,
   Button,
   ButtonBase,
   Card,
-  Chip,
   Divider,
   Drawer,
+  FormControlLabel,
   IconButton,
   InputAdornment,
   Link,
   MenuItem,
   Skeleton,
   Stack,
+  Switch,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
-import {
-  EnTeteCarte,
-  EnTetePage,
-  EtatVide,
-  GrilleTuiles,
-  Ligne,
-  PastilleIcone,
-  Tuile,
-} from '../composants/Elements';
+import { BarreChiffres, Chiffre, EnTetePage, EtatVide, Ligne, Section } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { ProspectsExercant } from '../composants/Exercices';
-import IconeType from '../composants/IconeEtablissement';
 import { BarrePagination } from '../composants/Recherche';
 import { ChampsLieu, ChoixActivite, SelectSecteur } from '../composants/Lieu';
 import { depuis } from '../composants/formats';
@@ -217,7 +195,6 @@ function DialogueEtablissement({
           </Typography>
           <Button
             size="small"
-            startIcon={<MyLocationRounded />}
             sx={{ flex: 'none', whiteSpace: 'nowrap' }}
             onClick={maPosition}
             disabled={localisation === 'attente'}
@@ -280,23 +257,6 @@ function DialogueEtablissement({
 
 // --- Fiche -------------------------------------------------------------------------------------
 
-function Section({
-  titre,
-  icone,
-  children,
-}: {
-  titre: string;
-  icone: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <Card variant="outlined">
-      <EnTeteCarte titre={titre} action={<PastilleIcone icone={icone} ton="info" taille={30} />} />
-      <Box sx={{ px: 2, py: 1.5 }}>{children}</Box>
-    </Card>
-  );
-}
-
 function FicheEtablissement({
   id,
   gerer,
@@ -327,8 +287,8 @@ function FicheEtablissement({
   return (
     <Box
       sx={{
-        width: { xs: '100vw', sm: 480 },
-        p: 2.5,
+        width: { xs: '100vw', sm: 460 },
+        p: 2,
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
@@ -342,29 +302,27 @@ function FicheEtablissement({
       ) : (
         <>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-            <PastilleIcone icone={<IconeType code={e.type_code} />} ton="primary" taille={52} />
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-              <Typography variant="h6" component="h2" sx={{ lineHeight: 1.2 }}>
+              <Typography variant="h4" component="h2">
                 {e.nom}
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {[e.type_libelle, e.localite?.libelle].filter(Boolean).join(' · ')}
-              </Typography>
-              <Stack direction="row" sx={{ mt: 1, gap: 0.5, flexWrap: 'wrap' }}>
-                <Chip
-                  size="small"
-                  icon={<PlaceRounded />}
-                  label={`${e.secteur.zone} · ${e.secteur.libelle}`}
-                />
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                {[e.type_libelle, e.localite?.libelle, `${e.secteur.zone} · ${e.secteur.libelle}`]
+                  .filter(Boolean)
+                  .join(' · ')}
                 {e.statut !== 'actif' && (
-                  <Chip
-                    size="small"
-                    color={e.statut === 'a_valider' ? 'warning' : 'default'}
-                    icon={e.statut === 'a_valider' ? <HourglassTopRounded /> : undefined}
-                    label={t(`prospect.statuts.${e.statut}`)}
-                  />
+                  <Box
+                    component="span"
+                    sx={{
+                      fontWeight: 600,
+                      color: e.statut === 'a_valider' ? 'warning.main' : 'text.secondary',
+                    }}
+                  >
+                    {' · '}
+                    {t(`prospect.statuts.${e.statut}`)}
+                  </Box>
                 )}
-              </Stack>
+              </Typography>
             </Box>
             <IconButton aria-label={t('commun.fermer')} onClick={surFermer}>
               <CloseRounded />
@@ -375,8 +333,6 @@ function FicheEtablissement({
             {gerer && e.statut === 'a_valider' && (
               <Button
                 variant="contained"
-                color="success"
-                startIcon={<TaskAltRounded />}
                 onClick={() =>
                   void client.etablissements
                     .valider(id)
@@ -393,18 +349,14 @@ function FicheEtablissement({
               </Button>
             )}
             {e.modifiable && (
-              <Button variant="outlined" startIcon={<EditRounded />} onClick={() => surModifier(e)}>
+              <Button variant="outlined" onClick={() => surModifier(e)}>
                 {e.a_coordonnees
                   ? t('prospect.fiche.modifier')
                   : t('etablissement.fiche.positionner')}
               </Button>
             )}
             {gerer && e.statut !== 'archive' && (
-              <Button
-                color="error"
-                startIcon={<ArchiveRounded />}
-                onClick={() => setArchivage(true)}
-              >
+              <Button color="error" onClick={() => setArchivage(true)}>
                 {t('prospect.fiche.archiver')}
               </Button>
             )}
@@ -427,10 +379,7 @@ function FicheEtablissement({
                 />
               </Suspense>
               <Stack direction="row" sx={{ justifyContent: 'space-between', mt: 0.75 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
-                >
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   {e.latitude?.toFixed(5)}, {e.longitude?.toFixed(5)}
                 </Typography>
                 <Link
@@ -444,13 +393,13 @@ function FicheEtablissement({
               </Stack>
             </Box>
           ) : (
-            <Alert severity="warning" icon={<LocationOffRounded />}>
+            <Alert severity="warning">
               <strong>{t('etablissement.fiche.sansPosition')}</strong> —{' '}
               {t('etablissement.fiche.sansPositionTexte')}
             </Alert>
           )}
 
-          <Section titre={t('etablissement.fiche.coordonnees')} icone={<PlaceRounded />}>
+          <Section titre={t('etablissement.fiche.coordonnees')}>
             <Ligne libelle={t('etablissement.champs.adresse')} valeur={e.adresse || aucun} />
             <Ligne
               libelle={t('etablissement.champs.localite')}
@@ -464,11 +413,7 @@ function FicheEtablissement({
               libelle={t('etablissement.champs.telephone')}
               valeur={
                 e.telephone ? (
-                  <Link
-                    href={`tel:${e.telephone}`}
-                    underline="hover"
-                    sx={{ fontFamily: 'monospace' }}
-                  >
+                  <Link href={`tel:${e.telephone}`} underline="hover">
                     {e.telephone}
                   </Link>
                 ) : (
@@ -477,7 +422,7 @@ function FicheEtablissement({
               }
             />
           </Section>
-          <Section titre={t('etablissement.fiche.prospects')} icone={<PeopleAltRounded />}>
+          <Section titre={t('etablissement.fiche.prospects')}>
             <ProspectsExercant etablissement={e.id} />
           </Section>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -516,7 +461,6 @@ function FicheEtablissement({
 /** Fiches établissements (PRP-003) : un secteur chacun, une position GPS de référence. */
 export default function Etablissements({ perimetre }: { perimetre: Perimetre }) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const { client } = useSession();
   const requetes = useQueryClient();
   const cle = perimetre.pays_actif?.code ?? 'consolide';
@@ -581,175 +525,171 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
   const placees = fiches.filter((e) => e.a_coordonnees);
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={2}>
       <EnTetePage
         titre={t('etablissement.titre')}
-        sousTitre={
-          perimetre.pays_actif
-            ? t('etablissement.sousTitre', { pays: perimetre.pays_actif.nom })
-            : t('etablissement.sousTitreConsolide')
-        }
+        sousTitre={perimetre.pays_actif?.nom ?? t('pays.consolide')}
         actions={
           peutCreer && (
-            <Button
-              variant="contained"
-              startIcon={<AddRounded />}
-              onClick={() => setDialogue({ fiche: null })}
-            >
+            <Button variant="contained" onClick={() => setDialogue({ fiche: null })}>
               {t('etablissement.nouveau')}
             </Button>
           )
         }
       />
-      <GrilleTuiles>
-        <Tuile
+      <BarreChiffres>
+        <Chiffre
           libelle={t('etablissement.chiffres.actifs')}
           valeur={s ? s.actifs : <Skeleton width={40} />}
-          icone={<ApartmentRounded />}
         />
-        <Tuile
+        <Chiffre
           libelle={
             delegue ? t('etablissement.chiffres.mesAValider') : t('etablissement.chiffres.aValider')
           }
           valeur={s ? delegue ? s.mes_a_valider : s.a_valider : <Skeleton width={40} />}
-          icone={<HourglassTopRounded />}
           ton="warning"
         />
-        <Tuile
+        <Chiffre
           libelle={t('etablissement.chiffres.sansCoordonnees')}
           valeur={s ? s.sans_coordonnees : <Skeleton width={40} />}
-          icone={<LocationOffRounded />}
-          ton={s && s.sans_coordonnees > 0 ? 'error' : 'success'}
-          detail={t('etablissement.chiffres.sansCoordonneesDetail')}
+          ton="warning"
         />
-        <Tuile
+        <Chiffre
           libelle={t('etablissement.chiffres.secteurs')}
           valeur={s ? s.secteurs_couverts : <Skeleton width={40} />}
-          icone={<MapRounded />}
-          ton="info"
           detail={
             secteurs.data
               ? t('referentiel.chiffres.surTotal', { total: secteurs.data.length })
               : undefined
           }
         />
-      </GrilleTuiles>
+      </BarreChiffres>
 
-      <Stack spacing={1.25}>
-        <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
-          <TextField
-            size="small"
-            placeholder={t('etablissement.rechercher')}
-            value={saisie}
-            onChange={(e) => setSaisie(e.target.value)}
-            sx={{ flexGrow: 1 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchRounded fontSize="small" />
-                  </InputAdornment>
-                ),
+      <Card sx={{ p: 1.5 }}>
+        <Stack spacing={1.25}>
+          <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
+            <TextField
+              size="small"
+              type="search"
+              placeholder={t('etablissement.rechercher')}
+              value={saisie}
+              onChange={(e) => setSaisie(e.target.value)}
+              sx={{ flexGrow: 1 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRounded fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+                htmlInput: { 'aria-label': t('etablissement.rechercher') },
+              }}
+            />
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={vue}
+              onChange={(_, v: 'liste' | 'carte' | null) => v && setVue(v)}
+              aria-label={t('etablissement.vue')}
+            >
+              <ToggleButton value="liste">{t('etablissement.vues.liste')}</ToggleButton>
+              <ToggleButton value="carte">{t('etablissement.vues.carte')}</ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 1.25,
+              alignItems: 'center',
+              gridTemplateColumns: {
+                xs: '1fr 1fr',
+                md: 'auto repeat(3, minmax(0, 1fr)) auto',
               },
-              htmlInput: { 'aria-label': t('etablissement.rechercher') },
-            }}
-          />
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={vue}
-            onChange={(_, v: 'liste' | 'carte' | null) => v && setVue(v)}
-          >
-            <ToggleButton value="liste" aria-label={t('etablissement.titre')}>
-              <ViewListRounded fontSize="small" />
-            </ToggleButton>
-            <ToggleButton value="carte" aria-label={t('etablissement.fiche.carte')}>
-              <MapRounded fontSize="small" />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Stack>
-        <Stack direction="row" sx={{ gap: 1.25, flexWrap: 'wrap', alignItems: 'center' }}>
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={statut}
-            onChange={(_, valeur: FiltreStatut | null) => valeur && setStatut(valeur)}
-            sx={{ '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 600, px: 1.5 } }}
-          >
-            {(
-              [
-                'tous',
-                'a_valider',
-                'actif',
-                ...(gerer ? (['archive'] as const) : []),
-              ] as FiltreStatut[]
-            ).map((v) => (
-              <ToggleButton key={v} value={v}>
-                {t(`prospect.filtres.${v}`)}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-          <TextField
-            select
-            size="small"
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            sx={{ minWidth: 160 }}
-            slotProps={{
-              select: { displayEmpty: true },
-              htmlInput: { 'aria-label': t('etablissement.champs.type') },
             }}
           >
-            <MenuItem value="">{t('etablissement.tousTypes')}</MenuItem>
-            {types.map((v) => (
-              <MenuItem key={v.id} value={v.id}>
-                {v.libelle}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            size="small"
-            value={tri}
-            onChange={(e) => setTri(e.target.value as TriEtablissements)}
-            sx={{ minWidth: 150 }}
-            slotProps={{ htmlInput: { 'aria-label': t('recherche.trierPar') } }}
-          >
-            {(['nom', 'type', 'secteur', 'recents'] as const).map((v) => (
-              <MenuItem key={v} value={v}>
-                {t(`recherche.tris.${v}`)}
-              </MenuItem>
-            ))}
-          </TextField>
-          <SelectSecteur
-            secteurs={secteurs.data ?? []}
-            valeur={secteur}
-            changer={setSecteur}
-            libelle={t('etablissement.champs.secteur')}
-            vide={t('etablissement.tousSecteurs')}
-            taille="small"
-          />
-          <ToggleButton
-            size="small"
-            value="sansGps"
-            selected={sansGps}
-            onChange={() => setSansGps((v) => !v)}
-            sx={{ textTransform: 'none', fontWeight: 600, gap: 0.5, flex: 'none' }}
-          >
-            <LocationOffRounded fontSize="small" />
-            {t('etablissement.sansGps')}
-          </ToggleButton>
+            <Box sx={{ overflowX: 'auto', gridColumn: { xs: '1 / -1', md: 'auto' } }}>
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={statut}
+                onChange={(_, valeur: FiltreStatut | null) => valeur && setStatut(valeur)}
+                aria-label={t('prospect.champs.statut')}
+              >
+                {(
+                  [
+                    'tous',
+                    'a_valider',
+                    'actif',
+                    ...(gerer ? (['archive'] as const) : []),
+                  ] as FiltreStatut[]
+                ).map((v) => (
+                  <ToggleButton key={v} value={v} sx={{ px: 1.25 }}>
+                    {t(`prospect.filtres.${v}`)}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            </Box>
+            <TextField
+              select
+              size="small"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              slotProps={{
+                select: { displayEmpty: true },
+                htmlInput: { 'aria-label': t('etablissement.champs.type') },
+              }}
+            >
+              <MenuItem value="">{t('etablissement.tousTypes')}</MenuItem>
+              {types.map((v) => (
+                <MenuItem key={v.id} value={v.id}>
+                  {v.libelle}
+                </MenuItem>
+              ))}
+            </TextField>
+            <SelectSecteur
+              secteurs={secteurs.data ?? []}
+              valeur={secteur}
+              changer={setSecteur}
+              libelle={t('etablissement.champs.secteur')}
+              vide={t('etablissement.tousSecteurs')}
+              taille="small"
+            />
+            <TextField
+              select
+              size="small"
+              value={tri}
+              onChange={(e) => setTri(e.target.value as TriEtablissements)}
+              slotProps={{ htmlInput: { 'aria-label': t('recherche.trierPar') } }}
+            >
+              {(['nom', 'type', 'secteur', 'recents'] as const).map((v) => (
+                <MenuItem key={v} value={v}>
+                  {t(`recherche.tris.${v}`)}
+                </MenuItem>
+              ))}
+            </TextField>
+            <FormControlLabel
+              sx={{ mr: 0, ml: 0.5 }}
+              control={
+                <Switch size="small" checked={sansGps} onChange={() => setSansGps((v) => !v)} />
+              }
+              label={<Typography variant="body2">{t('etablissement.sansGps')}</Typography>}
+            />
+          </Box>
         </Stack>
-      </Stack>
+      </Card>
 
       {liste.isError ? (
         <ErreurChargement erreur={liste.error} reessayer={() => void liste.refetch()} />
       ) : !liste.data ? (
-        <Stack spacing={1}>
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} variant="rounded" height={64} />
+        <Card aria-busy="true">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <Box key={i} sx={{ px: 2, py: 1.5, borderTop: i ? 1 : 0, borderColor: 'divider' }}>
+              <Skeleton width="40%" />
+              <Skeleton width="25%" />
+            </Box>
           ))}
-        </Stack>
+        </Card>
       ) : (
         <>
           <BarrePagination
@@ -759,7 +699,7 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
             changer={setPage}
           />
           {vue === 'carte' ? (
-            <Card sx={{ p: 1 }}>
+            <Card sx={{ overflow: 'hidden' }}>
               <Suspense fallback={<ChargementCarte hauteur={520} />}>
                 <Carte
                   hauteur={520}
@@ -778,10 +718,9 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
             <Card>
               {fiches.length === 0 ? (
                 q || type || secteur || sansGps || statut !== 'tous' ? (
-                  <EtatVide icone={<SearchRounded />} titre={t('etablissement.aucunResultat')} />
+                  <EtatVide titre={t('etablissement.aucunResultat')} />
                 ) : (
                   <EtatVide
-                    icone={<ApartmentRounded />}
                     titre={t('etablissement.vide')}
                     texte={t('etablissement.videTexte')}
                   />
@@ -796,29 +735,17 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
                         width: '100%',
                         textAlign: 'left',
                         display: 'grid',
-                        gridTemplateColumns: { xs: 'auto 1fr auto', md: 'auto 2fr 1.3fr 1fr auto' },
-                        gap: 2,
+                        gridTemplateColumns: { xs: '1fr auto', md: '2fr 1.3fr 120px' },
+                        columnGap: 2,
                         alignItems: 'center',
-                        px: 2.5,
-                        py: 1.25,
+                        px: 2,
+                        py: 1,
+                        minHeight: 56,
                         '&:hover': { bgcolor: 'action.hover' },
                       }}
                     >
-                      <Box
-                        sx={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 2,
-                          display: 'grid',
-                          placeItems: 'center',
-                          color: 'primary.main',
-                          bgcolor: alpha(theme.palette.primary.main, 0.08),
-                        }}
-                      >
-                        <IconeType code={e.type_code} />
-                      </Box>
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography sx={{ fontWeight: 700 }} noWrap>
+                        <Typography sx={{ fontWeight: 600 }} noWrap>
                           {e.nom}
                         </Typography>
                         <Typography
@@ -830,31 +757,25 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
                           {[e.type_libelle, e.localite?.libelle].filter(Boolean).join(' · ')}
                         </Typography>
                       </Box>
-                      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={`${e.secteur.zone} · ${e.secteur.libelle}`}
-                        />
-                      </Box>
-                      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                        {e.statut !== 'actif' && (
-                          <Chip
-                            size="small"
-                            color={e.statut === 'a_valider' ? 'warning' : 'default'}
-                            variant="outlined"
-                            label={t(`prospect.statuts.${e.statut}`)}
-                          />
-                        )}
-                      </Box>
-                      {e.a_coordonnees ? (
-                        <GpsFixedRounded
-                          color="success"
-                          aria-label={t('etablissement.champs.position')}
-                        />
-                      ) : (
-                        <LocationOffRounded color="error" aria-label={t('etablissement.sansGps')} />
-                      )}
+                      <Typography
+                        variant="body2"
+                        sx={{ display: { xs: 'none', md: 'block' }, color: 'text.secondary' }}
+                        noWrap
+                      >
+                        {`${e.secteur.zone} · ${e.secteur.libelle}`}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          textAlign: 'right',
+                          fontWeight: 600,
+                          color: e.statut === 'a_valider' ? 'warning.main' : 'text.secondary',
+                        }}
+                      >
+                        {e.statut !== 'actif'
+                          ? t(`prospect.statuts.${e.statut}`)
+                          : !e.a_coordonnees && t('etablissement.sansGps')}
+                      </Typography>
                     </ButtonBase>
                   </Box>
                 ))

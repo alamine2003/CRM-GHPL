@@ -1,21 +1,17 @@
 import { ErreurApi } from '@innov/api-client';
-import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
-import ReplayRounded from '@mui/icons-material/ReplayRounded';
 import { Alert, Box, Button, Card, Stack, Typography } from '@mui/material';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { signalerErreur } from '../signalement';
-import { PastilleIcone } from './Elements';
 
 /** Écran affiché quand une page plante : message clair, référence, rechargement. */
 export function EcranErreur({ reference }: { reference?: string }) {
   const { t } = useTranslation();
   return (
     <Box sx={{ display: 'grid', placeItems: 'center', minHeight: '60vh', p: 3 }}>
-      <Card sx={{ maxWidth: 480, p: 4, textAlign: 'center' }}>
-        <Stack spacing={2} sx={{ alignItems: 'center' }}>
-          <PastilleIcone icone={<ErrorOutlineRounded />} ton="error" taille={64} />
-          <Typography variant="h5" component="h1">
+      <Card sx={{ maxWidth: 480, p: 3 }}>
+        <Stack spacing={1.5}>
+          <Typography variant="h4" component="h1">
             {t('erreurs.titre')}
           </Typography>
           <Typography sx={{ color: 'text.secondary' }}>{t('erreurs.texte')}</Typography>
@@ -25,15 +21,16 @@ export function EcranErreur({ reference }: { reference?: string }) {
               sx={{
                 fontFamily: 'monospace',
                 bgcolor: 'action.hover',
-                px: 1.5,
+                px: 1,
                 py: 0.5,
                 borderRadius: 1,
+                alignSelf: 'flex-start',
               }}
             >
               {t('erreurs.reference', { reference })}
             </Typography>
           )}
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ pt: 1 }}>
             <Button variant="contained" onClick={() => window.location.reload()}>
               {t('erreurs.recharger')}
             </Button>
@@ -78,7 +75,7 @@ export function ErreurChargement({
       severity="error"
       action={
         reessayer && (
-          <Button color="inherit" size="small" startIcon={<ReplayRounded />} onClick={reessayer}>
+          <Button color="inherit" size="small" onClick={reessayer}>
             {t('erreurs.reessayer')}
           </Button>
         )

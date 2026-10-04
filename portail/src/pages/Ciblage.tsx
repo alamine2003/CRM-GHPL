@@ -1,21 +1,14 @@
 import type { Cible, Perimetre, PosteCible, Potentiel, ProspectCible } from '@innov/api-client';
-import AddRounded from '@mui/icons-material/AddRounded';
 import AddCircleOutlineRounded from '@mui/icons-material/AddCircleOutlineRounded';
-import BadgeRounded from '@mui/icons-material/BadgeRounded';
-import EventRepeatRounded from '@mui/icons-material/EventRepeatRounded';
-import GpsNotFixedRounded from '@mui/icons-material/GpsNotFixedRounded';
 import PersonOffRounded from '@mui/icons-material/PersonOffRounded';
-import PlaylistAddCheckRounded from '@mui/icons-material/PlaylistAddCheckRounded';
 import RemoveCircleOutlineRounded from '@mui/icons-material/RemoveCircleOutlineRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded';
 import {
   Alert,
   Box,
   Button,
   Card,
   Checkbox,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -23,6 +16,7 @@ import {
   IconButton,
   InputAdornment,
   List,
+  MenuItem,
   ListItemButton,
   Skeleton,
   Stack,
@@ -31,19 +25,20 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
 import {
+  BarreChiffres,
+  Chiffre,
   EnTeteCarte,
   EnTetePage,
   EtatVide,
-  GrilleTuiles,
-  PastilleIcone,
-  Tuile,
+  Potentiel as MarquePotentiel,
 } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { useNotifier } from '../contexteNotifications';
@@ -61,8 +56,8 @@ function useCouleurPotentiel() {
     p === 'A'
       ? theme.palette.secondary.main
       : p === 'B'
-        ? theme.palette.info.main
-        : theme.palette.text.disabled;
+        ? theme.palette.primary.main
+        : theme.palette.divider;
 }
 
 function nomAffiche(p: ProspectCible, t: (c: string) => string) {
@@ -85,7 +80,7 @@ function BarrePotentiels({ potentiels }: { potentiels: Record<string, number> })
         b: potentiels.B ?? 0,
         c: potentiels.C ?? 0,
       })}
-      sx={{ display: 'flex', height: 6, borderRadius: 3, overflow: 'hidden', mt: 1 }}
+      sx={{ display: 'flex', height: 4, gap: '2px', overflow: 'hidden', mt: 0.75 }}
     >
       {POTENTIELS.map((p) =>
         potentiels[p] ? <Box key={p} sx={{ flex: potentiels[p], bgcolor: couleur(p) }} /> : null,
@@ -96,26 +91,7 @@ function BarrePotentiels({ potentiels }: { potentiels: Record<string, number> })
 
 function PastillePotentiel({ potentiel }: { potentiel: Potentiel }) {
   const { t } = useTranslation();
-  const couleur = useCouleurPotentiel()(potentiel);
-  return (
-    <Box
-      aria-label={t(`prospect.potentiels.${potentiel}`)}
-      sx={{
-        width: 30,
-        height: 30,
-        flex: 'none',
-        borderRadius: '50%',
-        display: 'grid',
-        placeItems: 'center',
-        fontWeight: 800,
-        fontSize: 13,
-        color: couleur,
-        bgcolor: alpha(couleur, 0.14),
-      }}
-    >
-      {potentiel}
-    </Box>
-  );
+  return <MarquePotentiel valeur={potentiel} libelle={t(`prospect.potentiels.${potentiel}`)} />;
 }
 
 // --- Choix du poste -----------------------------------------------------------------------------
@@ -130,7 +106,28 @@ function ListePostes({
   choisir: (id: string) => void;
 }) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const [filtre, setFiltre] = useState('');
+  const large = useMediaQuery(theme.breakpoints.up('md'));
+  if (!large) {
+    // Sur petit écran, une liste déroulante : le détail du poste reste en haut de l'écran.
+    return (
+      <TextField
+        select
+        size="small"
+        fullWidth
+        label={t('ciblage.poste')}
+        value={choisi ?? ''}
+        onChange={(e) => choisir(e.target.value)}
+      >
+        {postes.map((p) => (
+          <MenuItem key={p.id} value={p.id}>
+            {`${p.libelle} · ${p.occupant ?? t('ciblage.vacant')} (${p.synthese.total})`}
+          </MenuItem>
+        ))}
+      </TextField>
+    );
+  }
   const visibles = postes.filter((p) =>
     normaliser(
       `${p.libelle} ${p.occupant ?? ''} ${p.secteurs.map((s) => s.libelle).join(' ')}`,
@@ -164,13 +161,18 @@ function ListePostes({
             selected={p.id === choisi}
             onClick={() => choisir(p.id)}
             divider
-            sx={{ display: 'block', py: 1.25 }}
+            sx={{
+              display: 'block',
+              py: 1,
+              borderRadius: 0,
+              '&.Mui-selected': { boxShadow: `inset 2px 0 0 ${theme.palette.secondary.main}` },
+            }}
           >
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
-              <Typography sx={{ fontWeight: 700, minWidth: 0 }} noWrap>
+              <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 0 }} noWrap>
                 {p.libelle}
               </Typography>
-              <Typography sx={{ fontWeight: 800, color: 'text.secondary' }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary' }}>
                 {p.synthese.total}
               </Typography>
             </Stack>
@@ -268,7 +270,7 @@ function DialogueAjout({ poste, surFermer }: { poste: PosteCible; surFermer: () 
               aria-label={t('prospect.champs.potentiel')}
             >
               {POTENTIELS.map((p) => (
-                <ToggleButton key={p} value={p} sx={{ px: 1.75, fontWeight: 800 }}>
+                <ToggleButton key={p} value={p} sx={{ px: 1.75, fontWeight: 700 }}>
                   {p}
                 </ToggleButton>
               ))}
@@ -331,7 +333,6 @@ function DialogueAjout({ poste, surFermer }: { poste: PosteCible; surFermer: () 
         <Button onClick={surFermer}>{t('commun.annuler')}</Button>
         <Button
           variant="contained"
-          startIcon={<PlaylistAddCheckRounded />}
           disabled={choix.size === 0 || envoi}
           onClick={() => void ajouter()}
         >
@@ -395,7 +396,6 @@ function Frequence({ cible, gerer }: { cible: Cible; gerer: boolean }) {
 function DetailPoste({ id }: { id: string }) {
   const { t } = useTranslation();
   const { client } = useSession();
-  const couleur = useCouleurPotentiel();
   const requetes = useQueryClient();
   const [ajout, setAjout] = useState(false);
   const [retrait, setRetrait] = useState<Cible | null>(null);
@@ -416,72 +416,62 @@ function DetailPoste({ id }: { id: string }) {
 
   return (
     <Stack spacing={2} sx={{ minWidth: 0 }}>
-      <Card sx={{ p: 2.5 }}>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={2}
-          sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}
-        >
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minWidth: 0 }}>
-            <PastilleIcone icone={<BadgeRounded />} taille={48} />
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="h5" component="h2" noWrap>
-                {poste.libelle}
-              </Typography>
-              <Typography sx={{ color: poste.occupant ? 'text.secondary' : 'warning.main' }}>
-                {poste.occupant ?? t('ciblage.vacant')}
-              </Typography>
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', rowGap: 1 }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="h5" component="h2">
+            {poste.libelle}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Box
+              component="span"
+              sx={{ color: poste.occupant ? 'text.primary' : 'warning.main', fontWeight: 500 }}
+            >
+              {poste.occupant ?? t('ciblage.vacant')}
             </Box>
-          </Stack>
-          {poste.gerable && (
-            <Button variant="contained" startIcon={<AddRounded />} onClick={() => setAjout(true)}>
-              {t('ciblage.ajouter')}
-            </Button>
-          )}
-        </Stack>
-        <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap', mt: 1.5 }}>
-          {poste.secteurs.map((x) => (
-            <Chip key={x.id} size="small" variant="outlined" label={x.libelle} />
-          ))}
-        </Stack>
-      </Card>
+            {poste.secteurs.length > 0 && ` · ${poste.secteurs.map((x) => x.libelle).join(', ')}`}
+          </Typography>
+        </Box>
+        {poste.gerable && (
+          <Button variant="contained" onClick={() => setAjout(true)}>
+            {t('ciblage.ajouter')}
+          </Button>
+        )}
+      </Stack>
 
-      <GrilleTuiles>
-        <Tuile
+      <BarreChiffres>
+        <Chiffre
           libelle={t('ciblage.chiffres.prospects')}
           valeur={s.total}
-          icone={<TrackChangesRounded />}
           detail={t('ciblage.repartition', {
             a: s.potentiels.A,
             b: s.potentiels.B,
             c: s.potentiels.C,
           })}
         />
-        <Tuile
+        <Chiffre
           libelle={t('ciblage.chiffres.visitesCycle', { semaines: s.cycle_semaines })}
           valeur={s.visites_par_cycle}
-          icone={<EventRepeatRounded />}
-          ton="secondary"
         />
-        <Tuile
+        <Chiffre
           libelle={t('ciblage.chiffres.visitesJour')}
           valeur={s.visites_par_jour.toLocaleString()}
-          icone={<EventRepeatRounded />}
-          ton={surcharge ? 'error' : 'info'}
+          ton={surcharge ? 'error' : 'neutre'}
           detail={
             s.seuil_min != null && s.seuil_max != null
               ? t('ciblage.chiffres.seuils', { min: s.seuil_min, max: s.seuil_max })
               : undefined
           }
         />
-        <Tuile
+        <Chiffre
           libelle={t('ciblage.chiffres.horsSecteur')}
           valeur={horsSecteur}
-          icone={<GpsNotFixedRounded />}
           ton="warning"
-          detail={t('ciblage.chiffres.horsSecteurDetail')}
         />
-      </GrilleTuiles>
+      </BarreChiffres>
       {surcharge && <Alert severity="warning">{t('ciblage.surcharge')}</Alert>}
 
       <Card>
@@ -496,7 +486,7 @@ function DetailPoste({ id }: { id: string }) {
               aria-label={t('prospect.champs.potentiel')}
             >
               {POTENTIELS.map((p) => (
-                <ToggleButton key={p} value={p} sx={{ px: 1.5, fontWeight: 800 }}>
+                <ToggleButton key={p} value={p} sx={{ px: 1.5, fontWeight: 700 }}>
                   {p}
                 </ToggleButton>
               ))}
@@ -505,16 +495,11 @@ function DetailPoste({ id }: { id: string }) {
         />
         {cibles.length === 0 ? (
           <EtatVide
-            icone={<TrackChangesRounded />}
             titre={t('ciblage.vide')}
             texte={poste.gerable ? t('ciblage.videTexte') : t('ciblage.videLecture')}
             action={
               poste.gerable && (
-                <Button
-                  variant="contained"
-                  startIcon={<AddRounded />}
-                  onClick={() => setAjout(true)}
-                >
+                <Button variant="contained" onClick={() => setAjout(true)}>
                   {t('ciblage.ajouter')}
                 </Button>
               )
@@ -530,11 +515,10 @@ function DetailPoste({ id }: { id: string }) {
                 sx={{
                   alignItems: { sm: 'center' },
                   px: 2,
-                  py: 1.1,
+                  py: 1,
+                  minHeight: 56,
                   borderTop: 1,
                   borderColor: 'divider',
-                  borderLeft: 3,
-                  borderLeftColor: couleur(c.prospect.potentiel),
                 }}
               >
                 <Stack
@@ -550,13 +534,12 @@ function DetailPoste({ id }: { id: string }) {
                       </Typography>
                       {c.hors_secteur && (
                         <Tooltip title={t('ciblage.horsSecteurAide')}>
-                          <Chip
-                            size="small"
-                            color="warning"
-                            variant="outlined"
-                            label={t('ciblage.horsSecteur')}
-                            sx={{ height: 20 }}
-                          />
+                          <Typography
+                            variant="caption"
+                            sx={{ color: 'warning.main', fontWeight: 600, flex: 'none' }}
+                          >
+                            {t('ciblage.horsSecteur')}
+                          </Typography>
                         </Tooltip>
                       )}
                     </Stack>
@@ -647,13 +630,19 @@ export default function Ciblage({ perimetre }: { perimetre: Perimetre }) {
   const sansListe = liste.filter((p) => p.occupant && p.synthese.total === 0).length;
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2}>
       <EnTetePage
         titre={t('ciblage.titre')}
         sousTitre={
-          perimetre.pays_actif
-            ? t('ciblage.sousTitre', { pays: perimetre.pays_actif.nom })
-            : t('ciblage.sousTitreConsolide')
+          postes.data && liste.length > 0
+            ? [
+                perimetre.pays_actif?.nom ?? t('pays.consolide'),
+                t('ciblage.resume', { count: liste.length, total }),
+                sansListe > 0 ? t('ciblage.sansListe', { count: sansListe }) : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            : (perimetre.pays_actif?.nom ?? t('pays.consolide'))
         }
       />
       {postes.isError ? (
@@ -663,22 +652,17 @@ export default function Ciblage({ perimetre }: { perimetre: Perimetre }) {
       ) : liste.length === 0 ? (
         <Card>
           <EtatVide
-            icone={<BadgeRounded />}
             titre={t('ciblage.aucunPoste')}
             texte={t('ciblage.aucunPosteTexte')}
           />
         </Card>
       ) : (
         <>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {t('ciblage.resume', { count: liste.length, total })}
-            {sansListe > 0 && ` · ${t('ciblage.sansListe', { count: sansListe })}`}
-          </Typography>
           <Box
             sx={{
               display: 'grid',
               gap: 2,
-              gridTemplateColumns: { xs: '1fr', md: '300px minmax(0, 1fr)' },
+              gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: '280px minmax(0, 1fr)' },
             }}
           >
             <ListePostes postes={liste} choisi={courant} choisir={setChoisi} />

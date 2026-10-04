@@ -1,5 +1,4 @@
 import type { Secteur, Zone } from '@innov/api-client';
-import AddRounded from '@mui/icons-material/AddRounded';
 import PlaceRounded from '@mui/icons-material/PlaceRounded';
 import {
   Alert,
@@ -160,7 +159,7 @@ export default function DialogueSecteur({
                 onChange={(e) => setLibelle(e.target.value)}
                 fullWidth
               />
-              <Button type="submit" startIcon={<AddRounded />} disabled={!libelle.trim()}>
+              <Button type="submit" disabled={!libelle.trim()}>
                 {t('organisation.secteur.ajouter')}
               </Button>
             </Stack>

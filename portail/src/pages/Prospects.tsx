@@ -8,32 +8,14 @@ import type {
   StatutFiche,
   ValeurReferentiel,
 } from '@innov/api-client';
-import AddRounded from '@mui/icons-material/AddRounded';
-import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
-import ArchiveRounded from '@mui/icons-material/ArchiveRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
-import EditRounded from '@mui/icons-material/EditRounded';
-import HourglassTopRounded from '@mui/icons-material/HourglassTopRounded';
-import LocalHospitalRounded from '@mui/icons-material/LocalHospitalRounded';
-import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
-import PhoneRounded from '@mui/icons-material/PhoneRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import SortRounded from '@mui/icons-material/SortRounded';
-import StarRounded from '@mui/icons-material/StarRounded';
-import TaskAltRounded from '@mui/icons-material/TaskAltRounded';
-import TodayRounded from '@mui/icons-material/TodayRounded';
-import TuneRounded from '@mui/icons-material/TuneRounded';
-import WrongLocationRounded from '@mui/icons-material/WrongLocationRounded';
-import VerifiedRounded from '@mui/icons-material/VerifiedRounded';
 import {
   Alert,
-  Avatar,
-  Badge,
   Box,
   Button,
   ButtonBase,
   Card,
-  Chip,
   Collapse,
   Divider,
   Drawer,
@@ -50,9 +32,8 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
 import { LieuxExercice } from '../composants/Exercices';
@@ -60,34 +41,22 @@ import { ChampsLieu, ChoixActivite, SelectSecteur } from '../composants/Lieu';
 import { useFiltresUrl } from '../composants/filtresUrl';
 import { BarrePagination, type Puce, PucesFiltres } from '../composants/Recherche';
 import {
-  EnTeteCarte,
+  BarreChiffres,
+  Chiffre,
   EnTetePage,
   EtatVide,
-  GrilleTuiles,
   Ligne,
-  PastilleIcone,
-  Tuile,
+  Potentiel as MarquePotentiel,
+  Section,
 } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { depuis } from '../composants/formats';
-import { initiales } from '../composants/initiales';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 
 const POTENTIELS: Potentiel[] = ['A', 'B', 'C'];
 const CIVILITES: Civilite[] = ['dr', 'pr', 'm', 'mme'];
 type FiltreStatut = 'tous' | StatutFiche;
-
-/** Couleur du potentiel : A ressort, C s'efface. */
-function usePotentiel() {
-  const theme = useTheme();
-  return (p: Potentiel) =>
-    p === 'A'
-      ? theme.palette.secondary.main
-      : p === 'B'
-        ? theme.palette.info.main
-        : theme.palette.text.secondary;
-}
 
 function nomAffiche(p: Pick<Prospect, 'civilite' | 'prenom' | 'nom'>, t: (c: string) => string) {
   return [p.civilite ? t(`prospect.civilites.${p.civilite}`) : '', p.prenom, p.nom]
@@ -97,28 +66,7 @@ function nomAffiche(p: Pick<Prospect, 'civilite' | 'prenom' | 'nom'>, t: (c: str
 
 function PastillePotentiel({ potentiel }: { potentiel: Potentiel }) {
   const { t } = useTranslation();
-  const couleur = usePotentiel()(potentiel);
-  return (
-    <Box
-      role="img"
-      aria-label={t(`prospect.potentiels.${potentiel}`)}
-      sx={{
-        width: 30,
-        height: 30,
-        flex: 'none',
-        borderRadius: '50%',
-        display: 'grid',
-        placeItems: 'center',
-        fontWeight: 800,
-        fontSize: 14,
-        color: couleur,
-        bgcolor: alpha(couleur, 0.12),
-        border: `2px solid ${alpha(couleur, 0.4)}`,
-      }}
-    >
-      {potentiel}
-    </Box>
-  );
+  return <MarquePotentiel valeur={potentiel} libelle={t(`prospect.potentiels.${potentiel}`)} />;
 }
 
 function useValeurs() {
@@ -289,7 +237,7 @@ function DialogueProspect({
           value={f.potentiel}
           onChange={(_, valeur: Potentiel | null) => valeur && changer('potentiel', valeur)}
           aria-label={t('prospect.champs.potentiel')}
-          sx={{ '& .MuiToggleButton-root': { px: 3, fontWeight: 800 } }}
+          sx={{ '& .MuiToggleButton-root': { px: 3, fontWeight: 700 } }}
         >
           {POTENTIELS.map((p) => (
             <ToggleButton key={p} value={p} aria-label={t(`prospect.potentiels.${p}`)}>
@@ -336,23 +284,6 @@ function DialogueProspect({
 
 // --- Fiche -------------------------------------------------------------------------------------
 
-function Section({
-  titre,
-  icone,
-  children,
-}: {
-  titre: string;
-  icone: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <Card variant="outlined">
-      <EnTeteCarte titre={titre} action={<PastilleIcone icone={icone} ton="info" taille={30} />} />
-      <Box sx={{ px: 2, py: 1.5 }}>{children}</Box>
-    </Card>
-  );
-}
-
 function FicheProspect({
   id,
   gerer,
@@ -390,7 +321,7 @@ function FicheProspect({
   );
   const telephone = (n: string | undefined) =>
     n ? (
-      <Link href={`tel:${n}`} underline="hover" sx={{ fontFamily: 'monospace' }}>
+      <Link href={`tel:${n}`} underline="hover">
         {n}
       </Link>
     ) : (
@@ -400,8 +331,8 @@ function FicheProspect({
   return (
     <Box
       sx={{
-        width: { xs: '100vw', sm: 460 },
-        p: 2.5,
+        width: { xs: '100vw', sm: 440 },
+        p: 2,
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
@@ -415,37 +346,32 @@ function FicheProspect({
       ) : (
         <>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-            <Avatar sx={{ width: 52, height: 52, bgcolor: 'primary.main', fontWeight: 700 }}>
-              {initiales(p.prenom || p.nom, p.nom)}
-            </Avatar>
             <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-              <Typography variant="h6" component="h2" sx={{ lineHeight: 1.2 }}>
+              <Typography variant="h4" component="h2">
                 {nomAffiche(p, t)}
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {[p.type_libelle, p.specialite_libelle].filter(Boolean).join(' · ')}
-              </Typography>
-              <Stack direction="row" spacing={0.75} sx={{ mt: 1, flexWrap: 'wrap', gap: 0.5 }}>
+              <Stack
+                direction="row"
+                sx={{ alignItems: 'center', columnGap: 1, flexWrap: 'wrap', mt: 0.5 }}
+              >
                 <PastillePotentiel potentiel={p.potentiel} />
-                <Chip
-                  size="small"
-                  color={
-                    p.statut === 'actif'
-                      ? 'success'
-                      : p.statut === 'a_valider'
-                        ? 'warning'
-                        : 'default'
-                  }
-                  icon={
-                    p.statut === 'actif' ? (
-                      <VerifiedRounded />
-                    ) : p.statut === 'a_valider' ? (
-                      <HourglassTopRounded />
-                    ) : undefined
-                  }
-                  label={t(`prospect.statuts.${p.statut}`)}
-                  sx={{ alignSelf: 'center' }}
-                />
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {[p.type_libelle, p.specialite_libelle].filter(Boolean).join(' · ')}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    color:
+                      p.statut === 'a_valider'
+                        ? 'warning.main'
+                        : p.statut === 'actif'
+                          ? 'success.main'
+                          : 'text.secondary',
+                  }}
+                >
+                  {t(`prospect.statuts.${p.statut}`)}
+                </Typography>
               </Stack>
             </Box>
             <IconButton aria-label={t('commun.fermer')} onClick={surFermer}>
@@ -455,26 +381,17 @@ function FicheProspect({
 
           <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap' }}>
             {gerer && p.statut === 'a_valider' && (
-              <Button
-                variant="contained"
-                color="success"
-                startIcon={<TaskAltRounded />}
-                onClick={() => void valider()}
-              >
+              <Button variant="contained" onClick={() => void valider()}>
                 {t('prospect.fiche.valider')}
               </Button>
             )}
             {p.modifiable && (
-              <Button variant="outlined" startIcon={<EditRounded />} onClick={() => surModifier(p)}>
+              <Button variant="outlined" onClick={() => surModifier(p)}>
                 {t('prospect.fiche.modifier')}
               </Button>
             )}
             {gerer && p.statut !== 'archive' && (
-              <Button
-                color="error"
-                startIcon={<ArchiveRounded />}
-                onClick={() => setArchivage(true)}
-              >
+              <Button color="error" onClick={() => setArchivage(true)}>
                 {t('prospect.fiche.archiver')}
               </Button>
             )}
@@ -485,7 +402,7 @@ function FicheProspect({
             </Typography>
           )}
 
-          <Section titre={t('prospect.fiche.identite')} icone={<LocalHospitalRounded />}>
+          <Section titre={t('prospect.fiche.identite')}>
             <Ligne libelle={t('prospect.champs.type')} valeur={p.type_libelle} />
             <Ligne
               libelle={t('prospect.champs.specialite')}
@@ -506,7 +423,7 @@ function FicheProspect({
               libelle={t('prospect.champs.numeroOrdre')}
               valeur={
                 p.numero_ordre ? (
-                  <Box sx={{ fontFamily: 'monospace' }}>{p.numero_ordre}</Box>
+                  p.numero_ordre
                 ) : (
                   aucun
                 )
@@ -517,7 +434,7 @@ function FicheProspect({
               valeur={t(`prospect.potentiels.${p.potentiel}`)}
             />
           </Section>
-          <Section titre={t('prospect.fiche.coordonnees')} icone={<PhoneRounded />}>
+          <Section titre={t('prospect.fiche.coordonnees')}>
             <Ligne
               libelle={t('prospect.champs.telephoneMobile')}
               valeur={telephone(p.telephone_mobile)}
@@ -539,10 +456,10 @@ function FicheProspect({
               }
             />
           </Section>
-          <Section titre={t('prospect.fiche.etablissements')} icone={<ApartmentRounded />}>
+          <Section titre={t('prospect.fiche.etablissements')}>
             <LieuxExercice prospect={p} />
           </Section>
-          <Section titre={t('prospect.fiche.visites')} icone={<TodayRounded />}>
+          <Section titre={t('prospect.fiche.visites')}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {t('prospect.fiche.visitesTexte')}
             </Typography>
@@ -634,7 +551,6 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
   const { t } = useTranslation();
   const { client } = useSession();
   const requetes = useQueryClient();
-  const couleur = usePotentiel();
   const cle = perimetre.pays_actif?.code ?? 'consolide';
   const peutCreer = perimetre.actions.includes('prospects.creer') && perimetre.pays_actif !== null;
   const gerer = perimetre.actions.includes('prospects.gerer') && perimetre.pays_actif !== null;
@@ -719,31 +635,22 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
   const fiches = liste.data?.resultats ?? [];
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={2}>
       <EnTetePage
         titre={t('prospect.titre')}
-        sousTitre={
-          perimetre.pays_actif
-            ? t('prospect.sousTitre', { pays: perimetre.pays_actif.nom })
-            : t('prospect.sousTitreConsolide')
-        }
+        sousTitre={perimetre.pays_actif?.nom ?? t('pays.consolide')}
         actions={
           peutCreer && (
-            <Button
-              variant="contained"
-              startIcon={<AddRounded />}
-              onClick={() => setDialogue({ prospect: null })}
-            >
+            <Button variant="contained" onClick={() => setDialogue({ prospect: null })}>
               {t('prospect.nouveau')}
             </Button>
           )
         }
       />
-      <GrilleTuiles>
-        <Tuile
+      <BarreChiffres>
+        <Chiffre
           libelle={t('prospect.chiffres.actifs')}
           valeur={s ? s.actifs : <Skeleton width={40} />}
-          icone={<PeopleAltRounded />}
           detail={
             s
               ? t('prospect.chiffres.repartition', {
@@ -754,26 +661,21 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
               : undefined
           }
         />
-        <Tuile
+        <Chiffre
           libelle={delegue ? t('prospect.chiffres.mesAValider') : t('prospect.chiffres.aValider')}
           valeur={s ? delegue ? s.mes_a_valider : s.a_valider : <Skeleton width={40} />}
-          icone={<HourglassTopRounded />}
           ton="warning"
         />
-        <Tuile
+        <Chiffre
           libelle={t('prospect.chiffres.potentielA')}
           valeur={s ? s.potentiels.A : <Skeleton width={40} />}
-          icone={<StarRounded />}
           ton="secondary"
         />
-        <Tuile
+        <Chiffre
           libelle={t('prospect.chiffres.sansLieu')}
           valeur={s ? s.sans_lieu : <Skeleton width={40} />}
-          icone={<WrongLocationRounded />}
-          ton="info"
-          detail={t('prospect.chiffres.sansLieuDetail')}
         />
-      </GrilleTuiles>
+      </BarreChiffres>
       {perimetre.actions.includes('prospects.creer') && !perimetre.pays_actif && (
         <Alert severity="info">{t('prospect.choisirPays')}</Alert>
       )}
@@ -787,6 +689,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
           >
             <TextField
               size="small"
+              type="search"
               placeholder={t('prospect.rechercher')}
               value={saisie}
               onChange={(e) => setSaisie(e.target.value)}
@@ -802,66 +705,58 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
                 htmlInput: { 'aria-label': t('prospect.rechercher') },
               }}
             />
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              value={statut}
-              onChange={(_, valeur: FiltreStatut | null) =>
-                valeur && changer({ statut: valeur === 'tous' ? '' : valeur })
-              }
-              sx={{
-                '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 600, px: 1.5 },
-              }}
-            >
-              {(
-                [
-                  'tous',
-                  'a_valider',
-                  'actif',
-                  ...(gerer ? (['archive'] as const) : []),
-                ] as FiltreStatut[]
-              ).map((v) => (
-                <ToggleButton key={v} value={v}>
-                  {t(`prospect.filtres.${v}`)}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-            <TextField
-              select
-              size="small"
-              value={f.tri || 'nom'}
-              onChange={(e) => changer({ tri: e.target.value === 'nom' ? '' : e.target.value })}
-              sx={{ minWidth: 170 }}
-              slotProps={{
-                htmlInput: { 'aria-label': t('recherche.trierPar') },
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SortRounded fontSize="small" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            >
-              {TRIS.map((tri) => (
-                <MenuItem key={tri} value={tri}>
-                  {t(`recherche.tris.${tri}`)}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Button
-              variant={panneau ? 'contained' : 'outlined'}
-              color="primary"
-              startIcon={
-                <Badge badgeContent={puces.length} color="secondary">
-                  <TuneRounded />
-                </Badge>
-              }
-              onClick={() => setPanneau((v) => !v)}
-              aria-expanded={panneau}
-            >
-              {t('recherche.filtres')}
-            </Button>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+              <Box sx={{ overflowX: 'auto', minWidth: 0, flexShrink: 1 }}>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  value={statut}
+                  onChange={(_, valeur: FiltreStatut | null) =>
+                    valeur && changer({ statut: valeur === 'tous' ? '' : valeur })
+                  }
+                  aria-label={t('prospect.champs.statut')}
+                >
+                  {(
+                    [
+                      'tous',
+                      'a_valider',
+                      'actif',
+                      ...(gerer ? (['archive'] as const) : []),
+                    ] as FiltreStatut[]
+                  ).map((v) => (
+                    <ToggleButton key={v} value={v} sx={{ px: 1.25 }}>
+                      {t(`prospect.filtres.${v}`)}
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <TextField
+                select
+                size="small"
+                value={f.tri || 'nom'}
+                onChange={(e) => changer({ tri: e.target.value === 'nom' ? '' : e.target.value })}
+                sx={{ minWidth: 0, flexGrow: { xs: 1, md: 0 }, width: { md: 150 } }}
+                slotProps={{ htmlInput: { 'aria-label': t('recherche.trierPar') } }}
+              >
+                {TRIS.map((tri) => (
+                  <MenuItem key={tri} value={tri}>
+                    {t(`recherche.tris.${tri}`)}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Button
+                variant={panneau ? 'contained' : 'outlined'}
+                onClick={() => setPanneau((v) => !v)}
+                aria-expanded={panneau}
+                sx={{ flex: 'none', minHeight: 40 }}
+              >
+                {puces.length
+                  ? t('recherche.filtresN', { count: puces.length })
+                  : t('recherche.filtres')}
+              </Button>
+            </Stack>
           </Stack>
           <Collapse in={panneau} unmountOnExit>
             <Box
@@ -971,7 +866,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
         </Stack>
       </Card>
       {terrain && f.portee !== 'pays' && (
-        <Typography variant="caption" sx={{ color: 'text.secondary', mt: -1.5 }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', mt: -1 }}>
           {t('recherche.perimetreAide')}
         </Typography>
       )}
@@ -979,11 +874,22 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
       {liste.isError ? (
         <ErreurChargement erreur={liste.error} reessayer={() => void liste.refetch()} />
       ) : !liste.data ? (
-        <Stack spacing={1}>
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} variant="rounded" height={64} />
+        <Card aria-busy="true">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <Stack
+              key={i}
+              direction="row"
+              spacing={2}
+              sx={{ px: 2, py: 1.5, borderTop: i ? 1 : 0, borderColor: 'divider' }}
+            >
+              <Skeleton variant="rounded" width={20} height={20} />
+              <Box sx={{ flexGrow: 1 }}>
+                <Skeleton width="40%" />
+                <Skeleton width="25%" />
+              </Box>
+            </Stack>
           ))}
-        </Stack>
+        </Card>
       ) : (
         <>
           <BarrePagination
@@ -995,10 +901,9 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
           <Card sx={{ opacity: liste.isPlaceholderData ? 0.6 : 1, transition: 'opacity .2s' }}>
             {fiches.length === 0 ? (
               filtresActifs > 0 ? (
-                <EtatVide icone={<SearchRounded />} titre={t('prospect.aucunResultat')} />
+                <EtatVide titre={t('prospect.aucunResultat')} />
               ) : (
                 <EtatVide
-                  icone={<PeopleAltRounded />}
                   titre={t('prospect.vide')}
                   texte={t('prospect.videTexte')}
                 />
@@ -1013,28 +918,18 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
                       width: '100%',
                       textAlign: 'left',
                       display: 'grid',
-                      gridTemplateColumns: { xs: 'auto 1fr auto', md: 'auto 2fr 1.4fr 1fr auto' },
-                      gap: 2,
+                      gridTemplateColumns: { xs: 'auto 1fr auto', md: 'auto 2fr 1.2fr 110px' },
+                      columnGap: 2,
                       alignItems: 'center',
-                      px: 2.5,
-                      py: 1.25,
+                      px: 2,
+                      py: 1,
+                      minHeight: 56,
                       '&:hover': { bgcolor: 'action.hover' },
                     }}
                   >
-                    <Avatar
-                      sx={{
-                        width: 38,
-                        height: 38,
-                        fontSize: 13,
-                        fontWeight: 700,
-                        bgcolor: alpha(couleur(p.potentiel), 0.14),
-                        color: couleur(p.potentiel),
-                      }}
-                    >
-                      {initiales(p.prenom || p.nom, p.nom)}
-                    </Avatar>
+                    <PastillePotentiel potentiel={p.potentiel} />
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ fontWeight: 700 }} noWrap>
+                      <Typography sx={{ fontWeight: 600 }} noWrap>
                         {nomAffiche(p, t)}
                       </Typography>
                       <Typography
@@ -1055,24 +950,22 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
                       variant="body2"
                       sx={{
                         display: { xs: 'none', md: 'block' },
-                        fontFamily: 'monospace',
                         color: 'text.secondary',
                       }}
                       noWrap
                     >
                       {p.telephone_mobile || p.telephone_pro || p.numero_ordre}
                     </Typography>
-                    <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                      {p.statut !== 'actif' && (
-                        <Chip
-                          size="small"
-                          color={p.statut === 'a_valider' ? 'warning' : 'default'}
-                          variant="outlined"
-                          label={t(`prospect.statuts.${p.statut}`)}
-                        />
-                      )}
-                    </Box>
-                    <PastillePotentiel potentiel={p.potentiel} />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 600,
+                        textAlign: 'right',
+                        color: p.statut === 'a_valider' ? 'warning.main' : 'text.secondary',
+                      }}
+                    >
+                      {p.statut !== 'actif' && t(`prospect.statuts.${p.statut}`)}
+                    </Typography>
                   </ButtonBase>
                 </Box>
               ))

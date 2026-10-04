@@ -1,6 +1,5 @@
 import type { Perimetre } from '@innov/api-client';
-import PublicRounded from '@mui/icons-material/PublicRounded';
-import { InputAdornment, MenuItem, TextField } from '@mui/material';
+import { MenuItem, TextField } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '../contexteSession';
 
@@ -25,15 +24,12 @@ export default function SelecteurPays({ perimetre }: { perimetre: Perimetre }) {
       onChange={(e) => void choisirPays(e.target.value === TOUS ? null : e.target.value)}
       slotProps={{
         htmlInput: { 'aria-label': t('pays.choix') },
-        input: {
-          startAdornment: (
-            <InputAdornment position="start">
-              <PublicRounded fontSize="small" />
-            </InputAdornment>
-          ),
-        },
       }}
-      sx={{ minWidth: { xs: 0, sm: 190 }, maxWidth: { xs: 150, sm: 'none' } }}
+      sx={{
+        minWidth: { xs: 0, sm: 160 },
+        maxWidth: { xs: 140, sm: 'none' },
+        '& .MuiInputBase-root': { height: 32, fontSize: 13 },
+      }}
     >
       {siege && <MenuItem value={TOUS}>{t('pays.tous')}</MenuItem>}
       {perimetre.pays_accessibles.map((pays) => (

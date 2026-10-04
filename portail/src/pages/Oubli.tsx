@@ -43,7 +43,7 @@ export default function Oubli() {
               required
               autoFocus
             />
-            <Button type="submit" variant="contained" color="secondary">
+            <Button type="submit" variant="contained">
               {t('oubli.envoyer')}
             </Button>
           </form>

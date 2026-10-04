@@ -1,21 +1,9 @@
 import type { DetailLot, LotImport, Perimetre } from '@innov/api-client';
-import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
-import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
-import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
-import DescriptionRounded from '@mui/icons-material/DescriptionRounded';
-import DownloadRounded from '@mui/icons-material/DownloadRounded';
-import HistoryRounded from '@mui/icons-material/HistoryRounded';
-import MedicationRounded from '@mui/icons-material/MedicationRounded';
-import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
-import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
-import ReportProblemRounded from '@mui/icons-material/ReportProblemRounded';
-import ScienceRounded from '@mui/icons-material/ScienceRounded';
 import {
   Alert,
   Box,
   Button,
   Card,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -23,7 +11,6 @@ import {
   LinearProgress,
   List,
   ListItemButton,
-  ListItemIcon,
   ListItemText,
   Skeleton,
   Stack,
@@ -37,12 +24,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type DragEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BarreChiffres,
+  Chiffre,
   EnTeteCarte,
   EnTetePage,
   EtatVide,
-  GrilleTuiles,
-  PastilleIcone,
-  Tuile,
+  Etiquette,
 } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { depuis } from '../composants/formats';
@@ -69,10 +56,8 @@ function taille(octets: number) {
 
 function StatutLot({ lot }: { lot: LotImport }) {
   const { t } = useTranslation();
-  const ton = lot.statut === 'termine' ? 'success' : lot.statut === 'echec' ? 'error' : 'info';
-  return (
-    <Chip size="small" color={ton} variant="outlined" label={t(`imports.statuts.${lot.statut}`)} />
-  );
+  const ton = lot.statut === 'termine' ? 'success' : lot.statut === 'echec' ? 'error' : 'neutre';
+  return <Etiquette ton={ton}>{t(`imports.statuts.${lot.statut}`)}</Etiquette>;
 }
 
 /** Compteurs et anomalies d'un lot (PRP-013 CA2). */
@@ -116,37 +101,32 @@ function ResultatLot({ lot }: { lot: DetailLot }) {
 
   return (
     <Stack spacing={2}>
-      <GrilleTuiles>
-        <Tuile
+      <BarreChiffres>
+        <Chiffre
           libelle={t('imports.chiffres.prospects')}
           valeur={n('prospects', 'crees')}
-          icone={<PeopleAltRounded />}
           detail={t('imports.chiffres.existants', { count: n('prospects', 'existants') })}
         />
-        <Tuile
+        <Chiffre
           libelle={t('imports.chiffres.etablissements')}
           valeur={n('etablissements', 'crees')}
-          icone={<ApartmentRounded />}
           ton="secondary"
           detail={t('imports.chiffres.aPreciser', {
             count: n('etablissements', 'type_a_preciser'),
           })}
         />
-        <Tuile
+        <Chiffre
           libelle={t('imports.chiffres.produits')}
           valeur={n('produits', 'crees')}
-          icone={<MedicationRounded />}
-          ton="info"
           detail={t('imports.chiffres.reseaux', { count: n('reseaux', 'crees') })}
         />
-        <Tuile
+        <Chiffre
           libelle={t('imports.chiffres.rejets')}
           valeur={lot.rejets}
-          icone={<ReportProblemRounded />}
           ton={lot.rejets ? 'warning' : 'success'}
           detail={t('imports.chiffres.anomalies', { count: lot.nb_anomalies })}
         />
-      </GrilleTuiles>
+      </BarreChiffres>
       <Box
         sx={{
           display: 'grid',
@@ -163,31 +143,26 @@ function ResultatLot({ lot }: { lot: DetailLot }) {
                 key={e}
                 direction="row"
                 spacing={1}
-                sx={{ px: 2.25, py: 1.1, alignItems: 'center', justifyContent: 'space-between' }}
+                sx={{ px: 2, py: 1, alignItems: 'center', justifyContent: 'space-between' }}
               >
-                <Typography sx={{ fontWeight: 600 }}>
+                <Typography sx={{ fontWeight: 500 }}>
                   {t(`imports.entites.${e}`, { defaultValue: e })}
                 </Typography>
-                <Stack
-                  direction="row"
-                  sx={{ flexWrap: 'wrap', gap: 0.5, justifyContent: 'flex-end' }}
-                >
-                  {Object.entries(c[e] ?? {}).map(([action, nombre]) => (
-                    <Chip
+                <Typography variant="body2" sx={{ textAlign: 'right', color: 'text.secondary' }}>
+                  {Object.entries(c[e] ?? {}).map(([action, nombre], i) => (
+                    <Box
+                      component="span"
                       key={action}
-                      size="small"
-                      color={
-                        action === 'rejetes'
-                          ? 'warning'
-                          : action === 'crees'
-                            ? 'primary'
-                            : 'default'
-                      }
-                      variant={action === 'crees' ? 'filled' : 'outlined'}
-                      label={`${t(`imports.actions.${action}`, { defaultValue: action })} ${nombre.toLocaleString()}`}
-                    />
+                      sx={{
+                        color: action === 'rejetes' && nombre ? 'warning.main' : undefined,
+                        fontWeight: action === 'crees' ? 600 : 400,
+                      }}
+                    >
+                      {i > 0 && ' · '}
+                      {`${t(`imports.actions.${action}`, { defaultValue: action })} ${nombre.toLocaleString()}`}
+                    </Box>
                   ))}
-                </Stack>
+                </Typography>
               </Stack>
             ))}
           </Stack>
@@ -198,7 +173,6 @@ function ResultatLot({ lot }: { lot: DetailLot }) {
             action={
               <Button
                 size="small"
-                startIcon={<DownloadRounded />}
                 onClick={() => void telecharger()}
               >
                 {t('imports.rapportCsv')}
@@ -206,7 +180,7 @@ function ResultatLot({ lot }: { lot: DetailLot }) {
             }
           />
           {motifs.length === 0 ? (
-            <EtatVide icone={<CheckCircleRounded />} titre={t('imports.aucuneAnomalie')} />
+            <EtatVide titre={t('imports.aucuneAnomalie')} />
           ) : (
             <Stack divider={<Box sx={{ borderTop: 1, borderColor: 'divider' }} />}>
               {motifs.map(([motif, m]) => (
@@ -214,14 +188,18 @@ function ResultatLot({ lot }: { lot: DetailLot }) {
                   key={motif}
                   direction="row"
                   spacing={1.5}
-                  sx={{ px: 2.25, py: 1.1, alignItems: 'center' }}
+                  sx={{ px: 2, py: 1, alignItems: 'center' }}
                 >
-                  <Chip
-                    size="small"
-                    color={m.niveau === 'rejet' ? 'warning' : 'default'}
-                    label={m.nombre.toLocaleString()}
-                    sx={{ minWidth: 48, fontWeight: 700 }}
-                  />
+                  <Typography
+                    sx={{
+                      minWidth: 56,
+                      textAlign: 'right',
+                      fontWeight: 600,
+                      color: m.niveau === 'rejet' ? 'warning.main' : 'text.primary',
+                    }}
+                  >
+                    {m.nombre.toLocaleString()}
+                  </Typography>
                   <Box sx={{ minWidth: 0 }}>
                     <Typography variant="body2">{motif}</Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -304,7 +282,7 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
 
   if (!perimetre.pays_actif) {
     return (
-      <Stack spacing={2.5}>
+      <Stack spacing={2}>
         <EnTetePage titre={t('imports.titre')} />
         <Alert severity="info">{t('imports.choisirPays')}</Alert>
       </Stack>
@@ -314,17 +292,16 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
   const affiche = consulte ? detail.data : resultat;
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2}>
       <EnTetePage
         titre={t('imports.titre')}
-        sousTitre={t('imports.sousTitre', { pays: perimetre.pays_actif.nom })}
+        sousTitre={perimetre.pays_actif.nom}
       />
       <Card>
         <EnTeteCarte
           titre={t('imports.birdnotes')}
-          action={<PastilleIcone icone={<CloudUploadRounded />} taille={32} />}
         />
-        <Stack spacing={2.5} sx={{ p: { xs: 2, sm: 3 } }}>
+        <Stack spacing={2} sx={{ p: 2 }}>
           <Stepper activeStep={etape} alternativeLabel>
             {(['fichier', 'simulation', 'import'] as const).map((e) => (
               <Step key={e}>
@@ -341,11 +318,11 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
             onDragLeave={() => setSurvol(false)}
             onDrop={deposer}
             sx={(theme) => ({
-              border: 2,
+              border: 1,
               borderStyle: 'dashed',
               borderColor: survol ? 'primary.main' : 'divider',
-              borderRadius: 3,
-              p: 3,
+              borderRadius: 1,
+              p: 2,
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
               alignItems: 'center',
@@ -363,13 +340,8 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
               hidden
               onChange={(e) => choisir(e.target.files?.[0])}
             />
-            <PastilleIcone
-              icone={fichier ? <DescriptionRounded /> : <CloudUploadRounded />}
-              ton={fichier ? 'success' : 'primary'}
-              taille={48}
-            />
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-              <Typography sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>
+              <Typography sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
                 {fichier ? fichier.name : t('imports.deposer')}
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -394,7 +366,6 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
             <Button
               variant={simule ? 'outlined' : 'contained'}
-              startIcon={<ScienceRounded />}
               disabled={!fichier || envoi !== null || importe}
               onClick={() => void lancer(true)}
             >
@@ -402,8 +373,6 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
             </Button>
             <Button
               variant="contained"
-              color="secondary"
-              startIcon={<PlayArrowRounded />}
               disabled={!simule || envoi !== null}
               onClick={() => setConfirmation(true)}
             >
@@ -440,7 +409,6 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
       <Card>
         <EnTeteCarte
           titre={t('imports.historique')}
-          action={<PastilleIcone icone={<HistoryRounded />} ton="secondary" taille={32} />}
         />
         {lots.isError ? (
           <Box sx={{ p: 2 }}>
@@ -450,7 +418,6 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
           <Skeleton variant="rounded" height={120} sx={{ m: 2 }} />
         ) : lots.data.length === 0 ? (
           <EtatVide
-            icone={<HistoryRounded />}
             titre={t('imports.aucunLot')}
             texte={t('imports.aucunLotTexte')}
           />
@@ -463,9 +430,6 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
                 onClick={() => setConsulte(lot.id)}
                 divider
               >
-                <ListItemIcon>
-                  {lot.simulation ? <ScienceRounded /> : <CheckCircleRounded color="success" />}
-                </ListItemIcon>
                 <ListItemText
                   primary={lot.fichier}
                   secondary={t('imports.lance', {
@@ -494,7 +458,7 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmation(false)}>{t('commun.annuler')}</Button>
-          <Button variant="contained" color="secondary" onClick={() => void lancer(false)}>
+          <Button variant="contained" onClick={() => void lancer(false)}>
             {t('imports.importer')}
           </Button>
         </DialogActions>

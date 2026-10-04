@@ -1,47 +1,71 @@
-import ScienceRounded from '@mui/icons-material/ScienceRounded';
-import { Box, Typography } from '@mui/material';
 import { marque } from '@innov/design';
-import { useQuery } from '@tanstack/react-query';
+import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useSession } from '../contexteSession';
+import { useDemonstration } from './demonstration';
 
-/**
- * Bandeau des instances de démonstration (DEM-001, RSK-11) : personne ne confond
- * des données fictives avec la production, ni sur une capture d'écran.
- */
-export default function BandeauDemonstration() {
-  const { t, i18n } = useTranslation();
-  const { client } = useSession();
-  const informations = useQuery({
-    queryKey: ['informations', i18n.language],
-    queryFn: () => client.informations(),
-    staleTime: 5 * 60 * 1000,
-  });
-  if (informations.data?.environnement !== 'demonstration') return null;
+/** Masqué à l'écran, lu par les lecteurs d'écran. */
+const masque = {
+  position: 'absolute',
+  // En pixels : dans `sx`, la valeur 1 vaut 100 % et ferait déborder la page.
+  width: '1px',
+  height: '1px',
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const;
+
+/** Filet orange de 3 px en haut de l'écran : visible sur toute capture, sans occuper la page. */
+export function FiletDemonstration() {
   return (
     <Box
+      aria-hidden
+      sx={{ position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: 1300, bgcolor: marque.orange }}
+    />
+  );
+}
+
+/**
+ * Mention « Démonstration » de la barre du haut : discrète mais permanente. La phrase
+ * d'explication s'affiche sur grand écran et reste lue par les lecteurs d'écran ailleurs.
+ */
+export function MentionDemonstration() {
+  const { t } = useTranslation();
+  return (
+    <Typography
       role="note"
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 1,
-        px: 2,
-        py: 0.75,
-        bgcolor: marque.orange,
-        // Texte bleu marine sur orange : contraste suffisant (WCAG AA).
-        color: marque.bleuMarine3,
-        backgroundImage:
-          'repeating-linear-gradient(135deg, rgba(255,255,255,0.12) 0 12px, transparent 12px 24px)',
-      }}
+      variant="caption"
+      noWrap
+      sx={{ color: 'secondary.main', fontWeight: 600, minWidth: 0 }}
     >
-      <ScienceRounded fontSize="small" />
-      <Typography variant="body2" sx={{ fontWeight: 700 }}>
-        {t('demonstration.bandeau')}
-      </Typography>
-      <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
+      {t('demonstration.bandeau')}
+      <Box
+        component="span"
+        sx={{ display: { xs: 'none', lg: 'inline' }, color: 'text.secondary', fontWeight: 400 }}
+      >
+        {' · '}
+        {t('demonstration.texte')}
+      </Box>
+      <Box component="span" sx={{ ...masque, display: { lg: 'none' } }}>
+        {t('demonstration.texte')}
+      </Box>
+    </Typography>
+  );
+}
+
+/** Pages publiques : filet en haut d'écran et mention sous le formulaire. */
+export default function BandeauDemonstration() {
+  const { t } = useTranslation();
+  if (!useDemonstration()) return null;
+  return (
+    <>
+      <FiletDemonstration />
+      <Typography role="note" variant="caption" component="p" sx={{ color: 'text.secondary' }}>
+        <Box component="span" sx={{ color: 'secondary.main', fontWeight: 600 }}>
+          {t('demonstration.bandeau')}
+        </Box>
+        {' · '}
         {t('demonstration.texte')}
       </Typography>
-    </Box>
+    </>
   );
 }

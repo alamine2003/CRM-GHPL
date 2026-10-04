@@ -1,15 +1,10 @@
-import BrightnessAutoRounded from '@mui/icons-material/BrightnessAutoRounded';
 import DarkModeRounded from '@mui/icons-material/DarkModeRounded';
 import LightModeRounded from '@mui/icons-material/LightModeRounded';
 import { IconButton, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { type ModeApparence, useApparence } from '../preferences';
 
-const MODES: { mode: ModeApparence; icone: React.ReactNode }[] = [
-  { mode: 'clair', icone: <LightModeRounded fontSize="small" /> },
-  { mode: 'sombre', icone: <DarkModeRounded fontSize="small" /> },
-  { mode: 'systeme', icone: <BrightnessAutoRounded fontSize="small" /> },
-];
+const MODES: ModeApparence[] = ['clair', 'sombre', 'systeme'];
 
 /** Choix complet (Mon profil) : clair, sombre ou réglage du système. */
 export function ChoixApparence() {
@@ -24,9 +19,8 @@ export function ChoixApparence() {
       aria-label={t('apparence.titre')}
     >
       {MODES.map((m) => (
-        <ToggleButton key={m.mode} value={m.mode} sx={{ gap: 0.75, px: 1.75 }}>
-          {m.icone}
-          {t(`apparence.${m.mode}`)}
+        <ToggleButton key={m} value={m} sx={{ px: 1.5 }}>
+          {t(`apparence.${m}`)}
         </ToggleButton>
       ))}
     </ToggleButtonGroup>
@@ -42,8 +36,9 @@ export function BasculeApparence() {
       <IconButton
         aria-label={t('apparence.basculer')}
         onClick={() => changer(sombre ? 'clair' : 'sombre')}
+        size="small"
       >
-        {sombre ? <LightModeRounded /> : <DarkModeRounded />}
+        {sombre ? <LightModeRounded fontSize="small" /> : <DarkModeRounded fontSize="small" />}
       </IconButton>
     </Tooltip>
   );

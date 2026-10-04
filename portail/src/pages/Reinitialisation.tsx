@@ -67,7 +67,7 @@ export default function Reinitialisation() {
               autoComplete="new-password"
               required
             />
-            <Button type="submit" variant="contained" color="secondary">
+            <Button type="submit" variant="contained">
               {t('reinitialisation.enregistrer')}
             </Button>
           </form>

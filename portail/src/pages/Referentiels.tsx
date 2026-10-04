@@ -5,17 +5,10 @@ import type {
   Produit,
   ValeurReferentiel,
 } from '@innov/api-client';
-import AddRounded from '@mui/icons-material/AddRounded';
 import ArchiveRounded from '@mui/icons-material/ArchiveRounded';
-import CategoryRounded from '@mui/icons-material/CategoryRounded';
 import EditRounded from '@mui/icons-material/EditRounded';
-import HubRounded from '@mui/icons-material/HubRounded';
-import Inventory2Rounded from '@mui/icons-material/Inventory2Rounded';
-import LibraryBooksRounded from '@mui/icons-material/LibraryBooksRounded';
-import MedicationRounded from '@mui/icons-material/MedicationRounded';
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import ShareRounded from '@mui/icons-material/ShareRounded';
 import UnarchiveRounded from '@mui/icons-material/UnarchiveRounded';
 import {
   Alert,
@@ -25,7 +18,6 @@ import {
   Card,
   CardContent,
   Checkbox,
-  Chip,
   Divider,
   FormControlLabel,
   IconButton,
@@ -45,18 +37,18 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type FormEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
 import {
+  BarreChiffres,
+  Chiffre,
   EnTeteCarte,
   EnTetePage,
   EtatVide,
-  GrilleTuiles,
-  PastilleIcone,
-  Tuile,
+  Etiquette,
 } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { useNotifier } from '../contexteNotifications';
@@ -79,30 +71,6 @@ function normaliser(texte: string) {
 }
 
 /** Teinte stable par classe thérapeutique : la même classe a la même couleur partout. */
-const TEINTES = ['#2F6FDE', '#E0703A', '#1E9E6A', '#8E59D9', '#D14B7F', '#0F9BB0', '#B8891A'];
-function teinte(id: string | null | undefined) {
-  if (!id) return '#7A8499';
-  let somme = 0;
-  for (const c of id) somme = (somme * 31 + c.charCodeAt(0)) % 9973;
-  return TEINTES[somme % TEINTES.length]!;
-}
-
-function PastilleClasse({ id, libelle }: { id: string | null; libelle: string }) {
-  const couleur = teinte(id);
-  return (
-    <Chip
-      size="small"
-      label={libelle}
-      sx={{
-        fontWeight: 600,
-        color: couleur,
-        bgcolor: alpha(couleur, 0.12),
-        border: `1px solid ${alpha(couleur, 0.25)}`,
-      }}
-    />
-  );
-}
-
 function useReferentiel(cle: string) {
   const { client } = useSession();
   const r = client.referentiel;
@@ -305,7 +273,6 @@ function OngletProduits({
         {gerer && (
           <Button
             variant="contained"
-            startIcon={<AddRounded />}
             onClick={() => setDialogue({ produit: null })}
             sx={{ flex: 'none' }}
           >
@@ -332,12 +299,11 @@ function OngletProduits({
       <Card>
         {produits.length === 0 ? (
           <EtatVide
-            icone={<MedicationRounded />}
             titre={t('referentiel.produit.vide')}
             texte={t('referentiel.produit.videTexte')}
           />
         ) : visibles.length === 0 ? (
-          <EtatVide icone={<SearchRounded />} titre={t('referentiel.produit.aucunResultat')} />
+          <EtatVide titre={t('referentiel.produit.aucunResultat')} />
         ) : (
           visibles.map((p, i) => (
             <Box key={p.id}>
@@ -351,23 +317,15 @@ function OngletProduits({
                   },
                   gap: { xs: 1, md: 2 },
                   alignItems: 'center',
-                  px: 2.5,
-                  py: 1.5,
+                  px: 2,
+                  py: 1,
+                  minHeight: 56,
                   opacity: p.archive ? 0.55 : 1,
                 }}
               >
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minWidth: 0 }}>
-                  <Box
-                    sx={{
-                      width: 10,
-                      height: 36,
-                      borderRadius: 1,
-                      bgcolor: teinte(p.classe),
-                      flex: 'none',
-                    }}
-                  />
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 700 }} noWrap>
+                    <Typography sx={{ fontWeight: 600 }} noWrap>
                       {p.libelle}
                     </Typography>
                     <Typography
@@ -381,30 +339,24 @@ function OngletProduits({
                 </Stack>
                 <Box sx={{ display: { xs: 'none', md: 'block' } }}>
                   {p.classe_libelle ? (
-                    <PastilleClasse id={p.classe} libelle={p.classe_libelle} />
+                    <Typography variant="body2">{p.classe_libelle}</Typography>
                   ) : (
                     <Typography variant="body2" sx={{ color: 'text.disabled' }}>
                       {t('referentiel.produit.sansClasse')}
                     </Typography>
                   )}
                 </Box>
-                <Stack
-                  direction="row"
-                  sx={{ gap: 0.5, flexWrap: 'wrap', display: { xs: 'none', md: 'flex' } }}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    display: { xs: 'none', md: 'block' },
+                    color: p.reseaux.length ? 'text.secondary' : 'warning.main',
+                  }}
                 >
-                  {p.reseaux.length === 0 ? (
-                    <Chip
-                      size="small"
-                      color="warning"
-                      variant="outlined"
-                      label={t('referentiel.produit.aucunReseau')}
-                    />
-                  ) : (
-                    p.reseaux.map((r) => (
-                      <Chip key={r.id} size="small" variant="outlined" label={r.libelle} />
-                    ))
-                  )}
-                </Stack>
+                  {p.reseaux.length === 0
+                    ? t('referentiel.produit.aucunReseau')
+                    : p.reseaux.map((r) => r.libelle).join(', ')}
+                </Typography>
                 {gerer ? (
                   <IconButton
                     aria-label={t('commun.actions')}
@@ -517,19 +469,16 @@ function DialoguePortefeuille({
           sx={{ flexGrow: 1 }}
           slotProps={{ htmlInput: { 'aria-label': t('referentiel.produit.rechercher') } }}
         />
-        <Chip
-          size="small"
-          sx={{ alignSelf: 'flex-start' }}
-          color="secondary"
-          label={t('referentiel.portefeuille.selection', { count: choisis.size })}
-        />
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          {t('referentiel.portefeuille.selection', { count: choisis.size })}
+        </Typography>
       </Stack>
       <Box sx={{ maxHeight: 380, overflowY: 'auto', mx: -1 }}>
         {groupes.map(([classe, liste]) => (
           <Box key={classe} sx={{ mb: 1 }}>
             <Typography
               variant="overline"
-              sx={{ px: 1, color: teinte(liste[0]?.classe), fontWeight: 700 }}
+              sx={{ px: 1, color: 'text.secondary' }}
             >
               {classe || t('referentiel.produit.sansClasse')}
             </Typography>
@@ -583,7 +532,6 @@ function OngletPortefeuilles({
     return (
       <Card>
         <EtatVide
-          icone={<HubRounded />}
           titre={t('referentiel.portefeuille.aucunReseau')}
           texte={t('referentiel.portefeuille.aucunReseauTexte')}
         />
@@ -616,16 +564,11 @@ function OngletPortefeuilles({
                     <EnTeteCarte
                       titre={p.reseau.libelle}
                       action={
-                        <Chip
-                          size="small"
-                          color={n === 0 ? 'warning' : 'secondary'}
-                          variant={n === 0 ? 'outlined' : 'filled'}
-                          label={
-                            n === 0
-                              ? t('referentiel.portefeuille.vide')
-                              : t('referentiel.produit.nombre', { count: n })
-                          }
-                        />
+                        <Etiquette ton={n === 0 ? 'warning' : 'neutre'}>
+                          {n === 0
+                            ? t('referentiel.portefeuille.vide')
+                            : t('referentiel.produit.nombre', { count: n })}
+                        </Etiquette>
                       }
                     />
                     <CardContent
@@ -636,9 +579,8 @@ function OngletPortefeuilles({
                           role="img"
                           aria-label={t('referentiel.produit.nombre', { count: n })}
                           sx={{
-                            height: 6,
-                            borderRadius: 3,
-                            bgcolor: 'action.hover',
+                            height: 4,
+                            bgcolor: 'divider',
                             overflow: 'hidden',
                           }}
                         >
@@ -648,7 +590,7 @@ function OngletPortefeuilles({
                               width: `${(n / max) * 100}%`,
                               bgcolor: hors
                                 ? theme.palette.warning.main
-                                : theme.palette.secondary.main,
+                                : theme.palette.primary.main,
                             }}
                           />
                         </Box>
@@ -658,27 +600,17 @@ function OngletPortefeuilles({
                           {t('referentiel.portefeuille.videTexte')}
                         </Typography>
                       ) : (
-                        <Stack direction="row" sx={{ gap: 0.5, flexWrap: 'wrap' }}>
-                          {p.produits.slice(0, 10).map((produit) => (
-                            <Chip
-                              key={produit.id}
-                              size="small"
-                              variant="outlined"
-                              label={produit.libelle}
-                            />
-                          ))}
-                          {n > 10 && (
-                            <Chip
-                              size="small"
-                              label={t('referentiel.portefeuille.plus', { count: n - 10 })}
-                            />
-                          )}
-                        </Stack>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          {p.produits
+                            .slice(0, 10)
+                            .map((produit) => produit.libelle)
+                            .join(', ')}
+                          {n > 10 && ` · ${t('referentiel.portefeuille.plus', { count: n - 10 })}`}
+                        </Typography>
                       )}
                       {gerer && (
                         <Button
                           size="small"
-                          startIcon={<Inventory2Rounded />}
                           onClick={() => setOuvert(p)}
                           sx={{ alignSelf: 'flex-start', mt: 'auto' }}
                         >
@@ -761,7 +693,9 @@ function OngletListes({ valeurs, gerer }: { valeurs: ValeurReferentiel[]; gerer:
                   primary={t(`referentiel.listes.${code}`)}
                   slotProps={{ primary: { sx: { fontWeight: code === liste ? 700 : 500 } } }}
                 />
-                <Chip size="small" label={nombre} />
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  {nombre}
+                </Typography>
               </ListItemButton>
             );
           })}
@@ -770,7 +704,6 @@ function OngletListes({ valeurs, gerer }: { valeurs: ValeurReferentiel[]; gerer:
       <Card>
         <EnTeteCarte
           titre={t(`referentiel.listes.${liste}`)}
-          action={<PastilleIcone icone={<LibraryBooksRounded />} ton="info" taille={32} />}
         />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -810,7 +743,6 @@ function OngletListes({ valeurs, gerer }: { valeurs: ValeurReferentiel[]; gerer:
               <Button
                 type="submit"
                 variant="contained"
-                startIcon={<AddRounded />}
                 disabled={!nouvelle.trim()}
               >
                 {t('referentiel.valeur.ajouter')}
@@ -831,19 +763,8 @@ function OngletListes({ valeurs, gerer }: { valeurs: ValeurReferentiel[]; gerer:
                   spacing={1.5}
                   sx={{ alignItems: 'center', py: 1.1, opacity: v.archive ? 0.55 : 1 }}
                 >
-                  {liste === 'classe_therapeutique' && (
-                    <Box
-                      sx={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: '50%',
-                        bgcolor: teinte(v.id),
-                        flex: 'none',
-                      }}
-                    />
-                  )}
                   <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontWeight: 600 }} noWrap>
+                    <Typography sx={{ fontWeight: 500 }} noWrap>
                       {v.libelle}
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -855,9 +776,11 @@ function OngletListes({ valeurs, gerer }: { valeurs: ValeurReferentiel[]; gerer:
                     </Typography>
                   </Box>
                   {v.parent && libelleParent(v.parent) && (
-                    <Chip size="small" variant="outlined" label={libelleParent(v.parent)} />
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {libelleParent(v.parent)}
+                    </Typography>
                   )}
-                  {v.archive && <Chip size="small" label={t('referentiel.valeur.archivee')} />}
+                  {v.archive && <Etiquette>{t('referentiel.valeur.archivee')}</Etiquette>}
                   {gerer && !v.archive && (
                     <Tooltip title={t('referentiel.valeur.renommer')}>
                       <IconButton
@@ -953,44 +876,34 @@ export default function Referentiels({ perimetre }: { perimetre: Perimetre }) {
     <Stack spacing={3}>
       <EnTetePage
         titre={t('referentiel.titre')}
-        sousTitre={
-          perimetre.pays_actif
-            ? t('referentiel.sousTitre', { pays: perimetre.pays_actif.nom })
-            : t('referentiel.sousTitreConsolide')
-        }
+        sousTitre={perimetre.pays_actif?.nom ?? t('pays.consolide')}
       />
-      <GrilleTuiles>
-        <Tuile
+      <BarreChiffres>
+        <Chiffre
           libelle={t('referentiel.chiffres.produits')}
           valeur={charge ? actifs.length : <Skeleton width={40} />}
-          icone={<MedicationRounded />}
         />
-        <Tuile
+        <Chiffre
           libelle={t('referentiel.chiffres.classes')}
           valeur={charge ? classes.length : <Skeleton width={40} />}
-          icone={<CategoryRounded />}
-          ton="info"
         />
-        <Tuile
+        <Chiffre
           libelle={t('referentiel.chiffres.reseauxCouverts')}
           valeur={charge ? couverts : <Skeleton width={40} />}
-          icone={<HubRounded />}
-          ton={charge && couverts < listePortefeuilles.length ? 'warning' : 'success'}
+          ton={charge && couverts < listePortefeuilles.length ? 'warning' : 'neutre'}
           detail={
             charge
               ? t('referentiel.chiffres.surTotal', { total: listePortefeuilles.length })
               : undefined
           }
         />
-        <Tuile
+        <Chiffre
           libelle={t('referentiel.chiffres.multiReseaux')}
           valeur={
             charge ? actifs.filter((p) => p.reseaux.length > 1).length : <Skeleton width={40} />
           }
-          icone={<ShareRounded />}
-          ton="secondary"
         />
-      </GrilleTuiles>
+      </BarreChiffres>
 
       {peutGerer && !gerer && <Alert severity="info">{t('referentiel.choisirPays')}</Alert>}
       {!peutGerer && <Alert severity="info">{t('referentiel.lectureSeule')}</Alert>}
@@ -1002,10 +915,6 @@ export default function Referentiels({ perimetre }: { perimetre: Perimetre }) {
           textColor="inherit"
           variant="scrollable"
           allowScrollButtonsMobile
-          sx={{
-            '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minHeight: 44 },
-            '& .MuiTabs-indicator': { bgcolor: 'secondary.main', height: 3, borderRadius: 3 },
-          }}
         >
           {(['produits', 'portefeuilles', 'listes'] as const).map((valeur) => (
             <Tab key={valeur} value={valeur} label={t(`referentiel.onglets.${valeur}`)} />
@@ -1016,11 +925,14 @@ export default function Referentiels({ perimetre }: { perimetre: Perimetre }) {
       {erreur ? (
         <ErreurChargement erreur={erreur.error} reessayer={() => void erreur.refetch()} />
       ) : !charge ? (
-        <Stack spacing={1.5}>
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} variant="rounded" height={64} />
+        <Card aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
+            <Box key={i} sx={{ px: 2, py: 1.5, borderTop: i ? 1 : 0, borderColor: 'divider' }}>
+              <Skeleton width="35%" />
+              <Skeleton width="20%" />
+            </Box>
           ))}
-        </Stack>
+        </Card>
       ) : onglet === 'produits' ? (
         <OngletProduits
           produits={listeProduits}

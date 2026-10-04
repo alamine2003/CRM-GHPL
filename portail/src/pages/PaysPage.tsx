@@ -1,21 +1,19 @@
 import type { Pays, Perimetre, StatutPays } from '@innov/api-client';
-import AddRounded from '@mui/icons-material/AddRounded';
-import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
-import { Box, Button, Card, Chip, Skeleton, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Card, Skeleton, Stack, TextField, Typography } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import DialogueFormulaire from '../composants/Dialogue';
-import { EnTetePage } from '../composants/Elements';
+import { EnTetePage, Etiquette } from '../composants/Elements';
 import { dateCourte, drapeau } from '../composants/formats';
 import { ErreurChargement } from '../composants/Erreurs';
 import { useSession } from '../contexteSession';
 
-const COULEUR: Record<StatutPays, 'success' | 'warning' | 'default'> = {
+const COULEUR: Record<StatutPays, 'success' | 'warning' | 'neutre'> = {
   actif: 'success',
   suspendu: 'warning',
-  archive: 'default',
+  archive: 'neutre',
 };
 
 type Changement = { pays: Pays; statut: StatutPays };
@@ -33,16 +31,13 @@ export default function PaysPage({ perimetre }: { perimetre: Perimetre }) {
   const rafraichir = () => requetes.invalidateQueries({ queryKey: ['pays'] });
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2}>
       <EnTetePage
         titre={t('paysPage.titre')}
-        sousTitre={t('paysPage.sousTitre')}
         actions={
           perimetre.actions.includes('pays.creer') && (
             <Button
               variant="contained"
-              color="secondary"
-              startIcon={<AddRounded />}
               onClick={() => setCreation(true)}
             >
               {t('paysPage.nouveau')}
@@ -65,10 +60,10 @@ export default function PaysPage({ perimetre }: { perimetre: Perimetre }) {
           {liste.data.map((pays) => (
             <Card
               key={pays.code}
-              sx={{ p: 2.25, display: 'flex', flexDirection: 'column', gap: 1.5 }}
+              sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}
             >
               <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                <Box aria-hidden sx={{ fontSize: 34, lineHeight: 1 }}>
+                <Box aria-hidden sx={{ fontSize: 24, lineHeight: 1 }}>
                   {drapeau(pays.code)}
                 </Box>
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -79,11 +74,7 @@ export default function PaysPage({ perimetre }: { perimetre: Perimetre }) {
                     {pays.code} · {pays.fuseau} · {pays.devise} · {pays.langue.toUpperCase()}
                   </Typography>
                 </Box>
-                <Chip
-                  size="small"
-                  color={COULEUR[pays.statut]}
-                  label={t(`paysPage.statuts.${pays.statut}`)}
-                />
+                <Etiquette ton={COULEUR[pays.statut]}>{t(`paysPage.statuts.${pays.statut}`)}</Etiquette>
               </Stack>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {t('paysPage.depuis', { date: dateCourte(pays.cree_le, i18n.language) })}
@@ -93,7 +84,6 @@ export default function PaysPage({ perimetre }: { perimetre: Perimetre }) {
                   <Button
                     size="small"
                     variant="outlined"
-                    endIcon={<ArrowForwardRounded />}
                     onClick={() => {
                       void choisirPays(pays.code);
                       void naviguer('/');

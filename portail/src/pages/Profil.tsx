@@ -1,17 +1,11 @@
 import type { Moi, Perimetre } from '@innov/api-client';
 import { LANGUES } from '@innov/i18n';
-import LockRounded from '@mui/icons-material/LockRounded';
-import PaletteRounded from '@mui/icons-material/PaletteRounded';
-import TranslateRounded from '@mui/icons-material/TranslateRounded';
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Card,
   CardContent,
-  Chip,
-  Divider,
   Stack,
   TextField,
   ToggleButton,
@@ -20,8 +14,7 @@ import {
 } from '@mui/material';
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EnTeteCarte, EnTetePage, Ligne, PastilleIcone } from '../composants/Elements';
-import { initiales } from '../composants/initiales';
+import { EnTeteCarte, EnTetePage, Ligne } from '../composants/Elements';
 import { ChoixApparence } from '../composants/Apparence';
 import { CarteActivite, CarteDoubleAuth, CarteSessions } from '../composants/SecuriteCompte';
 import { messageErreur, useSession } from '../contexteSession';
@@ -53,31 +46,21 @@ export default function Profil({
   }
 
   return (
-    <Stack spacing={2.5}>
-      <EnTetePage titre={t('profilPage.titre')} sousTitre={t('profilPage.sousTitre')} />
+    <Stack spacing={2}>
+      <EnTetePage titre={t('profilPage.titre')} />
       <Box
         sx={{
           display: 'grid',
           gap: 2,
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' },
           alignItems: 'start',
         }}
       >
-        <Card>
-          <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-              <Avatar sx={{ width: 56, height: 56, bgcolor: 'secondary.main', fontWeight: 800 }}>
-                {initiales(utilisateur.prenom, utilisateur.nom)}
-              </Avatar>
-              <Box>
-                <Typography variant="h5" component="h2">
-                  {utilisateur.prenom} {utilisateur.nom}
-                </Typography>
-                <Typography sx={{ color: 'text.secondary' }}>{utilisateur.identifiant}</Typography>
-              </Box>
-            </Stack>
-            <Divider />
+        <Card sx={{ minWidth: 0 }}>
+          <EnTeteCarte titre={`${utilisateur.prenom} ${utilisateur.nom}`} />
+          <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1, py: 0.5 }}>
             <Box>
+              <Ligne libelle={t('profil.identifiant')} valeur={utilisateur.identifiant} />
               <Ligne
                 libelle={t('profil.courriel')}
                 valeur={utilisateur.courriel || t('profil.nonRenseigne')}
@@ -86,20 +69,14 @@ export default function Profil({
                 libelle={t('profilPage.paysPrincipal')}
                 valeur={utilisateur.pays_principal?.nom ?? t('session.siege')}
               />
-            </Box>
-            <Box>
-              <Typography variant="overline" sx={{ color: 'text.secondary' }}>
-                {t('profilPage.mesRoles')}
-              </Typography>
-              <Stack direction="row" sx={{ gap: 0.75, flexWrap: 'wrap', mt: 0.5 }}>
-                {perimetre.roles.length ? (
-                  perimetre.roles.map((r) => (
-                    <Chip key={r} size="small" color="primary" label={t(`roles.${r}`)} />
-                  ))
-                ) : (
-                  <Typography variant="body2">{t('roles.aucun')}</Typography>
-                )}
-              </Stack>
+              <Ligne
+                libelle={t('profilPage.mesRoles')}
+                valeur={
+                  perimetre.roles.length
+                    ? perimetre.roles.map((r) => t(`roles.${r}`)).join(', ')
+                    : t('roles.aucun')
+                }
+              />
             </Box>
           </CardContent>
         </Card>
@@ -107,16 +84,13 @@ export default function Profil({
           <Card>
             <EnTeteCarte
               titre={t('profilPage.langueTitre')}
-              action={<PastilleIcone icone={<TranslateRounded />} ton="info" taille={32} />}
             />
             <CardContent>
               <ToggleButtonGroup
                 exclusive
                 value={i18n.language}
                 onChange={(_, langue: string | null) => langue && void changerLangue(langue)}
-                sx={{
-                  '& .MuiToggleButton-root': { textTransform: 'none', px: 2.5, fontWeight: 600 },
-                }}
+                sx={{ '& .MuiToggleButton-root': { px: 2 } }}
               >
                 {LANGUES.map((code) => (
                   <ToggleButton key={code} value={code}>
@@ -132,7 +106,6 @@ export default function Profil({
           <Card>
             <EnTeteCarte
               titre={t('apparence.titre')}
-              action={<PastilleIcone icone={<PaletteRounded />} ton="info" taille={32} />}
             />
             <CardContent>
               <ChoixApparence />
@@ -144,7 +117,6 @@ export default function Profil({
           <Card component="form" onSubmit={changerMotDePasse}>
             <EnTeteCarte
               titre={t('profilPage.motDePasse')}
-              action={<PastilleIcone icone={<LockRounded />} ton="secondary" taille={32} />}
             />
             <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
@@ -185,7 +157,7 @@ export default function Profil({
         sx={{
           display: 'grid',
           gap: 2,
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' },
           alignItems: 'start',
         }}
       >

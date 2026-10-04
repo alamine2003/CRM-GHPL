@@ -106,7 +106,7 @@
   "navigation": {
     "menu": "Menu",
     "accueil": "Home",
-    "visites": "Visits and reports",
+    "visites": "Visits",
     "planning": "Planning",
     "prospects": "Prospects",
     "pilotage": "Analytics",
@@ -117,7 +117,8 @@
     "organisation": "Organisation",
     "sections": {
       "activite": "Activity",
-      "administration": "Administration"
+      "administration": "Administration",
+      "aVenir": "Coming soon"
     },
     "pays": "Countries",
     "profil": "My profile",
@@ -165,7 +166,8 @@
     "courriel": "Email",
     "perimetre": "Scope",
     "langue": "Language",
-    "nonRenseigne": "Not provided"
+    "nonRenseigne": "Not provided",
+    "roles": "Roles"
   },
   "mobile": {
     "onglets": {
@@ -706,7 +708,7 @@
     "sousTitreConsolide": "Prospect records across all countries.",
     "choisirPays": "Choose a country to create or validate records.",
     "chiffres": {
-      "actifs": "Active records",
+      "actifs": "Active",
       "aValider": "To validate",
       "mesAValider": "My records to validate",
       "potentielA": "Potential A",
@@ -755,7 +757,8 @@
       "courriel": "Email",
       "potentiel": "Potential",
       "grade": "Title",
-      "nomAide": "Saved in capitals; the title (Dr, Pr) goes in the salutation."
+      "nomAide": "Saved in capitals; the title (Dr, Pr) goes in the salutation.",
+      "statut": "Status"
     },
     "aides": {
       "aValider": "Your record will be “to validate”: you can use it right away; other reps will see it once validated.",
@@ -803,10 +806,10 @@
     "tousSecteurs": "All sectors",
     "sansGps": "No GPS",
     "chiffres": {
-      "actifs": "Active institutions",
+      "actifs": "Active",
       "aValider": "To validate",
       "mesAValider": "My records to validate",
-      "sansCoordonnees": "Without GPS coordinates",
+      "sansCoordonnees": "No GPS",
       "sansCoordonneesDetail": "Distance check impossible",
       "secteurs": "Sectors covered"
     },
@@ -850,6 +853,11 @@
       "creer": "Create institution",
       "creee": "Institution created: awaiting validation by the country administrator.",
       "positionEnregistree": "Position saved ({{metres}} m)"
+    },
+    "vue": "View",
+    "vues": {
+      "liste": "List",
+      "carte": "Map"
     }
   },
   "lieu": {
@@ -1031,7 +1039,8 @@
       "horsLigne": "Offline: list saved on this phone on {{date}}.",
       "resume_one": "{{count}} prospect · {{visites}} visits per {{semaines}}-week cycle",
       "resume_other": "{{count}} prospects · {{visites}} visits per {{semaines}}-week cycle"
-    }
+    },
+    "poste": "Position"
   },
   "recherche": {
     "filtres": "Filters",
@@ -1056,6 +1065,7 @@
     "precedente": "Previous page",
     "premiere": "First page",
     "derniere": "Last page",
-    "voirPlus": "Show more ({{reste}} left)"
+    "voirPlus": "Show more ({{reste}} left)",
+    "filtresN": "Filters · {{count}}"
   }
 }

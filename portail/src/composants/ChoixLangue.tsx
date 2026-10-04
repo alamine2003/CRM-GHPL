@@ -18,7 +18,8 @@ export default function ChoixLangue({ surFonce = false }: { surFonce?: boolean }
         select: { renderValue: (v) => String(v).toUpperCase() },
       }}
       sx={{
-        minWidth: 76,
+        minWidth: 68,
+        '& .MuiInputBase-root': { height: 32, fontSize: 13 },
         ...(surFonce && {
           '& .MuiOutlinedInput-root': { bgcolor: 'transparent', color: '#FFFFFF' },
           '& .MuiSvgIcon-root': { color: '#FFFFFF' },

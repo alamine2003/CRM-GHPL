@@ -1,5 +1,4 @@
 import { barreLaterale, marque } from '@innov/design';
-import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,20 +24,19 @@ export default function EcranPublic({ titre, children }: { titre: string; childr
       <Box
         component="aside"
         sx={{
-          bgcolor: marque.bleuMarine3,
-          backgroundImage: `radial-gradient(120% 80% at 0% 0%, ${marque.bleuMarine2} 0%, ${marque.bleuMarine3} 60%)`,
+          bgcolor: marque.bleuMarine,
           color: '#FFFFFF',
-          px: { xs: 2.5, md: 6 },
-          py: { xs: 2.5, md: 6 },
+          px: { xs: 2, md: 6 },
+          py: { xs: 1.5, md: 5 },
           display: 'flex',
           flexDirection: 'column',
           gap: { xs: 0, md: 5 },
         }}
       >
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <Logo taille={40} />
+          <Logo taille={32} />
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" component="p" sx={{ color: '#FFFFFF', lineHeight: 1.1 }}>
+            <Typography variant="h6" component="p" sx={{ color: '#FFFFFF', lineHeight: 1.2 }}>
               {t('commun.produit')}
             </Typography>
             <Typography variant="caption" sx={{ color: barreLaterale.texteDiscret }}>
@@ -55,23 +53,35 @@ export default function EcranPublic({ titre, children }: { titre: string; childr
             component="p"
             sx={{
               color: '#FFFFFF',
-              fontSize: { md: '2.1rem', lg: '2.5rem' },
+              fontSize: { md: 28, lg: 32 },
+              lineHeight: 1.25,
               mb: 4,
-              maxWidth: 460,
+              maxWidth: 440,
             }}
           >
             {t('marque.accroche')}
           </Typography>
-          <Stack spacing={2}>
-            {ATOUTS.map((cle) => (
-              <Stack key={cle} direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                <CheckCircleRounded sx={{ color: marque.orange }} />
+          <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none', maxWidth: 400 }}>
+            {ATOUTS.map((cle, i) => (
+              <Box
+                component="li"
+                key={cle}
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  py: 1.25,
+                  borderTop: `1px solid ${barreLaterale.separateur}`,
+                }}
+              >
+                <Typography sx={{ color: marque.orange, fontWeight: 700, minWidth: 16 }}>
+                  {i + 1}
+                </Typography>
                 <Typography sx={{ color: barreLaterale.texte }}>
                   {t(`marque.atouts.${cle}`)}
                 </Typography>
-              </Stack>
+              </Box>
             ))}
-          </Stack>
+          </Box>
         </Box>
         <Typography
           variant="caption"
@@ -96,15 +106,19 @@ export default function EcranPublic({ titre, children }: { titre: string; childr
         >
           <ChoixLangue />
         </Box>
-        <Card sx={{ width: '100%', maxWidth: 420 }}>
-          <BandeauDemonstration />
-          <CardContent sx={{ p: { xs: 2.5, sm: 4 }, '&:last-child': { pb: { xs: 2.5, sm: 4 } } }}>
-            <Typography variant="h5" component="h1" sx={{ mb: 2.5 }}>
-              {titre}
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>{children}</Box>
-          </CardContent>
-        </Card>
+        <Box sx={{ width: '100%', maxWidth: 400 }}>
+          <Card>
+            <CardContent sx={{ p: { xs: 2, sm: 3.5 }, '&:last-child': { pb: { xs: 2.5, sm: 3.5 } } }}>
+              <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+                {titre}
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>{children}</Box>
+            </CardContent>
+          </Card>
+          <Box sx={{ mt: 1.5, px: 0.5 }}>
+            <BandeauDemonstration />
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

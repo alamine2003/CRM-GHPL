@@ -1,16 +1,9 @@
 import type { Activite, SessionOuverte } from '@innov/api-client';
-import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
-import ComputerRounded from '@mui/icons-material/ComputerRounded';
-import GppMaybeRounded from '@mui/icons-material/GppMaybeRounded';
-import HistoryRounded from '@mui/icons-material/HistoryRounded';
-import PhoneAndroidRounded from '@mui/icons-material/PhoneAndroidRounded';
-import SecurityRounded from '@mui/icons-material/SecurityRounded';
 import {
   Box,
   Button,
   Card,
   CardContent,
-  Chip,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -27,7 +20,7 @@ import { useSession } from '../contexteSession';
 import AssistantDoubleAuth from './AssistantDoubleAuth';
 import ChampCode from './ChampCode';
 import DialogueFormulaire from './Dialogue';
-import { EnTeteCarte, PastilleIcone } from './Elements';
+import { EnTeteCarte } from './Elements';
 import { depuis } from './formats';
 
 /** Double authentification du compte : état, activation, codes de secours, désactivation. */
@@ -53,32 +46,25 @@ export function CarteDoubleAuth() {
         titre={t('doubleAuth.titre')}
         action={
           e && (
-            <Stack direction="row" spacing={0.75}>
+            <Typography
+              variant="caption"
+              sx={{ fontWeight: 600, color: e.active ? 'success.main' : 'warning.main' }}
+            >
+              {e.active ? t('doubleAuth.active') : t('doubleAuth.inactive')}
               {e.requise && (
-                <Chip
-                  size="small"
-                  color="secondary"
-                  variant="outlined"
-                  label={t('doubleAuth.obligatoire')}
-                />
+                <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+                  {' · '}
+                  {t('doubleAuth.obligatoire')}
+                </Box>
               )}
-              <Chip
-                size="small"
-                color={e.active ? 'success' : 'default'}
-                icon={e.active ? <CheckCircleRounded /> : <GppMaybeRounded />}
-                label={e.active ? t('doubleAuth.active') : t('doubleAuth.inactive')}
-              />
-            </Stack>
+            </Typography>
           )
         }
       />
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
-          <PastilleIcone icone={<SecurityRounded />} ton={e?.active ? 'success' : 'warning'} />
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {t('doubleAuth.description')}
-          </Typography>
-        </Stack>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {t('doubleAuth.description')}
+        </Typography>
         {!e ? (
           <Skeleton height={36} />
         ) : e.active ? (
@@ -106,7 +92,7 @@ export function CarteDoubleAuth() {
         )}
       </CardContent>
       <Dialog open={assistant} onClose={() => setAssistant(false)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 700 }}>{t('doubleAuth.activer')}</DialogTitle>
+        <DialogTitle>{t('doubleAuth.activer')}</DialogTitle>
         <DialogContent>
           <AssistantDoubleAuth
             surTermine={() => {
@@ -141,7 +127,7 @@ export function CarteDoubleAuth() {
         </DialogueFormulaire>
       )}
       <Dialog open={nouveauxCodes !== null} onClose={() => setNouveauxCodes(null)}>
-        <DialogTitle sx={{ fontWeight: 700 }}>{t('doubleAuth.etapes.codes')}</DialogTitle>
+        <DialogTitle>{t('doubleAuth.etapes.codes')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             {t('doubleAuth.codesTexte')}
@@ -202,21 +188,16 @@ export function CarteSessions() {
           <Box key={s.id}>
             {i > 0 && <Divider />}
             <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 1.25 }}>
-              <PastilleIcone
-                icone={s.client === 'mobile' ? <PhoneAndroidRounded /> : <ComputerRounded />}
-                ton={s.courante ? 'success' : 'info'}
-                taille={36}
-              />
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 600 }} noWrap>
+                <Typography sx={{ fontWeight: 500, overflowWrap: 'anywhere' }}>
                   {s.appareil ?? t(`sessionsPage.${s.client}`)}
                   {s.courante && (
-                    <Chip
-                      size="small"
-                      color="success"
-                      label={t('sessionsPage.cetAppareil')}
-                      sx={{ ml: 1 }}
-                    />
+                    <Box
+                      component="span"
+                      sx={{ ml: 1, fontSize: 12.5, color: 'success.main', fontWeight: 600 }}
+                    >
+                      {t('sessionsPage.cetAppareil')}
+                    </Box>
                   )}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -255,7 +236,6 @@ export function CarteActivite() {
     <Card>
       <EnTeteCarte
         titre={t('activitePage.titre')}
-        action={<PastilleIcone icone={<HistoryRounded />} ton="info" taille={32} />}
       />
       <CardContent>
         {activite.isPending && <Skeleton height={48} />}
@@ -275,8 +255,8 @@ export function CarteActivite() {
               <Box sx={{ position: 'relative', width: 12, flex: 'none' }}>
                 <Box
                   sx={{
-                    width: 10,
-                    height: 10,
+                    width: 8,
+                    height: 8,
                     mt: 0.75,
                     borderRadius: '50%',
                     bgcolor: a.resultat === 'echec' ? 'error.main' : 'success.main',
@@ -286,17 +266,17 @@ export function CarteActivite() {
                   <Box
                     sx={{
                       position: 'absolute',
-                      left: 4,
+                      left: 3.5,
                       top: 18,
                       bottom: -6,
-                      width: 2,
+                      width: 1,
                       bgcolor: 'divider',
                     }}
                   />
                 )}
               </Box>
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
                   {t(`activitePage.actions.${cleAction(a)}`, { defaultValue: a.action })}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>

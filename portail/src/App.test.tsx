@@ -593,7 +593,7 @@ describe('portail — administration 0.0.6 (USR-003, USR-004, USR-006, ORG-011)'
     rendre(client, '/equipe');
     fireEvent.click(await screen.findByRole('tab', { name: 'Téléphones' }));
     expect(await screen.findByText('Galaxy A15')).toBeInTheDocument();
-    expect(screen.getByText('Android 14')).toBeInTheDocument();
+    expect(screen.getByText(/Android 14/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Révoquer' }));
     const dialogue = await screen.findByRole('dialog');
     fireEvent.click(within(dialogue).getByRole('button', { name: 'Révoquer' }));
@@ -951,7 +951,7 @@ describe('portail — référentiels et portefeuilles (PRP-001, ORG-004)', () =>
     const { client } = clientRef();
     rendre(client, '/referentiels');
     expect(await screen.findByText('Tensiovar 5 mg')).toBeInTheDocument();
-    expect(screen.getAllByText('Cardio Vasculaire').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Cardio Vasculaire/).length).toBeGreaterThan(0);
     expect(screen.getByText('Hors portefeuille')).toBeInTheDocument();
     // Recherche insensible aux accents et à la casse.
     await saisir('Rechercher un produit ou un code', 'FERRÔ');
@@ -1350,7 +1350,8 @@ describe('portail — établissements (PRP-003)', () => {
     rendre(client, '/etablissements');
     expect(await screen.findByText('Clinique du Cap')).toBeInTheDocument();
     expect(screen.getAllByText('Dakar · Plateau').length).toBe(2);
-    expect(screen.getByText('Sans coordonnées GPS')).toBeInTheDocument();
+    // Chiffre clé, filtre et ligne de « Cabinet Fall ».
+    expect(screen.getAllByText('Sans GPS').length).toBe(3);
     fireEvent.click(screen.getByText('Cabinet Fall'));
     expect(await screen.findByText('Position non renseignée')).toBeInTheDocument();
     expect(await screen.findByText(/Aucun prospect n.y exerce/)).toBeInTheDocument();
@@ -1598,9 +1599,13 @@ describe('portail — listes cibles (PRP-011)', () => {
     const { client, ciblage } = clientCiblage();
     rendre(client, '/ciblage');
     expect(await screen.findByRole('heading', { name: 'VM Plateau' })).toBeInTheDocument();
-    expect(screen.getByText('Poste vacant')).toBeInTheDocument();
     expect(screen.getByText('Dr Awa NDIAYE')).toBeInTheDocument();
-    expect(screen.getByText('Hors secteur', { selector: '.MuiChip-label' })).toBeInTheDocument();
+    // Le chiffre clé et la mention sur la ligne du prospect.
+    expect(screen.getAllByText('Hors secteur').length).toBe(2);
+    // Sur petit écran, les postes se choisissent dans une liste déroulante.
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Poste' }));
+    expect(await screen.findByRole('option', { name: /VM Fann · Poste vacant/ })).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('listbox'), { key: 'Escape' });
     expect(screen.getByText('Repère du poste : 6 à 10 par jour')).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole('button', { name: 'Une visite de plus par cycle · Dr Awa NDIAYE' }),

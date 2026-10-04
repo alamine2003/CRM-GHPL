@@ -25,18 +25,17 @@ export interface Entree {
   chemin?: string;
   /** Qui voit la rubrique (le serveur reste seul juge des données). */
   visible?: (p: Perimetre) => boolean;
-  version?: string;
 }
 
 const peut = (action: string) => (p: Perimetre) => p.actions.includes(action);
 export const estSiege = (p: Perimetre) =>
   p.roles.some((r) => r === 'admin_siege' || r === 'direction_siege');
 
-/** Entrées de navigation ; celles d'une version future sont visibles mais inactives. */
+/** Entrées de navigation ; celles d'une version future sont regroupées sous « À venir », inactives. */
 export const ENTREES: Entree[] = [
   { cle: 'accueil', icone: <HomeRounded />, section: 'activite', chemin: '/' },
-  { cle: 'visites', icone: <FactCheckRounded />, section: 'activite', version: '0.4.1' },
-  { cle: 'planning', icone: <CalendarMonthRounded />, section: 'activite', version: '0.2.1' },
+  { cle: 'visites', icone: <FactCheckRounded />, section: 'activite' },
+  { cle: 'planning', icone: <CalendarMonthRounded />, section: 'activite' },
   {
     cle: 'prospects',
     icone: <PeopleAltRounded />,
@@ -58,7 +57,7 @@ export const ENTREES: Entree[] = [
     chemin: '/ciblage',
     visible: peut('cibles.lire'),
   },
-  { cle: 'pilotage', icone: <BarChartRounded />, section: 'activite', version: '0.7.1' },
+  { cle: 'pilotage', icone: <BarChartRounded />, section: 'activite' },
   {
     cle: 'organisation',
     icone: <AccountTreeRounded />,

@@ -1,16 +1,20 @@
 import { Box, Card, Stack, Typography } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
 import type { ReactNode } from 'react';
 
-export type Ton = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+/**
+ * Composants de mise en page du portail (docs/design.md) : surfaces plates séparées par des
+ * filets, titres sans icône, chiffres sans décoration.
+ */
 
-/** En-tête de carte : titre à gauche, action ou pastille à droite. */
+export type Ton = 'neutre' | 'secondary' | 'warning' | 'error' | 'success';
+
+/** En-tête de section : titre à gauche, action éventuelle à droite, filet dessous. */
 export function EnTeteCarte({ titre, action }: { titre: string; action?: ReactNode }) {
   return (
     <Box
       sx={{
-        px: 2.25,
-        py: 1.75,
+        px: 2,
+        minHeight: 48,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -27,112 +31,101 @@ export function EnTeteCarte({ titre, action }: { titre: string; action?: ReactNo
   );
 }
 
-/** Ligne « libellé : valeur » d'une carte de détails. */
+/** Ligne « libellé : valeur » d'une section de détails. */
 export function Ligne({ libelle, valeur }: { libelle: string; valeur: ReactNode }) {
   return (
-    <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between', py: 1.1 }}>
-      <Typography sx={{ color: 'text.secondary' }}>{libelle}</Typography>
-      <Typography component="div" sx={{ fontWeight: 600, textAlign: 'right', minWidth: 0 }}>
+    <Stack
+      direction="row"
+      spacing={2}
+      sx={{ justifyContent: 'space-between', alignItems: 'baseline', py: 1, minWidth: 0 }}
+    >
+      <Typography variant="body2" sx={{ color: 'text.secondary', flex: 'none' }}>
+        {libelle}
+      </Typography>
+      <Typography
+        component="div"
+        sx={{ fontWeight: 500, textAlign: 'right', minWidth: 0, overflowWrap: 'anywhere' }}
+      >
         {valeur}
       </Typography>
     </Stack>
   );
 }
 
-/** Pastille d'icône colorée, fond adouci. */
-export function PastilleIcone({
-  icone,
-  ton = 'primary',
-  taille = 40,
-}: {
-  icone: ReactNode;
-  ton?: Ton;
-  taille?: number;
-}) {
-  const theme = useTheme();
-  const couleur = theme.palette[ton].main;
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        width: taille,
-        height: taille,
-        borderRadius: 2.5,
-        display: 'grid',
-        placeItems: 'center',
-        flex: 'none',
-        color: couleur,
-        bgcolor: alpha(couleur, theme.palette.mode === 'dark' ? 0.2 : 0.1),
-        '& svg': { fontSize: taille * 0.55 },
-      }}
-    >
-      {icone}
-    </Box>
-  );
-}
+const COULEUR_TON: Record<Ton, string> = {
+  neutre: 'text.primary',
+  secondary: 'secondary.main',
+  warning: 'warning.main',
+  error: 'error.main',
+  success: 'success.main',
+};
 
-/** Tuile de chiffre clé (maquette : « stat tiles »). */
-export function Tuile({
+/**
+ * Chiffre clé d'une barre de chiffres. Le ton colore le seul chiffre, et seulement quand il
+ * appelle une action (`alerte`) : un zéro reste neutre.
+ */
+export function Chiffre({
   libelle,
   valeur,
-  icone,
-  ton = 'primary',
+  ton = 'neutre',
   detail,
 }: {
   libelle: string;
   valeur: ReactNode;
-  icone: ReactNode;
   ton?: Ton;
   detail?: string;
 }) {
+  const nul = valeur === 0 || valeur === '0';
   return (
-    <Card
-      sx={{
-        p: 2,
-        display: 'flex',
-        flexDirection: { xs: 'column', sm: 'row' },
-        gap: { xs: 1.25, sm: 1.75 },
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        minWidth: 0,
-      }}
-    >
-      <PastilleIcone icone={icone} ton={ton} taille={44} />
-      <Box sx={{ minWidth: 0 }}>
-        <Typography
-          component="p"
-          sx={{ fontFamily: 'h4.fontFamily', fontWeight: 800, fontSize: 26, lineHeight: 1.1 }}
-        >
-          {valeur}
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {libelle}
-        </Typography>
+    <Box sx={{ px: 2, py: 1.5, minWidth: 0 }}>
+      <Typography
+        component="p"
+        sx={{
+          fontFamily: 'h4.fontFamily',
+          fontWeight: 700,
+          fontSize: 20,
+          lineHeight: '24px',
+          color: nul ? 'text.primary' : COULEUR_TON[ton],
+        }}
+      >
+        {valeur}
+      </Typography>
+      <Typography variant="caption" component="p" sx={{ color: 'text.secondary' }}>
+        {libelle}
         {detail && (
-          <Typography variant="caption" sx={{ color: 'text.disabled' }} component="p">
-            {detail}
-          </Typography>
+          <>
+            {' · '}
+            <Box component="span" sx={{ color: 'text.disabled' }}>
+              {detail}
+            </Box>
+          </>
         )}
-      </Box>
-    </Card>
-  );
-}
-
-/** Grille de tuiles qui passe de 1 à 4 colonnes selon la largeur. */
-export function GrilleTuiles({ children }: { children: ReactNode }) {
-  return (
-    <Box
-      sx={{
-        display: 'grid',
-        gap: 2,
-        gridTemplateColumns: { xs: '1fr 1fr', lg: 'repeat(4, minmax(0, 1fr))' },
-      }}
-    >
-      {children}
+      </Typography>
     </Box>
   );
 }
 
-/** Titre de page, sous-titre et actions. */
+/** Barre de chiffres : une seule surface, cellules séparées par des filets. */
+export function BarreChiffres({ children }: { children: ReactNode }) {
+  return (
+    <Card
+      component="section"
+      sx={{
+        display: 'grid',
+        overflow: 'hidden',
+        gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'none' },
+        gridAutoFlow: { md: 'column' },
+        gridAutoColumns: { md: 'minmax(0, 1fr)' },
+        // Filets internes : chaque cellule porte un filet gauche et haut, masqués au bord.
+        '& > *': { borderLeft: 1, borderTop: 1, borderColor: 'divider', ml: '-1px', mt: '-1px' },
+      }}
+    >
+      {children}
+    </Card>
+  );
+}
+
+/** Titre de page et actions sur une ligne ; contexte (pays, nombre) en texte discret. */
 export function EnTetePage({
   titre,
   sousTitre,
@@ -144,20 +137,31 @@ export function EnTetePage({
 }) {
   return (
     <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      spacing={1.5}
-      sx={{ justifyContent: 'space-between', alignItems: { sm: 'flex-end' } }}
+      direction="row"
+      sx={{
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        columnGap: 2,
+        rowGap: 1,
+        minHeight: 36,
+      }}
     >
-      <Box sx={{ minWidth: 0 }}>
+      <Stack
+        direction="row"
+        sx={{ alignItems: 'baseline', columnGap: 1.5, flexWrap: 'wrap', minWidth: 0 }}
+      >
         <Typography variant="h4" component="h1">
           {titre}
         </Typography>
         {sousTitre && (
-          <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>{sousTitre}</Typography>
+          <Typography variant="body2" component="p" sx={{ color: 'text.secondary' }}>
+            {sousTitre}
+          </Typography>
         )}
-      </Box>
+      </Stack>
       {actions && (
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
           {actions}
         </Stack>
       )}
@@ -165,28 +169,100 @@ export function EnTetePage({
   );
 }
 
-/** État vide : icône, message et action éventuelle. */
+/** État vide : une phrase, une précision et, si utile, une action. */
 export function EtatVide({
-  icone,
   titre,
   texte,
   action,
 }: {
-  icone: ReactNode;
   titre: string;
   texte?: string;
   action?: ReactNode;
 }) {
   return (
-    <Stack spacing={1.25} sx={{ alignItems: 'center', textAlign: 'center', py: 5, px: 2 }}>
-      <PastilleIcone icone={icone} ton="secondary" taille={56} />
-      <Typography sx={{ fontWeight: 700 }}>{titre}</Typography>
+    <Stack spacing={0.75} sx={{ alignItems: 'center', textAlign: 'center', py: 4, px: 2 }}>
+      <Typography sx={{ fontWeight: 600 }}>{titre}</Typography>
       {texte && (
         <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: 420 }}>
           {texte}
         </Typography>
       )}
-      {action}
+      {action && <Box sx={{ pt: 1 }}>{action}</Box>}
     </Stack>
+  );
+}
+
+const COULEUR_POTENTIEL: Record<string, string> = {
+  A: 'secondary.main',
+  B: 'primary.main',
+  C: 'text.secondary',
+};
+
+/** Potentiel A/B/C : la seule « couleur métier » des listes (A orange, B marine, C gris). */
+export function Potentiel({ valeur, libelle }: { valeur: string; libelle?: string }) {
+  return (
+    <Box
+      component="span"
+      aria-label={libelle}
+      title={libelle}
+      sx={{
+        display: 'inline-block',
+        minWidth: 20,
+        textAlign: 'center',
+        fontFamily: 'h4.fontFamily',
+        fontWeight: 700,
+        fontSize: 13,
+        lineHeight: '20px',
+        borderRadius: '4px',
+        border: 1,
+        borderColor: 'currentColor',
+        color: COULEUR_POTENTIEL[valeur] ?? 'text.secondary',
+      }}
+    >
+      {valeur}
+    </Box>
+  );
+}
+
+/** Section d'un panneau de détail : titre de section, filet, contenu ; sans carte imbriquée. */
+export function Section({ titre, action, children }: { titre: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <Box component="section">
+      <Stack
+        direction="row"
+        sx={{
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          pb: 0.75,
+          mb: 0.5,
+          borderBottom: 1,
+          borderColor: 'divider',
+          minHeight: 32,
+        }}
+      >
+        <Typography variant="h6" component="h3">
+          {titre}
+        </Typography>
+        {action}
+      </Stack>
+      {children}
+    </Box>
+  );
+}
+
+/** État en texte coloré (« Vacant », « Échec »…) : remplace les pastilles dans les listes. */
+export function Etiquette({ ton = 'neutre', children }: { ton?: Ton | 'info'; children: ReactNode }) {
+  return (
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{
+        fontWeight: 600,
+        whiteSpace: 'nowrap',
+        color: ton === 'info' ? 'info.main' : ton === 'neutre' ? 'text.secondary' : COULEUR_TON[ton],
+      }}
+    >
+      {children}
+    </Typography>
   );
 }

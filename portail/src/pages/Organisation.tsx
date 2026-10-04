@@ -8,22 +8,16 @@ import type {
   Utilisateur,
   Zone,
 } from '@innov/api-client';
-import AccountTreeRounded from '@mui/icons-material/AccountTreeRounded';
-import AddRounded from '@mui/icons-material/AddRounded';
 import ArchiveRounded from '@mui/icons-material/ArchiveRounded';
-import BadgeRounded from '@mui/icons-material/BadgeRounded';
 import HubRounded from '@mui/icons-material/HubRounded';
-import MapRounded from '@mui/icons-material/MapRounded';
 import MoreVertRounded from '@mui/icons-material/MoreVertRounded';
 import PersonAddAltRounded from '@mui/icons-material/PersonAddAltRounded';
-import PersonOffRounded from '@mui/icons-material/PersonOffRounded';
 import PersonRemoveRounded from '@mui/icons-material/PersonRemoveRounded';
 import PlaceRounded from '@mui/icons-material/PlaceRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
 import SupervisorAccountRounded from '@mui/icons-material/SupervisorAccountRounded';
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Card,
@@ -45,19 +39,11 @@ import {
   useTheme,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
 import DialogueSecteur from '../composants/DialogueSecteur';
-import {
-  EnTeteCarte,
-  EnTetePage,
-  EtatVide,
-  GrilleTuiles,
-  PastilleIcone,
-  Tuile,
-} from '../composants/Elements';
-import { initiales } from '../composants/initiales';
+import { BarreChiffres, Chiffre, EnTeteCarte, EnTetePage, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { useSession } from '../contexteSession';
 
@@ -85,33 +71,20 @@ function nomComplet(p: Pick<Personne, 'prenom' | 'nom'>) {
   return `${p.prenom} ${p.nom}`;
 }
 
-function PersonneCourte({ personne, ton }: { personne: Personne; ton?: 'secondary' }) {
+function PersonneCourte({ personne }: { personne: Personne }) {
   return (
-    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
-      <Avatar
-        sx={{
-          width: 28,
-          height: 28,
-          fontSize: 11,
-          fontWeight: 700,
-          bgcolor: ton === 'secondary' ? 'secondary.main' : 'primary.main',
-          color: ton === 'secondary' ? 'secondary.contrastText' : 'primary.contrastText',
-        }}
-      >
-        {initiales(personne.prenom, personne.nom)}
-      </Avatar>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
-          {nomComplet(personne)}
-        </Typography>
-        <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap component="p">
-          {personne.identifiant}
-        </Typography>
-      </Box>
-    </Stack>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+        {nomComplet(personne)}
+      </Typography>
+      <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap component="p">
+        {personne.identifiant}
+      </Typography>
+    </Box>
   );
 }
 
+/** Réseaux ou secteurs d'un poste : texte simple, séparé par des virgules. */
 function Pastilles({
   elements,
   vide = '—',
@@ -119,13 +92,13 @@ function Pastilles({
   elements: { id: string; libelle: string }[];
   vide?: string;
 }) {
-  if (!elements.length) return <Typography sx={{ color: 'text.disabled' }}>{vide}</Typography>;
   return (
-    <Stack direction="row" sx={{ gap: 0.5, flexWrap: 'wrap' }}>
-      {elements.map((e) => (
-        <Chip key={e.id} size="small" variant="outlined" label={e.libelle} />
-      ))}
-    </Stack>
+    <Typography
+      variant="body2"
+      sx={{ color: elements.length ? 'text.primary' : 'text.disabled', minWidth: 0 }}
+    >
+      {elements.length ? elements.map((e) => e.libelle).join(', ') : vide}
+    </Typography>
   );
 }
 
@@ -398,28 +371,20 @@ function Occupant({ poste }: { poste: Poste }) {
   return poste.occupant ? (
     <PersonneCourte personne={poste.occupant} />
   ) : (
-    <Chip
-      size="small"
-      color="warning"
-      variant="outlined"
-      icon={<PersonOffRounded />}
-      label={t('organisation.vacant')}
-      sx={{ alignSelf: 'flex-start', justifySelf: 'start' }}
-    />
+    <Typography variant="body2" sx={{ color: 'warning.main', fontWeight: 600 }}>
+      {t('organisation.vacant')}
+    </Typography>
   );
 }
 
 function SuperviseurPoste({ poste }: { poste: Poste }) {
   const { t } = useTranslation();
   return poste.superviseur ? (
-    <PersonneCourte personne={poste.superviseur} ton="secondary" />
+    <PersonneCourte personne={poste.superviseur} />
   ) : (
-    <Chip
-      size="small"
-      color="error"
-      variant="outlined"
-      label={t('organisation.aucunSuperviseur')}
-    />
+    <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 500 }}>
+      {t('organisation.aucunSuperviseur')}
+    </Typography>
   );
 }
 
@@ -427,7 +392,7 @@ function TitrePoste({ poste }: { poste: Poste }) {
   const { t } = useTranslation();
   return (
     <Box sx={{ minWidth: 0 }}>
-      <Typography sx={{ fontWeight: 700, lineHeight: 1.3 }}>{poste.libelle}</Typography>
+      <Typography sx={{ fontWeight: 600 }}>{poste.libelle}</Typography>
       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
         {t(`organisation.typesPoste.${poste.type_poste}`)}
         {poste.archive && ` · ${t('organisation.archive')}`}
@@ -452,24 +417,41 @@ function ListePostes({
 
   if (!large) {
     return (
-      <Stack spacing={1.5}>
-        {postes.map((poste) => (
-          <Card key={poste.id} sx={{ p: 2, opacity: poste.archive ? 0.6 : 1 }}>
+      <Card>
+        {postes.map((poste, i) => (
+          <Box
+            key={poste.id}
+            sx={{
+              px: 2,
+              py: 1.5,
+              borderTop: i ? 1 : 0,
+              borderColor: 'divider',
+              opacity: poste.archive ? 0.6 : 1,
+            }}
+          >
             <Stack direction="row" sx={{ alignItems: 'flex-start', gap: 1 }}>
-              <PastilleIcone icone={<BadgeRounded />} ton={poste.vacant ? 'warning' : 'primary'} />
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 <TitrePoste poste={poste} />
               </Box>
               {gerer && !poste.archive && <MenuPoste poste={poste} ouvrir={ouvrir} />}
             </Stack>
-            <Stack spacing={1.25} sx={{ mt: 1.5 }}>
+            <Box
+              sx={{
+                mt: 1,
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                gap: 1,
+              }}
+            >
               <Occupant poste={poste} />
               <SuperviseurPoste poste={poste} />
-              <Pastilles elements={[...poste.reseaux, ...poste.secteurs]} />
-            </Stack>
-          </Card>
+            </Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+              {[...poste.reseaux, ...poste.secteurs].map((e) => e.libelle).join(' · ')}
+            </Typography>
+          </Box>
         ))}
-      </Stack>
+      </Card>
     );
   }
 
@@ -482,9 +464,8 @@ function ListePostes({
           display: 'grid',
           gridTemplateColumns: colonnes,
           gap: 2,
-          px: 2.25,
-          py: 1.25,
-          bgcolor: 'background.default',
+          px: 2,
+          py: 1,
           borderBottom: 1,
           borderColor: 'divider',
         }}
@@ -508,8 +489,8 @@ function ListePostes({
             display: 'grid',
             gridTemplateColumns: colonnes,
             gap: 2,
-            px: 2.25,
-            py: 1.5,
+            px: 2,
+            py: 1.25,
             alignItems: 'center',
             borderBottom: 1,
             borderColor: 'divider',
@@ -518,14 +499,7 @@ function ListePostes({
             '&:hover': { bgcolor: 'action.hover' },
           }}
         >
-          <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', minWidth: 0 }}>
-            <PastilleIcone
-              icone={<BadgeRounded />}
-              ton={poste.vacant ? 'warning' : 'primary'}
-              taille={34}
-            />
-            <TitrePoste poste={poste} />
-          </Stack>
+          <TitrePoste poste={poste} />
           <Pastilles elements={poste.reseaux} />
           <Pastilles elements={poste.secteurs} />
           <Occupant poste={poste} />
@@ -570,14 +544,12 @@ function OngletPostes({
     return (
       <Card>
         <EtatVide
-          icone={<BadgeRounded />}
           titre={t('organisation.vides.postes')}
           texte={t('organisation.vides.postesTexte')}
           action={
             gerer && (
               <Button
                 variant="contained"
-                startIcon={<AddRounded />}
                 onClick={() => ouvrir({ type: 'poste' })}
               >
                 {t('organisation.actions.nouveauPoste')}
@@ -617,7 +589,7 @@ function OngletPostes({
           exclusive
           value={filtre}
           onChange={(_, valeur: Filtre | null) => valeur && setFiltre(valeur)}
-          sx={{ '& .MuiToggleButton-root': { textTransform: 'none', px: 1.5, fontWeight: 600 } }}
+          sx={{ overflowX: 'auto', maxWidth: '100%' }}
         >
           {(['tous', 'vacants', 'sansSuperviseur'] as const).map((f) => (
             <ToggleButton key={f} value={f}>
@@ -630,7 +602,7 @@ function OngletPostes({
         <ListePostes postes={visibles} gerer={gerer} ouvrir={ouvrir} />
       ) : (
         <Card>
-          <EtatVide icone={<SearchRounded />} titre={t('organisation.vides.filtre')} />
+          <EtatVide titre={t('organisation.vides.filtre')} />
         </Card>
       )}
     </Stack>
@@ -642,7 +614,6 @@ function OngletPostes({
 function CarteGroupe({
   titre,
   sousTitre,
-  icone,
   elements,
   action,
   surChoisir,
@@ -676,7 +647,6 @@ function CarteGroupe({
           {elements.map((e) => (
             <Chip
               key={e.id}
-              icon={icone as ReactElement}
               label={e.libelle}
               variant={e.archive ? 'outlined' : 'filled'}
               sx={e.archive ? { textDecoration: 'line-through', opacity: 0.6 } : undefined}
@@ -707,14 +677,12 @@ function OngletZones({
     return (
       <Card>
         <EtatVide
-          icone={<MapRounded />}
           titre={t('organisation.vides.zones')}
           texte={t('organisation.vides.zonesTexte')}
           action={
             gerer && (
               <Button
                 variant="contained"
-                startIcon={<AddRounded />}
                 onClick={() => ouvrir({ type: 'zone' })}
               >
                 {t('organisation.actions.nouvelleZone')}
@@ -745,7 +713,6 @@ function OngletZones({
               !zone.archive && (
                 <Button
                   size="small"
-                  startIcon={<AddRounded />}
                   onClick={() => ouvrir({ type: 'secteur', zone })}
                 >
                   {t('organisation.actions.nouveauSecteur')}
@@ -775,14 +742,12 @@ function OngletReseaux({
     return (
       <Card>
         <EtatVide
-          icone={<HubRounded />}
           titre={t('organisation.vides.reseaux')}
           texte={t('organisation.vides.reseauxTexte')}
           action={
             gerer && (
               <Button
                 variant="contained"
-                startIcon={<AddRounded />}
                 onClick={() => ouvrir({ type: 'division' })}
               >
                 {t('organisation.actions.nouvelleDivision')}
@@ -809,7 +774,6 @@ function OngletReseaux({
               !division.archive && (
                 <Button
                   size="small"
-                  startIcon={<AddRounded />}
                   onClick={() => ouvrir({ type: 'reseau', division: division.id })}
                 >
                   {t('organisation.actions.nouveauReseau')}
@@ -864,20 +828,14 @@ export default function Organisation({ perimetre }: { perimetre: Perimetre }) {
   const erreur = [donnees.postes, donnees.zones, donnees.divisions].find((q) => q.isError);
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2}>
       <EnTetePage
         titre={t('organisation.titre')}
-        sousTitre={
-          perimetre.pays_actif
-            ? t('organisation.sousTitre', { pays: perimetre.pays_actif.nom })
-            : t('organisation.sousTitreConsolide')
-        }
+        sousTitre={perimetre.pays_actif?.nom ?? t('pays.consolide')}
         actions={
           gerer && (
             <Button
               variant="contained"
-              color="secondary"
-              startIcon={<AddRounded />}
               onClick={() => setDialogue(boutonAjout[onglet].dialogue)}
             >
               {boutonAjout[onglet].libelle}
@@ -886,43 +844,38 @@ export default function Organisation({ perimetre }: { perimetre: Perimetre }) {
         }
       />
 
-      <GrilleTuiles>
-        <Tuile
+      <BarreChiffres>
+        <Chiffre
           libelle={t('organisation.chiffres.postes')}
           valeur={s ? s.postes : <Skeleton width={40} />}
-          icone={<BadgeRounded />}
           detail={s ? t('organisation.chiffres.occupes', { taux }) : undefined}
         />
-        <Tuile
+        <Chiffre
           libelle={t('organisation.chiffres.vacants')}
           valeur={s ? s.postes_vacants : <Skeleton width={40} />}
-          icone={<PersonOffRounded />}
           ton="warning"
         />
-        <Tuile
+        <Chiffre
           libelle={t('organisation.chiffres.sansSuperviseur')}
           valeur={s ? s.postes_sans_superviseur : <Skeleton width={40} />}
-          icone={<SupervisorAccountRounded />}
           ton="error"
         />
-        <Tuile
+        <Chiffre
           libelle={t('organisation.chiffres.secteurs')}
           valeur={s ? s.secteurs : <Skeleton width={40} />}
-          icone={<MapRounded />}
-          ton="info"
           detail={
             s
               ? `${t('organisation.chiffres.zones', { count: s.zones })} · ${t('organisation.chiffres.reseaux', { count: s.reseaux })}`
               : undefined
           }
         />
-      </GrilleTuiles>
+      </BarreChiffres>
 
       {!gerer && perimetre.actions.includes('organisation.gerer') && (
         <Alert severity="info">{t('organisation.choisirPays')}</Alert>
       )}
       {!perimetre.actions.includes('organisation.gerer') && (
-        <Alert severity="info" icon={<AccountTreeRounded />}>
+        <Alert severity="info">
           {t('organisation.lectureSeule')}
         </Alert>
       )}
@@ -934,10 +887,6 @@ export default function Organisation({ perimetre }: { perimetre: Perimetre }) {
           textColor="inherit"
           variant="scrollable"
           allowScrollButtonsMobile
-          sx={{
-            '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minHeight: 44 },
-            '& .MuiTabs-indicator': { bgcolor: 'secondary.main', height: 3, borderRadius: 3 },
-          }}
         >
           {(['postes', 'zones', 'reseaux'] as const).map((valeur) => (
             <Tab key={valeur} value={valeur} label={t(`organisation.onglets.${valeur}`)} />
@@ -948,11 +897,14 @@ export default function Organisation({ perimetre }: { perimetre: Perimetre }) {
       {erreur ? (
         <ErreurChargement erreur={erreur.error} reessayer={() => void erreur.refetch()} />
       ) : chargement ? (
-        <Stack spacing={1.5}>
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} variant="rounded" height={64} />
+        <Card aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
+            <Box key={i} sx={{ px: 2, py: 1.5, borderTop: i ? 1 : 0, borderColor: 'divider' }}>
+              <Skeleton width="35%" />
+              <Skeleton width="20%" />
+            </Box>
           ))}
-        </Stack>
+        </Card>
       ) : onglet === 'postes' ? (
         <OngletPostes postes={donnees.postes.data ?? []} gerer={gerer} ouvrir={setDialogue} />
       ) : onglet === 'zones' ? (

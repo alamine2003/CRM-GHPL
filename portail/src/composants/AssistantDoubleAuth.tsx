@@ -1,6 +1,3 @@
-import ContentCopyRounded from '@mui/icons-material/ContentCopyRounded';
-import DownloadRounded from '@mui/icons-material/DownloadRounded';
-import PhonelinkLockRounded from '@mui/icons-material/PhonelinkLockRounded';
 import {
   Alert,
   Box,
@@ -19,7 +16,6 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { messageErreur, useSession } from '../contexteSession';
 import ChampCode from './ChampCode';
-import { PastilleIcone } from './Elements';
 
 const ETAPES = ['installer', 'scanner', 'confirmer', 'codes'] as const;
 
@@ -85,8 +81,7 @@ export default function AssistantDoubleAuth({ surTermine }: { surTermine: () => 
         </Alert>
       )}
       {etape === 0 && (
-        <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
-          <PastilleIcone icone={<PhonelinkLockRounded />} ton="secondary" taille={64} />
+        <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
           <Typography sx={{ color: 'text.secondary' }}>{t('doubleAuth.installerTexte')}</Typography>
           <Button variant="contained" onClick={() => setEtape(1)}>
             {t('doubleAuth.suivant')}
@@ -96,7 +91,7 @@ export default function AssistantDoubleAuth({ surTermine }: { surTermine: () => 
       {etape === 1 && (
         <Stack spacing={2} sx={{ alignItems: 'center', textAlign: 'center' }}>
           <Typography sx={{ color: 'text.secondary' }}>{t('doubleAuth.scannerTexte')}</Typography>
-          <Paper variant="outlined" sx={{ p: 1.5, bgcolor: '#FFFFFF', borderRadius: 3 }}>
+          <Paper variant="outlined" sx={{ p: 1.5, bgcolor: '#FFFFFF' }}>
             {qr ? (
               <img src={qr} alt={t('doubleAuth.qrAlt')} width={220} height={220} />
             ) : (
@@ -158,13 +153,11 @@ export default function AssistantDoubleAuth({ surTermine }: { surTermine: () => 
           </Box>
           <Stack direction="row" spacing={1}>
             <Button
-              startIcon={<ContentCopyRounded />}
               onClick={() => void navigator.clipboard?.writeText(texteCodes)}
             >
               {t('doubleAuth.copier')}
             </Button>
             <Button
-              startIcon={<DownloadRounded />}
               href={`data:text/plain;charset=utf-8,${encodeURIComponent(`INNOV CRM\n\n${texteCodes}\n`)}`}
               download="innov-crm-codes-de-secours.txt"
             >
@@ -175,7 +168,7 @@ export default function AssistantDoubleAuth({ surTermine }: { surTermine: () => 
             control={<Checkbox checked={notes} onChange={(e) => setNotes(e.target.checked)} />}
             label={t('doubleAuth.notes')}
           />
-          <Button variant="contained" color="secondary" disabled={!notes} onClick={surTermine}>
+          <Button variant="contained" disabled={!notes} onClick={surTermine}>
             {t('doubleAuth.terminer')}
           </Button>
         </Stack>

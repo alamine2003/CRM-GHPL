@@ -1,12 +1,16 @@
 import type { Moi, Perimetre } from '@innov/api-client';
-import { barreLaterale, largeurBarreLaterale, marque } from '@innov/design';
+import {
+  barreLaterale,
+  hauteurBarre,
+  largeurBarreLaterale,
+  largeurContenu,
+  marque,
+} from '@innov/design';
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
-import PersonRounded from '@mui/icons-material/PersonRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import {
   Avatar,
   Box,
-  Chip,
   Divider,
   Drawer,
   IconButton,
@@ -21,7 +25,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as LienNavigation, useLocation } from 'react-router';
 import { useSession } from '../contexteSession';
@@ -32,10 +36,11 @@ import Logo from './Logo';
 import { ENTREES, type Entree } from './navigation';
 import SelecteurPays from './SelecteurPays';
 import { BasculeApparence } from './Apparence';
-import BandeauDemonstration from './BandeauDemonstration';
+import { FiletDemonstration, MentionDemonstration } from './BandeauDemonstration';
+import { useDemonstration } from './demonstration';
 
 function EntreeNavigation({
-  entree: { cle, icone, chemin, version },
+  entree: { cle, icone, chemin },
   courant,
   surNavigation,
 }: {
@@ -45,7 +50,7 @@ function EntreeNavigation({
 }) {
   const { t } = useTranslation();
   const actif = chemin !== undefined;
-  const bouton = (
+  return (
     <ListItemButton
       {...(actif ? { component: LienNavigation, to: chemin, onClick: surNavigation } : {})}
       selected={courant}
@@ -53,43 +58,31 @@ function EntreeNavigation({
       aria-current={courant ? 'page' : undefined}
       sx={{
         color: barreLaterale.texte,
-        py: 0.9,
+        minHeight: 36,
+        py: 0.5,
+        px: 1.25,
         '&.Mui-selected, &.Mui-selected:hover': {
           bgcolor: barreLaterale.actif,
           color: '#FFFFFF',
           boxShadow: `inset 3px 0 0 ${marque.orange}`,
         },
         '&:hover': { bgcolor: barreLaterale.survol },
-        '&.Mui-disabled': { opacity: 0.5 },
+        '&.Mui-disabled': { opacity: 0.55 },
       }}
     >
-      <ListItemIcon sx={{ color: 'inherit', minWidth: 34 }}>{icone}</ListItemIcon>
+      <ListItemIcon sx={{ color: 'inherit', minWidth: 30, '& svg': { fontSize: 18 } }}>
+        {icone}
+      </ListItemIcon>
       <ListItemText
         primary={t(`navigation.${cle}`)}
-        slotProps={{ primary: { sx: { fontWeight: 500, fontSize: 14 } } }}
+        slotProps={{ primary: { sx: { fontWeight: 500, fontSize: 13.5 }, noWrap: true } }}
       />
-      {!actif && (
-        <Chip
-          size="small"
-          label={version}
-          sx={{
-            height: 20,
-            fontSize: 11,
-            bgcolor: 'rgba(255,255,255,.08)',
-            color: barreLaterale.texteDiscret,
-          }}
-        />
-      )}
     </ListItemButton>
   );
-  return actif ? (
-    bouton
-  ) : (
-    <Tooltip title={t('navigation.disponibleEn', { version })} placement="right">
-      <span>{bouton}</span>
-    </Tooltip>
-  );
 }
+
+/** Rubriques livrées par section, puis les rubriques à venir, sans numéro de version. */
+const GROUPES = ['activite', 'administration', 'aVenir'] as const;
 
 function BarreLaterale({
   utilisateur,
@@ -117,11 +110,11 @@ function BarreLaterale({
         color: barreLaterale.texte,
         display: 'flex',
         flexDirection: 'column',
-        p: '18px 14px',
+        p: '12px 10px',
         gap: 0.5,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 1, pb: 2.25 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 0.75, pb: 2, pt: 0.25 }}>
         <Logo />
         <Box sx={{ lineHeight: 1.1, minWidth: 0 }}>
           <Typography sx={{ color: '#FFFFFF', fontWeight: 700 }} noWrap>
@@ -135,19 +128,23 @@ function BarreLaterale({
       </Box>
 
       <Box sx={{ overflowY: 'auto', flexGrow: 1, mx: -0.5, px: 0.5 }}>
-        {(['activite', 'administration'] as const).map((section) => {
+        {GROUPES.map((groupe) => {
           const entrees = ENTREES.filter(
-            (e) => e.section === section && (!e.visible || e.visible(perimetre)),
+            (e) =>
+              (groupe === 'aVenir'
+                ? e.chemin === undefined
+                : e.section === groupe && e.chemin !== undefined) &&
+              (!e.visible || e.visible(perimetre)),
           );
           if (!entrees.length) return null;
           return (
-            <Box key={section} sx={{ mb: 1.5 }}>
+            <Box key={groupe} sx={{ mb: 1.5 }}>
               <Typography
                 variant="overline"
                 component="p"
-                sx={{ px: 1.5, color: barreLaterale.texteDiscret, fontSize: 10.5, opacity: 0.8 }}
+                sx={{ px: 1.25, pb: 0.25, color: barreLaterale.texteDiscret }}
               >
-                {t(`navigation.sections.${section}`)}
+                {t(`navigation.sections.${groupe}`)}
               </Typography>
               <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
                 {entrees.map((entree) => (
@@ -167,8 +164,8 @@ function BarreLaterale({
       <Box
         sx={{
           mt: 'auto',
-          pt: 1.5,
-          px: 1,
+          pt: 1.25,
+          px: 0.75,
           borderTop: `1px solid ${barreLaterale.separateur}`,
           display: 'flex',
           alignItems: 'center',
@@ -177,8 +174,8 @@ function BarreLaterale({
       >
         <Avatar
           sx={{
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             bgcolor: barreLaterale.avatar,
             fontSize: 12,
             fontWeight: 700,
@@ -225,10 +222,10 @@ function MenuUtilisateur({ utilisateur }: { utilisateur: Moi }) {
         <IconButton
           aria-label={t('navigation.profil')}
           onClick={(e) => setAncre(e.currentTarget)}
-          sx={{ p: 0.25 }}
+          sx={{ p: 0.25, borderRadius: '50%' }}
         >
           <Avatar
-            sx={{ width: 34, height: 34, fontSize: 12, fontWeight: 700, bgcolor: 'secondary.main' }}
+            sx={{ width: 28, height: 28, fontSize: 11, fontWeight: 700, bgcolor: 'primary.main' }}
           >
             {initiales(utilisateur.prenom, utilisateur.nom)}
           </Avatar>
@@ -251,9 +248,6 @@ function MenuUtilisateur({ utilisateur }: { utilisateur: Moi }) {
         </Box>
         <Divider />
         <MenuItem component={LienNavigation} to="/profil" onClick={() => setAncre(null)}>
-          <ListItemIcon>
-            <PersonRounded fontSize="small" />
-          </ListItemIcon>
           {t('navigation.profil')}
         </MenuItem>
         <MenuItem
@@ -262,9 +256,6 @@ function MenuUtilisateur({ utilisateur }: { utilisateur: Moi }) {
             void deconnexion();
           }}
         >
-          <ListItemIcon>
-            <LogoutRounded fontSize="small" />
-          </ListItemIcon>
           {t('session.deconnexion')}
         </MenuItem>
       </Menu>
@@ -272,7 +263,10 @@ function MenuUtilisateur({ utilisateur }: { utilisateur: Moi }) {
   );
 }
 
-/** Cadre des pages connectées : barre latérale bleu marine et barre supérieure. */
+/**
+ * Cadre des pages connectées : barre latérale marine et barre du haut de 48 px. Le titre de la
+ * page n'est pas répété dans la barre : il ouvre le contenu (docs/design.md).
+ */
 export default function CadreApplication({
   utilisateur,
   perimetre,
@@ -288,9 +282,15 @@ export default function CadreApplication({
   const theme = useTheme();
   const large = useMediaQuery(theme.breakpoints.up('md'));
   const [tiroir, setTiroir] = useState(false);
+  const demonstration = useDemonstration();
+
+  useEffect(() => {
+    document.title = `${titre} · ${t('commun.produit')}`;
+  }, [titre, t]);
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      {demonstration && <FiletDemonstration />}
       {large ? (
         <Box sx={{ position: 'sticky', top: 0, height: '100vh', flex: 'none' }}>
           <BarreLaterale utilisateur={utilisateur} perimetre={perimetre} />
@@ -305,45 +305,47 @@ export default function CadreApplication({
         </Drawer>
       )}
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-        <BandeauDemonstration />
         <Box
           component="header"
           sx={{
             position: 'sticky',
             top: 0,
             zIndex: 2,
+            height: hauteurBarre,
             display: 'flex',
             alignItems: 'center',
-            gap: 1.5,
-            px: { xs: 2, md: 3.5 },
-            py: 1.5,
+            gap: 1,
+            px: { xs: 1, sm: 2, md: 3 },
             bgcolor: 'background.paper',
             borderBottom: 1,
             borderColor: 'divider',
           }}
         >
           {!large && (
-            <IconButton
-              aria-label={t('navigation.menu')}
-              onClick={() => setTiroir(true)}
-              edge="start"
-            >
+            <IconButton aria-label={t('navigation.menu')} onClick={() => setTiroir(true)}>
               <MenuRounded />
             </IconButton>
           )}
-          {!large && <Logo taille={28} />}
-          <Typography variant="h6" component="p" noWrap sx={{ flexGrow: 1 }}>
-            {titre}
-          </Typography>
+          {!large && <Logo taille={24} />}
+          <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+            {demonstration && <MentionDemonstration />}
+          </Box>
           <SelecteurPays perimetre={perimetre} />
-          <ChoixLangue />
+          <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+            <ChoixLangue />
+          </Box>
           <BasculeApparence />
           <MenuUtilisateur utilisateur={utilisateur} />
         </Box>
         <BanniereHorsLigne />
         <Box
           component="main"
-          sx={{ px: { xs: 2, md: 3.5 }, py: { xs: 2.5, md: 3 }, maxWidth: 1240 }}
+          sx={{
+            px: { xs: 2, md: 3 },
+            pt: { xs: 2, md: 2.5 },
+            pb: 4,
+            maxWidth: largeurContenu,
+          }}
         >
           {children}
         </Box>

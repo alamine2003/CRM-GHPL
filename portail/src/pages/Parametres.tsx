@@ -1,16 +1,9 @@
 import type { Parametre, Perimetre } from '@innov/api-client';
-import ArchiveRounded from '@mui/icons-material/ArchiveRounded';
-import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
-import DescriptionRounded from '@mui/icons-material/DescriptionRounded';
-import EditRounded from '@mui/icons-material/EditRounded';
-import EventNoteRounded from '@mui/icons-material/EventNoteRounded';
-import PlaceRounded from '@mui/icons-material/PlaceRounded';
 import {
   Alert,
   Box,
   Button,
   Card,
-  Chip,
   FormControlLabel,
   MenuItem,
   Skeleton,
@@ -22,10 +15,10 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
-import { EnTeteCarte, EnTetePage, PastilleIcone } from '../composants/Elements';
+import { EnTeteCarte, EnTetePage, Etiquette } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { useSession } from '../contexteSession';
 
@@ -34,15 +27,13 @@ type Seuil = { min: number; max: number };
 type Seuils = Record<string, Seuil>;
 const seuilDe = (s: Seuils, type: string): Seuil => s[type] ?? { min: 0, max: 0 };
 
-const GROUPES: { cle: string; icone: ReactNode; parametres: string[] }[] = [
+const GROUPES: { cle: string; parametres: string[] }[] = [
   {
     cle: 'calendrier',
-    icone: <CalendarMonthRounded />,
     parametres: ['format_date', 'jours_ouvres'],
   },
   {
     cle: 'planning',
-    icone: <EventNoteRounded />,
     parametres: [
       'echeance_soumission_planning',
       'echeance_approbation_planning',
@@ -51,7 +42,6 @@ const GROUPES: { cle: string; icone: ReactNode; parametres: string[] }[] = [
   },
   {
     cle: 'visites',
-    icone: <PlaceRounded />,
     parametres: [
       'seuils_visites_jour',
       'plage_horaire_visites',
@@ -60,8 +50,8 @@ const GROUPES: { cle: string; icone: ReactNode; parametres: string[] }[] = [
       'geolocalisation_active',
     ],
   },
-  { cle: 'rapports', icone: <DescriptionRounded />, parametres: ['heure_limite_rapport'] },
-  { cle: 'conservation', icone: <ArchiveRounded />, parametres: ['conservation'] },
+  { cle: 'rapports', parametres: ['heure_limite_rapport'] },
+  { cle: 'conservation', parametres: ['conservation'] },
 ];
 const TYPES_POSTE = ['vm', 'vm_otc', 'kam', 'dermo'];
 const JOURS = [1, 2, 3, 4, 5, 6, 7];
@@ -74,17 +64,11 @@ function Apercu({ cle, valeur }: { cle: string; valeur: Valeur }) {
   switch (cle) {
     case 'jours_ouvres':
       return (
-        <Stack direction="row" sx={{ gap: 0.5, flexWrap: 'wrap' }}>
-          {JOURS.map((n) => (
-            <Chip
-              key={n}
-              size="small"
-              label={jour(n)}
-              color={(valeur as number[]).includes(n) ? 'primary' : 'default'}
-              variant={(valeur as number[]).includes(n) ? 'filled' : 'outlined'}
-            />
-          ))}
-        </Stack>
+        <>
+          {JOURS.filter((n) => (valeur as number[]).includes(n))
+            .map(jour)
+            .join(', ')}
+        </>
       );
     case 'echeance_soumission_planning':
     case 'echeance_approbation_planning':
@@ -97,16 +81,12 @@ function Apercu({ cle, valeur }: { cle: string; valeur: Valeur }) {
       return <>{valeur ? t('commun.oui') : t('commun.non')}</>;
     case 'seuils_visites_jour':
       return (
-        <Stack direction="row" sx={{ gap: 0.5, flexWrap: 'wrap' }}>
-          {TYPES_POSTE.map((type) => (
-            <Chip
-              key={type}
-              size="small"
-              variant="outlined"
-              label={`${t(`organisation.typesPoste.${type}`)} · ${seuilDe(valeur as Seuils, type).min}–${seuilDe(valeur as Seuils, type).max}`}
-            />
-          ))}
-        </Stack>
+        <>
+          {TYPES_POSTE.map(
+            (type) =>
+              `${t(`organisation.typesPoste.${type}`)} ${seuilDe(valeur as Seuils, type).min}–${seuilDe(valeur as Seuils, type).max}`,
+          ).join(' · ')}
+        </>
       );
     case 'conservation':
       return (
@@ -304,10 +284,10 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
   const parCle = new Map((parametres.data ?? []).map((p) => [p.cle, p]));
 
   return (
-    <Stack spacing={2.5}>
+    <Stack spacing={2}>
       <EnTetePage
         titre={t('parametres.titre')}
-        sousTitre={pays ? t('parametres.sousTitre', { pays: pays.nom }) : undefined}
+        sousTitre={pays?.nom}
       />
       {!pays ? (
         <Alert severity="info">{t('parametres.choisirPays')}</Alert>
@@ -328,7 +308,6 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
             <Card key={groupe.cle}>
               <EnTeteCarte
                 titre={t(`parametres.groupes.${groupe.cle}`)}
-                action={<PastilleIcone icone={groupe.icone} ton="secondary" taille={32} />}
               />
               {groupe.parametres
                 .map((cle) => parCle.get(cle))
@@ -339,8 +318,8 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
                     direction="row"
                     spacing={2}
                     sx={{
-                      px: 2.25,
-                      py: 1.5,
+                      px: 2,
+                      py: 1.25,
                       borderBottom: 1,
                       borderColor: 'divider',
                       alignItems: 'center',
@@ -353,23 +332,14 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
                         spacing={0.75}
                         sx={{ alignItems: 'center', flexWrap: 'wrap' }}
                       >
-                        <Typography sx={{ fontWeight: 600 }}>
+                        <Typography sx={{ fontWeight: 500 }}>
                           {t(`parametres.cles.${p.cle}`)}
                         </Typography>
                         {p.personnalise && (
-                          <Chip
-                            size="small"
-                            color="secondary"
-                            label={t('parametres.personnalise')}
-                          />
+                          <Etiquette ton="secondary">{t('parametres.personnalise')}</Etiquette>
                         )}
                         {p.hypothese && (
-                          <Chip
-                            size="small"
-                            color="warning"
-                            variant="outlined"
-                            label={t('parametres.hypothese')}
-                          />
+                          <Etiquette ton="warning">{t('parametres.hypothese')}</Etiquette>
                         )}
                       </Stack>
                       <Box sx={{ color: 'text.secondary', mt: 0.5, typography: 'body2' }}>
@@ -379,7 +349,6 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
                     {modifier && (
                       <Button
                         size="small"
-                        startIcon={<EditRounded />}
                         onClick={() => setEdition(p)}
                       >
                         {t('parametres.modifier')}
