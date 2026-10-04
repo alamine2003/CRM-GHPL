@@ -105,7 +105,8 @@ SPECTACULAR_SETTINGS = {
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-if not DEBUG:
+# Sécurité du transport : uniquement derrière l'hébergeur (recette, préproduction, production).
+if ENVIRONNEMENT not in {"developpement", "test"}:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SSL_REDIRECT", True)
     SECURE_HSTS_SECONDS = 31536000
