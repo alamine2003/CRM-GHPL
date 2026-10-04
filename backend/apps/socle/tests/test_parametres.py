@@ -31,7 +31,7 @@ def test_valeurs_par_defaut_du_cadrage():
     assert valeurs["echeance_soumission_planning"] == {"jour": 4, "heure": "18:00"}
     assert valeurs["echeance_approbation_planning"] == {"jour": 5, "heure": "18:00"}
     assert valeurs["heure_limite_rapport"] == "23:59"
-    assert valeurs["distance_pointage_m"] == 200
+    assert valeurs["distance_pointage_m"] == 100
     assert valeurs["delai_escalade_heures_ouvrees"] == 24
     assert valeurs["conservation"] == {
         "activite_annees": 5,
@@ -44,7 +44,7 @@ def test_un_pays_ne_voit_pas_les_parametres_d_un_autre():
     sn, tg = creer_pays("SN"), creer_pays("TG")
     definir_parametre(tg, "distance_pointage_m", 500)
     assert valeur_parametre(tg, "distance_pointage_m") == 500
-    assert valeur_parametre(sn, "distance_pointage_m") == 200
+    assert valeur_parametre(sn, "distance_pointage_m") == 100
 
 
 def test_modification_datee_sans_effet_retroactif():
@@ -95,4 +95,4 @@ def test_un_pays_archive_est_en_lecture_seule():
     pays = archiver_pays(creer_pays("SN"))
     with pytest.raises(ValidationError, match="lecture seule"):
         definir_parametre(pays, "distance_pointage_m", 300)
-    assert valeur_parametre(pays, "distance_pointage_m") == 200
+    assert valeur_parametre(pays, "distance_pointage_m") == 100

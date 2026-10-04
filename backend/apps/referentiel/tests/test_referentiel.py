@@ -31,21 +31,21 @@ def reseaux(monde):
 
 
 def test_un_pays_ouvert_recoit_ses_listes_dans_sa_langue(monde):
-    """PRP-001 : types de prospect et d'établissement du PRD, spécialités et motifs proposés."""
+    """PRP-001 : listes alignées sur la pratique réelle (décision du 4 octobre 2026)."""
     sn = monde["sn"]
     codes = set(
         Valeur.objects.filter(pays=sn, liste=Liste.TYPE_PROSPECT).values_list("code", flat=True)
     )
-    assert codes == {
-        "medecin",
-        "pharmacien",
-        "sage_femme",
-        "infirmier",
-        "chirurgien_dentiste",
-        "autre",
-    }
+    assert codes == {"medecin", "paramedical", "pharmacie", "autre"}
     cardio = Valeur.objects.get(pays=sn, liste=Liste.SPECIALITE, code="cardiologie")
     assert cardio.parent.code == "medecin"
+    # Sage-femme et infirmier sont des spécialités paramédicales, comme sur le terrain.
+    sage_femme = Valeur.objects.get(pays=sn, liste=Liste.SPECIALITE, code="sage_femme")
+    assert sage_femme.parent.code == "paramedical"
+    assert Valeur.objects.filter(pays=sn, liste=Liste.GRADE, code="professeur_agrege").exists()
+    assert Valeur.objects.filter(
+        pays=sn, liste=Liste.TYPE_ETABLISSEMENT, code="poste_sante"
+    ).exists()
     assert Valeur.objects.filter(pays=sn, liste=Liste.MOTIF_ECART).count() >= 5
     from apps.socle.services import creer_pays
 
@@ -96,13 +96,13 @@ def test_libelle_en_double_refuse_dans_une_meme_liste(monde):
 
 def test_une_specialite_ne_depend_que_d_un_type_de_prospect(monde):
     admin = client_de(monde["admin.sn"])
-    pharmacien = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="pharmacien")
-    officine = admin.post(
+    pharmacie = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="pharmacie")
+    hospitaliere = admin.post(
         VALEURS,
-        {"liste": "specialite", "libelle": "Officine", "parent": str(pharmacien.pk)},
+        {"liste": "specialite", "libelle": "Pharmacie hospitalière", "parent": str(pharmacie.pk)},
         format="json",
     )
-    assert officine.json()["parent"] == str(pharmacien.pk)
+    assert hospitaliere.json()["parent"] == str(pharmacie.pk)
     motif = Valeur.objects.filter(pays=monde["sn"], liste="motif_ecart").first()
     refus = admin.post(
         VALEURS, {"liste": "specialite", "libelle": "X", "parent": str(motif.pk)}, format="json"

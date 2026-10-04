@@ -18,6 +18,7 @@ from apps.socle.services import aujourdhui
 
 from .models import (
     Division,
+    Localite,
     Occupation,
     PerimetreReseau,
     Poste,
@@ -101,6 +102,33 @@ def creer_secteur(pays: Pays, zone: Zone, libelle: str) -> Secteur:
     """Un secteur appartient à une seule zone (ORG-003 CA1)."""
     _meme_pays_actif(zone, pays, "zone_invalide")
     return _enregistrer(Secteur(pays=pays, zone=zone, libelle=_texte(libelle, "libelle")))
+
+
+def creer_localite(secteur: Secteur, libelle: str) -> Localite:
+    """Une localité appartient à un secteur actif de son pays."""
+    if secteur.est_archive:
+        raise ErreurMetier("secteur_invalide", _("Élément inconnu ou archivé dans ce pays."))
+    return _enregistrer(
+        Localite(pays=secteur.pays, secteur=secteur, libelle=_texte(libelle, "libelle"))
+    )
+
+
+def deplacer_secteur(secteur: Secteur, zone: Zone) -> Secteur:
+    """Rattache un secteur à une autre zone de son pays (secteurs repris d'un import dans la
+    zone « À répartir », redécoupage du territoire). Ses postes et établissements le suivent."""
+    if secteur.est_archive or zone.est_archive or zone.pays_id != secteur.pays_id:
+        raise ErreurMetier("zone_invalide", _("Élément inconnu ou archivé dans ce pays."))
+    if zone.pk == secteur.zone_id:
+        return secteur
+    ancienne = secteur.zone.libelle
+    secteur.zone = zone
+    try:
+        with transaction.atomic():
+            secteur.save(update_fields=["zone"])
+    except IntegrityError as erreur:
+        raise _doublon(erreur) from erreur
+    _auditer("secteur.deplacement", secteur, ancienne=ancienne, nouvelle=zone.libelle)
+    return secteur
 
 
 def renommer(objet, libelle: str):

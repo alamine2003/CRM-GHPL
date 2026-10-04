@@ -1,6 +1,7 @@
 import type { Perimetre } from '@innov/api-client';
 import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
 import AccountTreeRounded from '@mui/icons-material/AccountTreeRounded';
+import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
 import BarChartRounded from '@mui/icons-material/BarChartRounded';
 import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
@@ -65,6 +66,13 @@ export const ENTREES: Entree[] = [
     // Catalogue de l'encadrement et de l'administration ; le délégué voit ses produits
     // sur le téléphone (« Mes produits »).
     visible: (p) => peut('referentiels.lire')(p) && peut('organisation.lire')(p),
+  },
+  {
+    cle: 'imports',
+    icone: <CloudUploadRounded />,
+    section: 'administration',
+    chemin: '/imports',
+    visible: peut('imports.gerer'),
   },
   {
     cle: 'equipe',

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Civilite, Etablissement, Potentiel, Prospect
+from .models import Activite, Civilite, Etablissement, Potentiel, Prospect
 
 
 class PersonneResumeSerializer(serializers.Serializer):
@@ -8,6 +8,11 @@ class PersonneResumeSerializer(serializers.Serializer):
     identifiant = serializers.CharField(source="username")
     prenom = serializers.CharField(source="first_name")
     nom = serializers.CharField(source="last_name")
+
+
+class LieuSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    libelle = serializers.CharField()
 
 
 class ProspectSerializer(serializers.ModelSerializer):
@@ -18,6 +23,10 @@ class ProspectSerializer(serializers.ModelSerializer):
     specialite_libelle = serializers.CharField(
         source="specialite.libelle", allow_null=True, default=None
     )
+    grade = serializers.UUIDField(source="grade_id", allow_null=True)
+    grade_libelle = serializers.CharField(source="grade.libelle", allow_null=True, default=None)
+    secteur = LieuSerializer(allow_null=True)
+    localite = LieuSerializer(allow_null=True)
     cree_par = PersonneResumeSerializer()
     modifiable = serializers.SerializerMethodField()
 
@@ -26,7 +35,8 @@ class ProspectSerializer(serializers.ModelSerializer):
         fields = [
             "id", "pays", "civilite", "nom", "prenom", "type", "type_libelle", "specialite",
             "specialite_libelle", "numero_ordre", "telephone_mobile", "telephone_pro",
-            "courriel", "potentiel", "statut", "cree_par", "cree_le", "valide_le", "modifiable",
+            "courriel", "potentiel", "activite", "grade", "grade_libelle", "secteur", "localite",
+            "statut", "cree_par", "cree_le", "valide_le", "modifiable",
         ]  # fmt: skip
 
     def get_modifiable(self, prospect) -> bool:
@@ -51,6 +61,10 @@ class SaisieProspectSerializer(serializers.Serializer):
     telephone_pro = serializers.CharField(max_length=30, required=False, allow_blank=True)
     courriel = serializers.EmailField(required=False, allow_blank=True)
     potentiel = serializers.ChoiceField(choices=Potentiel.choices, required=False)
+    activite = serializers.ChoiceField(choices=Activite.choices, required=False, allow_blank=True)
+    grade = serializers.UUIDField(required=False, allow_null=True)
+    secteur = serializers.UUIDField(required=False, allow_null=True)
+    localite = serializers.UUIDField(required=False, allow_null=True)
 
 
 class ArchivageProspectSerializer(serializers.Serializer):
@@ -70,12 +84,19 @@ class SecteurResumeSerializer(serializers.Serializer):
     zone = serializers.CharField(source="zone.libelle")
 
 
+class SecteurSaisieSerializer(SecteurResumeSerializer):
+    """Secteur et ses localités actives, proposés à la saisie d'une fiche."""
+
+    localites = LieuSerializer(source="localites_actives", many=True)
+
+
 class EtablissementSerializer(serializers.ModelSerializer):
     pays = serializers.CharField(source="pays.code", read_only=True)
     type = serializers.UUIDField(source="type_id")
     type_code = serializers.CharField(source="type.code")
     type_libelle = serializers.CharField(source="type.libelle")
     secteur = SecteurResumeSerializer()
+    localite = LieuSerializer(allow_null=True)
     latitude = serializers.FloatField(allow_null=True)
     longitude = serializers.FloatField(allow_null=True)
     a_coordonnees = serializers.BooleanField(read_only=True)
@@ -86,7 +107,8 @@ class EtablissementSerializer(serializers.ModelSerializer):
         model = Etablissement
         fields = [
             "id", "pays", "nom", "type", "type_code", "type_libelle", "secteur", "adresse",
-            "localite", "latitude", "longitude", "a_coordonnees", "telephone", "statut",
+            "localite", "activite", "latitude", "longitude", "a_coordonnees", "telephone",
+            "statut",
             "cree_par", "cree_le", "valide_le", "modifiable",
         ]  # fmt: skip
 
@@ -106,7 +128,8 @@ class SaisieEtablissementSerializer(serializers.Serializer):
     type = serializers.UUIDField(required=False, allow_null=True)
     secteur = serializers.UUIDField(required=False, allow_null=True)
     adresse = serializers.CharField(max_length=200, required=False, allow_blank=True)
-    localite = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    localite = serializers.UUIDField(required=False, allow_null=True)
+    activite = serializers.ChoiceField(choices=Activite.choices, required=False, allow_blank=True)
     latitude = serializers.FloatField(required=False, allow_null=True)
     longitude = serializers.FloatField(required=False, allow_null=True)
     telephone = serializers.CharField(max_length=30, required=False, allow_blank=True)

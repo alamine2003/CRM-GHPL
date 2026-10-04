@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.1.3
+  version: 0.1.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -670,7 +670,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/SecteurResume'
+                  $ref: '#/components/schemas/SecteurSaisie'
           description: ''
   /api/v1/etablissements/synthese/:
     get:
@@ -701,6 +701,84 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EtatExploitation'
+          description: ''
+  /api/v1/imports/:
+    get:
+      operationId: imports_liste
+      tags:
+      - imports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LotImport'
+          description: ''
+  /api/v1/imports/{id}/:
+    get:
+      operationId: import_detail
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - imports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailLot'
+          description: ''
+  /api/v1/imports/{id}/rapport/:
+    get:
+      operationId: import_rapport
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - imports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+          description: ''
+  /api/v1/imports/birdnotes/:
+    post:
+      operationId: import_birdnotes
+      tags:
+      - imports
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportBirdNotes'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailLot'
           description: ''
   /api/v1/informations/:
     get:
@@ -811,6 +889,105 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Division'
+          description: ''
+  /api/v1/organisation/localites/:
+    get:
+      operationId: localites_liste
+      parameters:
+      - in: query
+        name: secteur
+        schema:
+          type: string
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Localite'
+          description: ''
+    post:
+      operationId: localite_creer
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationLocalite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationLocalite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationLocalite'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Localite'
+          description: ''
+  /api/v1/organisation/localites/{id}/:
+    patch:
+      operationId: localite_renommer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Localite'
+          description: ''
+  /api/v1/organisation/localites/{id}/archiver/:
+    post:
+      operationId: localite_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Localite'
           description: ''
   /api/v1/organisation/moi/:
     get:
@@ -1310,7 +1487,7 @@ paths:
           description: ''
   /api/v1/organisation/secteurs/{id}/:
     patch:
-      operationId: secteur_renommer
+      operationId: secteur_modifier
       parameters:
       - in: path
         name: id
@@ -1324,13 +1501,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedLibelle'
+              $ref: '#/components/schemas/PatchedModificationSecteur'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedLibelle'
+              $ref: '#/components/schemas/PatchedModificationSecteur'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedLibelle'
+              $ref: '#/components/schemas/PatchedModificationSecteur'
       security:
       - jetonAcces: []
       responses:
@@ -2054,6 +2231,7 @@ paths:
           type: string
           enum:
           - classe_therapeutique
+          - grade
           - motif_ecart
           - specialite
           - type_etablissement
@@ -2483,6 +2661,14 @@ components:
       - client
       - le
       - resultat
+    ActiviteEnum:
+      enum:
+      - hospitalier
+      - prive
+      type: string
+      description: |-
+        * `hospitalier` - Hospitalier
+        * `prive` - Privé
     Affectation:
       type: object
       properties:
@@ -2537,6 +2723,22 @@ components:
       - motif
       - pays
       - role
+    Anomalie:
+      type: object
+      properties:
+        entite:
+          type: string
+        identifiant:
+          type: string
+        niveau:
+          type: string
+        motif:
+          type: string
+      required:
+      - entite
+      - identifiant
+      - motif
+      - niveau
     Appareil:
       type: object
       description: 'Téléphone enregistré (USR-006 CA1 : appareil, système, version,
@@ -2698,6 +2900,18 @@ components:
       required:
       - code
       - libelle
+    CreationLocalite:
+      type: object
+      properties:
+        secteur:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+          maxLength: 120
+      required:
+      - libelle
+      - secteur
     CreationPays:
       type: object
       properties:
@@ -2852,6 +3066,63 @@ components:
       required:
       - identifiant_installation
       - plateforme
+    DetailLot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        fichier:
+          type: string
+          maxLength: 200
+        simulation:
+          type: boolean
+        statut:
+          $ref: '#/components/schemas/StatutLotEnum'
+        lance_par:
+          type: string
+        debut:
+          type: string
+          format: date-time
+        fin:
+          type: string
+          format: date-time
+          nullable: true
+        compteurs:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+        nb_anomalies:
+          type: integer
+          readOnly: true
+        rejets:
+          type: integer
+          readOnly: true
+        anomalies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Anomalie'
+      required:
+      - anomalies
+      - compteurs
+      - debut
+      - fichier
+      - id
+      - lance_par
+      - nb_anomalies
+      - pays
+      - rejets
+      - simulation
+      - source
+      - statut
     Division:
       type: object
       properties:
@@ -2927,8 +3198,13 @@ components:
           type: string
           maxLength: 200
         localite:
-          type: string
-          maxLength: 120
+          allOf:
+          - $ref: '#/components/schemas/Lieu'
+          nullable: true
+        activite:
+          oneOf:
+          - $ref: '#/components/schemas/ActiviteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
         latitude:
           type: number
           format: double
@@ -2964,6 +3240,7 @@ components:
       - cree_par
       - id
       - latitude
+      - localite
       - longitude
       - modifiable
       - nom
@@ -3075,6 +3352,17 @@ components:
         fin:
           type: string
           format: date
+    ImportBirdNotes:
+      type: object
+      properties:
+        fichier:
+          type: string
+          format: uri
+        simulation:
+          type: boolean
+          default: true
+      required:
+      - fichier
     Informations:
       type: object
       properties:
@@ -3164,12 +3452,24 @@ components:
           maxLength: 120
       required:
       - libelle
+    Lieu:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+      required:
+      - id
+      - libelle
     ListeEnum:
       enum:
       - type_prospect
       - specialite
       - type_etablissement
       - classe_therapeutique
+      - grade
       - motif_ecart
       type: string
       description: |-
@@ -3177,6 +3477,7 @@ components:
         * `specialite` - Spécialités
         * `type_etablissement` - Types d'établissement
         * `classe_therapeutique` - Classes thérapeutiques
+        * `grade` - Grades
         * `motif_ecart` - Motifs d'écart
     ListeEtablissements:
       type: object
@@ -3208,6 +3509,83 @@ components:
       - limite
       - resultats
       - total
+    Localite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        libelle:
+          type: string
+          maxLength: 120
+        secteur:
+          type: string
+          format: uuid
+        archive:
+          type: boolean
+          readOnly: true
+      required:
+      - archive
+      - id
+      - libelle
+      - pays
+      - secteur
+    LotImport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        source:
+          $ref: '#/components/schemas/SourceEnum'
+        fichier:
+          type: string
+          maxLength: 200
+        simulation:
+          type: boolean
+        statut:
+          $ref: '#/components/schemas/StatutLotEnum'
+        lance_par:
+          type: string
+        debut:
+          type: string
+          format: date-time
+        fin:
+          type: string
+          format: date-time
+          nullable: true
+        compteurs:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: integer
+        nb_anomalies:
+          type: integer
+          readOnly: true
+        rejets:
+          type: integer
+          readOnly: true
+      required:
+      - compteurs
+      - debut
+      - fichier
+      - id
+      - lance_par
+      - nb_anomalies
+      - pays
+      - rejets
+      - simulation
+      - source
+      - statut
     ModificationParametre:
       type: object
       properties:
@@ -3417,6 +3795,16 @@ components:
           items:
             type: string
             format: uuid
+    PatchedModificationSecteur:
+      type: object
+      description: Renommage et/ou rattachement à une autre zone.
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        zone:
+          type: string
+          format: uuid
     PatchedModificationValeur:
       type: object
       properties:
@@ -3449,7 +3837,12 @@ components:
           maxLength: 200
         localite:
           type: string
-          maxLength: 120
+          format: uuid
+          nullable: true
+        activite:
+          oneOf:
+          - $ref: '#/components/schemas/ActiviteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
         latitude:
           type: number
           format: double
@@ -3499,6 +3892,22 @@ components:
             maxLength: 0
         potentiel:
           $ref: '#/components/schemas/PotentielEnum'
+        activite:
+          oneOf:
+          - $ref: '#/components/schemas/ActiviteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        grade:
+          type: string
+          format: uuid
+          nullable: true
+        secteur:
+          type: string
+          format: uuid
+          nullable: true
+        localite:
+          type: string
+          format: uuid
+          nullable: true
     Pays:
       type: object
       properties:
@@ -3843,6 +4252,25 @@ components:
             maxLength: 0
         potentiel:
           $ref: '#/components/schemas/PotentielEnum'
+        activite:
+          oneOf:
+          - $ref: '#/components/schemas/ActiviteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        grade:
+          type: string
+          format: uuid
+          nullable: true
+        grade_libelle:
+          type: string
+          nullable: true
+        secteur:
+          allOf:
+          - $ref: '#/components/schemas/Lieu'
+          nullable: true
+        localite:
+          allOf:
+          - $ref: '#/components/schemas/Lieu'
+          nullable: true
         statut:
           $ref: '#/components/schemas/StatutFicheEnum'
         cree_par:
@@ -3861,11 +4289,14 @@ components:
       required:
       - cree_le
       - cree_par
+      - grade
       - id
+      - localite
       - modifiable
       - nom
       - pays
       - potentiel
+      - secteur
       - specialite
       - type
       - type_libelle
@@ -4050,7 +4481,12 @@ components:
           maxLength: 200
         localite:
           type: string
-          maxLength: 120
+          format: uuid
+          nullable: true
+        activite:
+          oneOf:
+          - $ref: '#/components/schemas/ActiviteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
         latitude:
           type: number
           format: double
@@ -4100,6 +4536,22 @@ components:
             maxLength: 0
         potentiel:
           $ref: '#/components/schemas/PotentielEnum'
+        activite:
+          oneOf:
+          - $ref: '#/components/schemas/ActiviteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        grade:
+          type: string
+          format: uuid
+          nullable: true
+        secteur:
+          type: string
+          format: uuid
+          nullable: true
+        localite:
+          type: string
+          format: uuid
+          nullable: true
     Secteur:
       type: object
       properties:
@@ -4142,6 +4594,26 @@ components:
       - id
       - libelle
       - zone
+    SecteurSaisie:
+      type: object
+      description: Secteur et ses localités actives, proposés à la saisie d'une fiche.
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+        zone:
+          type: string
+        localites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lieu'
+      required:
+      - id
+      - libelle
+      - localites
+      - zone
     Session:
       type: object
       properties:
@@ -4182,6 +4654,11 @@ components:
       - courante
       - expire_le
       - id
+    SourceEnum:
+      enum:
+      - birdnotes
+      type: string
+      description: '* `birdnotes` - BirdNotes'
     StatutEnum:
       enum:
       - actif
@@ -4204,6 +4681,16 @@ components:
         * `actif` - Actif
         * `archive` - Archivé
         * `fusionne` - Fusionné
+    StatutLotEnum:
+      enum:
+      - simule
+      - termine
+      - echec
+      type: string
+      description: |-
+        * `simule` - Simulé
+        * `termine` - Terminé
+        * `echec` - Échec
     StatutPays:
       type: object
       properties:

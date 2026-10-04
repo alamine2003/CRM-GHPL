@@ -123,7 +123,8 @@
     "profil": "My profile",
     "exploitation": "Operations",
     "referentiels": "Reference data",
-    "etablissements": "Institutions"
+    "etablissements": "Institutions",
+    "imports": "Imports"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -307,7 +308,17 @@
       "reseauxTexte": "A division groups networks; the product portfolio arrives in version 0.1.1.",
       "secteurs": "No sectors"
     },
-    "enregistre": "Change saved."
+    "enregistre": "Change saved.",
+    "secteur": {
+      "deplacer": "Move",
+      "deplace": "Sector moved to its new zone.",
+      "localites_one": "{{count}} locality",
+      "localites_other": "{{count}} localities",
+      "aucuneLocalite": "No localities: add the sector's neighbourhoods or villages.",
+      "nouvelleLocalite": "New locality",
+      "ajouter": "Add",
+      "localiteArchivee": "Locality archived."
+    }
   },
   "profilPage": {
     "titre": "My profile",
@@ -656,7 +667,8 @@
       "specialite": "Specialties",
       "type_etablissement": "Institution types",
       "classe_therapeutique": "Therapeutic classes",
-      "motif_ecart": "Deviation reasons"
+      "motif_ecart": "Deviation reasons",
+      "grade": "Titles"
     },
     "aides": {
       "type_prospect": "Doctor, pharmacist, midwife… Each prospect record has one.",
@@ -689,7 +701,7 @@
   },
   "prospect": {
     "titre": "Prospects",
-    "sousTitre": "Shared records of doctors, pharmacists and other healthcare professionals · {{pays}}.",
+    "sousTitre": "Shared records of doctors, allied health professionals and pharmacies · {{pays}}.",
     "sousTitreConsolide": "Prospect records across all countries.",
     "choisirPays": "Choose a country to create or validate records.",
     "chiffres": {
@@ -738,7 +750,8 @@
       "telephonePro": "Work phone",
       "telephoneAide": "A local number is read in the record's country.",
       "courriel": "Email",
-      "potentiel": "Potential"
+      "potentiel": "Potential",
+      "grade": "Title"
     },
     "aides": {
       "aValider": "Your record will be “to validate”: you can use it right away; other reps will see it once validated.",
@@ -754,7 +767,7 @@
       "identite": "Identity",
       "coordonnees": "Contact details",
       "etablissements": "Institutions",
-      "etablissementsTexte": "Dated places of practice arrive in version 0.1.4.",
+      "etablissementsTexte": "Dated places of practice arrive in version 0.1.5.",
       "visites": "My visits",
       "visitesTexte": "Your visits and reports on this prospect will come with visits (0.4).",
       "creePar": "Created by {{personne}} {{quand}}",
@@ -822,7 +835,7 @@
       "ouvrirCarte": "Open in OpenStreetMap",
       "coordonnees": "Coordinates",
       "prospects": "Prospects practising here",
-      "prospectsTexte": "Dated prospect ↔ institution practices arrive in version 0.1.4.",
+      "prospectsTexte": "Dated prospect ↔ institution practices arrive in version 0.1.5.",
       "validee": "Record validated: it is now shared."
     },
     "nombre_one": "{{count}} institution",
@@ -838,5 +851,96 @@
       "creee": "Institution created: awaiting validation by the country administrator.",
       "positionEnregistree": "Position saved ({{metres}} m)"
     }
+  },
+  "lieu": {
+    "exercice": "Practice",
+    "exercices": {
+      "hospitalier": "Hospital",
+      "prive": "Private"
+    },
+    "lieu": "Location",
+    "aucuneLocalite": "No locality in this sector: add some in Organisation."
+  },
+  "imports": {
+    "titre": "Imports",
+    "sousTitre": "Controlled migration of the current CRM's data · {{pays}}.",
+    "choisirPays": "Choose a country: an import always targets one country.",
+    "birdnotes": "BirdNotes export",
+    "etapes": {
+      "fichier": "Choose the file",
+      "simulation": "Simulate and check",
+      "import": "Import"
+    },
+    "deposer": "Drop the BirdNotes export here",
+    "formats": "JSON extraction file, or its ZIP archive",
+    "choisir": "Choose a file",
+    "changer": "Change file",
+    "confidentialite": "The file is read during processing and not kept: only the summary and the anomaly report remain.",
+    "enCours": "Processing: about a minute for a whole country.",
+    "simuler": "Run the simulation",
+    "resimuler": "Simulate again",
+    "importer": "Import for real",
+    "simulationTerminee": "Simulation finished: nothing was saved.",
+    "importTermine": "Import finished.",
+    "simulationAide": "Simulation: nothing was saved. Check the figures and anomalies, then import for real.",
+    "importAide": "Data imported. Importing the same file again creates no duplicates: it finds the records already imported.",
+    "resultatSimulation": "Simulation of {{fichier}}",
+    "resultatImport": "Import of {{fichier}}",
+    "chiffres": {
+      "prospects": "Prospects imported",
+      "etablissements": "Facilities imported",
+      "produits": "Products imported",
+      "rejets": "Rows set aside",
+      "existants_one": "{{count}} already present",
+      "existants_other": "{{count}} already present",
+      "aPreciser_one": "{{count}} type to specify",
+      "aPreciser_other": "{{count}} types to specify",
+      "reseaux_one": "{{count}} network",
+      "reseaux_other": "{{count}} networks",
+      "anomalies_one": "{{count}} anomaly in the report",
+      "anomalies_other": "{{count}} anomalies in the report"
+    },
+    "detail": "Details by data",
+    "anomalies": "Anomalies",
+    "rapportCsv": "CSV report",
+    "aucuneAnomalie": "No anomalies",
+    "entites": {
+      "secteurs": "Sectors",
+      "localites": "Localities",
+      "divisions": "Divisions",
+      "reseaux": "Networks",
+      "produits": "Products",
+      "portefeuilles": "Portfolios",
+      "etablissements": "Facilities",
+      "prospects": "Prospects",
+      "demandes_modification": "Change requests",
+      "zones": "Zones"
+    },
+    "actions": {
+      "crees": "created",
+      "existants": "already present",
+      "fusionnes": "merged",
+      "rejetes": "set aside",
+      "type_a_preciser": "type to specify",
+      "secteur_deduit": "sector inferred",
+      "gamme_technique_ignoree": "technical range ignored",
+      "non_reprises": "postponed"
+    },
+    "niveaux": {
+      "rejet": "Row set aside",
+      "avertissement": "Warning"
+    },
+    "statuts": {
+      "simule": "Simulation",
+      "termine": "Imported",
+      "echec": "Failed"
+    },
+    "historique": "History",
+    "aucunLot": "No imports yet",
+    "aucunLotTexte": "Every simulation and import stays here with its report.",
+    "lance_one": "{{personne}} · {{quand}} · {{count}} anomaly",
+    "lance_other": "{{personne}} · {{quand}} · {{count}} anomalies",
+    "confirmerTitre": "Import for real?",
+    "confirmerTexte": "{{prospects}} prospects and {{etablissements}} facilities will be created, as in the simulation. Imported records remain editable and archivable; they are never deleted."
   }
 }

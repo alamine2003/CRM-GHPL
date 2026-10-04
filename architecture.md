@@ -291,7 +291,7 @@ Volume estimé : < 10 Mo après la synchronisation initiale (NFR-004) [H].
 | `pilotage` | Objectifs, indicateurs, agrégats, exports, vues de pilotage pour Grafana | DSH-* |
 | `synchro` | Points d'accès de synchronisation, journal des changements, idempotence, conflits | OFF-* |
 | `audit` | Écriture et consultation du journal d'audit | AUD-* |
-| `imports` | Lots d'import, simulation, rapports d'erreurs, connecteurs (organisation, produits, BirdNotes) | ORG-014, PRP-013 |
+| `imports` | Lots d'import, simulation, rapports d'erreurs, connecteurs (organisation, produits, BirdNotes) | ORG-014, PRP-013 ; mise en œuvre 0.1.4 : connecteur BirdNotes (`birdnotes.py`, correspondances dans `correspondances.py`), `LotImport` (compteurs et anomalies en JSON), `ReferenceExterne` (clé source → objet), commande `importer_birdnotes`, API `imports/` réservée à l'administrateur pays (`imports.gerer`) |
 
 ### 7.2 Règles entre modules
 
@@ -537,7 +537,7 @@ erDiagram
 | `Appareil` | `utilisateur_id`, `identifiant_installation`, `plateforme`, `version_app`, `jeton_push`, `derniere_synchro`, `revoque_le` | Mise en œuvre 0.0.6 : `systeme`, `modele`, `dernier_contact` (connexion ou rafraîchissement) en attendant `derniere_synchro` (0.8) ; `jeton_push` en 0.8 |
 | `Division`, `Reseau` | `code`, `libelle`, `division_id` | — |
 | `ClasseTherapeutique`, `Produit` | `libelle`, `classe_id`, `actif` | `Portefeuille(reseau_id, produit_id, debut, fin)` ; mise en œuvre 0.1.1 : les listes simples (types, spécialités, classes thérapeutiques, motifs d'écart) partagent l'entité `Valeur(liste, code, libelle, ordre, parent)` ; « actif » = non archivé |
-| `Zone`, `Secteur`, `Localite` | `libelle`, rattachements | — |
+| `Zone`, `Secteur`, `Localite` | `libelle`, rattachements | `Localite(secteur_id, libelle)` livrée en 0.1.4, unique par secteur |
 | `Poste` | `type_poste` (`vm`, `vm_otc`, `kam`, `dermo`), `libelle`, réseaux (n–n), secteurs (n–n) | Peut être vacant |
 | `Occupation` | `poste_id`, `utilisateur_id`, `debut`, `fin`, `principal` | — |
 | `Rattachement` | `poste_id`, `superviseur_id`, `debut`, `fin` | — |
@@ -545,8 +545,8 @@ erDiagram
 | `Remplacement` | `superviseur_id`, `remplacant_id`, `debut`, `fin`, `designe_par` | — |
 
 Mise en œuvre (0.0.5) : les liens datés de l'organisation (`Occupation`, `Rattachement`, `Perimetre` — nommé `PerimetreReseau` dans le code —, `AffectationPays`) sont des dates du pays ; un lien est actif le jour `j` si `debut <= j < fin` (fin exclue). `Division` et `Reseau` existent dès 0.0.5 avec code et libellé seulement, pour porter postes et périmètres ; le portefeuille arrive avec ORG-004 (0.1.1). Un rôle exercé hors du pays principal ne compte que pendant une affectation active.
-| `Prospect` | `type`, `specialite_id`, `civilite`, `nom`, `prenom`, `nom_normalise`, `cle_phonetique`, `numero_ordre`, `telephone_mobile`, `telephone_pro`, `courriel`, `potentiel` (`A`,`B`,`C`), `statut`, `cree_par_poste_id`, `fusionne_dans_id` | Fiche commune au pays |
-| `Etablissement` | `type`, `nom`, `nom_normalise`, `adresse`, `localite_id`, `secteur_id`, `latitude`, `longitude`, `statut` | — |
+| `Prospect` | `type`, `specialite_id`, `grade_id`, `activite` (`hospitalier`, `prive`), `secteur_id`, `localite_id`, `civilite`, `nom`, `prenom`, `nom_normalise`, `cle_phonetique`, `numero_ordre`, `telephone_mobile`, `telephone_pro`, `courriel`, `potentiel` (`A`,`B`,`C`), `statut`, `cree_par_poste_id`, `fusionne_dans_id` | Fiche commune au pays ; grade, activité, secteur et localité facultatifs (0.1.4) |
+| `Etablissement` | `type`, `nom`, `nom_normalise`, `adresse`, `localite_id`, `secteur_id`, `activite`, `latitude`, `longitude`, `statut` | La localité appartient au secteur ; elle le donne quand il est omis |
 | `Exercice` | `prospect_id`, `etablissement_id`, `debut`, `fin`, `principal` | — |
 | `ListeCible` | `poste_id`, `prospect_id`, `frequence_cible`, `periode` (mois), `debut`, `fin` | — |
 | `CandidatDoublon` | `fiche_a_id`, `fiche_b_id`, `score`, `criteres`, `decision`, `decide_par` | Paires « garder séparées » mémorisées |
@@ -569,7 +569,7 @@ Mise en œuvre (0.0.5) : les liens datés de l'organisation (`Occupation`, `Ratt
 | `EvenementAudit` | `le`, `acteur_id`, `role`, `pays_id`, `action`, `objet_type`, `objet_id`, `contexte` (JSON), `resultat`, `empreinte_precedente` | Append-only, partitionné |
 | `JournalChangement` | `sequence` (bigserial), `pays_id`, `entite`, `entite_id`, `version`, `operation`, `le` | Support de la synchronisation |
 | `OperationSync` | `id_operation` (UUID client), `appareil_id`, `recu_le`, `resultat` (JSON) | Idempotence |
-| `LotImport`, `LigneImport` | `type`, `source`, `statut`, `simulation`, `erreurs` | — |
+| `LotImport`, `LigneImport` | `type`, `source`, `statut`, `simulation`, `erreurs` | Mise en œuvre 0.1.4 : `LotImport(source, fichier, simulation, statut, lance_par, debut, fin, compteurs, anomalies)` sans `LigneImport` (le fichier n'est pas conservé) ; `ReferenceExterne(source, entite, identifiant, objet_type, objet_id, complements, lot_id)` |
 
 ## 14. Synchronisation hors connexion
 
@@ -833,7 +833,7 @@ flowchart LR
 
 | Intégration | Sens | Mécanisme |
 |---|---|---|
-| BirdNotes | Entrant, ponctuel | Fichiers exportés → format d'import standard → module `imports` (section 26) |
+| BirdNotes | Entrant, ponctuel | Export JSON de BirdNotes, lu tel quel → module `imports` (section 26) |
 | Fichier d'organisation | Entrant | Import Excel au format du fichier d'organisation (ORG-014) |
 | Expo Push (FCM, APNs) | Sortant | API Expo Push |
 | Courriel transactionnel | Sortant | SMTP ou API du fournisseur |
@@ -873,6 +873,7 @@ flowchart LR
 ```
 
 - Chaque ligne garde sa **clé source** (`source`, `id_source`) : un réimport met à jour au lieu de dupliquer.
+- Mise en œuvre 0.1.4 (BirdNotes, décision du 4 octobre 2026) : pas de conversion ni de zone de transit. L'export JSON (ou ZIP) est lu en mémoire ; l'import s'exécute dans **une transaction** que la simulation annule ; il ne reste que le `LotImport` (compteurs, anomalies) et l'événement d'audit `import.birdnotes`. La clé source est `ReferenceExterne` ; ses `complements` gardent ce qui servira plus tard (établissement d'exercice et délégués affectés pour 0.1.5 et 0.1.6, groupe de doublons pour 0.1.8, position GPS du prospect). Le fichier, qui contient des données réelles, n'est jamais versionné ni stocké.
 - La simulation n'écrit que dans la zone de transit.
 - Répétition complète à blanc en préproduction en `0.9.6`, puis exécution réelle avant le pilote.
 - Données de la phase test BirdNotes : seuls les prospects, établissements et éventuellement l'historique de visites utile sont repris (O-01) ; les comptes utilisateurs sont recréés.

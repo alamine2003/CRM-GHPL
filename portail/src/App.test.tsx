@@ -1081,10 +1081,21 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
       archiver: vi.fn(async () => FICHE),
     };
     const referentiel = { valeurs: vi.fn(async () => TYPES) };
+    const etablissements = {
+      secteurs: vi.fn(async () => [
+        {
+          id: 's1',
+          libelle: 'Plateau',
+          zone: 'Dakar',
+          localites: [{ id: 'l1', libelle: 'Centre' }],
+        },
+      ]),
+    };
     const client = fauxClient({
       reprendre: vi.fn(async () => JETONS),
       perimetre: vi.fn(async () => perimetre),
       prospects: prospects as unknown as ClientApi['prospects'],
+      etablissements: etablissements as unknown as ClientApi['etablissements'],
       referentiel: referentiel as unknown as ClientApi['referentiel'],
     } as Partial<ClientApi>);
     return { client, prospects };
@@ -1150,7 +1161,12 @@ describe('portail — établissements (PRP-003)', () => {
     await i18n.changeLanguage('fr');
   });
 
-  const SECTEUR = { id: 's1', libelle: 'Plateau', zone: 'Dakar' };
+  const SECTEUR = {
+    id: 's1',
+    libelle: 'Plateau',
+    zone: 'Dakar',
+    localites: [{ id: 'l1', libelle: 'Plateau Centre' }],
+  };
   const BASE = {
     pays: 'SN',
     type: 't1',
@@ -1158,7 +1174,8 @@ describe('portail — établissements (PRP-003)', () => {
     type_libelle: 'Clinique',
     secteur: SECTEUR,
     adresse: '12 rue Carnot',
-    localite: 'Plateau',
+    localite: { id: 'l1', libelle: 'Plateau Centre' },
+    activite: 'prive' as const,
     telephone: '+221338210000',
     statut: 'actif' as const,
     valide_le: null,
@@ -1269,6 +1286,10 @@ describe('portail — établissements (PRP-003)', () => {
     });
     fireEvent.mouseDown(within(dialogue).getByLabelText(/^Secteur/));
     fireEvent.click(await screen.findByRole('option', { name: 'Plateau' }));
+    // La localité proposée est celle du secteur choisi.
+    fireEvent.mouseDown(within(dialogue).getByLabelText(/^Localité/));
+    fireEvent.click(await screen.findByRole('option', { name: 'Plateau Centre' }));
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Hospitalier' }));
     fireEvent.click(within(dialogue).getByRole('button', { name: 'Utiliser ma position' }));
     expect(await within(dialogue).findByText('Précision : 12 m')).toBeInTheDocument();
     fireEvent.click(within(dialogue).getByRole('button', { name: 'Enregistrer' }));
@@ -1277,6 +1298,8 @@ describe('portail — établissements (PRP-003)', () => {
         expect.objectContaining({
           nom: 'Pharmacie Médina',
           secteur: 's1',
+          localite: 'l1',
+          activite: 'hospitalier',
           type: 't1',
           latitude: 14.7,
           longitude: -17.45,
@@ -1289,6 +1312,97 @@ describe('portail — établissements (PRP-003)', () => {
     const { client } = clientEtab();
     const { container } = rendre(client, '/etablissements');
     await screen.findByText('Clinique du Cap');
+    expect(await violationsAccessibilite(container)).toEqual([]);
+  });
+});
+
+describe('portail — imports (PRP-013)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const LOT = {
+    id: 'lot1',
+    pays: 'SN',
+    source: 'birdnotes' as const,
+    fichier: 'export-fictif.zip',
+    simulation: true,
+    statut: 'simule' as const,
+    lance_par: 'admin.sn',
+    debut: '2026-10-04T08:00:00Z',
+    fin: '2026-10-04T08:01:00Z',
+    compteurs: {
+      prospects: { crees: 120, existants: 0 },
+      etablissements: { crees: 40, type_a_preciser: 6, rejetes: 2 },
+      produits: { crees: 12 },
+      reseaux: { crees: 3 },
+    },
+    nb_anomalies: 5,
+    rejets: 2,
+    anomalies: [
+      { entite: 'etablissement', identifiant: '7', niveau: 'rejet', motif: 'Sans secteur.' },
+      { entite: 'etablissement', identifiant: '8', niveau: 'rejet', motif: 'Sans secteur.' },
+      { entite: 'prospect', identifiant: '1', niveau: 'avertissement', motif: 'Téléphone.' },
+      { entite: 'prospect', identifiant: '2', niveau: 'avertissement', motif: 'Téléphone.' },
+      { entite: 'prospect', identifiant: '3', niveau: 'avertissement', motif: 'Téléphone.' },
+    ],
+  };
+
+  function clientImports() {
+    const imports = {
+      liste: vi.fn(async () => [] as unknown[]),
+      detail: vi.fn(async () => LOT),
+      birdnotes: vi.fn(async (_f: Blob, _n: string, simulation: boolean) =>
+        simulation ? LOT : { ...LOT, id: 'lot2', simulation: false, statut: 'termine' },
+      ),
+      rapport: vi.fn(async () => 'Entité;Identifiant source;Niveau;Motif'),
+    };
+    const client = fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => ({
+        ...PERIMETRE_DELEGUE,
+        roles: ['admin_pays'],
+        actions: ['imports.gerer', 'pays.lire'],
+      })),
+      imports: imports as unknown as ClientApi['imports'],
+    } as Partial<ClientApi>);
+    return { client, imports };
+  }
+
+  it('simule d’abord, montre le bilan par motif, puis importe pour de bon (CA1, CA2)', async () => {
+    const { client, imports } = clientImports();
+    const { container } = rendre(client, '/imports');
+    expect(await screen.findByText(/Aucun import pour l/)).toBeInTheDocument();
+    const importer = screen.getByRole('button', { name: 'Importer pour de bon' });
+    expect(importer).toBeDisabled();
+    const entree = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const fichier = new File(['{}'], 'export-fictif.zip', { type: 'application/zip' });
+    fireEvent.change(entree, { target: { files: [fichier] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lancer la simulation' }));
+    await vi.waitFor(() =>
+      expect(imports.birdnotes).toHaveBeenCalledWith(fichier, 'export-fictif.zip', true),
+    );
+    expect(await screen.findByText('Simulation de export-fictif.zip')).toBeInTheDocument();
+    expect(screen.getByText('120')).toBeInTheDocument();
+    // Les anomalies sont regroupées par motif, les rejets d'abord.
+    expect(screen.getByText('Sans secteur.')).toBeInTheDocument();
+    expect(screen.getByText('Téléphone.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Importer pour de bon' }));
+    const confirmation = await screen.findByRole('dialog');
+    expect(
+      within(confirmation).getByText(/120 prospects et 40 établissements/),
+    ).toBeInTheDocument();
+    fireEvent.click(within(confirmation).getByRole('button', { name: 'Importer pour de bon' }));
+    await vi.waitFor(() =>
+      expect(imports.birdnotes).toHaveBeenCalledWith(fichier, 'export-fictif.zip', false),
+    );
+    expect(await screen.findByText('Import de export-fictif.zip')).toBeInTheDocument();
+  });
+
+  it('la page Imports ne présente aucune violation d’accessibilité détectable', async () => {
+    const { client } = clientImports();
+    const { container } = rendre(client, '/imports');
+    await screen.findByText(/Aucun import pour l/);
     expect(await violationsAccessibilite(container)).toEqual([]);
   });
 });

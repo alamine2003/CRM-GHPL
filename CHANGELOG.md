@@ -2,6 +2,77 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.4] — Import BirdNotes et modèle aligné sur le terrain ; design enrichi
+
+Quatrième jalon du cycle 0.1 « Référentiel ». Le 4 octobre 2026, l'export réel du CRM en place au Sénégal (BirdNotes) a servi de point de départ « pour ne pas inventer » : les listes et paramètres suivent sa pratique, et l'import est avancé de 0.1.8 à 0.1.4. Le fichier, qui contient des données réelles, n'entre jamais dans le dépôt : seuls des libellés génériques et des proportions y figurent.
+
+### Ajouté — import contrôlé depuis BirdNotes (PRP-013)
+
+- **Module `imports`** : l'administrateur pays téléverse l'export JSON de BirdNotes tel quel (ou son archive ZIP). Le fichier est lu en mémoire et n'est pas conservé.
+- **CA1 — simulation d'abord** : tout est calculé dans une transaction puis annulé. Seuls le bilan (compteurs par donnée) et les anomalies restent, dans un `LotImport`.
+- **CA2 — rapport d'anomalies** : chaque ligne écartée ou corrigée a un motif, traduit. Le rapport se télécharge en CSV (séparateur « ; », lisible par Excel).
+- **Ce qui est repris**, dans l'ordre des dépendances :
+  - secteurs et localités : les secteurs nouveaux vont dans une zone « À répartir », les variantes d'orthographe sont fusionnées ;
+  - gammes → divisions et réseaux, produits, portefeuilles : la gamme technique « Default » est ignorée et signalée ;
+  - établissements : le type est déduit du nom (poste de santé, centre de santé, pharmacie…), sinon « Autre » à préciser ; l'activité H est reprise ; un établissement sans secteur prend celui de la majorité de ses prospects, signalé ; sans secteur ni prospect, il est écarté ;
+  - prospects validés (`actif`) et demandes de création (`a_valider`) : le type est déduit de la spécialité, le potentiel est ramené à A/B/C (« BB » → B, « D » et « X » → C, signalé), le grade donne la civilité, les téléphones sont normalisés en E.164 (inexploitables signalés).
+- **CA3** : les groupes de doublons signalés par BirdNotes sont gardés avec les fiches, pour la file des doublons (0.1.8). Les demandes de modification en attente sont comptées et reportées aux propositions de modification (0.1.8).
+- **CA4 — réimport idempotent** : chaque fiche garde sa référence BirdNotes (`ReferenceExterne`). Un nouvel import la retrouve et ne crée rien. Les compléments utiles plus tard y sont conservés : établissement d'exercice, délégués affectés, position GPS.
+- Commande `manage.py importer_birdnotes <fichier> --pays SN --auteur … [--simulation] [--rapport rapport.csv]`.
+- API `imports/` (liste, détail, téléversement, rapport CSV) ; nouveau droit `imports.gerer` réservé à l'administrateur pays. Le lot est audité (`import.birdnotes`), la table est protégée par la sécurité au niveau des lignes, les routes sont couvertes par la matrice et les tests d'isolation.
+- Les tests portent sur un export **entièrement fictif** qui reprend seulement la structure des tables.
+
+### Modifié — modèle aligné sur la pratique réelle (prd.md §14.1, §14.2)
+
+- **Types de prospect** : médecin, paramédical, pharmacie, autre. Sage-femme et infirmier deviennent des spécialités paramédicales, l'officine une spécialité de la pharmacie. Les anciennes valeurs par défaut (pharmacien, sage-femme, infirmier, chirurgien-dentiste) sont archivées : elles restent lisibles là où elles ont servi (PRP-001 CA2).
+- **44 spécialités** rattachées à leur type ; nouvelle liste des **grades** (docteur, professeur, professeur agrégé, chef de service, assistant, résident), modifiable dans Référentiels.
+- **Type d'établissement « poste de santé »**, premier type relevé sur le terrain.
+- **Exercice hospitalier ou privé (H/P)** sur le prospect et l'établissement.
+- **Référentiel des localités** par secteur (`Localite`, ORG-003) : la localité d'un établissement n'est plus un texte libre. Elle donne son secteur et doit lui appartenir. Le prospect peut porter un secteur et une localité.
+- **Paramètres par défaut** :
+  - distance de pointage : 100 m au lieu de 200 ;
+  - visites sans GPS tolérées par journée : 3 au lieu de 0 [H] ;
+  - nouveau paramètre « cycle de visite » : 4 semaines.
+- **Un secteur se rattache à une autre zone** : c'est le sort des secteurs repris dans « À répartir ». Le déplacement est audité.
+
+### Portail et mobile
+
+- **Page Imports** (menu Administration) :
+  - étapes « Choisir le fichier → Simuler et vérifier → Importer » ;
+  - zone de dépôt par glisser-déposer ;
+  - bilan en tuiles (prospects, établissements, produits, lignes écartées) et détail par donnée ;
+  - anomalies **regroupées par motif**, rejets d'abord, et téléchargement du rapport CSV ;
+  - confirmation chiffrée avant l'import réel ;
+  - historique des lots, chacun consultable.
+- **Fiches prospect** : grade, exercice H/P, secteur puis localité du secteur choisi. La liste affiche spécialité et localité.
+- **Fiches établissement** : localité choisie parmi celles du secteur, exercice H/P.
+- **Organisation** : un clic sur un secteur ouvre sa fiche, pour changer sa zone et gérer ses localités (ajout, archivage).
+- **Mobile** : la localité d'un nouvel établissement se choisit parmi celles du secteur.
+
+### Démonstration
+
+- Générateur calibré sur les proportions relevées (agrégats seulement) :
+  - spécialités : sage-femme 24,5 %, infirmier 24,4 %, officine 14,8 %, médecine générale 12,7 % ;
+  - potentiels : A 42 %, B 46 %, C 12 % ;
+  - exercice : privé 71 % ;
+  - grades des médecins ;
+  - postes de santé majoritaires parmi les établissements.
+- Deux à quatre localités fictives par secteur.
+
+### Feuille de route (prd.md §23)
+
+- 0.1.4 : import BirdNotes et modèle aligné ;
+- 0.1.5 : exercices datés (PRP-004) ;
+- 0.1.6 : listes cibles (PRP-011) ;
+- 0.1.7 : recherche et pagination (PRP-005) ;
+- 0.1.8 : doublons, fusion, défusion, propositions et historique (PRP-007 à PRP-010, PRP-012, PRP-014), plus l'import du fichier d'organisation (ORG-014).
+
+### Constats sur l'export réel (à confirmer)
+
+- BirdNotes compte 24 délégués, alors que le fichier d'organisation en prévoit 207 : périmètre de la phase test, ou effectif réel ? (O-01).
+- 367 établissements ont un type à préciser, et 576 établissements sans secteur ni prospect ne sont pas repris.
+- Les comptes, postes et l'historique des visites ne sont pas repris : l'organisation viendra du fichier d'organisation (ORG-014).
+
 ## [0.1.3] — Fiches établissements, positions GPS et carte ; design enrichi
 
 Troisième jalon du cycle 0.1 « Référentiel ».
@@ -36,7 +107,7 @@ Troisième jalon du cycle 0.1 « Référentiel ».
 
 ### Hypothèses
 
-- [H] La localité est un texte libre en attendant un référentiel des localités (architecture §13.2).
+- [H] La localité est un texte libre en attendant un référentiel des localités (architecture §13.2) — remplacé en 0.1.4.
 
 ### Reste à livrer
 

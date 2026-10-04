@@ -34,6 +34,7 @@ class Action(StrEnum):
     PROSPECTS_LIRE = "prospects.lire"
     PROSPECTS_CREER = "prospects.creer"
     PROSPECTS_GERER = "prospects.gerer"
+    IMPORTS_GERER = "imports.gerer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -90,6 +91,9 @@ MATRICE: dict[Action, frozenset[str]] = {
     # Valider, modifier toute fiche, archiver : l'administrateur pays, qui tranche aussi les
     # doublons (§6.3).
     Action.PROSPECTS_GERER: frozenset({Role.ADMIN_PAYS}),
+    # Imports (ORG-014, PRP-013) : l'administrateur pays « importe l'organisation et le
+    # référentiel » (prd.md §5).
+    Action.IMPORTS_GERER: frozenset({Role.ADMIN_PAYS}),
 }
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.

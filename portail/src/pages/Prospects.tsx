@@ -48,6 +48,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
+import { ChampsLieu, ChoixExercice } from '../composants/Lieu';
 import {
   EnTeteCarte,
   EnTetePage,
@@ -120,6 +121,7 @@ function useValeurs() {
   return {
     types: actives.filter((v) => v.liste === 'type_prospect'),
     specialites: actives.filter((v) => v.liste === 'specialite'),
+    grades: actives.filter((v) => v.liste === 'grade'),
   };
 }
 
@@ -130,6 +132,7 @@ function DialogueProspect({
   delegue,
   types,
   specialites,
+  grades,
   surFermer,
   surEnregistre,
 }: {
@@ -137,6 +140,7 @@ function DialogueProspect({
   delegue: boolean;
   types: ValeurReferentiel[];
   specialites: ValeurReferentiel[];
+  grades: ValeurReferentiel[];
   surFermer: () => void;
   surEnregistre: (p: Prospect) => void;
 }) {
@@ -153,6 +157,14 @@ function DialogueProspect({
     telephone_pro: prospect?.telephone_pro ?? '',
     courriel: prospect?.courriel ?? '',
     potentiel: prospect?.potentiel ?? 'B',
+    activite: prospect?.activite ?? '',
+    grade: prospect?.grade ?? null,
+    secteur: prospect?.secteur?.id ?? null,
+    localite: prospect?.localite?.id ?? null,
+  });
+  const secteurs = useQuery({
+    queryKey: ['etablissements', 'saisie', 'secteurs'],
+    queryFn: () => client.etablissements.secteurs(),
   });
   const changer = <K extends keyof SaisieProspect>(cle: K, valeur: SaisieProspect[K]) =>
     setF((avant) => ({ ...avant, [cle]: valeur }));
@@ -230,6 +242,33 @@ function DialogueProspect({
           ))}
         </TextField>
       </Stack>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        sx={{ alignItems: { sm: 'flex-end' } }}
+      >
+        <TextField
+          select
+          label={t('prospect.champs.grade')}
+          value={f.grade ?? ''}
+          onChange={(e) => changer('grade', e.target.value || null)}
+          fullWidth
+        >
+          <MenuItem value="">—</MenuItem>
+          {grades.map((v) => (
+            <MenuItem key={v.id} value={v.id}>
+              {v.libelle}
+            </MenuItem>
+          ))}
+        </TextField>
+        <ChoixExercice valeur={f.activite ?? ''} changer={(v) => changer('activite', v)} />
+      </Stack>
+      <ChampsLieu
+        secteurs={secteurs.data ?? []}
+        secteur={f.secteur ?? null}
+        localite={f.localite ?? null}
+        changer={(secteur, localite) => setF((a) => ({ ...a, secteur, localite }))}
+      />
       <Box>
         <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.75 }}>
           {t('prospect.champs.potentiel')}
@@ -441,6 +480,17 @@ function FicheProspect({
               libelle={t('prospect.champs.specialite')}
               valeur={p.specialite_libelle ?? aucun}
             />
+            <Ligne libelle={t('prospect.champs.grade')} valeur={p.grade_libelle ?? aucun} />
+            <Ligne
+              libelle={t('lieu.exercice')}
+              valeur={p.activite ? t(`lieu.exercices.${p.activite}`) : aucun}
+            />
+            <Ligne
+              libelle={t('lieu.lieu')}
+              valeur={
+                [p.localite?.libelle, p.secteur?.libelle].filter(Boolean).join(' · ') || aucun
+              }
+            />
             <Ligne
               libelle={t('prospect.champs.numeroOrdre')}
               valeur={
@@ -531,7 +581,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
   const peutCreer = perimetre.actions.includes('prospects.creer') && perimetre.pays_actif !== null;
   const gerer = perimetre.actions.includes('prospects.gerer') && perimetre.pays_actif !== null;
   const delegue = perimetre.roles.includes('delegue') && !gerer;
-  const { types, specialites } = useValeurs();
+  const { types, specialites, grades } = useValeurs();
 
   const [saisie, setSaisie] = useState('');
   const [q, setQ] = useState('');
@@ -764,7 +814,12 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
                         noWrap
                         component="p"
                       >
-                        {[p.type_libelle, p.specialite_libelle].filter(Boolean).join(' · ')}
+                        {[
+                          p.specialite_libelle ?? p.type_libelle,
+                          p.localite?.libelle ?? p.secteur?.libelle,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </Typography>
                     </Box>
                     <Typography
@@ -813,6 +868,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
           delegue={delegue}
           types={types}
           specialites={specialites}
+          grades={grades}
           surFermer={() => setDialogue(null)}
           surEnregistre={(p) => {
             void requetes.invalidateQueries({ queryKey: ['prospects'] });

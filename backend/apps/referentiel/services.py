@@ -17,7 +17,7 @@ from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
 from apps.socle.services import aujourdhui
 
-from .catalogue import INITIALES
+from .catalogue import synchroniser
 from .models import Liste, Portefeuille, Produit, Valeur
 
 #: Listes dont une valeur peut avoir un parent, et la liste de ce parent.
@@ -77,17 +77,7 @@ def _parent(pays: Pays, liste: str, parent: Valeur | None) -> Valeur | None:
 
 def initialiser_pays(pays: Pays) -> None:
     """Listes proposées à l'ouverture d'un pays, dans sa langue ; l'administrateur les ajuste."""
-    anglais = pays.langue == "en"
-    parents: dict[str, Valeur] = {}
-    for liste, entrees in INITIALES.items():
-        for ordre, (code, fr, en, *parent) in enumerate(entrees, start=1):
-            valeur = Valeur(
-                pays=pays, liste=liste, code=code, libelle=en if anglais else fr, ordre=ordre,
-                parent=parents.get(parent[0]) if parent else None,
-            )  # fmt: skip
-            valeur.save()
-            if liste == Liste.TYPE_PROSPECT:
-                parents[code] = valeur
+    synchroniser(Valeur, pays)
 
 
 def creer_valeur(

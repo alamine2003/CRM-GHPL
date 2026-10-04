@@ -4,11 +4,12 @@ Lecture : `organisation.lire` ; écriture : `organisation.gerer` (siège, admini
 Une écriture exige un pays actif : le siège choisit d'abord un pays (en-tête X-Pays).
 """
 
+from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -26,6 +27,7 @@ from . import serializers as s
 from . import services
 from .models import (
     Division,
+    Localite,
     Occupation,
     PerimetreReseau,
     Poste,
@@ -155,6 +157,30 @@ class SecteursVue(VueElements):
         return self.cree(services.creer_secteur(zone.pays, zone, v["libelle"]))
 
 
+class LocalitesVue(VueElements):
+    modele, serializer_class = Localite, s.LocaliteSerializer
+
+    @extend_schema(
+        parameters=[OpenApiParameter("secteur", str, required=False)],
+        responses=s.LocaliteSerializer(many=True),
+        operation_id="localites_liste",
+    )
+    def get(self, request):
+        qs = self.get_queryset()
+        if secteur := request.query_params.get("secteur"):
+            qs = qs.filter(secteur_id=secteur)
+        if request.query_params.get("actifs") == "1":
+            qs = qs.filter(archive_le__isnull=True)
+        return Response(self.get_serializer(qs, many=True).data)
+
+    @extend_schema(request=s.CreationLocaliteSerializer, responses={201: s.LocaliteSerializer},
+                   operation_id="localite_creer")  # fmt: skip
+    def post(self, request):
+        v = _lire(s.CreationLocaliteSerializer, request)
+        secteur = _reference(Secteur, self.perimetre, v["secteur"], "secteur_invalide")
+        return self.cree(services.creer_localite(secteur, v["libelle"]))
+
+
 def _vue_element(modele, serializer, nom):
     """Renommage (PATCH) et archivage (POST …/archiver/) d'un élément simple."""
 
@@ -187,7 +213,25 @@ def _vue_element(modele, serializer, nom):
 DivisionVue, DivisionArchivageVue = _vue_element(Division, s.DivisionSerializer, "division")
 ReseauVue, ReseauArchivageVue = _vue_element(Reseau, s.ReseauSerializer, "reseau")
 ZoneVue, ZoneArchivageVue = _vue_element(Zone, s.ZoneSerializer, "zone")
-SecteurVue, SecteurArchivageVue = _vue_element(Secteur, s.SecteurSerializer, "secteur")
+_SecteurRenommageVue, SecteurArchivageVue = _vue_element(Secteur, s.SecteurSerializer, "secteur")
+
+
+class SecteurVue(_SecteurRenommageVue):
+    @extend_schema(request=s.ModificationSecteurSerializer, responses=s.SecteurSerializer,
+                   operation_id="secteur_modifier")  # fmt: skip
+    def patch(self, request, id):
+        secteur = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.ModificationSecteurSerializer, request)
+        with transaction.atomic():
+            if "zone" in v:
+                zone = _reference(Zone, self.perimetre, v["zone"], "zone_invalide")
+                secteur = services.deplacer_secteur(secteur, zone)
+            if "libelle" in v:
+                secteur = services.renommer(secteur, v["libelle"])
+        return Response(s.SecteurSerializer(secteur).data)
+
+
+LocaliteVue, LocaliteArchivageVue = _vue_element(Localite, s.LocaliteSerializer, "localite")
 
 
 # --- Postes, occupations, rattachements (ORG-005 à ORG-007) ----------------------------------

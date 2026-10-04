@@ -16,9 +16,12 @@ URL = "/api/v1/etablissements/"
 def secteurs(monde):
     sn = monde["sn"]
     dakar = org.creer_zone(sn, "Dakar")
+    plateau = org.creer_secteur(sn, dakar, "Plateau")
     return {
-        "plateau": org.creer_secteur(sn, dakar, "Plateau"),
+        "plateau": plateau,
         "fann": org.creer_secteur(sn, dakar, "Fann"),
+        "plateau_centre": org.creer_localite(plateau, "Plateau centre"),
+        "medina": org.creer_localite(org.creer_secteur(sn, dakar, "Médina"), "Gueule Tapée"),
         "lome": org.creer_secteur(monde["tg"], org.creer_zone(monde["tg"], "Lomé"), "Bè"),
     }
 
@@ -30,7 +33,7 @@ def fiche(monde, secteurs, **champs):
         "type": str(clinique.pk),
         "secteur": str(secteurs["plateau"].pk),
         "adresse": "12 rue Carnot",
-        "localite": "Plateau",
+        "localite": str(secteurs["plateau_centre"].pk),
         "latitude": 14.6681,
         "longitude": -17.4369,
         "telephone": "33 821 00 00",
@@ -45,7 +48,7 @@ def noms(reponse):
 def test_un_etablissement_a_un_secteur(monde, secteurs):
     """PRP-003 CA1 : sans secteur, ou avec un secteur d'un autre pays, il est refusé."""
     admin = client_de(monde["admin.sn"])
-    sans = admin.post(URL, fiche(monde, secteurs, secteur=None), format="json")
+    sans = admin.post(URL, fiche(monde, secteurs, secteur=None, localite=None), format="json")
     assert sans.status_code == 400 and sans.json()["code"] == "secteur_requis"
     ailleurs = admin.post(URL, fiche(monde, secteurs, secteur=str(secteurs["lome"].pk)),
                           format="json")  # fmt: skip
@@ -56,6 +59,13 @@ def test_un_etablissement_a_un_secteur(monde, secteurs):
     assert e["secteur"]["libelle"] == "Plateau" and e["secteur"]["zone"] == "Dakar"
     assert e["statut"] == "actif" and e["telephone"] == "+221338210000"
     assert e["type_libelle"] == "Clinique"
+    assert e["localite"]["libelle"] == "Plateau centre"
+    # La localité donne son secteur ; elle doit appartenir au secteur indiqué.
+    deduit = admin.post(URL, fiche(monde, secteurs, nom="Cabinet Ba", secteur=None), format="json")
+    assert deduit.json()["secteur"]["libelle"] == "Plateau"
+    hors = admin.post(URL, fiche(monde, secteurs, localite=str(secteurs["medina"].pk)),
+                      format="json")  # fmt: skip
+    assert hors.json()["code"] == "localite_hors_secteur"
 
 
 def test_les_coordonnees_gps_sont_facultatives_mais_completes(monde, secteurs):
@@ -97,12 +107,14 @@ def test_le_delegue_cree_un_etablissement_a_valider(monde, secteurs):
 def test_recherche_filtres_et_archivage(monde, secteurs):
     admin = client_de(monde["admin.sn"])
     hopital = Valeur.objects.get(pays=monde["sn"], liste="type_etablissement", code="hopital")
+    hock = org.creer_localite(secteurs["fann"], "Fann Hock")
     admin.post(URL, fiche(monde, secteurs), format="json")
     cree = admin.post(URL, fiche(monde, secteurs, nom="Hôpital de Fann", type=str(hopital.pk),
-                                 secteur=str(secteurs["fann"].pk), localite="Fann"),
+                                 secteur=str(secteurs["fann"].pk), localite=str(hock.pk)),
                       format="json").json()  # fmt: skip
     assert noms(admin.get(f"{URL}?q=hopital")) == ["Hôpital de Fann"]
     assert noms(admin.get(f"{URL}?q=fann")) == ["Hôpital de Fann"]
+    assert noms(admin.get(f"{URL}?q=hock")) == ["Hôpital de Fann"]  # par la localité
     assert noms(admin.get(f"{URL}?secteur={secteurs['plateau'].pk}")) == ["Clinique du Cap"]
     assert admin.get(f"{URL}synthese/").json()["types"] == {"clinique": 1, "hopital": 1}
     admin.post(f"{URL}{cree['id']}/archiver/", {"motif": "Fermé"}, format="json")
@@ -124,4 +136,8 @@ def test_isolation_entre_pays(monde, secteurs):
 
 def test_le_delegue_obtient_les_secteurs_du_pays_pour_sa_saisie(monde, secteurs):
     reponse = client_de(monde["deleg.sn"]).get(f"{URL}secteurs/").json()
-    assert [(x["zone"], x["libelle"]) for x in reponse] == [("Dakar", "Fann"), ("Dakar", "Plateau")]
+    assert [(x["zone"], x["libelle"]) for x in reponse] == [
+        ("Dakar", "Fann"), ("Dakar", "Médina"), ("Dakar", "Plateau"),
+    ]  # fmt: skip
+    # Chaque secteur arrive avec ses localités actives, pour le choix en cascade.
+    assert [loc["libelle"] for loc in reponse[2]["localites"]] == ["Plateau centre"]

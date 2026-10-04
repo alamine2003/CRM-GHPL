@@ -4,7 +4,7 @@ Lecture : `prospects.lire` ; création : `prospects.creer` (administrateur pays,
 validation, modification de toute fiche, archivage : `prospects.gerer` (administrateur pays).
 """
 
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
@@ -13,7 +13,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from apps.identite.models import Role
-from apps.organisation.models import Secteur
+from apps.organisation.models import Localite, Secteur
 from apps.organisation.vues import _lire, _reference, pays_requis
 from apps.perimetre.matrice import SIEGE, Action
 from apps.perimetre.vues import VuePerimetre
@@ -24,7 +24,7 @@ from . import serializers as s
 from . import services
 from .models import Etablissement, Potentiel, StatutFiche
 
-#: Résultats renvoyés par une recherche ; pagination complète en 0.1.6 (PRP-005).
+#: Résultats renvoyés par une recherche ; pagination complète en 0.1.7 (PRP-005).
 LIMITE = 100
 
 
@@ -33,7 +33,7 @@ class VueProspects(VuePerimetre):
 
     def selection(self, perimetre):
         return services.prospects_visibles(perimetre).select_related(
-            "pays", "type", "specialite", "cree_par"
+            "pays", "type", "specialite", "grade", "secteur", "localite", "cree_par"
         )
 
     def get_serializer_context(self):
@@ -46,10 +46,14 @@ class VueProspects(VuePerimetre):
         return Response(self.get_serializer(prospect).data, status=statut)
 
     def references(self, v: dict) -> dict:
-        """Identifiants du formulaire → valeurs du référentiel du pays actif."""
-        for champ in ("type", "specialite"):
+        """Identifiants du formulaire → objets du pays actif (référentiel, secteur, localité)."""
+        for champ in ("type", "specialite", "grade"):
             if v.get(champ):
                 v[champ] = _reference(Valeur, self.perimetre, v[champ], "valeur_invalide")
+        if v.get("secteur"):
+            v["secteur"] = _reference(Secteur, self.perimetre, v["secteur"], "secteur_invalide")
+        if v.get("localite"):
+            v["localite"] = _reference(Localite, self.perimetre, v["localite"], "localite_invalide")
         return v
 
 
@@ -172,15 +176,8 @@ class VueEtablissements(VueProspects):
 
     def selection(self, perimetre):
         return services.fiches_visibles(Etablissement, perimetre).select_related(
-            "pays", "type", "secteur__zone", "cree_par"
+            "pays", "type", "secteur__zone", "localite", "cree_par"
         )
-
-    def references(self, v: dict) -> dict:
-        if v.get("type"):
-            v["type"] = _reference(Valeur, self.perimetre, v["type"], "valeur_invalide")
-        if v.get("secteur"):
-            v["secteur"] = _reference(Secteur, self.perimetre, v["secteur"], "secteur_invalide")
-        return v
 
 
 class EtablissementsVue(VueEtablissements):
@@ -301,14 +298,18 @@ class SecteursEtablissementsVue(VuePerimetre):
     délégué, qui ne lit pas l'organisation, en a besoin pour créer une fiche."""
 
     actions = {"GET": Action.PROSPECTS_LIRE}
-    serializer_class = s.SecteurResumeSerializer
+    serializer_class = s.SecteurSaisieSerializer
 
     def selection(self, perimetre):
-        return perimetre.filtrer_par_pays(
-            Secteur.objects.filter(archive_le__isnull=True).select_related("zone")
-        ).order_by("zone__libelle", "libelle")
+        localites = Localite.objects.filter(archive_le__isnull=True).order_by("libelle")
+        return (
+            perimetre.filtrer_par_pays(Secteur.objects.filter(archive_le__isnull=True))
+            .select_related("zone")
+            .prefetch_related(Prefetch("localites", localites, to_attr="localites_actives"))
+            .order_by("zone__libelle", "libelle")
+        )
 
-    @extend_schema(responses=s.SecteurResumeSerializer(many=True),
+    @extend_schema(responses=s.SecteurSaisieSerializer(many=True),
                    operation_id="etablissements_secteurs")  # fmt: skip
     def get(self, request):
-        return Response(s.SecteurResumeSerializer(self.get_queryset(), many=True).data)
+        return Response(s.SecteurSaisieSerializer(self.get_queryset(), many=True).data)

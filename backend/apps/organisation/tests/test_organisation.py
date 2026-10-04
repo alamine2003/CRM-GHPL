@@ -66,6 +66,23 @@ def test_un_secteur_appartient_a_une_seule_zone_du_meme_pays(monde):
     assert reponse.status_code == 400 and reponse.json()["code"] == "zone_invalide"
 
 
+def test_un_secteur_se_rattache_a_une_autre_zone_du_pays(org):
+    """ORG-003 : les secteurs repris d'un import (zone « À répartir ») rejoignent leur zone."""
+    c = admin(org)
+    url = f"{API}/secteurs/{org['s2'].pk}/"
+    deplace = c.patch(url, {"zone": str(org["sud"].pk)}, format="json")
+    assert deplace.status_code == 200, deplace.content
+    assert deplace.json()["zone_libelle"] == "Sud" and deplace.json()["libelle"] == "Louga"
+    from apps.audit.models import EvenementAudit
+
+    e = EvenementAudit.objects.get(action="organisation.secteur.deplacement")
+    assert e.details == {"ancienne": "Nord", "nouvelle": "Sud"}
+    ailleurs = services.creer_zone(org["tg"], "Maritime")
+    refus = c.patch(url, {"zone": str(ailleurs.pk)}, format="json")
+    assert refus.status_code == 400 and refus.json()["code"] == "zone_invalide"
+    assert client_de(org["sup.sn"]).patch(url, {"zone": str(org["nord"].pk)}).status_code == 403
+
+
 def test_un_secteur_archive_reste_visible_mais_n_est_plus_propose(org):
     """ORG-003 CA2."""
     c = admin(org)

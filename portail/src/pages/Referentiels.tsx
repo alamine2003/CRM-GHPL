@@ -65,6 +65,7 @@ import { messageErreur, useSession } from '../contexteSession';
 const LISTES: ListeReferentiel[] = [
   'type_prospect',
   'specialite',
+  'grade',
   'type_etablissement',
   'classe_therapeutique',
   'motif_ecart',

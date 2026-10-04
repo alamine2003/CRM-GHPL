@@ -241,7 +241,8 @@ Voir `ORG-001` à `ORG-014` (section 15.1).
 | Échéance d'approbation du planning | Vendredi 18 h de la semaine précédente |
 | Délai de rapport | Jour de la visite, 23 h 59 |
 | Seuils de visites par jour | Par type de poste (ex. `vm` 6 à 10, `kam` 3 à 6) [H] |
-| Contrôles de conformité | Plage horaire 8 h–20 h ; visites sans GPS tolérées par journée : 0 [H] ; distance de pointage 200 m |
+| Contrôles de conformité | Plage horaire 8 h–20 h ; visites sans GPS tolérées par journée : 3 [H] ; distance de pointage 100 m (pratique relevée dans BirdNotes, 4 octobre 2026) |
+| Cycle de visite | 4 semaines (pratique relevée dans BirdNotes) |
 | Géolocalisation | Activée ou désactivée par pays |
 | Champs supplémentaires du rapport | Aucun |
 | Libellés (division, réseau, zone, secteur) | Libellés standard, modifiables |
@@ -386,8 +387,11 @@ stateDiagram-v2
 | Champ | Obligatoire | Remarque |
 |---|---|---|
 | Civilité, nom, prénom | Nom obligatoire | Normalisés pour la détection de doublons |
-| Type de prospect | Oui | `medecin`, `pharmacien`, `sage_femme`, `infirmier`, `chirurgien_dentiste`, `autre` (liste par pays) |
-| Spécialité | Selon le type | Référentiel par pays |
+| Type de prospect | Oui | `medecin`, `paramedical`, `pharmacie`, `autre` (liste par pays). Révisé le 4 octobre 2026 sur la pratique relevée dans BirdNotes : sage-femme et infirmier sont des spécialités paramédicales, l'officine une spécialité de la pharmacie |
+| Spécialité | Selon le type | Référentiel par pays, chaque spécialité rattachée à son type (médecine générale, cardiologie… ; sage-femme, infirmier… ; officine, parapharmacie) |
+| Grade | Non | `docteur`, `professeur`, `professeur_agrege`, `chef_service`, `assistant`, `resident` (liste par pays) |
+| Exercice | Non | `hospitalier` ou `prive` (H/P) |
+| Secteur, localité | Non | La localité appartient à un secteur ; elle en donne le secteur |
 | Numéro d'ordre professionnel | Non | Identifiant fort pour la fusion automatique |
 | Téléphone mobile personnel, téléphone professionnel, courriel | Non | Normalisés au format international |
 | Potentiel | Oui | `A`, `B`, `C` |
@@ -396,7 +400,7 @@ stateDiagram-v2
 
 ### 14.2 Établissement
 
-Nom, type (`cabinet`, `hopital`, `clinique`, `centre_sante`, `pharmacie`, `grossiste`, `autre` — liste par pays), adresse, localité, secteur, coordonnées GPS de référence, téléphone, statut (`a_valider`, `actif`, `archive`, `fusionne`).
+Nom, type (`cabinet`, `hopital`, `clinique`, `centre_sante`, `poste_sante`, `pharmacie`, `grossiste`, `autre` — liste par pays), adresse, secteur, localité (référentiel des localités de chaque secteur, tenu dans Organisation), exercice `hospitalier` ou `prive`, coordonnées GPS de référence, téléphone, statut (`a_valider`, `actif`, `archive`, `fusionne`).
 
 ### 14.3 Exercice (relation prospect ↔ établissement)
 
@@ -424,9 +428,17 @@ Un prospect exerce dans **un ou plusieurs** établissements. Chaque exercice est
   - **aucun** → la fiche devient `actif` et commune.
 - Toute fusion est **réversible** (défusion) et auditée ; les visites, rapports, exercices et listes cibles suivent la fiche conservée.
 
-### 14.7 Import initial depuis BirdNotes [D, format O-01]
+### 14.7 Import initial depuis BirdNotes [D, format O-01 tranché le 4 octobre 2026]
 
-Les prospects, établissements et l'historique utile de la phase test viennent de BirdNotes. L'import passe par un **format d'import standard** du CRM (CSV/Excel) vers lequel l'export BirdNotes est converti, avec simulation préalable, rapport d'erreurs ligne par ligne, détection de doublons et journal d'import.
+Les prospects, établissements, secteurs, localités et produits viennent de BirdNotes, le CRM en place au Sénégal. L'administrateur pays téléverse **l'export JSON de BirdNotes tel quel** (ou son archive ZIP) : le fichier est lu à l'exécution, jamais conservé ni versionné (données réelles). L'import :
+
+- se **simule** d'abord : tout est calculé puis annulé ; seuls le bilan et le rapport restent ;
+- produit un **rapport d'anomalies** téléchargeable (CSV), un motif par ligne écartée ou corrigée ;
+- reprend dans l'ordre secteurs et localités (les secteurs nouveaux vont dans une zone « À répartir »), gammes (divisions et réseaux), produits et portefeuilles, établissements (type déduit du nom, à préciser sinon ; secteur déduit de leurs prospects quand BirdNotes n'en donne pas), prospects validés (`actif`) et demandes de création (`a_valider`) ;
+- conserve les **groupes de doublons** signalés par BirdNotes pour la file des doublons (0.1.8) ; les demandes de modification en attente sont reportées aux propositions de modification (0.1.8) ;
+- garde la **référence BirdNotes** de chaque fiche reprise : un réimport la retrouve et ne crée rien.
+
+Les comptes, l'organisation (postes, affectations) et l'historique des visites ne sont pas repris en 0.1.4 : l'organisation vient du fichier d'organisation (ORG-014).
 
 ## 15. Exigences fonctionnelles
 
@@ -469,17 +481,17 @@ Chaque exigence porte : un identifiant stable, la version de première livraison
 | PRP-001 | Référentiels par pays : types de prospect, spécialités, types d'établissement, classes thérapeutiques, produits, motifs d'écart. | 0.1.1 | CA1 : chaque liste est modifiable par l'administrateur pays. CA2 : une valeur utilisée ne se supprime pas, elle s'archive. |
 | PRP-002 | Création et consultation des fiches prospects (section 14.1). | 0.1.2 | CA1 : un prospect sans nom ni type est refusé. CA2 : la fiche affiche ses établissements, son potentiel, et pour l'utilisateur ses visites autorisées. |
 | PRP-003 | Création et consultation des établissements (section 14.2). | 0.1.3 | CA1 : un établissement a un secteur. CA2 : les coordonnées GPS de référence sont facultatives mais nécessaires au contrôle de distance. |
-| PRP-004 | Exercices datés prospect ↔ établissement. | 0.1.4 | CA1 : un prospect peut avoir plusieurs exercices actifs. CA2 : une visite ne peut référencer qu'un couple prospect/établissement lié par un exercice actif à la date de la visite. |
-| PRP-005 | Recherche, filtres, tri et pagination (nom, spécialité, potentiel, localité, secteur, délégué). | 0.1.6 | CA1 : la recherche tolère accents et casse. CA2 : les résultats ne contiennent que des fiches du pays actif et du périmètre. CA3 : 20 résultats par page par défaut. |
+| PRP-004 | Exercices datés prospect ↔ établissement. | 0.1.5 | CA1 : un prospect peut avoir plusieurs exercices actifs. CA2 : une visite ne peut référencer qu'un couple prospect/établissement lié par un exercice actif à la date de la visite. |
+| PRP-005 | Recherche, filtres, tri et pagination (nom, spécialité, potentiel, localité, secteur, délégué). | 0.1.7 | CA1 : la recherche tolère accents et casse. CA2 : les résultats ne contiennent que des fiches du pays actif et du périmètre. CA3 : 20 résultats par page par défaut. |
 | PRP-006 | Création par le délégué au statut `a_valider`, utilisable immédiatement par lui seul. | 0.1.2 | CA1 : la fiche n'apparaît pas aux autres délégués avant de devenir `actif`. CA2 : le délégué peut la planifier aussitôt. |
-| PRP-007 | Suggestions de fiches ressemblantes pendant la saisie. | 0.1.7 | CA1 : saisir un nom approchant d'une fiche existante (faute de frappe, accent, préfixe « Dr ») affiche cette fiche parmi les suggestions. CA2 : la suggestion fonctionne hors connexion sur les fiches présentes sur le téléphone. |
-| PRP-008 | Détecteur de doublons à l'enregistrement : `certain` → fusion automatique ; `probable` → file ; `aucun` → `actif`. | 0.1.7 | CA1 : deux fiches avec le même numéro d'ordre dans le même pays fusionnent automatiquement. CA2 : deux fiches au même téléphone fixe d'établissement mais aux noms différents ne fusionnent pas. CA3 : chaque décision du détecteur est auditée avec le score et les critères. |
-| PRP-009 | File des doublons probables traitée par l'administrateur pays : fusionner, garder séparées, refuser. | 0.1.7 | CA1 : la comparaison affiche les deux fiches côte à côte. CA2 : « garder séparées » empêche que la même paire réapparaisse. |
-| PRP-010 | Défusion d'une fusion (automatique ou manuelle). | 0.1.7 | CA1 : après défusion, les deux fiches retrouvent leurs visites, rapports, exercices et listes cibles d'origine. CA2 : la défusion est auditée. |
-| PRP-011 | Liste cible par poste avec fréquence cible par prospect, tenue par le superviseur ou l'administrateur pays. | 0.1.5 | CA1 : ajouter ou retirer un prospect est audité. CA2 : la liste cible est disponible hors connexion sur le téléphone du délégué. |
-| PRP-012 | Modification contrôlée et archivage logique des fiches ; historique des changements. | 0.1.7 | CA1 : chaque modification est historisée (champ, ancienne valeur, nouvelle valeur, auteur, date). CA2 : aucune suppression physique. |
-| PRP-013 | Import contrôlé des prospects et établissements (format standard, depuis BirdNotes). | 0.1.8 | CA1 : simulation sans écriture. CA2 : rapport d'erreurs téléchargeable. CA3 : les doublons détectés vont dans la file. CA4 : un réimport idempotent ne crée rien de nouveau. |
-| PRP-014 | Le délégué propose une modification d'une fiche commune (adresse, téléphone, nouvel exercice) ; le superviseur ou l'administrateur pays l'accepte ou la refuse. | 0.1.7 | CA1 : la proposition ne modifie pas la fiche avant acceptation. CA2 : le délégué est notifié de la décision. |
+| PRP-007 | Suggestions de fiches ressemblantes pendant la saisie. | 0.1.8 | CA1 : saisir un nom approchant d'une fiche existante (faute de frappe, accent, préfixe « Dr ») affiche cette fiche parmi les suggestions. CA2 : la suggestion fonctionne hors connexion sur les fiches présentes sur le téléphone. |
+| PRP-008 | Détecteur de doublons à l'enregistrement : `certain` → fusion automatique ; `probable` → file ; `aucun` → `actif`. | 0.1.8 | CA1 : deux fiches avec le même numéro d'ordre dans le même pays fusionnent automatiquement. CA2 : deux fiches au même téléphone fixe d'établissement mais aux noms différents ne fusionnent pas. CA3 : chaque décision du détecteur est auditée avec le score et les critères. |
+| PRP-009 | File des doublons probables traitée par l'administrateur pays : fusionner, garder séparées, refuser. | 0.1.8 | CA1 : la comparaison affiche les deux fiches côte à côte. CA2 : « garder séparées » empêche que la même paire réapparaisse. |
+| PRP-010 | Défusion d'une fusion (automatique ou manuelle). | 0.1.8 | CA1 : après défusion, les deux fiches retrouvent leurs visites, rapports, exercices et listes cibles d'origine. CA2 : la défusion est auditée. |
+| PRP-011 | Liste cible par poste avec fréquence cible par prospect, tenue par le superviseur ou l'administrateur pays. | 0.1.6 | CA1 : ajouter ou retirer un prospect est audité. CA2 : la liste cible est disponible hors connexion sur le téléphone du délégué. |
+| PRP-012 | Modification contrôlée et archivage logique des fiches ; historique des changements. | 0.1.8 | CA1 : chaque modification est historisée (champ, ancienne valeur, nouvelle valeur, auteur, date). CA2 : aucune suppression physique. |
+| PRP-013 | Import contrôlé des prospects et établissements depuis l'export BirdNotes (section 14.7). | 0.1.4 | CA1 : simulation sans écriture. CA2 : rapport d'erreurs téléchargeable. CA3 : les doublons signalés sont conservés pour la file des doublons. CA4 : un réimport idempotent ne crée rien de nouveau. |
+| PRP-014 | Le délégué propose une modification d'une fiche commune (adresse, téléphone, nouvel exercice) ; le superviseur ou l'administrateur pays l'accepte ou la refuse. | 0.1.8 | CA1 : la proposition ne modifie pas la fiche avant acceptation. CA2 : le délégué est notifié de la décision. |
 
 ### 15.4 Planning — PLN
 
@@ -867,11 +879,11 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 | 0.1.1 | Référentiels pays : types, spécialités, classes thérapeutiques, produits ; divisions et réseaux ; portefeuilles |
 | 0.1.2 | Fiches prospects ; création par le délégué au statut `a_valider` |
 | 0.1.3 | Fiches établissements |
-| 0.1.4 | Exercices datés prospect ↔ établissement |
-| 0.1.5 | Listes cibles, fréquences, potentiel A/B/C, affectation territoriale |
-| 0.1.6 | Recherche, filtres, tri, pagination |
-| 0.1.7 | Détecteur de doublons, fusion automatique certaine, file des doublons probables, défusion, propositions de modification, historique |
-| 0.1.8 | Imports : organisation, produits, prospects et établissements depuis BirdNotes, simulation et rapport d'erreurs |
+| 0.1.4 | Import BirdNotes (prospects, établissements, secteurs, localités, produits), simulation et rapport d'anomalies ; modèle aligné sur le terrain : types révisés, grades, exercice H/P, localités |
+| 0.1.5 | Exercices datés prospect ↔ établissement |
+| 0.1.6 | Listes cibles, fréquences, potentiel A/B/C, affectation territoriale |
+| 0.1.7 | Recherche, filtres, tri, pagination |
+| 0.1.8 | Détecteur de doublons, fusion automatique certaine, file des doublons probables, défusion, propositions de modification, historique ; import du fichier d'organisation |
 | 0.1.9 | Stabilisation, qualité des données, démonstration |
 
 ### Cycle 0.2 — Planning hebdomadaire
@@ -994,7 +1006,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 
 | ID | Question | Impact | Hypothèse en attendant |
 |---|---|---|---|
-| O-01 | Format et contenu de l'export BirdNotes (champs, historique de la phase test, identifiants) | Outil d'import (0.1.8) | Export CSV/Excel converti vers le format standard du CRM |
+| O-01 | Format et contenu de l'export BirdNotes (champs, historique de la phase test, identifiants) | Outil d'import (0.1.4) | Tranché le 4 octobre 2026 : export JSON de BirdNotes importé tel quel (section 14.7). Reste ouvert : écart entre les 24 délégués de BirdNotes et les 207 personnes du fichier d'organisation ; reprise de l'historique des visites |
 | O-02 | Valeurs cibles des indicateurs KPI-01 à KPI-09 | Critères de succès | Valeurs de la section 5 |
 | O-03 | Position de la CDP sur l'hébergement en Europe ; formalités des autres pays | Pilote, ouverture des pays | Déclaration et demande d'autorisation de transfert avant 0.9.7 |
 | O-04 | Hébergement de Grafana (Grafana Cloud ou service dédié) | Cycle 0.7 | Service Grafana auto-hébergé sur Render [H] |
@@ -1054,6 +1066,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | DC-42 | Vocabulaire Division / Réseau / Classe thérapeutique | V1 |
 | DC-43 | Objectifs par réseau et Grafana en 1.0.0 | V2 |
 | DC-44 | Nom INNOV CRM, identité visuelle de la maquette | Maquette |
+| DC-45 | L'export réel de BirdNotes sert de point de départ : import JSON tel quel, à l'exécution, jamais versionné ; avancé en 0.1.4 ; types, grades, exercice H/P, localités et paramètres alignés sur la pratique relevée | Échange du 4 octobre 2026 |
 
 ## 26. Glossaire
 

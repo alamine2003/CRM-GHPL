@@ -3,7 +3,7 @@
 La fiche est **commune** à tous les réseaux du pays (§14.4) ; les visites resteront
 privées. Une fiche créée par un délégué est `a_valider` et visible par lui seul jusqu'à
 devenir `actif` (RG-041). Les champs normalisés préparent la détection de doublons
-(0.1.7) : nom sans accents ni titre, téléphones au format international (E.164).
+(0.1.8) : nom sans accents ni titre, téléphones au format international (E.164).
 """
 
 from django.conf import settings
@@ -24,6 +24,13 @@ class Potentiel(models.TextChoices):
     A = "A", "A"
     B = "B", "B"
     C = "C", "C"
+
+
+class Activite(models.TextChoices):
+    """Exercice hospitalier ou privé (H/P), tel que le terrain le distingue."""
+
+    HOSPITALIER = "hospitalier", "Hospitalier"
+    PRIVE = "prive", "Privé"
 
 
 class StatutFiche(models.TextChoices):
@@ -54,6 +61,29 @@ class Prospect(ModeleDePays):
     telephone_pro = models.CharField(max_length=20, blank=True)
     courriel = models.EmailField(blank=True)
     potentiel = models.CharField(max_length=1, choices=Potentiel.choices)
+    activite = models.CharField(max_length=12, choices=Activite.choices, blank=True)
+    grade = models.ForeignKey(
+        "referentiel.Valeur",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="prospects_du_grade",
+    )
+    #: Lieu d'exercice principal, quand il n'est pas encore relié à un établissement.
+    secteur = models.ForeignKey(
+        "organisation.Secteur",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="prospects",
+    )
+    localite = models.ForeignKey(
+        "organisation.Localite",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="prospects",
+    )
     statut = models.CharField(
         max_length=10, choices=StatutFiche.choices, default=StatutFiche.A_VALIDER
     )
@@ -102,8 +132,14 @@ class Etablissement(ModeleDePays):
         "organisation.Secteur", on_delete=models.PROTECT, related_name="etablissements"
     )
     adresse = models.CharField(max_length=200, blank=True)
-    #: Quartier ou ville [H] : texte libre en attendant un référentiel des localités.
-    localite = models.CharField(max_length=120, blank=True)
+    localite = models.ForeignKey(
+        "organisation.Localite",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="etablissements",
+    )
+    activite = models.CharField(max_length=12, choices=Activite.choices, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     telephone = models.CharField(max_length=20, blank=True)

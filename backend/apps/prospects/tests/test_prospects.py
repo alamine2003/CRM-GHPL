@@ -53,10 +53,11 @@ def test_un_prospect_sans_nom_ni_type_est_refuse(monde):
     # La spécialité suit le type : obligatoire pour un médecin, refusée si elle ne s'y applique pas.
     sans_specialite = admin.post(URL, fiche(monde, specialite=None), format="json")
     assert sans_specialite.json()["details"]["champ"] == "specialite"
-    pharmacien = valeur(monde, "type_prospect", "pharmacien")
-    incoherente = admin.post(URL, fiche(monde, type=pharmacien), format="json")
+    paramedical = valeur(monde, "type_prospect", "paramedical")
+    incoherente = admin.post(URL, fiche(monde, type=paramedical), format="json")
     assert incoherente.json()["code"] == "specialite_incompatible"
-    ok = admin.post(URL, fiche(monde, type=pharmacien, specialite=None), format="json")
+    autre = valeur(monde, "type_prospect", "autre")
+    ok = admin.post(URL, fiche(monde, type=autre, specialite=None), format="json")
     assert ok.status_code == 201, ok.content
 
 
@@ -98,7 +99,7 @@ def test_la_fiche_du_delegue_est_a_valider_et_visible_par_lui_seul(monde):
     valide = admin.post(f"{URL}{identifiant}/valider/").json()
     assert valide["statut"] == "actif"
     assert noms(autre.get(URL)) == ["Sarr"]
-    # Devenue commune, le délégué ne la modifie plus directement (propositions en 0.1.7).
+    # Devenue commune, le délégué ne la modifie plus directement (propositions en 0.1.8).
     refus = deleg.patch(f"{URL}{identifiant}/", {"potentiel": "C"}, format="json")
     assert refus.status_code == 403 and refus.json()["code"] == "modification_interdite"
 

@@ -490,6 +490,70 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/imports/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['imports_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/imports/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['import_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/imports/{id}/rapport/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['import_rapport'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/imports/birdnotes/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['import_birdnotes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/informations/': {
     parameters: {
       query?: never;
@@ -549,6 +613,54 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['division_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/localites/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['localites_liste'];
+    put?: never;
+    post: operations['localite_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/localites/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['localite_renommer'];
+    trace?: never;
+  };
+  '/api/v1/organisation/localites/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['localite_archiver'];
     delete?: never;
     options?: never;
     head?: never;
@@ -781,7 +893,7 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
-    patch: operations['secteur_renommer'];
+    patch: operations['secteur_modifier'];
     trace?: never;
   };
   '/api/v1/organisation/secteurs/{id}/archiver/': {
@@ -1363,6 +1475,12 @@ export interface components {
       client: string | null;
       adresse: string | null;
     };
+    /**
+     * @description * `hospitalier` - Hospitalier
+     *     * `prive` - Privé
+     * @enum {string}
+     */
+    ActiviteEnum: 'hospitalier' | 'prive';
     Affectation: {
       /** Format: uuid */
       readonly id: string;
@@ -1384,6 +1502,12 @@ export interface components {
       debut?: string;
       /** Format: date */
       fin?: string | null;
+    };
+    Anomalie: {
+      entite: string;
+      identifiant: string;
+      niveau: string;
+      motif: string;
     };
     /** @description Téléphone enregistré (USR-006 CA1 : appareil, système, version, dernier contact). */
     Appareil: {
@@ -1455,6 +1579,11 @@ export interface components {
       libelle: string;
       code: string;
     };
+    CreationLocalite: {
+      /** Format: uuid */
+      secteur: string;
+      libelle: string;
+    };
     CreationPays: {
       /** @description Code ISO d'une filiale du catalogue. */
       code: string;
@@ -1509,6 +1638,28 @@ export interface components {
       modele?: string;
       version_app?: string;
     };
+    DetailLot: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      source: components['schemas']['SourceEnum'];
+      fichier: string;
+      simulation: boolean;
+      statut: components['schemas']['StatutLotEnum'];
+      lance_par: string;
+      /** Format: date-time */
+      debut: string;
+      /** Format: date-time */
+      fin?: string | null;
+      compteurs: {
+        [key: string]: {
+          [key: string]: number;
+        };
+      };
+      readonly nb_anomalies: number;
+      readonly rejets: number;
+      anomalies: components['schemas']['Anomalie'][];
+    };
     Division: {
       /** Format: uuid */
       readonly id: string;
@@ -1536,7 +1687,8 @@ export interface components {
       type_libelle: string;
       secteur: components['schemas']['SecteurResume'];
       adresse?: string;
-      localite?: string;
+      localite: components['schemas']['Lieu'] | null;
+      activite?: components['schemas']['ActiviteEnum'] | components['schemas']['BlankEnum'];
       /** Format: double */
       latitude: number | null;
       /** Format: double */
@@ -1595,6 +1747,12 @@ export interface components {
       /** Format: date */
       fin?: string;
     };
+    ImportBirdNotes: {
+      /** Format: uri */
+      fichier: string;
+      /** @default true */
+      simulation: boolean;
+    };
     Informations: {
       produit: string;
       version: string;
@@ -1634,11 +1792,17 @@ export interface components {
     Libelle: {
       libelle: string;
     };
+    Lieu: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+    };
     /**
      * @description * `type_prospect` - Types de prospect
      *     * `specialite` - Spécialités
      *     * `type_etablissement` - Types d'établissement
      *     * `classe_therapeutique` - Classes thérapeutiques
+     *     * `grade` - Grades
      *     * `motif_ecart` - Motifs d'écart
      * @enum {string}
      */
@@ -1647,6 +1811,7 @@ export interface components {
       | 'specialite'
       | 'type_etablissement'
       | 'classe_therapeutique'
+      | 'grade'
       | 'motif_ecart';
     ListeEtablissements: {
       total: number;
@@ -1657,6 +1822,36 @@ export interface components {
       total: number;
       limite: number;
       resultats: components['schemas']['Prospect'][];
+    };
+    Localite: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      libelle: string;
+      /** Format: uuid */
+      secteur: string;
+      readonly archive: boolean;
+    };
+    LotImport: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      source: components['schemas']['SourceEnum'];
+      fichier: string;
+      simulation: boolean;
+      statut: components['schemas']['StatutLotEnum'];
+      lance_par: string;
+      /** Format: date-time */
+      debut: string;
+      /** Format: date-time */
+      fin?: string | null;
+      compteurs: {
+        [key: string]: {
+          [key: string]: number;
+        };
+      };
+      readonly nb_anomalies: number;
+      readonly rejets: number;
     };
     ModificationParametre: {
       valeur: unknown;
@@ -1739,6 +1934,12 @@ export interface components {
       classe?: string | null;
       reseaux?: string[];
     };
+    /** @description Renommage et/ou rattachement à une autre zone. */
+    PatchedModificationSecteur: {
+      libelle?: string;
+      /** Format: uuid */
+      zone?: string;
+    };
     PatchedModificationValeur: {
       libelle?: string;
       ordre?: number;
@@ -1752,7 +1953,9 @@ export interface components {
       /** Format: uuid */
       secteur?: string | null;
       adresse?: string;
-      localite?: string;
+      /** Format: uuid */
+      localite?: string | null;
+      activite?: components['schemas']['ActiviteEnum'] | components['schemas']['BlankEnum'];
       /** Format: double */
       latitude?: number | null;
       /** Format: double */
@@ -1772,6 +1975,13 @@ export interface components {
       telephone_pro?: string;
       courriel?: string;
       potentiel?: components['schemas']['PotentielEnum'];
+      activite?: components['schemas']['ActiviteEnum'] | components['schemas']['BlankEnum'];
+      /** Format: uuid */
+      grade?: string | null;
+      /** Format: uuid */
+      secteur?: string | null;
+      /** Format: uuid */
+      localite?: string | null;
     };
     Pays: {
       readonly code: string;
@@ -1897,6 +2107,12 @@ export interface components {
       telephone_pro?: string;
       courriel?: string;
       potentiel: components['schemas']['PotentielEnum'];
+      activite?: components['schemas']['ActiviteEnum'] | components['schemas']['BlankEnum'];
+      /** Format: uuid */
+      grade: string | null;
+      grade_libelle?: string | null;
+      secteur: components['schemas']['Lieu'] | null;
+      localite: components['schemas']['Lieu'] | null;
       statut?: components['schemas']['StatutFicheEnum'];
       cree_par: components['schemas']['PersonneResume'];
       /** Format: date-time */
@@ -1993,7 +2209,9 @@ export interface components {
       /** Format: uuid */
       secteur?: string | null;
       adresse?: string;
-      localite?: string;
+      /** Format: uuid */
+      localite?: string | null;
+      activite?: components['schemas']['ActiviteEnum'] | components['schemas']['BlankEnum'];
       /** Format: double */
       latitude?: number | null;
       /** Format: double */
@@ -2013,6 +2231,13 @@ export interface components {
       telephone_pro?: string;
       courriel?: string;
       potentiel?: components['schemas']['PotentielEnum'];
+      activite?: components['schemas']['ActiviteEnum'] | components['schemas']['BlankEnum'];
+      /** Format: uuid */
+      grade?: string | null;
+      /** Format: uuid */
+      secteur?: string | null;
+      /** Format: uuid */
+      localite?: string | null;
     };
     Secteur: {
       /** Format: uuid */
@@ -2029,6 +2254,14 @@ export interface components {
       id: string;
       libelle: string;
       zone: string;
+    };
+    /** @description Secteur et ses localités actives, proposés à la saisie d'une fiche. */
+    SecteurSaisie: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+      zone: string;
+      localites: components['schemas']['Lieu'][];
     };
     Session: {
       /** Format: uuid */
@@ -2047,6 +2280,11 @@ export interface components {
       readonly courante: boolean;
     };
     /**
+     * @description * `birdnotes` - BirdNotes
+     * @enum {string}
+     */
+    SourceEnum: 'birdnotes';
+    /**
      * @description * `actif` - Actif
      *     * `suspendu` - Suspendu
      *     * `archive` - Archivé
@@ -2061,6 +2299,13 @@ export interface components {
      * @enum {string}
      */
     StatutFicheEnum: 'a_valider' | 'actif' | 'archive' | 'fusionne';
+    /**
+     * @description * `simule` - Simulé
+     *     * `termine` - Terminé
+     *     * `echec` - Échec
+     * @enum {string}
+     */
+    StatutLotEnum: 'simule' | 'termine' | 'echec';
     StatutPays: {
       statut: components['schemas']['StatutEnum'];
     };
@@ -2839,7 +3084,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['SecteurResume'][];
+          'application/json': components['schemas']['SecteurSaisie'][];
         };
       };
     };
@@ -2878,6 +3123,90 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['EtatExploitation'];
+        };
+      };
+    };
+  };
+  imports_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotImport'][];
+        };
+      };
+    };
+  };
+  import_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DetailLot'];
+        };
+      };
+    };
+  };
+  import_rapport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+        };
+      };
+    };
+  };
+  import_birdnotes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['ImportBirdNotes'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DetailLot'];
         };
       };
     };
@@ -2989,6 +3318,100 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Division'];
+        };
+      };
+    };
+  };
+  localites_liste: {
+    parameters: {
+      query?: {
+        secteur?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Localite'][];
+        };
+      };
+    };
+  };
+  localite_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationLocalite'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationLocalite'];
+        'multipart/form-data': components['schemas']['CreationLocalite'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Localite'];
+        };
+      };
+    };
+  };
+  localite_renommer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedLibelle'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedLibelle'];
+        'multipart/form-data': components['schemas']['PatchedLibelle'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Localite'];
+        };
+      };
+    };
+  };
+  localite_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Localite'];
         };
       };
     };
@@ -3459,7 +3882,7 @@ export interface operations {
       };
     };
   };
-  secteur_renommer: {
+  secteur_modifier: {
     parameters: {
       query?: never;
       header?: never;
@@ -3470,9 +3893,9 @@ export interface operations {
     };
     requestBody?: {
       content: {
-        'application/json': components['schemas']['PatchedLibelle'];
-        'application/x-www-form-urlencoded': components['schemas']['PatchedLibelle'];
-        'multipart/form-data': components['schemas']['PatchedLibelle'];
+        'application/json': components['schemas']['PatchedModificationSecteur'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationSecteur'];
+        'multipart/form-data': components['schemas']['PatchedModificationSecteur'];
       };
     };
     responses: {
@@ -4134,6 +4557,7 @@ export interface operations {
         actifs?: string;
         liste?:
           | 'classe_therapeutique'
+          | 'grade'
           | 'motif_ecart'
           | 'specialite'
           | 'type_etablissement'

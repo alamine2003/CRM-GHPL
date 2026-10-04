@@ -62,7 +62,7 @@ def senegal(monde):
     from apps.prospects.services import creer_prospect
     from apps.referentiel.models import Valeur
 
-    medecin = Valeur.objects.get(pays=sn, liste="type_prospect", code="pharmacien")
+    medecin = Valeur.objects.get(pays=sn, liste="type_prospect", code="autre")
     prospect = creer_prospect(sn, monde["admin.sn"], actif=True, nom="Ndiaye", type=medecin,
                               potentiel="A")  # fmt: skip
     from apps.prospects.services import creer_etablissement
@@ -70,7 +70,13 @@ def senegal(monde):
     cabinet = Valeur.objects.get(pays=sn, liste="type_etablissement", code="cabinet")
     etab = creer_etablissement(sn, monde["admin.sn"], actif=True, nom="Cabinet", type=cabinet,
                                secteur=secteur)  # fmt: skip
+    from apps.imports.birdnotes import importer
+
+    localite = org.creer_localite(secteur, "Louga Centre")
+    lot = importer(sn, monde["admin.sn"], b'{"donnees": {}}', "vide.json", simulation=True)
     return {
+        "localite": localite.pk, "localite-archiver": localite.pk,
+        "import": lot.pk, "import-rapport": lot.pk,
         "etablissement": etab.pk, "etablissement-valider": etab.pk,
         "etablissement-archiver": etab.pk,
         "prospect": prospect.pk, "prospect-valider": prospect.pk,
@@ -140,7 +146,8 @@ def test_aucune_route_n_ouvre_un_objet_d_un_autre_pays(monde, senegal):
 LISTES = ["/api/v1/utilisateurs/", "/api/v1/appareils/", "/api/v1/pays/",
           "/api/v1/organisation/divisions/", "/api/v1/organisation/reseaux/",
           "/api/v1/organisation/zones/", "/api/v1/organisation/secteurs/",
-          "/api/v1/organisation/postes/", "/api/v1/referentiel/produits/",
+          "/api/v1/organisation/postes/", "/api/v1/organisation/localites/",
+          "/api/v1/imports/", "/api/v1/referentiel/produits/",
           "/api/v1/referentiel/portefeuilles/"]  # fmt: skip
 PAGINEES = ["/api/v1/prospects/", "/api/v1/etablissements/"]
 

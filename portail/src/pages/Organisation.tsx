@@ -48,6 +48,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
+import DialogueSecteur from '../composants/DialogueSecteur';
 import {
   EnTeteCarte,
   EnTetePage,
@@ -136,6 +137,7 @@ type Dialogue =
   | { type: 'liberer'; poste: Poste }
   | { type: 'zone' }
   | { type: 'secteur'; zone: Zone }
+  | { type: 'fiche-secteur'; secteur: Secteur }
   | { type: 'division' }
   | { type: 'reseau'; division: string };
 
@@ -643,12 +645,15 @@ function CarteGroupe({
   icone,
   elements,
   action,
+  surChoisir,
 }: {
   titre: string;
   sousTitre: string;
   icone: ReactNode;
   elements: { id: string; libelle: string; archive: boolean }[];
   action?: ReactNode;
+  /** Ouvre le détail d'un élément (ex. la fiche d'un secteur). */
+  surChoisir?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -676,6 +681,7 @@ function CarteGroupe({
               variant={e.archive ? 'outlined' : 'filled'}
               sx={e.archive ? { textDecoration: 'line-through', opacity: 0.6 } : undefined}
               title={e.archive ? t('organisation.archive') : undefined}
+              onClick={surChoisir && !e.archive ? () => surChoisir(e.id) : undefined}
             />
           ))}
           {action}
@@ -730,6 +736,10 @@ function OngletZones({
             sousTitre={`${siens.filter((s) => !s.archive).length} ${t('organisation.chiffres.secteurs').toLowerCase()}`}
             icone={<PlaceRounded />}
             elements={siens}
+            surChoisir={(id) => {
+              const secteur = siens.find((x) => x.id === id);
+              if (secteur) ouvrir({ type: 'fiche-secteur', secteur });
+            }}
             action={
               gerer &&
               !zone.archive && (
@@ -1008,6 +1018,14 @@ export default function Organisation({ perimetre }: { perimetre: Perimetre }) {
           titre={`${t('organisation.actions.nouveauSecteur')} · ${dialogue.zone.libelle}`}
           surFermer={fermer}
           surValider={(libelle) => o.creerSecteur(dialogue.zone.id, libelle)}
+        />
+      )}
+      {dialogue?.type === 'fiche-secteur' && (
+        <DialogueSecteur
+          secteur={dialogue.secteur}
+          zones={donnees.zones.data ?? []}
+          gerer={gerer}
+          surFermer={fermer}
         />
       )}
       {dialogue?.type === 'division' && (

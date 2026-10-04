@@ -45,6 +45,7 @@ ATTENDU = {
     },  # fmt: skip
     Action.PROSPECTS_CREER: {"admin_pays", "delegue"},
     Action.PROSPECTS_GERER: {"admin_pays"},
+    Action.IMPORTS_GERER: {"admin_pays"},
     Action.REFERENTIELS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -133,6 +134,7 @@ REQUETES = {
     Action.PROSPECTS_GERER: (
         "post", lambda m: f"/api/v1/prospects/{_prospect_a_valider(m).pk}/valider/", {}, 200,
     ),
+    Action.IMPORTS_GERER: ("get", "/api/v1/imports/", None, 200),
     Action.APPAREILS_REVOQUER: (
         "post", lambda m: f"/api/v1/appareils/{_telephone(m).pk}/revoquer/", {}, 200,
     ),
@@ -151,17 +153,17 @@ def _telephone(monde):
 def _fiche(monde):
     from apps.referentiel.models import Valeur
 
-    pharmacien = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="pharmacien")
-    return {"nom": "Faye", "type": str(pharmacien.pk), "potentiel": "B"}
+    autre = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="autre")
+    return {"nom": "Faye", "type": str(autre.pk), "potentiel": "B"}
 
 
 def _prospect_a_valider(monde):
     from apps.prospects.services import creer_prospect
     from apps.referentiel.models import Valeur
 
-    pharmacien = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="pharmacien")
+    autre = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="autre")
     return creer_prospect(monde["sn"], monde["deleg.sn"], actif=False, nom="Kane",
-                          type=pharmacien, potentiel="C")  # fmt: skip
+                          type=autre, potentiel="C")  # fmt: skip
 
 
 def test_chaque_action_a_sa_requete():

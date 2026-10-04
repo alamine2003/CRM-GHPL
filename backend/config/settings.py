@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "apps.organisation",
     "apps.referentiel",
     "apps.prospects",
+    "apps.imports",
     "apps.demonstration",
     "apps.audit",
 ]
@@ -244,6 +245,7 @@ SPECTACULAR_SETTINGS = {
         "LangueEnum": "apps.socle.models.CHOIX_LANGUES",
         "StatutEnum": "apps.socle.models.Pays.Statut",
         "StatutFicheEnum": "apps.prospects.models.StatutFiche",
+        "StatutLotEnum": "apps.imports.models.LotImport.Statut",
     },
 }
 

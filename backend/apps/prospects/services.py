@@ -14,14 +14,14 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.identite.models import Role, Utilisateur
-from apps.organisation.models import Secteur
+from apps.organisation.models import Localite, Secteur
 from apps.perimetre.matrice import PAYS_CONSULTATION, SIEGE
 from apps.perimetre.perimetre import Perimetre
 from apps.referentiel.models import Liste, Valeur
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
 
-from .models import Civilite, Etablissement, Potentiel, Prospect, StatutFiche
+from .models import Activite, Civilite, Etablissement, Potentiel, Prospect, StatutFiche
 
 #: Titres retirés du nom normalisé : « Dr Diop » et « Diop » sont la même personne.
 TITRES = {"dr", "docteur", "pr", "professeur", "m", "mr", "mme", "mlle", "madame", "monsieur"}
@@ -73,6 +73,45 @@ def _valeur(pays: Pays, valeur: Valeur | None, liste: str, champ: str) -> Valeur
     return valeur
 
 
+def _activite(valeur) -> str:
+    valeur = valeur or ""
+    if valeur and valeur not in Activite.values:
+        raise ErreurMetier(
+            "valeur_invalide", _("Activité inconnue (hospitalier ou privé)."), champ="activite"
+        )
+    return valeur
+
+
+def _lieu(pays: Pays, secteur: Secteur | None, localite: Localite | None, *, requis: bool):
+    """Secteur et localité cohérents : une localité donne son secteur ; elle doit appartenir
+    au secteur indiqué. Tous deux actifs et du pays de la fiche."""
+    if localite is not None:
+        if localite.pays_id != pays.pk or localite.est_archive:
+            raise ErreurMetier(
+                "localite_invalide",
+                _("Localité inconnue ou archivée dans ce pays."),
+                champ="localite",
+            )
+        if secteur is not None and localite.secteur_id != secteur.pk:
+            raise ErreurMetier(
+                "localite_hors_secteur",
+                _("Cette localité n'appartient pas au secteur choisi."),
+                champ="localite",
+            )
+        secteur = secteur or localite.secteur
+    if secteur is None:
+        if requis:
+            raise ErreurMetier(
+                "secteur_requis", _("Un établissement appartient à un secteur."), champ="secteur"
+            )
+        return None, None
+    if secteur.pays_id != pays.pk or secteur.est_archive:
+        raise ErreurMetier(
+            "secteur_invalide", _("Secteur inconnu ou archivé dans ce pays."), champ="secteur"
+        )
+    return secteur, localite
+
+
 def _verifier(pays: Pays, champs: dict) -> dict:
     """PRP-002 CA1 : nom et type obligatoires ; la spécialité suit le type (§14.1)."""
     nom = (champs.get("nom") or "").strip()
@@ -114,6 +153,15 @@ def _verifier(pays: Pays, champs: dict) -> dict:
         "telephone_pro": normaliser_telephone(champs.get("telephone_pro"), pays, "telephone_pro"),
         "courriel": (champs.get("courriel") or "").strip().lower(),
         "potentiel": potentiel,
+        "activite": _activite(champs.get("activite")),
+        "grade": _valeur(pays, champs.get("grade"), Liste.GRADE, "grade"),
+        **dict(
+            zip(
+                ("secteur", "localite"),
+                _lieu(pays, champs.get("secteur"), champs.get("localite"), requis=False),
+                strict=True,
+            )
+        ),
     }
 
 
@@ -148,12 +196,13 @@ def creer_prospect(pays: Pays, auteur: Utilisateur, *, actif: bool, **champs) ->
 
 
 SUIVIS = ["civilite", "nom", "prenom", "type", "specialite", "numero_ordre",
-          "telephone_mobile", "telephone_pro", "courriel", "potentiel"]  # fmt: skip
+          "telephone_mobile", "telephone_pro", "courriel", "potentiel", "activite", "grade",
+          "secteur", "localite"]  # fmt: skip
 
 
 def modifier_prospect(prospect: Prospect, **champs) -> Prospect:
     """Modification d'une fiche ; chaque champ changé est audité (ancienne, nouvelle valeur).
-    L'historique détaillé des fiches communes et les propositions arrivent en 0.1.7."""
+    L'historique détaillé des fiches communes et les propositions arrivent en 0.1.8."""
     if prospect.statut not in (StatutFiche.A_VALIDER, StatutFiche.ACTIF):
         raise ErreurMetier("archive", _("Une fiche archivée ne se modifie plus."))
     actuels = {c: getattr(prospect, c) for c in SUIVIS}
@@ -173,7 +222,7 @@ def modifier_prospect(prospect: Prospect, **champs) -> Prospect:
 
 def valider(fiche, par: Utilisateur):
     """L'administrateur pays rend commune une fiche créée par un délégué (RG-041). Le
-    détecteur de doublons (0.1.7) fera ce passage automatiquement quand il ne trouve rien."""
+    détecteur de doublons (0.1.8) fera ce passage automatiquement quand il ne trouve rien."""
     if fiche.statut != StatutFiche.A_VALIDER:
         raise ErreurMetier("deja_valide", _("Cette fiche n'est pas à valider."))
     fiche.statut, fiche.valide_par, fiche.valide_le = StatutFiche.ACTIF, par, timezone.now()
@@ -215,7 +264,7 @@ def fiches_visibles(modele, perimetre: Perimetre) -> QuerySet:
 
 def peut_modifier(perimetre: Perimetre, prospect) -> bool:
     """L'administrateur pays modifie toute fiche ; l'auteur, sa fiche tant qu'elle est à
-    valider. Les autres proposeront une modification (PRP-014, 0.1.7)."""
+    valider. Les autres proposeront une modification (PRP-014, 0.1.8)."""
     if Role.ADMIN_PAYS in perimetre.roles:
         return True
     auteur = prospect.cree_par_id == perimetre.utilisateur.pk
@@ -240,8 +289,8 @@ def rechercher(qs: QuerySet, texte: str) -> QuerySet:
 
 # --- Établissements (PRP-003) ---------------------------------------------------------------
 
-SUIVIS_ETABLISSEMENT = ["nom", "type", "secteur", "adresse", "localite", "latitude",
-                        "longitude", "telephone"]  # fmt: skip
+SUIVIS_ETABLISSEMENT = ["nom", "type", "secteur", "adresse", "localite", "activite",
+                        "latitude", "longitude", "telephone"]  # fmt: skip
 
 
 def _coordonnee(valeur, minimum: int, maximum: int, champ: str) -> Decimal | None:
@@ -266,15 +315,7 @@ def _verifier_etablissement(pays: Pays, champs: dict) -> dict:
         raise ErreurMetier(
             "champ_requis", _("Le type d'établissement est obligatoire."), champ="type"
         )
-    secteur: Secteur | None = champs.get("secteur")
-    if secteur is None:
-        raise ErreurMetier(
-            "secteur_requis", _("Un établissement appartient à un secteur."), champ="secteur"
-        )
-    if secteur.pays_id != pays.pk or secteur.est_archive:
-        raise ErreurMetier(
-            "secteur_invalide", _("Secteur inconnu ou archivé dans ce pays."), champ="secteur"
-        )
+    secteur, localite = _lieu(pays, champs.get("secteur"), champs.get("localite"), requis=True)
     latitude = _coordonnee(champs.get("latitude"), -90, 90, "latitude")
     longitude = _coordonnee(champs.get("longitude"), -180, 180, "longitude")
     if (latitude is None) != (longitude is None):
@@ -288,8 +329,9 @@ def _verifier_etablissement(pays: Pays, champs: dict) -> dict:
         "nom_normalise": normaliser_nom(nom),
         "type": type_,
         "secteur": secteur,
+        "localite": localite,
+        "activite": _activite(champs.get("activite")),
         "adresse": (champs.get("adresse") or "").strip(),
-        "localite": (champs.get("localite") or "").strip(),
         "latitude": latitude,
         "longitude": longitude,
         "telephone": normaliser_telephone(champs.get("telephone"), pays, "telephone"),
@@ -338,7 +380,7 @@ def rechercher_etablissements(qs: QuerySet, texte: str) -> QuerySet:
     filtre = Q()
     for mot in normaliser_nom(texte).split():
         filtre &= Q(nom_normalise__contains=mot)
-    filtre |= Q(localite__unaccent__icontains=texte)
+    filtre |= Q(localite__libelle__unaccent__icontains=texte)
     chiffres = re.sub(r"\D", "", texte)
     if len(chiffres) >= 4:
         filtre |= Q(telephone__contains=chiffres)

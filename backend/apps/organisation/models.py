@@ -1,7 +1,8 @@
 """Organisation matricielle d'un pays (prd.md §7.1, ORG-003 à ORG-008).
 
 - Ligne produit : Division → Réseau (le portefeuille de produits arrive en 0.1.1).
-- Ligne terrain : Zone → Secteur → Poste ← Occupation (personne) et Rattachement (superviseur).
+- Ligne terrain : Zone → Secteur → Localité ; Secteur → Poste ← Occupation (personne) et
+  Rattachement (superviseur).
 - Périmètre de réseaux daté des DF et DM.
 
 Les liens datés suivent une seule convention : actif le jour `j` si
@@ -81,6 +82,23 @@ class Secteur(ModeleDePays):
     class Meta:
         ordering = ["libelle"]
         constraints = [_unique_hors_archives(["pays", "libelle"], "secteur_libelle_unique")]
+
+    def __str__(self):
+        return self.libelle
+
+
+class Localite(ModeleDePays):
+    """Quartier, village ou ville d'un secteur (architecture §13.2) : situe établissements
+    et prospects plus finement que le secteur. Décision du 4 octobre 2026 : référentiel
+    plutôt que texte libre (le CRM en place en compte 430 au Sénégal)."""
+
+    secteur = models.ForeignKey(Secteur, on_delete=models.PROTECT, related_name="localites")
+    libelle = models.CharField(max_length=120)
+
+    class Meta:
+        verbose_name = "localité"
+        ordering = ["libelle"]
+        constraints = [_unique_hors_archives(["secteur", "libelle"], "localite_libelle_unique")]
 
     def __str__(self):
         return self.libelle

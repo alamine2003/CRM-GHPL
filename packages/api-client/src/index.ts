@@ -8,6 +8,11 @@
  * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
  */
 import type {
+  DetailLot,
+  Exercice,
+  Localite,
+  LotImport,
+  SecteurSaisie,
   Activite,
   Affectation,
   Appareil,
@@ -53,6 +58,13 @@ import type {
 } from '@innov/api-types';
 
 export type {
+  AnomalieImport,
+  DetailLot,
+  Exercice,
+  Lieu,
+  Localite,
+  LotImport,
+  SecteurSaisie,
   Activite,
   Affectation,
   Appareil,
@@ -174,6 +186,10 @@ export interface SaisieProspect {
   telephone_pro?: string;
   courriel?: string;
   potentiel: Potentiel;
+  activite?: Exercice | '';
+  grade?: string | null;
+  secteur?: string | null;
+  localite?: string | null;
 }
 
 export interface FiltresEtablissements {
@@ -189,7 +205,8 @@ export interface SaisieEtablissement {
   type: string | null;
   secteur: string | null;
   adresse?: string;
-  localite?: string;
+  localite?: string | null;
+  activite?: Exercice | '';
   latitude?: number | null;
   longitude?: number | null;
   telephone?: string;
@@ -230,7 +247,10 @@ export interface OptionsClient {
 
 interface OptionsRequete {
   methode?: 'GET' | 'POST' | 'PATCH' | 'PUT';
+  /** Objet envoyé en JSON, ou formulaire multipart (téléversement de fichier). */
   corps?: unknown;
+  /** Réponse lue comme texte brut (rapport CSV). */
+  texte?: boolean;
   authentifiee?: boolean;
 }
 
@@ -254,18 +274,25 @@ export function creerClient(options: OptionsClient) {
       Accept: 'application/json',
       'Accept-Language': options.langue(),
     };
-    if (opts.corps !== undefined) entetes['Content-Type'] = 'application/json';
+    const formulaire = typeof FormData !== 'undefined' && opts.corps instanceof FormData;
+    if (opts.corps !== undefined && !formulaire) entetes['Content-Type'] = 'application/json';
     if (portail) entetes['X-Innov-Client'] = 'portail';
     if (paysActif) entetes['X-Pays'] = paysActif;
     if (opts.authentifiee && acces) entetes.Authorization = `Bearer ${acces}`;
     const reponse = await appel(`${base}${chemin}`, {
       method: opts.methode ?? 'GET',
       headers: entetes,
-      body: opts.corps === undefined ? undefined : JSON.stringify(opts.corps),
+      body:
+        opts.corps === undefined
+          ? undefined
+          : formulaire
+            ? (opts.corps as FormData)
+            : JSON.stringify(opts.corps),
       credentials: portail ? 'include' : 'omit',
     });
     if (reponse.status === 204) return undefined as T;
     const texte = await reponse.text();
+    if (opts.texte && reponse.ok) return texte as T;
     const donnees = texte ? JSON.parse(texte) : {};
     if (!reponse.ok) {
       throw new ErreurApi(
@@ -410,8 +437,17 @@ export function creerClient(options: OptionsClient) {
         requete<Zone>(`${ORG}/zones/`, { methode: 'POST', corps: { libelle } }),
       creerSecteur: (zone: string, libelle: string) =>
         requete<Secteur>(`${ORG}/secteurs/`, { methode: 'POST', corps: { zone, libelle } }),
-      archiver: (type: 'divisions' | 'reseaux' | 'zones' | 'secteurs' | 'postes', id: string) =>
-        requete<unknown>(`${ORG}/${type}/${id}/archiver/`, { methode: 'POST' }),
+      /** Renomme un secteur et/ou le rattache à une autre zone (ORG-003). */
+      modifierSecteur: (id: string, champs: { libelle?: string; zone?: string }) =>
+        requete<Secteur>(`${ORG}/secteurs/${id}/`, { methode: 'PATCH', corps: champs }),
+      localites: (secteur?: string) =>
+        requete<Localite[]>(`${ORG}/localites/${secteur ? `?secteur=${secteur}` : ''}`),
+      creerLocalite: (secteur: string, libelle: string) =>
+        requete<Localite>(`${ORG}/localites/`, { methode: 'POST', corps: { secteur, libelle } }),
+      archiver: (
+        type: 'divisions' | 'reseaux' | 'zones' | 'secteurs' | 'localites' | 'postes',
+        id: string,
+      ) => requete<unknown>(`${ORG}/${type}/${id}/archiver/`, { methode: 'POST' }),
       creerPoste: (poste: NouveauPoste) =>
         requete<Poste>(`${ORG}/postes/`, { methode: 'POST', corps: poste }),
       occuper: (poste: string, utilisateur: string, debut?: string) =>
@@ -489,10 +525,8 @@ export function creerClient(options: OptionsClient) {
         return requete<ListeEtablissements>(`/api/v1/etablissements/${params ? `?${params}` : ''}`);
       },
       synthese: () => requete<SyntheseEtablissements>('/api/v1/etablissements/synthese/'),
-      secteurs: () =>
-        requete<{ id: string; libelle: string; zone: string }[]>(
-          '/api/v1/etablissements/secteurs/',
-        ),
+      /** Secteurs actifs et leurs localités, pour la saisie d'une fiche. */
+      secteurs: () => requete<SecteurSaisie[]>('/api/v1/etablissements/secteurs/'),
       detail: (id: string) => requete<Etablissement>(`/api/v1/etablissements/${id}/`),
       creer: (fiche: SaisieEtablissement) =>
         requete<Etablissement>('/api/v1/etablissements/', { methode: 'POST', corps: fiche }),
@@ -508,6 +542,21 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { motif },
         }),
+    },
+    /** Imports contrôlés (PRP-013) : simulation, import, rapport d'anomalies. */
+    imports: {
+      liste: () => requete<LotImport[]>('/api/v1/imports/'),
+      detail: (id: string) => requete<DetailLot>(`/api/v1/imports/${id}/`),
+      birdnotes: (fichier: Blob, nom: string, simulation: boolean) => {
+        const formulaire = new FormData();
+        formulaire.append('fichier', fichier, nom);
+        formulaire.append('simulation', simulation ? 'true' : 'false');
+        return requete<DetailLot>('/api/v1/imports/birdnotes/', {
+          methode: 'POST',
+          corps: formulaire,
+        });
+      },
+      rapport: (id: string) => requete<string>(`/api/v1/imports/${id}/rapport/`, { texte: true }),
     },
     /** Comptes du pays actif (USR-003). */
     utilisateurs: () => requete<Utilisateur[]>('/api/v1/utilisateurs/'),

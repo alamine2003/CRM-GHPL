@@ -1,4 +1,4 @@
-import type { Etablissement, SaisieEtablissement } from '@innov/api-client';
+import type { Etablissement, SaisieEtablissement, SecteurSaisie } from '@innov/api-client';
 import { marque } from '@innov/design';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
@@ -79,12 +79,13 @@ export function FormulaireEtablissement({ surTermine }: { surTermine: () => void
   const { t } = useTranslation();
   const { client } = useSession();
   const [types, setTypes] = useState<{ id: string; libelle: string }[]>([]);
-  const [secteurs, setSecteurs] = useState<{ id: string; libelle: string; zone: string }[]>([]);
+  const [secteurs, setSecteurs] = useState<SecteurSaisie[]>([]);
   const [f, setF] = useState<SaisieEtablissement>({ nom: '', type: null, secteur: null });
   const [precision, setPrecision] = useState<number | null>(null);
   const [localisation, setLocalisation] = useState<'attente' | 'erreur' | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
+  const localites = secteurs.find((s) => s.id === f.secteur)?.localites ?? [];
 
   useEffect(() => {
     let actif = true;
@@ -164,15 +165,25 @@ export function FormulaireEtablissement({ surTermine }: { surTermine: () => void
             key={s.id}
             libelle={s.libelle}
             actif={f.secteur === s.id}
-            onPress={() => setF({ ...f, secteur: s.id })}
+            onPress={() => setF({ ...f, secteur: s.id, localite: null })}
           />
         ))}
       </View>
-      <Champ
-        libelle={t('etablissement.champs.localite')}
-        value={f.localite ?? ''}
-        onChangeText={(localite) => setF({ ...f, localite })}
-      />
+      {localites.length > 0 && (
+        <>
+          <Texte variante="libelle">{t('etablissement.champs.localite')}</Texte>
+          <View style={styles.pilules}>
+            {localites.map((l) => (
+              <Pilule
+                key={l.id}
+                libelle={l.libelle}
+                actif={f.localite === l.id}
+                onPress={() => setF({ ...f, localite: f.localite === l.id ? null : l.id })}
+              />
+            ))}
+          </View>
+        </>
+      )}
       <Texte variante="libelle">{t('etablissement.champs.position')}</Texte>
       <Texte variante="discret">{t('etablissement.aides.position')}</Texte>
       <Bouton

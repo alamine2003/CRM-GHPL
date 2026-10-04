@@ -3,6 +3,7 @@ import type {
   FiltresEtablissements,
   Perimetre,
   SaisieEtablissement,
+  SecteurSaisie,
   StatutFiche,
 } from '@innov/api-client';
 import AddRounded from '@mui/icons-material/AddRounded';
@@ -36,7 +37,6 @@ import {
   IconButton,
   InputAdornment,
   Link,
-  ListSubheader,
   MenuItem,
   Skeleton,
   Stack,
@@ -60,6 +60,7 @@ import {
   Tuile,
 } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
+import { ChampsLieu, ChoixExercice, SelectSecteur } from '../composants/Lieu';
 import { depuis } from '../composants/formats';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
@@ -68,7 +69,6 @@ import { messageErreur, useSession } from '../contexteSession';
 const Carte = lazy(() => import('../composants/Carte'));
 
 type FiltreStatut = 'tous' | StatutFiche;
-type Secteur = { id: string; libelle: string; zone: string };
 
 /** Icône par type d'établissement ; une valeur ajoutée par le pays prend l'icône générique. */
 function IconeType({ code }: { code: string }) {
@@ -85,53 +85,6 @@ function ChargementCarte({ hauteur }: { hauteur: number }) {
   return <Skeleton variant="rounded" height={hauteur} />;
 }
 
-function SelectSecteur({
-  secteurs,
-  valeur,
-  changer,
-  libelle,
-  vide,
-  taille,
-  requis,
-}: {
-  secteurs: Secteur[];
-  valeur: string;
-  changer: (v: string) => void;
-  libelle: string;
-  vide?: string;
-  taille?: 'small';
-  requis?: boolean;
-}) {
-  const zones = [...new Set(secteurs.map((s) => s.zone))];
-  return (
-    <TextField
-      select
-      size={taille}
-      label={vide ? undefined : libelle}
-      value={valeur}
-      onChange={(e) => changer(e.target.value)}
-      required={requis}
-      fullWidth={!vide}
-      sx={vide ? { minWidth: 180 } : undefined}
-      slotProps={
-        vide ? { select: { displayEmpty: true }, htmlInput: { 'aria-label': libelle } } : undefined
-      }
-    >
-      {vide && <MenuItem value="">{vide}</MenuItem>}
-      {zones.flatMap((zone) => [
-        <ListSubheader key={`z-${zone}`}>{zone}</ListSubheader>,
-        ...secteurs
-          .filter((s) => s.zone === zone)
-          .map((s) => (
-            <MenuItem key={s.id} value={s.id}>
-              {s.libelle}
-            </MenuItem>
-          )),
-      ])}
-    </TextField>
-  );
-}
-
 // --- Saisie ------------------------------------------------------------------------------------
 
 function DialogueEtablissement({
@@ -145,7 +98,7 @@ function DialogueEtablissement({
   fiche: Etablissement | null;
   delegue: boolean;
   types: { id: string; libelle: string }[];
-  secteurs: Secteur[];
+  secteurs: SecteurSaisie[];
   surFermer: () => void;
   surEnregistre: (e: Etablissement) => void;
 }) {
@@ -156,7 +109,8 @@ function DialogueEtablissement({
     type: fiche?.type ?? types[0]?.id ?? null,
     secteur: fiche?.secteur.id ?? null,
     adresse: fiche?.adresse ?? '',
-    localite: fiche?.localite ?? '',
+    localite: fiche?.localite?.id ?? null,
+    activite: fiche?.activite ?? '',
     latitude: fiche?.latitude ?? null,
     longitude: fiche?.longitude ?? null,
     telephone: fiche?.telephone ?? '',
@@ -226,26 +180,24 @@ function DialogueEtablissement({
             </MenuItem>
           ))}
         </TextField>
-        <SelectSecteur
-          secteurs={secteurs}
-          valeur={f.secteur ?? ''}
-          changer={(v) => changer('secteur', v)}
-          libelle={t('etablissement.champs.secteur')}
-          requis
-        />
       </Stack>
+      <ChampsLieu
+        secteurs={secteurs}
+        secteur={f.secteur}
+        localite={f.localite ?? null}
+        changer={(secteur, localite) => setF((a) => ({ ...a, secteur, localite }))}
+        requis
+      />
       <TextField
         label={t('etablissement.champs.adresse')}
         value={f.adresse}
         onChange={(e) => changer('adresse', e.target.value)}
       />
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-        <TextField
-          label={t('etablissement.champs.localite')}
-          value={f.localite}
-          onChange={(e) => changer('localite', e.target.value)}
-          fullWidth
-        />
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        sx={{ alignItems: { sm: 'flex-end' } }}
+      >
         <TextField
           label={t('etablissement.champs.telephone')}
           value={f.telephone}
@@ -253,6 +205,7 @@ function DialogueEtablissement({
           type="tel"
           fullWidth
         />
+        <ChoixExercice valeur={f.activite ?? ''} changer={(v) => changer('activite', v)} />
       </Stack>
 
       <Box
@@ -406,7 +359,7 @@ function FicheEtablissement({
                 {e.nom}
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {[e.type_libelle, e.localite].filter(Boolean).join(' · ')}
+                {[e.type_libelle, e.localite?.libelle].filter(Boolean).join(' · ')}
               </Typography>
               <Stack direction="row" sx={{ mt: 1, gap: 0.5, flexWrap: 'wrap' }}>
                 <Chip
@@ -510,7 +463,14 @@ function FicheEtablissement({
 
           <Section titre={t('etablissement.fiche.coordonnees')} icone={<PlaceRounded />}>
             <Ligne libelle={t('etablissement.champs.adresse')} valeur={e.adresse || aucun} />
-            <Ligne libelle={t('etablissement.champs.localite')} valeur={e.localite || aucun} />
+            <Ligne
+              libelle={t('etablissement.champs.localite')}
+              valeur={e.localite?.libelle ?? aucun}
+            />
+            <Ligne
+              libelle={t('lieu.exercice')}
+              valeur={e.activite ? t(`lieu.exercices.${e.activite}`) : aucun}
+            />
             <Ligne
               libelle={t('etablissement.champs.telephone')}
               valeur={
@@ -853,7 +813,7 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
                           noWrap
                           component="p"
                         >
-                          {[e.type_libelle, e.localite].filter(Boolean).join(' · ')}
+                          {[e.type_libelle, e.localite?.libelle].filter(Boolean).join(' · ')}
                         </Typography>
                       </Box>
                       <Box sx={{ display: { xs: 'none', md: 'block' } }}>

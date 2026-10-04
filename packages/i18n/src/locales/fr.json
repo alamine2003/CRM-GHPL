@@ -123,7 +123,8 @@
     "profil": "Mon profil",
     "exploitation": "Exploitation",
     "referentiels": "Référentiels",
-    "etablissements": "Établissements"
+    "etablissements": "Établissements",
+    "imports": "Imports"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -307,7 +308,17 @@
       "reseauxTexte": "Une division regroupe des réseaux ; le portefeuille de produits arrive en version 0.1.1.",
       "secteurs": "Aucun secteur"
     },
-    "enregistre": "Modification enregistrée."
+    "enregistre": "Modification enregistrée.",
+    "secteur": {
+      "deplacer": "Déplacer",
+      "deplace": "Secteur rattaché à sa nouvelle zone.",
+      "localites_one": "{{count}} localité",
+      "localites_other": "{{count}} localités",
+      "aucuneLocalite": "Aucune localité : ajoutez les quartiers ou villages du secteur.",
+      "nouvelleLocalite": "Nouvelle localité",
+      "ajouter": "Ajouter",
+      "localiteArchivee": "Localité archivée."
+    }
   },
   "profilPage": {
     "titre": "Mon profil",
@@ -656,7 +667,8 @@
       "specialite": "Spécialités",
       "type_etablissement": "Types d'établissement",
       "classe_therapeutique": "Classes thérapeutiques",
-      "motif_ecart": "Motifs d'écart"
+      "motif_ecart": "Motifs d'écart",
+      "grade": "Grades"
     },
     "aides": {
       "type_prospect": "Médecin, pharmacien, sage-femme… Chaque fiche prospect en porte un.",
@@ -689,7 +701,7 @@
   },
   "prospect": {
     "titre": "Prospects",
-    "sousTitre": "Fiches communes des médecins, pharmaciens et autres professionnels de santé · {{pays}}.",
+    "sousTitre": "Fiches communes des médecins, paramédicaux et pharmacies · {{pays}}.",
     "sousTitreConsolide": "Fiches prospects de tous les pays.",
     "choisirPays": "Choisissez un pays pour créer ou valider des fiches.",
     "chiffres": {
@@ -738,7 +750,8 @@
       "telephonePro": "Téléphone professionnel",
       "telephoneAide": "Un numéro local s'entend dans le pays de la fiche.",
       "courriel": "Courriel",
-      "potentiel": "Potentiel"
+      "potentiel": "Potentiel",
+      "grade": "Grade"
     },
     "aides": {
       "aValider": "Votre fiche sera « à valider » : vous pouvez l'utiliser tout de suite ; les autres délégués la verront une fois validée.",
@@ -754,7 +767,7 @@
       "identite": "Identité",
       "coordonnees": "Coordonnées",
       "etablissements": "Établissements",
-      "etablissementsTexte": "Les lieux d'exercice, datés, arrivent en version 0.1.4.",
+      "etablissementsTexte": "Les lieux d'exercice, datés, arrivent en version 0.1.5.",
       "visites": "Mes visites",
       "visitesTexte": "Vos visites et rapports sur ce prospect arriveront avec les visites (0.4).",
       "creePar": "Créée par {{personne}} {{quand}}",
@@ -822,7 +835,7 @@
       "ouvrirCarte": "Ouvrir dans OpenStreetMap",
       "coordonnees": "Coordonnées",
       "prospects": "Prospects qui y exercent",
-      "prospectsTexte": "Les exercices datés prospect ↔ établissement arrivent en version 0.1.4.",
+      "prospectsTexte": "Les exercices datés prospect ↔ établissement arrivent en version 0.1.5.",
       "validee": "Fiche validée : elle est désormais commune."
     },
     "nombre_one": "{{count}} établissement",
@@ -838,5 +851,96 @@
       "creee": "Établissement créé : à valider par l'administrateur pays.",
       "positionEnregistree": "Position enregistrée ({{metres}} m)"
     }
+  },
+  "lieu": {
+    "exercice": "Exercice",
+    "exercices": {
+      "hospitalier": "Hospitalier",
+      "prive": "Privé"
+    },
+    "lieu": "Lieu",
+    "aucuneLocalite": "Aucune localité dans ce secteur : ajoutez-en dans Organisation."
+  },
+  "imports": {
+    "titre": "Imports",
+    "sousTitre": "Reprise contrôlée des données du CRM en place · {{pays}}.",
+    "choisirPays": "Choisissez un pays : un import se fait toujours dans un pays.",
+    "birdnotes": "Export BirdNotes",
+    "etapes": {
+      "fichier": "Choisir le fichier",
+      "simulation": "Simuler et vérifier",
+      "import": "Importer"
+    },
+    "deposer": "Déposez ici l'export BirdNotes",
+    "formats": "Fichier JSON de l'extraction, ou son archive ZIP",
+    "choisir": "Choisir un fichier",
+    "changer": "Changer de fichier",
+    "confidentialite": "Le fichier est lu le temps du traitement et n'est pas conservé : seuls le bilan et le rapport d'anomalies restent.",
+    "enCours": "Traitement en cours : une minute environ pour un pays entier.",
+    "simuler": "Lancer la simulation",
+    "resimuler": "Simuler à nouveau",
+    "importer": "Importer pour de bon",
+    "simulationTerminee": "Simulation terminée : rien n'a été enregistré.",
+    "importTermine": "Import terminé.",
+    "simulationAide": "Simulation : rien n'a été enregistré. Vérifiez les chiffres et les anomalies, puis importez pour de bon.",
+    "importAide": "Données importées. Un nouvel import du même fichier ne crée pas de doublon : il retrouve les fiches déjà reprises.",
+    "resultatSimulation": "Simulation de {{fichier}}",
+    "resultatImport": "Import de {{fichier}}",
+    "chiffres": {
+      "prospects": "Prospects repris",
+      "etablissements": "Établissements repris",
+      "produits": "Produits repris",
+      "rejets": "Lignes écartées",
+      "existants_one": "{{count}} déjà présent",
+      "existants_other": "{{count}} déjà présents",
+      "aPreciser_one": "{{count}} type à préciser",
+      "aPreciser_other": "{{count}} types à préciser",
+      "reseaux_one": "{{count}} réseau",
+      "reseaux_other": "{{count}} réseaux",
+      "anomalies_one": "{{count}} anomalie au rapport",
+      "anomalies_other": "{{count}} anomalies au rapport"
+    },
+    "detail": "Détail par donnée",
+    "anomalies": "Anomalies",
+    "rapportCsv": "Rapport CSV",
+    "aucuneAnomalie": "Aucune anomalie",
+    "entites": {
+      "secteurs": "Secteurs",
+      "localites": "Localités",
+      "divisions": "Divisions",
+      "reseaux": "Réseaux",
+      "produits": "Produits",
+      "portefeuilles": "Portefeuilles",
+      "etablissements": "Établissements",
+      "prospects": "Prospects",
+      "demandes_modification": "Demandes de modification",
+      "zones": "Zones"
+    },
+    "actions": {
+      "crees": "créés",
+      "existants": "déjà présents",
+      "fusionnes": "fusionnés",
+      "rejetes": "écartés",
+      "type_a_preciser": "type à préciser",
+      "secteur_deduit": "secteur déduit",
+      "gamme_technique_ignoree": "gamme technique ignorée",
+      "non_reprises": "reportées"
+    },
+    "niveaux": {
+      "rejet": "Ligne écartée",
+      "avertissement": "Avertissement"
+    },
+    "statuts": {
+      "simule": "Simulation",
+      "termine": "Importé",
+      "echec": "Échec"
+    },
+    "historique": "Historique",
+    "aucunLot": "Aucun import pour l'instant",
+    "aucunLotTexte": "Chaque simulation et chaque import restent ici avec leur rapport.",
+    "lance_one": "{{personne}} · {{quand}} · {{count}} anomalie",
+    "lance_other": "{{personne}} · {{quand}} · {{count}} anomalies",
+    "confirmerTitre": "Importer pour de bon ?",
+    "confirmerTexte": "{{prospects}} prospects et {{etablissements}} établissements seront créés, comme dans la simulation. Les fiches reprises restent modifiables et archivables ; elles ne se suppriment pas."
   }
 }

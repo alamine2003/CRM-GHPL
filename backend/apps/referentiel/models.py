@@ -2,7 +2,7 @@
 
 Toute variation entre pays est une donnée (ADR-017) : chaque pays tient ses propres listes.
 
-- Listes simples (`Valeur`) : types de prospect, spécialités, types d'établissement,
+- Listes simples (`Valeur`) : types de prospect, spécialités, grades, types d'établissement,
   classes thérapeutiques, motifs d'écart. Une spécialité peut dépendre d'un type de prospect.
 - Produits : spécialités promues, propres à un pays, classées par classe thérapeutique.
 - Portefeuille : lien daté réseau ↔ produit ; un produit peut appartenir à plusieurs
@@ -24,6 +24,7 @@ class Liste(models.TextChoices):
     SPECIALITE = "specialite", "Spécialités"
     TYPE_ETABLISSEMENT = "type_etablissement", "Types d'établissement"
     CLASSE_THERAPEUTIQUE = "classe_therapeutique", "Classes thérapeutiques"
+    GRADE = "grade", "Grades"
     MOTIF_ECART = "motif_ecart", "Motifs d'écart"
 
 

@@ -6,6 +6,7 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView
 
 from apps.identite import vues_comptes as comptes
+from apps.imports import vues as imp
 from apps.organisation import vues as org
 from apps.prospects import vues as prs
 from apps.referentiel import vues as ref
@@ -63,6 +64,13 @@ urlpatterns = [
         "organisation/divisions/<uuid:id>/archiver/",
         org.DivisionArchivageVue.as_view(),
         name="division-archiver",
+    ),
+    path("organisation/localites/", org.LocalitesVue.as_view(), name="localites"),
+    path("organisation/localites/<uuid:id>/", org.LocaliteVue.as_view(), name="localite"),
+    path(
+        "organisation/localites/<uuid:id>/archiver/",
+        org.LocaliteArchivageVue.as_view(),
+        name="localite-archiver",
     ),
     path("organisation/reseaux/", org.ReseauxVue.as_view(), name="reseaux"),
     path("organisation/reseaux/<uuid:id>/", org.ReseauVue.as_view(), name="reseau"),
@@ -186,5 +194,10 @@ urlpatterns = [
         prs.EtablissementArchivageVue.as_view(),
         name="etablissement-archiver",
     ),
+    # Imports (PRP-013)
+    path("imports/", imp.LotsVue.as_view(), name="imports"),
+    path("imports/birdnotes/", imp.ImportBirdNotesVue.as_view(), name="import-birdnotes"),
+    path("imports/<uuid:id>/", imp.LotVue.as_view(), name="import"),
+    path("imports/<uuid:id>/rapport/", imp.RapportLotVue.as_view(), name="import-rapport"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

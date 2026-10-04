@@ -70,7 +70,7 @@ def test_les_actions_d_administration_sont_auditees_avec_les_roles(monde):
     assert e.objet_id == str(compte.pk) and e.details["role"] == "delegue"
     admin.put("/api/v1/pays/SN/parametres/distance_pointage_m/", {"valeur": 300}, format="json")
     p = dernier("parametre.modification")
-    assert p.details == {"cle": "distance_pointage_m", "ancienne": 200, "nouvelle": 300}
+    assert p.details == {"cle": "distance_pointage_m", "ancienne": 100, "nouvelle": 300}
     admin.post("/api/v1/organisation/zones/", {"libelle": "Nord"}, format="json")
     assert dernier("organisation.zone.creation").pays == monde["sn"]
 

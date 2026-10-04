@@ -5,6 +5,7 @@ from apps.socle.services import aujourdhui
 
 from .models import (
     Division,
+    Localite,
     Occupation,
     PerimetreReseau,
     Poste,
@@ -62,6 +63,19 @@ class SecteurSerializer(_ElementSerializer):
     class Meta:
         model = Secteur
         fields = ["id", "pays", "libelle", "zone", "zone_libelle", "archive"]
+
+
+class LocaliteSerializer(_ElementSerializer):
+    secteur = serializers.UUIDField(source="secteur_id")
+
+    class Meta:
+        model = Localite
+        fields = ["id", "pays", "libelle", "secteur", "archive"]
+
+
+class CreationLocaliteSerializer(serializers.Serializer):
+    secteur = serializers.UUIDField()
+    libelle = serializers.CharField(max_length=120)
 
 
 class ResumeSerializer(serializers.Serializer):
@@ -148,6 +162,13 @@ class PosteSerializer(_ElementSerializer):
 
 class LibelleSerializer(serializers.Serializer):
     libelle = serializers.CharField(max_length=120)
+
+
+class ModificationSecteurSerializer(serializers.Serializer):
+    """Renommage et/ou rattachement à une autre zone."""
+
+    libelle = serializers.CharField(max_length=120, required=False)
+    zone = serializers.UUIDField(required=False)
 
 
 class CreationDivisionSerializer(LibelleSerializer):

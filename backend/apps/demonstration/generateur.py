@@ -47,6 +47,19 @@ DIVISIONS = [
                                "Douleur", "ORL", "OTC Pharmacies"]),
 ]  # fmt: skip
 
+#: Proportions des spécialités relevées sur le terrain (prd.md §14.1) : les paramédicaux et
+#: les officines forment plus de la moitié des fiches, la médecine générale un huitième.
+SPECIALITES_DEMO = [
+    ("sage_femme", 24.5), ("infirmier", 24.4), ("officine", 14.8), ("medecine_generale", 12.7),
+    ("gynecologie", 4.0), ("pediatrie", 3.5), ("medecine_interne", 2.5), ("cardiologie", 2.0),
+    ("aide_infirmier", 2.0), ("technicien_superieur", 1.5), ("endocrinologie", 1.2),
+    ("diabetologie", 1.0), ("dermatologie", 1.0), ("gastro_enterologie", 1.0),
+    ("pneumologie", 0.8), ("rhumatologie", 0.6), ("orl", 0.6), ("chirurgie_dentiste", 0),
+    ("kinesitherapie", 0.5), ("parapharmacie", 0.3),
+]  # fmt: skip
+
+QUARTIERS = ["Centre", "Nord", "Sud", "Est", "Ouest", "Marché", "Gare", "Extension"]
+
 ZONES = {
     "Dakar": [
         "Plateau", "Médina", "Fann", "Mermoz", "Ouakam", "Ngor", "Yoff", "Parcelles Assainies",
@@ -134,7 +147,15 @@ def vider() -> None:
     vider cette base fictive, par le propriétaire des tables.
     """
     tables = []
-    for etiquette in ("socle", "identite", "organisation", "referentiel", "audit"):
+    for etiquette in (
+        "socle",
+        "identite",
+        "organisation",
+        "referentiel",
+        "prospects",
+        "imports",
+        "audit",
+    ):
         for modele in apps.get_app_config(etiquette).get_models(include_auto_created=True):
             tables.append(connection.ops.quote_name(modele._meta.db_table))
     with connection.cursor() as curseur:
@@ -265,6 +286,7 @@ class Generateur:
         for i, poste in enumerate(rattaches):
             org.rattacher(poste, superviseurs[i % len(superviseurs)], debut)
 
+        localites = self.localites(secteurs_par_zone)
         self.bilan.pays[code] = {
             "divisions": len(reseaux_par_division),
             "reseaux": len(tous_reseaux),
@@ -273,14 +295,28 @@ class Generateur:
             "postes": len(postes),
             "delegues": len(delegues),
             "produits": produits_crees,
-            "prospects": self.prospects(pays, volumes.prospects, delegues[0]),
-            "etablissements": self.etablissements(pays, secteurs_par_zone, delegues[0]),
+            "prospects": self.prospects(pays, volumes.prospects, localites, delegues[0]),
+            "etablissements": self.etablissements(pays, secteurs_par_zone, localites, delegues[0]),
         }
 
-    def etablissements(self, pays, secteurs_par_zone, delegue) -> int:
-        """Établissements fictifs (PRP-003) : dans chaque secteur, cabinets, pharmacies et une
-        clinique ; un hôpital par zone. Coordonnées tirées autour d'un point de la zone, une
-        fois sur cinq absentes pour montrer le signalement « sans GPS »."""
+    def localites(self, secteurs_par_zone) -> dict:
+        """Deux à quatre localités fictives par secteur (« Centre », « Nord »…) : le terrain
+        découpe chaque secteur en quartiers ou villages (prd.md §14.1)."""
+        a = self.alea
+        par_secteur = {}
+        for secteurs in secteurs_par_zone:
+            for secteur in secteurs:
+                parties = a.sample(QUARTIERS, k=a.randint(2, 4))
+                par_secteur[secteur.pk] = [
+                    org.creer_localite(secteur, f"{secteur.libelle} {partie}") for partie in parties
+                ]
+        return par_secteur
+
+    def etablissements(self, pays, secteurs_par_zone, localites, delegue) -> int:
+        """Établissements fictifs (PRP-003), répartis comme sur le terrain : postes et centres
+        de santé, cabinets, pharmacies, une clinique de temps en temps ; un hôpital par zone.
+        Coordonnées tirées autour d'un point de la zone, une fois sur cinq absentes pour montrer
+        le signalement « sans GPS »."""
         a = self.alea
         types = {v.code: v for v in Valeur.objects.filter(pays=pays, liste="type_etablissement")}
         admin = Utilisateur.objects.filter(roles__role=Role.ADMIN_PAYS, roles__pays=pays).first()
@@ -291,47 +327,61 @@ class Generateur:
             secteur_hopital = secteurs[0]
             plan = [("hopital", f"Hôpital régional {secteur_hopital.libelle}", secteur_hopital)]
             for secteur in secteurs:
-                plan += [("cabinet", f"Cabinet médical {a.choice(NOMS)}", secteur)
+                plan += [("poste_sante", f"Poste de santé {a.choice(NOMS)}", secteur)
                          for _ in range(a.randint(1, 3))]  # fmt: skip
+                plan += [("cabinet", f"Cabinet médical {a.choice(NOMS)}", secteur)
+                         for _ in range(a.randint(0, 2))]  # fmt: skip
                 plan += [("pharmacie", f"Pharmacie {secteur.libelle}", secteur)]
-                if a.random() < 0.4:
+                if a.random() < 0.5:
+                    plan.append(("centre_sante", f"Centre de santé {secteur.libelle}", secteur))
+                if a.random() < 0.3:
                     plan.append(("clinique", f"Clinique {a.choice(NOMS)}", secteur))
             for code, nom, secteur in plan:
                 gps = a.random() > 0.2
                 a_valider = nombre < 3
+                public = code in ("hopital", "centre_sante", "poste_sante")
                 creer_etablissement(
                     pays, delegue if a_valider else admin, actif=not a_valider, nom=nom,
-                    type=types[code], secteur=secteur, localite=secteur.libelle,
+                    type=types[code], secteur=secteur,
+                    localite=a.choice(localites[secteur.pk]),
+                    activite="hospitalier" if public else "prive",
                     latitude=round(lat0 + a.uniform(-0.25, 0.25), 6) if gps else None,
                     longitude=round(lon0 + a.uniform(-0.25, 0.25), 6) if gps else None,
                 )  # fmt: skip
                 nombre += 1
         return nombre
 
-    def prospects(self, pays, nombre: int, delegue) -> int:
+    def prospects(self, pays, nombre: int, localites, delegue) -> int:
         """Fiches fictives (DEM-001 CA2) : noms tirés des listes, aucun téléphone ni courriel ;
-        quelques fiches créées par un délégué attendent leur validation (PRP-006)."""
+        quelques fiches créées par un délégué attendent leur validation (PRP-006).
+
+        Spécialités, potentiels, activité et grades suivent les proportions relevées sur le
+        terrain au Sénégal (agrégats seulement, voir SPECIALITES_DEMO)."""
         a = self.alea
         valeurs = {(v.liste, v.code): v for v in Valeur.objects.filter(pays=pays)}
-        types = [("medecin", 0.7), ("pharmacien", 0.15), ("sage_femme", 0.07),
-                 ("infirmier", 0.05), ("chirurgien_dentiste", 0.03)]  # fmt: skip
-        specialites = [v for (liste, _), v in valeurs.items() if liste == "specialite"]
         admin = Utilisateur.objects.filter(roles__role=Role.ADMIN_PAYS, roles__pays=pays).first()
+        toutes = [loc for liste in localites.values() for loc in liste]
+        codes, poids = zip(*SPECIALITES_DEMO, strict=True)
         for i in range(nombre):
-            code = a.choices([c for c, _ in types], [p for _, p in types])[0]
-            type_ = valeurs[("type_prospect", code)]
-            specialite = (
-                a.choice([s for s in specialites if s.parent_id == type_.pk])
-                if type_.enfants.exists()
-                else None
-            )
+            specialite = valeurs[("specialite", a.choices(codes, poids)[0])]
+            type_ = specialite.parent
+            medecin = type_.code == "medecin"
+            grade = None
+            if medecin:
+                code_grade = a.choices(["docteur", "professeur", "professeur_agrege", ""],
+                                       [0.75, 0.04, 0.03, 0.18])[0]  # fmt: skip
+                grade = valeurs.get(("grade", code_grade))
             a_valider = i < 6
             creer_prospect(
                 pays, delegue if a_valider else admin, actif=not a_valider,
-                civilite="dr" if code == "medecin" else "",
+                civilite=("pr" if grade and grade.code.startswith("professeur")
+                          else "dr" if medecin else ""),
                 nom=a.choice(NOMS), prenom=a.choice(PRENOMS), type=type_,
-                specialite=specialite, potentiel=a.choices("ABC", [0.2, 0.35, 0.45])[0],
-                numero_ordre=f"DEMO-{pays.code}-{i + 1:05d}" if code == "medecin" else "",
+                specialite=specialite, grade=grade,
+                potentiel=a.choices("ABC", [0.42, 0.46, 0.12])[0],
+                activite=a.choices(["prive", "hospitalier"], [0.71, 0.29])[0],
+                localite=a.choice(toutes),
+                numero_ordre=f"DEMO-{pays.code}-{i + 1:05d}" if medecin else "",
             )  # fmt: skip
         return nombre
 

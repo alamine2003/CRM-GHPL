@@ -151,15 +151,23 @@ CATALOGUE: dict[str, DefinitionParametre] = {
         DefinitionParametre(
             "visites_sans_gps_tolerees",
             "Visites sans GPS tolérées par journée (VIS-010)",
-            0,
+            # Valeur du CRM en place au Sénégal (4 octobre 2026) ; son sens exact reste à confirmer.
+            3,
             _entier(0, 50),
             hypothese=True,
         ),
         DefinitionParametre(
             "distance_pointage_m",
             "Distance de pointage acceptée en mètres (VIS-010)",
-            200,
+            # Tolérance appliquée aujourd'hui au Sénégal (décision du 4 octobre 2026).
+            100,
             _entier(10, 5000),
+        ),
+        DefinitionParametre(
+            "cycle_visite_semaines",
+            "Durée du cycle de visite en semaines (fréquences cibles, PRP-011)",
+            4,
+            _entier(1, 12),
         ),
         DefinitionParametre(
             "geolocalisation_active",
