@@ -1,0 +1,170 @@
+/**
+ * Client de l'API INNOV CRM, partagé par le portail et l'application mobile.
+ *
+ * - Le jeton d'accès (15 minutes) reste en mémoire, jamais dans un stockage
+ *   persistant (architecture-essentials §10).
+ * - Le jeton de rafraîchissement est dans un cookie HttpOnly pour le portail,
+ *   dans le magasin sécurisé du téléphone pour le mobile (architecture §11.1).
+ * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
+ */
+import type { Informations, Jetons, Moi, TypeClient } from '@innov/api-types';
+
+export type { Informations, Jetons, Moi, TypeClient };
+
+/** Stockage du jeton de rafraîchissement, pour l'application mobile uniquement. */
+export interface StockageRafraichissement {
+  lire(): Promise<string | null>;
+  ecrire(jeton: string | null): Promise<void>;
+}
+
+export class ErreurApi extends Error {
+  constructor(
+    readonly statut: number,
+    readonly code: string,
+    message: string,
+    readonly details: Record<string, unknown> = {},
+  ) {
+    super(message);
+    this.name = 'ErreurApi';
+  }
+}
+
+export interface OptionsClient {
+  baseUrl: string;
+  client: TypeClient;
+  /** Langue courante, envoyée dans Accept-Language pour des messages traduits. */
+  langue: () => string;
+  /** Obligatoire pour le mobile ; ignoré par le portail. */
+  stockage?: StockageRafraichissement;
+  /** Appelé quand la session est définitivement perdue (expirée, révoquée). */
+  surSessionPerdue?: () => void;
+  fetch?: typeof fetch;
+}
+
+interface OptionsRequete {
+  methode?: 'GET' | 'POST';
+  corps?: unknown;
+  authentifiee?: boolean;
+}
+
+export function creerClient(options: OptionsClient) {
+  const base = options.baseUrl.replace(/\/$/, '');
+  const appel = options.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
+  const portail = options.client === 'portail';
+  if (!portail && !options.stockage) {
+    throw new Error('Le client mobile a besoin d’un stockage sécurisé.');
+  }
+  let acces: string | null = null;
+  let rafraichissementEnCours: Promise<Jetons> | null = null;
+
+  async function brute<T>(chemin: string, opts: OptionsRequete = {}): Promise<T> {
+    const entetes: Record<string, string> = {
+      Accept: 'application/json',
+      'Accept-Language': options.langue(),
+    };
+    if (opts.corps !== undefined) entetes['Content-Type'] = 'application/json';
+    if (portail) entetes['X-Innov-Client'] = 'portail';
+    if (opts.authentifiee && acces) entetes.Authorization = `Bearer ${acces}`;
+    const reponse = await appel(`${base}${chemin}`, {
+      method: opts.methode ?? 'GET',
+      headers: entetes,
+      body: opts.corps === undefined ? undefined : JSON.stringify(opts.corps),
+      credentials: portail ? 'include' : 'omit',
+    });
+    if (reponse.status === 204 || reponse.status === 202) return undefined as T;
+    const texte = await reponse.text();
+    const donnees = texte ? JSON.parse(texte) : {};
+    if (!reponse.ok) {
+      throw new ErreurApi(
+        reponse.status,
+        donnees.code ?? 'erreur',
+        donnees.message ?? `Erreur ${reponse.status}`,
+        donnees.details ?? {},
+      );
+    }
+    return donnees as T;
+  }
+
+  async function memoriser(jetons: Jetons): Promise<Jetons> {
+    acces = jetons.acces;
+    if (!portail && jetons.rafraichissement)
+      await options.stockage!.ecrire(jetons.rafraichissement);
+    return jetons;
+  }
+
+  async function oublier(): Promise<void> {
+    acces = null;
+    if (!portail) await options.stockage!.ecrire(null);
+  }
+
+  async function rafraichir(): Promise<Jetons> {
+    // Un seul rafraîchissement à la fois : le jeton change à chaque usage.
+    rafraichissementEnCours ??= (async () => {
+      try {
+        const corps = portail ? {} : { rafraichissement: await options.stockage!.lire() };
+        if (!portail && !corps.rafraichissement) {
+          throw new ErreurApi(401, 'session_invalide', 'Aucune session enregistrée.');
+        }
+        return await memoriser(
+          await brute<Jetons>('/api/v1/auth/rafraichir/', { methode: 'POST', corps }),
+        );
+      } catch (erreur) {
+        if (erreur instanceof ErreurApi && erreur.statut < 500) await oublier();
+        throw erreur;
+      } finally {
+        rafraichissementEnCours = null;
+      }
+    })();
+    return rafraichissementEnCours;
+  }
+
+  async function requete<T>(chemin: string, opts: OptionsRequete = {}): Promise<T> {
+    try {
+      return await brute<T>(chemin, { ...opts, authentifiee: true });
+    } catch (erreur) {
+      if (!(erreur instanceof ErreurApi) || erreur.statut !== 401) throw erreur;
+      try {
+        await rafraichir();
+      } catch (echec) {
+        options.surSessionPerdue?.();
+        throw echec;
+      }
+      return brute<T>(chemin, { ...opts, authentifiee: true });
+    }
+  }
+
+  return {
+    /** Ouvre une session. */
+    async connexion(identifiant: string, motDePasse: string): Promise<Jetons> {
+      return memoriser(
+        await brute<Jetons>('/api/v1/auth/connexion/', {
+          methode: 'POST',
+          corps: { identifiant, mot_de_passe: motDePasse, client: options.client },
+        }),
+      );
+    },
+    /** Reprend une session existante (cookie ou magasin sécurisé), sinon échoue. */
+    reprendre: rafraichir,
+    async deconnexion(): Promise<void> {
+      try {
+        if (acces)
+          await brute('/api/v1/auth/deconnexion/', { methode: 'POST', authentifiee: true });
+      } finally {
+        await oublier();
+      }
+    },
+    moi: () => requete<Moi>('/api/v1/auth/moi/'),
+    informations: () => brute<Informations>('/api/v1/informations/'),
+    demanderReinitialisation: (identifiant: string) =>
+      brute<void>('/api/v1/auth/mot-de-passe/oubli/', { methode: 'POST', corps: { identifiant } }),
+    reinitialiser: (jeton: string, motDePasse: string) =>
+      brute<void>('/api/v1/auth/mot-de-passe/reinitialisation/', {
+        methode: 'POST',
+        corps: { jeton, mot_de_passe: motDePasse },
+      }),
+    requete,
+    estConnecte: () => acces !== null,
+  };
+}
+
+export type ClientApi = ReturnType<typeof creerClient>;

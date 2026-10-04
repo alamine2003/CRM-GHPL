@@ -34,6 +34,15 @@ make portail                      # portail sur http://localhost:5173
 make mobile                       # Expo : ouvrir avec Expo Go ou un émulateur
 ```
 
+Premier compte (en attendant les écrans d'administration) :
+
+```bash
+cd backend
+.venv/bin/python manage.py creer_pays SN
+.venv/bin/python manage.py creer_utilisateur prenom.nom --prenom Prénom --nom Nom --pays SN --afficher-lien
+# Ouvrir le lien affiché pour choisir le mot de passe, puis se connecter sur le portail.
+```
+
 Variables utiles : `backend/.env.example` (serveur), `VITE_API_URL` (portail), `EXPO_PUBLIC_API_URL` (mobile).
 
 ## Vérifier

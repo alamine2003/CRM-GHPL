@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY VERSION /app/VERSION
 COPY backend/ .
 RUN python manage.py compilemessages && \
-    DJANGO_SECRET_KEY=construction ENVIRONNEMENT=build python manage.py collectstatic --noinput
+    ENVIRONNEMENT=test python manage.py collectstatic --noinput
 RUN useradd --create-home innov
 USER innov
 EXPOSE 8000

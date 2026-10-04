@@ -18,6 +18,46 @@
     "versionClient": "App version",
     "versionServeur": "Service version",
     "environnement": "Environment",
-    "reessayer": "Retry"
+    "reessayer": "Retry",
+    "perimetre": "Scope"
+  },
+  "connexion": {
+    "titre": "Sign in",
+    "identifiant": "Username",
+    "aideIdentifiant": "Format: firstname.lastname",
+    "motDePasse": "Password",
+    "afficher": "Show password",
+    "masquer": "Hide password",
+    "seConnecter": "Sign in",
+    "enCours": "Signing in…",
+    "oublie": "Forgot your password?"
+  },
+  "oubli": {
+    "titre": "Forgot password",
+    "explication": "Enter your username or email. If an account matches, you will receive a link valid for 30 minutes.",
+    "identifiant": "Username or email",
+    "envoyer": "Send the link",
+    "envoye": "If an account matches, a link has just been sent. Remember to check your spam folder.",
+    "retour": "Back to sign in"
+  },
+  "reinitialisation": {
+    "titre": "New password",
+    "explication": "At least 12 characters, not too common, and not close to your name or username.",
+    "nouveau": "New password",
+    "confirmation": "Confirm the password",
+    "differents": "The two passwords do not match.",
+    "enregistrer": "Save",
+    "succes": "Password saved. You can now sign in.",
+    "lienManquant": "Incomplete link: open the link you received by email."
+  },
+  "session": {
+    "bonjour": "Hello {{prenom}}",
+    "siege": "Headquarters",
+    "deconnexion": "Sign out",
+    "expiree": "Your session has expired. Please sign in again.",
+    "chargement": "Loading…"
+  },
+  "erreurs": {
+    "reseau": "Service unreachable. Check your connection and try again."
   }
 }

@@ -4,6 +4,118 @@
  */
 
 export interface paths {
+  '/api/v1/auth/connexion/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['connexion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/deconnexion/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['deconnexion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/moi/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['moi'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/mot-de-passe/changement/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['mot_de_passe_changement'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/mot-de-passe/oubli/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['mot_de_passe_oubli'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/mot-de-passe/reinitialisation/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['mot_de_passe_reinitialisation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/rafraichir/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['rafraichir'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/informations/': {
     parameters: {
       query?: never;
@@ -25,6 +137,21 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    Changement: {
+      actuel: string;
+      nouveau: string;
+    };
+    /**
+     * @description * `portail` - Portail web
+     *     * `mobile` - Application mobile
+     * @enum {string}
+     */
+    ClientEnum: 'portail' | 'mobile';
+    Connexion: {
+      identifiant: string;
+      mot_de_passe: string;
+      client: components['schemas']['ClientEnum'];
+    };
     Informations: {
       produit: string;
       version: string;
@@ -34,9 +161,52 @@ export interface components {
       message: string;
       langues: components['schemas']['Langue'][];
     };
+    Jetons: {
+      /** @description Jeton d'accès, à envoyer en « Bearer ». */
+      acces: string;
+      /** @description Durée de validité du jeton d'accès (s). */
+      expire_dans: number;
+      /** @description Application mobile uniquement ; nul pour le portail (cookie HttpOnly). */
+      rafraichissement: string | null;
+      utilisateur: components['schemas']['Moi'];
+    };
     Langue: {
       code: string;
       libelle: string;
+    };
+    /**
+     * @description * `fr` - Français
+     *     * `en` - Anglais
+     * @enum {string}
+     */
+    LangueEnum: 'fr' | 'en';
+    Moi: {
+      /** Format: uuid */
+      readonly id: string;
+      identifiant: string;
+      prenom: string;
+      nom: string;
+      courriel: string;
+      langue?: components['schemas']['LangueEnum'];
+      pays_principal: components['schemas']['PaysResume'] | null;
+      est_siege: boolean;
+    };
+    Oubli: {
+      /** @description Identifiant ou courriel. */
+      identifiant: string;
+    };
+    PaysResume: {
+      code: string;
+      nom: string;
+      fuseau: string;
+    };
+    Rafraichissement: {
+      /** @description Application mobile uniquement ; le portail utilise le cookie. */
+      rafraichissement?: string;
+    };
+    Reinitialisation: {
+      jeton: string;
+      mot_de_passe: string;
     };
   };
   responses: never;
@@ -47,6 +217,165 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  connexion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Connexion'];
+        'application/x-www-form-urlencoded': components['schemas']['Connexion'];
+        'multipart/form-data': components['schemas']['Connexion'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Jetons'];
+        };
+      };
+    };
+  };
+  deconnexion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  moi: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Moi'];
+        };
+      };
+    };
+  };
+  mot_de_passe_changement: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Changement'];
+        'application/x-www-form-urlencoded': components['schemas']['Changement'];
+        'multipart/form-data': components['schemas']['Changement'];
+      };
+    };
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  mot_de_passe_oubli: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Oubli'];
+        'application/x-www-form-urlencoded': components['schemas']['Oubli'];
+        'multipart/form-data': components['schemas']['Oubli'];
+      };
+    };
+    responses: {
+      /** @description No response body */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  mot_de_passe_reinitialisation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Reinitialisation'];
+        'application/x-www-form-urlencoded': components['schemas']['Reinitialisation'];
+        'multipart/form-data': components['schemas']['Reinitialisation'];
+      };
+    };
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  rafraichir: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['Rafraichissement'];
+        'application/x-www-form-urlencoded': components['schemas']['Rafraichissement'];
+        'multipart/form-data': components['schemas']['Rafraichissement'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Jetons'];
+        };
+      };
+    };
+  };
   informations: {
     parameters: {
       query?: never;

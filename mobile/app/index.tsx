@@ -1,25 +1,36 @@
-import { marque, paletteClaire, paletteSombre, zoneTactileMin } from '@innov/design';
+import { marque, zoneTactileMin } from '@innov/design';
 import { LANGUES, type Langue } from '@innov/i18n';
+import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Bouton, Entete, usePalette } from '../src/composants';
+import { useSession } from '../src/session';
 import { VERSION_APP } from '../src/version';
 
-/** Premier écran de l'application délégué (version 0.0.1). */
+/** Accueil du délégué connecté (version 0.0.3). */
 export default function Accueil() {
   const { t, i18n } = useTranslation();
-  const p = useColorScheme() === 'dark' ? paletteSombre : paletteClaire;
+  const p = usePalette();
+  const { etat, deconnexion } = useSession();
   const langue = i18n.language as Langue;
+
+  if (etat.statut === 'chargement') {
+    return (
+      <View style={[styles.centre, { backgroundColor: p.fond }]}>
+        <ActivityIndicator accessibilityLabel={t('session.chargement')} color={marque.bleuMarine} />
+      </View>
+    );
+  }
+  if (etat.statut === 'anonyme') return <Redirect href="/connexion" />;
+  const { utilisateur } = etat;
 
   return (
     <SafeAreaView style={[styles.ecran, { backgroundColor: p.fond }]} edges={['bottom']}>
-      <View style={styles.entete}>
-        <Text style={styles.produit}>{t('commun.produit')}</Text>
-        <Text style={styles.sousTitre}>{t('commun.sousTitre')}</Text>
-      </View>
+      <Entete sousTitre={utilisateur.pays_principal?.nom ?? t('session.siege')} />
       <View style={styles.contenu}>
         <Text accessibilityRole="header" style={[styles.titre, { color: p.texte }]}>
-          {t('accueil.titre')}
+          {t('session.bonjour', { prenom: utilisateur.prenom })}
         </Text>
         <Text style={[styles.texte, { color: p.texteSecondaire }]}>
           {t('accueil.introduction')}
@@ -53,6 +64,13 @@ export default function Accueil() {
             );
           })}
         </View>
+        <View style={{ marginTop: 12 }}>
+          <Bouton
+            libelle={t('session.deconnexion')}
+            secondaire
+            onPress={() => void deconnexion()}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -60,14 +78,7 @@ export default function Accueil() {
 
 const styles = StyleSheet.create({
   ecran: { flex: 1 },
-  entete: {
-    backgroundColor: marque.bleuMarine,
-    paddingTop: 56,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  produit: { color: '#FFFFFF', fontSize: 22, fontWeight: '800' },
-  sousTitre: { color: '#B9C4E8', fontSize: 13, marginTop: 2 },
+  centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   contenu: { padding: 20, gap: 12 },
   titre: { fontSize: 26, fontWeight: '700' },
   texte: { fontSize: 15, lineHeight: 21 },

@@ -6,6 +6,7 @@ défaut ne conviennent qu'au poste de développement.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
@@ -27,14 +28,21 @@ def env_liste(nom: str, defaut: str = "") -> list[str]:
 ENVIRONNEMENT = os.environ.get("ENVIRONNEMENT", "developpement")
 DEBUG = env_bool("DJANGO_DEBUG", ENVIRONNEMENT == "developpement")
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
-if not SECRET_KEY:
-    if ENVIRONNEMENT not in {"developpement", "test"}:
-        raise RuntimeError("DJANGO_SECRET_KEY est obligatoire hors développement.")
-    SECRET_KEY = "cle-de-developpement-uniquement"  # noqa: S105
+if ENVIRONNEMENT in {"developpement", "test"} and not SECRET_KEY:
+    SECRET_KEY = "cle-de-developpement-uniquement-jamais-utilisee-en-production"  # noqa: S105
+elif len(SECRET_KEY) < 50:
+    # Elle signe aussi les jetons d'accès : une clé courte affaiblit toute l'authentification.
+    raise RuntimeError("DJANGO_SECRET_KEY est obligatoire hors développement (50 caractères min.).")
 
 ALLOWED_HOSTS = env_liste("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 CORS_ALLOWED_ORIGINS = env_liste("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
 CSRF_TRUSTED_ORIGINS = env_liste("CSRF_TRUSTED_ORIGINS", "http://localhost:5173")
+# Le jeton de rafraîchissement du portail voyage dans un cookie : le portail et
+# l'API doivent partager le même domaine parent (même « site »).
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = ["accept", "accept-language", "authorization", "content-type",
+                      "x-innov-client"]  # fmt: skip
+PORTAIL_URL = os.environ.get("PORTAIL_URL", "http://localhost:5173").rstrip("/")
 
 INNOV_VERSION = VERSION
 
@@ -51,6 +59,33 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = "identite.Utilisateur"
+
+# Mots de passe : Argon2id, 12 caractères minimum, refus des mots de passe courants (SEC-001).
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+]
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+# Connexion et sessions (SEC-002, architecture §11.1).
+INNOV_AUTH = {
+    "ECHECS_AVANT_VERROUILLAGE": 5,
+    "DUREE_VERROUILLAGE_MINUTES": 15,
+    # Durée de vie glissante du jeton de rafraîchissement, par client.
+    "SESSION_PORTAIL_MINUTES": 30,
+    "SESSION_MOBILE_JOURS": 7,
+    "REINITIALISATION_MINUTES": 30,
+    "COOKIE_RAFRAICHISSEMENT": "innov_rafraichissement",
+    "COOKIE_SECURISE": ENVIRONNEMENT not in {"developpement", "test"},
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -93,12 +128,44 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.identite.authentification.AuthentificationSession"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "UNAUTHENTICATED_USER": None,
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"connexion": "20/min", "recuperation": "5/min"},
+    "EXCEPTION_HANDLER": "apps.socle.erreurs.gestionnaire_exceptions",
 }
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "SIGNING_KEY": os.environ.get("JWT_SIGNING_KEY", SECRET_KEY),
+    "ALGORITHM": "HS256",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "sub",
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+CACHES = {
+    "default": (
+        {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": os.environ["REDIS_URL"],
+        }
+        if os.environ.get("REDIS_URL")
+        else {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+    )
+}
+
+# Courriel : uniquement sécurité du compte (NOT-004). Console en développement.
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "INNOV CRM <ne-pas-repondre@localhost>")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "INNOV CRM",

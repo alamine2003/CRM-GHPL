@@ -1,19 +1,60 @@
-"""Modèle utilisateur d'INNOV CRM.
+"""Comptes, sessions et récupération d'accès (USR-001, USR-003, USR-005, SEC-001, SEC-002).
 
-Il est déclaré dès la version 0.0.2, avant toute migration du module
-d'authentification de Django : changer de modèle utilisateur après coup
-impose de refaire l'historique des migrations. Les comptes, la connexion et
-les rôles arrivent en 0.0.3 et 0.0.4 (USR-001, USR-003).
+Le modèle utilisateur a été déclaré en 0.0.2, avant toute migration du
+module d'authentification de Django. Les rôles par pays arrivent en 0.0.4.
 """
 
-from django.contrib.auth.models import AbstractUser
+import hashlib
+import re
+import secrets
+
+from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 from apps.socle.identifiants import uuid7
+
+# Identifiant nominatif « prenom.nom » (USR-001 CA1) : pas de compte partagé ou générique.
+FORMAT_IDENTIFIANT = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z0-9-]+)+$")
+IDENTIFIANTS_GENERIQUES = {
+    "admin", "administrateur", "root", "test", "demo", "commun", "partage", "equipe",
+    "delegue", "superviseur", "siege", "support", "info", "contact", "invite",
+}  # fmt: skip
+
+
+def valider_identifiant(valeur: str) -> None:
+    if not FORMAT_IDENTIFIANT.match(valeur):
+        raise ValidationError(
+            "Identifiant nominatif attendu, au format prenom.nom (minuscules, sans accent)."
+        )
+    if set(valeur.split(".")) & IDENTIFIANTS_GENERIQUES:
+        raise ValidationError("Les comptes partagés ou génériques sont interdits (USR-001).")
+
+
+def empreinte(jeton: str) -> str:
+    """Seule l'empreinte d'un jeton est stockée, jamais le jeton lui-même."""
+    return hashlib.sha256(jeton.encode()).hexdigest()
+
+
+def nouveau_jeton() -> str:
+    return secrets.token_urlsafe(32)
+
+
+class GestionnaireUtilisateurs(UserManager):
+    def create_superuser(self, *args, **kwargs):
+        raise TypeError(
+            "Pas de super-utilisateur Django : les droits viennent des rôles (0.0.4). "
+            "Utiliser la commande creer_utilisateur."
+        )
 
 
 class Utilisateur(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    username = models.CharField(
+        "identifiant", max_length=150, unique=True, validators=[valider_identifiant]
+    )
+    email = models.EmailField("courriel", blank=True)
     pays_principal = models.ForeignKey(
         "socle.Pays",
         on_delete=models.PROTECT,
@@ -25,10 +66,87 @@ class Utilisateur(AbstractUser):
     langue = models.CharField(
         max_length=2, choices=[("fr", "Français"), ("en", "Anglais")], default="fr"
     )
+    echecs_connexion = models.PositiveSmallIntegerField(default=0, editable=False)
+    verrouille_jusqua = models.DateTimeField(null=True, blank=True, editable=False)
+
+    objects = GestionnaireUtilisateurs()
 
     class Meta:
         verbose_name = "utilisateur"
         ordering = ["last_name", "first_name", "username"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["email"], condition=~models.Q(email=""), name="courriel_unique"
+            )
+        ]
 
     def delete(self, *args, **kwargs):
         raise TypeError("Un utilisateur est désactivé, jamais supprimé (RG-007).")
+
+    @property
+    def est_siege(self) -> bool:
+        return self.pays_principal_id is None
+
+    @property
+    def est_verrouille(self) -> bool:
+        return self.verrouille_jusqua is not None and self.verrouille_jusqua > timezone.now()
+
+
+class Session(models.Model):
+    """Session ouverte sur un client (portail ou mobile).
+
+    Le jeton d'accès (JWT, 15 minutes) porte l'identifiant de session : une
+    session révoquée invalide aussitôt ses jetons. Le jeton de
+    rafraîchissement change à chaque usage ; présenter un ancien jeton
+    signale un vol et révoque la session (architecture §11.1).
+    """
+
+    class Client(models.TextChoices):
+        PORTAIL = "portail", "Portail web"
+        MOBILE = "mobile", "Application mobile"
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.PROTECT, related_name="sessions")
+    client = models.CharField(max_length=10, choices=Client.choices)
+    empreinte_rafraichissement = models.CharField(max_length=64, unique=True)
+    empreinte_precedente = models.CharField(max_length=64, blank=True, db_index=True)
+    cree_le = models.DateTimeField(default=timezone.now)
+    utilisee_le = models.DateTimeField(default=timezone.now)
+    expire_le = models.DateTimeField()
+    revoquee_le = models.DateTimeField(null=True, blank=True)
+    motif_revocation = models.CharField(max_length=40, blank=True)
+    adresse_ip = models.GenericIPAddressField(null=True, blank=True)
+    agent = models.CharField(max_length=300, blank=True)
+
+    class Meta:
+        ordering = ["-cree_le"]
+        indexes = [models.Index(fields=["utilisateur", "revoquee_le"])]
+
+    def __str__(self):
+        return f"{self.utilisateur} — {self.client} — {self.cree_le:%Y-%m-%d %H:%M}"
+
+    @property
+    def est_active(self) -> bool:
+        return self.revoquee_le is None and self.expire_le > timezone.now()
+
+
+class JetonReinitialisation(models.Model):
+    """Lien de récupération d'accès à usage unique, valable 30 minutes (USR-005)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.PROTECT, related_name="+")
+    empreinte = models.CharField(max_length=64, unique=True)
+    cree_le = models.DateTimeField(default=timezone.now)
+    expire_le = models.DateTimeField()
+    utilise_le = models.DateTimeField(null=True, blank=True)
+    demande_par_administrateur = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-cree_le"]
+
+    def __str__(self):
+        return f"Réinitialisation de {self.utilisateur} ({self.cree_le:%Y-%m-%d %H:%M})"
+
+    @property
+    def est_valide(self) -> bool:
+        return self.utilise_le is None and self.expire_le > timezone.now()

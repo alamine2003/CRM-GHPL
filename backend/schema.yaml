@@ -1,9 +1,150 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.0.2
+  version: 0.0.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
+  /api/v1/auth/connexion/:
+    post:
+      operationId: connexion
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Connexion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Connexion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Connexion'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Jetons'
+          description: ''
+  /api/v1/auth/deconnexion/:
+    post:
+      operationId: deconnexion
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/moi/:
+    get:
+      operationId: moi
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Moi'
+          description: ''
+  /api/v1/auth/mot-de-passe/changement/:
+    post:
+      operationId: mot_de_passe_changement
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Changement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Changement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Changement'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/mot-de-passe/oubli/:
+    post:
+      operationId: mot_de_passe_oubli
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Oubli'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Oubli'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Oubli'
+        required: true
+      security:
+      - {}
+      responses:
+        '202':
+          description: No response body
+  /api/v1/auth/mot-de-passe/reinitialisation/:
+    post:
+      operationId: mot_de_passe_reinitialisation
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reinitialisation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reinitialisation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reinitialisation'
+        required: true
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/rafraichir/:
+    post:
+      operationId: rafraichir
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Rafraichissement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Rafraichissement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Rafraichissement'
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Jetons'
+          description: ''
   /api/v1/informations/:
     get:
       operationId: informations
@@ -11,6 +152,7 @@ paths:
       tags:
       - informations
       security:
+      - jetonAcces: []
       - {}
       responses:
         '200':
@@ -21,6 +163,41 @@ paths:
           description: ''
 components:
   schemas:
+    Changement:
+      type: object
+      properties:
+        actuel:
+          type: string
+          maxLength: 256
+        nouveau:
+          type: string
+          maxLength: 256
+      required:
+      - actuel
+      - nouveau
+    ClientEnum:
+      enum:
+      - portail
+      - mobile
+      type: string
+      description: |-
+        * `portail` - Portail web
+        * `mobile` - Application mobile
+    Connexion:
+      type: object
+      properties:
+        identifiant:
+          type: string
+          maxLength: 150
+        mot_de_passe:
+          type: string
+          maxLength: 256
+        client:
+          $ref: '#/components/schemas/ClientEnum'
+      required:
+      - client
+      - identifiant
+      - mot_de_passe
     Informations:
       type: object
       properties:
@@ -46,6 +223,27 @@ components:
       - message
       - produit
       - version
+    Jetons:
+      type: object
+      properties:
+        acces:
+          type: string
+          description: Jeton d'accès, à envoyer en « Bearer ».
+        expire_dans:
+          type: integer
+          description: Durée de validité du jeton d'accès (s).
+        rafraichissement:
+          type: string
+          nullable: true
+          description: Application mobile uniquement ; nul pour le portail (cookie
+            HttpOnly).
+        utilisateur:
+          $ref: '#/components/schemas/Moi'
+      required:
+      - acces
+      - expire_dans
+      - rafraichissement
+      - utilisateur
     Langue:
       type: object
       properties:
@@ -56,3 +254,87 @@ components:
       required:
       - code
       - libelle
+    LangueEnum:
+      enum:
+      - fr
+      - en
+      type: string
+      description: |-
+        * `fr` - Français
+        * `en` - Anglais
+    Moi:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        identifiant:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+        courriel:
+          type: string
+        langue:
+          $ref: '#/components/schemas/LangueEnum'
+        pays_principal:
+          allOf:
+          - $ref: '#/components/schemas/PaysResume'
+          nullable: true
+        est_siege:
+          type: boolean
+      required:
+      - courriel
+      - est_siege
+      - id
+      - identifiant
+      - nom
+      - pays_principal
+      - prenom
+    Oubli:
+      type: object
+      properties:
+        identifiant:
+          type: string
+          description: Identifiant ou courriel.
+          maxLength: 254
+      required:
+      - identifiant
+    PaysResume:
+      type: object
+      properties:
+        code:
+          type: string
+        nom:
+          type: string
+        fuseau:
+          type: string
+      required:
+      - code
+      - fuseau
+      - nom
+    Rafraichissement:
+      type: object
+      properties:
+        rafraichissement:
+          type: string
+          description: Application mobile uniquement ; le portail utilise le cookie.
+    Reinitialisation:
+      type: object
+      properties:
+        jeton:
+          type: string
+          maxLength: 128
+        mot_de_passe:
+          type: string
+          maxLength: 256
+      required:
+      - jeton
+      - mot_de_passe
+  securitySchemes:
+    jetonAcces:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

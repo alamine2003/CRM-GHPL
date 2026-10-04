@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from apps.socle import identifiants
 from apps.socle.identifiants import uuid7
 
 
@@ -9,7 +10,9 @@ def test_uuid7_respecte_la_rfc():
     assert identifiant.variant == "specified in RFC 4122"
 
 
-def test_uuid7_porte_l_heure_de_creation():
+def test_uuid7_porte_l_heure_de_creation(monkeypatch):
+    # Des tests figent l'horloge dans le futur ; l'ordre croissant garderait cette date.
+    monkeypatch.setattr(identifiants, "_dernier", 0)
     avant = datetime.now(UTC).timestamp() * 1000
     ms = uuid7().int >> 80
     apres = datetime.now(UTC).timestamp() * 1000

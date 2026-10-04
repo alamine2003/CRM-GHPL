@@ -434,6 +434,8 @@ flowchart LR
 
 Bibliothèques recommandées : `djangorestframework-simplejwt` (avec liste de révocation), `django-otp`, `argon2-cffi`, limitation de débit DRF + Redis.
 
+Mise en œuvre (0.0.3) : le jeton d'accès porte l'identifiant de session (`sid`) et chaque requête vérifie que la session est ouverte, ce qui rend la révocation immédiate sans liste de révocation. Le cookie de rafraîchissement du portail (`SameSite=Strict`, chemin `/api/v1/auth/`) impose que **le portail et l'API partagent le même domaine parent** ; la requête de rafraîchissement porte en plus l'en-tête `X-Innov-Client: portail`, ce qui oblige le navigateur à une vérification CORS.
+
 ### 11.2 Modèle d'autorisation
 
 - **Rôles** : attribués **par pays** (`RoleUtilisateur(utilisateur, pays, role, debut, fin)`).

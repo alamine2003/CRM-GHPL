@@ -2,8 +2,10 @@ import { CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router';
 import App from './App';
 import './i18n';
+import { FournisseurSession } from './session';
 import { creerTheme } from './theme';
 
 const clientRequetes = new QueryClient();
@@ -15,7 +17,11 @@ function Racine() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <QueryClientProvider client={clientRequetes}>
-        <App />
+        <BrowserRouter>
+          <FournisseurSession>
+            <App />
+          </FournisseurSession>
+        </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>
   );

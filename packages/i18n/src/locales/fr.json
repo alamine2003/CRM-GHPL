@@ -18,6 +18,46 @@
     "versionClient": "Version de l'application",
     "versionServeur": "Version du service",
     "environnement": "Environnement",
-    "reessayer": "Réessayer"
+    "reessayer": "Réessayer",
+    "perimetre": "Périmètre"
+  },
+  "connexion": {
+    "titre": "Connexion",
+    "identifiant": "Identifiant",
+    "aideIdentifiant": "Au format prenom.nom",
+    "motDePasse": "Mot de passe",
+    "afficher": "Afficher le mot de passe",
+    "masquer": "Masquer le mot de passe",
+    "seConnecter": "Se connecter",
+    "enCours": "Connexion…",
+    "oublie": "Mot de passe oublié ?"
+  },
+  "oubli": {
+    "titre": "Mot de passe oublié",
+    "explication": "Indiquez votre identifiant ou votre courriel. Si un compte correspond, vous recevrez un lien valable 30 minutes.",
+    "identifiant": "Identifiant ou courriel",
+    "envoyer": "Envoyer le lien",
+    "envoye": "Si un compte correspond, un lien vient d'être envoyé. Pensez à vérifier vos courriers indésirables.",
+    "retour": "Retour à la connexion"
+  },
+  "reinitialisation": {
+    "titre": "Nouveau mot de passe",
+    "explication": "Au moins 12 caractères, ni trop courant, ni proche de votre nom ou de votre identifiant.",
+    "nouveau": "Nouveau mot de passe",
+    "confirmation": "Confirmez le mot de passe",
+    "differents": "Les deux mots de passe ne correspondent pas.",
+    "enregistrer": "Enregistrer",
+    "succes": "Mot de passe enregistré. Vous pouvez vous connecter.",
+    "lienManquant": "Lien incomplet : ouvrez le lien reçu par courriel."
+  },
+  "session": {
+    "bonjour": "Bonjour {{prenom}}",
+    "siege": "Siège",
+    "deconnexion": "Se déconnecter",
+    "expiree": "Votre session a expiré. Reconnectez-vous.",
+    "chargement": "Chargement…"
+  },
+  "erreurs": {
+    "reseau": "Service injoignable. Vérifiez votre connexion et réessayez."
   }
 }

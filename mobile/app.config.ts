@@ -24,7 +24,7 @@ const config: ExpoConfig = {
     },
   },
   web: { favicon: './assets/favicon.png' },
-  plugins: ['expo-router', 'expo-localization'],
+  plugins: ['expo-router', 'expo-localization', 'expo-secure-store'],
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000',
   },
