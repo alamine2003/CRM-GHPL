@@ -16,6 +16,8 @@ from django.db.models import QuerySet
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import BasePermission, IsAuthenticated
 
+from apps.socle import journalisation
+
 from . import isolation
 from .matrice import Action
 from .perimetre import Perimetre, calculer_perimetre
@@ -46,6 +48,9 @@ class VuePerimetre(GenericAPIView):
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
         isolation.appliquer(self.perimetre)
+        journalisation.pays.set(
+            self.perimetre.pays_actif.code if self.perimetre.pays_actif else "consolide"
+        )
 
     @cached_property
     def perimetre(self) -> Perimetre:

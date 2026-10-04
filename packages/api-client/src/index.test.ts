@@ -71,6 +71,42 @@ describe('client mobile', () => {
     expect(JSON.parse(init.body as string).appareil).toEqual(appareil);
   });
 
+  it('expose la référence de la requête dans l’erreur', async () => {
+    const appel = vi.fn(async () =>
+      reponse(404, {
+        code: 'introuvable',
+        message: 'Ressource introuvable.',
+        reference: 'abc123def4',
+      }),
+    );
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage: stockageMemoire(),
+      fetch: appel,
+    });
+    const erreur = await client.informations().catch((e: unknown) => e);
+    expect(erreur).toBeInstanceOf(ErreurApi);
+    expect((erreur as ErreurApi).reference).toBe('abc123def4');
+  });
+
+  it('signale une erreur sans jamais lever', async () => {
+    const appel = vi.fn(async () => {
+      throw new TypeError('hors ligne');
+    });
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage: stockageMemoire(),
+      fetch: appel,
+    });
+    await expect(
+      client.signalerErreur({ message: 'x', version: '0.0.7' }),
+    ).resolves.toBeUndefined();
+  });
+
   it('rafraîchit une seule fois sur 401 puis rejoue la requête', async () => {
     const stockage = stockageMemoire('R1');
     const appel = vi

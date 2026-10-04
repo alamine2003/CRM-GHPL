@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { type FormEvent, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNotifier } from '../contexteNotifications';
 import { messageErreur } from '../contexteSession';
 
 /**
@@ -38,6 +39,7 @@ export default function DialogueFormulaire({
   const { t } = useTranslation();
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
+  const notifier = useNotifier();
 
   async function valider(evenement: FormEvent) {
     evenement.preventDefault();
@@ -45,6 +47,7 @@ export default function DialogueFormulaire({
     setEnvoi(true);
     try {
       await surValider();
+      notifier(t('commun.enregistre'));
       surFermer();
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));

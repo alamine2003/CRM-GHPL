@@ -48,6 +48,7 @@ import DialogueFormulaire from '../composants/Dialogue';
 import { EnTetePage, EtatVide, GrilleTuiles, PastilleIcone, Tuile } from '../composants/Elements';
 import { aujourdhuiIso, dateCourte, depuis } from '../composants/formats';
 import { initiales } from '../composants/initiales';
+import { ErreurChargement } from '../composants/Erreurs';
 import { messageErreur, useSession } from '../contexteSession';
 
 const ROLES_PAYS = ['responsable_pays', 'admin_pays', 'df', 'dm', 'superviseur', 'delegue'];
@@ -958,7 +959,10 @@ export default function Equipe({ perimetre }: { perimetre: Perimetre }) {
       </Box>
 
       {(onglet === 'comptes' ? comptes : appareils).isError ? (
-        <Alert severity="error">{t('erreurs.reseau')}</Alert>
+        <ErreurChargement
+          erreur={(onglet === 'comptes' ? comptes : appareils).error}
+          reessayer={() => void (onglet === 'comptes' ? comptes : appareils).refetch()}
+        />
       ) : onglet === 'comptes' ? (
         comptes.isPending ? (
           <Skeleton variant="rounded" height={200} />

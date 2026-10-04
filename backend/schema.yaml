@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.0.6
+  version: 0.0.7
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -256,6 +256,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Jetons'
+          description: ''
+  /api/v1/erreurs-clients/:
+    post:
+      operationId: erreur_client
+      description: |-
+        Le portail et l'application signalent leurs plantages (architecture §19).
+
+        Ouvert sans session (une erreur peut survenir avant la connexion), limité en débit ;
+        le rapport ne contient ni donnée saisie ni identité.
+      tags:
+      - erreurs-clients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErreurClient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ErreurClient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ErreurClient'
+        required: true
+      security:
+      - {}
+      responses:
+        '202':
+          description: No response body
+  /api/v1/exploitation/:
+    get:
+      operationId: exploitation_etat
+      description: État technique du service pour l'administrateur technique et le
+        siège (prd.md §6.1).
+      tags:
+      - exploitation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EtatExploitation'
           description: ''
   /api/v1/informations/:
     get:
@@ -1795,6 +1838,89 @@ components:
       - id
       - libelle
       - pays
+    ErreurClient:
+      type: object
+      properties:
+        client:
+          $ref: '#/components/schemas/ClientEnum'
+        version:
+          type: string
+          maxLength: 20
+        message:
+          type: string
+          maxLength: 500
+        pile:
+          type: string
+          maxLength: 4000
+        ecran:
+          type: string
+          maxLength: 200
+        reference:
+          type: string
+          maxLength: 64
+      required:
+      - client
+      - message
+      - version
+    EtatBase:
+      type: object
+      properties:
+        disponible:
+          type: boolean
+        latence_ms:
+          type: number
+          format: double
+          nullable: true
+        migrations_en_attente:
+          type: integer
+      required:
+      - disponible
+      - latence_ms
+      - migrations_en_attente
+    EtatExploitation:
+      type: object
+      properties:
+        version:
+          type: string
+        environnement:
+          type: string
+        heure_serveur:
+          type: string
+          format: date-time
+        base:
+          $ref: '#/components/schemas/EtatBase'
+        isolation:
+          $ref: '#/components/schemas/EtatIsolation'
+        suivi_erreurs_actif:
+          type: boolean
+        verification_fuites_active:
+          type: boolean
+        format_journaux:
+          type: string
+      required:
+      - base
+      - environnement
+      - format_journaux
+      - heure_serveur
+      - isolation
+      - suivi_erreurs_actif
+      - verification_fuites_active
+      - version
+    EtatIsolation:
+      type: object
+      properties:
+        tables_protegees:
+          type: integer
+        tables_attendues:
+          type: integer
+        role_contourne:
+          type: boolean
+          description: Vrai si le rôle PostgreSQL ignore la sécurité au niveau des
+            lignes.
+      required:
+      - role_contourne
+      - tables_attendues
+      - tables_protegees
     Fin:
       type: object
       properties:

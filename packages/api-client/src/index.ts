@@ -12,6 +12,7 @@ import type {
   Appareil,
   DescriptionAppareil,
   Division,
+  EtatExploitation,
   Informations,
   Jetons,
   Moi,
@@ -40,6 +41,7 @@ export type {
   CodeRole,
   DescriptionAppareil,
   Division,
+  EtatExploitation,
   Informations,
   Jetons,
   Moi,
@@ -63,6 +65,15 @@ export type {
   Utilisateur,
   Zone,
 } from '@innov/api-types';
+
+/** Erreur d'un client signalée au serveur (architecture §19), sans donnée saisie. */
+export interface RapportErreur {
+  message: string;
+  version: string;
+  pile?: string;
+  ecran?: string;
+  reference?: string;
+}
 
 /** Données de création d'un compte (USR-003). */
 export interface NouveauCompte {
@@ -102,6 +113,8 @@ export class ErreurApi extends Error {
     readonly code: string,
     message: string,
     readonly details: Record<string, unknown> = {},
+    /** Référence de la requête, à donner au support (X-Request-Id). */
+    readonly reference: string | null = null,
   ) {
     super(message);
     this.name = 'ErreurApi';
@@ -166,6 +179,7 @@ export function creerClient(options: OptionsClient) {
         donnees.code ?? 'erreur',
         donnees.message ?? `Erreur ${reponse.status}`,
         donnees.details ?? {},
+        donnees.reference ?? reponse.headers.get('X-Request-Id'),
       );
     }
     return donnees as T;
@@ -362,6 +376,25 @@ export function creerClient(options: OptionsClient) {
           methode: 'PUT',
           corps: { valeur },
         }),
+    },
+    /** État technique du service (administrateur technique, siège). */
+    exploitation: () => requete<EtatExploitation>('/api/v1/exploitation/'),
+    /** Signale une erreur du client ; ne lève jamais (le signalement est un renfort). */
+    async signalerErreur(rapport: RapportErreur): Promise<void> {
+      try {
+        await brute<void>('/api/v1/erreurs-clients/', {
+          methode: 'POST',
+          corps: {
+            client: options.client,
+            ...rapport,
+            message: rapport.message.slice(0, 500),
+            pile: rapport.pile?.slice(0, 4000),
+            ecran: rapport.ecran?.slice(0, 200),
+          },
+        });
+      } catch {
+        // Hors ligne ou serveur indisponible : rien à faire de plus.
+      }
     },
     requete,
     estConnecte: () => acces !== null,

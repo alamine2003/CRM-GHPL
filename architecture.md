@@ -679,6 +679,7 @@ Les conflits non résolus sont visibles par le délégué (badge) et par l'admin
 
 - Journaux structurés JSON (niveau, identifiant de requête, utilisateur pseudonymisé, pays, durée) ; aucune donnée personnelle en clair.
 - Rétention des journaux techniques : 30 jours (Render + Sentry) [H].
+- Mise en œuvre (0.0.7) : `apps.socle.journalisation` (format JSON, référence `X-Request-Id` reprise dans chaque erreur, utilisateur pseudonymisé par HMAC) ; les clients signalent leurs plantages à `POST /api/v1/erreurs-clients/` ; Sentry s'active seulement si `SENTRY_DSN` est fourni, sans donnée personnelle ; la page Exploitation du portail expose l'état technique (base, isolation, suivi).
 
 ## 17. Sécurité
 

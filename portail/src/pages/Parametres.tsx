@@ -26,6 +26,7 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
 import { EnTeteCarte, EnTetePage, PastilleIcone } from '../composants/Elements';
+import { ErreurChargement } from '../composants/Erreurs';
 import { useSession } from '../contexteSession';
 
 type Valeur = unknown;
@@ -311,7 +312,7 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
       {!pays ? (
         <Alert severity="info">{t('parametres.choisirPays')}</Alert>
       ) : parametres.isError ? (
-        <Alert severity="error">{t('erreurs.reseau')}</Alert>
+        <ErreurChargement erreur={parametres.error} reessayer={() => void parametres.refetch()} />
       ) : parametres.isPending ? (
         <Skeleton variant="rounded" height={240} />
       ) : (

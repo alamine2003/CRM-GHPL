@@ -37,3 +37,4 @@ export type Appareil = Schemas['Appareil'];
 export type DescriptionAppareil = Schemas['DescriptionAppareil'];
 export type Parametre = Schemas['Parametre'];
 export type StatutPays = Schemas['StatutEnum'];
+export type EtatExploitation = Schemas['EtatExploitation'];

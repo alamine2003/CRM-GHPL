@@ -5,10 +5,12 @@ langue de la requête.
 """
 
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.utils.translation import gettext as _
 from rest_framework import exceptions, status
 from rest_framework.response import Response
+
+from . import journalisation
 
 
 class ErreurMetier(exceptions.APIException):
@@ -40,13 +42,32 @@ CODES_PAR_DEFAUT = {
 }
 
 
+def _erreur_interne() -> dict:
+    ref = journalisation.reference.get()
+    return {
+        "code": "erreur_interne",
+        "message": _(
+            "Une erreur inattendue s'est produite. Si elle se répète, donnez la référence "
+            "%(reference)s au support."
+        )
+        % {"reference": ref},
+        "details": {},
+        "reference": ref,
+    }
+
+
 def gestionnaire_exceptions(exc, contexte):
     # Import tardif : rest_framework.views charge les classes d'authentification au démarrage.
     from rest_framework.views import exception_handler
 
     reponse = exception_handler(exc, contexte)
     if reponse is None:
-        return None
+        # Erreur imprévue : journalisée et suivie, puis une réponse JSON sobre (jamais de
+        # trace technique à l'utilisateur), avec la référence à donner au support.
+        from .suivi import signaler_exception
+
+        signaler_exception(exc)
+        return Response(_erreur_interne(), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     # Les 404 et 403 de Django prennent le code de leur équivalent DRF.
     if isinstance(exc, Http404):
         exc = exceptions.NotFound()
@@ -63,4 +84,23 @@ def gestionnaire_exceptions(exc, contexte):
             code, message = exc.code_metier, str(exc.detail)
         details = reponse.data if isinstance(exc, exceptions.ValidationError) else {}
         corps = {"code": code, "message": message, "details": details}
+    corps["reference"] = journalisation.reference.get()
     return Response(corps, status=reponse.status_code, headers=reponse.headers)
+
+
+def page_introuvable(request, exception=None):
+    """404 hors des vues de l'API (chemin inconnu) : même format JSON que l'API."""
+    return JsonResponse(
+        {
+            "code": "introuvable",
+            "message": _("Ressource introuvable."),
+            "details": {},
+            "reference": journalisation.reference.get(),
+        },
+        status=404,
+    )
+
+
+def erreur_serveur(request):
+    """500 hors des vues de l'API : réponse JSON avec la référence."""
+    return JsonResponse(_erreur_interne(), status=500)

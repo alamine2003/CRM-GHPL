@@ -4,11 +4,14 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import CadreApplication from './composants/CadreApplication';
+import { LimiteErreur } from './composants/Erreurs';
 import { ENTREES } from './composants/navigation';
 import { useSession } from './contexteSession';
 import Accueil from './pages/Accueil';
 import Connexion from './pages/Connexion';
 import Equipe from './pages/Equipe';
+import Exploitation from './pages/Exploitation';
+import Introuvable from './pages/Introuvable';
 import Organisation from './pages/Organisation';
 import Oubli from './pages/Oubli';
 import Parametres from './pages/Parametres';
@@ -32,6 +35,7 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
     titre: 'navigation.profil',
     rendu: (u, p) => <Profil utilisateur={u} perimetre={p} />,
   },
+  '/exploitation': { titre: 'navigation.exploitation', rendu: () => <Exploitation /> },
 };
 
 function Protegee() {
@@ -49,11 +53,18 @@ function Protegee() {
   const { utilisateur, perimetre } = etat;
   const page = PAGES[pathname];
   const entree = ENTREES.find((e) => e.chemin === pathname);
-  const permise = page && (!entree?.visible || entree.visible(perimetre));
-  if (!permise) return <Navigate to="/" replace />;
+  // Une page connue mais non permise renvoie à l'accueil ; une adresse inconnue affiche 404.
+  if (page && entree?.visible && !entree.visible(perimetre)) return <Navigate to="/" replace />;
   return (
-    <CadreApplication utilisateur={utilisateur} perimetre={perimetre} titre={t(page.titre)}>
-      {page.rendu(utilisateur, perimetre)}
+    <CadreApplication
+      utilisateur={utilisateur}
+      perimetre={perimetre}
+      titre={t(page ? page.titre : 'erreurs.introuvableTitre')}
+    >
+      {/* Une page qui plante n'emporte pas le cadre : la navigation reste utilisable. */}
+      <LimiteErreur key={pathname}>
+        {page ? page.rendu(utilisateur, perimetre) : <Introuvable />}
+      </LimiteErreur>
     </CadreApplication>
   );
 }

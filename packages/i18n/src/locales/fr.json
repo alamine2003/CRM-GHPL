@@ -20,7 +20,8 @@
     "jamais": "Jamais",
     "tous": "Tous",
     "copie": "Copié",
-    "voir": "Voir"
+    "voir": "Voir",
+    "enregistre": "Modification enregistrée."
   },
   "accueil": {
     "titre": "Bienvenue",
@@ -88,7 +89,18 @@
     "chargement": "Chargement…"
   },
   "erreurs": {
-    "reseau": "Service injoignable. Vérifiez votre connexion et réessayez."
+    "reseau": "Service injoignable. Vérifiez votre connexion et réessayez.",
+    "titre": "Quelque chose s’est mal passé",
+    "texte": "L'erreur a été signalée à l'équipe technique. Rechargez la page ; si elle revient, donnez la référence ci-dessous au support.",
+    "reference": "Référence : {{reference}}",
+    "recharger": "Recharger la page",
+    "accueil": "Retour à l'accueil",
+    "reessayer": "Réessayer",
+    "chargement": "Impossible de charger ces informations.",
+    "horsLigne": "Vous êtes hors connexion. Les informations affichées peuvent ne pas être à jour.",
+    "retourEnLigne": "Connexion rétablie.",
+    "introuvableTitre": "Page introuvable",
+    "introuvableTexte": "Cette adresse ne correspond à aucune page, ou vous n'y avez pas accès."
   },
   "navigation": {
     "menu": "Menu",
@@ -107,7 +119,8 @@
       "administration": "Administration"
     },
     "pays": "Pays",
-    "profil": "Mon profil"
+    "profil": "Mon profil",
+    "exploitation": "Exploitation"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -449,5 +462,33 @@
     "confirmerArchivage": "{{pays}} passera en lecture seule pour le siège. Ce changement est définitif.",
     "depuis": "Ouvert le {{date}}",
     "ouvrir": "Travailler sur ce pays"
+  },
+  "exploitation": {
+    "titre": "Exploitation",
+    "sousTitre": "État technique du service : base, isolation des pays, suivi des erreurs.",
+    "toutVaBien": "Tout est opérationnel",
+    "pointsAttention_one": "{{count}} point d’attention",
+    "pointsAttention_other": "{{count}} points d’attention",
+    "misAJour": "Mis à jour {{quand}}",
+    "actualiser": "Actualiser",
+    "service": "Service",
+    "version": "Version",
+    "environnement": "Environnement",
+    "base": "Base de données",
+    "latence": "Temps de réponse",
+    "migrations": "Migrations en attente",
+    "isolation": "Isolation des pays",
+    "tablesProtegees": "Tables protégées",
+    "roleContourne": "Le rôle de la base contourne l'isolation : à corriger avant la mise en ligne.",
+    "roleConforme": "Le rôle de la base respecte l’isolation.",
+    "suivi": "Suivi des erreurs",
+    "suiviActif": "Sentry actif",
+    "suiviInactif": "Journaux seulement : ajoutez SENTRY_DSN pour être alerté.",
+    "fuites": "Vérification des fuites de mots de passe",
+    "journaux": "Journaux techniques",
+    "actif": "Active",
+    "inactif": "Inactive",
+    "ok": "OK",
+    "attention": "À vérifier"
   }
 }

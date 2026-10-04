@@ -57,6 +57,7 @@ import {
   Tuile,
 } from '../composants/Elements';
 import { initiales } from '../composants/initiales';
+import { ErreurChargement } from '../composants/Erreurs';
 import { useSession } from '../contexteSession';
 
 const TYPES_POSTE: TypePoste[] = ['vm', 'vm_otc', 'kam', 'dermo'];
@@ -935,7 +936,7 @@ export default function Organisation({ perimetre }: { perimetre: Perimetre }) {
       </Box>
 
       {erreur ? (
-        <Alert severity="error">{erreur.error?.message ?? t('erreurs.reseau')}</Alert>
+        <ErreurChargement erreur={erreur.error} reessayer={() => void erreur.refetch()} />
       ) : chargement ? (
         <Stack spacing={1.5}>
           {[0, 1, 2].map((i) => (

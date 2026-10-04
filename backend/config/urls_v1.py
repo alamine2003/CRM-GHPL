@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularAPIView
 
 from apps.identite import vues_comptes as comptes
 from apps.organisation import vues as org
+from apps.socle import vues_exploitation as exploitation
 from apps.socle import vues_pays as pays
 from apps.socle.views import InformationsView
 
@@ -14,6 +15,8 @@ urlpatterns = [
     path("auth/", include("apps.identite.urls")),
     path("auth/perimetre/", comptes.PerimetreVue.as_view(), name="perimetre"),
     path("informations/", InformationsView.as_view(), name="informations"),
+    path("erreurs-clients/", exploitation.ErreursClientsVue.as_view(), name="erreurs-clients"),
+    path("exploitation/", exploitation.ExploitationVue.as_view(), name="exploitation"),
     # Pays et paramètres (ORG-001, ORG-011)
     path("pays/", pays.PaysListeVue.as_view(), name="pays-liste"),
     path("pays/<str:code>/", pays.PaysDetailVue.as_view(), name="pays-detail"),

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 12:36+0000\n"
+"POT-Creation-Date: 2026-10-04 12:56+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -266,6 +266,14 @@ msgstr "Too many attempts, try again later."
 
 msgid "Données invalides."
 msgstr "Invalid data."
+
+#, python-format
+msgid ""
+"Une erreur inattendue s'est produite. Si elle se répète, donnez la référence"
+" %(reference)s au support."
+msgstr ""
+"An unexpected error occurred. If it happens again, give reference "
+"%(reference)s to support."
 
 msgid "Bienvenue dans INNOV CRM."
 msgstr "Welcome to INNOV CRM."

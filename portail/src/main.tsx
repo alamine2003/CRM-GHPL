@@ -4,11 +4,15 @@ import { StrictMode, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
 import App from './App';
+import { LimiteErreur } from './composants/Erreurs';
+import FournisseurNotifications from './composants/Notifications';
 import './i18n';
 import { FournisseurSession } from './session';
+import { surveillerErreursGlobales } from './signalement';
 import { creerTheme } from './theme';
 
 const clientRequetes = new QueryClient();
+surveillerErreursGlobales();
 
 function Racine() {
   const sombre = useMediaQuery('(prefers-color-scheme: dark)');
@@ -18,9 +22,13 @@ function Racine() {
       <CssBaseline />
       <QueryClientProvider client={clientRequetes}>
         <BrowserRouter>
-          <FournisseurSession>
-            <App />
-          </FournisseurSession>
+          <LimiteErreur>
+            <FournisseurNotifications>
+              <FournisseurSession>
+                <App />
+              </FournisseurSession>
+            </FournisseurNotifications>
+          </LimiteErreur>
         </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>

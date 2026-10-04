@@ -103,6 +103,7 @@ INNOV_AUTH = {
 }
 
 MIDDLEWARE = [
+    "apps.socle.journalisation.ReferenceRequete",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -112,6 +113,46 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+
+# Journaux techniques : JSON sur la sortie standard (Render les collecte), sans donnée
+# personnelle en clair (architecture §16.3). JOURNAUX_LISIBLES=1 en local pour du texte.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {"()": "apps.socle.journalisation.FormatJSON"},
+        "texte": {"format": "%(levelname)s %(name)s %(message)s"},
+    },
+    "handlers": {
+        "sortie": {
+            "class": "logging.StreamHandler",
+            "formatter": "texte" if env_bool("JOURNAUX_LISIBLES") else "json",
+        }
+    },
+    "root": {"handlers": ["sortie"], "level": os.environ.get("NIVEAU_JOURNAUX", "INFO")},
+    "loggers": {
+        # Les requêtes sont déjà journalisées par ReferenceRequete, avec leur référence.
+        "django.request": {"level": "ERROR"},
+        "django.server": {"level": "WARNING"},
+    },
+}
+
+# Suivi des erreurs (architecture §19) : actif seulement si SENTRY_DSN est fourni par
+# l'hébergeur. Aucune donnée personnelle n'est envoyée.
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+if SENTRY_DSN:
+    import sentry_sdk
+
+    from apps.socle.suivi import avant_envoi
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=ENVIRONNEMENT,
+        release=f"innov-crm@{INNOV_VERSION}",
+        send_default_pii=False,
+        traces_sample_rate=float(os.environ.get("SENTRY_ECHANTILLON_TRACES", "0")),
+        before_send=avant_envoi,
+    )
 WSGI_APPLICATION = "config.wsgi.application"
 
 TEMPLATES = [
@@ -149,7 +190,11 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "UNAUTHENTICATED_USER": None,
     "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.ScopedRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"connexion": "20/min", "recuperation": "5/min"},
+    "DEFAULT_THROTTLE_RATES": {
+        "connexion": "20/min",
+        "recuperation": "5/min",
+        "erreurs_clients": "30/min",
+    },
     "EXCEPTION_HANDLER": "apps.socle.erreurs.gestionnaire_exceptions",
 }
 

@@ -239,6 +239,7 @@ class Generateur:
     def tout(self, volumes: Volumes, pays_secondaires: tuple[str, ...] = ("TG",)) -> Bilan:
         self.premier("admin_siege", self.personne(None, Role.ADMIN_SIEGE))
         self.premier("direction_siege", self.personne(None, Role.DIRECTION_SIEGE))
+        self.premier("admin_technique", self.personne(None, Role.ADMIN_TECHNIQUE))
         self.pays("SN", volumes)
         for code in pays_secondaires:
             self.pays(code, volumes.reduits(0.2))

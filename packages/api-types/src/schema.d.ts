@@ -186,6 +186,45 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/erreurs-clients/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Le portail et l'application signalent leurs plantages (architecture §19).
+     *
+     *     Ouvert sans session (une erreur peut survenir avant la connexion), limité en débit ;
+     *     le rapport ne contient ni donnée saisie ni identité.
+     */
+    post: operations['erreur_client'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/exploitation/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description État technique du service pour l'administrateur technique et le siège (prd.md §6.1). */
+    get: operations['exploitation_etat'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/informations/': {
     parameters: {
       query?: never;
@@ -902,6 +941,37 @@ export interface components {
       libelle: string;
       readonly archive: boolean;
     };
+    ErreurClient: {
+      client: components['schemas']['ClientEnum'];
+      version: string;
+      message: string;
+      pile?: string;
+      ecran?: string;
+      reference?: string;
+    };
+    EtatBase: {
+      disponible: boolean;
+      /** Format: double */
+      latence_ms: number | null;
+      migrations_en_attente: number;
+    };
+    EtatExploitation: {
+      version: string;
+      environnement: string;
+      /** Format: date-time */
+      heure_serveur: string;
+      base: components['schemas']['EtatBase'];
+      isolation: components['schemas']['EtatIsolation'];
+      suivi_erreurs_actif: boolean;
+      verification_fuites_active: boolean;
+      format_journaux: string;
+    };
+    EtatIsolation: {
+      tables_protegees: number;
+      tables_attendues: number;
+      /** @description Vrai si le rôle PostgreSQL ignore la sécurité au niveau des lignes. */
+      role_contourne: boolean;
+    };
     Fin: {
       /** Format: date */
       fin?: string;
@@ -1507,6 +1577,49 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Jetons'];
+        };
+      };
+    };
+  };
+  erreur_client: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ErreurClient'];
+        'application/x-www-form-urlencoded': components['schemas']['ErreurClient'];
+        'multipart/form-data': components['schemas']['ErreurClient'];
+      };
+    };
+    responses: {
+      /** @description No response body */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  exploitation_etat: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EtatExploitation'];
         };
       };
     };

@@ -59,6 +59,13 @@ INNOV_DEMO_MOT_DE_PASSE='…' .venv/bin/python manage.py reinitialiser_demo --ou
 
 La commande affiche un compte par rôle (siège, responsable et administrateur pays, DF, DM, superviseur, délégué). Sans la variable, un mot de passe est tiré au hasard et affiché une fois. Les courriels finissent en `@demo.invalid` : aucun message ne peut partir vers une vraie boîte.
 
+## Exploitation
+
+- Journaux : JSON sur la sortie standard (une ligne par requête, utilisateur pseudonymisé). En local, `JOURNAUX_LISIBLES=1` pour du texte.
+- Suivi des erreurs : fournir `SENTRY_DSN` à l'hébergeur pour l'activer ; sans lui, les erreurs restent dans les journaux.
+- Mise en ligne : `python manage.py check --deploy --database default` vérifie notamment que le rôle PostgreSQL de l'application ne contourne pas l'isolation des pays.
+- Le portail affiche l'état technique dans **Exploitation** (administrateur technique et siège).
+
 ## Vérifier
 
 ```bash

@@ -5,6 +5,7 @@ import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import HomeRounded from '@mui/icons-material/HomeRounded';
+import MonitorHeartRounded from '@mui/icons-material/MonitorHeartRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import PublicRounded from '@mui/icons-material/PublicRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
@@ -61,5 +62,12 @@ export const ENTREES: Entree[] = [
     section: 'administration',
     chemin: '/pays',
     visible: estSiege,
+  },
+  {
+    cle: 'exploitation',
+    icone: <MonitorHeartRounded />,
+    section: 'administration',
+    chemin: '/exploitation',
+    visible: peut('exploitation.lire'),
   },
 ];

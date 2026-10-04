@@ -552,3 +552,117 @@ describe('portail — administration 0.0.6 (USR-003, USR-004, USR-006, ORG-011)'
     );
   });
 });
+
+vi.mock('./signalement', () => ({
+  signalerErreur: vi.fn(),
+  surveillerErreursGlobales: vi.fn(),
+}));
+
+describe('portail — erreurs et exploitation (0.0.7)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const TECHNIQUE: Perimetre = {
+    pays_actif: null,
+    vue_consolidee: false,
+    roles: ['admin_technique'],
+    actions: ['exploitation.lire'],
+    pays_accessibles: [],
+  };
+  const ETAT = {
+    version: '0.0.7',
+    environnement: 'production',
+    heure_serveur: '2026-10-04T12:00:00Z',
+    base: { disponible: true, latence_ms: 1.2, migrations_en_attente: 0 },
+    isolation: { tables_protegees: 10, tables_attendues: 10, role_contourne: false },
+    suivi_erreurs_actif: true,
+    verification_fuites_active: true,
+    format_journaux: 'json',
+  };
+
+  it('une adresse inconnue affiche une page 404 dans le cadre', async () => {
+    rendre(fauxClient({ reprendre: vi.fn(async () => JETONS) }), '/nulle-part');
+    expect(await screen.findByRole('heading', { name: 'Page introuvable' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: "Retour à l'accueil" })).toBeInTheDocument();
+  });
+
+  it('l’administrateur technique voit l’état du service', async () => {
+    rendre(
+      fauxClient({
+        reprendre: vi.fn(async () => JETONS),
+        perimetre: vi.fn(async () => TECHNIQUE),
+        exploitation: vi.fn(async () => ETAT),
+      } as Partial<ClientApi>),
+      '/exploitation',
+    );
+    expect(await screen.findByText('Tout est opérationnel')).toBeInTheDocument();
+    expect(screen.getByText('10 / 10')).toBeInTheDocument();
+  });
+
+  it('signale les points d’attention', async () => {
+    const degrade = {
+      ...ETAT,
+      isolation: { ...ETAT.isolation, role_contourne: true },
+      suivi_erreurs_actif: false,
+    };
+    rendre(
+      fauxClient({
+        reprendre: vi.fn(async () => JETONS),
+        perimetre: vi.fn(async () => TECHNIQUE),
+        exploitation: vi.fn(async () => degrade),
+      } as Partial<ClientApi>),
+      '/exploitation',
+    );
+    expect(await screen.findByText('2 points d’attention')).toBeInTheDocument();
+    expect(screen.getByText(/contourne l'isolation/)).toBeInTheDocument();
+  });
+
+  it('une page qui plante affiche l’écran d’erreur et la signale, sans emporter le cadre', async () => {
+    const { signalerErreur } = await import('./signalement');
+    rendre(
+      fauxClient({
+        reprendre: vi.fn(async () => JETONS),
+        perimetre: vi.fn(async () => TECHNIQUE),
+        // Réponse malformée : la page lève pendant son rendu.
+        exploitation: vi.fn(async () => ({ version: '0.0.7' })),
+      } as unknown as Partial<ClientApi>),
+      '/exploitation',
+    );
+    expect(
+      await screen.findByRole('heading', { name: 'Quelque chose s’est mal passé' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^Référence : /)).toBeInTheDocument();
+    expect(signalerErreur).toHaveBeenCalled();
+    // Le cadre (barre supérieure, menu) reste là.
+    expect(screen.getByRole('button', { name: 'Menu' })).toBeInTheDocument();
+  });
+
+  it('une erreur de chargement montre le message, la référence et « Réessayer »', async () => {
+    const utilisateurs = vi.fn(async () => {
+      throw new ErreurApi(
+        500,
+        'erreur_interne',
+        'Une erreur inattendue s’est produite.',
+        {},
+        'ref1234567',
+      );
+    });
+    rendre(
+      fauxClient({
+        reprendre: vi.fn(async () => JETONS),
+        perimetre: vi.fn(async () => ({
+          ...PERIMETRE_DELEGUE,
+          roles: ['admin_pays'],
+          actions: ['utilisateurs.lire'],
+        })),
+        utilisateurs,
+        appareils: { liste: vi.fn(async () => []) } as unknown as ClientApi['appareils'],
+      } as Partial<ClientApi>),
+      '/equipe',
+    );
+    expect(await screen.findByText('Référence : ref1234567')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+    await vi.waitFor(() => expect(utilisateurs).toHaveBeenCalledTimes(2));
+  });
+});

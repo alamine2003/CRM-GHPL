@@ -10,6 +10,7 @@ from rest_framework import exceptions
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken
 
+from apps.socle import journalisation
 from apps.socle.erreurs import ErreurMetier
 
 from .models import Session
@@ -39,6 +40,7 @@ class AuthentificationSession(JWTAuthentication):
             echec.code_metier = erreur.code
             raise echec from erreur
         request.session_innov = session
+        journalisation.utilisateur.set(journalisation.pseudonyme(session.utilisateur_id))
         return session.utilisateur, jeton
 
     def authenticate_header(self, request):

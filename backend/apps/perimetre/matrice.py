@@ -28,6 +28,7 @@ class Action(StrEnum):
     ORGANISATION_GERER = "organisation.gerer"
     AFFECTATIONS_GERER = "affectations.gerer"
     APPAREILS_REVOQUER = "appareils.revoquer"
+    EXPLOITATION_LIRE = "exploitation.lire"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -62,4 +63,10 @@ MATRICE: dict[Action, frozenset[str]] = {
     # « Effacer à distance un appareil » : siège et administrateur pays. La révocation
     # (USR-006 CA2) en est la première étape ; l'effacement des données locales suit en 0.8.
     Action.APPAREILS_REVOQUER: frozenset({Role.ADMIN_SIEGE, Role.ADMIN_PAYS}),
+    # État technique du service [H] : l'administrateur technique « exploite et surveille »
+    # (prd.md §6.1) ; l'administrateur du siège le consulte aussi. Aucune donnée métier.
+    Action.EXPLOITATION_LIRE: frozenset({Role.ADMIN_TECHNIQUE, Role.ADMIN_SIEGE}),
 }
+
+#: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.
+ACTIONS_TECHNIQUES = frozenset({Action.EXPLOITATION_LIRE})

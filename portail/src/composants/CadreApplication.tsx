@@ -25,6 +25,7 @@ import { type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as LienNavigation, useLocation } from 'react-router';
 import { useSession } from '../contexteSession';
+import BanniereHorsLigne from './BanniereHorsLigne';
 import ChoixLangue from './ChoixLangue';
 import { initiales } from './initiales';
 import Logo from './Logo';
@@ -335,6 +336,7 @@ export default function CadreApplication({
           <ChoixLangue />
           <MenuUtilisateur utilisateur={utilisateur} />
         </Box>
+        <BanniereHorsLigne />
         <Box
           component="main"
           sx={{ px: { xs: 2, md: 3.5 }, py: { xs: 2.5, md: 3 }, maxWidth: 1240 }}

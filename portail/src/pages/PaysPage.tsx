@@ -1,17 +1,7 @@
 import type { Pays, Perimetre, StatutPays } from '@innov/api-client';
 import AddRounded from '@mui/icons-material/AddRounded';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  Chip,
-  Skeleton,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Button, Card, Chip, Skeleton, Stack, TextField, Typography } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +9,7 @@ import { useNavigate } from 'react-router';
 import DialogueFormulaire from '../composants/Dialogue';
 import { EnTetePage } from '../composants/Elements';
 import { dateCourte, drapeau } from '../composants/formats';
+import { ErreurChargement } from '../composants/Erreurs';
 import { useSession } from '../contexteSession';
 
 const COULEUR: Record<StatutPays, 'success' | 'warning' | 'default'> = {
@@ -60,7 +51,7 @@ export default function PaysPage({ perimetre }: { perimetre: Perimetre }) {
         }
       />
       {liste.isError ? (
-        <Alert severity="error">{t('erreurs.reseau')}</Alert>
+        <ErreurChargement erreur={liste.error} reessayer={() => void liste.refetch()} />
       ) : liste.isPending ? (
         <Skeleton variant="rounded" height={180} />
       ) : (

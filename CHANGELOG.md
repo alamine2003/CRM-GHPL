@@ -2,9 +2,29 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
-## [Non publié] — Sécurité renforcée (décisions du 4 octobre 2026)
+## [0.0.7] — Erreurs, journaux, suivi, isolation renforcée ; design enrichi
 
-### Ajouté
+Septième jalon du cycle 0.0 « Fondations ».
+
+### Ajouté — gestion des erreurs
+
+- **Référence de requête** : chaque réponse porte un en-tête `X-Request-Id`, repris dans toute erreur (`reference`) ; l'utilisateur peut la donner au support, qui la retrouve dans les journaux et le suivi.
+- **Erreur inattendue** : réponse JSON sobre (`erreur_interne`, message traduit avec la référence), jamais de trace technique ; un chemin inconnu de l'API répond aussi en JSON (`introuvable`).
+- **Portail** : écran « Quelque chose s'est mal passé » (référence, recharger, retour à l'accueil) — une page qui plante n'emporte plus le cadre ni la navigation ; page 404 ; erreurs de chargement avec message, référence et bouton « Réessayer » ; notification « Modification enregistrée. » après chaque enregistrement ; bannière quand le réseau tombe et message quand il revient.
+- **Mobile** : écran d'erreur avec référence et « Réessayer », sans fermeture de l'application.
+
+### Ajouté — journaux et suivi des erreurs (architecture §16.3, §19)
+
+- **Journaux techniques JSON** : une ligne par requête (méthode, chemin, statut, durée, référence, pays) ; l'utilisateur n'apparaît que sous un pseudonyme (empreinte HMAC), jamais son nom ni son identifiant. `JOURNAUX_LISIBLES=1` donne du texte en local.
+- **Signalement des plantages** du portail et du mobile au serveur (`POST /api/v1/erreurs-clients/`, limité en débit, sans donnée saisie ni paramètre d'adresse).
+- **Sentry, prêt mais désactivé** : il s'active seulement si l'hébergeur fournit `SENTRY_DSN` ; rien de personnel n'est envoyé (en-têtes d'authentification, cookies et corps retirés).
+- **Page Exploitation** (administrateur technique et siège) : état de la base (temps de réponse, migrations en attente), isolation des pays (tables protégées, rôle de base conforme), suivi des erreurs, vérification des fuites de mots de passe, format des journaux ; synthèse « Tout est opérationnel » ou « N points d'attention ». [H] action `exploitation.lire`, technique, sans donnée métier.
+
+### Ajouté — isolation
+
+- **Premiers tests d'isolation systématiques** : un administrateur du Togo essaie chaque route qui désigne un objet, avec des identifiants du Sénégal, et chaque liste ; une nouvelle route sans cas de test fait échouer la suite.
+
+### Ajouté — sécurité (décisions du 4 octobre 2026)
 
 - **Sécurité au niveau des lignes PostgreSQL** (ADR-003, architecture §12, couche 2) : chaque table rattachée à un pays (organisation, paramètres, journal des changements) n'accepte, pendant une requête métier, que les lignes du pays actif — en lecture comme en écriture, même si un filtre applicatif manquait. Le siège reste autorisé sur tous les pays ; un utilisateur sans rôle ne voit rien. Les tests s'exécutent sous un rôle PostgreSQL ordinaire ; un test échoue si une nouvelle table de pays n'est pas protégée ; `check --deploy` signale un rôle de base qui contournerait ces règles.
 - **Mots de passe compromettants refusés** (SEC-001) : un mot de passe ne peut plus contenir un mot de la liste `mots_compromettants.txt` (nom de l'entreprise, mots du métier, pays et villes des filiales, mots de passe courants), même déguisé (« D@k4r », « P4ssw0rd ») ; message : « Ce mot de passe peut être compromettant : il contient « dakar » ». Hors développement, un mot de passe paru dans des fuites publiques est aussi refusé (Have I Been Pwned, k-anonymat : seuls 5 caractères de son empreinte quittent le serveur) ; si ce service ne répond pas, la vérification n'empêche pas l'utilisateur d'avancer.
@@ -12,6 +32,10 @@ Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `
 ### Sécurité du dépôt
 
 - Historique de la branche réécrit : les anciens mots de passe de test et l'adresse de base de données avec mot de passe de la CI, signalés par GitGuardian, n'existent plus dans aucun commit.
+
+### Corrigé
+
+- `/api/v1/pays/<code>/designations/` répondait 200 (liste vide) pour un pays hors périmètre au lieu de 404 : trouvé par la nouvelle suite d'isolation.
 
 ## [0.0.6] — Navigation, accueil par rôle, administration, appareils et démonstration ; design enrichi
 

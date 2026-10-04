@@ -20,7 +20,8 @@
     "jamais": "Never",
     "tous": "All",
     "copie": "Copied",
-    "voir": "View"
+    "voir": "View",
+    "enregistre": "Change saved."
   },
   "accueil": {
     "titre": "Welcome",
@@ -88,7 +89,18 @@
     "chargement": "Loading…"
   },
   "erreurs": {
-    "reseau": "Service unreachable. Check your connection and try again."
+    "reseau": "Service unreachable. Check your connection and try again.",
+    "titre": "Something went wrong",
+    "texte": "The error was reported to the technical team. Reload the page; if it happens again, give the reference below to support.",
+    "reference": "Reference: {{reference}}",
+    "recharger": "Reload the page",
+    "accueil": "Back to home",
+    "reessayer": "Try again",
+    "chargement": "Unable to load this information.",
+    "horsLigne": "You are offline. The information shown may be out of date.",
+    "retourEnLigne": "Back online.",
+    "introuvableTitre": "Page not found",
+    "introuvableTexte": "This address does not match any page, or you do not have access to it."
   },
   "navigation": {
     "menu": "Menu",
@@ -107,7 +119,8 @@
       "administration": "Administration"
     },
     "pays": "Countries",
-    "profil": "My profile"
+    "profil": "My profile",
+    "exploitation": "Operations"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -449,5 +462,33 @@
     "confirmerArchivage": "{{pays}} will become read-only for headquarters. This change is final.",
     "depuis": "Opened on {{date}}",
     "ouvrir": "Work on this country"
+  },
+  "exploitation": {
+    "titre": "Operations",
+    "sousTitre": "Technical state of the service: database, country isolation, error tracking.",
+    "toutVaBien": "Everything is operational",
+    "pointsAttention_one": "{{count}} point to check",
+    "pointsAttention_other": "{{count}} points to check",
+    "misAJour": "Updated {{quand}}",
+    "actualiser": "Refresh",
+    "service": "Service",
+    "version": "Version",
+    "environnement": "Environment",
+    "base": "Database",
+    "latence": "Response time",
+    "migrations": "Pending migrations",
+    "isolation": "Country isolation",
+    "tablesProtegees": "Protected tables",
+    "roleContourne": "The database role bypasses isolation: fix before going live.",
+    "roleConforme": "The database role enforces isolation.",
+    "suivi": "Error tracking",
+    "suiviActif": "Sentry active",
+    "suiviInactif": "Logs only: add SENTRY_DSN to be alerted.",
+    "fuites": "Password breach check",
+    "journaux": "Technical logs",
+    "actif": "Active",
+    "inactif": "Inactive",
+    "ok": "OK",
+    "attention": "To check"
   }
 }

@@ -246,7 +246,11 @@ class DesignationsVue(VuePerimetre):
 
     @extend_schema(responses=RoleSerializer(many=True), operation_id="designations_liste")
     def get(self, request, code):
-        roles = self.get_queryset().filter(pays__code=code.upper())
+        # Un pays hors du périmètre répond 404, comme tout objet invisible (USR-002 CA2).
+        pays = get_object_or_404(
+            self.perimetre.filtrer_par_pays(Pays.objects.all(), champ="pk"), code=code.upper()
+        )
+        roles = self.get_queryset().filter(pays=pays)
         return Response(RoleSerializer(roles, many=True).data)
 
 

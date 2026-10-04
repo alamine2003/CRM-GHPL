@@ -3,7 +3,7 @@
 import pytest
 
 from apps.identite.models import Role
-from apps.perimetre.matrice import MATRICE, Action
+from apps.perimetre.matrice import ACTIONS_TECHNIQUES, MATRICE, Action
 
 from .conftest import client_de
 
@@ -31,6 +31,7 @@ ATTENDU = {
     },  # fmt: skip
     Action.AFFECTATIONS_GERER: {"admin_siege"},
     Action.APPAREILS_REVOQUER: {"admin_siege", "admin_pays"},
+    Action.EXPLOITATION_LIRE: {"admin_technique", "admin_siege"},
     Action.PAYS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -49,7 +50,8 @@ def test_la_matrice_suit_le_prd():
 
 
 def test_l_administrateur_technique_n_a_aucune_action_metier():
-    assert all(Role.ADMIN_TECHNIQUE not in roles for roles in MATRICE.values())
+    metier = {a: r for a, r in MATRICE.items() if a not in ACTIONS_TECHNIQUES}
+    assert all(Role.ADMIN_TECHNIQUE not in roles for roles in metier.values())
 
 
 COMPTE_PAR_ROLE = {
@@ -78,6 +80,7 @@ REQUETES = {
     ),  # fmt: skip
     Action.UTILISATEURS_LIRE: ("get", "/api/v1/utilisateurs/", None, 200),
     Action.ORGANISATION_LIRE: ("get", "/api/v1/organisation/postes/", None, 200),
+    Action.EXPLOITATION_LIRE: ("get", "/api/v1/exploitation/", None, 200),
     Action.ORGANISATION_GERER: ("post", "/api/v1/organisation/zones/", {"libelle": "Nord"}, 201),
     Action.UTILISATEURS_GERER: (
         "post",
