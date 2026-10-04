@@ -36,7 +36,7 @@ def test_un_pays_ouvert_recoit_ses_listes_dans_sa_langue(monde):
     codes = set(
         Valeur.objects.filter(pays=sn, liste=Liste.TYPE_PROSPECT).values_list("code", flat=True)
     )
-    assert codes == {"medecin", "paramedical", "pharmacie", "autre"}
+    assert codes == {"medecin", "paramedical", "pharmacie", "grossiste"}
     cardio = Valeur.objects.get(pays=sn, liste=Liste.SPECIALITE, code="cardiologie")
     assert cardio.parent.code == "medecin"
     # Sage-femme et infirmier sont des spécialités paramédicales, comme sur le terrain.

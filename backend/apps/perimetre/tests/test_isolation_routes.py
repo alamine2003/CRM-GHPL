@@ -62,7 +62,7 @@ def senegal(monde):
     from apps.prospects.services import creer_prospect
     from apps.referentiel.models import Valeur
 
-    medecin = Valeur.objects.get(pays=sn, liste="type_prospect", code="autre")
+    medecin = Valeur.objects.get(pays=sn, liste="type_prospect", code="grossiste")
     prospect = creer_prospect(sn, monde["admin.sn"], actif=True, nom="Ndiaye", type=medecin,
                               potentiel="A")  # fmt: skip
     from apps.prospects.services import creer_etablissement

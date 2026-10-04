@@ -194,6 +194,9 @@ class ImportBirdNotes:
         for ligne in self.table("Localites"):
             secteur = self.secteurs.get(K.cle(ligne.get("Secteur")))
             nom = (ligne.get("Localité") or "").strip()
+            if K.LOCALITES_FICTIVES.match(K.cle(nom)):
+                self.rapport.compter("localites", "fictives_ignorees")
+                continue
             if secteur is None or not nom:
                 self.rapport.signaler(
                     "localite", ligne.get("ID localité"),
@@ -381,12 +384,14 @@ class ImportBirdNotes:
 
     # --- 4. prospects ----------------------------------------------------------------------------
 
-    def prospect(self, ligne: dict, statut: str, doublons: dict) -> None:
+    def prospect(self, ligne: dict, statut: str, doublons: dict, homonymes: dict) -> None:
         ident = ligne.get("ID prospect")
         if self.deja("prospect", ident):
             self.rapport.compter("prospects", "existants")
             return
-        nom = (ligne.get("Nom") or "").strip() or (ligne.get("Nom complet") or "").strip()
+        titre, prenom, nom, a_separer = K.extraire_titre(
+            ligne.get("Prénom"), (ligne.get("Nom") or "").strip() or ligne.get("Nom complet")
+        )
         if not nom:
             self.rapport.signaler("prospect", ident, _("Prospect sans nom."), "rejet")
             return
@@ -403,7 +408,7 @@ class ImportBirdNotes:
             if specialite and specialite.parent_id
             else self.valeur(
                 Liste.TYPE_PROSPECT,
-                K.TYPES_PROSPECT.get(K.cle(ligne.get("Type prospect")), "autre"),
+                K.TYPES_PROSPECT.get(K.cle(ligne.get("Type prospect"))),
             )
         )
         if type_ is None:
@@ -425,14 +430,22 @@ class ImportBirdNotes:
         grade = self.valeur(Liste.GRADE, K.GRADES.get(K.cle(ligne.get("Grade"))))
         secteur, localite = self.lieu(ligne.get("Secteur"), ligne.get("Localité"))
         mobile, pro = self.telephones("prospect", ident, ligne.get("GSM"), ligne.get("Téléphone"))
-        civilite = (
+        civilite = titre or (
             "pr" if grade and grade.code.startswith("professeur")
             else "dr" if grade and grade.code == "docteur" else ""
         )  # fmt: skip
+        if a_separer:
+            self.rapport.compter("prospects", "prenom_a_separer")
+            self.rapport.signaler(
+                "prospect", ident,
+                _("Titre saisi à la place du prénom : prénom et nom à séparer à la main."),
+            )  # fmt: skip
+        if K.LOCALITES_FICTIVES.match(K.cle(ligne.get("Localité"))):
+            self.rapport.compter("prospects", "localite_a_preciser")
         fiche = Prospect(
-            pays=self.pays, civilite=civilite, nom=nom.title(),
-            prenom=(ligne.get("Prénom") or "").strip().title(),
-            nom_normalise=prs.normaliser_nom(ligne.get("Prénom") or "", nom),
+            pays=self.pays, civilite=civilite, nom=prs.ecrire_nom(nom),
+            prenom=prs.ecrire_prenom(prenom),
+            nom_normalise=prs.normaliser_nom(prenom, nom),
             type=type_, specialite=specialite, potentiel=potentiel, grade=grade,
             activite={"H": Activite.HOSPITALIER, "P": Activite.PRIVE}.get(
                 ligne.get("Activité (H/P)") or "", ""
@@ -450,22 +463,55 @@ class ImportBirdNotes:
             etablissement=ligne.get("Établissement"),
             delegues=ligne.get("Délégués affectés"),
             groupe_doublons=doublons.get(str(ident)),
+            homonymes=homonymes.get(str(ident)),
             gps=[latitude, longitude] if latitude and longitude else None,
         )  # fmt: skip
         self.rapport.compter("prospects", "crees")
+
+    def homonymes(self, lignes: list[dict]) -> dict[str, str]:
+        """Fiches au même nom une fois le titre retiré (1 136 groupes dans l'export du
+        4 octobre 2026) : gardées ensemble pour la file des doublons, où le superviseur tranche
+        (décision du 4 octobre 2026). Rien n'est fusionné à l'import."""
+        par_nom: dict[str, list[str]] = defaultdict(list)
+        for ligne in lignes:
+            _civ, prenom, nom, _sep = K.extraire_titre(
+                ligne.get("Prénom"), (ligne.get("Nom") or "") or ligne.get("Nom complet")
+            )
+            if cle := prs.normaliser_nom(prenom, nom):
+                par_nom[cle].append(str(ligne.get("ID prospect")))
+        groupes = [ids for ids in par_nom.values() if len(ids) > 1]
+        if groupes:
+            self.rapport.signaler(
+                "prospect", _("{n} groupes").format(n=len(groupes)),
+                _("Fiches au même nom ({n}) : gardées pour la file des doublons, où le "
+                  "superviseur tranchera (0.1.8).").format(n=sum(map(len, groupes))),
+            )  # fmt: skip
+        return {ident: f"H{i}" for i, ids in enumerate(groupes, 1) for ident in ids}
 
     def prospects(self) -> None:
         doublons = {
             str(r.get("ID prospect")): r.get("Groupe") for r in self.table("Doublons prospects")
         }
+        creations = [
+            *self.table("Prospects"),
+            *(r for r in self.table("Prospects en attente") if not r.get("ID prospect d'origine")),
+        ]
+        homonymes = self.homonymes(creations)
         for ligne in self.table("Prospects"):
-            self.prospect(ligne, StatutFiche.ACTIF, doublons)
+            self.prospect(ligne, StatutFiche.ACTIF, doublons, homonymes)
         for ligne in self.table("Prospects en attente"):
             if ligne.get("ID prospect d'origine"):
                 # Demande de modification d'une fiche : reprise avec les propositions (0.1.8).
                 self.rapport.compter("demandes_modification", "non_reprises")
                 continue
-            self.prospect(ligne, StatutFiche.A_VALIDER, doublons)
+            self.prospect(ligne, StatutFiche.A_VALIDER, doublons, homonymes)
+        compteurs = self.rapport.compteurs["prospects"]
+        if compteurs["localite_a_preciser"]:
+            self.rapport.signaler(
+                "prospect", _("{n} fiches").format(n=compteurs["localite_a_preciser"]),
+                _("Localité « INTERMEDIARE » dans BirdNotes, qui n'en est pas une : secteur "
+                  "gardé, localité à préciser."),
+            )  # fmt: skip
         groupes = len(set(doublons.values()))
         if groupes:
             self.rapport.signaler(

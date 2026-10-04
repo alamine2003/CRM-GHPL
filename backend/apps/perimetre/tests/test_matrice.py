@@ -153,7 +153,7 @@ def _telephone(monde):
 def _fiche(monde):
     from apps.referentiel.models import Valeur
 
-    autre = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="autre")
+    autre = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="grossiste")
     return {"nom": "Faye", "type": str(autre.pk), "potentiel": "B"}
 
 
@@ -161,7 +161,7 @@ def _prospect_a_valider(monde):
     from apps.prospects.services import creer_prospect
     from apps.referentiel.models import Valeur
 
-    autre = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="autre")
+    autre = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="grossiste")
     return creer_prospect(monde["sn"], monde["deleg.sn"], actif=False, nom="Kane",
                           type=autre, potentiel="C")  # fmt: skip
 

@@ -209,6 +209,7 @@ function DialogueProspect({
         label={t('prospect.champs.nom')}
         value={f.nom}
         onChange={(e) => changer('nom', e.target.value)}
+        helperText={t('prospect.champs.nomAide')}
         required
         autoFocus
       />

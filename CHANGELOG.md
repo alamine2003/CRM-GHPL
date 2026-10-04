@@ -22,9 +22,17 @@ Quatrième jalon du cycle 0.1 « Référentiel ». Le 4 octobre 2026, l'export r
 - API `imports/` (liste, détail, téléversement, rapport CSV) ; nouveau droit `imports.gerer` réservé à l'administrateur pays. Le lot est audité (`import.birdnotes`), la table est protégée par la sécurité au niveau des lignes, les routes sont couvertes par la matrice et les tests d'isolation.
 - Les tests portent sur un export **entièrement fictif** qui reprend seulement la structure des tables.
 
+### Ajouté — nettoyage des prospects (proposition du 4 octobre 2026, DC-46)
+
+- **Règle d'écriture imposée à la saisie comme à l'import** : NOM en majuscules, Prénom avec sa majuscule (« NDIAYE », « Mame-Diarra »).
+- **Titre sorti du nom** : « DR » saisi à la place du prénom (2 415 fiches) ou en tête du nom passe dans la civilité. Quand prénom et nom restent collés, la fiche est signalée « à séparer à la main ».
+- **Localités « INTERMEDIARE »** (1 338 fiches) non reprises : le secteur est gardé, la localité reste à préciser.
+- **Fiches au même nom** une fois le titre retiré : gardées ensemble (référence `homonymes`) pour la file des doublons (0.1.8), où le superviseur tranche. Rien n'est fusionné à l'import.
+- Fusions de spécialités confirmées : sage-femme d'État → sage-femme, gynécologue → gynécologie-obstétrique, et les corrections d'orthographe.
+
 ### Modifié — modèle aligné sur la pratique réelle (prd.md §14.1, §14.2)
 
-- **Types de prospect** : médecin, paramédical, pharmacie, autre. Sage-femme et infirmier deviennent des spécialités paramédicales, l'officine une spécialité de la pharmacie. Les anciennes valeurs par défaut (pharmacien, sage-femme, infirmier, chirurgien-dentiste) sont archivées : elles restent lisibles là où elles ont servi (PRP-001 CA2).
+- **Types de prospect** : liste fermée médecin, paramédical, pharmacie, grossiste. Sage-femme et infirmier deviennent des spécialités paramédicales, l'officine une spécialité de la pharmacie. Les anciennes valeurs par défaut (pharmacien, sage-femme, infirmier, chirurgien-dentiste, autre) sont archivées : elles restent lisibles là où elles ont servi (PRP-001 CA2).
 - **44 spécialités** rattachées à leur type ; nouvelle liste des **grades** (docteur, professeur, professeur agrégé, chef de service, assistant, résident), modifiable dans Référentiels.
 - **Type d'établissement « poste de santé »**, premier type relevé sur le terrain.
 - **Exercice hospitalier ou privé (H/P)** sur le prospect et l'établissement.

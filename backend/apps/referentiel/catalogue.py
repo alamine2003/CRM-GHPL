@@ -5,7 +5,8 @@ dans l'export du CRM en place (BirdNotes), nettoyée de ses doublons. Le fichier
 n'est jamais versionné (CLAUDE.md : aucune donnée réelle dans le dépôt) ; seuls des
 libellés génériques de la profession figurent ici.
 
-- Types de prospect : médecin, paramédical, pharmacie (prd.md §14.1, révisé). Sage-femme
+- Types de prospect : liste fermée médecin, paramédical, pharmacie, grossiste (prd.md §14.1,
+  révisé ; « autre » retiré le 4 octobre 2026). Sage-femme
   et infirmier sont des spécialités paramédicales, comme sur le terrain.
 - Spécialités rattachées à leur type ; grades (docteur, professeur…).
 - Types d'établissement : prd.md §14.2, plus le poste de santé, premier type relevé.
@@ -19,7 +20,7 @@ TYPES_PROSPECT = [
     ("medecin", "Médecin", "Doctor"),
     ("paramedical", "Paramédical", "Allied health"),
     ("pharmacie", "Pharmacie", "Pharmacy"),
-    ("autre", "Autre", "Other"),
+    ("grossiste", "Grossiste", "Wholesaler"),
 ]
 
 TYPES_ETABLISSEMENT = [
@@ -156,8 +157,8 @@ def synchroniser(Valeur, pays, *, journal=None) -> None:  # noqa: N803 (modèle 
                     journal(ancienne, False)
 
 
-#: Valeurs par défaut des versions précédentes (0.1.1 à 0.1.3), remplacées le 4 octobre 2026.
+#: Valeurs par défaut des versions précédentes (0.1.1 à 0.1.4), remplacées le 4 octobre 2026.
 ANCIENS_CODES = {
-    "type_prospect": ["pharmacien", "sage_femme", "infirmier", "chirurgien_dentiste"],
+    "type_prospect": ["pharmacien", "sage_femme", "infirmier", "chirurgien_dentiste", "autre"],
     "specialite": [],
 }

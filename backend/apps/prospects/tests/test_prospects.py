@@ -36,6 +36,8 @@ def noms(reponse):
 def test_normalisation_des_noms_et_telephones(monde):
     assert services.normaliser_nom("Dr", "Aïssatou", "N'Diaye") == "aissatou ndiaye"
     assert services.normaliser_nom("Pr. Jean-Marc Dossou") == "jeanmarc dossou"
+    assert services.ecrire_nom(" fall  n'diaye ") == "FALL N'DIAYE"
+    assert services.ecrire_prenom("MAME-DIARRA aïssatou") == "Mame-Diarra Aïssatou"
     sn = monde["sn"]
     assert services.normaliser_telephone("77 123 45 67", sn, "t") == "+221771234567"
     assert services.normaliser_telephone("+228 90 12 34 56", sn, "t") == "+22890123456"
@@ -56,8 +58,8 @@ def test_un_prospect_sans_nom_ni_type_est_refuse(monde):
     paramedical = valeur(monde, "type_prospect", "paramedical")
     incoherente = admin.post(URL, fiche(monde, type=paramedical), format="json")
     assert incoherente.json()["code"] == "specialite_incompatible"
-    autre = valeur(monde, "type_prospect", "autre")
-    ok = admin.post(URL, fiche(monde, type=autre, specialite=None), format="json")
+    grossiste = valeur(monde, "type_prospect", "grossiste")
+    ok = admin.post(URL, fiche(monde, type=grossiste, specialite=None), format="json")
     assert ok.status_code == 201, ok.content
 
 
@@ -68,9 +70,11 @@ def test_la_fiche_creee_par_l_administrateur_est_commune(monde):
     assert cree["statut"] == "actif" and cree["potentiel"] == "A"
     assert cree["telephone_mobile"] == "+221771234567"
     assert cree["type_libelle"] == "Médecin" and cree["specialite_libelle"] == "Cardiologie"
+    # Règle d'écriture du 4 octobre 2026 : NOM en majuscules, Prénom avec sa majuscule.
+    assert (cree["nom"], cree["prenom"]) == ("NDIAYE", "Aïssatou")
     deleg = client_de(monde["deleg.sn"])
     assert deleg.get(f"{URL}{cree['id']}/").json()["potentiel"] == "A"
-    assert noms(deleg.get(URL)) == ["Ndiaye"]
+    assert noms(deleg.get(URL)) == ["NDIAYE"]
     assert EvenementAudit.objects.filter(action="prospect.creation").count() == 1
 
 
@@ -81,7 +85,7 @@ def test_la_fiche_du_delegue_est_a_valider_et_visible_par_lui_seul(monde):
     assert cree.status_code == 201 and cree.json()["statut"] == "a_valider"
     identifiant = cree.json()["id"]
     # CA2 : utilisable aussitôt par son auteur (la planification arrive en 0.2) ; il la corrige.
-    assert noms(deleg.get(URL)) == ["Sarr"]
+    assert noms(deleg.get(URL)) == ["SARR"]
     corrige = deleg.patch(f"{URL}{identifiant}/", {"potentiel": "B"}, format="json")
     assert corrige.status_code == 200 and corrige.json()["modifiable"] is True
     # Un autre délégué du pays ne la voit pas, ni en liste ni par son identifiant.
@@ -98,7 +102,7 @@ def test_la_fiche_du_delegue_est_a_valider_et_visible_par_lui_seul(monde):
     assert admin.get(f"{URL}synthese/").json()["a_valider"] == 1
     valide = admin.post(f"{URL}{identifiant}/valider/").json()
     assert valide["statut"] == "actif"
-    assert noms(autre.get(URL)) == ["Sarr"]
+    assert noms(autre.get(URL)) == ["SARR"]
     # Devenue commune, le délégué ne la modifie plus directement (propositions en 0.1.8).
     refus = deleg.patch(f"{URL}{identifiant}/", {"potentiel": "C"}, format="json")
     assert refus.status_code == 403 and refus.json()["code"] == "modification_interdite"
@@ -123,10 +127,10 @@ def test_recherche_tolerante_et_filtres(monde):
             fiche(monde, nom=nom, prenom=prenom, potentiel=potentiel, telephone_mobile=telephone),
             format="json",
         )
-    assert sorted(noms(admin.get(f"{URL}?q=dr ndiaye"))) == ["N'Diaye", "Ndiaye"]
-    assert noms(admin.get(f"{URL}?q=AISSATOU")) == ["Ndiaye"]
-    assert noms(admin.get(f"{URL}?q=771112233")) == ["Ndiaye"]
-    assert noms(admin.get(f"{URL}?potentiel=B")) == ["Diop"]
+    assert sorted(noms(admin.get(f"{URL}?q=dr ndiaye"))) == ["N'DIAYE", "NDIAYE"]
+    assert noms(admin.get(f"{URL}?q=AISSATOU")) == ["NDIAYE"]
+    assert noms(admin.get(f"{URL}?q=771112233")) == ["NDIAYE"]
+    assert noms(admin.get(f"{URL}?potentiel=B")) == ["DIOP"]
     synthese = admin.get(f"{URL}synthese/").json()
     assert synthese["potentiels"] == {"A": 1, "B": 1, "C": 1} and synthese["actifs"] == 3
 
@@ -147,7 +151,7 @@ def test_archivage_sans_suppression_et_audit_des_modifications(monde):
     archive = admin.post(f"{URL}{cree['id']}/archiver/", {"motif": "Parti à l'étranger"},
                          format="json").json()  # fmt: skip
     assert archive["statut"] == "archive"
-    assert noms(admin.get(URL)) == [] and noms(admin.get(f"{URL}?statut=archive")) == ["Ndiaye"]
+    assert noms(admin.get(URL)) == [] and noms(admin.get(f"{URL}?statut=archive")) == ["NDIAYE"]
     assert Prospect.objects.filter(pk=cree["id"]).exists()
     deleg = client_de(monde["deleg.sn"])
     assert deleg.post(f"{URL}{cree['id']}/archiver/").status_code == 403

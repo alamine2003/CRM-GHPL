@@ -47,6 +47,17 @@ def normaliser_nom(*parties: str) -> str:
     return " ".join(mots)
 
 
+def ecrire_nom(nom: str) -> str:
+    """Règle d'écriture retenue le 4 octobre 2026 : NOM en majuscules (« N'DIAYE »)."""
+    return re.sub(r"\s+", " ", nom or "").strip().upper()
+
+
+def ecrire_prenom(prenom: str) -> str:
+    """Prénom avec une majuscule à chaque partie : « MAME-DIARRA » → « Mame-Diarra »."""
+    texte = re.sub(r"\s+", " ", prenom or "").strip().lower()
+    return re.sub(r"(^|[\s'’-])(\w)", lambda m: m.group(1) + m.group(2).upper(), texte)
+
+
 def normaliser_telephone(valeur: str, pays: Pays, champ: str) -> str:
     """Format international E.164 (§14.1) ; un numéro local s'entend dans le pays de la fiche."""
     valeur = (valeur or "").strip()
@@ -114,7 +125,7 @@ def _lieu(pays: Pays, secteur: Secteur | None, localite: Localite | None, *, req
 
 def _verifier(pays: Pays, champs: dict) -> dict:
     """PRP-002 CA1 : nom et type obligatoires ; la spécialité suit le type (§14.1)."""
-    nom = (champs.get("nom") or "").strip()
+    nom = ecrire_nom(champs.get("nom"))
     if not nom:
         raise ErreurMetier("champ_requis", _("Le nom est obligatoire."), champ="nom")
     type_ = _valeur(pays, champs.get("type"), Liste.TYPE_PROSPECT, "type")
@@ -138,7 +149,7 @@ def _verifier(pays: Pays, champs: dict) -> dict:
     civilite = champs.get("civilite") or ""
     if civilite and civilite not in Civilite.values:
         raise ErreurMetier("valeur_invalide", _("Civilité inconnue."), champ="civilite")
-    prenom = (champs.get("prenom") or "").strip()
+    prenom = ecrire_prenom(champs.get("prenom"))
     return {
         "civilite": civilite,
         "nom": nom,

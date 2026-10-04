@@ -44,6 +44,7 @@ def export() -> dict:
             "Localites": [
                 {"ID localité": 1, "Localité": "Quartier Un", "Secteur": "Fictif Nord"},
                 {"ID localité": 2, "Localité": "Quartier Deux", "Secteur": "Fictif Sud"},
+                {"ID localité": 3, "Localité": "INTERMEDIARE 1", "Secteur": "Fictif Nord"},
             ],
             "Gammes": [
                 {"Gamme": "Division Test", "Niveau": "Parente", "Gamme parente": ""},
@@ -98,6 +99,10 @@ def export() -> dict:
                 prospect(2, "Fictive", "MEDECIN GENERALISTE", potentiel="X"),
                 prospect(3, "Sansnom", "MEDECIN GENERALISTE", Nom="", **{"Nom complet": ""}),
                 prospect(4, "Faux", "MEDECIN GENERALISTE", GSM="12"),
+                # Titre à la place du prénom, localité qui n'en est pas une.
+                prospect(5, "MOUSSA DIOP", "INFIRMIER", Prénom="DR", Localité="INTERMEDIARE 1"),
+                # Même nom qu'une autre fiche une fois le titre retiré : homonymes.
+                prospect(6, "Fictif", "INFIRMIER", Prénom="Dr Awa"),
             ],  # fmt: skip
             "Prospects en attente": [
                 prospect(10, "Attente", "MEDECIN GENERALISTE"),
@@ -131,7 +136,7 @@ def test_la_simulation_n_ecrit_rien_et_donne_le_rapport(monde):
     """PRP-013 CA1 : la simulation calcule tout, annule tout, et garde le lot et son rapport."""
     lot = importer(monde["sn"], monde["admin.sn"], contenu(), "export.json", simulation=True)
     assert lot.statut == LotImport.Statut.SIMULE
-    assert lot.compteurs["prospects"]["crees"] == 4  # 3 validés (sans nom : écarté) + 1 en attente
+    assert lot.compteurs["prospects"]["crees"] == 6  # 5 validés (sans nom : écarté) + 1 en attente
     assert lot.compteurs["secteurs"] == {"crees": 2, "fusionnes": 1}
     assert not Prospect.objects.exists() and not Secteur.objects.filter(pays=monde["sn"]).exists()
     assert not ReferenceExterne.objects.exists()
@@ -156,20 +161,27 @@ def test_import_reel_et_rapport_des_anomalies(monde):
     assert etablissements["Lieu Inclassable"].type.code == "autre"
     assert etablissements["PHARMACIE TEST"].secteur.libelle == "Fictif Nord"
 
-    fictif = Prospect.objects.get(nom="Fictif")
+    fictif = Prospect.objects.get(nom="FICTIF", prenom="Awa", civilite="pr")
     assert fictif.type.code == "medecin" and fictif.specialite.code == "medecine_generale"
     assert fictif.grade.code == "professeur" and fictif.civilite == "pr"
     assert fictif.localite.libelle == "Quartier Un" and fictif.activite == "prive"
     assert fictif.telephone_mobile == "+221770000001"
-    assert Prospect.objects.get(nom="Fictive").potentiel == "C"  # « X » ramené à « C »
-    assert Prospect.objects.get(nom="Attente").statut == StatutFiche.A_VALIDER
-    assert not Prospect.objects.filter(nom="Modif").exists()  # proposition : 0.1.8
+    assert Prospect.objects.get(nom="FICTIVE").potentiel == "C"  # « X » ramené à « C »
+    assert Prospect.objects.get(nom="ATTENTE").statut == StatutFiche.A_VALIDER
+    # Le titre sort du prénom ; prénom et nom collés restent à séparer à la main.
+    diop = Prospect.objects.get(nom="MOUSSA DIOP")
+    assert (diop.civilite, diop.prenom, diop.type.code) == ("dr", "", "paramedical")
+    # « INTERMEDIARE » n'est pas une localité : secteur gardé, localité à préciser.
+    assert diop.secteur.libelle == "Fictif Nord" and diop.localite is None
+    assert not Localite.objects.filter(libelle__icontains="intermedia").exists()
+    assert not Prospect.objects.filter(nom="MODIF").exists()  # proposition : 0.1.8
     assert lot.compteurs["demandes_modification"] == {"non_reprises": 1}
 
     csv = rapport_csv(lot)
     assert csv.startswith("﻿Entité;Identifiant source;Niveau;Motif")
     for motif in ("Prospect sans nom", "Téléphone inexploitable", "« X » ramené à « C »",
-                  "sans secteur ni prospect", "secteur déduit", "Type non reconnu"):  # fmt: skip
+                  "sans secteur ni prospect", "secteur déduit", "Type non reconnu",
+                  "prénom et nom à séparer", "INTERMEDIARE", "Fiches au même nom (2)"):  # fmt: skip
         assert motif in csv, motif
 
 
@@ -181,6 +193,13 @@ def test_les_doublons_signales_sont_gardes(monde):
         for r in ReferenceExterne.objects.filter(entite="prospect")
     }
     assert groupes["1"] == groupes["2"] == "G1"
+    # Noms identiques une fois le titre retiré : gardés ensemble, le superviseur tranchera.
+    homonymes = {
+        r.identifiant: r.complements.get("homonymes")
+        for r in ReferenceExterne.objects.filter(entite="prospect")
+    }
+    assert homonymes["1"] == homonymes["6"] is not None and homonymes["2"] is None
+    assert Prospect.objects.filter(nom="FICTIF").count() == 2  # rien n'est fusionné
 
 
 def test_un_reimport_ne_cree_rien_de_nouveau(monde):
@@ -192,7 +211,7 @@ def test_un_reimport_ne_cree_rien_de_nouveau(monde):
     assert (Prospect.objects.count(), Etablissement.objects.count(),
             Produit.objects.count()) == avant  # fmt: skip
     assert "crees" not in lot.compteurs.get("prospects", {})
-    assert lot.compteurs["prospects"]["existants"] == 4
+    assert lot.compteurs["prospects"]["existants"] == 6
 
 
 def test_api_reservee_a_l_administrateur_pays(monde):

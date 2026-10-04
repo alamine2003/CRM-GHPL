@@ -751,7 +751,8 @@
       "telephoneAide": "A local number is read in the record's country.",
       "courriel": "Email",
       "potentiel": "Potential",
-      "grade": "Title"
+      "grade": "Title",
+      "nomAide": "Saved in capitals; the title (Dr, Pr) goes in the salutation."
     },
     "aides": {
       "aValider": "Your record will be “to validate”: you can use it right away; other reps will see it once validated.",
@@ -924,7 +925,10 @@
       "type_a_preciser": "type to specify",
       "secteur_deduit": "sector inferred",
       "gamme_technique_ignoree": "technical range ignored",
-      "non_reprises": "postponed"
+      "non_reprises": "postponed",
+      "fictives_ignorees": "placeholders ignored",
+      "localite_a_preciser": "locality to specify",
+      "prenom_a_separer": "first name to separate"
     },
     "niveaux": {
       "rejet": "Row set aside",

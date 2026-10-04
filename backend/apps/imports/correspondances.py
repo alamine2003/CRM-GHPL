@@ -103,6 +103,36 @@ PREFIXES_ETABLISSEMENT = [
 ]
 
 
+#: Titres saisis dans le nom ou à la place du prénom → civilité (2 415 fiches ont « DR » en
+#: guise de prénom). Le titre sort du nom ; prénom et nom collés restent à séparer à la main.
+TITRES = {
+    "DR": "dr", "DOCTEUR": "dr", "PR": "pr", "PROFESSEUR": "pr",
+    "MME": "mme", "MLLE": "mme", "MADAME": "mme", "M": "m", "MR": "m", "MONSIEUR": "m",
+}  # fmt: skip
+
+
+def extraire_titre(prenom: str | None, nom: str | None) -> tuple[str, str, str, bool]:
+    """(civilité, prénom, nom, à séparer) : « DR » / « MOUSSA DIOP » → (« dr », « », « MOUSSA
+    DIOP », vrai). Un titre en tête du nom ou du prénom est retiré de la même façon."""
+    civilite = ""
+    prenom, nom = (prenom or "").strip(), (nom or "").strip()
+    if cle(prenom) in TITRES:
+        civilite, prenom = TITRES[cle(prenom)], ""
+    for attribut in ("prenom", "nom"):
+        texte = prenom if attribut == "prenom" else nom
+        mots = texte.split()
+        if len(mots) > 1 and cle(mots[0]) in TITRES:
+            civilite = civilite or TITRES[cle(mots[0])]
+            texte = " ".join(mots[1:])
+        prenom, nom = (texte, nom) if attribut == "prenom" else (prenom, texte)
+    a_separer = civilite != "" and not prenom and len(nom.split()) > 1
+    return civilite, prenom, nom, a_separer
+
+
+#: Localités de BirdNotes qui n'en sont pas (« INTERMEDIARE 1 », 1 338 fiches) : non reprises.
+LOCALITES_FICTIVES = re.compile(r"^INTERMEDIAI?RE( \d+)?$")
+
+
 def type_etablissement(nom: str) -> str:
     """Type déduit du nom ; « autre » quand rien ne correspond (signalé dans le rapport)."""
     texte = cle(nom)

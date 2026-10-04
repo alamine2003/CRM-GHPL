@@ -386,8 +386,8 @@ stateDiagram-v2
 
 | Champ | Obligatoire | Remarque |
 |---|---|---|
-| Civilité, nom, prénom | Nom obligatoire | Normalisés pour la détection de doublons |
-| Type de prospect | Oui | `medecin`, `paramedical`, `pharmacie`, `autre` (liste par pays). Révisé le 4 octobre 2026 sur la pratique relevée dans BirdNotes : sage-femme et infirmier sont des spécialités paramédicales, l'officine une spécialité de la pharmacie |
+| Civilité, nom, prénom | Nom obligatoire | NOM en majuscules, Prénom avec sa majuscule (règle imposée à la saisie, 4 octobre 2026) ; le titre (Dr, Pr, Mme, M.) va dans la civilité, jamais dans le nom ; normalisés pour la détection de doublons |
+| Type de prospect | Oui | Liste fermée `medecin`, `paramedical`, `pharmacie`, `grossiste` (liste par pays). Révisé le 4 octobre 2026 sur la pratique relevée dans BirdNotes : sage-femme et infirmier sont des spécialités paramédicales, l'officine une spécialité de la pharmacie |
 | Spécialité | Selon le type | Référentiel par pays, chaque spécialité rattachée à son type (médecine générale, cardiologie… ; sage-femme, infirmier… ; officine, parapharmacie) |
 | Grade | Non | `docteur`, `professeur`, `professeur_agrege`, `chef_service`, `assistant`, `resident` (liste par pays) |
 | Exercice | Non | `hospitalier` ou `prive` (H/P) |
@@ -435,7 +435,8 @@ Les prospects, établissements, secteurs, localités et produits viennent de Bir
 - se **simule** d'abord : tout est calculé puis annulé ; seuls le bilan et le rapport restent ;
 - produit un **rapport d'anomalies** téléchargeable (CSV), un motif par ligne écartée ou corrigée ;
 - reprend dans l'ordre secteurs et localités (les secteurs nouveaux vont dans une zone « À répartir »), gammes (divisions et réseaux), produits et portefeuilles, établissements (type déduit du nom, à préciser sinon ; secteur déduit de leurs prospects quand BirdNotes n'en donne pas), prospects validés (`actif`) et demandes de création (`a_valider`) ;
-- conserve les **groupes de doublons** signalés par BirdNotes pour la file des doublons (0.1.8) ; les demandes de modification en attente sont reportées aux propositions de modification (0.1.8) ;
+- applique les règles de nettoyage validées le 4 octobre 2026 : titre sorti du nom ou du prénom vers la civilité (prénom et nom collés signalés, à séparer à la main), NOM en majuscules, libellés de spécialité et de secteur unifiés, localités « INTERMEDIARE » non reprises (secteur gardé, localité à préciser) ;
+- conserve les **groupes de doublons** signalés par BirdNotes et les **fiches au même nom** pour la file des doublons (0.1.8), où le superviseur tranche ; rien n'est fusionné à l'import ; les demandes de modification en attente sont reportées aux propositions de modification (0.1.8) ;
 - garde la **référence BirdNotes** de chaque fiche reprise : un réimport la retrouve et ne crée rien.
 
 Les comptes, l'organisation (postes, affectations) et l'historique des visites ne sont pas repris en 0.1.4 : l'organisation vient du fichier d'organisation (ORG-014).
@@ -1066,6 +1067,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | DC-42 | Vocabulaire Division / Réseau / Classe thérapeutique | V1 |
 | DC-43 | Objectifs par réseau et Grafana en 1.0.0 | V2 |
 | DC-44 | Nom INNOV CRM, identité visuelle de la maquette | Maquette |
+| DC-46 | Nettoyage des prospects BirdNotes : NOM en majuscules, titre dans la civilité, types médecin / paramédical / pharmacie / grossiste, fusions de spécialités validées (sage-femme d'État, gynécologue…), noms identiques tranchés par les superviseurs dans la file des doublons du CRM ; on nettoie une fois, puis la saisie verrouille | Proposition de nettoyage du 4 octobre 2026 |
 | DC-45 | L'export réel de BirdNotes sert de point de départ : import JSON tel quel, à l'exécution, jamais versionné ; avancé en 0.1.4 ; types, grades, exercice H/P, localités et paramètres alignés sur la pratique relevée | Échange du 4 octobre 2026 |
 
 ## 26. Glossaire

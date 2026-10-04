@@ -751,7 +751,8 @@
       "telephoneAide": "Un numéro local s'entend dans le pays de la fiche.",
       "courriel": "Courriel",
       "potentiel": "Potentiel",
-      "grade": "Grade"
+      "grade": "Grade",
+      "nomAide": "Enregistré en majuscules ; le titre (Dr, Pr) va dans la civilité."
     },
     "aides": {
       "aValider": "Votre fiche sera « à valider » : vous pouvez l'utiliser tout de suite ; les autres délégués la verront une fois validée.",
@@ -924,7 +925,10 @@
       "type_a_preciser": "type à préciser",
       "secteur_deduit": "secteur déduit",
       "gamme_technique_ignoree": "gamme technique ignorée",
-      "non_reprises": "reportées"
+      "non_reprises": "reportées",
+      "fictives_ignorees": "fictives ignorées",
+      "localite_a_preciser": "localité à préciser",
+      "prenom_a_separer": "prénom à séparer"
     },
     "niveaux": {
       "rejet": "Ligne écartée",
