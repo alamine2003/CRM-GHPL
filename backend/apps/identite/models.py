@@ -14,6 +14,7 @@ from django.db import models
 from django.utils import timezone
 
 from apps.socle.identifiants import uuid7
+from apps.socle.models import CHOIX_LANGUES
 
 # Identifiant nominatif « prenom.nom » (USR-001 CA1) : pas de compte partagé ou générique.
 FORMAT_IDENTIFIANT = re.compile(r"^[a-z][a-z0-9-]*(\.[a-z0-9-]+)+$")
@@ -63,9 +64,7 @@ class Utilisateur(AbstractUser):
         related_name="+",
         help_text="Vide pour les comptes du siège (RG-002, RG-003).",
     )
-    langue = models.CharField(
-        max_length=2, choices=[("fr", "Français"), ("en", "Anglais")], default="fr"
-    )
+    langue = models.CharField(max_length=2, choices=CHOIX_LANGUES, default="fr")
     echecs_connexion = models.PositiveSmallIntegerField(default=0, editable=False)
     verrouille_jusqua = models.DateTimeField(null=True, blank=True, editable=False)
 
@@ -150,3 +149,76 @@ class JetonReinitialisation(models.Model):
     @property
     def est_valide(self) -> bool:
         return self.utilise_le is None and self.expire_le > timezone.now()
+
+
+class Role(models.TextChoices):
+    """Les 9 rôles d'INNOV CRM (prd.md §6.1). Aucun autre rôle sans décision."""
+
+    ADMIN_SIEGE = "admin_siege", "Administrateur du siège"
+    DIRECTION_SIEGE = "direction_siege", "Direction du siège"
+    RESPONSABLE_PAYS = "responsable_pays", "Responsable pays"
+    ADMIN_PAYS = "admin_pays", "Administrateur pays"
+    DF = "df", "DF"
+    DM = "dm", "DM"
+    SUPERVISEUR = "superviseur", "Superviseur"
+    DELEGUE = "delegue", "Délégué"
+    ADMIN_TECHNIQUE = "admin_technique", "Administrateur technique"
+
+
+# Rôles portés par le siège ou la plateforme : sans pays (RG-002).
+ROLES_SANS_PAYS = frozenset({Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE, Role.ADMIN_TECHNIQUE})
+# Rôles que seul l'administrateur du siège peut attribuer (ORG-002).
+ROLES_DESIGNES_PAR_LE_SIEGE = frozenset({Role.RESPONSABLE_PAYS, Role.ADMIN_PAYS} | ROLES_SANS_PAYS)
+
+
+class RoleUtilisateur(models.Model):
+    """Rôle daté d'un utilisateur dans un pays (architecture §11.2).
+
+    Un rôle n'est jamais supprimé : on le termine (fin), ce qui garde
+    l'historique des désignations (ORG-002 CA2).
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.PROTECT, related_name="roles")
+    pays = models.ForeignKey(
+        "socle.Pays", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    role = models.CharField(max_length=20, choices=Role.choices)
+    debut = models.DateTimeField(default=timezone.now)
+    fin = models.DateTimeField(null=True, blank=True)
+    attribue_par = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    retire_par = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    cree_le = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = "rôle d'un utilisateur"
+        ordering = ["-debut"]
+        indexes = [
+            models.Index(fields=["utilisateur", "fin"]),
+            models.Index(fields=["pays", "role"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(role__in=sorted(ROLES_SANS_PAYS), pays__isnull=True)
+                    | (~models.Q(role__in=sorted(ROLES_SANS_PAYS)) & models.Q(pays__isnull=False))
+                ),
+                name="role_pays_coherent",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(fin__isnull=True) | models.Q(fin__gt=models.F("debut")),
+                name="role_fin_apres_debut",
+            ),
+        ]
+
+    def __str__(self):
+        portee = self.pays.code if self.pays_id else "siège"
+        return f"{self.utilisateur} — {self.get_role_display()} ({portee})"
+
+    def est_actif(self, a=None) -> bool:
+        a = a or timezone.now()
+        return self.debut <= a and (self.fin is None or self.fin > a)

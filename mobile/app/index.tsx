@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarreOnglets } from '../src/BarreOnglets';
-import { Bouton, Carte, Ligne, Texte, usePalette } from '../src/composants';
+import { Alerte, Bouton, Carte, Ligne, Texte, usePalette } from '../src/composants';
 import { police } from '../src/polices';
 import { useSession } from '../src/session';
 import { VERSION_APP } from '../src/version';
@@ -27,7 +27,8 @@ export default function Accueil() {
     );
   }
   if (etat.statut === 'anonyme') return <Redirect href="/connexion" />;
-  const { utilisateur } = etat;
+  const { utilisateur, perimetre } = etat;
+  const roles = perimetre.roles.map((role) => t(`roles.${role}`)).join(', ');
   const a = avancement(VERSION_APP === 'inconnue' ? '0.0.1' : VERSION_APP);
   const date = new Intl.DateTimeFormat(langue, {
     weekday: 'long',
@@ -35,13 +36,13 @@ export default function Accueil() {
     month: 'long',
     timeZone: utilisateur.pays_principal?.fuseau,
   }).format(new Date());
-  const perimetre = utilisateur.pays_principal?.nom ?? t('session.siege');
+  const nomPays = perimetre.pays_actif?.nom ?? t('session.siege');
 
   return (
     <View style={{ flex: 1, backgroundColor: p.fond }}>
       <View style={[styles.entete, { paddingTop: marges.top + 18 }]}>
         <Text style={styles.date}>
-          {date.charAt(0).toUpperCase() + date.slice(1)} · {perimetre}
+          {date.charAt(0).toUpperCase() + date.slice(1)} · {nomPays}
         </Text>
         <Text accessibilityRole="header" style={styles.bonjour}>
           {t('session.bonjour', { prenom: utilisateur.prenom })}
@@ -60,6 +61,7 @@ export default function Accueil() {
       </View>
 
       <ScrollView contentContainerStyle={styles.contenu}>
+        {perimetre.roles.length === 0 && <Alerte type="info">{t('roles.aucun')}</Alerte>}
         <Carte style={{ backgroundColor: p.orangeDoux, borderColor: marque.orange }}>
           <Texte variante="fort">{t('mobile.onglets.tournee')}</Texte>
           <Texte variante="discret" style={{ marginTop: 4 }}>
@@ -72,7 +74,8 @@ export default function Accueil() {
             {t('profil.titre')}
           </Texte>
           <Ligne libelle={t('profil.identifiant')} valeur={utilisateur.identifiant} />
-          <Ligne libelle={t('profil.perimetre')} valeur={perimetre} />
+          <Ligne libelle={t('roles.titre')} valeur={roles || '—'} />
+          <Ligne libelle={t('profil.perimetre')} valeur={nomPays} />
           <Ligne libelle={t('accueil.versionClient')} valeur={VERSION_APP} derniere />
         </Carte>
 

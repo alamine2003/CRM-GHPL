@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.0.3
+  version: 0.0.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/auth/connexion/:
@@ -120,6 +120,23 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/auth/perimetre/:
+    get:
+      operationId: perimetre
+      description: |-
+        Périmètre de l'utilisateur pour le pays actif : rôles, actions permises, pays
+        accessibles. Les clients s'en servent pour masquer ; le serveur reste seul juge.
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Perimetre'
+          description: ''
   /api/v1/auth/rafraichir/:
     post:
       operationId: rafraichir
@@ -161,8 +178,372 @@ paths:
               schema:
                 $ref: '#/components/schemas/Informations'
           description: ''
+  /api/v1/pays/:
+    get:
+      operationId: pays_liste
+      description: Le siège en vue consolidée voit tous les pays ; sinon, seulement
+        le pays actif.
+      tags:
+      - pays
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pays'
+          description: ''
+    post:
+      operationId: pays_creer
+      description: Le siège en vue consolidée voit tous les pays ; sinon, seulement
+        le pays actif.
+      tags:
+      - pays
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationPays'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationPays'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationPays'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pays'
+          description: ''
+  /api/v1/pays/{code}/:
+    get:
+      operationId: pays_detail
+      description: Le siège en vue consolidée voit tous les pays ; sinon, seulement
+        le pays actif.
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - pays
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pays'
+          description: ''
+  /api/v1/pays/{code}/designations/:
+    get:
+      operationId: designations_liste
+      description: Historique des responsables et administrateurs d'un pays (ORG-002
+        CA2).
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - pays
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+          description: ''
+  /api/v1/pays/{code}/parametres/:
+    get:
+      operationId: parametres_liste
+      description: Le siège en vue consolidée voit tous les pays ; sinon, seulement
+        le pays actif.
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - pays
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Parametre'
+          description: ''
+  /api/v1/pays/{code}/parametres/{cle}/:
+    put:
+      operationId: parametre_modifier
+      description: Le siège en vue consolidée voit tous les pays ; sinon, seulement
+        le pays actif.
+      parameters:
+      - in: path
+        name: cle
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - pays
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModificationParametre'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ModificationParametre'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ModificationParametre'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Parametre'
+          description: ''
+  /api/v1/pays/{code}/statut/:
+    post:
+      operationId: pays_statut
+      description: Le siège en vue consolidée voit tous les pays ; sinon, seulement
+        le pays actif.
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - pays
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatutPays'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StatutPays'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StatutPays'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pays'
+          description: ''
+  /api/v1/roles/{id}/retirer/:
+    post:
+      operationId: role_retirer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - roles
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+  /api/v1/utilisateurs/:
+    get:
+      operationId: utilisateurs_liste
+      tags:
+      - utilisateurs
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Utilisateur'
+          description: ''
+    post:
+      operationId: utilisateurs_creer
+      description: |-
+        Crée un compte dans le pays actif (ou un compte du siège en vue consolidée) et
+        envoie le lien de définition du mot de passe.
+      tags:
+      - utilisateurs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationUtilisateur'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationUtilisateur'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationUtilisateur'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+          description: ''
+  /api/v1/utilisateurs/{id}/:
+    get:
+      operationId: utilisateur_detail
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - utilisateurs
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+          description: ''
+  /api/v1/utilisateurs/{id}/{operation}/:
+    post:
+      operationId: utilisateur_action
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: operation
+        schema:
+          type: string
+        required: true
+      tags:
+      - utilisateurs
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Utilisateur'
+          description: ''
+  /api/v1/utilisateurs/{id}/roles/:
+    get:
+      operationId: roles_liste
+      description: Historique des rôles d'un compte et attribution d'un nouveau rôle.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - utilisateurs
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+          description: ''
+    post:
+      operationId: role_attribuer
+      description: Historique des rôles d'un compte et attribution d'un nouveau rôle.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - utilisateurs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributionRole'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttributionRole'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttributionRole'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
 components:
   schemas:
+    AttributionRole:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - role
     Changement:
       type: object
       properties:
@@ -198,6 +579,39 @@ components:
       - client
       - identifiant
       - mot_de_passe
+    CreationPays:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Code ISO d'une filiale du catalogue.
+          maxLength: 2
+      required:
+      - code
+    CreationUtilisateur:
+      type: object
+      properties:
+        identifiant:
+          type: string
+          maxLength: 150
+        prenom:
+          type: string
+          maxLength: 150
+        nom:
+          type: string
+          maxLength: 150
+        courriel:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+        langue:
+          $ref: '#/components/schemas/LangueEnum'
+      required:
+      - identifiant
+      - nom
+      - prenom
     Informations:
       type: object
       properties:
@@ -262,6 +676,12 @@ components:
       description: |-
         * `fr` - Français
         * `en` - Anglais
+    ModificationParametre:
+      type: object
+      properties:
+        valeur: {}
+      required:
+      - valeur
     Moi:
       type: object
       properties:
@@ -302,6 +722,63 @@ components:
           maxLength: 254
       required:
       - identifiant
+    Parametre:
+      type: object
+      properties:
+        cle:
+          type: string
+        description:
+          type: string
+        valeur: {}
+        defaut: {}
+        personnalise:
+          type: boolean
+          description: Vrai si le pays a changé la valeur.
+        hypothese:
+          type: boolean
+          description: Valeur par défaut encore à confirmer.
+      required:
+      - cle
+      - defaut
+      - description
+      - hypothese
+      - personnalise
+      - valeur
+    Pays:
+      type: object
+      properties:
+        code:
+          type: string
+          readOnly: true
+        nom:
+          type: string
+          readOnly: true
+        fuseau:
+          type: string
+          readOnly: true
+        langue:
+          allOf:
+          - $ref: '#/components/schemas/LangueEnum'
+          readOnly: true
+        devise:
+          type: string
+          readOnly: true
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutEnum'
+          readOnly: true
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - cree_le
+      - devise
+      - fuseau
+      - langue
+      - nom
+      - statut
     PaysResume:
       type: object
       properties:
@@ -315,6 +792,33 @@ components:
       - code
       - fuseau
       - nom
+    Perimetre:
+      type: object
+      properties:
+        pays_actif:
+          allOf:
+          - $ref: '#/components/schemas/PaysResume'
+          nullable: true
+        vue_consolidee:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+        actions:
+          type: array
+          items:
+            type: string
+        pays_accessibles:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaysResume'
+      required:
+      - actions
+      - pays_accessibles
+      - pays_actif
+      - roles
+      - vue_consolidee
     Rafraichissement:
       type: object
       properties:
@@ -333,6 +837,120 @@ components:
       required:
       - jeton
       - mot_de_passe
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        libelle:
+          type: string
+        pays:
+          type: string
+          nullable: true
+        debut:
+          type: string
+          format: date-time
+        fin:
+          type: string
+          format: date-time
+          nullable: true
+        actif:
+          type: boolean
+          readOnly: true
+        attribue_par:
+          type: string
+        retire_par:
+          type: string
+      required:
+      - actif
+      - id
+      - libelle
+      - role
+    RoleEnum:
+      enum:
+      - admin_siege
+      - direction_siege
+      - responsable_pays
+      - admin_pays
+      - df
+      - dm
+      - superviseur
+      - delegue
+      - admin_technique
+      type: string
+      description: |-
+        * `admin_siege` - Administrateur du siège
+        * `direction_siege` - Direction du siège
+        * `responsable_pays` - Responsable pays
+        * `admin_pays` - Administrateur pays
+        * `df` - DF
+        * `dm` - DM
+        * `superviseur` - Superviseur
+        * `delegue` - Délégué
+        * `admin_technique` - Administrateur technique
+    StatutEnum:
+      enum:
+      - actif
+      - suspendu
+      - archive
+      type: string
+      description: |-
+        * `actif` - Actif
+        * `suspendu` - Suspendu
+        * `archive` - Archivé
+    StatutPays:
+      type: object
+      properties:
+        statut:
+          $ref: '#/components/schemas/StatutEnum'
+      required:
+      - statut
+    Utilisateur:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        identifiant:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+        courriel:
+          type: string
+        langue:
+          $ref: '#/components/schemas/LangueEnum'
+        actif:
+          type: boolean
+        pays_principal:
+          allOf:
+          - $ref: '#/components/schemas/PaysResume'
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+          title: Dernière connexion
+      required:
+      - actif
+      - courriel
+      - id
+      - identifiant
+      - nom
+      - pays_principal
+      - prenom
+      - roles
   securitySchemes:
     jetonAcces:
       type: http

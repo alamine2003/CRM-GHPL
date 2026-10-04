@@ -100,6 +100,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/auth/perimetre/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Périmètre de l'utilisateur pour le pays actif : rôles, actions permises, pays
+     *     accessibles. Les clients s'en servent pour masquer ; le serveur reste seul juge.
+     */
+    get: operations['perimetre'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/auth/rafraichir/': {
     parameters: {
       query?: never;
@@ -133,10 +153,202 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/pays/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Le siège en vue consolidée voit tous les pays ; sinon, seulement le pays actif. */
+    get: operations['pays_liste'];
+    put?: never;
+    /** @description Le siège en vue consolidée voit tous les pays ; sinon, seulement le pays actif. */
+    post: operations['pays_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/pays/{code}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Le siège en vue consolidée voit tous les pays ; sinon, seulement le pays actif. */
+    get: operations['pays_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/pays/{code}/designations/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Historique des responsables et administrateurs d'un pays (ORG-002 CA2). */
+    get: operations['designations_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/pays/{code}/parametres/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Le siège en vue consolidée voit tous les pays ; sinon, seulement le pays actif. */
+    get: operations['parametres_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/pays/{code}/parametres/{cle}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** @description Le siège en vue consolidée voit tous les pays ; sinon, seulement le pays actif. */
+    put: operations['parametre_modifier'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/pays/{code}/statut/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description Le siège en vue consolidée voit tous les pays ; sinon, seulement le pays actif. */
+    post: operations['pays_statut'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/roles/{id}/retirer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['role_retirer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/utilisateurs/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['utilisateurs_liste'];
+    put?: never;
+    /**
+     * @description Crée un compte dans le pays actif (ou un compte du siège en vue consolidée) et
+     *     envoie le lien de définition du mot de passe.
+     */
+    post: operations['utilisateurs_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/utilisateurs/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['utilisateur_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/utilisateurs/{id}/{operation}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['utilisateur_action'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/utilisateurs/{id}/roles/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Historique des rôles d'un compte et attribution d'un nouveau rôle. */
+    get: operations['roles_liste'];
+    put?: never;
+    /** @description Historique des rôles d'un compte et attribution d'un nouveau rôle. */
+    post: operations['role_attribuer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    AttributionRole: {
+      role: components['schemas']['RoleEnum'];
+    };
     Changement: {
       actuel: string;
       nouveau: string;
@@ -151,6 +363,17 @@ export interface components {
       identifiant: string;
       mot_de_passe: string;
       client: components['schemas']['ClientEnum'];
+    };
+    CreationPays: {
+      /** @description Code ISO d'une filiale du catalogue. */
+      code: string;
+    };
+    CreationUtilisateur: {
+      identifiant: string;
+      prenom: string;
+      nom: string;
+      courriel?: string;
+      langue?: components['schemas']['LangueEnum'];
     };
     Informations: {
       produit: string;
@@ -180,6 +403,9 @@ export interface components {
      * @enum {string}
      */
     LangueEnum: 'fr' | 'en';
+    ModificationParametre: {
+      valeur: unknown;
+    };
     Moi: {
       /** Format: uuid */
       readonly id: string;
@@ -195,10 +421,37 @@ export interface components {
       /** @description Identifiant ou courriel. */
       identifiant: string;
     };
+    Parametre: {
+      cle: string;
+      description: string;
+      valeur: unknown;
+      defaut: unknown;
+      /** @description Vrai si le pays a changé la valeur. */
+      personnalise: boolean;
+      /** @description Valeur par défaut encore à confirmer. */
+      hypothese: boolean;
+    };
+    Pays: {
+      readonly code: string;
+      readonly nom: string;
+      readonly fuseau: string;
+      readonly langue: components['schemas']['LangueEnum'];
+      readonly devise: string;
+      readonly statut: components['schemas']['StatutEnum'];
+      /** Format: date-time */
+      readonly cree_le: string;
+    };
     PaysResume: {
       code: string;
       nom: string;
       fuseau: string;
+    };
+    Perimetre: {
+      pays_actif: components['schemas']['PaysResume'] | null;
+      vue_consolidee: boolean;
+      roles: string[];
+      actions: string[];
+      pays_accessibles: components['schemas']['PaysResume'][];
     };
     Rafraichissement: {
       /** @description Application mobile uniquement ; le portail utilise le cookie. */
@@ -207,6 +460,69 @@ export interface components {
     Reinitialisation: {
       jeton: string;
       mot_de_passe: string;
+    };
+    Role: {
+      /** Format: uuid */
+      readonly id: string;
+      role: components['schemas']['RoleEnum'];
+      libelle: string;
+      pays?: string | null;
+      /** Format: date-time */
+      debut?: string;
+      /** Format: date-time */
+      fin?: string | null;
+      readonly actif: boolean;
+      attribue_par?: string;
+      retire_par?: string;
+    };
+    /**
+     * @description * `admin_siege` - Administrateur du siège
+     *     * `direction_siege` - Direction du siège
+     *     * `responsable_pays` - Responsable pays
+     *     * `admin_pays` - Administrateur pays
+     *     * `df` - DF
+     *     * `dm` - DM
+     *     * `superviseur` - Superviseur
+     *     * `delegue` - Délégué
+     *     * `admin_technique` - Administrateur technique
+     * @enum {string}
+     */
+    RoleEnum:
+      | 'admin_siege'
+      | 'direction_siege'
+      | 'responsable_pays'
+      | 'admin_pays'
+      | 'df'
+      | 'dm'
+      | 'superviseur'
+      | 'delegue'
+      | 'admin_technique';
+    /**
+     * @description * `actif` - Actif
+     *     * `suspendu` - Suspendu
+     *     * `archive` - Archivé
+     * @enum {string}
+     */
+    StatutEnum: 'actif' | 'suspendu' | 'archive';
+    StatutPays: {
+      statut: components['schemas']['StatutEnum'];
+    };
+    Utilisateur: {
+      /** Format: uuid */
+      readonly id: string;
+      identifiant: string;
+      prenom: string;
+      nom: string;
+      courriel: string;
+      langue?: components['schemas']['LangueEnum'];
+      actif: boolean;
+      pays_principal: components['schemas']['PaysResume'] | null;
+      readonly roles: string[];
+      /**
+       * Dernière connexion
+       * Format: date-time
+       */
+      last_login?: string | null;
     };
   };
   responses: never;
@@ -351,6 +667,25 @@ export interface operations {
       };
     };
   };
+  perimetre: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Perimetre'];
+        };
+      };
+    };
+  };
   rafraichir: {
     parameters: {
       query?: never;
@@ -391,6 +726,324 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Informations'];
+        };
+      };
+    };
+  };
+  pays_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Pays'][];
+        };
+      };
+    };
+  };
+  pays_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationPays'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationPays'];
+        'multipart/form-data': components['schemas']['CreationPays'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Pays'];
+        };
+      };
+    };
+  };
+  pays_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        code: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Pays'];
+        };
+      };
+    };
+  };
+  designations_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        code: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Role'][];
+        };
+      };
+    };
+  };
+  parametres_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        code: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Parametre'][];
+        };
+      };
+    };
+  };
+  parametre_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        cle: string;
+        code: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ModificationParametre'];
+        'application/x-www-form-urlencoded': components['schemas']['ModificationParametre'];
+        'multipart/form-data': components['schemas']['ModificationParametre'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Parametre'];
+        };
+      };
+    };
+  };
+  pays_statut: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        code: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['StatutPays'];
+        'application/x-www-form-urlencoded': components['schemas']['StatutPays'];
+        'multipart/form-data': components['schemas']['StatutPays'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Pays'];
+        };
+      };
+    };
+  };
+  role_retirer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Role'];
+        };
+      };
+    };
+  };
+  utilisateurs_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Utilisateur'][];
+        };
+      };
+    };
+  };
+  utilisateurs_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationUtilisateur'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationUtilisateur'];
+        'multipart/form-data': components['schemas']['CreationUtilisateur'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Utilisateur'];
+        };
+      };
+    };
+  };
+  utilisateur_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Utilisateur'];
+        };
+      };
+    };
+  };
+  utilisateur_action: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        operation: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Utilisateur'];
+        };
+      };
+    };
+  };
+  roles_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Role'][];
+        };
+      };
+    };
+  };
+  role_attribuer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AttributionRole'];
+        'application/x-www-form-urlencoded': components['schemas']['AttributionRole'];
+        'multipart/form-data': components['schemas']['AttributionRole'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Role'];
         };
       };
     };

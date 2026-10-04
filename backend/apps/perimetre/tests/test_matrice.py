@@ -1,0 +1,89 @@
+"""USR-002 CA1 : chaque cellule de la matrice prd.md §6.3 couverte par un test."""
+
+import pytest
+
+from apps.identite.models import Role
+from apps.perimetre.matrice import MATRICE, Action
+
+from .conftest import client_de
+
+pytestmark = pytest.mark.django_db
+
+# Attendu par action : rôles autorisés (prd.md §6.3). Toute divergence avec MATRICE échoue.
+ATTENDU = {
+    Action.PAYS_CREER: {"admin_siege"},
+    Action.PAYS_CHANGER_STATUT: {"admin_siege"},
+    Action.DESIGNER_RESPONSABLES_PAYS: {"admin_siege"},
+    Action.UTILISATEURS_GERER: {"admin_siege", "admin_pays"},
+    Action.ROLES_ATTRIBUER: {"admin_siege", "admin_pays"},
+    Action.PARAMETRES_MODIFIER: {"admin_siege", "admin_pays"},
+    Action.PARAMETRES_LIRE: {"admin_siege", "direction_siege", "responsable_pays", "admin_pays"},
+    Action.UTILISATEURS_LIRE: {"admin_siege", "direction_siege", "responsable_pays", "admin_pays"},
+    Action.PAYS_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+        "delegue",
+    },  # fmt: skip
+}
+
+
+def test_la_matrice_suit_le_prd():
+    assert {action: set(roles) for action, roles in MATRICE.items()} == ATTENDU
+
+
+def test_l_administrateur_technique_n_a_aucune_action_metier():
+    assert all(Role.ADMIN_TECHNIQUE not in roles for roles in MATRICE.values())
+
+
+COMPTE_PAR_ROLE = {
+    "admin_siege": "ada.siege",
+    "direction_siege": "dina.direction",
+    "admin_technique": "theo.technique",
+    "responsable_pays": "resp.sn",
+    "admin_pays": "admin.sn",
+    "df": "df.sn",
+    "dm": "dm.sn",
+    "superviseur": "sup.sn",
+    "delegue": "deleg.sn",
+}
+
+# Une requête représentative par action, sur le Sénégal (pays du compte ou X-Pays pour le siège).
+REQUETES = {
+    Action.PAYS_LIRE: ("get", "/api/v1/pays/SN/", None, 200),
+    Action.PAYS_CREER: ("post", "/api/v1/pays/", {"code": "BJ"}, 201),
+    Action.PAYS_CHANGER_STATUT: ("post", "/api/v1/pays/SN/statut/", {"statut": "suspendu"}, 200),
+    Action.PARAMETRES_LIRE: ("get", "/api/v1/pays/SN/parametres/", None, 200),
+    Action.PARAMETRES_MODIFIER: (
+        "put",
+        "/api/v1/pays/SN/parametres/distance_pointage_m/",
+        {"valeur": 300},
+        200,
+    ),  # fmt: skip
+    Action.UTILISATEURS_LIRE: ("get", "/api/v1/utilisateurs/", None, 200),
+    Action.UTILISATEURS_GERER: (
+        "post",
+        "/api/v1/utilisateurs/",
+        {"identifiant": "nouveau.compte", "prenom": "N", "nom": "C"},
+        201,
+    ),  # fmt: skip
+}
+
+
+@pytest.mark.parametrize("role", list(COMPTE_PAR_ROLE))
+@pytest.mark.parametrize("action", list(REQUETES))
+def test_chaque_role_chaque_action(monde, role, action):
+    compte = monde[COMPTE_PAR_ROLE[role]]
+    # Le siège choisit le Sénégal ; l'administrateur technique n'a aucun pays.
+    pays = "SN" if role in {"admin_siege", "direction_siege"} else None
+    methode, url, corps, succes = REQUETES[action]
+    reponse = getattr(client_de(compte, pays), methode)(url, corps, format="json")
+    if role in MATRICE[action]:
+        assert reponse.status_code == succes, reponse.content
+    else:
+        assert reponse.status_code == 403, (role, action, reponse.status_code)
+        assert reponse.json()["code"] == "interdit"

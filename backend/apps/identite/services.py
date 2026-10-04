@@ -22,7 +22,16 @@ from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
 
 from . import courriels
-from .models import JetonReinitialisation, Session, Utilisateur, empreinte, nouveau_jeton
+from .models import (
+    ROLES_SANS_PAYS,
+    JetonReinitialisation,
+    Role,
+    RoleUtilisateur,
+    Session,
+    Utilisateur,
+    empreinte,
+    nouveau_jeton,
+)
 
 # Empreinte aléatoire : vérifier un mot de passe prend le même temps, que le compte existe ou non.
 _EMPREINTE_FACTICE = make_password(secrets.token_urlsafe(32))
@@ -340,3 +349,72 @@ def _definir_mot_de_passe(utilisateur: Utilisateur, nouveau: str) -> None:
     utilisateur.save()
     # Un nouveau mot de passe ferme toutes les sessions ouvertes.
     revoquer_sessions(utilisateur, "mot_de_passe_change")
+
+
+# --- Rôles (USR-001, ORG-002, architecture §11.2) ------------------------------------------
+
+
+def _role_deja_actif(utilisateur: Utilisateur, role: str, pays: Pays | None) -> bool:
+    from django.db.models import Q
+
+    maintenant = timezone.now()
+    return (
+        RoleUtilisateur.objects.filter(utilisateur=utilisateur, role=role, pays=pays)
+        .filter(Q(fin__isnull=True) | Q(fin__gt=maintenant))
+        .exists()
+    )
+
+
+@transaction.atomic
+def attribuer_role(
+    utilisateur: Utilisateur,
+    role: str,
+    pays: Pays | None,
+    *,
+    par: Utilisateur | None,
+    debut=None,
+) -> RoleUtilisateur:
+    """Attribue un rôle daté. Les contrôles de droit de l'acteur sont faits par les vues.
+
+    - Un rôle du siège ou technique n'a pas de pays et suppose un compte du siège (RG-002).
+    - Un rôle de pays porte sur le pays principal de l'utilisateur ; les affectations
+      supplémentaires dans d'autres pays arrivent en 0.0.5 (ORG-009).
+    """
+    if role not in Role.values:
+        raise ErreurMetier("role_inconnu", _("Rôle inconnu."))
+    if role in ROLES_SANS_PAYS:
+        if pays is not None or not utilisateur.est_siege:
+            raise ErreurMetier("role_reserve_siege", _("Ce rôle est réservé aux comptes du siège."))
+    else:
+        if pays is None:
+            raise ErreurMetier("pays_requis", _("Ce rôle s'exerce dans un pays."))
+        if utilisateur.pays_principal_id != pays.pk:
+            raise ErreurMetier(
+                "pays_incoherent",
+                _("Ce rôle doit porter sur le pays principal de l'utilisateur."),
+            )
+    if not utilisateur.is_active:
+        raise ErreurMetier("compte_desactive", _("Ce compte est désactivé."))
+    if _role_deja_actif(utilisateur, role, pays):
+        raise ErreurMetier("role_deja_attribue", _("Ce rôle est déjà attribué."))
+    return RoleUtilisateur.objects.create(
+        utilisateur=utilisateur,
+        role=role,
+        pays=pays,
+        debut=debut or timezone.now(),
+        attribue_par=par,
+    )
+
+
+@transaction.atomic
+def retirer_role(role: RoleUtilisateur, *, par: Utilisateur | None, fin=None) -> RoleUtilisateur:
+    """Termine un rôle ; il reste dans l'historique (ORG-002 CA2)."""
+    fin = fin or timezone.now()
+    if role.fin is not None and role.fin <= timezone.now():
+        raise ErreurMetier("role_deja_termine", _("Ce rôle est déjà terminé."))
+    if fin <= role.debut:
+        raise ErreurMetier("fin_invalide", _("La fin doit suivre le début du rôle."))
+    role.fin = fin
+    role.retire_par = par
+    role.save(update_fields=["fin", "retire_par"])
+    return role

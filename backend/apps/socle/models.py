@@ -6,6 +6,9 @@ from django.db import models
 
 from .modeles_base import ModeleBase, ModeleDePays
 
+# Langues de l'interface (DC-12), communes aux pays, aux comptes et à l'API.
+CHOIX_LANGUES = [("fr", "Français"), ("en", "Anglais")]
+
 
 def valider_fuseau(valeur: str) -> None:
     if valeur not in available_timezones():
@@ -30,7 +33,7 @@ class Pays(ModeleBase):
     )
     nom = models.CharField(max_length=100)
     fuseau = models.CharField(max_length=64, validators=[valider_fuseau])
-    langue = models.CharField(max_length=2, choices=[("fr", "Français"), ("en", "Anglais")])
+    langue = models.CharField(max_length=2, choices=CHOIX_LANGUES)
     devise = models.CharField(
         max_length=3, validators=[RegexValidator(r"^[A-Z]{3}$", "Code ISO 4217 attendu.")]
     )

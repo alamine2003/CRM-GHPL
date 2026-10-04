@@ -7,9 +7,9 @@
  *   dans le magasin sécurisé du téléphone pour le mobile (architecture §11.1).
  * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
  */
-import type { Informations, Jetons, Moi, TypeClient } from '@innov/api-types';
+import type { Informations, Jetons, Moi, Perimetre, TypeClient } from '@innov/api-types';
 
-export type { Informations, Jetons, Moi, TypeClient };
+export type { CodeRole, Informations, Jetons, Moi, Perimetre, TypeClient } from '@innov/api-types';
 
 /** Stockage du jeton de rafraîchissement, pour l'application mobile uniquement. */
 export interface StockageRafraichissement {
@@ -55,6 +55,8 @@ export function creerClient(options: OptionsClient) {
     throw new Error('Le client mobile a besoin d’un stockage sécurisé.');
   }
   let acces: string | null = null;
+  // Pays actif envoyé dans X-Pays ; nul = pays principal (ou vue consolidée pour le siège).
+  let paysActif: string | null = null;
   let rafraichissementEnCours: Promise<Jetons> | null = null;
 
   async function brute<T>(chemin: string, opts: OptionsRequete = {}): Promise<T> {
@@ -64,6 +66,7 @@ export function creerClient(options: OptionsClient) {
     };
     if (opts.corps !== undefined) entetes['Content-Type'] = 'application/json';
     if (portail) entetes['X-Innov-Client'] = 'portail';
+    if (paysActif) entetes['X-Pays'] = paysActif;
     if (opts.authentifiee && acces) entetes.Authorization = `Bearer ${acces}`;
     const reponse = await appel(`${base}${chemin}`, {
       method: opts.methode ?? 'GET',
@@ -94,6 +97,7 @@ export function creerClient(options: OptionsClient) {
 
   async function oublier(): Promise<void> {
     acces = null;
+    paysActif = null;
     if (!portail) await options.stockage!.ecrire(null);
   }
 
@@ -154,6 +158,13 @@ export function creerClient(options: OptionsClient) {
       }
     },
     moi: () => requete<Moi>('/api/v1/auth/moi/'),
+    /** Rôles, actions permises et pays accessibles pour le pays actif. */
+    perimetre: () => requete<Perimetre>('/api/v1/auth/perimetre/'),
+    /** Choisit le pays actif (code ISO) ; nul pour revenir au pays principal. */
+    choisirPays(code: string | null) {
+      paysActif = code;
+    },
+    paysActif: () => paysActif,
     informations: () => brute<Informations>('/api/v1/informations/'),
     demanderReinitialisation: (identifiant: string) =>
       brute<void>('/api/v1/auth/mot-de-passe/oubli/', { methode: 'POST', corps: { identifiant } }),

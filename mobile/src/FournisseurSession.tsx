@@ -1,7 +1,16 @@
-import type { ClientApi } from '@innov/api-client';
+import type { ClientApi, Jetons } from '@innov/api-client';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { creerClientMobile } from './client';
 import { ContexteSession, type Etat, type Session } from './session';
+
+/** Une session ouverte charge aussitôt le périmètre (rôles, pays, actions permises). */
+async function ouvrir(client: ClientApi, jetons: Jetons): Promise<Etat> {
+  return {
+    statut: 'connecte',
+    utilisateur: jetons.utilisateur,
+    perimetre: await client.perimetre(),
+  };
+}
 
 export function FournisseurSession({
   children,
@@ -22,7 +31,8 @@ export function FournisseurSession({
     let actif = true;
     client
       .reprendre()
-      .then((jetons) => actif && setEtat({ statut: 'connecte', utilisateur: jetons.utilisateur }))
+      .then((jetons) => ouvrir(client, jetons))
+      .then((etatConnecte) => actif && setEtat(etatConnecte))
       .catch(() => actif && setEtat({ statut: 'anonyme' }));
     return () => {
       actif = false;
@@ -35,7 +45,7 @@ export function FournisseurSession({
       client,
       async connexion(identifiant, motDePasse) {
         const jetons = await client.connexion(identifiant, motDePasse);
-        setEtat({ statut: 'connecte', utilisateur: jetons.utilisateur });
+        setEtat(await ouvrir(client, jetons));
       },
       async deconnexion() {
         await client.deconnexion().catch(() => undefined);

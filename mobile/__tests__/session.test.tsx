@@ -35,8 +35,17 @@ const JETONS: Jetons = {
   },
 };
 
+const PERIMETRE = {
+  pays_actif: { code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' },
+  vue_consolidee: false,
+  roles: ['delegue'],
+  actions: ['pays.lire'],
+  pays_accessibles: [{ code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' }],
+};
+
 function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
   return {
+    perimetre: jest.fn(async () => PERIMETRE),
     connexion: jest.fn(async () => JETONS),
     reprendre: jest.fn(async () => {
       throw new ErreurApi(401, 'session_invalide', 'Session invalide');
@@ -66,6 +75,7 @@ describe('mobile — session', () => {
     expect(await screen.findByText('Bonjour Awa')).toBeTruthy();
     expect(screen.getAllByText(/Sénégal/).length).toBeGreaterThan(0);
     expect(screen.getByText('0.0.3')).toBeTruthy();
+    expect(screen.getByText('Délégué')).toBeTruthy();
   });
 
   it('se connecte avec l’identifiant et le mot de passe', async () => {
@@ -106,6 +116,17 @@ describe('mobile — session', () => {
     await fireEvent.press(await screen.findByText('Se déconnecter'));
     expect(client.deconnexion).toHaveBeenCalled();
     expect(await screen.findByText('redirection:/connexion')).toBeTruthy();
+  });
+
+  it('prévient le délégué qui n’a aucun rôle', async () => {
+    await rendre(
+      <Accueil />,
+      fauxClient({
+        reprendre: jest.fn(async () => JETONS),
+        perimetre: jest.fn(async () => ({ ...PERIMETRE, roles: [], actions: [] })),
+      }),
+    );
+    expect(await screen.findByText(/Aucun rôle ne vous est attribué/)).toBeTruthy();
   });
 
   it('bascule en anglais', async () => {

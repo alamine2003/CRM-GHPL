@@ -40,8 +40,9 @@ CSRF_TRUSTED_ORIGINS = env_liste("CSRF_TRUSTED_ORIGINS", "http://localhost:5173"
 # Le jeton de rafraîchissement du portail voyage dans un cookie : le portail et
 # l'API doivent partager le même domaine parent (même « site »).
 CORS_ALLOW_CREDENTIALS = True
+# En-têtes propres à INNOV CRM : client du portail (rafraîchissement) et pays actif (§11.4).
 CORS_ALLOW_HEADERS = ["accept", "accept-language", "authorization", "content-type",
-                      "x-innov-client"]  # fmt: skip
+                      "x-innov-client", "x-pays"]  # fmt: skip
 PORTAIL_URL = os.environ.get("PORTAIL_URL", "http://localhost:5173").rstrip("/")
 
 INNOV_VERSION = VERSION
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "apps.socle",
     "apps.identite",
+    "apps.perimetre",
 ]
 
 AUTH_USER_MODEL = "identite.Utilisateur"
@@ -172,6 +174,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API du CRM multi-pays des délégués médicaux.",
     "VERSION": VERSION,
     "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {"LangueEnum": "apps.socle.models.CHOIX_LANGUES"},
 }
 
 SECURE_CONTENT_TYPE_NOSNIFF = True

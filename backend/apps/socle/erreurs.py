@@ -4,6 +4,8 @@ Le code est stable et lisible par les clients ; le message est traduit dans la
 langue de la requête.
 """
 
+from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
+from django.http import Http404
 from django.utils.translation import gettext as _
 from rest_framework import exceptions, status
 from rest_framework.response import Response
@@ -45,6 +47,11 @@ def gestionnaire_exceptions(exc, contexte):
     reponse = exception_handler(exc, contexte)
     if reponse is None:
         return None
+    # Les 404 et 403 de Django prennent le code de leur équivalent DRF.
+    if isinstance(exc, Http404):
+        exc = exceptions.NotFound()
+    elif isinstance(exc, DjangoPermissionDenied):
+        exc = exceptions.PermissionDenied()
     if isinstance(exc, ErreurMetier):
         corps = {"code": exc.code, "message": str(exc.detail), "details": exc.details}
     else:

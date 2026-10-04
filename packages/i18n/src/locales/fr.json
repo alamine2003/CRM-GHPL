@@ -119,5 +119,23 @@
     "bienvenue": "Bienvenue",
     "sousTitreConnexion": "Connectez-vous pour retrouver votre tournée.",
     "prochainement": "Votre tournée et vos visites arrivent dans les prochaines versions."
+  },
+  "roles": {
+    "titre": "Rôles",
+    "aucun": "Aucun rôle ne vous est attribué dans ce pays. Contactez votre administrateur pays.",
+    "admin_siege": "Administrateur du siège",
+    "direction_siege": "Direction du siège",
+    "responsable_pays": "Responsable pays",
+    "admin_pays": "Administrateur pays",
+    "df": "DF",
+    "dm": "DM",
+    "superviseur": "Superviseur",
+    "delegue": "Délégué",
+    "admin_technique": "Administrateur technique"
+  },
+  "pays": {
+    "choix": "Pays",
+    "tous": "Tous les pays",
+    "consolide": "Vue consolidée"
   }
 }

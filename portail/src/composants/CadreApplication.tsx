@@ -1,4 +1,4 @@
-import type { Moi } from '@innov/api-client';
+import type { Moi, Perimetre } from '@innov/api-client';
 import { barreLaterale, largeurBarreLaterale, marque } from '@innov/design';
 import BarChartRounded from '@mui/icons-material/BarChartRounded';
 import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
@@ -30,6 +30,7 @@ import { useSession } from '../contexteSession';
 import ChoixLangue from './ChoixLangue';
 import { initiales } from './initiales';
 import Logo from './Logo';
+import SelecteurPays from './SelecteurPays';
 
 /** Entrées de navigation ; celles d'une version future sont visibles mais inactives. */
 const ENTREES = [
@@ -42,7 +43,7 @@ const ENTREES = [
   { cle: 'parametres', icone: <SettingsRounded />, version: '0.0.6' },
 ] as const;
 
-function BarreLaterale({ utilisateur }: { utilisateur: Moi }) {
+function BarreLaterale({ utilisateur, perimetre }: { utilisateur: Moi; perimetre: Perimetre }) {
   const { t } = useTranslation();
   const { deconnexion } = useSession();
   const theme = useTheme();
@@ -70,7 +71,8 @@ function BarreLaterale({ utilisateur }: { utilisateur: Moi }) {
             {t('commun.produit')}
           </Typography>
           <Typography variant="caption" sx={{ color: barreLaterale.texteDiscret }} noWrap>
-            {utilisateur.pays_principal?.nom ?? t('session.siege')}
+            {perimetre.pays_actif?.nom ??
+              (perimetre.vue_consolidee ? t('pays.consolide') : t('session.siege'))}
           </Typography>
         </Box>
       </Box>
@@ -173,10 +175,12 @@ function BarreLaterale({ utilisateur }: { utilisateur: Moi }) {
 /** Cadre des pages connectées : barre latérale bleu marine et barre supérieure. */
 export default function CadreApplication({
   utilisateur,
+  perimetre,
   titre,
   children,
 }: {
   utilisateur: Moi;
+  perimetre: Perimetre;
   titre: string;
   children: ReactNode;
 }) {
@@ -189,11 +193,11 @@ export default function CadreApplication({
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
       {large ? (
         <Box sx={{ position: 'sticky', top: 0, height: '100vh', flex: 'none' }}>
-          <BarreLaterale utilisateur={utilisateur} />
+          <BarreLaterale utilisateur={utilisateur} perimetre={perimetre} />
         </Box>
       ) : (
         <Drawer open={tiroir} onClose={() => setTiroir(false)}>
-          <BarreLaterale utilisateur={utilisateur} />
+          <BarreLaterale utilisateur={utilisateur} perimetre={perimetre} />
         </Drawer>
       )}
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -226,6 +230,7 @@ export default function CadreApplication({
           <Typography variant="h6" component="p" noWrap sx={{ flexGrow: 1 }}>
             {titre}
           </Typography>
+          <SelecteurPays perimetre={perimetre} />
           <ChoixLangue />
         </Box>
         <Box

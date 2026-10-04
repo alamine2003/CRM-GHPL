@@ -119,5 +119,23 @@
     "bienvenue": "Welcome",
     "sousTitreConnexion": "Sign in to find your round.",
     "prochainement": "Your round and visits arrive in the next versions."
+  },
+  "roles": {
+    "titre": "Roles",
+    "aucun": "No role is assigned to you in this country. Contact your country administrator.",
+    "admin_siege": "Headquarters administrator",
+    "direction_siege": "Headquarters management",
+    "responsable_pays": "Country manager",
+    "admin_pays": "Country administrator",
+    "df": "DF",
+    "dm": "DM",
+    "superviseur": "Supervisor",
+    "delegue": "Medical representative",
+    "admin_technique": "Technical administrator"
+  },
+  "pays": {
+    "choix": "Country",
+    "tous": "All countries",
+    "consolide": "Consolidated view"
   }
 }

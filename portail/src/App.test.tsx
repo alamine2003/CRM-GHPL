@@ -1,4 +1,10 @@
-import { type ClientApi, ErreurApi, type Jetons, type Moi } from '@innov/api-client';
+import {
+  type ClientApi,
+  ErreurApi,
+  type Jetons,
+  type Moi,
+  type Perimetre,
+} from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,8 +27,21 @@ const MDP = `${Math.random().toString(36).slice(2)}-Aa9-${Date.now()}`;
 const NOUVEAU = `${Math.random().toString(36).slice(2)}-Bb8-${Date.now()}`;
 const JETONS: Jetons = { acces: 'A', expire_dans: 900, rafraichissement: null, utilisateur: AWA };
 
+const SENEGAL = { code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' };
+const TOGO = { code: 'TG', nom: 'Togo', fuseau: 'Africa/Lome' };
+const PERIMETRE_DELEGUE: Perimetre = {
+  pays_actif: SENEGAL,
+  vue_consolidee: false,
+  roles: ['delegue'],
+  actions: ['pays.lire'],
+  pays_accessibles: [SENEGAL],
+};
+
 function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
   return {
+    perimetre: vi.fn(async () => PERIMETRE_DELEGUE),
+    choisirPays: vi.fn(),
+    paysActif: () => null,
     connexion: vi.fn(async () => JETONS),
     reprendre: vi.fn(async () => {
       throw new ErreurApi(401, 'session_invalide', 'Session invalide');
@@ -77,6 +96,7 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
     expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
     expect(screen.getAllByText('Sénégal').length).toBeGreaterThan(0);
     expect(screen.getByText(/^Cycle 0\.\d · /)).toBeInTheDocument();
+    expect(screen.getByText('Délégué')).toBeInTheDocument();
     expect(await screen.findByText('Service disponible')).toBeInTheDocument();
   });
 
@@ -135,6 +155,48 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
     await screen.findByRole('heading', { name: 'Connexion' });
     await act(() => i18n.changeLanguage('en'));
     expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
+  });
+});
+
+describe('portail — rôles et pays actif (USR-001, USR-002)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  it('prévient l’utilisateur qui n’a aucun rôle', async () => {
+    const sansRole = { ...PERIMETRE_DELEGUE, roles: [], actions: [] };
+    rendre(
+      fauxClient({ reprendre: vi.fn(async () => JETONS), perimetre: vi.fn(async () => sansRole) }),
+    );
+    expect(await screen.findByText(/Aucun rôle ne vous est attribué/)).toBeInTheDocument();
+  });
+
+  it('un délégué d’un seul pays n’a pas de sélecteur de pays', async () => {
+    rendre(fauxClient({ reprendre: vi.fn(async () => JETONS) }));
+    await screen.findByRole('heading', { name: 'Bonjour Awa' });
+    expect(screen.queryByLabelText('Pays')).not.toBeInTheDocument();
+  });
+
+  it('le siège passe de la vue consolidée à un pays', async () => {
+    const consolide: Perimetre = {
+      pays_actif: null,
+      vue_consolidee: true,
+      roles: ['direction_siege'],
+      actions: ['pays.lire'],
+      pays_accessibles: [SENEGAL, TOGO],
+    };
+    const perimetre = vi
+      .fn()
+      .mockResolvedValueOnce(consolide)
+      .mockResolvedValueOnce({ ...consolide, pays_actif: TOGO, vue_consolidee: false });
+    const client = fauxClient({ reprendre: vi.fn(async () => JETONS), perimetre });
+    rendre(client);
+    const selecteur = await screen.findByLabelText('Pays');
+    expect(screen.getAllByText('Vue consolidée').length).toBeGreaterThan(0);
+    fireEvent.mouseDown(selecteur);
+    fireEvent.click(await screen.findByRole('option', { name: 'Togo' }));
+    expect(client.choisirPays).toHaveBeenCalledWith('TG');
+    expect((await screen.findAllByText('Togo')).length).toBeGreaterThan(0);
   });
 });
 

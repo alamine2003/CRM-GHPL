@@ -1,16 +1,18 @@
-import { type ClientApi, ErreurApi, type Moi } from '@innov/api-client';
+import { type ClientApi, ErreurApi, type Moi, type Perimetre } from '@innov/api-client';
 import { createContext, useContext } from 'react';
 
 export type Etat =
   | { statut: 'chargement' }
   | { statut: 'anonyme'; sessionExpiree?: boolean }
-  | { statut: 'connecte'; utilisateur: Moi };
+  | { statut: 'connecte'; utilisateur: Moi; perimetre: Perimetre };
 
 export interface Session {
   etat: Etat;
   client: ClientApi;
   connexion(identifiant: string, motDePasse: string): Promise<void>;
   deconnexion(): Promise<void>;
+  /** Change le pays actif (code ISO), ou revient au pays principal / à la vue consolidée. */
+  choisirPays(code: string | null): Promise<void>;
 }
 
 export const ContexteSession = createContext<Session | null>(null);

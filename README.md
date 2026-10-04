@@ -40,6 +40,7 @@ Premier compte (en attendant les écrans d'administration) :
 cd backend
 .venv/bin/python manage.py creer_pays SN
 .venv/bin/python manage.py creer_utilisateur prenom.nom --prenom Prénom --nom Nom --pays SN --afficher-lien
+.venv/bin/python manage.py attribuer_role prenom.nom admin_pays     # ou admin_siege pour un compte sans pays
 # Ouvrir le lien affiché pour choisir le mot de passe, puis se connecter sur le portail.
 ```
 

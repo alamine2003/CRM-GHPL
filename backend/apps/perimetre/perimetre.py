@@ -1,0 +1,102 @@
+"""Moteur de périmètre : ce qu'un utilisateur voit et peut faire (architecture §11.2).
+
+Le périmètre est calculé à chaque requête pour le **pays actif** :
+
+- en-tête `X-Pays: <code>` s'il est fourni et autorisé ;
+- sinon le pays principal de l'utilisateur ;
+- un compte du siège sans en-tête travaille en vue consolidée (tous les pays).
+
+Un utilisateur sans rôle actif dans le pays actif ne voit rien (USR-001 CA2).
+"""
+
+from dataclasses import dataclass, field
+
+from django.db.models import Q, QuerySet
+from django.utils import timezone
+from django.utils.translation import gettext as _
+from rest_framework import status
+
+from apps.identite.models import ROLES_SANS_PAYS, RoleUtilisateur, Utilisateur
+from apps.socle.erreurs import ErreurMetier
+from apps.socle.models import Pays
+
+from .matrice import MATRICE, SIEGE, Action
+
+
+@dataclass(frozen=True)
+class Perimetre:
+    utilisateur: Utilisateur
+    pays_actif: Pays | None
+    roles: frozenset[str]
+    pays_accessibles: tuple[Pays, ...] = field(default_factory=tuple)
+
+    @property
+    def est_siege(self) -> bool:
+        return bool(self.roles & SIEGE)
+
+    @property
+    def vue_consolidee(self) -> bool:
+        """Siège sans pays choisi : tous les pays, en agrégé."""
+        return self.est_siege and self.pays_actif is None
+
+    def peut(self, action: Action) -> bool:
+        return bool(self.roles & MATRICE[action])
+
+    def actions(self) -> list[str]:
+        return sorted(action.value for action in Action if self.peut(action))
+
+    def exiger(self, action: Action) -> None:
+        if not self.peut(action):
+            raise ErreurMetier("interdit", _("Action non autorisée."), status.HTTP_403_FORBIDDEN)
+
+    # --- Sélecteurs de base -----------------------------------------------------------
+
+    def filtrer_par_pays(self, qs: QuerySet, champ: str = "pays_id") -> QuerySet:
+        """Limite un jeu d'objets au pays actif, ou à tous les pays pour la vue consolidée."""
+        if not self.roles:
+            return qs.none()
+        if self.vue_consolidee:
+            return qs
+        if self.pays_actif is None:
+            return qs.none()
+        return qs.filter(**{champ: self.pays_actif.pk})
+
+
+def roles_actifs(utilisateur: Utilisateur, a=None) -> list[RoleUtilisateur]:
+    a = a or timezone.now()
+    return list(
+        RoleUtilisateur.objects.select_related("pays")
+        .filter(utilisateur=utilisateur, debut__lte=a)
+        .filter(Q(fin__isnull=True) | Q(fin__gt=a))
+    )
+
+
+def calculer_perimetre(utilisateur: Utilisateur, code_pays: str | None = None) -> Perimetre:
+    actifs = roles_actifs(utilisateur)
+    roles_sans_pays = {r.role for r in actifs if r.role in ROLES_SANS_PAYS}
+    siege = bool(roles_sans_pays & SIEGE)
+
+    if siege:
+        accessibles = tuple(Pays.objects.exclude(statut=Pays.Statut.ARCHIVE).order_by("nom"))
+    else:
+        par_pays = {r.pays.pk: r.pays for r in actifs if r.pays_id}
+        accessibles = tuple(sorted(par_pays.values(), key=lambda p: p.nom))
+
+    if code_pays:
+        pays_actif = Pays.objects.filter(code=code_pays.strip().upper()).first()
+        autorise = pays_actif is not None and (
+            siege or any(p.pk == pays_actif.pk for p in accessibles)
+        )
+        if not autorise:
+            raise ErreurMetier(
+                "pays_non_autorise",
+                _("Vous n'avez pas accès à ce pays."),
+                status.HTTP_403_FORBIDDEN,
+            )
+    else:
+        pays_actif = utilisateur.pays_principal
+
+    roles = set(roles_sans_pays)
+    if pays_actif is not None:
+        roles |= {r.role for r in actifs if r.pays_id == pays_actif.pk}
+    return Perimetre(utilisateur, pays_actif, frozenset(roles), accessibles)

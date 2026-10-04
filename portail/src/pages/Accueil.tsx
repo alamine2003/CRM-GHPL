@@ -1,9 +1,10 @@
-import type { Moi } from '@innov/api-client';
+import type { Moi, Perimetre } from '@innov/api-client';
 import { avancement } from '@innov/domaine';
 import CloudDoneRounded from '@mui/icons-material/CloudDoneRounded';
 import CloudOffRounded from '@mui/icons-material/CloudOffRounded';
 import RouteRounded from '@mui/icons-material/RouteRounded';
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -167,12 +168,30 @@ function EtatService() {
   );
 }
 
-function MonCompte({ utilisateur }: { utilisateur: Moi }) {
+function MonCompte({ utilisateur, perimetre }: { utilisateur: Moi; perimetre: Perimetre }) {
   const { t, i18n } = useTranslation();
   return (
     <Card>
       <EnTeteCarte titre={t('profil.titre')} />
       <CardContent sx={{ py: 0.5 }}>
+        <Ligne
+          libelle={t('roles.titre')}
+          valeur={
+            perimetre.roles.length ? (
+              <Stack
+                direction="row"
+                sx={{ gap: 0.75, flexWrap: 'wrap', justifyContent: 'flex-end' }}
+              >
+                {perimetre.roles.map((role) => (
+                  <Chip key={role} size="small" color="primary" label={t(`roles.${role}`)} />
+                ))}
+              </Stack>
+            ) : (
+              '—'
+            )
+          }
+        />
+        <Divider />
         <Ligne libelle={t('profil.identifiant')} valeur={utilisateur.identifiant} />
         <Divider />
         <Ligne
@@ -182,7 +201,10 @@ function MonCompte({ utilisateur }: { utilisateur: Moi }) {
         <Divider />
         <Ligne
           libelle={t('profil.perimetre')}
-          valeur={utilisateur.pays_principal?.nom ?? t('session.siege')}
+          valeur={
+            perimetre.pays_actif?.nom ??
+            (perimetre.vue_consolidee ? t('pays.consolide') : t('session.siege'))
+          }
         />
         <Divider />
         <Ligne libelle={t('profil.langue')} valeur={t(`commun.langues.${i18n.language}`)} />
@@ -191,7 +213,13 @@ function MonCompte({ utilisateur }: { utilisateur: Moi }) {
   );
 }
 
-export default function Accueil({ utilisateur }: { utilisateur: Moi }) {
+export default function Accueil({
+  utilisateur,
+  perimetre,
+}: {
+  utilisateur: Moi;
+  perimetre: Perimetre;
+}) {
   const { t, i18n } = useTranslation();
   const date = new Intl.DateTimeFormat(i18n.language, {
     weekday: 'long',
@@ -212,6 +240,11 @@ export default function Accueil({ utilisateur }: { utilisateur: Moi }) {
           {t('accueil.introduction')}
         </Typography>
       </Box>
+      {perimetre.roles.length === 0 && (
+        <Alert severity="warning" role="alert">
+          {t('roles.aucun')}
+        </Alert>
+      )}
       <Box
         sx={{
           display: 'grid',
@@ -224,7 +257,7 @@ export default function Accueil({ utilisateur }: { utilisateur: Moi }) {
           <FeuilleDeRoute />
           <EtatService />
         </Stack>
-        <MonCompte utilisateur={utilisateur} />
+        <MonCompte utilisateur={utilisateur} perimetre={perimetre} />
       </Box>
     </Stack>
   );

@@ -20,8 +20,12 @@ function Protegee() {
   }
   if (etat.statut === 'anonyme') return <Navigate to="/connexion" replace />;
   return (
-    <CadreApplication utilisateur={etat.utilisateur} titre={t('navigation.accueil')}>
-      <Accueil utilisateur={etat.utilisateur} />
+    <CadreApplication
+      utilisateur={etat.utilisateur}
+      perimetre={etat.perimetre}
+      titre={t('navigation.accueil')}
+    >
+      <Accueil utilisateur={etat.utilisateur} perimetre={etat.perimetre} />
     </CadreApplication>
   );
 }

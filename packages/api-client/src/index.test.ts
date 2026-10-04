@@ -146,3 +146,24 @@ describe('client portail', () => {
     expect(appel.mock.calls.filter(([u]) => String(u).endsWith('rafraichir/'))).toHaveLength(1);
   });
 });
+
+describe('pays actif', () => {
+  it('envoie X-Pays une fois le pays choisi, et l’oublie à la déconnexion', async () => {
+    const appel = vi.fn(async (url: RequestInfo | URL, _init?: RequestInit) =>
+      String(url).endsWith('deconnexion/') ? reponse(204) : reponse(200, jetons('A1', null)),
+    );
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'portail',
+      langue: () => 'fr',
+      fetch: appel,
+    });
+    await client.connexion('awa.diallo', `${Date.now()}`);
+    client.choisirPays('TG');
+    await client.reprendre();
+    const entetes = appel.mock.calls[1]![1]!.headers as Record<string, string>;
+    expect(entetes['X-Pays']).toBe('TG');
+    await client.deconnexion();
+    expect(client.paysActif()).toBeNull();
+  });
+});
