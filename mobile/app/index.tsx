@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Alerte, Carte, Texte } from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { MesProduits } from '../src/MesProduits';
+import { MesPropositions } from '../src/MesPropositions';
 import { MonPoste } from '../src/MonPoste';
 import { useSession } from '../src/session';
 
@@ -27,6 +28,7 @@ export default function Accueil() {
       titre={t('session.bonjour', { prenom: connecte?.utilisateur.prenom ?? '' })}
     >
       {roles.length === 0 && <Alerte type="info">{t('roles.aucun')}</Alerte>}
+      <MesPropositions />
       <MonPoste />
       <MesProduits />
       <Carte>

@@ -24,6 +24,7 @@ from apps.socle.services import aujourdhui
 
 from .models import (
     Activite,
+    Changement,
     Civilite,
     Etablissement,
     Exercice,
@@ -44,6 +45,26 @@ def _auditer(action: str, fiche, **details) -> None:
 
     prefixe = "etablissement" if isinstance(fiche, Etablissement) else "prospect"
     enregistrer(f"{prefixe}.{action}", objet=fiche, pays=fiche.pays, details=details)
+
+
+def historiser(fiche, changes: dict, auteur: Utilisateur | None, origine: str = "saisie"):
+    """PRP-012 CA1 : une ligne par champ changé (ancienne, nouvelle valeur, auteur, date)."""
+    objet = (
+        Changement.Objet.ETABLISSEMENT
+        if isinstance(fiche, Etablissement)
+        else Changement.Objet.PROSPECT
+    )
+    for champ, valeurs in changes.items():
+        Changement.objects.create(
+            pays=fiche.pays,
+            objet=objet,
+            objet_id=fiche.pk,
+            champ=champ,
+            ancienne=valeurs["ancien"][:300],
+            nouvelle=valeurs["nouveau"][:300],
+            auteur=auteur,
+            origine=origine,
+        )
 
 
 def normaliser_nom(*parties: str) -> str:
@@ -215,14 +236,42 @@ def creer_prospect(pays: Pays, auteur: Utilisateur, *, actif: bool, **champs) ->
     return prospect
 
 
+def saisir_prospect(pays: Pays, auteur: Utilisateur, *, actif: bool, **champs):
+    """Création depuis l'application : le détecteur de doublons tranche (PRP-008). Renvoie la
+    fiche à montrer (la fiche conservée si la saisie a été fusionnée) et la décision."""
+    from . import doublons
+
+    valeurs = _verifier(pays, champs)
+    prospect = Prospect(
+        pays=pays,
+        cree_par=auteur,
+        statut=StatutFiche.ACTIF if actif else StatutFiche.A_VALIDER,
+        **valeurs,
+    )
+    if actif:
+        prospect.valide_par, prospect.valide_le = auteur, timezone.now()
+    try:
+        with transaction.atomic():
+            fiche, decision = doublons.appliquer(prospect, auteur)
+    except IntegrityError as erreur:
+        raise ErreurMetier(
+            "numero_ordre_deja_utilise",
+            _("Ce numéro d'ordre est déjà celui d'une autre fiche de ce pays."),
+            champ="numero_ordre",
+        ) from erreur
+    _auditer("creation", prospect, statut=prospect.statut, doublon=decision.niveau)
+    return fiche, decision
+
+
 SUIVIS = ["civilite", "nom", "prenom", "type", "specialite", "numero_ordre",
           "telephone_mobile", "telephone_pro", "courriel", "potentiel", "activite", "grade",
           "secteur", "localite"]  # fmt: skip
 
 
-def modifier_prospect(prospect: Prospect, **champs) -> Prospect:
-    """Modification d'une fiche ; chaque champ changé est audité (ancienne, nouvelle valeur).
-    L'historique détaillé des fiches communes et les propositions arrivent en 0.1.8."""
+def modifier_prospect(
+    prospect: Prospect, *, auteur: Utilisateur | None = None, origine: str = "saisie", **champs
+) -> Prospect:
+    """Modification d'une fiche ; chaque champ changé est audité et historisé (PRP-012)."""
     if prospect.statut not in (StatutFiche.A_VALIDER, StatutFiche.ACTIF):
         raise ErreurMetier("archive", _("Une fiche archivée ne se modifie plus."))
     actuels = {c: getattr(prospect, c) for c in SUIVIS}
@@ -237,6 +286,7 @@ def modifier_prospect(prospect: Prospect, **champs) -> Prospect:
     if changes:
         _enregistrer(prospect)
         _auditer("modification", prospect, **changes)
+        historiser(prospect, changes, auteur, origine)
     return prospect
 
 
@@ -248,10 +298,11 @@ def valider(fiche, par: Utilisateur):
     fiche.statut, fiche.valide_par, fiche.valide_le = StatutFiche.ACTIF, par, timezone.now()
     fiche.save(update_fields=["statut", "valide_par", "valide_le"])
     _auditer("validation", fiche)
+    historiser(fiche, {"statut": {"ancien": StatutFiche.A_VALIDER, "nouveau": fiche.statut}}, par)
     return fiche
 
 
-def archiver(fiche, motif: str = ""):
+def archiver(fiche, motif: str = "", par: Utilisateur | None = None):
     """Aucune suppression (PRP-012 CA2) : une fiche archivée n'est plus proposée."""
     if fiche.statut == StatutFiche.ARCHIVE:
         return fiche
@@ -267,6 +318,7 @@ def archiver(fiche, motif: str = ""):
 
         retirer_partout(fiche, _("Fiche archivée"))
     _auditer("archivage", fiche, ancien=ancien, motif=motif.strip())
+    historiser(fiche, {"statut": {"ancien": ancien, "nouveau": StatutFiche.ARCHIVE}}, par)
     return fiche
 
 
@@ -291,7 +343,7 @@ def fiches_visibles(modele, perimetre: Perimetre) -> QuerySet:
 
 def peut_modifier(perimetre: Perimetre, prospect) -> bool:
     """L'administrateur pays modifie toute fiche ; l'auteur, sa fiche tant qu'elle est à
-    valider. Les autres proposeront une modification (PRP-014, 0.1.8)."""
+    valider. Les autres proposent une modification (PRP-014)."""
     if Role.ADMIN_PAYS in perimetre.roles:
         return True
     auteur = prospect.cree_par_id == perimetre.utilisateur.pk
@@ -386,7 +438,7 @@ def creer_etablissement(pays: Pays, auteur: Utilisateur, *, actif: bool, **champ
     return etablissement
 
 
-def modifier_etablissement(etablissement, **champs):
+def modifier_etablissement(etablissement, *, auteur=None, origine: str = "saisie", **champs):
     if etablissement.statut not in (StatutFiche.A_VALIDER, StatutFiche.ACTIF):
         raise ErreurMetier("archive", _("Une fiche archivée ne se modifie plus."))
     actuels = {c: getattr(etablissement, c) for c in SUIVIS_ETABLISSEMENT}
@@ -401,6 +453,7 @@ def modifier_etablissement(etablissement, **champs):
     if changes:
         etablissement.save()
         _auditer("modification", etablissement, **changes)
+        historiser(etablissement, changes, auteur, origine)
     return etablissement
 
 

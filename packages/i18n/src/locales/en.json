@@ -126,7 +126,9 @@
     "referentiels": "Reference data",
     "etablissements": "Institutions",
     "imports": "Imports",
-    "ciblage": "Target lists"
+    "ciblage": "Target lists",
+    "doublons": "Duplicates",
+    "propositions": "Proposals"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -761,7 +763,7 @@
       "statut": "Status"
     },
     "aides": {
-      "aValider": "Your record will be “to validate”: you can use it right away; other reps will see it once validated.",
+      "aValider": "On saving, the system checks for duplicates: without one, the record becomes shared at once; otherwise it waits for the country administrator’s decision.",
       "potentiel": "A: major prescriber · B: regular · C: occasional"
     },
     "nombre_one": "{{count}} record",
@@ -784,7 +786,7 @@
       "archiverAide": "The record will no longer be offered; its history remains.",
       "modifier": "Edit",
       "modifierTitre": "Edit record",
-      "communeAide": "Shared record: only the country administrator edits it.",
+      "communeAide": "Shared record: the country administrator edits it; you can propose a change.",
       "aucun": "Not provided"
     },
     "mobile": {
@@ -873,14 +875,11 @@
     "titre": "Imports",
     "sousTitre": "Controlled migration of the current CRM's data · {{pays}}.",
     "choisirPays": "Choose a country: an import always targets one country.",
-    "birdnotes": "BirdNotes export",
     "etapes": {
       "fichier": "Choose the file",
       "simulation": "Simulate and check",
       "import": "Import"
     },
-    "deposer": "Drop the BirdNotes export here",
-    "formats": "JSON extraction file, or its ZIP archive",
     "choisir": "Choose a file",
     "changer": "Change file",
     "confidentialite": "The file is read during processing and not kept: only the summary and the anomaly report remain.",
@@ -906,7 +905,10 @@
       "reseaux_one": "{{count}} network",
       "reseaux_other": "{{count}} networks",
       "anomalies_one": "{{count}} anomaly in the report",
-      "anomalies_other": "{{count}} anomalies in the report"
+      "anomalies_other": "{{count}} anomalies in the report",
+      "postes": "Positions created",
+      "vacants": "Vacant positions",
+      "comptes": "Accounts created"
     },
     "detail": "Details by data",
     "anomalies": "Anomalies",
@@ -923,7 +925,14 @@
       "prospects": "Prospects",
       "demandes_modification": "Change requests",
       "zones": "Zones",
-      "exercices": "Places of practice"
+      "exercices": "Places of practice",
+      "comptes": "Accounts",
+      "roles": "Roles",
+      "perimetres": "DF and DM scopes",
+      "postes": "Positions",
+      "occupations": "Assignments",
+      "rattachements": "Supervision links",
+      "lignes": "Rows"
     },
     "actions": {
       "crees": "created",
@@ -938,7 +947,13 @@
       "localite_a_preciser": "locality to specify",
       "prenom_a_separer": "first name to separate",
       "sans_etablissement": "no facility",
-      "etablissement_non_repris": "facility not imported"
+      "etablissement_non_repris": "facility not imported",
+      "modifies": "modified",
+      "vacants": "vacant",
+      "creees": "created",
+      "existantes": "already present",
+      "attribues": "granted",
+      "importees": "imported"
     },
     "niveaux": {
       "rejet": "Row set aside",
@@ -955,7 +970,24 @@
     "lance_one": "{{personne}} · {{quand}} · {{count}} anomaly",
     "lance_other": "{{personne}} · {{quand}} · {{count}} anomalies",
     "confirmerTitre": "Import for real?",
-    "confirmerTexte": "{{prospects}} prospects and {{etablissements}} facilities will be created, as in the simulation. Imported records remain editable and archivable; they are never deleted."
+    "confirmerTexte": "{{prospects}} prospects and {{etablissements}} facilities will be created, as in the simulation. Imported records remain editable and archivable; they are never deleted.",
+    "sources": {
+      "birdnotes": "BirdNotes export",
+      "organisation": "Organisation file"
+    },
+    "sourcesCourtes": {
+      "birdnotes": "BirdNotes",
+      "organisation": "Organisation"
+    },
+    "source": "Source",
+    "deposerSource": {
+      "birdnotes": "Drop the BirdNotes export here",
+      "organisation": "Drop the organisation file here"
+    },
+    "formatsSource": {
+      "birdnotes": "Extraction JSON file, or its ZIP archive",
+      "organisation": "Excel workbook (.xlsx), “ORGANISATION” sheet"
+    }
   },
   "exercice": {
     "etablissement": "Facility",
@@ -1067,5 +1099,111 @@
     "derniere": "Last page",
     "voirPlus": "Show more ({{reste}} left)",
     "filtresN": "Filters · {{count}}"
+  },
+  "historique": {
+    "titre": "Change history",
+    "vide": "No recorded change.",
+    "systeme": "System",
+    "origines": {
+      "proposition": "accepted proposal",
+      "fusion": "merge",
+      "defusion": "unmerge",
+      "import": "import"
+    }
+  },
+  "doublons": {
+    "titre": "Duplicates",
+    "choisirPays": "Choose a country: duplicates are handled country by country.",
+    "resume_one": "{{count}} pair to decide",
+    "resume_other": "{{count}} pairs to decide",
+    "onglets": {
+      "file": "To decide",
+      "fusions": "Merges"
+    },
+    "fileVide": "No duplicate to decide",
+    "fileVideTexte": "Records the detector finds probably identical arrive here.",
+    "aucuneFusion": "No merge yet",
+    "score": "Similarity {{score}} / 100",
+    "comparaison": "Comparison of both records",
+    "nouvelle": "Entered record",
+    "existante": "Existing record",
+    "lieux": "Places of practice",
+    "cibles": "Target lists",
+    "creee": "Created by",
+    "fusionner": "Merge",
+    "separer": "Keep separate",
+    "refuser": "Reject the entered record",
+    "aideFusion": "Merging keeps the existing record: the other one’s places of practice and target lists join it. A merge can be undone from the “Merges” tab.",
+    "decisions": {
+      "fusionner": "Records merged.",
+      "separer": "Records kept separate: this pair will not come back.",
+      "refuser": "Entered record rejected and archived."
+    },
+    "criteres": {
+      "nom_similaire": "similar name",
+      "meme_numero_ordre": "same licence number",
+      "meme_mobile": "same mobile",
+      "meme_telephone_fixe": "same landline",
+      "meme_specialite": "same specialty",
+      "meme_type": "same type",
+      "meme_secteur": "same sector"
+    },
+    "automatique": "Automatic merge",
+    "parPersonne": "By {{personne}}",
+    "defaite": "Undone on {{date}}",
+    "defaire": "Undo",
+    "defaireTitre": "Undo the merge",
+    "defaireAide": "“{{absorbee}}” becomes a record distinct from “{{conservee}}” again and gets back its places of practice and target lists. The pair will no longer merge automatically.",
+    "ressemblantes": "Similar records",
+    "ressemblantesAide": "This prospect may already exist: open its record rather than creating a second one.",
+    "ouvrir": "Open",
+    "saisie": {
+      "certain": "This record already existed: your entry was attached to it.",
+      "probable": "Record saved, pending validation: it looks like an existing record, the country administrator will decide."
+    },
+    "horsLigne": "(Offline: compared with your target list.)"
+  },
+  "propositions": {
+    "titre": "Proposals",
+    "proposer": "Propose a change",
+    "proposerTitre": "Propose a change",
+    "proposerAide": "This is a shared record: it only changes once your proposal is accepted by your supervisor or the country administrator.",
+    "envoyer": "Send the proposal",
+    "commentaire": "Comment (optional)",
+    "motif": "Reason for rejection",
+    "accepter": "Accept",
+    "refuser": "Reject",
+    "refuserTitre": "Reject the proposal",
+    "acceptee": "Proposal accepted: the record is up to date.",
+    "nouvelExercice": "New place of practice",
+    "par": "Proposed by {{personne}} · {{quand}}",
+    "decidee": "Decision by {{personne}} · {{quand}}",
+    "filtres": {
+      "en_attente": "Pending",
+      "acceptee": "Accepted",
+      "refusee": "Rejected"
+    },
+    "statuts": {
+      "en_attente": "Pending",
+      "acceptee": "Accepted",
+      "refusee": "Rejected"
+    },
+    "vides": {
+      "en_attente": "No pending proposal",
+      "acceptee": "No accepted proposal",
+      "refusee": "No rejected proposal"
+    },
+    "videAuteur": "Propose a change from the record of a shared prospect or institution.",
+    "champs": {
+      "telephone_mobile": "Mobile phone",
+      "telephone_pro": "Work phone",
+      "courriel": "Email",
+      "numero_ordre": "Licence number",
+      "adresse": "Address",
+      "telephone": "Phone"
+    },
+    "decisionsTitre_one": "{{count}} decision on your proposals",
+    "decisionsTitre_other": "{{count}} decisions on your proposals",
+    "vu": "Seen"
   }
 }

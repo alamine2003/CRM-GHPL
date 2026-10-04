@@ -100,14 +100,17 @@ class ProspectsVue(VueProspects):
         resultats, pagination = rch.paginer(qs, p)
         return Response({**pagination, "resultats": self.get_serializer(resultats, many=True).data})
 
-    @extend_schema(request=s.SaisieProspectSerializer, responses={201: s.ProspectSerializer},
+    @extend_schema(request=s.SaisieProspectSerializer, responses={201: s.ProspectCreeSerializer},
                    operation_id="prospect_creer")  # fmt: skip
     def post(self, request):
         v = self.references(_lire(s.SaisieProspectSerializer, request))
         pays = pays_requis(self.perimetre)
         actif = Role.ADMIN_PAYS in self.perimetre.roles
-        prospect = services.creer_prospect(pays, request.user, actif=actif, **v)
-        return self.detail(prospect, status.HTTP_201_CREATED)
+        fiche, decision = services.saisir_prospect(pays, request.user, actif=actif, **v)
+        reponse = self.detail(fiche, status.HTTP_201_CREATED)
+        # PRP-008 : la décision du détecteur accompagne la fiche (fusionnée, en file, commune).
+        reponse.data["doublon"] = decision.niveau
+        return reponse
 
 
 class ProspectVue(VueProspects):
@@ -132,7 +135,7 @@ class ProspectVue(VueProspects):
                 status.HTTP_403_FORBIDDEN,
             )
         v = self.references(_lire(s.SaisieProspectSerializer, request))
-        return self.detail(services.modifier_prospect(prospect, **v))
+        return self.detail(services.modifier_prospect(prospect, auteur=request.user, **v))
 
 
 class ProspectValidationVue(VueProspects):
@@ -152,7 +155,7 @@ class ProspectArchivageVue(VueProspects):
     def post(self, request, id):
         prospect = get_object_or_404(self.get_queryset(), pk=id)
         v = _lire(s.ArchivageProspectSerializer, request)
-        return self.detail(services.archiver(prospect, v.get("motif", "")))
+        return self.detail(services.archiver(prospect, v.get("motif", ""), request.user))
 
 
 class SyntheseProspectsVue(VueProspects):
@@ -254,7 +257,7 @@ class EtablissementVue(VueEtablissements):
                 status.HTTP_403_FORBIDDEN,
             )
         v = self.references(_lire(s.SaisieEtablissementSerializer, request))
-        return self.detail(services.modifier_etablissement(fiche, **v))
+        return self.detail(services.modifier_etablissement(fiche, auteur=request.user, **v))
 
 
 class EtablissementValidationVue(VueEtablissements):
@@ -275,7 +278,7 @@ class EtablissementArchivageVue(VueEtablissements):
     def post(self, request, id):
         fiche = get_object_or_404(self.get_queryset(), pk=id)
         v = _lire(s.ArchivageProspectSerializer, request)
-        return self.detail(services.archiver(fiche, v.get("motif", "")))
+        return self.detail(services.archiver(fiche, v.get("motif", ""), request.user))
 
 
 class SyntheseEtablissementsVue(VueEtablissements):

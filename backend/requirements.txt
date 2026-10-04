@@ -12,3 +12,4 @@ sentry-sdk>=2.20
 pyotp>=2.9
 cryptography>=44
 phonenumbers>=8.13
+defusedxml>=0.7

@@ -158,6 +158,8 @@ Tous les types de poste suivent **le même workflow** planning → visite → ra
 | Gérer les référentiels (produits, spécialités, types) | Oui | Non | Non | Oui | Non | Non | Non | Non |
 | Créer un prospect ou un établissement | Non | Non | Non | Oui | Non | Non | Selon délégation de l'administrateur pays [H] | Oui (statut `a_valider`) |
 | Trancher un doublon, fusionner, défusionner | Non | Non | Non | Oui | Non | Non | Non | Non |
+| Proposer une modification d'une fiche commune (PRP-014) | Non | Non | Non | Non | Non | Non | Non | Oui |
+| Accepter ou refuser une proposition (PRP-014) | Non | Non | Non | Oui | Non | Non | Oui (périm.) | Non |
 | Tenir une liste cible | Non | Non | Non | Oui | Non | Non | Oui (périm.) | Non |
 | Fixer les objectifs d'un réseau | Non | Non | Non | Oui | Non | Oui (périm.) | Non | Non |
 | Créer et soumettre un planning | Non | Non | Non | Non | Non | Non | Oui (s'il occupe un poste) | Oui (le sien) |
@@ -427,6 +429,8 @@ Un prospect exerce dans **un ou plusieurs** établissements. Chaque exercice est
   - **probable** → la fiche entre dans la **file des doublons probables**, tranchée par l'administrateur pays ;
   - **aucun** → la fiche devient `actif` et commune.
 - Toute fusion est **réversible** (défusion) et auditée ; les visites, rapports, exercices et listes cibles suivent la fiche conservée.
+- Mise en œuvre 0.1.8 [H] : le score va de 0 à 100 (similarité des noms normalisés jusqu'à 60, même numéro d'ordre 40, même mobile 25, même fixe avec nom similaire 10, même spécialité ou type et même secteur 5 chacun) ; deux noms sont « similaires » au-dessus de 0,85 (rapport de ressemblance insensible à l'ordre des mots). Le même téléphone fixe seul ne rend jamais deux fiches probables. La fiche conservée garde ses valeurs ; ses champs vides sont complétés par ceux de la fiche absorbée, et la défusion les rend. Une fiche défusionnée qui partageait le numéro d'ordre de l'autre le perd (deux personnes n'en partagent pas) et l'historique le garde. Une défusion déclare la paire distincte : elle ne refusionne plus automatiquement.
+- Le délégué ne modifie pas une fiche commune : il **propose** (téléphones, courriel, numéro d'ordre, adresse, nouvel exercice) ; le superviseur des postes de l'auteur ou l'administrateur pays tranche (PRP-014). Chaque champ changé est historisé : champ, ancienne et nouvelle valeur, auteur, date, origine (saisie, proposition, fusion, défusion) (PRP-012).
 
 ### 14.7 Import initial depuis BirdNotes [D, format O-01 tranché le 4 octobre 2026]
 
@@ -436,7 +440,7 @@ Les prospects, établissements, secteurs, localités et produits viennent de Bir
 - produit un **rapport d'anomalies** téléchargeable (CSV), un motif par ligne écartée ou corrigée ;
 - reprend dans l'ordre secteurs et localités (les secteurs nouveaux vont dans une zone « À répartir »), gammes (divisions et réseaux), produits et portefeuilles, établissements (type déduit du nom, à préciser sinon ; secteur déduit de leurs prospects quand BirdNotes n'en donne pas), prospects validés (`actif`) et demandes de création (`a_valider`) ;
 - applique les règles de nettoyage validées le 4 octobre 2026 : titre sorti du nom ou du prénom vers la civilité (prénom et nom collés signalés, à séparer à la main), NOM en majuscules, libellés de spécialité et de secteur unifiés, localités « INTERMEDIARE » non reprises (secteur gardé, localité à préciser) ;
-- conserve les **groupes de doublons** signalés par BirdNotes et les **fiches au même nom** pour la file des doublons (0.1.8), où le superviseur tranche ; rien n'est fusionné à l'import ; les demandes de modification en attente sont reportées aux propositions de modification (0.1.8) ;
+- verse les **groupes de doublons** signalés par BirdNotes et les **fiches au même nom** dans la file des doublons, que tranche l'administrateur pays (§6.3, PRP-009) ; rien n'est fusionné à l'import ; les demandes de modification en attente dans BirdNotes ne sont pas reprises, leur auteur n'ayant pas de compte [H] : elles se reproposent depuis INNOV CRM (PRP-014) ;
 - garde la **référence BirdNotes** de chaque fiche reprise : un réimport la retrouve et ne crée rien.
 
 Les comptes, l'organisation (postes, affectations) et l'historique des visites ne sont pas repris en 0.1.4 : l'organisation vient du fichier d'organisation (ORG-014).
@@ -463,6 +467,8 @@ Chaque exigence porte : un identifiant stable, la version de première livraison
 | ORG-012 | L'administrateur pays tient le calendrier des jours fériés. | 0.2.1 | CA1 : un jour férié est exclu des contrôles « semaine complète » et des seuils. CA2 : une date variable peut être modifiée jusqu'à la veille. |
 | ORG-013 | Le superviseur, le DM ou l'administrateur pays désigne un **remplaçant** daté pour un superviseur. | 0.3.4 | CA1 : pendant la période, le remplaçant voit et décide les plannings et rapports concernés. CA2 : toute décision porte le mode `remplacement` et l'identité du remplaçant. CA3 : à la fin de la période, l'accès cesse. |
 | ORG-014 | L'administrateur pays importe l'organisation depuis un fichier au format du fichier d'organisation (division, réseau, DF, DM, superviseur, zone, secteur, personne, type de poste, produits). | 0.1.8 | CA1 : une simulation affiche les créations et modifications sans rien écrire. CA2 : chaque ligne rejetée a un motif. CA3 : un poste « non pourvu » crée un poste vacant. CA4 : un réimport du même fichier ne crée aucun doublon. |
+
+Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION », une ligne par poste, colonnes GAMME (division), RESEAUX, DF, DM, SUPERVISEUR, ZONE, SECTEUR / VILLE, NOM ET PRENOMS, FONCTION, PRODUITS DE LA GAMME (séparés par « ; »). Hypothèses [H] : le dernier mot de « NOM ET PRENOMS » est le nom ; une personne inconnue reçoit un compte sans mot de passe (lien d'activation envoyé ensuite) ; « (assuré par les superviseurs) » désigne un superviseur occupant le poste ; un produit absent du référentiel est signalé, jamais créé ; un poste déjà occupé par une autre personne n'est pas changé (avertissement) ; le portefeuille d'un réseau reçoit les produits du fichier sans perdre les siens.
 
 ### 15.2 Utilisateurs et accès — USR
 

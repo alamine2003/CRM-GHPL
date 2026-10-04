@@ -1117,10 +1117,17 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
         sans_lieu: 2,
       })),
       detail: vi.fn(async () => FICHE),
-      creer: vi.fn(async () => FICHE),
+      creer: vi.fn(async () => ({ ...FICHE, doublon: 'aucun' })),
       modifier: vi.fn(async () => FICHE),
       valider: vi.fn(async () => ({ ...FICHE, statut: 'actif' })),
       archiver: vi.fn(async () => FICHE),
+      historique: vi.fn(async () => []),
+      // PRP-007 : la saisie « Ndiay » ressemble à la fiche existante.
+      ressemblants: vi.fn(async ({ nom }: { nom?: string }) =>
+        nom && 'ndiaye'.startsWith(nom.toLowerCase().slice(0, 4))
+          ? [{ prospect: FICHE, lieu_principal: 'Clinique du Cap', score: 62, criteres: [] }]
+          : [],
+      ),
     };
     const referentiel = { valeurs: vi.fn(async () => TYPES) };
     const etablissements = {
@@ -1232,7 +1239,7 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
     const { client, prospects } = clientProspects(DELEGUE_P);
     rendre(client, '/prospects');
     fireEvent.click(await screen.findByRole('button', { name: 'Nouveau prospect' }));
-    expect(await screen.findByText(/vous pouvez l'utiliser tout de suite/)).toBeInTheDocument();
+    expect(await screen.findByText(/le système vérifie les doublons/)).toBeInTheDocument();
     const dialogue = await screen.findByRole('dialog');
     fireEvent.change(within(dialogue).getByLabelText(/^Nom/), { target: { value: 'Sarr' } });
     fireEvent.click(within(dialogue).getByRole('button', { name: 'Enregistrer' }));
@@ -1242,6 +1249,21 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
       ),
     );
     expect(screen.queryByRole('button', { name: 'Valider la fiche' })).not.toBeInTheDocument();
+  });
+
+  it('propose les fiches ressemblantes pendant la saisie (PRP-007)', async () => {
+    const { client, prospects } = clientProspects(DELEGUE_P);
+    rendre(client, '/prospects');
+    fireEvent.click(await screen.findByRole('button', { name: 'Nouveau prospect' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.change(within(dialogue).getByLabelText(/^Nom/), { target: { value: 'Ndiay' } });
+    const region = await within(dialogue).findByRole('region', { name: 'Fiches ressemblantes' });
+    expect(within(region).getByText('Dr Aïssatou Ndiaye')).toBeInTheDocument();
+    expect(prospects.ressemblants).toHaveBeenCalledWith(expect.objectContaining({ nom: 'Ndiay' }));
+    // « Ouvrir » ferme la saisie et ouvre la fiche existante plutôt que d'en créer une seconde.
+    fireEvent.click(within(region).getByRole('button', { name: 'Ouvrir' }));
+    await vi.waitFor(() => expect(prospects.detail).toHaveBeenCalled());
+    expect(prospects.creer).not.toHaveBeenCalled();
   });
 
   it('la page Prospects ne présente aucune violation d’accessibilité détectable', async () => {
@@ -1630,5 +1652,152 @@ describe('portail — listes cibles (PRP-011)', () => {
     const { container } = rendre(client, '/ciblage');
     await screen.findByText('Dr Awa NDIAYE');
     expect(await violationsAccessibilite(container)).toEqual([]);
+  });
+});
+
+describe('portail — doublons et propositions (PRP-009, PRP-010, PRP-014)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const PERSONNE = { id: 'u1', identifiant: 'awa.diop', prenom: 'Awa', nom: 'Diop' };
+  const COTE = {
+    civilite: 'dr' as const,
+    prenom: 'Aïssatou',
+    nom: 'NDIAYE',
+    type_libelle: 'Médecin',
+    specialite_libelle: 'Cardiologie',
+    numero_ordre: '',
+    telephone_mobile: '',
+    telephone_pro: '',
+    courriel: '',
+    potentiel: 'A' as const,
+    secteur: 'Plateau',
+    localite: null,
+    cree_par: PERSONNE,
+    cree_le: '2026-10-01T10:00:00Z',
+    lieux: [],
+    cibles: 0,
+  };
+  const PAIRE = {
+    id: 'd1',
+    fiche: { ...COTE, id: 'p2', statut: 'a_valider' as const, telephone_mobile: '+221770000001' },
+    candidat: { ...COTE, id: 'p1', statut: 'actif' as const, lieux: ['Clinique du Cap'] },
+    score: 74,
+    criteres: ['nom_similaire', 'meme_specialite'],
+    statut: 'en_attente',
+    cree_le: '2026-10-02T10:00:00Z',
+    decide_par: null,
+    decide_le: null,
+  };
+  const RESUME = {
+    id: 'p1',
+    civilite: 'dr' as const,
+    prenom: 'Aïssatou',
+    nom: 'NDIAYE',
+    type_libelle: 'Médecin',
+    specialite_libelle: 'Cardiologie',
+    potentiel: 'A' as const,
+    statut: 'actif' as const,
+  };
+
+  function clientDoublons() {
+    const doublons = {
+      liste: vi.fn(async () => [PAIRE]),
+      trancher: vi.fn(async () => ({ ...PAIRE, statut: 'separes' })),
+    };
+    const fusions = {
+      liste: vi.fn(async () => [
+        {
+          id: 'f1',
+          conservee: RESUME,
+          absorbee: { ...RESUME, id: 'p3', prenom: 'Aissatou' },
+          automatique: true,
+          score: 100,
+          criteres: ['meme_numero_ordre'],
+          par: null,
+          cree_le: '2026-10-03T10:00:00Z',
+          defaite_le: null,
+          defaite_par: null,
+        },
+      ]),
+      defaire: vi.fn(async () => ({})),
+    };
+    const client = fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => ({
+        ...PERIMETRE_DELEGUE,
+        roles: ['admin_pays'],
+        actions: ['prospects.lire', 'prospects.gerer', 'pays.lire'],
+      })),
+      doublons: doublons as unknown as ClientApi['doublons'],
+      fusions: fusions as unknown as ClientApi['fusions'],
+    } as Partial<ClientApi>);
+    return { client, doublons, fusions };
+  }
+
+  it('compare les deux fiches côte à côte et garde la paire séparée (PRP-009)', async () => {
+    const { client, doublons } = clientDoublons();
+    rendre(client, '/doublons');
+    expect(await screen.findByText('Ressemblance 74 / 100')).toBeInTheDocument();
+    const table = screen.getByRole('table', { name: 'Comparaison des deux fiches' });
+    expect(within(table).getByText('+221770000001')).toBeInTheDocument();
+    expect(within(table).getByText('Clinique du Cap')).toBeInTheDocument();
+    expect(screen.getByText('nom similaire · même spécialité')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Garder séparées' }));
+    await vi.waitFor(() => expect(doublons.trancher).toHaveBeenCalledWith('d1', 'separer'));
+  });
+
+  it('défait une fusion après confirmation (PRP-010)', async () => {
+    const { client, fusions } = clientDoublons();
+    rendre(client, '/doublons');
+    fireEvent.click(await screen.findByRole('tab', { name: 'Fusions' }));
+    expect(await screen.findByText(/Fusion automatique/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Défaire' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Défaire' }));
+    await vi.waitFor(() => expect(fusions.defaire).toHaveBeenCalledWith('f1'));
+  });
+
+  it('le superviseur accepte une proposition ; la valeur actuelle reste visible (PRP-014)', async () => {
+    const propositions = {
+      liste: vi.fn(async () => [
+        {
+          id: 'pr1',
+          prospect: RESUME,
+          etablissement: null,
+          nouvel_exercice: null,
+          changements: { telephone_mobile: '+221779998877' },
+          actuels: { telephone_mobile: '+221770000000' },
+          commentaire: 'Nouveau numéro',
+          auteur: PERSONNE,
+          statut: 'en_attente',
+          decide_par: null,
+          decide_le: null,
+          motif: '',
+          vue_le: null,
+          cree_le: '2026-10-03T10:00:00Z',
+          decidable: true,
+        },
+      ]),
+      trancher: vi.fn(async () => ({})),
+      marquerVues: vi.fn(async () => undefined),
+    };
+    const client = fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => ({
+        ...PERIMETRE_DELEGUE,
+        roles: ['superviseur'],
+        actions: ['prospects.lire', 'propositions.trancher', 'pays.lire'],
+      })),
+      propositions: propositions as unknown as ClientApi['propositions'],
+    } as Partial<ClientApi>);
+    rendre(client, '/propositions');
+    expect(await screen.findByText('+221779998877')).toBeInTheDocument();
+    expect(screen.getByText('+221770000000')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Accepter' }));
+    await vi.waitFor(() => expect(propositions.trancher).toHaveBeenCalledWith('pr1', 'accepter'));
+    // Seul l'auteur marque les décisions comme lues.
+    expect(propositions.marquerVues).not.toHaveBeenCalled();
   });
 });

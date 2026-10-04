@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.1.7
+  version: 0.1.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -645,6 +645,66 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProspectCible'
           description: ''
+  /api/v1/doublons/:
+    get:
+      operationId: doublons_liste
+      description: 'PRP-009 : file des doublons probables du pays actif.'
+      parameters:
+      - in: query
+        name: statut
+        schema:
+          type: string
+          enum:
+          - en_attente
+          - fusionnes
+          - refuse
+          - separes
+      tags:
+      - doublons
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Doublon'
+          description: ''
+  /api/v1/doublons/{id}/trancher/:
+    post:
+      operationId: doublon_trancher
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - doublons
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionDoublon'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DecisionDoublon'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DecisionDoublon'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Doublon'
+          description: ''
   /api/v1/erreurs-clients/:
     post:
       operationId: erreur_client
@@ -884,6 +944,30 @@ paths:
                 items:
                   $ref: '#/components/schemas/Exercice'
           description: ''
+  /api/v1/etablissements/{id}/historique/:
+    get:
+      operationId: etablissement_historique
+      description: 'PRP-012 CA1 : changements champ par champ d''une fiche visible.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChangementFiche'
+          description: ''
   /api/v1/etablissements/{id}/valider/:
     post:
       operationId: etablissement_valider
@@ -1026,6 +1110,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/EtatExploitation'
           description: ''
+  /api/v1/fusions/:
+    get:
+      operationId: fusions_liste
+      description: 'PRP-010 : fusions du pays (automatiques et manuelles), les plus
+        récentes d''abord.'
+      tags:
+      - fusions
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fusion'
+          description: ''
+  /api/v1/fusions/{id}/defaire/:
+    post:
+      operationId: fusion_defaire
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fusions
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fusion'
+          description: ''
   /api/v1/imports/:
     get:
       operationId: imports_liste
@@ -1087,6 +1210,28 @@ paths:
   /api/v1/imports/birdnotes/:
     post:
       operationId: import_birdnotes
+      tags:
+      - imports
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportBirdNotes'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailLot'
+          description: ''
+  /api/v1/imports/organisation/:
+    post:
+      operationId: import_organisation
+      description: 'ORG-014 : simuler puis importer le fichier d''organisation (classeur
+        Excel).'
       tags:
       - imports
       requestBody:
@@ -2160,6 +2305,100 @@ paths:
               schema:
                 $ref: '#/components/schemas/Pays'
           description: ''
+  /api/v1/propositions/:
+    get:
+      operationId: propositions_liste
+      description: Les propositions de l'utilisateur et celles qu'il peut trancher.
+      parameters:
+      - in: query
+        name: statut
+        schema:
+          type: string
+          enum:
+          - acceptee
+          - en_attente
+          - refusee
+      tags:
+      - propositions
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Proposition'
+          description: ''
+    post:
+      operationId: proposition_creer
+      tags:
+      - propositions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieProposition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieProposition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieProposition'
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposition'
+          description: ''
+  /api/v1/propositions/{id}/trancher/:
+    post:
+      operationId: proposition_trancher
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - propositions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionProposition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DecisionProposition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DecisionProposition'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proposition'
+          description: ''
+  /api/v1/propositions/vues/:
+    post:
+      operationId: propositions_marquer_vues
+      description: 'PRP-014 CA2 : le délégué a lu les décisions sur ses propositions.'
+      tags:
+      - propositions
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/prospects/:
     get:
       operationId: prospects_liste
@@ -2280,7 +2519,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Prospect'
+                $ref: '#/components/schemas/ProspectCree'
           description: ''
   /api/v1/prospects/{id}/:
     get:
@@ -2429,6 +2668,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Exercice'
           description: ''
+  /api/v1/prospects/{id}/historique/:
+    get:
+      operationId: prospect_historique
+      description: 'PRP-012 CA1 : changements champ par champ d''une fiche visible.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - prospects
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChangementFiche'
+          description: ''
   /api/v1/prospects/{id}/valider/:
     post:
       operationId: prospect_valider
@@ -2449,6 +2712,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Prospect'
+          description: ''
+  /api/v1/prospects/ressemblants/:
+    get:
+      operationId: prospects_ressemblants
+      description: 'PRP-007 CA1 : fiches qui ressemblent à la saisie en cours.'
+      parameters:
+      - in: query
+        name: nom
+        schema:
+          type: string
+      - in: query
+        name: numero_ordre
+        schema:
+          type: string
+      - in: query
+        name: prenom
+        schema:
+          type: string
+      - in: query
+        name: telephone_mobile
+        schema:
+          type: string
+      tags:
+      - prospects
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ressemblante'
           description: ''
   /api/v1/prospects/synthese/:
     get:
@@ -3280,6 +3577,35 @@ components:
       required:
       - actuel
       - nouveau
+    ChangementFiche:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        champ:
+          type: string
+        ancienne:
+          type: string
+        nouvelle:
+          type: string
+        auteur:
+          allOf:
+          - $ref: '#/components/schemas/PersonneResume'
+          nullable: true
+        origine:
+          type: string
+        le:
+          type: string
+          format: date-time
+      required:
+      - ancienne
+      - auteur
+      - champ
+      - id
+      - le
+      - nouvelle
+      - origine
     Cible:
       type: object
       properties:
@@ -3354,6 +3680,78 @@ components:
             type: string
       required:
       - codes_secours
+    Comparaison:
+      type: object
+      description: Fiche complète pour la comparaison côte à côte (PRP-009 CA1).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        civilite:
+          oneOf:
+          - $ref: '#/components/schemas/CiviliteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        prenom:
+          type: string
+          maxLength: 80
+        nom:
+          type: string
+          maxLength: 80
+        type_libelle:
+          type: string
+        specialite_libelle:
+          type: string
+          nullable: true
+        numero_ordre:
+          type: string
+          maxLength: 40
+        telephone_mobile:
+          type: string
+          maxLength: 20
+        telephone_pro:
+          type: string
+          maxLength: 20
+        courriel:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        potentiel:
+          $ref: '#/components/schemas/PotentielEnum'
+        secteur:
+          type: string
+          nullable: true
+        localite:
+          type: string
+          nullable: true
+        statut:
+          $ref: '#/components/schemas/StatutFicheEnum'
+        cree_par:
+          $ref: '#/components/schemas/PersonneResume'
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        lieux:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        cibles:
+          type: integer
+          readOnly: true
+      required:
+      - cibles
+      - cree_le
+      - cree_par
+      - id
+      - lieux
+      - nom
+      - potentiel
+      - type_libelle
     Connexion:
       type: object
       properties:
@@ -3533,6 +3931,44 @@ components:
       required:
       - libelle
       - liste
+    DecisionDoublon:
+      type: object
+      properties:
+        decision:
+          $ref: '#/components/schemas/DecisionDoublonDecisionEnum'
+        conserver:
+          type: string
+          format: uuid
+      required:
+      - decision
+    DecisionDoublonDecisionEnum:
+      enum:
+      - fusionner
+      - separer
+      - refuser
+      type: string
+      description: |-
+        * `fusionner` - fusionner
+        * `separer` - separer
+        * `refuser` - refuser
+    DecisionProposition:
+      type: object
+      properties:
+        decision:
+          $ref: '#/components/schemas/DecisionPropositionDecisionEnum'
+        motif:
+          type: string
+          maxLength: 300
+      required:
+      - decision
+    DecisionPropositionDecisionEnum:
+      enum:
+      - accepter
+      - refuser
+      type: string
+      description: |-
+        * `accepter` - accepter
+        * `refuser` - refuser
     DefinitionPortefeuille:
       type: object
       properties:
@@ -3646,6 +4082,55 @@ components:
       - id
       - libelle
       - pays
+    Doublon:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fiche:
+          $ref: '#/components/schemas/Comparaison'
+        candidat:
+          $ref: '#/components/schemas/Comparaison'
+        score:
+          type: integer
+        criteres:
+          type: array
+          items:
+            type: string
+        statut:
+          type: string
+        cree_le:
+          type: string
+          format: date-time
+        decide_par:
+          allOf:
+          - $ref: '#/components/schemas/PersonneResume'
+          nullable: true
+        decide_le:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - candidat
+      - cree_le
+      - criteres
+      - decide_le
+      - decide_par
+      - fiche
+      - id
+      - score
+      - statut
+    DoublonEnum:
+      enum:
+      - certain
+      - probable
+      - aucun
+      type: string
+      description: |-
+        * `certain` - certain
+        * `probable` - probable
+        * `aucun` - aucun
     ErreurClient:
       type: object
       properties:
@@ -3924,6 +4409,50 @@ components:
         fin:
           type: string
           format: date
+    Fusion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conservee:
+          $ref: '#/components/schemas/ProspectResume'
+        absorbee:
+          $ref: '#/components/schemas/ProspectResume'
+        automatique:
+          type: boolean
+        score:
+          type: integer
+        criteres:
+          type: array
+          items:
+            type: string
+        par:
+          allOf:
+          - $ref: '#/components/schemas/PersonneResume'
+          nullable: true
+        cree_le:
+          type: string
+          format: date-time
+        defaite_le:
+          type: string
+          format: date-time
+          nullable: true
+        defaite_par:
+          allOf:
+          - $ref: '#/components/schemas/PersonneResume'
+          nullable: true
+      required:
+      - absorbee
+      - automatique
+      - conservee
+      - cree_le
+      - criteres
+      - defaite_le
+      - defaite_par
+      - id
+      - par
+      - score
     ImportBirdNotes:
       type: object
       properties:
@@ -4839,6 +5368,76 @@ components:
       - code
       - id
       - libelle
+    Proposition:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        prospect:
+          allOf:
+          - $ref: '#/components/schemas/ProspectResume'
+          nullable: true
+        etablissement:
+          allOf:
+          - $ref: '#/components/schemas/EtablissementResume'
+          nullable: true
+        nouvel_exercice:
+          allOf:
+          - $ref: '#/components/schemas/EtablissementResume'
+          nullable: true
+        changements:
+          type: object
+          additionalProperties:
+            type: string
+        actuels:
+          type: object
+          additionalProperties:
+            type: string
+          description: Valeurs actuelles de la fiche, pour comparer avant de trancher.
+          readOnly: true
+        commentaire:
+          type: string
+        auteur:
+          $ref: '#/components/schemas/PersonneResume'
+        statut:
+          type: string
+        decide_par:
+          allOf:
+          - $ref: '#/components/schemas/PersonneResume'
+          nullable: true
+        decide_le:
+          type: string
+          format: date-time
+          nullable: true
+        motif:
+          type: string
+        vue_le:
+          type: string
+          format: date-time
+          nullable: true
+        cree_le:
+          type: string
+          format: date-time
+        decidable:
+          type: boolean
+          readOnly: true
+      required:
+      - actuels
+      - auteur
+      - changements
+      - commentaire
+      - cree_le
+      - decidable
+      - decide_le
+      - decide_par
+      - etablissement
+      - id
+      - motif
+      - nouvel_exercice
+      - prospect
+      - statut
+      - vue_le
     Prospect:
       type: object
       properties:
@@ -4983,6 +5582,118 @@ components:
       - nom
       - potentiel
       - type_libelle
+    ProspectCree:
+      type: object
+      description: |-
+        Fiche créée et décision du détecteur (PRP-008) : `certain` (fusionnée dans la fiche
+        renvoyée), `probable` (en file), `aucun` (commune).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        civilite:
+          oneOf:
+          - $ref: '#/components/schemas/CiviliteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        nom:
+          type: string
+          maxLength: 80
+        prenom:
+          type: string
+          maxLength: 80
+        type:
+          type: string
+          format: uuid
+        type_libelle:
+          type: string
+        specialite:
+          type: string
+          format: uuid
+          nullable: true
+        specialite_libelle:
+          type: string
+          nullable: true
+        numero_ordre:
+          type: string
+          maxLength: 40
+        telephone_mobile:
+          type: string
+          maxLength: 20
+        telephone_pro:
+          type: string
+          maxLength: 20
+        courriel:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        potentiel:
+          $ref: '#/components/schemas/PotentielEnum'
+        activite:
+          oneOf:
+          - $ref: '#/components/schemas/ActiviteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        grade:
+          type: string
+          format: uuid
+          nullable: true
+        grade_libelle:
+          type: string
+          nullable: true
+        secteur:
+          allOf:
+          - $ref: '#/components/schemas/Lieu'
+          nullable: true
+        localite:
+          allOf:
+          - $ref: '#/components/schemas/Lieu'
+          nullable: true
+        statut:
+          $ref: '#/components/schemas/StatutFicheEnum'
+        cree_par:
+          $ref: '#/components/schemas/PersonneResume'
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        valide_le:
+          type: string
+          format: date-time
+          nullable: true
+        modifiable:
+          type: boolean
+          readOnly: true
+        lieu_principal:
+          allOf:
+          - $ref: '#/components/schemas/Lieu'
+          nullable: true
+          readOnly: true
+        doublon:
+          allOf:
+          - $ref: '#/components/schemas/DoublonEnum'
+          readOnly: true
+      required:
+      - cree_le
+      - cree_par
+      - doublon
+      - grade
+      - id
+      - lieu_principal
+      - localite
+      - modifiable
+      - nom
+      - pays
+      - potentiel
+      - secteur
+      - specialite
+      - type
+      - type_libelle
     ProspectResume:
       type: object
       properties:
@@ -5110,6 +5821,27 @@ components:
       - code
       - id
       - libelle
+    Ressemblante:
+      type: object
+      description: 'PRP-007 : fiche ressemblant à la saisie, avec son score et ses
+        critères.'
+      properties:
+        prospect:
+          $ref: '#/components/schemas/ProspectResume'
+        lieu_principal:
+          type: string
+          nullable: true
+        score:
+          type: integer
+        criteres:
+          type: array
+          items:
+            type: string
+      required:
+      - criteres
+      - lieu_principal
+      - prospect
+      - score
     ResultatAjout:
       type: object
       properties:
@@ -5245,6 +5977,25 @@ components:
           maxLength: 120
       required:
       - etablissement
+    SaisieProposition:
+      type: object
+      properties:
+        prospect:
+          type: string
+          format: uuid
+        etablissement:
+          type: string
+          format: uuid
+        changements:
+          type: object
+          additionalProperties:
+            type: string
+        nouvel_exercice:
+          type: string
+          format: uuid
+        commentaire:
+          type: string
+          maxLength: 300
     SaisieProspect:
       type: object
       properties:
@@ -5404,8 +6155,11 @@ components:
     SourceEnum:
       enum:
       - birdnotes
+      - organisation
       type: string
-      description: '* `birdnotes` - BirdNotes'
+      description: |-
+        * `birdnotes` - BirdNotes
+        * `organisation` - Fichier d'organisation
     StatutEnum:
       enum:
       - actif

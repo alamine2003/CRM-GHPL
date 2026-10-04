@@ -455,6 +455,39 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/doublons/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description PRP-009 : file des doublons probables du pays actif. */
+    get: operations['doublons_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/doublons/{id}/trancher/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['doublon_trancher'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/erreurs-clients/': {
     parameters: {
       query?: never;
@@ -538,6 +571,23 @@ export interface paths {
      *     fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
      */
     get: operations['etablissement_exercices'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/etablissements/{id}/historique/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description PRP-012 CA1 : changements champ par champ d'une fiche visible. */
+    get: operations['etablissement_historique'];
     put?: never;
     post?: never;
     delete?: never;
@@ -657,6 +707,39 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/fusions/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description PRP-010 : fusions du pays (automatiques et manuelles), les plus récentes d'abord. */
+    get: operations['fusions_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/fusions/{id}/defaire/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['fusion_defaire'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/imports/': {
     parameters: {
       query?: never;
@@ -715,6 +798,23 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['import_birdnotes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/imports/organisation/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description ORG-014 : simuler puis importer le fichier d'organisation (classeur Excel). */
+    post: operations['import_organisation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1247,6 +1347,56 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/propositions/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Les propositions de l'utilisateur et celles qu'il peut trancher. */
+    get: operations['propositions_liste'];
+    put?: never;
+    post: operations['proposition_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/propositions/{id}/trancher/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['proposition_trancher'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/propositions/vues/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description PRP-014 CA2 : le délégué a lu les décisions sur ses propositions. */
+    post: operations['propositions_marquer_vues'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/prospects/': {
     parameters: {
       query?: never;
@@ -1322,6 +1472,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/prospects/{id}/historique/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description PRP-012 CA1 : changements champ par champ d'une fiche visible. */
+    get: operations['prospect_historique'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/prospects/{id}/valider/': {
     parameters: {
       query?: never;
@@ -1332,6 +1499,23 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['prospect_valider'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/prospects/ressemblants/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description PRP-007 CA1 : fiches qui ressemblent à la saisie en cours. */
+    get: operations['prospects_ressemblants'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -1741,6 +1925,17 @@ export interface components {
       actuel: string;
       nouveau: string;
     };
+    ChangementFiche: {
+      /** Format: uuid */
+      id: string;
+      champ: string;
+      ancienne: string;
+      nouvelle: string;
+      auteur: components['schemas']['PersonneResume'] | null;
+      origine: string;
+      /** Format: date-time */
+      le: string;
+    };
     Cible: {
       /** Format: uuid */
       readonly id: string;
@@ -1774,6 +1969,29 @@ export interface components {
     };
     CodesSecours: {
       codes_secours: string[];
+    };
+    /** @description Fiche complète pour la comparaison côte à côte (PRP-009 CA1). */
+    Comparaison: {
+      /** Format: uuid */
+      readonly id: string;
+      civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
+      prenom?: string;
+      nom: string;
+      type_libelle: string;
+      specialite_libelle?: string | null;
+      numero_ordre?: string;
+      telephone_mobile?: string;
+      telephone_pro?: string;
+      courriel?: string;
+      potentiel: components['schemas']['PotentielEnum'];
+      secteur?: string | null;
+      localite?: string | null;
+      statut?: components['schemas']['StatutFicheEnum'];
+      cree_par: components['schemas']['PersonneResume'];
+      /** Format: date-time */
+      readonly cree_le: string;
+      readonly lieux: string[];
+      readonly cibles: number;
     };
     Connexion: {
       identifiant: string;
@@ -1839,6 +2057,28 @@ export interface components {
       /** Format: uuid */
       parent?: string | null;
     };
+    DecisionDoublon: {
+      decision: components['schemas']['DecisionDoublonDecisionEnum'];
+      /** Format: uuid */
+      conserver?: string;
+    };
+    /**
+     * @description * `fusionner` - fusionner
+     *     * `separer` - separer
+     *     * `refuser` - refuser
+     * @enum {string}
+     */
+    DecisionDoublonDecisionEnum: 'fusionner' | 'separer' | 'refuser';
+    DecisionProposition: {
+      decision: components['schemas']['DecisionPropositionDecisionEnum'];
+      motif?: string;
+    };
+    /**
+     * @description * `accepter` - accepter
+     *     * `refuser` - refuser
+     * @enum {string}
+     */
+    DecisionPropositionDecisionEnum: 'accepter' | 'refuser';
     DefinitionPortefeuille: {
       produits: string[];
     };
@@ -1880,6 +2120,27 @@ export interface components {
       libelle: string;
       readonly archive: boolean;
     };
+    Doublon: {
+      /** Format: uuid */
+      id: string;
+      fiche: components['schemas']['Comparaison'];
+      candidat: components['schemas']['Comparaison'];
+      score: number;
+      criteres: string[];
+      statut: string;
+      /** Format: date-time */
+      cree_le: string;
+      decide_par: components['schemas']['PersonneResume'] | null;
+      /** Format: date-time */
+      decide_le: string | null;
+    };
+    /**
+     * @description * `certain` - certain
+     *     * `probable` - probable
+     *     * `aucun` - aucun
+     * @enum {string}
+     */
+    DoublonEnum: 'certain' | 'probable' | 'aucun';
     ErreurClient: {
       client: components['schemas']['ClientEnum'];
       version: string;
@@ -1988,6 +2249,21 @@ export interface components {
     FinExercice: {
       /** Format: date */
       fin?: string;
+    };
+    Fusion: {
+      /** Format: uuid */
+      id: string;
+      conservee: components['schemas']['ProspectResume'];
+      absorbee: components['schemas']['ProspectResume'];
+      automatique: boolean;
+      score: number;
+      criteres: string[];
+      par: components['schemas']['PersonneResume'] | null;
+      /** Format: date-time */
+      cree_le: string;
+      /** Format: date-time */
+      defaite_le: string | null;
+      defaite_par: components['schemas']['PersonneResume'] | null;
     };
     ImportBirdNotes: {
       /** Format: uri */
@@ -2357,6 +2633,32 @@ export interface components {
       libelle: string;
       classe_libelle?: string | null;
     };
+    Proposition: {
+      /** Format: uuid */
+      id: string;
+      prospect: components['schemas']['ProspectResume'] | null;
+      etablissement: components['schemas']['EtablissementResume'] | null;
+      nouvel_exercice: components['schemas']['EtablissementResume'] | null;
+      changements: {
+        [key: string]: string;
+      };
+      /** @description Valeurs actuelles de la fiche, pour comparer avant de trancher. */
+      readonly actuels: {
+        [key: string]: string;
+      };
+      commentaire: string;
+      auteur: components['schemas']['PersonneResume'];
+      statut: string;
+      decide_par: components['schemas']['PersonneResume'] | null;
+      /** Format: date-time */
+      decide_le: string | null;
+      motif: string;
+      /** Format: date-time */
+      vue_le: string | null;
+      /** Format: date-time */
+      cree_le: string;
+      readonly decidable: boolean;
+    };
     Prospect: {
       /** Format: uuid */
       readonly id: string;
@@ -2402,6 +2704,44 @@ export interface components {
       statut?: components['schemas']['StatutFicheEnum'];
       readonly lieu_principal: components['schemas']['Lieu'] | null;
       secteur?: string | null;
+    };
+    /**
+     * @description Fiche créée et décision du détecteur (PRP-008) : `certain` (fusionnée dans la fiche
+     *     renvoyée), `probable` (en file), `aucun` (commune).
+     */
+    ProspectCree: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
+      nom: string;
+      prenom?: string;
+      /** Format: uuid */
+      type: string;
+      type_libelle: string;
+      /** Format: uuid */
+      specialite: string | null;
+      specialite_libelle?: string | null;
+      numero_ordre?: string;
+      telephone_mobile?: string;
+      telephone_pro?: string;
+      courriel?: string;
+      potentiel: components['schemas']['PotentielEnum'];
+      activite?: components['schemas']['ActiviteEnum'] | components['schemas']['BlankEnum'];
+      /** Format: uuid */
+      grade: string | null;
+      grade_libelle?: string | null;
+      secteur: components['schemas']['Lieu'] | null;
+      localite: components['schemas']['Lieu'] | null;
+      statut?: components['schemas']['StatutFicheEnum'];
+      cree_par: components['schemas']['PersonneResume'];
+      /** Format: date-time */
+      readonly cree_le: string;
+      /** Format: date-time */
+      valide_le?: string | null;
+      readonly modifiable: boolean;
+      readonly lieu_principal: components['schemas']['Lieu'] | null;
+      readonly doublon: components['schemas']['DoublonEnum'];
     };
     ProspectResume: {
       /** Format: uuid */
@@ -2453,6 +2793,13 @@ export interface components {
       id: string;
       code: string;
       libelle: string;
+    };
+    /** @description PRP-007 : fiche ressemblant à la saisie, avec son score et ses critères. */
+    Ressemblante: {
+      prospect: components['schemas']['ProspectResume'];
+      lieu_principal: string | null;
+      score: number;
+      criteres: string[];
     };
     ResultatAjout: {
       ajoutes: number;
@@ -2526,6 +2873,18 @@ export interface components {
       principal?: boolean | null;
       presence?: string;
     };
+    SaisieProposition: {
+      /** Format: uuid */
+      prospect?: string;
+      /** Format: uuid */
+      etablissement?: string;
+      changements?: {
+        [key: string]: string;
+      };
+      /** Format: uuid */
+      nouvel_exercice?: string;
+      commentaire?: string;
+    };
     SaisieProspect: {
       civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
       nom?: string;
@@ -2589,9 +2948,10 @@ export interface components {
     };
     /**
      * @description * `birdnotes` - BirdNotes
+     *     * `organisation` - Fichier d'organisation
      * @enum {string}
      */
-    SourceEnum: 'birdnotes';
+    SourceEnum: 'birdnotes' | 'organisation';
     /**
      * @description * `actif` - Actif
      *     * `suspendu` - Suspendu
@@ -3386,6 +3746,54 @@ export interface operations {
       };
     };
   };
+  doublons_liste: {
+    parameters: {
+      query?: {
+        statut?: 'en_attente' | 'fusionnes' | 'refuse' | 'separes';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Doublon'][];
+        };
+      };
+    };
+  };
+  doublon_trancher: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DecisionDoublon'];
+        'application/x-www-form-urlencoded': components['schemas']['DecisionDoublon'];
+        'multipart/form-data': components['schemas']['DecisionDoublon'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Doublon'];
+        };
+      };
+    };
+  };
   erreur_client: {
     parameters: {
       query?: never;
@@ -3564,6 +3972,27 @@ export interface operations {
       };
     };
   };
+  etablissement_historique: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChangementFiche'][];
+        };
+      };
+    };
+  };
   etablissement_valider: {
     parameters: {
       query?: never;
@@ -3696,6 +4125,46 @@ export interface operations {
       };
     };
   };
+  fusions_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Fusion'][];
+        };
+      };
+    };
+  };
+  fusion_defaire: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Fusion'];
+        };
+      };
+    };
+  };
   imports_liste: {
     parameters: {
       query?: never;
@@ -3758,6 +4227,29 @@ export interface operations {
     };
   };
   import_birdnotes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['ImportBirdNotes'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DetailLot'];
+        };
+      };
+    };
+  };
+  import_organisation: {
     parameters: {
       query?: never;
       header?: never;
@@ -4772,6 +5264,97 @@ export interface operations {
       };
     };
   };
+  propositions_liste: {
+    parameters: {
+      query?: {
+        statut?: 'acceptee' | 'en_attente' | 'refusee';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Proposition'][];
+        };
+      };
+    };
+  };
+  proposition_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SaisieProposition'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieProposition'];
+        'multipart/form-data': components['schemas']['SaisieProposition'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Proposition'];
+        };
+      };
+    };
+  };
+  proposition_trancher: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DecisionProposition'];
+        'application/x-www-form-urlencoded': components['schemas']['DecisionProposition'];
+        'multipart/form-data': components['schemas']['DecisionProposition'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Proposition'];
+        };
+      };
+    };
+  };
+  propositions_marquer_vues: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   prospects_liste: {
     parameters: {
       query?: {
@@ -4830,7 +5413,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['Prospect'];
+          'application/json': components['schemas']['ProspectCree'];
         };
       };
     };
@@ -4958,6 +5541,27 @@ export interface operations {
       };
     };
   };
+  prospect_historique: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChangementFiche'][];
+        };
+      };
+    };
+  };
   prospect_valider: {
     parameters: {
       query?: never;
@@ -4975,6 +5579,30 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Prospect'];
+        };
+      };
+    };
+  };
+  prospects_ressemblants: {
+    parameters: {
+      query?: {
+        nom?: string;
+        numero_ordre?: string;
+        prenom?: string;
+        telephone_mobile?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Ressemblante'][];
         };
       };
     };

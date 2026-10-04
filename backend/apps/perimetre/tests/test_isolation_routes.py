@@ -80,7 +80,20 @@ def senegal(monde):
     from apps.prospects.ciblage import ajouter
 
     cible = ajouter(poste, [prospect], monde["admin.sn"])["creees"][0]
+    from apps.prospects import doublons, propositions
+    from apps.prospects.models import DoublonProbable
+
+    jumeau = creer_prospect(sn, monde["admin.sn"], actif=True, nom="Ndiay", type=medecin,
+                            potentiel="B")  # fmt: skip
+    doublon = DoublonProbable.objects.create(pays=sn, fiche=jumeau, candidat=prospect, score=70)
+    absorbee = creer_prospect(sn, monde["admin.sn"], actif=True, nom="Ndiayee", type=medecin,
+                              potentiel="B")  # fmt: skip
+    fusion = doublons.fusionner(prospect, absorbee, par=monde["admin.sn"], automatique=False)
+    proposition = propositions.proposer(monde["deleg.sn"], prospect, {"courriel": "x@y.invalid"})
     return {
+        "prospect-historique": prospect.pk, "etablissement-historique": etab.pk,
+        "doublon-trancher": doublon.pk, "fusion-defaire": fusion.pk,
+        "proposition-trancher": proposition.pk,
         "ciblage-liste": poste.pk, "ciblage-candidats": poste.pk,
         "cible": cible.pk, "cible-retirer": cible.pk,
         "prospect-exercices": prospect.pk, "etablissement-exercices": etab.pk,
@@ -159,7 +172,8 @@ LISTES = ["/api/v1/utilisateurs/", "/api/v1/appareils/", "/api/v1/pays/",
           "/api/v1/organisation/postes/", "/api/v1/organisation/localites/",
           "/api/v1/imports/", "/api/v1/ciblage/postes/", "/api/v1/ciblage/moi/",
           "/api/v1/referentiel/produits/",
-          "/api/v1/referentiel/portefeuilles/"]  # fmt: skip
+          "/api/v1/referentiel/portefeuilles/", "/api/v1/doublons/", "/api/v1/fusions/",
+          "/api/v1/propositions/"]  # fmt: skip
 PAGINEES = ["/api/v1/prospects/", "/api/v1/etablissements/"]
 
 

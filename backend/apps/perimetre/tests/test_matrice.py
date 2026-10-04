@@ -12,6 +12,8 @@ pytestmark = pytest.mark.django_db
 # Attendu par action : rôles autorisés (prd.md §6.3). Toute divergence avec MATRICE échoue.
 ATTENDU = {
     Action.PAYS_CREER: {"admin_siege"},
+    Action.PROPOSITIONS_CREER: {"delegue"},
+    Action.PROPOSITIONS_TRANCHER: {"admin_pays", "superviseur"},
     Action.PAYS_CHANGER_STATUT: {"admin_siege"},
     Action.DESIGNER_RESPONSABLES_PAYS: {"admin_siege"},
     Action.UTILISATEURS_GERER: {"admin_siege", "admin_pays"},
@@ -154,7 +156,45 @@ REQUETES = {
     Action.APPAREILS_REVOQUER: (
         "post", lambda m: f"/api/v1/appareils/{_telephone(m).pk}/revoquer/", {}, 200,
     ),
+    # PRP-014 : proposition sur une fiche commune ; décision sur celle d'un délégué dont le
+    # poste est rattaché au superviseur.
+    Action.PROPOSITIONS_CREER: (
+        "post", "/api/v1/propositions/", lambda m: _proposition(m), 201,
+    ),
+    Action.PROPOSITIONS_TRANCHER: (
+        "post", lambda m: f"/api/v1/propositions/{_proposition_en_attente(m).pk}/trancher/",
+        {"decision": "refuser"}, 200,
+    ),
 }  # fmt: skip
+
+
+def _fiche_commune(monde):
+    from apps.prospects.models import Prospect
+    from apps.prospects.services import creer_prospect
+    from apps.referentiel.models import Valeur
+
+    fiche = Prospect.objects.filter(nom="MATRICE").first()
+    if fiche is None:
+        autre = Valeur.objects.get(pays=monde["sn"], liste="type_prospect", code="grossiste")
+        fiche = creer_prospect(monde["sn"], monde["admin.sn"], actif=True, nom="Matrice",
+                               type=autre, potentiel="C")  # fmt: skip
+    return fiche
+
+
+def _proposition(monde):
+    return {"prospect": str(_fiche_commune(monde).pk),
+            "changements": {"courriel": "matrice@exemple.invalid"}}  # fmt: skip
+
+
+def _proposition_en_attente(monde):
+    from apps.organisation import services as org
+    from apps.organisation.models import Occupation
+    from apps.prospects.propositions import proposer
+
+    poste = _poste_rattache(monde)
+    if not Occupation.objects.filter(poste=poste).exists():
+        org.occuper(poste, monde["deleg.sn"])
+    return proposer(monde["deleg.sn"], _fiche_commune(monde), {"telephone_pro": "33 800 00 01"})
 
 
 def _poste_rattache(monde):

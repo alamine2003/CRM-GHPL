@@ -16,6 +16,7 @@ from apps.socle.modeles_base import ModeleDePays
 
 class Source(models.TextChoices):
     BIRDNOTES = "birdnotes", "BirdNotes"
+    ORGANISATION = "organisation", "Fichier d'organisation"
 
 
 class LotImport(ModeleDePays):

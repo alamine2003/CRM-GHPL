@@ -42,7 +42,9 @@ import {
   Ligne,
   Section,
 } from '../composants/Elements';
+import DialogueProposition from '../composants/DialogueProposition';
 import { ErreurChargement } from '../composants/Erreurs';
+import Historique from '../composants/Historique';
 import { ProspectsExercant } from '../composants/Exercices';
 import { BarrePagination } from '../composants/Recherche';
 import { ChampsLieu, ChoixActivite, SelectSecteur } from '../composants/Lieu';
@@ -269,14 +271,17 @@ function FicheEtablissement({
   gerer,
   surFermer,
   surModifier,
+  proposer,
 }: {
   id: string;
   gerer: boolean;
   surFermer: () => void;
   surModifier: (e: Etablissement) => void;
+  proposer: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
+  const [proposition, setProposition] = useState(false);
   const requetes = useQueryClient();
   const notifier = useNotifier();
   const [archivage, setArchivage] = useState(false);
@@ -362,6 +367,11 @@ function FicheEtablissement({
                   : t('etablissement.fiche.positionner')}
               </Button>
             )}
+            {proposer && !e.modifiable && e.statut === 'actif' && (
+              <Button variant="outlined" onClick={() => setProposition(true)}>
+                {t('propositions.proposer')}
+              </Button>
+            )}
             {gerer && e.statut !== 'archive' && (
               <Button color="error" onClick={() => setArchivage(true)}>
                 {t('prospect.fiche.archiver')}
@@ -432,6 +442,15 @@ function FicheEtablissement({
           <Section titre={t('etablissement.fiche.prospects')}>
             <ProspectsExercant etablissement={e.id} />
           </Section>
+          <Historique objet="etablissement" id={e.id} />
+          {proposition && (
+            <DialogueProposition
+              objet="etablissement"
+              id={e.id}
+              actuels={{ adresse: e.adresse, telephone: e.telephone }}
+              surFermer={() => setProposition(false)}
+            />
+          )}
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {t('prospect.fiche.creePar', {
               personne: `${e.cree_par.prenom} ${e.cree_par.nom}`,
@@ -805,6 +824,7 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
           <FicheEtablissement
             id={ouverte}
             gerer={gerer}
+            proposer={perimetre.actions.includes('propositions.creer')}
             surFermer={() => setOuverte(null)}
             surModifier={(e) => setDialogue({ fiche: e })}
           />

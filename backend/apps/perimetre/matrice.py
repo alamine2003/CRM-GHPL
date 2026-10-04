@@ -37,6 +37,8 @@ class Action(StrEnum):
     IMPORTS_GERER = "imports.gerer"
     CIBLES_LIRE = "cibles.lire"
     CIBLES_GERER = "cibles.gerer"
+    PROPOSITIONS_CREER = "propositions.creer"
+    PROPOSITIONS_TRANCHER = "propositions.trancher"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -103,6 +105,10 @@ MATRICE: dict[Action, frozenset[str]] = {
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
     ),
     Action.CIBLES_GERER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
+    # PRP-014 : le délégué propose une modification d'une fiche commune ; l'administrateur pays
+    # ou le superviseur des postes de l'auteur (périmètre) l'accepte ou la refuse.
+    Action.PROPOSITIONS_CREER: frozenset({Role.DELEGUE}),
+    Action.PROPOSITIONS_TRANCHER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
 }
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.

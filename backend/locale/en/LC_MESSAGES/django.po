@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 21:38+0000\n"
+"POT-Creation-Date: 2026-10-04 23:08+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -301,12 +301,15 @@ msgid "{n} groupes"
 msgstr "{n} groups"
 
 #, python-brace-format
+#| msgid ""
+#| "Fiches au même nom ({n}) : gardées pour la file des doublons, où le "
+#| "superviseur tranchera (0.1.8)."
 msgid ""
-"Fiches au même nom ({n}) : gardées pour la file des doublons, où le "
-"superviseur tranchera (0.1.8)."
+"Fiches au même nom ({n}) : versées dans la file des doublons, que tranche "
+"l'administrateur pays."
 msgstr ""
-"Records sharing the same name ({n}): kept for the duplicates queue, where "
-"the supervisor will decide (0.1.8)."
+"Records sharing the same name ({n}): added to the duplicates queue, decided "
+"by the country administrator."
 
 #, python-brace-format
 msgid "{n} fiches"
@@ -319,23 +322,29 @@ msgstr ""
 "\"INTERMEDIARE\" locality in BirdNotes, which is not one: sector kept, "
 "locality to be specified."
 
+#| msgid ""
+#| "Doublons probables signalés par BirdNotes : gardés pour la file des doublons"
+#| " (0.1.8)."
 msgid ""
-"Doublons probables signalés par BirdNotes : gardés pour la file des doublons"
-" (0.1.8)."
+"Doublons probables signalés par BirdNotes : versés dans la file des "
+"doublons, rien n'est fusionné à l'import."
 msgstr ""
-"Probable duplicates flagged by BirdNotes: kept for the duplicates queue "
-"(0.1.8)."
+"Probable duplicates flagged by BirdNotes: added to the duplicates queue; "
+"nothing is merged on import."
 
 #, python-brace-format
 msgid "{n} demandes"
 msgstr "{n} requests"
 
+#| msgid ""
+#| "Demandes de modification en attente dans BirdNotes : à traiter avec les "
+#| "propositions de modification (0.1.8)."
 msgid ""
-"Demandes de modification en attente dans BirdNotes : à traiter avec les "
-"propositions de modification (0.1.8)."
+"Demandes de modification en attente dans BirdNotes : non reprises, leur "
+"auteur n'a pas encore de compte ; à reproposer depuis INNOV CRM."
 msgstr ""
-"Change requests pending in BirdNotes: to be handled with change proposals "
-"(0.1.8)."
+"Change requests pending in BirdNotes: not imported, their author has no "
+"account yet; to be proposed again from INNOV CRM."
 
 msgid "Entité"
 msgstr "Entity"
@@ -348,6 +357,38 @@ msgstr "Level"
 
 msgid "Motif"
 msgstr "Reason"
+
+#, python-format
+msgid "Colonnes attendues introuvables : %(colonnes)s."
+msgstr "Expected columns not found: %(colonnes)s."
+
+msgid "Fichier illisible : classeur Excel (.xlsx) attendu."
+msgstr "Unreadable file: Excel workbook (.xlsx) expected."
+
+msgid "Aucune feuille au format du fichier d'organisation."
+msgstr "No sheet in the organisation file format."
+
+msgid "Sans gamme"
+msgstr "No range"
+
+#, python-format
+msgid "Poste « %(poste)s » déjà occupé par une autre personne : inchangé."
+msgstr "Position “%(poste)s” already held by someone else: unchanged."
+
+msgid "Poste sans superviseur dans le fichier."
+msgstr "Position without a supervisor in the file."
+
+#, python-format
+msgid "Colonne vide : %(colonnes)s."
+msgstr "Empty column: %(colonnes)s."
+
+#, python-format
+msgid "Fonction inconnue : « %(fonction)s »."
+msgstr "Unknown job: “%(fonction)s”."
+
+#, python-format
+msgid "Produit absent du référentiel (%(n)s lignes) : non ajouté."
+msgstr "Product missing from the catalogue (%(n)s rows): not added."
 
 msgid "Ce libellé ou ce code est déjà utilisé."
 msgstr "This label or code is already in use."
@@ -437,8 +478,48 @@ msgstr "Only an active record of the country can enter a target list."
 msgid "Ce prospect n'est plus dans la liste cible."
 msgstr "This prospect is no longer in the target list."
 
+msgid "Ces deux fiches ne peuvent pas fusionner."
+msgstr "These two records cannot be merged."
+
+msgid "Seules des fiches en cours fusionnent."
+msgstr "Only records in service can be merged."
+
+msgid "Cette fusion a déjà été défaite."
+msgstr "This merge has already been undone."
+
+msgid "Ce doublon a déjà été tranché."
+msgstr "This duplicate has already been decided."
+
+msgid "Doublon refusé"
+msgstr "Duplicate rejected"
+
+msgid "Décision inconnue."
+msgstr "Unknown decision."
+
+#, python-format
+msgid "Ce champ ne se propose pas : %(champ)s."
+msgstr "This field cannot be proposed: %(champ)s."
+
+msgid "Seule une fiche commune reçoit des propositions."
+msgstr "Only a shared record can receive proposals."
+
+msgid "Établissement inconnu dans ce pays."
+msgstr "Unknown facility in this country."
+
+msgid "La proposition ne change rien à la fiche."
+msgstr "The proposal changes nothing in the record."
+
+msgid "Cette proposition a déjà été tranchée."
+msgstr "This proposal has already been decided."
+
+msgid "La fiche n'est plus en service."
+msgstr "The record is no longer in service."
+
 msgid "Portée de recherche inconnue."
 msgstr "Unknown search scope."
+
+msgid "Choisissez un prospect ou un établissement."
+msgstr "Choose a prospect or an institution."
 
 msgid "Ce numéro de téléphone n'est pas valide."
 msgstr "This phone number is not valid."
@@ -500,9 +581,6 @@ msgstr "The institution type is required."
 
 msgid "Indiquez la latitude et la longitude, ou aucune des deux."
 msgstr "Enter both latitude and longitude, or neither."
-
-msgid "Établissement inconnu dans ce pays."
-msgstr "Unknown facility in this country."
 
 msgid "Un exercice relie une fiche prospect et un établissement en service."
 msgstr ""

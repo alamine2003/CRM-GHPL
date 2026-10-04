@@ -2,6 +2,79 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.8] — Doublons, propositions, historique, import de l'organisation ; refonte du design
+
+Huitième jalon du cycle 0.1 « Référentiel ».
+
+### Ajouté — doublons des fiches prospects (PRP-007 à PRP-010)
+
+- **PRP-007 — suggestions pendant la saisie** : dès deux lettres, le formulaire de création affiche les fiches ressemblantes : faute de frappe, accent, titre « Dr », même numéro d'ordre ou même mobile. « Ouvrir » mène à la fiche existante au lieu d'en créer une seconde.
+  - **CA2** : sans réseau, le téléphone compare la saisie à la liste cible gardée dans sa base chiffrée.
+- **PRP-008 — détecteur à l'enregistrement** :
+  - **certain** (même numéro d'ordre dans le pays, ou même mobile avec un nom similaire) : fusion automatique, et la saisie renvoie la fiche conservée ;
+  - **probable** : la fiche reste `a_valider` et entre dans la file ;
+  - **aucun** : la fiche devient aussitôt commune (§14.6). Une fiche créée par un délégué n'attend donc plus une validation manuelle quand elle n'a pas de doublon.
+  - **CA2** : un même téléphone fixe (le standard d'une clinique) avec des noms différents ne rend jamais deux fiches identiques, ni même probables.
+  - **CA3** : chaque décision est auditée avec son score (0 à 100) et ses critères. Seuils et pondérations : prd.md §14.6 [H].
+- **PRP-009 — file des doublons** (nouvelle page « Doublons », administrateur pays) :
+  - **CA1** : comparaison des deux fiches côte à côte, les valeurs différentes en évidence (identité, téléphones, lieux d'exercice, listes cibles, auteur) ;
+  - décisions « Fusionner », « Garder séparées » et « Refuser la fiche saisie » (archivée) ;
+  - **CA2** : une paire gardée séparée ne revient plus.
+- **Import BirdNotes** : les groupes de doublons signalés par BirdNotes et les fiches au même nom entrent dans la file, une fois chacun ; un réimport n'ajoute aucune paire. Rien n'est fusionné à l'import.
+- **PRP-010 — défusion** (onglet « Fusions ») :
+  - **CA1** : chaque fiche retrouve ses lieux d'exercice, ses listes cibles et les champs que la fusion avait complétés ;
+  - **CA2** : la défusion est auditée ;
+  - une paire défusionnée ne refusionne plus automatiquement ;
+  - une fiche qui partageait le numéro d'ordre de l'autre le perd, et l'historique le garde.
+
+### Ajouté — historique et propositions (PRP-012, PRP-014)
+
+- **PRP-012 — historique** : chaque champ modifié d'un prospect ou d'un établissement est historisé avec l'ancienne et la nouvelle valeur, l'auteur, la date et l'origine (saisie, proposition, fusion, défusion). Les validations et archivages y figurent. La fiche affiche son historique repliable. CA2 : aucune suppression physique.
+- **PRP-014 — propositions de modification** : le délégué propose un changement sur une fiche commune (téléphones, courriel, numéro d'ordre, adresse, nouveau lieu d'exercice), avec un commentaire.
+  - **CA1** : la fiche ne change pas avant l'acceptation.
+  - Le superviseur des postes de l'auteur ou l'administrateur pays accepte ou refuse avec un motif ; la page « Propositions » montre la valeur actuelle à côté de la valeur proposée.
+  - **CA2** : le délégué voit les décisions sur le portail et sur l'accueil du téléphone, jusqu'à ce qu'il les marque « Vu ».
+  - Nouveaux droits `propositions.creer` (délégué) et `propositions.trancher` (administrateur pays, superviseur dans son périmètre) ; prd.md §6.3 complétée.
+- Tables `Fusion`, `DoublonProbable`, `Changement` et `Proposition` sous sécurité au niveau des lignes ; routes couvertes par la matrice et les tests d'isolation.
+
+### Ajouté — import du fichier d'organisation (ORG-014)
+
+- Classeur Excel, feuille « ORGANISATION », une ligne par poste. Il crée ou retrouve divisions, réseaux, zones, secteurs, comptes (sans mot de passe), rôles, périmètres de réseaux des DF et DM, postes, occupations, rattachements aux superviseurs et produits des portefeuilles.
+- **CA1** : simulation sans rien écrire ; **CA2** : chaque ligne rejetée a son motif (colonne vide, fonction inconnue) ; **CA3** : « POSTE NON POURVU » crée un poste vacant ; **CA4** : un réimport retrouve ses postes et ne crée aucun doublon.
+- Hypothèses dans prd.md, sous ORG-014 [H].
+- Le classeur est lu sans nouvelle dépendance lourde ; son XML passe par `defusedxml`, qui refuse les entités dangereuses.
+- La page « Imports » propose les deux sources : export BirdNotes ou fichier d'organisation.
+
+### Design — direction « registre » (portail et mobile)
+
+Référence : `docs/design.md`, avec la grille de revue obligatoire à chaque version.
+
+| Écran | Défaut observé en 0.1.7 | Correction |
+|---|---|---|
+| Tout le portail | Titre répété dans la barre du haut puis en 28 px, avec une phrase de sous-titre | Barre de 48 px sans titre ; titre de page de 20 px et contexte (pays) sur la même ligne |
+| Tout le portail | Bandeau « Démonstration » orange hachuré de 32 px | Filet orange de 3 px et mention discrète dans la barre |
+| Tout le portail | Tuiles de chiffres à pastille d'icône, ombres, arrondis de 10 px | Barre de chiffres sans icône, surfaces plates séparées par des filets, arrondis de 6 px |
+| Accueil | Bannière à dégradé et halos | En-tête simple ; feuille de route en barre segmentée sans pastilles |
+| Navigation | Numéros de version sur les rubriques futures | Groupe « À venir », sans numéro ; libellé « Visites » raccourci |
+| Organisation, Référentiels, Équipe | Réseaux, classes, rôles et états en pastilles colorées | Texte, et couleur réservée aux états qui appellent une action |
+| Fiches et listes | Avatars d'initiales, icônes de type, icônes devant les boutons libellés | Supprimés ; le potentiel A/B/C reste l'unique couleur métier (A orange, B marine, C gris) |
+| Boutons | Actions principales en orange | Marine ; l'orange marque l'élément actif et ce qui est « à traiter » |
+| 360 à 834 px | Débordement horizontal (Profil, Accueil, puis toutes les pages via un texte masqué mal dimensionné) | Corrigés, vérifiés par capture aux quatre largeurs |
+| Prospects (360 px) | Statut en boutons coupés, flèche de pagination à la ligne, liste à 520 px du haut | Statut défilant, pagination compacte, chiffres sur une rangée défilante : liste visible au premier écran |
+| Listes cibles (≤ 834 px) | Les 45 postes empilés avant le détail | Liste déroulante de postes |
+| Formulaires (téléphone) | Dialogue étroit, champs serrés | Plein écran |
+| Mobile | En-tête marine de 180 à 360 px, pastilles de rôles, barre « v0.0.6 Fondations » périmée | En-tête de 56 px sur fond clair ; version et rôles dans « Profil » |
+| Mobile | Cartes à liseré et icône orange, onglets en pilules, libellés en capitales | Cartes sobres, onglets de 56 px avec repère orange, libellés en casse normale |
+
+Revue des nouveaux écrans 0.1.8 (360, 834 et 1440 px), puis seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Doublons | Lignes vides des deux côtés, tirets en gras, phrase d'aide répétée sur chaque paire | Lignes vides masquées, gras réservé aux valeurs qui diffèrent, aide une seule fois au-dessus de la file |
+| Propositions | Étiquette « En attente » répétant le filtre ; « — → » quand le champ était vide | Étiquette retirée ; seule la nouvelle valeur s'affiche quand l'ancienne est vide |
+| Mobile, saisie | Suggestions en paragraphe à puces dans une alerte | Liste à filets : nom, puis spécialité et lieu |
+| Mobile, accueil | Motif du refus absent | Motif sous le nom de la fiche |
+
 ## [0.1.7] — Recherche, filtres, tri et pagination ; design enrichi
 
 Septième jalon du cycle 0.1 « Référentiel ».

@@ -8,6 +8,14 @@
  * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
  */
 import type {
+  ChangementFiche,
+  DecisionDoublon,
+  DoublonProbable,
+  Fusion,
+  Proposition,
+  ProspectCree,
+  Ressemblante,
+  SaisieProposition,
   Cible,
   ListeCible,
   PosteCible,
@@ -64,6 +72,15 @@ import type {
 } from '@innov/api-types';
 
 export type {
+  ChangementFiche,
+  ComparaisonFiche,
+  DecisionDoublon,
+  DoublonProbable,
+  Fusion,
+  Proposition,
+  ProspectCree,
+  Ressemblante,
+  SaisieProposition,
   Cible,
   ListeCible,
   PosteCible,
@@ -548,8 +565,23 @@ export function creerClient(options: OptionsClient) {
       },
       synthese: () => requete<SyntheseProspects>('/api/v1/prospects/synthese/'),
       detail: (id: string) => requete<Prospect>(`/api/v1/prospects/${id}/`),
+      /** PRP-008 : la réponse porte la décision du détecteur (`doublon`). */
       creer: (fiche: SaisieProspect) =>
-        requete<Prospect>('/api/v1/prospects/', { methode: 'POST', corps: fiche }),
+        requete<ProspectCree>('/api/v1/prospects/', { methode: 'POST', corps: fiche }),
+      /** PRP-007 : fiches qui ressemblent à la saisie en cours. */
+      ressemblants: (saisie: {
+        nom?: string;
+        prenom?: string;
+        numero_ordre?: string;
+        telephone_mobile?: string;
+      }) => {
+        const params = new URLSearchParams(
+          Object.entries(saisie).filter(([, v]) => v) as [string, string][],
+        ).toString();
+        return requete<Ressemblante[]>(`/api/v1/prospects/ressemblants/?${params}`);
+      },
+      /** PRP-012 : historique champ par champ. */
+      historique: (id: string) => requete<ChangementFiche[]>(`/api/v1/prospects/${id}/historique/`),
       modifier: (id: string, champs: Partial<SaisieProspect>) =>
         requete<Prospect>(`/api/v1/prospects/${id}/`, { methode: 'PATCH', corps: champs }),
       valider: (id: string) =>
@@ -559,6 +591,35 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { motif },
         }),
+    },
+    /** File des doublons probables (PRP-009). */
+    doublons: {
+      liste: (statut?: string) =>
+        requete<DoublonProbable[]>(`/api/v1/doublons/${statut ? `?statut=${statut}` : ''}`),
+      trancher: (id: string, decision: DecisionDoublon, conserver?: string) =>
+        requete<DoublonProbable>(`/api/v1/doublons/${id}/trancher/`, {
+          methode: 'POST',
+          corps: { decision, ...(conserver ? { conserver } : {}) },
+        }),
+    },
+    /** Fusions et défusions (PRP-008, PRP-010). */
+    fusions: {
+      liste: () => requete<Fusion[]>('/api/v1/fusions/'),
+      defaire: (id: string) =>
+        requete<Fusion>(`/api/v1/fusions/${id}/defaire/`, { methode: 'POST' }),
+    },
+    /** Propositions de modification des fiches communes (PRP-014). */
+    propositions: {
+      liste: (statut?: string) =>
+        requete<Proposition[]>(`/api/v1/propositions/${statut ? `?statut=${statut}` : ''}`),
+      creer: (saisie: SaisieProposition) =>
+        requete<Proposition>('/api/v1/propositions/', { methode: 'POST', corps: saisie }),
+      trancher: (id: string, decision: 'accepter' | 'refuser', motif = '') =>
+        requete<Proposition>(`/api/v1/propositions/${id}/trancher/`, {
+          methode: 'POST',
+          corps: { decision, motif },
+        }),
+      marquerVues: () => requete<void>('/api/v1/propositions/vues/', { methode: 'POST' }),
     },
     /** Lieux d'exercice datés prospect ↔ établissement (PRP-004). */
     exercices: {
@@ -625,6 +686,8 @@ export function creerClient(options: OptionsClient) {
       /** Secteurs actifs et leurs localités, pour la saisie d'une fiche. */
       secteurs: () => requete<SecteurSaisie[]>('/api/v1/etablissements/secteurs/'),
       detail: (id: string) => requete<Etablissement>(`/api/v1/etablissements/${id}/`),
+      historique: (id: string) =>
+        requete<ChangementFiche[]>(`/api/v1/etablissements/${id}/historique/`),
       creer: (fiche: SaisieEtablissement) =>
         requete<Etablissement>('/api/v1/etablissements/', { methode: 'POST', corps: fiche }),
       modifier: (id: string, champs: Partial<SaisieEtablissement>) =>
@@ -649,6 +712,16 @@ export function creerClient(options: OptionsClient) {
         formulaire.append('fichier', fichier, nom);
         formulaire.append('simulation', simulation ? 'true' : 'false');
         return requete<DetailLot>('/api/v1/imports/birdnotes/', {
+          methode: 'POST',
+          corps: formulaire,
+        });
+      },
+      /** ORG-014 : fichier d'organisation (classeur Excel). */
+      organisation: (fichier: Blob, nom: string, simulation: boolean) => {
+        const formulaire = new FormData();
+        formulaire.append('fichier', fichier, nom);
+        formulaire.append('simulation', simulation ? 'true' : 'false');
+        return requete<DetailLot>('/api/v1/imports/organisation/', {
           methode: 'POST',
           corps: formulaire,
         });

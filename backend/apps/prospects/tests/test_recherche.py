@@ -84,7 +84,8 @@ def test_les_resultats_restent_dans_le_perimetre(terrain):
     assert deleg.get(f"{URL}?portee=monde").status_code == 400
     assert len(noms(client_de(terrain["admin.sn"]).get(URL))) == 5  # avec la fiche « Ba »
     # La synthèse suit le même périmètre ; le Togo ne voit rien du Sénégal.
-    assert deleg.get(f"{URL}synthese/").json()["actifs"] == 3
+    # « Ba » sans doublon est devenue commune (PRP-008) : elle compte parmi ses fiches actives.
+    assert deleg.get(f"{URL}synthese/").json()["actifs"] == 4
     assert noms(client_de(terrain["admin.tg"]).get(f"{URL}?portee=pays")) == []
 
 

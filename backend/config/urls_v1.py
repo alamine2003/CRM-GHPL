@@ -10,6 +10,7 @@ from apps.imports import vues as imp
 from apps.organisation import vues as org
 from apps.prospects import vues as prs
 from apps.prospects import vues_ciblage as cib
+from apps.prospects import vues_doublons as dbl
 from apps.referentiel import vues as ref
 from apps.socle import vues_exploitation as exploitation
 from apps.socle import vues_pays as pays
@@ -163,6 +164,29 @@ urlpatterns = [
     # Fiches prospects (PRP-002, PRP-006)
     path("prospects/", prs.ProspectsVue.as_view(), name="prospects"),
     path("prospects/synthese/", prs.SyntheseProspectsVue.as_view(), name="prospects-synthese"),
+    # Doublons, fusions, historique, propositions (PRP-007 à PRP-014)
+    path("prospects/ressemblants/", dbl.RessemblantsVue.as_view(), name="prospects-ressemblants"),
+    path(
+        "prospects/<uuid:id>/historique/",
+        dbl.HistoriqueProspectVue.as_view(),
+        name="prospect-historique",
+    ),
+    path(
+        "etablissements/<uuid:id>/historique/",
+        dbl.HistoriqueEtablissementVue.as_view(),
+        name="etablissement-historique",
+    ),
+    path("doublons/", dbl.DoublonsVue.as_view(), name="doublons"),
+    path("doublons/<uuid:id>/trancher/", dbl.DoublonDecisionVue.as_view(), name="doublon-trancher"),
+    path("fusions/", dbl.FusionsVue.as_view(), name="fusions"),
+    path("fusions/<uuid:id>/defaire/", dbl.DefusionVue.as_view(), name="fusion-defaire"),
+    path("propositions/", dbl.PropositionsVue.as_view(), name="propositions"),
+    path("propositions/vues/", dbl.PropositionsVuesVue.as_view(), name="propositions-vues"),
+    path(
+        "propositions/<uuid:id>/trancher/",
+        dbl.PropositionDecisionVue.as_view(),
+        name="proposition-trancher",
+    ),
     path("prospects/<uuid:id>/", prs.ProspectVue.as_view(), name="prospect"),
     path(
         "prospects/<uuid:id>/valider/", prs.ProspectValidationVue.as_view(), name="prospect-valider"
@@ -220,6 +244,7 @@ urlpatterns = [
     # Imports (PRP-013)
     path("imports/", imp.LotsVue.as_view(), name="imports"),
     path("imports/birdnotes/", imp.ImportBirdNotesVue.as_view(), name="import-birdnotes"),
+    path("imports/organisation/", imp.ImportOrganisationVue.as_view(), name="import-organisation"),
     path("imports/<uuid:id>/", imp.LotVue.as_view(), name="import"),
     path("imports/<uuid:id>/rapport/", imp.RapportLotVue.as_view(), name="import-rapport"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),

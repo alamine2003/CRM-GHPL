@@ -70,3 +70,13 @@ export type PosteCible = Schemas['PosteCible'];
 export type ListeCible = Schemas['ListeCible'];
 export type ProspectCible = Schemas['ProspectCible'];
 export type ResultatAjoutCibles = Schemas['ResultatAjout'];
+// Doublons, fusions, historique, propositions (PRP-007 à PRP-014).
+export type ProspectCree = Schemas['ProspectCree'];
+export type Ressemblante = Schemas['Ressemblante'];
+export type ComparaisonFiche = Schemas['Comparaison'];
+export type DoublonProbable = Schemas['Doublon'];
+export type DecisionDoublon = Schemas['DecisionDoublon']['decision'];
+export type Fusion = Schemas['Fusion'];
+export type ChangementFiche = Schemas['ChangementFiche'];
+export type Proposition = Schemas['Proposition'];
+export type SaisieProposition = Schemas['SaisieProposition'];

@@ -1,7 +1,9 @@
 import type {
   Etablissement,
+  ListeCible,
   Potentiel,
   Prospect,
+  ProspectCree,
   SaisieProspect,
   ValeurReferentiel,
 } from '@innov/api-client';
@@ -20,7 +22,9 @@ import {
 } from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { FormulaireEtablissement, LigneEtablissement, Pilule } from '../src/Etablissements';
+import { lire } from '../src/baseLocale';
 import { MaListeCible } from '../src/MaListe';
+import { normaliserNom, ressemblantesLocales } from '../src/ressemblances';
 import { messageErreur, useSession } from '../src/session';
 
 const POTENTIELS: Potentiel[] = ['A', 'B', 'C'];
@@ -54,7 +58,80 @@ function LigneProspect({ prospect }: { prospect: Prospect }) {
   );
 }
 
-function Formulaire({ surTermine }: { surTermine: (p: Prospect) => void }) {
+/**
+ * PRP-007 : fiches ressemblantes pendant la saisie. En ligne, le serveur cherche dans tout le
+ * pays ; sans réseau, la liste cible gardée sur le téléphone sert de référence (CA2).
+ */
+function Ressemblantes({ nom, prenom }: { nom: string; prenom: string }) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const [fiches, setFiches] = useState<{ id: string; libelle: string; detail: string }[]>([]);
+  const [horsLigne, setHorsLigne] = useState(false);
+  const palette = usePalette();
+
+  const court = normaliserNom(prenom, nom).length < 2;
+  useEffect(() => {
+    let actif = true;
+    if (court) return;
+    const minuteur = setTimeout(() => {
+      Promise.resolve()
+        .then(() => client.prospects.ressemblants({ nom, prenom }))
+        .then((r) => {
+          if (!actif) return;
+          setHorsLigne(false);
+          setFiches(
+            r.map(({ prospect: p, lieu_principal }) => ({
+              id: p.id,
+              libelle: [p.prenom, p.nom].filter(Boolean).join(' '),
+              detail: [p.specialite_libelle ?? p.type_libelle, lieu_principal]
+                .filter(Boolean)
+                .join(' · '),
+            })),
+          );
+        })
+        .catch(async () => {
+          const memoire = await lire<ListeCible[]>('ciblage.moi').catch(() => null);
+          if (!actif) return;
+          setHorsLigne(true);
+          setFiches(
+            ressemblantesLocales(memoire?.valeur ?? [], nom, prenom).map((p) => ({
+              id: p.id,
+              libelle: [p.prenom, p.nom].filter(Boolean).join(' '),
+              detail: [p.specialite_libelle ?? p.type_libelle, p.lieu_principal?.libelle]
+                .filter(Boolean)
+                .join(' · '),
+            })),
+          );
+        });
+    }, 350);
+    return () => {
+      actif = false;
+      clearTimeout(minuteur);
+    };
+  }, [client, court, nom, prenom]);
+
+  if (court || fiches.length === 0) return null;
+  return (
+    <View
+      accessibilityRole="alert"
+      style={[styles.ressemblantes, { borderColor: palette.attention }]}
+    >
+      <Texte variante="libelle">{t('doublons.ressemblantes')}</Texte>
+      <Texte variante="discret">
+        {t('doublons.ressemblantesAide')}
+        {horsLigne ? ` ${t('doublons.horsLigne')}` : ''}
+      </Texte>
+      {fiches.map((f) => (
+        <View key={f.id} style={[styles.ressemblante, { borderTopColor: palette.ligne }]}>
+          <Texte>{f.libelle}</Texte>
+          {f.detail ? <Texte variante="discret">{f.detail}</Texte> : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function Formulaire({ surTermine }: { surTermine: (p: ProspectCree) => void }) {
   const { t } = useTranslation();
   const { client } = useSession();
   const [valeurs, setValeurs] = useState<ValeurReferentiel[]>([]);
@@ -105,6 +182,7 @@ function Formulaire({ surTermine }: { surTermine: (p: Prospect) => void }) {
         value={f.prenom}
         onChangeText={(prenom) => setF({ ...f, prenom })}
       />
+      <Ressemblantes nom={f.nom} prenom={f.prenom ?? ''} />
       <Texte variante="libelle">{t('prospect.champs.type')}</Texte>
       <View style={styles.pilules}>
         {types.map((v) => (
@@ -247,9 +325,14 @@ export default function EcranProspects() {
         <>
           {segment === 'prospects' ? (
             <Formulaire
-              surTermine={() => {
+              surTermine={(cree) => {
                 setCreation(false);
-                setMessage(t('prospect.mobile.creee'));
+                // PRP-008 : la décision du détecteur est annoncée au délégué.
+                setMessage(
+                  cree.doublon && cree.doublon !== 'aucun'
+                    ? t(`doublons.saisie.${cree.doublon}`)
+                    : t('prospect.mobile.creee'),
+                );
                 setVersion((v) => v + 1);
               }}
             />
@@ -323,6 +406,8 @@ export default function EcranProspects() {
 
 const styles = StyleSheet.create({
   segments: { flexDirection: 'row', gap: 8 },
+  ressemblantes: { borderWidth: 1, borderRadius: 6, padding: 12, gap: 4 },
+  ressemblante: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 8, marginTop: 4 },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',

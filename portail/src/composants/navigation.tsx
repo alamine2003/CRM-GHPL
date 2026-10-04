@@ -4,6 +4,8 @@ import AccountTreeRounded from '@mui/icons-material/AccountTreeRounded';
 import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
 import BarChartRounded from '@mui/icons-material/BarChartRounded';
 import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
+import CompareArrowsRounded from '@mui/icons-material/CompareArrowsRounded';
+import EditNoteRounded from '@mui/icons-material/EditNoteRounded';
 import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import HomeRounded from '@mui/icons-material/HomeRounded';
@@ -57,6 +59,15 @@ export const ENTREES: Entree[] = [
     chemin: '/ciblage',
     visible: peut('cibles.lire'),
   },
+  {
+    // PRP-014 : le délégué y suit ses propositions ; le superviseur et l'administrateur pays
+    // les tranchent.
+    cle: 'propositions',
+    icone: <EditNoteRounded />,
+    section: 'activite',
+    chemin: '/propositions',
+    visible: (p) => peut('propositions.creer')(p) || peut('propositions.trancher')(p),
+  },
   { cle: 'pilotage', icone: <BarChartRounded />, section: 'activite' },
   {
     cle: 'organisation',
@@ -73,6 +84,13 @@ export const ENTREES: Entree[] = [
     // Catalogue de l'encadrement et de l'administration ; le délégué voit ses produits
     // sur le téléphone (« Mes produits »).
     visible: (p) => peut('referentiels.lire')(p) && peut('organisation.lire')(p),
+  },
+  {
+    cle: 'doublons',
+    icone: <CompareArrowsRounded />,
+    section: 'administration',
+    chemin: '/doublons',
+    visible: peut('prospects.gerer'),
   },
   {
     cle: 'imports',

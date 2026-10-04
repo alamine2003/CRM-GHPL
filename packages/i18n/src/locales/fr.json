@@ -126,7 +126,9 @@
     "referentiels": "Référentiels",
     "etablissements": "Établissements",
     "imports": "Imports",
-    "ciblage": "Listes cibles"
+    "ciblage": "Listes cibles",
+    "doublons": "Doublons",
+    "propositions": "Propositions"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -761,7 +763,7 @@
       "statut": "Statut"
     },
     "aides": {
-      "aValider": "Votre fiche sera « à valider » : vous pouvez l'utiliser tout de suite ; les autres délégués la verront une fois validée.",
+      "aValider": "À l'enregistrement, le système vérifie les doublons : sans doublon, la fiche devient aussitôt commune ; sinon elle attend la décision de l'administrateur pays.",
       "potentiel": "A : prescripteur majeur · B : régulier · C : occasionnel"
     },
     "nombre_one": "{{count}} fiche",
@@ -784,7 +786,7 @@
       "archiverAide": "La fiche ne sera plus proposée ; son historique reste.",
       "modifier": "Modifier",
       "modifierTitre": "Modifier la fiche",
-      "communeAide": "Fiche commune : seul l'administrateur pays la modifie.",
+      "communeAide": "Fiche commune : l'administrateur pays la modifie ; vous pouvez proposer une modification.",
       "aucun": "Non renseigné"
     },
     "mobile": {
@@ -873,14 +875,11 @@
     "titre": "Imports",
     "sousTitre": "Reprise contrôlée des données du CRM en place · {{pays}}.",
     "choisirPays": "Choisissez un pays : un import se fait toujours dans un pays.",
-    "birdnotes": "Export BirdNotes",
     "etapes": {
       "fichier": "Choisir le fichier",
       "simulation": "Simuler et vérifier",
       "import": "Importer"
     },
-    "deposer": "Déposez ici l'export BirdNotes",
-    "formats": "Fichier JSON de l'extraction, ou son archive ZIP",
     "choisir": "Choisir un fichier",
     "changer": "Changer de fichier",
     "confidentialite": "Le fichier est lu le temps du traitement et n'est pas conservé : seuls le bilan et le rapport d'anomalies restent.",
@@ -906,7 +905,10 @@
       "reseaux_one": "{{count}} réseau",
       "reseaux_other": "{{count}} réseaux",
       "anomalies_one": "{{count}} anomalie au rapport",
-      "anomalies_other": "{{count}} anomalies au rapport"
+      "anomalies_other": "{{count}} anomalies au rapport",
+      "postes": "Postes créés",
+      "vacants": "Postes vacants",
+      "comptes": "Comptes créés"
     },
     "detail": "Détail par donnée",
     "anomalies": "Anomalies",
@@ -923,7 +925,14 @@
       "prospects": "Prospects",
       "demandes_modification": "Demandes de modification",
       "zones": "Zones",
-      "exercices": "Lieux d'exercice"
+      "exercices": "Lieux d'exercice",
+      "comptes": "Comptes",
+      "roles": "Rôles",
+      "perimetres": "Périmètres DF et DM",
+      "postes": "Postes",
+      "occupations": "Occupations",
+      "rattachements": "Rattachements",
+      "lignes": "Lignes"
     },
     "actions": {
       "crees": "créés",
@@ -938,7 +947,13 @@
       "localite_a_preciser": "localité à préciser",
       "prenom_a_separer": "prénom à séparer",
       "sans_etablissement": "sans établissement",
-      "etablissement_non_repris": "établissement non repris"
+      "etablissement_non_repris": "établissement non repris",
+      "modifies": "modifiés",
+      "vacants": "vacants",
+      "creees": "créées",
+      "existantes": "déjà présentes",
+      "attribues": "attribués",
+      "importees": "importées"
     },
     "niveaux": {
       "rejet": "Ligne écartée",
@@ -955,7 +970,24 @@
     "lance_one": "{{personne}} · {{quand}} · {{count}} anomalie",
     "lance_other": "{{personne}} · {{quand}} · {{count}} anomalies",
     "confirmerTitre": "Importer pour de bon ?",
-    "confirmerTexte": "{{prospects}} prospects et {{etablissements}} établissements seront créés, comme dans la simulation. Les fiches reprises restent modifiables et archivables ; elles ne se suppriment pas."
+    "confirmerTexte": "{{prospects}} prospects et {{etablissements}} établissements seront créés, comme dans la simulation. Les fiches reprises restent modifiables et archivables ; elles ne se suppriment pas.",
+    "sources": {
+      "birdnotes": "Export BirdNotes",
+      "organisation": "Fichier d'organisation"
+    },
+    "sourcesCourtes": {
+      "birdnotes": "BirdNotes",
+      "organisation": "Organisation"
+    },
+    "source": "Source",
+    "deposerSource": {
+      "birdnotes": "Déposez ici l'export BirdNotes",
+      "organisation": "Déposez ici le fichier d'organisation"
+    },
+    "formatsSource": {
+      "birdnotes": "Fichier JSON de l'extraction, ou son archive ZIP",
+      "organisation": "Classeur Excel (.xlsx), feuille « ORGANISATION »"
+    }
   },
   "exercice": {
     "etablissement": "Établissement",
@@ -1067,5 +1099,111 @@
     "derniere": "Dernière page",
     "voirPlus": "Voir plus ({{reste}} restants)",
     "filtresN": "Filtres · {{count}}"
+  },
+  "historique": {
+    "titre": "Historique des modifications",
+    "vide": "Aucune modification enregistrée.",
+    "systeme": "Système",
+    "origines": {
+      "proposition": "proposition acceptée",
+      "fusion": "fusion",
+      "defusion": "défusion",
+      "import": "import"
+    }
+  },
+  "doublons": {
+    "titre": "Doublons",
+    "choisirPays": "Choisissez un pays : les doublons se traitent pays par pays.",
+    "resume_one": "{{count}} paire à trancher",
+    "resume_other": "{{count}} paires à trancher",
+    "onglets": {
+      "file": "À trancher",
+      "fusions": "Fusions"
+    },
+    "fileVide": "Aucun doublon à trancher",
+    "fileVideTexte": "Les fiches que le détecteur juge probablement identiques arrivent ici.",
+    "aucuneFusion": "Aucune fusion pour le moment",
+    "score": "Ressemblance {{score}} / 100",
+    "comparaison": "Comparaison des deux fiches",
+    "nouvelle": "Fiche saisie",
+    "existante": "Fiche existante",
+    "lieux": "Lieux d'exercice",
+    "cibles": "Listes cibles",
+    "creee": "Créée par",
+    "fusionner": "Fusionner",
+    "separer": "Garder séparées",
+    "refuser": "Refuser la fiche saisie",
+    "aideFusion": "Fusionner garde la fiche existante : exercices et listes cibles de l'autre la rejoignent. La fusion se défait depuis l'onglet « Fusions ».",
+    "decisions": {
+      "fusionner": "Fiches fusionnées.",
+      "separer": "Fiches gardées séparées : la paire ne reviendra plus.",
+      "refuser": "Fiche saisie refusée et archivée."
+    },
+    "criteres": {
+      "nom_similaire": "nom similaire",
+      "meme_numero_ordre": "même n° d'ordre",
+      "meme_mobile": "même mobile",
+      "meme_telephone_fixe": "même téléphone fixe",
+      "meme_specialite": "même spécialité",
+      "meme_type": "même type",
+      "meme_secteur": "même secteur"
+    },
+    "automatique": "Fusion automatique",
+    "parPersonne": "Par {{personne}}",
+    "defaite": "Défaite le {{date}}",
+    "defaire": "Défaire",
+    "defaireTitre": "Défaire la fusion",
+    "defaireAide": "« {{absorbee}} » redevient une fiche distincte de « {{conservee}} » et retrouve ses lieux d'exercice et listes cibles. La paire ne sera plus fusionnée automatiquement.",
+    "ressemblantes": "Fiches ressemblantes",
+    "ressemblantesAide": "Ce prospect existe peut-être déjà : ouvrez sa fiche plutôt que d'en créer une seconde.",
+    "ouvrir": "Ouvrir",
+    "saisie": {
+      "certain": "Cette fiche existait déjà : votre saisie y a été rattachée.",
+      "probable": "Fiche enregistrée à valider : elle ressemble à une fiche existante, l'administrateur pays tranchera."
+    },
+    "horsLigne": "(Hors connexion : comparaison avec votre liste cible.)"
+  },
+  "propositions": {
+    "titre": "Propositions",
+    "proposer": "Proposer une modification",
+    "proposerTitre": "Proposer une modification",
+    "proposerAide": "La fiche est commune : elle ne change qu'une fois votre proposition acceptée par votre superviseur ou l'administrateur pays.",
+    "envoyer": "Envoyer la proposition",
+    "commentaire": "Commentaire (facultatif)",
+    "motif": "Motif du refus",
+    "accepter": "Accepter",
+    "refuser": "Refuser",
+    "refuserTitre": "Refuser la proposition",
+    "acceptee": "Proposition acceptée : la fiche est à jour.",
+    "nouvelExercice": "Nouveau lieu d'exercice",
+    "par": "Proposée par {{personne}} · {{quand}}",
+    "decidee": "Décision de {{personne}} · {{quand}}",
+    "filtres": {
+      "en_attente": "En attente",
+      "acceptee": "Acceptées",
+      "refusee": "Refusées"
+    },
+    "statuts": {
+      "en_attente": "En attente",
+      "acceptee": "Acceptée",
+      "refusee": "Refusée"
+    },
+    "vides": {
+      "en_attente": "Aucune proposition en attente",
+      "acceptee": "Aucune proposition acceptée",
+      "refusee": "Aucune proposition refusée"
+    },
+    "videAuteur": "Proposez une modification depuis la fiche d'un prospect ou d'un établissement commun.",
+    "champs": {
+      "telephone_mobile": "Téléphone mobile",
+      "telephone_pro": "Téléphone professionnel",
+      "courriel": "Courriel",
+      "numero_ordre": "N° d'ordre",
+      "adresse": "Adresse",
+      "telephone": "Téléphone"
+    },
+    "decisionsTitre_one": "{{count}} décision sur vos propositions",
+    "decisionsTitre_other": "{{count}} décisions sur vos propositions",
+    "vu": "Vu"
   }
 }

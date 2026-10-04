@@ -11,8 +11,8 @@ versionné. Ce qui est repris, dans l'ordre des dépendances :
 Règles :
 - simulation d'abord (CA1) : tout est calculé puis annulé ; seul le lot et son rapport restent ;
 - chaque ligne écartée ou corrigée a un motif dans le rapport téléchargeable (CA2) ;
-- les groupes de doublons signalés par BirdNotes sont gardés pour la file des doublons
-  (0.1.8, CA3) ;
+- les groupes de doublons signalés par BirdNotes et les fiches au même nom sont versés dans
+  la file des doublons (CA3, PRP-009) : rien n'est fusionné à l'import ;
 - un réimport retrouve ses références externes et ne crée rien de nouveau (CA4) ;
 - rien n'est deviné : un libellé inconnu est signalé, jamais inventé.
 """
@@ -520,8 +520,8 @@ class ImportBirdNotes:
 
     def homonymes(self, lignes: list[dict]) -> dict[str, str]:
         """Fiches au même nom une fois le titre retiré (1 136 groupes dans l'export du
-        4 octobre 2026) : gardées ensemble pour la file des doublons, où le superviseur tranche
-        (décision du 4 octobre 2026). Rien n'est fusionné à l'import."""
+        4 octobre 2026) : gardées ensemble pour la file des doublons (décision du 4 octobre
+        2026), que tranche l'administrateur pays (§6.3, PRP-009). Rien n'est fusionné."""
         par_nom: dict[str, list[str]] = defaultdict(list)
         for ligne in lignes:
             _civ, prenom, nom, _sep = K.extraire_titre(
@@ -533,8 +533,8 @@ class ImportBirdNotes:
         if groupes:
             self.rapport.signaler(
                 "prospect", _("{n} groupes").format(n=len(groupes)),
-                _("Fiches au même nom ({n}) : gardées pour la file des doublons, où le "
-                  "superviseur tranchera (0.1.8).").format(n=sum(map(len, groupes))),
+                _("Fiches au même nom ({n}) : versées dans la file des doublons, que tranche "
+                  "l'administrateur pays.").format(n=sum(map(len, groupes))),
             )  # fmt: skip
         return {ident: f"H{i}" for i, ids in enumerate(groupes, 1) for ident in ids}
 
@@ -551,7 +551,7 @@ class ImportBirdNotes:
             self.prospect(ligne, StatutFiche.ACTIF, doublons, homonymes)
         for ligne in self.table("Prospects en attente"):
             if ligne.get("ID prospect d'origine"):
-                # Demande de modification d'une fiche : reprise avec les propositions (0.1.8).
+                # Demande de modification d'une fiche : son auteur BirdNotes n'a pas de compte.
                 self.rapport.compter("demandes_modification", "non_reprises")
                 continue
             self.prospect(ligne, StatutFiche.A_VALIDER, doublons, homonymes)
@@ -566,9 +566,13 @@ class ImportBirdNotes:
         if groupes:
             self.rapport.signaler(
                 "prospect", _("{n} groupes").format(n=groupes),
-                _("Doublons probables signalés par BirdNotes : gardés pour la file des doublons "
-                  "(0.1.8)."),
+                _("Doublons probables signalés par BirdNotes : versés dans la file des doublons, "
+                  "rien n'est fusionné à l'import."),
             )  # fmt: skip
+        # PRP-009 : groupes BirdNotes et fiches au même nom entrent dans la file des doublons.
+        from apps.prospects.doublons import alimenter_depuis_import
+
+        self.rapport.compter("doublons", "en_file", alimenter_depuis_import(self.pays))
         if self.rapport.compteurs["demandes_modification"]["non_reprises"]:
             self.rapport.signaler(
                 "prospect",
@@ -576,8 +580,8 @@ class ImportBirdNotes:
                     n=self.rapport.compteurs["demandes_modification"]["non_reprises"]
                 ),
                 _(
-                    "Demandes de modification en attente dans BirdNotes : à traiter avec les "
-                    "propositions de modification (0.1.8)."
+                    "Demandes de modification en attente dans BirdNotes : non reprises, leur "
+                    "auteur n'a pas encore de compte ; à reproposer depuis INNOV CRM."
                 ),
             )
 

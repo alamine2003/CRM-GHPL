@@ -17,6 +17,8 @@ import {
   Step,
   StepLabel,
   Stepper,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -102,28 +104,45 @@ function ResultatLot({ lot }: { lot: DetailLot }) {
   return (
     <Stack spacing={2}>
       <BarreChiffres>
-        <Chiffre
-          libelle={t('imports.chiffres.prospects')}
-          valeur={n('prospects', 'crees')}
-          detail={t('imports.chiffres.existants', { count: n('prospects', 'existants') })}
-        />
-        <Chiffre
-          libelle={t('imports.chiffres.etablissements')}
-          valeur={n('etablissements', 'crees')}
-          ton="secondary"
-          detail={t('imports.chiffres.aPreciser', {
-            count: n('etablissements', 'type_a_preciser'),
-          })}
-        />
-        <Chiffre
-          libelle={t('imports.chiffres.produits')}
-          valeur={n('produits', 'crees')}
-          detail={t('imports.chiffres.reseaux', { count: n('reseaux', 'crees') })}
-        />
+        {lot.source === 'organisation' ? (
+          <>
+            <Chiffre
+              libelle={t('imports.chiffres.postes')}
+              valeur={n('postes', 'crees')}
+              detail={t('imports.chiffres.existants', { count: n('postes', 'existants') })}
+            />
+            <Chiffre libelle={t('imports.chiffres.vacants')} valeur={n('postes', 'vacants')} />
+            <Chiffre
+              libelle={t('imports.chiffres.comptes')}
+              valeur={n('comptes', 'crees')}
+              detail={t('imports.chiffres.reseaux', { count: n('reseaux', 'crees') })}
+            />
+          </>
+        ) : (
+          <>
+            <Chiffre
+              libelle={t('imports.chiffres.prospects')}
+              valeur={n('prospects', 'crees')}
+              detail={t('imports.chiffres.existants', { count: n('prospects', 'existants') })}
+            />
+            <Chiffre
+              libelle={t('imports.chiffres.etablissements')}
+              valeur={n('etablissements', 'crees')}
+              detail={t('imports.chiffres.aPreciser', {
+                count: n('etablissements', 'type_a_preciser'),
+              })}
+            />
+            <Chiffre
+              libelle={t('imports.chiffres.produits')}
+              valeur={n('produits', 'crees')}
+              detail={t('imports.chiffres.reseaux', { count: n('reseaux', 'crees') })}
+            />
+          </>
+        )}
         <Chiffre
           libelle={t('imports.chiffres.rejets')}
           valeur={lot.rejets}
-          ton={lot.rejets ? 'warning' : 'success'}
+          ton="warning"
           detail={t('imports.chiffres.anomalies', { count: lot.nb_anomalies })}
         />
       </BarreChiffres>
@@ -219,6 +238,8 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
   const { client } = useSession();
   const notifier = useNotifier();
   const requetes = useQueryClient();
+  // Deux sources : l'export BirdNotes (PRP-013) et le fichier d'organisation (ORG-014).
+  const [source, setSource] = useState<'birdnotes' | 'organisation'>('birdnotes');
   const [fichier, setFichier] = useState<File | null>(null);
   const [survol, setSurvol] = useState(false);
   const [envoi, setEnvoi] = useState<'simulation' | 'import' | null>(null);
@@ -254,7 +275,7 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
     setEnvoi(simulation ? 'simulation' : 'import');
     setConfirmation(false);
     try {
-      const lot = await client.imports.birdnotes(fichier, fichier.name, simulation);
+      const lot = await client.imports[source](fichier, fichier.name, simulation);
       setResultat(lot);
       setConsulte(null);
       notifier(simulation ? t('imports.simulationTerminee') : t('imports.importTermine'));
@@ -292,7 +313,28 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
     <Stack spacing={2}>
       <EnTetePage titre={t('imports.titre')} sousTitre={perimetre.pays_actif.nom} />
       <Card>
-        <EnTeteCarte titre={t('imports.birdnotes')} />
+        <EnTeteCarte
+          titre={t(`imports.sources.${source}`)}
+          action={
+            <ToggleButtonGroup
+              size="small"
+              exclusive
+              value={source}
+              onChange={(_, v: 'birdnotes' | 'organisation' | null) => {
+                if (!v) return;
+                setSource(v);
+                setFichier(null);
+                setResultat(null);
+              }}
+              aria-label={t('imports.source')}
+            >
+              <ToggleButton value="birdnotes">{t('imports.sourcesCourtes.birdnotes')}</ToggleButton>
+              <ToggleButton value="organisation">
+                {t('imports.sourcesCourtes.organisation')}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          }
+        />
         <Stack spacing={2} sx={{ p: 2 }}>
           <Stepper activeStep={etape} alternativeLabel>
             {(['fichier', 'simulation', 'import'] as const).map((e) => (
@@ -328,16 +370,20 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
           >
             <input
               type="file"
-              accept=".json,.zip,application/json,application/zip"
+              accept={
+                source === 'birdnotes'
+                  ? '.json,.zip,application/json,application/zip'
+                  : '.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+              }
               hidden
               onChange={(e) => choisir(e.target.files?.[0])}
             />
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
               <Typography sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
-                {fichier ? fichier.name : t('imports.deposer')}
+                {fichier ? fichier.name : t(`imports.deposerSource.${source}`)}
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {fichier ? taille(fichier.size) : t('imports.formats')}
+                {fichier ? taille(fichier.size) : t(`imports.formatsSource.${source}`)}
               </Typography>
             </Box>
             <Button variant="outlined" component="span">

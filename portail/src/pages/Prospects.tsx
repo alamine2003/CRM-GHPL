@@ -4,6 +4,7 @@ import type {
   Perimetre,
   Potentiel,
   Prospect,
+  ProspectCree,
   SaisieProspect,
   StatutFiche,
   ValeurReferentiel,
@@ -49,7 +50,9 @@ import {
   Potentiel as MarquePotentiel,
   Section,
 } from '../composants/Elements';
+import DialogueProposition from '../composants/DialogueProposition';
 import { ErreurChargement } from '../composants/Erreurs';
+import Historique from '../composants/Historique';
 import { depuis } from '../composants/formats';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
@@ -93,6 +96,7 @@ function DialogueProspect({
   grades,
   surFermer,
   surEnregistre,
+  surOuvrir,
 }: {
   prospect: Prospect | null;
   delegue: boolean;
@@ -100,7 +104,8 @@ function DialogueProspect({
   specialites: ValeurReferentiel[];
   grades: ValeurReferentiel[];
   surFermer: () => void;
-  surEnregistre: (p: Prospect) => void;
+  surEnregistre: (p: Prospect | ProspectCree) => void;
+  surOuvrir: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const { client } = useSession();
@@ -128,6 +133,35 @@ function DialogueProspect({
     setF((avant) => ({ ...avant, [cle]: valeur }));
   // Spécialités proposées : celles du type choisi, et celles qui valent pour tous les types.
   const proposees = specialites.filter((s) => !s.parent || s.parent === f.type);
+  // PRP-007 : à la création, les fiches ressemblantes s'affichent pendant la saisie.
+  const [saisie, setSaisie] = useState({ nom: '', prenom: '', numero_ordre: '', mobile: '' });
+  useEffect(() => {
+    if (prospect) return;
+    const minuteur = setTimeout(
+      () =>
+        setSaisie({
+          nom: f.nom.trim(),
+          prenom: (f.prenom ?? '').trim(),
+          numero_ordre: (f.numero_ordre ?? '').trim(),
+          mobile: (f.telephone_mobile ?? '').trim(),
+        }),
+      350,
+    );
+    return () => clearTimeout(minuteur);
+  }, [prospect, f.nom, f.prenom, f.numero_ordre, f.telephone_mobile]);
+  const ressemblants = useQuery({
+    queryKey: ['prospects', 'ressemblants', saisie],
+    queryFn: () =>
+      client.prospects.ressemblants({
+        nom: saisie.nom,
+        prenom: saisie.prenom,
+        numero_ordre: saisie.numero_ordre,
+        telephone_mobile: saisie.mobile,
+      }),
+    enabled:
+      !prospect &&
+      (saisie.nom.length >= 2 || saisie.numero_ordre.length >= 3 || saisie.mobile.length >= 8),
+  });
   return (
     <DialogueFormulaire
       ouvert
@@ -171,6 +205,42 @@ function DialogueProspect({
         required
         autoFocus
       />
+      {!prospect && (ressemblants.data?.length ?? 0) > 0 && (
+        <Box
+          role="region"
+          aria-label={t('doublons.ressemblantes')}
+          sx={{ border: 1, borderColor: 'warning.main', borderRadius: 1, px: 1.5, py: 1 }}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {t('doublons.ressemblantes')}
+          </Typography>
+          <Typography variant="caption" component="p" sx={{ color: 'text.secondary', mb: 0.5 }}>
+            {t('doublons.ressemblantesAide')}
+          </Typography>
+          {ressemblants.data!.map((r) => (
+            <Stack
+              key={r.prospect.id}
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: 'center', py: 0.5, borderTop: 1, borderColor: 'divider' }}
+            >
+              <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+                  {nomAffiche(r.prospect, t)}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap component="p">
+                  {[r.prospect.specialite_libelle ?? r.prospect.type_libelle, r.lieu_principal]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Typography>
+              </Box>
+              <Button size="small" onClick={() => surOuvrir(r.prospect.id)}>
+                {t('doublons.ouvrir')}
+              </Button>
+            </Stack>
+          ))}
+        </Box>
+      )}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
         <TextField
           select
@@ -289,9 +359,11 @@ function FicheProspect({
   gerer,
   surFermer,
   surModifier,
+  proposer,
 }: {
   id: string;
   gerer: boolean;
+  proposer: boolean;
   surFermer: () => void;
   surModifier: (p: Prospect) => void;
 }) {
@@ -300,6 +372,7 @@ function FicheProspect({
   const requetes = useQueryClient();
   const notifier = useNotifier();
   const [archivage, setArchivage] = useState(false);
+  const [proposition, setProposition] = useState(false);
   const [motif, setMotif] = useState('');
   const fiche = useQuery({
     queryKey: ['prospects', 'fiche', id],
@@ -394,9 +467,16 @@ function FicheProspect({
             )}
           </Stack>
           {!p.modifiable && p.statut === 'actif' && (
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {t('prospect.fiche.communeAide')}
-            </Typography>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', flexGrow: 1 }}>
+                {t('prospect.fiche.communeAide')}
+              </Typography>
+              {proposer && (
+                <Button size="small" variant="outlined" onClick={() => setProposition(true)}>
+                  {t('propositions.proposer')}
+                </Button>
+              )}
+            </Stack>
           )}
 
           <Section titre={t('prospect.fiche.identite')}>
@@ -455,6 +535,20 @@ function FicheProspect({
               {t('prospect.fiche.visitesTexte')}
             </Typography>
           </Section>
+          <Historique objet="prospect" id={p.id} />
+          {proposition && (
+            <DialogueProposition
+              objet="prospect"
+              id={p.id}
+              actuels={{
+                telephone_mobile: p.telephone_mobile,
+                telephone_pro: p.telephone_pro,
+                courriel: p.courriel,
+                numero_ordre: p.numero_ordre,
+              }}
+              surFermer={() => setProposition(false)}
+            />
+          )}
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {t('prospect.fiche.creePar', {
               personne: `${p.cree_par.prenom} ${p.cree_par.nom}`,
@@ -542,6 +636,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
   const { t } = useTranslation();
   const { client } = useSession();
   const requetes = useQueryClient();
+  const notifier = useNotifier();
   const cle = perimetre.pays_actif?.code ?? 'consolide';
   const peutCreer = perimetre.actions.includes('prospects.creer') && perimetre.pays_actif !== null;
   const gerer = perimetre.actions.includes('prospects.gerer') && perimetre.pays_actif !== null;
@@ -978,6 +1073,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
           <FicheProspect
             id={ouverte}
             gerer={gerer}
+            proposer={perimetre.actions.includes('propositions.creer')}
             surFermer={() => setOuverte(null)}
             surModifier={(p) => setDialogue({ prospect: p })}
           />
@@ -993,7 +1089,15 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
           surFermer={() => setDialogue(null)}
           surEnregistre={(p) => {
             void requetes.invalidateQueries({ queryKey: ['prospects'] });
+            // PRP-008 : la décision du détecteur est annoncée à l'auteur.
+            if ('doublon' in p && p.doublon !== 'aucun') {
+              notifier(t(`doublons.saisie.${p.doublon}`), 'info');
+            }
             setOuverte(p.id);
+          }}
+          surOuvrir={(id) => {
+            setDialogue(null);
+            setOuverte(id);
           }}
         />
       )}

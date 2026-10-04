@@ -1,5 +1,6 @@
-"""API des imports (PRP-013) : simuler puis importer un export BirdNotes, consulter les lots
-et télécharger leur rapport d'anomalies (CA2). Réservé à l'administrateur pays."""
+"""API des imports (PRP-013, ORG-014) : simuler puis importer un export BirdNotes ou le fichier
+d'organisation, consulter les lots et télécharger leur rapport d'anomalies. Réservé à
+l'administrateur pays."""
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -13,6 +14,7 @@ from apps.organisation.vues import pays_requis
 from apps.perimetre.matrice import Action
 from apps.perimetre.vues import VuePerimetre
 
+from . import organisation
 from . import serializers as s
 from .birdnotes import importer, rapport_csv
 from .models import LotImport
@@ -45,6 +47,26 @@ class ImportBirdNotesVue(VueLots):
         donnees.is_valid(raise_exception=True)
         fichier = donnees.validated_data["fichier"]
         lot = importer(
+            pays_requis(self.perimetre), request.user, fichier.read(), fichier.name,
+            simulation=donnees.validated_data["simulation"],
+        )  # fmt: skip
+        return Response(s.DetailLotSerializer(lot).data, status=status.HTTP_201_CREATED)
+
+
+class ImportOrganisationVue(VueLots):
+    """ORG-014 : simuler puis importer le fichier d'organisation (classeur Excel)."""
+
+    actions = {"POST": Action.IMPORTS_GERER}
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(request={"multipart/form-data": s.ImportBirdNotesSerializer},
+                   responses={201: s.DetailLotSerializer},
+                   operation_id="import_organisation")  # fmt: skip
+    def post(self, request):
+        donnees = s.ImportBirdNotesSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        fichier = donnees.validated_data["fichier"]
+        lot = organisation.importer(
             pays_requis(self.perimetre), request.user, fichier.read(), fichier.name,
             simulation=donnees.validated_data["simulation"],
         )  # fmt: skip

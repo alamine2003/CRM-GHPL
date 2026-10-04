@@ -179,7 +179,8 @@ def test_import_reel_et_rapport_des_anomalies(monde):
     # « INTERMEDIARE » n'est pas une localité : secteur gardé, localité à préciser.
     assert diop.secteur.libelle == "Fictif Nord" and diop.localite is None
     assert not Localite.objects.filter(libelle__icontains="intermedia").exists()
-    assert not Prospect.objects.filter(nom="MODIF").exists()  # proposition : 0.1.8
+    # Demande de modification : son auteur BirdNotes n'a pas de compte ; non reprise.
+    assert not Prospect.objects.filter(nom="MODIF").exists()
     assert lot.compteurs["demandes_modification"] == {"non_reprises": 1}
 
     csv = rapport_csv(lot)
@@ -198,13 +199,22 @@ def test_les_doublons_signales_sont_gardes(monde):
         for r in ReferenceExterne.objects.filter(entite="prospect")
     }
     assert groupes["1"] == groupes["2"] == "G1"
-    # Noms identiques une fois le titre retiré : gardés ensemble, le superviseur tranchera.
+    # Noms identiques une fois le titre retiré : gardés ensemble pour la file des doublons.
     homonymes = {
         r.identifiant: r.complements.get("homonymes")
         for r in ReferenceExterne.objects.filter(entite="prospect")
     }
     assert homonymes["1"] == homonymes["6"] is not None and homonymes["2"] is None
     assert Prospect.objects.filter(nom="FICTIF").count() == 2  # rien n'est fusionné
+    # PRP-009 : les deux sortes de groupes entrent dans la file de l'administrateur pays, une
+    # fois chacune ; un réimport n'ajoute aucune paire.
+    from apps.prospects.models import DoublonProbable
+
+    file = DoublonProbable.objects.all()
+    assert {c for d in file for c in d.criteres} >= {"groupe_birdnotes", "meme_nom"}
+    paires = file.count()
+    importer(monde["sn"], monde["admin.sn"], contenu(), "export.json", simulation=False)
+    assert DoublonProbable.objects.count() == paires
 
 
 def test_un_reimport_ne_cree_rien_de_nouveau(monde):

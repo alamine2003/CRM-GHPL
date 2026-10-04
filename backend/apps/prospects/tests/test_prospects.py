@@ -82,13 +82,18 @@ def test_la_fiche_creee_par_l_administrateur_est_commune(monde):
 
 
 def test_la_fiche_du_delegue_est_a_valider_et_visible_par_lui_seul(monde):
-    """PRP-006 CA1 (RG-041) : invisible des autres délégués jusqu'à `actif`."""
+    """PRP-006 CA1 (RG-041) : invisible des autres délégués jusqu'à `actif`. Depuis 0.1.8, la
+    fiche reste `a_valider` quand le détecteur la juge probablement en double (§14.6) ; sans
+    doublon, elle devient commune aussitôt (PRP-008)."""
+    admin = client_de(monde["admin.sn"])
+    admin.post(URL, fiche(monde, nom="Sarr", prenom="Awa"), format="json")
     deleg = client_de(monde["deleg.sn"])
-    cree = deleg.post(URL, fiche(monde, nom="Sarr"), format="json")
+    cree = deleg.post(URL, fiche(monde, nom="Sar", prenom="Awa"), format="json")
     assert cree.status_code == 201 and cree.json()["statut"] == "a_valider"
+    assert cree.json()["doublon"] == "probable"
     identifiant = cree.json()["id"]
     # CA2 : utilisable aussitôt par son auteur (la planification arrive en 0.2) ; il la corrige.
-    assert noms(deleg.get(URL)) == ["SARR"]
+    assert noms(deleg.get(URL)) == ["SAR"]
     corrige = deleg.patch(f"{URL}{identifiant}/", {"potentiel": "B"}, format="json")
     assert corrige.status_code == 200 and corrige.json()["modifiable"] is True
     # Un autre délégué du pays ne la voit pas, ni en liste ni par son identifiant.
@@ -98,15 +103,14 @@ def test_la_fiche_du_delegue_est_a_valider_et_visible_par_lui_seul(monde):
     collegue = creer_utilisateur("fatou.sn", prenom="Fatou", nom="Sn", pays=monde["sn"])
     attribuer_role(collegue, Role.DELEGUE, monde["sn"], par=None)
     autre = client_de(collegue)
-    assert noms(autre.get(PAYS)) == []
+    assert noms(autre.get(PAYS)) == ["SARR"]
     assert autre.get(f"{URL}{identifiant}/").status_code == 404
     # L'administration du pays la voit et la valide : elle devient commune.
-    admin = client_de(monde["admin.sn"])
     assert admin.get(f"{URL}synthese/").json()["a_valider"] == 1
     valide = admin.post(f"{URL}{identifiant}/valider/").json()
     assert valide["statut"] == "actif"
-    assert noms(autre.get(PAYS)) == ["SARR"]
-    # Devenue commune, le délégué ne la modifie plus directement (propositions en 0.1.8).
+    assert noms(autre.get(PAYS)) == ["SAR", "SARR"]
+    # Devenue commune, le délégué ne la modifie plus directement : il propose (PRP-014).
     refus = deleg.patch(f"{URL}{identifiant}/", {"potentiel": "C"}, format="json")
     assert refus.status_code == 403 and refus.json()["code"] == "modification_interdite"
 
@@ -139,10 +143,15 @@ def test_recherche_tolerante_et_filtres(monde):
 
 
 def test_numero_d_ordre_unique_dans_le_pays(monde):
+    """Identifiant fort (§14.6) : une saisie au même numéro fusionne dans la fiche existante
+    (PRP-008) ; une modification vers un numéro déjà pris est refusée."""
     admin = client_de(monde["admin.sn"])
-    admin.post(URL, fiche(monde, numero_ordre="SN 1234"), format="json")
+    premiere = admin.post(URL, fiche(monde, numero_ordre="SN 1234"), format="json").json()
     doublon = admin.post(URL, fiche(monde, nom="Autre", numero_ordre="sn1234"), format="json")
-    assert doublon.status_code == 400 and doublon.json()["code"] == "numero_ordre_deja_utilise"
+    assert doublon.json()["doublon"] == "certain" and doublon.json()["id"] == premiere["id"]
+    autre = admin.post(URL, fiche(monde, nom="Diop", prenom="Moussa"), format="json").json()
+    refus = admin.patch(f"{URL}{autre['id']}/", {"numero_ordre": "SN1234"}, format="json")
+    assert refus.status_code == 400 and refus.json()["code"] == "numero_ordre_deja_utilise"
 
 
 def test_archivage_sans_suppression_et_audit_des_modifications(monde):

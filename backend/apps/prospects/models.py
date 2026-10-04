@@ -98,6 +98,10 @@ class Prospect(ModeleDePays):
         related_name="prospects_valides",
     )
     valide_le = models.DateTimeField(null=True, blank=True)
+    #: Fiche conservée quand celle-ci a été fusionnée (statut `fusionne`, PRP-008 à PRP-010).
+    fusionne_dans = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="absorbees"
+    )
 
     class Meta:
         ordering = ["nom", "prenom"]
@@ -264,3 +268,176 @@ class Cible(ModeleDePays):
 
     def __str__(self):
         return f"{self.poste} → {self.prospect}"
+
+
+# --- Doublons, fusions, historique, propositions (0.1.8) ---------------------------------------
+
+
+class Fusion(ModeleDePays):
+    """Fusion d'une fiche dans une autre (PRP-008 CA1, PRP-009) ; réversible (PRP-010).
+
+    `transferts` garde ce qui a suivi la fiche conservée (exercices, listes cibles, champs
+    complétés) pour que la défusion rende à chacune ce qui était à elle.
+    """
+
+    conservee = models.ForeignKey(Prospect, on_delete=models.PROTECT, related_name="fusions")
+    absorbee = models.ForeignKey(Prospect, on_delete=models.PROTECT, related_name="fusions_subies")
+    automatique = models.BooleanField(default=False)
+    score = models.PositiveSmallIntegerField(default=0)
+    criteres = models.JSONField(default=list)
+    #: Statut de la fiche absorbée avant la fusion, rétabli à la défusion.
+    statut_avant = models.CharField(max_length=10, choices=StatutFiche.choices)
+    transferts = models.JSONField(default=dict)
+    par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="fusions_faites",
+    )
+    defaite_le = models.DateTimeField(null=True, blank=True)
+    defaite_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="fusions_defaites",
+    )
+
+    class Meta:
+        ordering = ["-cree_le"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["absorbee"],
+                condition=Q(defaite_le__isnull=True),
+                name="fusion_en_cours_unique",
+            )
+        ]
+
+
+class StatutDoublon(models.TextChoices):
+    EN_ATTENTE = "en_attente", "En attente"
+    FUSIONNES = "fusionnes", "Fusionnés"
+    SEPARES = "separes", "Gardés séparés"
+    REFUSE = "refuse", "Refusé"
+
+
+class DoublonProbable(ModeleDePays):
+    """Paire de fiches que le détecteur juge probablement identiques (PRP-008, PRP-009).
+
+    L'administrateur pays fusionne, garde séparées (la paire ne revient plus, CA2) ou refuse
+    la fiche nouvelle (archivée).
+    """
+
+    fiche = models.ForeignKey(Prospect, on_delete=models.PROTECT, related_name="doublons")
+    candidat = models.ForeignKey(
+        Prospect, on_delete=models.PROTECT, related_name="doublons_candidats"
+    )
+    score = models.PositiveSmallIntegerField()
+    criteres = models.JSONField(default=list)
+    statut = models.CharField(
+        max_length=10, choices=StatutDoublon.choices, default=StatutDoublon.EN_ATTENTE
+    )
+    decide_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="doublons_tranches",
+    )
+    decide_le = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-score", "cree_le"]
+        constraints = [
+            models.UniqueConstraint(fields=["fiche", "candidat"], name="doublon_paire_unique")
+        ]
+
+
+class Changement(ModeleDePays):
+    """Historique champ par champ d'une fiche (PRP-012 CA1) : rien ne s'efface (CA2)."""
+
+    class Objet(models.TextChoices):
+        PROSPECT = "prospect", "Prospect"
+        ETABLISSEMENT = "etablissement", "Établissement"
+
+    objet = models.CharField(max_length=14, choices=Objet.choices)
+    objet_id = models.UUIDField(db_index=True)
+    champ = models.CharField(max_length=40)
+    ancienne = models.CharField(max_length=300, blank=True)
+    nouvelle = models.CharField(max_length=300, blank=True)
+    auteur = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="changements",
+    )
+    #: Origine : saisie, proposition acceptée, fusion, défusion, import.
+    origine = models.CharField(max_length=20, default="saisie")
+
+    class Meta:
+        ordering = ["-cree_le"]
+        indexes = [models.Index(fields=["objet", "objet_id", "cree_le"])]
+
+
+class StatutProposition(models.TextChoices):
+    EN_ATTENTE = "en_attente", "En attente"
+    ACCEPTEE = "acceptee", "Acceptée"
+    REFUSEE = "refusee", "Refusée"
+
+
+class Proposition(ModeleDePays):
+    """Modification d'une fiche commune proposée par un délégué (PRP-014).
+
+    La fiche ne change pas avant l'acceptation (CA1) ; le délégué voit la décision dans ses
+    propositions (CA2). `changements` : champs proposés de la fiche ; `etablissement` : un
+    nouvel exercice proposé pour un prospect.
+    """
+
+    prospect = models.ForeignKey(
+        Prospect, null=True, blank=True, on_delete=models.PROTECT, related_name="propositions"
+    )
+    etablissement = models.ForeignKey(
+        Etablissement,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="propositions",
+    )
+    #: Pour un prospect : établissement où il exerce désormais (nouvel exercice proposé).
+    nouvel_exercice = models.ForeignKey(
+        Etablissement,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="exercices_proposes",
+    )
+    changements = models.JSONField(default=dict)
+    commentaire = models.CharField(max_length=300, blank=True)
+    auteur = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="propositions"
+    )
+    statut = models.CharField(
+        max_length=10, choices=StatutProposition.choices, default=StatutProposition.EN_ATTENTE
+    )
+    decide_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="propositions_tranchees",
+    )
+    decide_le = models.DateTimeField(null=True, blank=True)
+    motif = models.CharField(max_length=300, blank=True)
+    #: Le délégué a vu la décision (notification lue).
+    vue_le = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-cree_le"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(prospect__isnull=False) ^ Q(etablissement__isnull=False),
+                name="proposition_une_fiche",
+            )
+        ]

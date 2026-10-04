@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -307,3 +308,143 @@ class FrequenceSerializer(serializers.Serializer):
 
 class RetraitCibleSerializer(serializers.Serializer):
     motif = serializers.CharField(max_length=200, required=False, allow_blank=True)
+
+
+# --- Doublons, fusions, historique, propositions (0.1.8) -----------------------------------
+
+
+class ProspectCreeSerializer(ProspectSerializer):
+    """Fiche créée et décision du détecteur (PRP-008) : `certain` (fusionnée dans la fiche
+    renvoyée), `probable` (en file), `aucun` (commune)."""
+
+    doublon = serializers.ChoiceField(choices=["certain", "probable", "aucun"], read_only=True)
+
+    class Meta(ProspectSerializer.Meta):
+        fields = [*ProspectSerializer.Meta.fields, "doublon"]
+
+
+class RessemblanteSerializer(serializers.Serializer):
+    """PRP-007 : fiche ressemblant à la saisie, avec son score et ses critères."""
+
+    prospect = ProspectResumeSerializer()
+    lieu_principal = serializers.CharField(allow_null=True)
+    score = serializers.IntegerField()
+    criteres = serializers.ListField(child=serializers.CharField())
+
+
+class ComparaisonSerializer(serializers.ModelSerializer):
+    """Fiche complète pour la comparaison côte à côte (PRP-009 CA1)."""
+
+    type_libelle = serializers.CharField(source="type.libelle")
+    specialite_libelle = serializers.CharField(
+        source="specialite.libelle", allow_null=True, default=None
+    )
+    secteur = serializers.CharField(source="secteur.libelle", allow_null=True, default=None)
+    localite = serializers.CharField(source="localite.libelle", allow_null=True, default=None)
+    cree_par = PersonneResumeSerializer()
+    lieux = serializers.SerializerMethodField()
+    cibles = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Prospect
+        fields = ["id", "civilite", "prenom", "nom", "type_libelle", "specialite_libelle",
+                  "numero_ordre", "telephone_mobile", "telephone_pro", "courriel", "potentiel",
+                  "secteur", "localite", "statut", "cree_par", "cree_le", "lieux",
+                  "cibles"]  # fmt: skip
+
+    def get_lieux(self, prospect) -> list[str]:
+        return [
+            e.etablissement.nom
+            for e in prospect.exercices.filter(fin__isnull=True).select_related("etablissement")
+        ]
+
+    def get_cibles(self, prospect) -> int:
+        return prospect.cibles.filter(fin__isnull=True).count()
+
+
+class DoublonSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    fiche = ComparaisonSerializer()
+    candidat = ComparaisonSerializer()
+    score = serializers.IntegerField()
+    criteres = serializers.ListField(child=serializers.CharField())
+    statut = serializers.CharField()
+    cree_le = serializers.DateTimeField()
+    decide_par = PersonneResumeSerializer(allow_null=True)
+    decide_le = serializers.DateTimeField(allow_null=True)
+
+
+class DecisionDoublonSerializer(serializers.Serializer):
+    decision = serializers.ChoiceField(choices=["fusionner", "separer", "refuser"])
+    #: Fiche conservée en cas de fusion (le candidat, déjà commun, par défaut).
+    conserver = serializers.UUIDField(required=False)
+
+
+class FusionSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    conservee = ProspectResumeSerializer()
+    absorbee = ProspectResumeSerializer()
+    automatique = serializers.BooleanField()
+    score = serializers.IntegerField()
+    criteres = serializers.ListField(child=serializers.CharField())
+    par = PersonneResumeSerializer(allow_null=True)
+    cree_le = serializers.DateTimeField()
+    defaite_le = serializers.DateTimeField(allow_null=True)
+    defaite_par = PersonneResumeSerializer(allow_null=True)
+
+
+class ChangementFicheSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    champ = serializers.CharField()
+    ancienne = serializers.CharField()
+    nouvelle = serializers.CharField()
+    auteur = PersonneResumeSerializer(allow_null=True)
+    origine = serializers.CharField()
+    le = serializers.DateTimeField(source="cree_le")
+
+
+class PropositionSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    prospect = ProspectResumeSerializer(allow_null=True)
+    etablissement = EtablissementResumeSerializer(allow_null=True)
+    nouvel_exercice = EtablissementResumeSerializer(allow_null=True)
+    changements = serializers.DictField(child=serializers.CharField())
+    actuels = serializers.SerializerMethodField()
+    commentaire = serializers.CharField()
+    auteur = PersonneResumeSerializer()
+    statut = serializers.CharField()
+    decide_par = PersonneResumeSerializer(allow_null=True)
+    decide_le = serializers.DateTimeField(allow_null=True)
+    motif = serializers.CharField()
+    vue_le = serializers.DateTimeField(allow_null=True)
+    cree_le = serializers.DateTimeField()
+    decidable = serializers.SerializerMethodField()
+
+    def get_actuels(self, proposition) -> dict[str, str]:
+        """Valeurs actuelles de la fiche, pour comparer avant de trancher."""
+        fiche = proposition.prospect or proposition.etablissement
+        return {c: str(getattr(fiche, c) or "") for c in proposition.changements}
+
+    def get_decidable(self, proposition) -> bool:
+        ids = self.context.get("decidables")
+        return bool(
+            ids is not None and proposition.pk in ids and proposition.statut == "en_attente"
+        )
+
+
+class SaisiePropositionSerializer(serializers.Serializer):
+    prospect = serializers.UUIDField(required=False)
+    etablissement = serializers.UUIDField(required=False)
+    changements = serializers.DictField(child=serializers.CharField(allow_blank=True), default=dict)
+    nouvel_exercice = serializers.UUIDField(required=False)
+    commentaire = serializers.CharField(required=False, allow_blank=True, max_length=300)
+
+    def validate(self, donnees):
+        if bool(donnees.get("prospect")) == bool(donnees.get("etablissement")):
+            raise serializers.ValidationError(_("Choisissez un prospect ou un établissement."))
+        return donnees
+
+
+class DecisionPropositionSerializer(serializers.Serializer):
+    decision = serializers.ChoiceField(choices=["accepter", "refuser"])
+    motif = serializers.CharField(required=False, allow_blank=True, max_length=300)
