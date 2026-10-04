@@ -7,9 +7,54 @@
  *   dans le magasin sécurisé du téléphone pour le mobile (architecture §11.1).
  * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
  */
-import type { Informations, Jetons, Moi, Perimetre, TypeClient } from '@innov/api-types';
+import type {
+  Division,
+  Informations,
+  Jetons,
+  Moi,
+  MonOrganisation,
+  Occupation,
+  Perimetre,
+  Poste,
+  Rattachement,
+  Reseau,
+  Secteur,
+  SyntheseOrganisation,
+  TypeClient,
+  TypePoste,
+  Utilisateur,
+  Zone,
+} from '@innov/api-types';
 
-export type { CodeRole, Informations, Jetons, Moi, Perimetre, TypeClient } from '@innov/api-types';
+export type {
+  CodeRole,
+  Division,
+  Informations,
+  Jetons,
+  Moi,
+  MonOrganisation,
+  MonPoste,
+  Occupation,
+  Perimetre,
+  Personne,
+  Poste,
+  Rattachement,
+  Reseau,
+  Secteur,
+  SyntheseOrganisation,
+  TypeClient,
+  TypePoste,
+  Utilisateur,
+  Zone,
+} from '@innov/api-types';
+
+/** Données de création d'un poste (ORG-005). */
+export interface NouveauPoste {
+  libelle: string;
+  type_poste: TypePoste;
+  reseaux: string[];
+  secteurs: string[];
+}
 
 /** Stockage du jeton de rafraîchissement, pour l'application mobile uniquement. */
 export interface StockageRafraichissement {
@@ -42,10 +87,12 @@ export interface OptionsClient {
 }
 
 interface OptionsRequete {
-  methode?: 'GET' | 'POST';
+  methode?: 'GET' | 'POST' | 'PATCH';
   corps?: unknown;
   authentifiee?: boolean;
 }
+
+const ORG = '/api/v1/organisation';
 
 export function creerClient(options: OptionsClient) {
   const base = options.baseUrl.replace(/\/$/, '');
@@ -173,6 +220,49 @@ export function creerClient(options: OptionsClient) {
         methode: 'POST',
         corps: { jeton, mot_de_passe: motDePasse },
       }),
+    /** Organisation du pays actif (ORG-003 à ORG-008). */
+    organisation: {
+      synthese: () => requete<SyntheseOrganisation>(`${ORG}/synthese/`),
+      moi: () => requete<MonOrganisation>(`${ORG}/moi/`),
+      divisions: () => requete<Division[]>(`${ORG}/divisions/`),
+      reseaux: () => requete<Reseau[]>(`${ORG}/reseaux/`),
+      zones: () => requete<Zone[]>(`${ORG}/zones/`),
+      secteurs: () => requete<Secteur[]>(`${ORG}/secteurs/`),
+      postes: () => requete<Poste[]>(`${ORG}/postes/`),
+      creerDivision: (code: string, libelle: string) =>
+        requete<Division>(`${ORG}/divisions/`, { methode: 'POST', corps: { code, libelle } }),
+      creerReseau: (division: string, code: string, libelle: string) =>
+        requete<Reseau>(`${ORG}/reseaux/`, {
+          methode: 'POST',
+          corps: { division, code, libelle },
+        }),
+      creerZone: (libelle: string) =>
+        requete<Zone>(`${ORG}/zones/`, { methode: 'POST', corps: { libelle } }),
+      creerSecteur: (zone: string, libelle: string) =>
+        requete<Secteur>(`${ORG}/secteurs/`, { methode: 'POST', corps: { zone, libelle } }),
+      archiver: (type: 'divisions' | 'reseaux' | 'zones' | 'secteurs' | 'postes', id: string) =>
+        requete<unknown>(`${ORG}/${type}/${id}/archiver/`, { methode: 'POST' }),
+      creerPoste: (poste: NouveauPoste) =>
+        requete<Poste>(`${ORG}/postes/`, { methode: 'POST', corps: poste }),
+      occuper: (poste: string, utilisateur: string, debut?: string) =>
+        requete<Occupation>(`${ORG}/postes/${poste}/occupations/`, {
+          methode: 'POST',
+          corps: { utilisateur, ...(debut ? { debut } : {}) },
+        }),
+      occupations: (poste: string) => requete<Occupation[]>(`${ORG}/postes/${poste}/occupations/`),
+      terminerOccupation: (occupation: string, fin?: string) =>
+        requete<Occupation>(`${ORG}/occupations/${occupation}/terminer/`, {
+          methode: 'POST',
+          corps: fin ? { fin } : {},
+        }),
+      rattacher: (poste: string, superviseur: string, debut?: string) =>
+        requete<Rattachement>(`${ORG}/postes/${poste}/rattachements/`, {
+          methode: 'POST',
+          corps: { superviseur, ...(debut ? { debut } : {}) },
+        }),
+    },
+    /** Comptes du pays actif (USR-003). */
+    utilisateurs: () => requete<Utilisateur[]>('/api/v1/utilisateurs/'),
     requete,
     estConnecte: () => acces !== null,
   };

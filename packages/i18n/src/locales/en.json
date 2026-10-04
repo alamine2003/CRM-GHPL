@@ -6,7 +6,13 @@
     "langues": {
       "fr": "Français",
       "en": "English"
-    }
+    },
+    "annuler": "Cancel",
+    "enregistrer": "Save",
+    "creer": "Create",
+    "rechercher": "Search",
+    "actions": "Actions",
+    "fermer": "Close"
   },
   "accueil": {
     "titre": "Welcome",
@@ -19,7 +25,9 @@
     "versionServeur": "Service version",
     "environnement": "Environment",
     "reessayer": "Retry",
-    "perimetre": "Scope"
+    "perimetre": "Scope",
+    "chiffresOrganisation": "Your organisation today",
+    "voirOrganisation": "View the organisation"
   },
   "connexion": {
     "titre": "Sign in",
@@ -70,7 +78,8 @@
     "equipe": "Team",
     "parametres": "Settings",
     "bientot": "Soon",
-    "disponibleEn": "Available in version {{version}}"
+    "disponibleEn": "Available in version {{version}}",
+    "organisation": "Organisation"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -137,5 +146,103 @@
     "choix": "Country",
     "tous": "All countries",
     "consolide": "Consolidated view"
+  },
+  "monPoste": {
+    "titre": "My position",
+    "titrePlusieurs": "My positions",
+    "principal": "Main",
+    "superviseur": "Supervisor",
+    "reseaux": "Networks",
+    "secteurs": "Sectors",
+    "depuis": "Since {{date}}",
+    "aucun": "No position is assigned to you in this country.",
+    "superviseurManquant": "Your main position has no supervisor: you will not be able to submit a plan. Let your country administrator know.",
+    "postesSupervises_one": "{{count}} position reports to you",
+    "postesSupervises_other": "{{count}} positions report to you",
+    "perimetreReseaux": "My network scope"
+  },
+  "organisation": {
+    "titre": "Organisation",
+    "sousTitre": "{{pays}} · zones, sectors, networks and positions.",
+    "sousTitreConsolide": "All countries, consolidated view.",
+    "lectureSeule": "Read only: only the country administrator and headquarters change the organisation.",
+    "choisirPays": "Choose a country to change its organisation.",
+    "onglets": {
+      "postes": "Positions",
+      "zones": "Zones and sectors",
+      "reseaux": "Divisions and networks"
+    },
+    "chiffres": {
+      "postes": "Positions",
+      "vacants": "Vacant positions",
+      "sansSuperviseur": "Without supervisor",
+      "secteurs": "Sectors",
+      "zones_one": "{{count}} zone",
+      "zones_other": "{{count}} zones",
+      "reseaux_one": "{{count}} network",
+      "reseaux_other": "{{count}} networks",
+      "occupes": "{{taux}}% filled"
+    },
+    "filtres": {
+      "tous": "All",
+      "vacants": "Vacant",
+      "sansSuperviseur": "Without supervisor",
+      "recherche": "Search a position, a person, a sector"
+    },
+    "colonnes": {
+      "poste": "Position",
+      "reseaux": "Networks",
+      "secteurs": "Sectors",
+      "occupant": "Holder",
+      "superviseur": "Supervisor"
+    },
+    "vacant": "Vacant",
+    "aucunSuperviseur": "No supervisor",
+    "archive": "Archived",
+    "typesPoste": {
+      "vm": "Medical representative",
+      "vm_otc": "OTC medical representative",
+      "kam": "Key Account Manager",
+      "dermo": "Dermo-advisor"
+    },
+    "actions": {
+      "nouveauPoste": "New position",
+      "affecter": "Assign a holder",
+      "rattacher": "Assign a supervisor",
+      "liberer": "Free the position",
+      "archiver": "Archive",
+      "nouvelleZone": "New zone",
+      "nouveauSecteur": "Add a sector",
+      "nouvelleDivision": "New division",
+      "nouveauReseau": "Add a network"
+    },
+    "champs": {
+      "libelle": "Label",
+      "code": "Code",
+      "type": "Position type",
+      "reseaux": "Networks",
+      "secteurs": "Sectors",
+      "personne": "Person",
+      "superviseur": "Supervisor",
+      "debut": "Starting on",
+      "zone": "Zone",
+      "division": "Division"
+    },
+    "aides": {
+      "affecter": "Representatives and supervisors of the country. A position has one holder at a time.",
+      "rattacher": "The previous reporting line ends on this date; the past does not change.",
+      "liberer": "{{personne}}'s occupancy ends today; the history is kept."
+    },
+    "vides": {
+      "postes": "No positions yet",
+      "postesTexte": "Create the representatives' positions: a position can be vacant and cover several sectors.",
+      "filtre": "No position matches",
+      "zones": "No zones yet",
+      "zonesTexte": "A zone groups sectors; a sector belongs to a single zone.",
+      "reseaux": "No divisions yet",
+      "reseauxTexte": "A division groups networks; the product portfolio arrives in version 0.1.1.",
+      "secteurs": "No sectors"
+    },
+    "enregistre": "Change saved."
   }
 }

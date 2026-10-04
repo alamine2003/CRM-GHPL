@@ -43,8 +43,11 @@ const PERIMETRE = {
   pays_accessibles: [{ code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' }],
 };
 
+const SANS_POSTE = { postes: [], postes_supervises: 0, reseaux: [], superviseur_manquant: false };
+
 function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
   return {
+    organisation: { moi: jest.fn(async () => SANS_POSTE) },
     perimetre: jest.fn(async () => PERIMETRE),
     connexion: jest.fn(async () => JETONS),
     reprendre: jest.fn(async () => {
@@ -127,6 +130,42 @@ describe('mobile — session', () => {
       }),
     );
     expect(await screen.findByText(/Aucun rôle ne vous est attribué/)).toBeTruthy();
+  });
+
+  it('affiche le poste du délégué et l’absence de superviseur (ORG-006, ORG-007)', async () => {
+    const moi = {
+      postes: [
+        {
+          occupation: {
+            id: 'o1',
+            poste: { id: 'a', libelle: 'VM Dakar Plateau' },
+            personne: { id: '1', identifiant: 'awa.diallo', prenom: 'Awa', nom: 'Diallo' },
+            debut: '2026-09-01',
+            fin: null,
+            principal: true,
+            actif: true,
+          },
+          type_poste: 'vm',
+          type_libelle: 'Visiteur médical',
+          reseaux: [{ id: 'r1', libelle: 'Cardio' }],
+          secteurs: [{ id: 's1', libelle: 'Plateau' }],
+          superviseur: null,
+        },
+      ],
+      postes_supervises: 0,
+      reseaux: [],
+      superviseur_manquant: true,
+    };
+    await rendre(
+      <Accueil />,
+      fauxClient({
+        reprendre: jest.fn(async () => JETONS),
+        organisation: { moi: jest.fn(async () => moi) } as unknown as ClientApi['organisation'],
+      }),
+    );
+    expect(await screen.findByText('VM Dakar Plateau')).toBeTruthy();
+    expect(screen.getByText('Cardio')).toBeTruthy();
+    expect(screen.getByText(/pas de superviseur/)).toBeTruthy();
   });
 
   it('bascule en anglais', async () => {

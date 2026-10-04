@@ -7,6 +7,8 @@ Le périmètre est calculé à chaque requête pour le **pays actif** :
 - un compte du siège sans en-tête travaille en vue consolidée (tous les pays).
 
 Un utilisateur sans rôle actif dans le pays actif ne voit rien (USR-001 CA2).
+Hors pays principal, un rôle de pays ne compte que pendant une affectation
+active dans ce pays (ORG-009 CA2) : à sa date de fin, l'accès cesse seul.
 """
 
 from dataclasses import dataclass, field
@@ -16,9 +18,10 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import status
 
-from apps.identite.models import ROLES_SANS_PAYS, RoleUtilisateur, Utilisateur
+from apps.identite.models import ROLES_SANS_PAYS, AffectationPays, RoleUtilisateur, Utilisateur
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
+from apps.socle.services import aujourdhui
 
 from .matrice import MATRICE, SIEGE, Action
 
@@ -71,8 +74,16 @@ def roles_actifs(utilisateur: Utilisateur, a=None) -> list[RoleUtilisateur]:
     )
 
 
+def pays_d_affectation(utilisateur: Utilisateur) -> set:
+    """Identifiants des pays où l'utilisateur a une affectation active aujourd'hui."""
+    affectations = AffectationPays.objects.select_related("pays").filter(utilisateur=utilisateur)
+    return {a.pays_id for a in affectations if a.est_active(aujourdhui(a.pays))}
+
+
 def calculer_perimetre(utilisateur: Utilisateur, code_pays: str | None = None) -> Perimetre:
     actifs = roles_actifs(utilisateur)
+    pays_autorises = {utilisateur.pays_principal_id} | pays_d_affectation(utilisateur)
+    actifs = [r for r in actifs if r.pays_id is None or r.pays_id in pays_autorises]
     roles_sans_pays = {r.role for r in actifs if r.role in ROLES_SANS_PAYS}
     siege = bool(roles_sans_pays & SIEGE)
 

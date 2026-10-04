@@ -46,6 +46,12 @@ class ModeleBase(models.Model):
     def delete(self, *args, **kwargs):
         raise TypeError("Suppression physique interdite (RG-005) : utiliser archiver().")
 
+    def archiver(self) -> None:
+        """Suppression logique (RG-005) : l'objet reste lisible dans l'historique."""
+        if self.archive_le is None:
+            self.archive_le = timezone.now()
+            self.save(update_fields=["archive_le"])
+
     @property
     def est_archive(self) -> bool:
         return self.archive_le is not None

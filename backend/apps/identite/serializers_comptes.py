@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.socle.models import CHOIX_LANGUES
 
-from .models import Role, RoleUtilisateur, Utilisateur
+from .models import AffectationPays, Role, RoleUtilisateur, Transfert, Utilisateur
 from .serializers import PaysResumeSerializer
 
 
@@ -37,7 +37,15 @@ class UtilisateurSerializer(serializers.ModelSerializer):
                   "pays_principal", "roles", "last_login"]  # fmt: skip
 
     def get_roles(self, utilisateur) -> list[str]:
-        return sorted({r.role for r in utilisateur.roles.all() if r.est_actif()})
+        """Rôles actifs ; depuis un pays actif, seulement ceux de ce pays (ORG-009)."""
+        pays = self.context.get("pays")
+        return sorted(
+            {
+                r.role
+                for r in utilisateur.roles.all()
+                if r.est_actif() and (pays is None or r.pays_id == pays.pk)
+            }
+        )
 
 
 class CreationUtilisateurSerializer(serializers.Serializer):
@@ -58,3 +66,47 @@ class PerimetreSerializer(serializers.Serializer):
     roles = serializers.ListField(child=serializers.CharField())
     actions = serializers.ListField(child=serializers.CharField())
     pays_accessibles = PaysResumeSerializer(many=True)
+
+
+class AffectationSerializer(serializers.ModelSerializer):
+    pays = serializers.CharField(source="pays.code")
+    active = serializers.SerializerMethodField()
+    accorde_par = serializers.CharField(source="accorde_par.username", default=None)
+    retire_par = serializers.CharField(source="retire_par.username", default=None)
+
+    class Meta:
+        model = AffectationPays
+        fields = ["id", "pays", "motif", "debut", "fin", "active", "accorde_par", "retire_par"]
+
+    def get_active(self, affectation) -> bool:
+        from apps.socle.services import aujourdhui
+
+        return affectation.est_active(aujourdhui(affectation.pays))
+
+
+class AffectationCreationSerializer(serializers.Serializer):
+    pays = serializers.CharField(max_length=2)
+    role = serializers.ChoiceField(choices=Role.choices)
+    motif = serializers.CharField(max_length=300)
+    debut = serializers.DateField(required=False)
+    fin = serializers.DateField(required=False, allow_null=True)
+
+
+class FinAffectationSerializer(serializers.Serializer):
+    fin = serializers.DateField(required=False)
+
+
+class TransfertSerializer(serializers.ModelSerializer):
+    pays_origine = serializers.CharField(source="pays_origine.code")
+    pays_destination = serializers.CharField(source="pays_destination.code")
+    autorise_par = serializers.CharField(source="autorise_par.username", default=None)
+
+    class Meta:
+        model = Transfert
+        fields = ["id", "pays_origine", "pays_destination", "motif", "le", "autorise_par"]
+
+
+class TransfertCreationSerializer(serializers.Serializer):
+    pays = serializers.CharField(max_length=2)
+    motif = serializers.CharField(max_length=300)
+    role = serializers.ChoiceField(choices=Role.choices, required=False)

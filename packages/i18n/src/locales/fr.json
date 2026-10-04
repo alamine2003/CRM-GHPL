@@ -6,7 +6,13 @@
     "langues": {
       "fr": "Français",
       "en": "English"
-    }
+    },
+    "annuler": "Annuler",
+    "enregistrer": "Enregistrer",
+    "creer": "Créer",
+    "rechercher": "Rechercher",
+    "actions": "Actions",
+    "fermer": "Fermer"
   },
   "accueil": {
     "titre": "Bienvenue",
@@ -19,7 +25,9 @@
     "versionServeur": "Version du service",
     "environnement": "Environnement",
     "reessayer": "Réessayer",
-    "perimetre": "Périmètre"
+    "perimetre": "Périmètre",
+    "chiffresOrganisation": "Votre organisation aujourd'hui",
+    "voirOrganisation": "Voir l'organisation"
   },
   "connexion": {
     "titre": "Connexion",
@@ -70,7 +78,8 @@
     "equipe": "Équipe",
     "parametres": "Paramètres",
     "bientot": "Bientôt",
-    "disponibleEn": "Disponible en version {{version}}"
+    "disponibleEn": "Disponible en version {{version}}",
+    "organisation": "Organisation"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -137,5 +146,103 @@
     "choix": "Pays",
     "tous": "Tous les pays",
     "consolide": "Vue consolidée"
+  },
+  "monPoste": {
+    "titre": "Mon poste",
+    "titrePlusieurs": "Mes postes",
+    "principal": "Principal",
+    "superviseur": "Superviseur",
+    "reseaux": "Réseaux",
+    "secteurs": "Secteurs",
+    "depuis": "Depuis le {{date}}",
+    "aucun": "Aucun poste ne vous est attribué dans ce pays.",
+    "superviseurManquant": "Votre poste principal n'a pas de superviseur : vous ne pourrez pas soumettre de planning. Prévenez votre administrateur pays.",
+    "postesSupervises_one": "{{count}} poste rattaché",
+    "postesSupervises_other": "{{count}} postes rattachés",
+    "perimetreReseaux": "Mon périmètre de réseaux"
+  },
+  "organisation": {
+    "titre": "Organisation",
+    "sousTitre": "{{pays}} · zones, secteurs, réseaux et postes.",
+    "sousTitreConsolide": "Tous les pays, en vue consolidée.",
+    "lectureSeule": "Consultation seule : seuls l'administrateur pays et le siège modifient l'organisation.",
+    "choisirPays": "Choisissez un pays pour modifier son organisation.",
+    "onglets": {
+      "postes": "Postes",
+      "zones": "Zones et secteurs",
+      "reseaux": "Divisions et réseaux"
+    },
+    "chiffres": {
+      "postes": "Postes",
+      "vacants": "Postes vacants",
+      "sansSuperviseur": "Sans superviseur",
+      "secteurs": "Secteurs",
+      "zones_one": "{{count}} zone",
+      "zones_other": "{{count}} zones",
+      "reseaux_one": "{{count}} réseau",
+      "reseaux_other": "{{count}} réseaux",
+      "occupes": "{{taux}} % occupés"
+    },
+    "filtres": {
+      "tous": "Tous",
+      "vacants": "Vacants",
+      "sansSuperviseur": "Sans superviseur",
+      "recherche": "Rechercher un poste, une personne, un secteur"
+    },
+    "colonnes": {
+      "poste": "Poste",
+      "reseaux": "Réseaux",
+      "secteurs": "Secteurs",
+      "occupant": "Occupant",
+      "superviseur": "Superviseur"
+    },
+    "vacant": "Vacant",
+    "aucunSuperviseur": "Aucun superviseur",
+    "archive": "Archivé",
+    "typesPoste": {
+      "vm": "Visiteur médical",
+      "vm_otc": "Visiteur médical OTC",
+      "kam": "Key Account Manager",
+      "dermo": "Dermo-conseillère"
+    },
+    "actions": {
+      "nouveauPoste": "Nouveau poste",
+      "affecter": "Affecter un occupant",
+      "rattacher": "Rattacher un superviseur",
+      "liberer": "Libérer le poste",
+      "archiver": "Archiver",
+      "nouvelleZone": "Nouvelle zone",
+      "nouveauSecteur": "Ajouter un secteur",
+      "nouvelleDivision": "Nouvelle division",
+      "nouveauReseau": "Ajouter un réseau"
+    },
+    "champs": {
+      "libelle": "Libellé",
+      "code": "Code",
+      "type": "Type de poste",
+      "reseaux": "Réseaux",
+      "secteurs": "Secteurs",
+      "personne": "Personne",
+      "superviseur": "Superviseur",
+      "debut": "À partir du",
+      "zone": "Zone",
+      "division": "Division"
+    },
+    "aides": {
+      "affecter": "Délégués et superviseurs du pays. Un poste n'a qu'un occupant à la fois.",
+      "rattacher": "Le rattachement précédent prend fin à cette date ; le passé ne change pas.",
+      "liberer": "L'occupation de {{personne}} prend fin aujourd'hui ; l'historique est conservé."
+    },
+    "vides": {
+      "postes": "Aucun poste pour l'instant",
+      "postesTexte": "Créez les postes de délégués : un poste peut être vacant et couvrir plusieurs secteurs.",
+      "filtre": "Aucun poste ne correspond",
+      "zones": "Aucune zone pour l'instant",
+      "zonesTexte": "Une zone regroupe des secteurs ; un secteur appartient à une seule zone.",
+      "reseaux": "Aucune division pour l'instant",
+      "reseauxTexte": "Une division regroupe des réseaux ; le portefeuille de produits arrive en version 0.1.1.",
+      "secteurs": "Aucun secteur"
+    },
+    "enregistre": "Modification enregistrée."
   }
 }

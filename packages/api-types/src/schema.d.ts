@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+  '/api/v1/affectations/{id}/terminer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['affectation_terminer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/auth/connexion/': {
     parameters: {
       query?: never;
@@ -147,6 +163,364 @@ export interface paths {
     get: operations['informations'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/divisions/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['divisions_liste'];
+    put?: never;
+    post: operations['division_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/divisions/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['division_renommer'];
+    trace?: never;
+  };
+  '/api/v1/organisation/divisions/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['division_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/moi/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Le poste de l'utilisateur, son superviseur, ses réseaux, dans le pays actif.
+     *
+     *     Point d'accès personnel : il ne renvoie que des liens de l'utilisateur lui-même.
+     */
+    get: operations['mon_organisation'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/occupations/{id}/terminer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['occupation_terminer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/perimetres-reseaux/{id}/terminer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['perimetre_reseau_terminer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/personnes/{id}/reseaux/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['perimetres_reseaux_liste'];
+    put?: never;
+    post: operations['perimetre_reseau_ajouter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/postes/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['postes_liste'];
+    put?: never;
+    post: operations['poste_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/postes/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['poste_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['poste_modifier'];
+    trace?: never;
+  };
+  '/api/v1/organisation/postes/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['poste_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/postes/{id}/occupations/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['occupations_liste'];
+    put?: never;
+    post: operations['occupation_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/postes/{id}/rattachements/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['rattachements_liste'];
+    put?: never;
+    post: operations['rattachement_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/reseaux/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['reseaux_liste'];
+    put?: never;
+    post: operations['reseau_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/reseaux/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['reseau_renommer'];
+    trace?: never;
+  };
+  '/api/v1/organisation/reseaux/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['reseau_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/secteurs/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['secteurs_liste'];
+    put?: never;
+    post: operations['secteur_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/secteurs/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['secteur_renommer'];
+    trace?: never;
+  };
+  '/api/v1/organisation/secteurs/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['secteur_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/synthese/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Chiffres de l'organisation visible : postes vacants, postes sans superviseur… */
+    get: operations['organisation_synthese'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/zones/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['zones_liste'];
+    put?: never;
+    post: operations['zone_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/organisation/zones/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['zone_renommer'];
+    trace?: never;
+  };
+  '/api/v1/organisation/zones/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['zone_archiver'];
     delete?: never;
     options?: never;
     head?: never;
@@ -324,6 +698,24 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/utilisateurs/{id}/affectations/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Affectations d'un compte dans d'autres pays (ORG-009) : le siège les accorde. */
+    get: operations['affectations_liste'];
+    put?: never;
+    /** @description Affectations d'un compte dans d'autres pays (ORG-009) : le siège les accorde. */
+    post: operations['affectation_accorder'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/utilisateurs/{id}/roles/': {
     parameters: {
       query?: never;
@@ -342,10 +734,50 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/utilisateurs/{id}/transferts/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Transferts d'un compte vers un autre pays (ORG-010) : le siège les autorise. */
+    get: operations['transferts_liste'];
+    put?: never;
+    /** @description Transferts d'un compte vers un autre pays (ORG-010) : le siège les autorise. */
+    post: operations['transfert_autoriser'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    Affectation: {
+      /** Format: uuid */
+      readonly id: string;
+      pays: string;
+      motif: string;
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin?: string | null;
+      readonly active: boolean;
+      accorde_par?: string;
+      retire_par?: string;
+    };
+    AffectationCreation: {
+      pays: string;
+      role: components['schemas']['RoleEnum'];
+      motif: string;
+      /** Format: date */
+      debut?: string;
+      /** Format: date */
+      fin?: string | null;
+    };
     AttributionRole: {
       role: components['schemas']['RoleEnum'];
     };
@@ -364,9 +796,30 @@ export interface components {
       mot_de_passe: string;
       client: components['schemas']['ClientEnum'];
     };
+    CreationDivision: {
+      libelle: string;
+      code: string;
+    };
     CreationPays: {
       /** @description Code ISO d'une filiale du catalogue. */
       code: string;
+    };
+    CreationPoste: {
+      libelle: string;
+      type_poste: components['schemas']['TypePosteEnum'];
+      reseaux?: string[];
+      secteurs?: string[];
+    };
+    CreationReseau: {
+      libelle: string;
+      code: string;
+      /** Format: uuid */
+      division: string;
+    };
+    CreationSecteur: {
+      libelle: string;
+      /** Format: uuid */
+      zone: string;
     };
     CreationUtilisateur: {
       identifiant: string;
@@ -374,6 +827,22 @@ export interface components {
       nom: string;
       courriel?: string;
       langue?: components['schemas']['LangueEnum'];
+    };
+    Division: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      code: string;
+      libelle: string;
+      readonly archive: boolean;
+    };
+    Fin: {
+      /** Format: date */
+      fin?: string;
+    };
+    FinAffectation: {
+      /** Format: date */
+      fin?: string;
     };
     Informations: {
       produit: string;
@@ -403,6 +872,9 @@ export interface components {
      * @enum {string}
      */
     LangueEnum: 'fr' | 'en';
+    Libelle: {
+      libelle: string;
+    };
     ModificationParametre: {
       valeur: unknown;
     };
@@ -417,6 +889,38 @@ export interface components {
       pays_principal: components['schemas']['PaysResume'] | null;
       est_siege: boolean;
     };
+    MonOrganisation: {
+      postes: components['schemas']['MonPoste'][];
+      postes_supervises: number;
+      reseaux: components['schemas']['PerimetreReseau'][];
+      superviseur_manquant: boolean;
+    };
+    MonPoste: {
+      occupation: components['schemas']['Occupation'];
+      type_poste: string;
+      type_libelle: string;
+      reseaux: components['schemas']['Resume'][];
+      secteurs: components['schemas']['Resume'][];
+      superviseur: components['schemas']['Personne'] | null;
+    };
+    Occupation: {
+      /** Format: uuid */
+      readonly id: string;
+      poste: components['schemas']['Resume'];
+      personne: components['schemas']['Personne'];
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin?: string | null;
+      principal?: boolean;
+      readonly actif: boolean;
+    };
+    OccupationCreation: {
+      /** Format: uuid */
+      utilisateur: string;
+      /** Format: date */
+      debut?: string;
+    };
     Oubli: {
       /** @description Identifiant ou courriel. */
       identifiant: string;
@@ -430,6 +934,15 @@ export interface components {
       personnalise: boolean;
       /** @description Valeur par défaut encore à confirmer. */
       hypothese: boolean;
+    };
+    PatchedLibelle: {
+      libelle?: string;
+    };
+    PatchedModificationPoste: {
+      libelle?: string;
+      type_poste?: components['schemas']['TypePosteEnum'];
+      reseaux?: string[];
+      secteurs?: string[];
     };
     Pays: {
       readonly code: string;
@@ -453,13 +966,82 @@ export interface components {
       actions: string[];
       pays_accessibles: components['schemas']['PaysResume'][];
     };
+    PerimetreReseau: {
+      /** Format: uuid */
+      readonly id: string;
+      reseau: components['schemas']['Resume'];
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin?: string | null;
+      readonly actif: boolean;
+    };
+    PerimetreReseauCreation: {
+      /** Format: uuid */
+      reseau: string;
+      /** Format: date */
+      debut?: string;
+    };
+    Personne: {
+      /** Format: uuid */
+      id: string;
+      identifiant: string;
+      prenom: string;
+      nom: string;
+    };
+    /** @description Un poste avec son occupant et son superviseur du jour ; « vacant » sans occupant. */
+    Poste: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      libelle: string;
+      type_poste: components['schemas']['TypePosteEnum'];
+      type_libelle: string;
+      reseaux: components['schemas']['Resume'][];
+      secteurs: components['schemas']['Secteur'][];
+      readonly occupant: components['schemas']['Personne'] | null;
+      readonly superviseur: components['schemas']['Personne'] | null;
+      readonly vacant: boolean;
+      readonly archive: boolean;
+    };
     Rafraichissement: {
       /** @description Application mobile uniquement ; le portail utilise le cookie. */
       rafraichissement?: string;
     };
+    Rattachement: {
+      /** Format: uuid */
+      readonly id: string;
+      superviseur: components['schemas']['Personne'];
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin?: string | null;
+      readonly actif: boolean;
+    };
+    RattachementCreation: {
+      /** Format: uuid */
+      superviseur: string;
+      /** Format: date */
+      debut?: string;
+    };
     Reinitialisation: {
       jeton: string;
       mot_de_passe: string;
+    };
+    Reseau: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      code: string;
+      libelle: string;
+      /** Format: uuid */
+      division: string;
+      readonly archive: boolean;
+    };
+    Resume: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
     };
     Role: {
       /** Format: uuid */
@@ -497,6 +1079,16 @@ export interface components {
       | 'superviseur'
       | 'delegue'
       | 'admin_technique';
+    Secteur: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      libelle: string;
+      /** Format: uuid */
+      zone: string;
+      zone_libelle: string;
+      readonly archive: boolean;
+    };
     /**
      * @description * `actif` - Actif
      *     * `suspendu` - Suspendu
@@ -507,6 +1099,38 @@ export interface components {
     StatutPays: {
       statut: components['schemas']['StatutEnum'];
     };
+    Synthese: {
+      divisions: number;
+      reseaux: number;
+      zones: number;
+      secteurs: number;
+      postes: number;
+      postes_vacants: number;
+      postes_sans_superviseur: number;
+    };
+    Transfert: {
+      /** Format: uuid */
+      readonly id: string;
+      pays_origine: string;
+      pays_destination: string;
+      motif: string;
+      /** Format: date-time */
+      le?: string;
+      autorise_par?: string;
+    };
+    TransfertCreation: {
+      pays: string;
+      motif: string;
+      role?: components['schemas']['RoleEnum'];
+    };
+    /**
+     * @description * `vm` - Visiteur médical
+     *     * `vm_otc` - Visiteur médical OTC
+     *     * `kam` - Key Account Manager
+     *     * `dermo` - Dermo-conseillère
+     * @enum {string}
+     */
+    TypePosteEnum: 'vm' | 'vm_otc' | 'kam' | 'dermo';
     Utilisateur: {
       /** Format: uuid */
       readonly id: string;
@@ -517,12 +1141,20 @@ export interface components {
       langue?: components['schemas']['LangueEnum'];
       actif: boolean;
       pays_principal: components['schemas']['PaysResume'] | null;
+      /** @description Rôles actifs ; depuis un pays actif, seulement ceux de ce pays (ORG-009). */
       readonly roles: string[];
       /**
        * Dernière connexion
        * Format: date-time
        */
       last_login?: string | null;
+    };
+    Zone: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      libelle: string;
+      readonly archive: boolean;
     };
   };
   responses: never;
@@ -533,6 +1165,33 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  affectation_terminer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['FinAffectation'];
+        'application/x-www-form-urlencoded': components['schemas']['FinAffectation'];
+        'multipart/form-data': components['schemas']['FinAffectation'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Affectation'];
+        };
+      };
+    };
+  };
   connexion: {
     parameters: {
       query?: never;
@@ -726,6 +1385,723 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Informations'];
+        };
+      };
+    };
+  };
+  divisions_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Division'][];
+        };
+      };
+    };
+  };
+  division_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationDivision'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationDivision'];
+        'multipart/form-data': components['schemas']['CreationDivision'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Division'];
+        };
+      };
+    };
+  };
+  division_renommer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedLibelle'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedLibelle'];
+        'multipart/form-data': components['schemas']['PatchedLibelle'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Division'];
+        };
+      };
+    };
+  };
+  division_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Division'];
+        };
+      };
+    };
+  };
+  mon_organisation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MonOrganisation'];
+        };
+      };
+    };
+  };
+  occupation_terminer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['Fin'];
+        'application/x-www-form-urlencoded': components['schemas']['Fin'];
+        'multipart/form-data': components['schemas']['Fin'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Occupation'];
+        };
+      };
+    };
+  };
+  perimetre_reseau_terminer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['Fin'];
+        'application/x-www-form-urlencoded': components['schemas']['Fin'];
+        'multipart/form-data': components['schemas']['Fin'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerimetreReseau'];
+        };
+      };
+    };
+  };
+  perimetres_reseaux_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerimetreReseau'][];
+        };
+      };
+    };
+  };
+  perimetre_reseau_ajouter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['PerimetreReseauCreation'];
+        'application/x-www-form-urlencoded': components['schemas']['PerimetreReseauCreation'];
+        'multipart/form-data': components['schemas']['PerimetreReseauCreation'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerimetreReseau'];
+        };
+      };
+    };
+  };
+  postes_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Poste'][];
+        };
+      };
+    };
+  };
+  poste_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationPoste'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationPoste'];
+        'multipart/form-data': components['schemas']['CreationPoste'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Poste'];
+        };
+      };
+    };
+  };
+  poste_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Poste'];
+        };
+      };
+    };
+  };
+  poste_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationPoste'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationPoste'];
+        'multipart/form-data': components['schemas']['PatchedModificationPoste'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Poste'];
+        };
+      };
+    };
+  };
+  poste_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Poste'];
+        };
+      };
+    };
+  };
+  occupations_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Occupation'][];
+        };
+      };
+    };
+  };
+  occupation_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['OccupationCreation'];
+        'application/x-www-form-urlencoded': components['schemas']['OccupationCreation'];
+        'multipart/form-data': components['schemas']['OccupationCreation'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Occupation'];
+        };
+      };
+    };
+  };
+  rattachements_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Rattachement'][];
+        };
+      };
+    };
+  };
+  rattachement_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RattachementCreation'];
+        'application/x-www-form-urlencoded': components['schemas']['RattachementCreation'];
+        'multipart/form-data': components['schemas']['RattachementCreation'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Rattachement'];
+        };
+      };
+    };
+  };
+  reseaux_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Reseau'][];
+        };
+      };
+    };
+  };
+  reseau_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationReseau'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationReseau'];
+        'multipart/form-data': components['schemas']['CreationReseau'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Reseau'];
+        };
+      };
+    };
+  };
+  reseau_renommer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedLibelle'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedLibelle'];
+        'multipart/form-data': components['schemas']['PatchedLibelle'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Reseau'];
+        };
+      };
+    };
+  };
+  reseau_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Reseau'];
+        };
+      };
+    };
+  };
+  secteurs_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Secteur'][];
+        };
+      };
+    };
+  };
+  secteur_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationSecteur'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationSecteur'];
+        'multipart/form-data': components['schemas']['CreationSecteur'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Secteur'];
+        };
+      };
+    };
+  };
+  secteur_renommer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedLibelle'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedLibelle'];
+        'multipart/form-data': components['schemas']['PatchedLibelle'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Secteur'];
+        };
+      };
+    };
+  };
+  secteur_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Secteur'];
+        };
+      };
+    };
+  };
+  organisation_synthese: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Synthese'];
+        };
+      };
+    };
+  };
+  zones_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Zone'][];
+        };
+      };
+    };
+  };
+  zone_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Libelle'];
+        'application/x-www-form-urlencoded': components['schemas']['Libelle'];
+        'multipart/form-data': components['schemas']['Libelle'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Zone'];
+        };
+      };
+    };
+  };
+  zone_renommer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedLibelle'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedLibelle'];
+        'multipart/form-data': components['schemas']['PatchedLibelle'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Zone'];
+        };
+      };
+    };
+  };
+  zone_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Zone'];
         };
       };
     };
@@ -1000,6 +2376,54 @@ export interface operations {
       };
     };
   };
+  affectations_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Affectation'][];
+        };
+      };
+    };
+  };
+  affectation_accorder: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AffectationCreation'];
+        'application/x-www-form-urlencoded': components['schemas']['AffectationCreation'];
+        'multipart/form-data': components['schemas']['AffectationCreation'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Affectation'];
+        };
+      };
+    };
+  };
   roles_liste: {
     parameters: {
       query?: never;
@@ -1044,6 +2468,54 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Role'];
+        };
+      };
+    };
+  };
+  transferts_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Transfert'][];
+        };
+      };
+    };
+  };
+  transfert_autoriser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TransfertCreation'];
+        'application/x-www-form-urlencoded': components['schemas']['TransfertCreation'];
+        'multipart/form-data': components['schemas']['TransfertCreation'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Transfert'];
         };
       };
     };

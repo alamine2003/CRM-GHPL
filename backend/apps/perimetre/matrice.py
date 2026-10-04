@@ -24,6 +24,9 @@ class Action(StrEnum):
     UTILISATEURS_LIRE = "utilisateurs.lire"
     UTILISATEURS_GERER = "utilisateurs.gerer"
     ROLES_ATTRIBUER = "roles.attribuer"
+    ORGANISATION_LIRE = "organisation.lire"
+    ORGANISATION_GERER = "organisation.gerer"
+    AFFECTATIONS_GERER = "affectations.gerer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -45,4 +48,14 @@ MATRICE: dict[Action, frozenset[str]] = {
     Action.UTILISATEURS_GERER: frozenset({Role.ADMIN_SIEGE, Role.ADMIN_PAYS}),
     # Rôles terrain (df, dm, superviseur, délégué) : administrateur pays et siège.
     Action.ROLES_ATTRIBUER: frozenset({Role.ADMIN_SIEGE, Role.ADMIN_PAYS}),
+    # « Gérer l'organisation (zones, secteurs, réseaux, postes) » : siège et administrateur pays.
+    Action.ORGANISATION_GERER: frozenset({Role.ADMIN_SIEGE, Role.ADMIN_PAYS}),
+    # Consultation de l'organisation [H] : le PRD ne la liste pas ; elle suit les périmètres
+    # d'architecture §11.2 (DF et DM : postes de leurs réseaux ; superviseur : postes rattachés).
+    # Le délégué ne voit que son propre poste (« Mon organisation »).
+    Action.ORGANISATION_LIRE: frozenset(
+        SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}
+    ),
+    # « Accorder une affectation multi-pays ou un transfert » : administrateur du siège.
+    Action.AFFECTATIONS_GERER: frozenset({Role.ADMIN_SIEGE}),
 }

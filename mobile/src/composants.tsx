@@ -167,17 +167,18 @@ export function Alerte({
   type,
 }: {
   children: ReactNode;
-  type: 'erreur' | 'info' | 'succes';
+  type: 'erreur' | 'info' | 'succes' | 'attention';
 }) {
   const p = usePalette();
   const [fond, accent] = {
     erreur: [p.erreurDoux, p.erreur],
     info: [p.infoDoux, p.info],
     succes: [p.succesDoux, p.succes],
+    attention: [p.attentionDoux, p.attention],
   }[type];
   return (
     <View
-      accessibilityRole={type === 'erreur' ? 'alert' : undefined}
+      accessibilityRole={type === 'erreur' || type === 'attention' ? 'alert' : undefined}
       style={[styles.alerte, { backgroundColor: fond, borderLeftColor: accent }]}
     >
       <Texte>{children}</Texte>

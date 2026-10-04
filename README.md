@@ -44,6 +44,8 @@ cd backend
 # Ouvrir le lien affiché pour choisir le mot de passe, puis se connecter sur le portail.
 ```
 
+L'administrateur pays construit ensuite l'organisation (zones, secteurs, divisions, réseaux, postes, occupants, superviseurs) depuis la page **Organisation** du portail. Les affectations dans un autre pays et les transferts se font par l'API (`/api/v1/utilisateurs/<id>/affectations/` et `/transferts/`) en attendant leurs écrans (0.0.6).
+
 Variables utiles : `backend/.env.example` (serveur), `VITE_API_URL` (portail), `EXPO_PUBLIC_API_URL` (mobile).
 
 ## Vérifier

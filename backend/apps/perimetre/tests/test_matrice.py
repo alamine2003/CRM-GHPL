@@ -19,6 +19,17 @@ ATTENDU = {
     Action.PARAMETRES_MODIFIER: {"admin_siege", "admin_pays"},
     Action.PARAMETRES_LIRE: {"admin_siege", "direction_siege", "responsable_pays", "admin_pays"},
     Action.UTILISATEURS_LIRE: {"admin_siege", "direction_siege", "responsable_pays", "admin_pays"},
+    Action.ORGANISATION_GERER: {"admin_siege", "admin_pays"},
+    Action.ORGANISATION_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+    },  # fmt: skip
+    Action.AFFECTATIONS_GERER: {"admin_siege"},
     Action.PAYS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -65,6 +76,8 @@ REQUETES = {
         200,
     ),  # fmt: skip
     Action.UTILISATEURS_LIRE: ("get", "/api/v1/utilisateurs/", None, 200),
+    Action.ORGANISATION_LIRE: ("get", "/api/v1/organisation/postes/", None, 200),
+    Action.ORGANISATION_GERER: ("post", "/api/v1/organisation/zones/", {"libelle": "Nord"}, 201),
     Action.UTILISATEURS_GERER: (
         "post",
         "/api/v1/utilisateurs/",

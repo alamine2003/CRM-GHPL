@@ -6,8 +6,9 @@ Les autres modules passent par ces fonctions, jamais par les tables directement
 (version 0.0.8, AUD-001).
 """
 
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -108,3 +109,13 @@ def definir_parametre(
     return ParametrePays.objects.create(
         pays=pays, cle=cle, valeur=valeur, debut=debut or timezone.now()
     )
+
+
+def aujourdhui(pays: Pays) -> date:
+    """Date du jour dans le fuseau du pays (RG-006)."""
+    return timezone.now().astimezone(ZoneInfo(pays.fuseau)).date()
+
+
+def debut_du_jour(pays: Pays, jour: date) -> datetime:
+    """Minuit, heure du pays, du jour donné (en UTC côté base)."""
+    return datetime.combine(jour, time.min, tzinfo=ZoneInfo(pays.fuseau))

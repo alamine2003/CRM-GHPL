@@ -210,7 +210,7 @@ class RoleUtilisateur(models.Model):
                 name="role_pays_coherent",
             ),
             models.CheckConstraint(
-                condition=models.Q(fin__isnull=True) | models.Q(fin__gt=models.F("debut")),
+                condition=models.Q(fin__isnull=True) | models.Q(fin__gte=models.F("debut")),
                 name="role_fin_apres_debut",
             ),
         ]
@@ -222,3 +222,70 @@ class RoleUtilisateur(models.Model):
     def est_actif(self, a=None) -> bool:
         a = a or timezone.now()
         return self.debut <= a and (self.fin is None or self.fin > a)
+
+
+class AffectationPays(models.Model):
+    """Affectation supplémentaire d'un utilisateur dans un autre pays (ORG-009, RG-003).
+
+    Accordée par le siège, datée (fin exclue, facultative) et motivée. Pendant
+    l'affectation, l'utilisateur peut choisir ce pays comme pays actif ; ses
+    rôles dans ce pays cessent avec elle.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    utilisateur = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, related_name="affectations"
+    )
+    pays = models.ForeignKey("socle.Pays", on_delete=models.PROTECT, related_name="+")
+    motif = models.CharField(max_length=300)
+    debut = models.DateField()
+    fin = models.DateField(null=True, blank=True)
+    accorde_par = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    retire_par = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    cree_le = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = "affectation dans un pays"
+        ordering = ["-debut"]
+        indexes = [models.Index(fields=["utilisateur", "pays", "fin"])]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(fin__isnull=True) | models.Q(fin__gte=models.F("debut")),
+                name="affectation_fin_apres_debut",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.utilisateur} — {self.pays_id} ({self.debut} → {self.fin or '…'})"
+
+    def est_active(self, jour) -> bool:
+        return self.debut <= jour and (self.fin is None or self.fin > jour)
+
+
+class Transfert(models.Model):
+    """Changement de pays principal autorisé par le siège (ORG-010, RG-004).
+
+    L'historique (plannings, visites, rapports) reste dans le pays d'origine.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    utilisateur = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, related_name="transferts"
+    )
+    pays_origine = models.ForeignKey("socle.Pays", on_delete=models.PROTECT, related_name="+")
+    pays_destination = models.ForeignKey("socle.Pays", on_delete=models.PROTECT, related_name="+")
+    motif = models.CharField(max_length=300)
+    le = models.DateTimeField(default=timezone.now)
+    autorise_par = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+
+    class Meta:
+        ordering = ["-le"]
+
+    def __str__(self):
+        return f"{self.utilisateur} : {self.pays_origine_id} → {self.pays_destination_id}"

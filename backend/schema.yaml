@@ -1,9 +1,41 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.0.4
+  version: 0.0.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
+  /api/v1/affectations/{id}/terminer/:
+    post:
+      operationId: affectation_terminer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - affectations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinAffectation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FinAffectation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FinAffectation'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Affectation'
+          description: ''
   /api/v1/auth/connexion/:
     post:
       operationId: connexion
@@ -177,6 +209,759 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Informations'
+          description: ''
+  /api/v1/organisation/divisions/:
+    get:
+      operationId: divisions_liste
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Division'
+          description: ''
+    post:
+      operationId: division_creer
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationDivision'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationDivision'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationDivision'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Division'
+          description: ''
+  /api/v1/organisation/divisions/{id}/:
+    patch:
+      operationId: division_renommer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Division'
+          description: ''
+  /api/v1/organisation/divisions/{id}/archiver/:
+    post:
+      operationId: division_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Division'
+          description: ''
+  /api/v1/organisation/moi/:
+    get:
+      operationId: mon_organisation
+      description: |-
+        Le poste de l'utilisateur, son superviseur, ses réseaux, dans le pays actif.
+
+        Point d'accès personnel : il ne renvoie que des liens de l'utilisateur lui-même.
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonOrganisation'
+          description: ''
+  /api/v1/organisation/occupations/{id}/terminer/:
+    post:
+      operationId: occupation_terminer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Fin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Fin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Fin'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Occupation'
+          description: ''
+  /api/v1/organisation/perimetres-reseaux/{id}/terminer/:
+    post:
+      operationId: perimetre_reseau_terminer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Fin'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Fin'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Fin'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerimetreReseau'
+          description: ''
+  /api/v1/organisation/personnes/{id}/reseaux/:
+    get:
+      operationId: perimetres_reseaux_liste
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerimetreReseau'
+          description: ''
+    post:
+      operationId: perimetre_reseau_ajouter
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PerimetreReseauCreation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PerimetreReseauCreation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PerimetreReseauCreation'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerimetreReseau'
+          description: ''
+  /api/v1/organisation/postes/:
+    get:
+      operationId: postes_liste
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Poste'
+          description: ''
+    post:
+      operationId: poste_creer
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationPoste'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationPoste'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationPoste'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poste'
+          description: ''
+  /api/v1/organisation/postes/{id}/:
+    get:
+      operationId: poste_detail
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poste'
+          description: ''
+    patch:
+      operationId: poste_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationPoste'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationPoste'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationPoste'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poste'
+          description: ''
+  /api/v1/organisation/postes/{id}/archiver/:
+    post:
+      operationId: poste_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poste'
+          description: ''
+  /api/v1/organisation/postes/{id}/occupations/:
+    get:
+      operationId: occupations_liste
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Occupation'
+          description: ''
+    post:
+      operationId: occupation_creer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OccupationCreation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OccupationCreation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OccupationCreation'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Occupation'
+          description: ''
+  /api/v1/organisation/postes/{id}/rattachements/:
+    get:
+      operationId: rattachements_liste
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Rattachement'
+          description: ''
+    post:
+      operationId: rattachement_creer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RattachementCreation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RattachementCreation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RattachementCreation'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rattachement'
+          description: ''
+  /api/v1/organisation/reseaux/:
+    get:
+      operationId: reseaux_liste
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reseau'
+          description: ''
+    post:
+      operationId: reseau_creer
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationReseau'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationReseau'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationReseau'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reseau'
+          description: ''
+  /api/v1/organisation/reseaux/{id}/:
+    patch:
+      operationId: reseau_renommer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reseau'
+          description: ''
+  /api/v1/organisation/reseaux/{id}/archiver/:
+    post:
+      operationId: reseau_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reseau'
+          description: ''
+  /api/v1/organisation/secteurs/:
+    get:
+      operationId: secteurs_liste
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Secteur'
+          description: ''
+    post:
+      operationId: secteur_creer
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationSecteur'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationSecteur'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationSecteur'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Secteur'
+          description: ''
+  /api/v1/organisation/secteurs/{id}/:
+    patch:
+      operationId: secteur_renommer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Secteur'
+          description: ''
+  /api/v1/organisation/secteurs/{id}/archiver/:
+    post:
+      operationId: secteur_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Secteur'
+          description: ''
+  /api/v1/organisation/synthese/:
+    get:
+      operationId: organisation_synthese
+      description: 'Chiffres de l''organisation visible : postes vacants, postes sans
+        superviseur…'
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Synthese'
+          description: ''
+  /api/v1/organisation/zones/:
+    get:
+      operationId: zones_liste
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Zone'
+          description: ''
+    post:
+      operationId: zone_creer
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Libelle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Libelle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Libelle'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: ''
+  /api/v1/organisation/zones/{id}/:
+    patch:
+      operationId: zone_renommer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLibelle'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
+          description: ''
+  /api/v1/organisation/zones/{id}/archiver/:
+    post:
+      operationId: zone_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - organisation
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zone'
           description: ''
   /api/v1/pays/:
     get:
@@ -478,6 +1263,65 @@ paths:
               schema:
                 $ref: '#/components/schemas/Utilisateur'
           description: ''
+  /api/v1/utilisateurs/{id}/affectations/:
+    get:
+      operationId: affectations_liste
+      description: 'Affectations d''un compte dans d''autres pays (ORG-009) : le siège
+        les accorde.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - utilisateurs
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Affectation'
+          description: ''
+    post:
+      operationId: affectation_accorder
+      description: 'Affectations d''un compte dans d''autres pays (ORG-009) : le siège
+        les accorde.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - utilisateurs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffectationCreation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AffectationCreation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AffectationCreation'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Affectation'
+          description: ''
   /api/v1/utilisateurs/{id}/roles/:
     get:
       operationId: roles_liste
@@ -535,8 +1379,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/Role'
           description: ''
+  /api/v1/utilisateurs/{id}/transferts/:
+    get:
+      operationId: transferts_liste
+      description: 'Transferts d''un compte vers un autre pays (ORG-010) : le siège
+        les autorise.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - utilisateurs
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transfert'
+          description: ''
+    post:
+      operationId: transfert_autoriser
+      description: 'Transferts d''un compte vers un autre pays (ORG-010) : le siège
+        les autorise.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - utilisateurs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransfertCreation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TransfertCreation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TransfertCreation'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transfert'
+          description: ''
 components:
   schemas:
+    Affectation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+        motif:
+          type: string
+          maxLength: 300
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+          nullable: true
+        active:
+          type: boolean
+          readOnly: true
+        accorde_par:
+          type: string
+        retire_par:
+          type: string
+      required:
+      - active
+      - debut
+      - id
+      - motif
+      - pays
+    AffectationCreation:
+      type: object
+      properties:
+        pays:
+          type: string
+          maxLength: 2
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        motif:
+          type: string
+          maxLength: 300
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - motif
+      - pays
+      - role
     AttributionRole:
       type: object
       properties:
@@ -579,6 +1536,18 @@ components:
       - client
       - identifiant
       - mot_de_passe
+    CreationDivision:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        code:
+          type: string
+          maxLength: 20
+      required:
+      - code
+      - libelle
     CreationPays:
       type: object
       properties:
@@ -588,6 +1557,55 @@ components:
           maxLength: 2
       required:
       - code
+    CreationPoste:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        type_poste:
+          $ref: '#/components/schemas/TypePosteEnum'
+        reseaux:
+          type: array
+          items:
+            type: string
+            format: uuid
+        secteurs:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - libelle
+      - type_poste
+    CreationReseau:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        code:
+          type: string
+          maxLength: 20
+        division:
+          type: string
+          format: uuid
+      required:
+      - code
+      - division
+      - libelle
+    CreationSecteur:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        zone:
+          type: string
+          format: uuid
+      required:
+      - libelle
+      - zone
     CreationUtilisateur:
       type: object
       properties:
@@ -612,6 +1630,43 @@ components:
       - identifiant
       - nom
       - prenom
+    Division:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        libelle:
+          type: string
+          maxLength: 120
+        archive:
+          type: boolean
+          readOnly: true
+      required:
+      - archive
+      - code
+      - id
+      - libelle
+      - pays
+    Fin:
+      type: object
+      properties:
+        fin:
+          type: string
+          format: date
+    FinAffectation:
+      type: object
+      properties:
+        fin:
+          type: string
+          format: date
     Informations:
       type: object
       properties:
@@ -676,6 +1731,14 @@ components:
       description: |-
         * `fr` - Français
         * `en` - Anglais
+    Libelle:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+      required:
+      - libelle
     ModificationParametre:
       type: object
       properties:
@@ -713,6 +1776,94 @@ components:
       - nom
       - pays_principal
       - prenom
+    MonOrganisation:
+      type: object
+      properties:
+        postes:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonPoste'
+        postes_supervises:
+          type: integer
+        reseaux:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerimetreReseau'
+        superviseur_manquant:
+          type: boolean
+      required:
+      - postes
+      - postes_supervises
+      - reseaux
+      - superviseur_manquant
+    MonPoste:
+      type: object
+      properties:
+        occupation:
+          $ref: '#/components/schemas/Occupation'
+        type_poste:
+          type: string
+        type_libelle:
+          type: string
+        reseaux:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
+        secteurs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
+        superviseur:
+          allOf:
+          - $ref: '#/components/schemas/Personne'
+          nullable: true
+      required:
+      - occupation
+      - reseaux
+      - secteurs
+      - superviseur
+      - type_libelle
+      - type_poste
+    Occupation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        poste:
+          $ref: '#/components/schemas/Resume'
+        personne:
+          $ref: '#/components/schemas/Personne'
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+          nullable: true
+        principal:
+          type: boolean
+        actif:
+          type: boolean
+          readOnly: true
+      required:
+      - actif
+      - debut
+      - id
+      - personne
+      - poste
+    OccupationCreation:
+      type: object
+      properties:
+        utilisateur:
+          type: string
+          format: uuid
+        debut:
+          type: string
+          format: date
+      required:
+      - utilisateur
     Oubli:
       type: object
       properties:
@@ -744,6 +1895,30 @@ components:
       - hypothese
       - personnalise
       - valeur
+    PatchedLibelle:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+    PatchedModificationPoste:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        type_poste:
+          $ref: '#/components/schemas/TypePosteEnum'
+        reseaux:
+          type: array
+          items:
+            type: string
+            format: uuid
+        secteurs:
+          type: array
+          items:
+            type: string
+            format: uuid
     Pays:
       type: object
       properties:
@@ -819,12 +1994,154 @@ components:
       - pays_actif
       - roles
       - vue_consolidee
+    PerimetreReseau:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        reseau:
+          $ref: '#/components/schemas/Resume'
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+          nullable: true
+        actif:
+          type: boolean
+          readOnly: true
+      required:
+      - actif
+      - debut
+      - id
+      - reseau
+    PerimetreReseauCreation:
+      type: object
+      properties:
+        reseau:
+          type: string
+          format: uuid
+        debut:
+          type: string
+          format: date
+      required:
+      - reseau
+    Personne:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        identifiant:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+      required:
+      - id
+      - identifiant
+      - nom
+      - prenom
+    Poste:
+      type: object
+      description: Un poste avec son occupant et son superviseur du jour ; « vacant
+        » sans occupant.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        libelle:
+          type: string
+          maxLength: 120
+        type_poste:
+          $ref: '#/components/schemas/TypePosteEnum'
+        type_libelle:
+          type: string
+        reseaux:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
+        secteurs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Secteur'
+        occupant:
+          allOf:
+          - $ref: '#/components/schemas/Personne'
+          nullable: true
+          readOnly: true
+        superviseur:
+          allOf:
+          - $ref: '#/components/schemas/Personne'
+          nullable: true
+          readOnly: true
+        vacant:
+          type: boolean
+          readOnly: true
+        archive:
+          type: boolean
+          readOnly: true
+      required:
+      - archive
+      - id
+      - libelle
+      - occupant
+      - pays
+      - reseaux
+      - secteurs
+      - superviseur
+      - type_libelle
+      - type_poste
+      - vacant
     Rafraichissement:
       type: object
       properties:
         rafraichissement:
           type: string
           description: Application mobile uniquement ; le portail utilise le cookie.
+    Rattachement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        superviseur:
+          $ref: '#/components/schemas/Personne'
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+          nullable: true
+        actif:
+          type: boolean
+          readOnly: true
+      required:
+      - actif
+      - debut
+      - id
+      - superviseur
+    RattachementCreation:
+      type: object
+      properties:
+        superviseur:
+          type: string
+          format: uuid
+        debut:
+          type: string
+          format: date
+      required:
+      - superviseur
     Reinitialisation:
       type: object
       properties:
@@ -837,6 +2154,46 @@ components:
       required:
       - jeton
       - mot_de_passe
+    Reseau:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        libelle:
+          type: string
+          maxLength: 120
+        division:
+          type: string
+          format: uuid
+        archive:
+          type: boolean
+          readOnly: true
+      required:
+      - archive
+      - code
+      - division
+      - id
+      - libelle
+      - pays
+    Resume:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+      required:
+      - id
+      - libelle
     Role:
       type: object
       properties:
@@ -892,6 +2249,34 @@ components:
         * `superviseur` - Superviseur
         * `delegue` - Délégué
         * `admin_technique` - Administrateur technique
+    Secteur:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        libelle:
+          type: string
+          maxLength: 120
+        zone:
+          type: string
+          format: uuid
+        zone_libelle:
+          type: string
+        archive:
+          type: boolean
+          readOnly: true
+      required:
+      - archive
+      - id
+      - libelle
+      - pays
+      - zone
+      - zone_libelle
     StatutEnum:
       enum:
       - actif
@@ -909,6 +2294,81 @@ components:
           $ref: '#/components/schemas/StatutEnum'
       required:
       - statut
+    Synthese:
+      type: object
+      properties:
+        divisions:
+          type: integer
+        reseaux:
+          type: integer
+        zones:
+          type: integer
+        secteurs:
+          type: integer
+        postes:
+          type: integer
+        postes_vacants:
+          type: integer
+        postes_sans_superviseur:
+          type: integer
+      required:
+      - divisions
+      - postes
+      - postes_sans_superviseur
+      - postes_vacants
+      - reseaux
+      - secteurs
+      - zones
+    Transfert:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays_origine:
+          type: string
+        pays_destination:
+          type: string
+        motif:
+          type: string
+          maxLength: 300
+        le:
+          type: string
+          format: date-time
+        autorise_par:
+          type: string
+      required:
+      - id
+      - motif
+      - pays_destination
+      - pays_origine
+    TransfertCreation:
+      type: object
+      properties:
+        pays:
+          type: string
+          maxLength: 2
+        motif:
+          type: string
+          maxLength: 300
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+      required:
+      - motif
+      - pays
+    TypePosteEnum:
+      enum:
+      - vm
+      - vm_otc
+      - kam
+      - dermo
+      type: string
+      description: |-
+        * `vm` - Visiteur médical
+        * `vm_otc` - Visiteur médical OTC
+        * `kam` - Key Account Manager
+        * `dermo` - Dermo-conseillère
     Utilisateur:
       type: object
       properties:
@@ -936,6 +2396,8 @@ components:
           type: array
           items:
             type: string
+          description: Rôles actifs ; depuis un pays actif, seulement ceux de ce pays
+            (ORG-009).
           readOnly: true
         last_login:
           type: string
@@ -951,6 +2413,27 @@ components:
       - pays_principal
       - prenom
       - roles
+    Zone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        libelle:
+          type: string
+          maxLength: 120
+        archive:
+          type: boolean
+          readOnly: true
+      required:
+      - archive
+      - id
+      - libelle
+      - pays
   securitySchemes:
     jetonAcces:
       type: http

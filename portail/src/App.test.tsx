@@ -3,7 +3,9 @@ import {
   ErreurApi,
   type Jetons,
   type Moi,
+  type MonOrganisation,
   type Perimetre,
+  type Poste,
 } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen } from '@testing-library/react';
@@ -37,8 +39,62 @@ const PERIMETRE_DELEGUE: Perimetre = {
   pays_accessibles: [SENEGAL],
 };
 
+const SANS_POSTE: MonOrganisation = {
+  postes: [],
+  postes_supervises: 0,
+  reseaux: [],
+  superviseur_manquant: false,
+};
+const SYNTHESE = {
+  divisions: 1,
+  reseaux: 2,
+  zones: 2,
+  secteurs: 5,
+  postes: 3,
+  postes_vacants: 1,
+  postes_sans_superviseur: 1,
+};
+const MOUSSA = { id: 'p1', identifiant: 'moussa.fall', prenom: 'Moussa', nom: 'Fall' };
+const NDEYE = { id: 'p2', identifiant: 'ndeye.diop', prenom: 'Ndèye', nom: 'Diop' };
+function poste(id: string, libelle: string, occupant: typeof MOUSSA | null, superviseur = NDEYE) {
+  return {
+    id,
+    pays: 'SN',
+    libelle,
+    type_poste: 'vm',
+    type_libelle: 'Visiteur médical',
+    reseaux: [{ id: 'r1', libelle: 'Cardio' }],
+    secteurs: [],
+    occupant,
+    superviseur: superviseur as typeof NDEYE | null,
+    vacant: occupant === null,
+    archive: false,
+  } as Poste;
+}
+const POSTES: Poste[] = [
+  poste('a', 'VM Dakar Plateau', MOUSSA),
+  poste('b', 'VM Thiès', null),
+  { ...poste('c', 'KAM Saint-Louis', MOUSSA), superviseur: null },
+];
+
+function fausseOrganisation(surcharges: Partial<ClientApi['organisation']> = {}) {
+  return {
+    synthese: vi.fn(async () => SYNTHESE),
+    moi: vi.fn(async () => SANS_POSTE),
+    postes: vi.fn(async () => POSTES),
+    zones: vi.fn(async () => []),
+    secteurs: vi.fn(async () => []),
+    divisions: vi.fn(async () => []),
+    reseaux: vi.fn(async () => []),
+    creerPoste: vi.fn(async () => POSTES[0]),
+    ...surcharges,
+  } as unknown as ClientApi['organisation'];
+}
+
 function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
   return {
+    organisation: fausseOrganisation(),
+    utilisateurs: vi.fn(async () => []),
     perimetre: vi.fn(async () => PERIMETRE_DELEGUE),
     choisirPays: vi.fn(),
     paysActif: () => null,
@@ -237,5 +293,103 @@ describe('portail — récupération d’accès (USR-005)', () => {
   it('signale un lien incomplet', async () => {
     rendre(fauxClient(), '/reinitialisation');
     expect(await screen.findByText(/Lien incomplet/)).toBeInTheDocument();
+  });
+});
+
+describe('portail — organisation (ORG-003 à ORG-008)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const ADMIN_PAYS: Perimetre = {
+    ...PERIMETRE_DELEGUE,
+    roles: ['admin_pays'],
+    actions: ['organisation.gerer', 'organisation.lire', 'pays.lire'],
+  };
+
+  it('le délégué voit son poste et l’alerte s’il n’a pas de superviseur (ORG-007)', async () => {
+    const moi: MonOrganisation = {
+      postes: [
+        {
+          occupation: {
+            id: 'o1',
+            poste: { id: 'a', libelle: 'VM Dakar Plateau' },
+            personne: MOUSSA,
+            debut: '2026-09-01',
+            fin: null,
+            principal: true,
+            actif: true,
+          },
+          type_poste: 'vm',
+          type_libelle: 'Visiteur médical',
+          reseaux: [{ id: 'r1', libelle: 'Cardio' }],
+          secteurs: [{ id: 's1', libelle: 'Plateau' }],
+          superviseur: null,
+        },
+      ],
+      postes_supervises: 0,
+      reseaux: [],
+      superviseur_manquant: true,
+    };
+    rendre(
+      fauxClient({
+        reprendre: vi.fn(async () => JETONS),
+        organisation: fausseOrganisation({ moi: vi.fn(async () => moi) }),
+      }),
+    );
+    expect(await screen.findByText('VM Dakar Plateau')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('pas de superviseur');
+    // Le délégué n'a pas accès à la page Organisation.
+    expect(screen.queryByRole('link', { name: /Organisation/ })).not.toBeInTheDocument();
+  });
+
+  it('l’administrateur pays consulte les postes, les filtre et voit les vacants', async () => {
+    rendre(
+      fauxClient({
+        reprendre: vi.fn(async () => JETONS),
+        perimetre: vi.fn(async () => ADMIN_PAYS),
+      }),
+      '/organisation',
+    );
+    expect(await screen.findByRole('heading', { name: 'Organisation' })).toBeInTheDocument();
+    expect(await screen.findByText('VM Thiès')).toBeInTheDocument();
+    expect(screen.getByText('Postes vacants')).toBeInTheDocument();
+    expect(screen.getAllByText('Vacant').length).toBe(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Vacants' }));
+    expect(screen.queryByText('VM Dakar Plateau')).not.toBeInTheDocument();
+    expect(screen.getByText('VM Thiès')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tous' }));
+    await saisir('Rechercher', 'saint');
+    expect(screen.getByText('KAM Saint-Louis')).toBeInTheDocument();
+    expect(screen.queryByText('VM Thiès')).not.toBeInTheDocument();
+  });
+
+  it('l’administrateur pays crée un poste', async () => {
+    const organisation = fausseOrganisation();
+    rendre(
+      fauxClient({
+        reprendre: vi.fn(async () => JETONS),
+        perimetre: vi.fn(async () => ADMIN_PAYS),
+        organisation,
+      }),
+      '/organisation',
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Nouveau poste' }));
+    await saisir(/^Libellé/, 'VM Mbour');
+    fireEvent.click(screen.getByRole('button', { name: 'Créer' }));
+    await screen.findByRole('heading', { name: 'Organisation' });
+    await vi.waitFor(() =>
+      expect(organisation.creerPoste).toHaveBeenCalledWith({
+        libelle: 'VM Mbour',
+        type_poste: 'vm',
+        reseaux: [],
+        secteurs: [],
+      }),
+    );
+  });
+
+  it('sans le droit de lecture, la page Organisation renvoie à l’accueil', async () => {
+    rendre(fauxClient({ reprendre: vi.fn(async () => JETONS) }), '/organisation');
+    expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
   });
 });

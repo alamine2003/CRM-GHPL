@@ -543,6 +543,8 @@ erDiagram
 | `Rattachement` | `poste_id`, `superviseur_id`, `debut`, `fin` | — |
 | `Perimetre` | `utilisateur_id`, `reseau_id`, `debut`, `fin` | DF, DM |
 | `Remplacement` | `superviseur_id`, `remplacant_id`, `debut`, `fin`, `designe_par` | — |
+
+Mise en œuvre (0.0.5) : les liens datés de l'organisation (`Occupation`, `Rattachement`, `Perimetre` — nommé `PerimetreReseau` dans le code —, `AffectationPays`) sont des dates du pays ; un lien est actif le jour `j` si `debut <= j < fin` (fin exclue). `Division` et `Reseau` existent dès 0.0.5 avec code et libellé seulement, pour porter postes et périmètres ; le portefeuille arrive avec ORG-004 (0.1.1). Un rôle exercé hors du pays principal ne compte que pendant une affectation active.
 | `Prospect` | `type`, `specialite_id`, `civilite`, `nom`, `prenom`, `nom_normalise`, `cle_phonetique`, `numero_ordre`, `telephone_mobile`, `telephone_pro`, `courriel`, `potentiel` (`A`,`B`,`C`), `statut`, `cree_par_poste_id`, `fusionne_dans_id` | Fiche commune au pays |
 | `Etablissement` | `type`, `nom`, `nom_normalise`, `adresse`, `localite_id`, `secteur_id`, `latitude`, `longitude`, `statut` | — |
 | `Exercice` | `prospect_id`, `etablissement_id`, `debut`, `fin`, `principal` | — |

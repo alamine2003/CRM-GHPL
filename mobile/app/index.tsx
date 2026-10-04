@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarreOnglets } from '../src/BarreOnglets';
+import { MonPoste } from '../src/MonPoste';
 import { Alerte, Bouton, Carte, Ligne, Texte, usePalette } from '../src/composants';
 import { police } from '../src/polices';
 import { useSession } from '../src/session';
@@ -28,7 +29,6 @@ export default function Accueil() {
   }
   if (etat.statut === 'anonyme') return <Redirect href="/connexion" />;
   const { utilisateur, perimetre } = etat;
-  const roles = perimetre.roles.map((role) => t(`roles.${role}`)).join(', ');
   const a = avancement(VERSION_APP === 'inconnue' ? '0.0.1' : VERSION_APP);
   const date = new Intl.DateTimeFormat(langue, {
     weekday: 'long',
@@ -47,6 +47,15 @@ export default function Accueil() {
         <Text accessibilityRole="header" style={styles.bonjour}>
           {t('session.bonjour', { prenom: utilisateur.prenom })}
         </Text>
+        {perimetre.roles.length > 0 && (
+          <View style={styles.pastilles}>
+            {perimetre.roles.map((role) => (
+              <Text key={role} style={styles.pastille}>
+                {t(`roles.${role}`)}
+              </Text>
+            ))}
+          </View>
+        )}
         <View style={styles.progression}>
           <Text style={styles.progressionTexte}>v{a.version}</Text>
           <View style={styles.piste}>
@@ -62,6 +71,7 @@ export default function Accueil() {
 
       <ScrollView contentContainerStyle={styles.contenu}>
         {perimetre.roles.length === 0 && <Alerte type="info">{t('roles.aucun')}</Alerte>}
+        <MonPoste />
         <Carte style={{ backgroundColor: p.orangeDoux, borderColor: marque.orange }}>
           <Texte variante="fort">{t('mobile.onglets.tournee')}</Texte>
           <Texte variante="discret" style={{ marginTop: 4 }}>
@@ -74,7 +84,6 @@ export default function Accueil() {
             {t('profil.titre')}
           </Texte>
           <Ligne libelle={t('profil.identifiant')} valeur={utilisateur.identifiant} />
-          <Ligne libelle={t('roles.titre')} valeur={roles || '—'} />
           <Ligne libelle={t('profil.perimetre')} valeur={nomPays} />
           <Ligne libelle={t('accueil.versionClient')} valeur={VERSION_APP} derniere />
         </Carte>
@@ -131,6 +140,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   barre: { height: '100%', borderRadius: 999, backgroundColor: marque.orange },
+  pastilles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  pastille: {
+    color: '#FFFFFF',
+    fontFamily: police.texteMoyen,
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,.14)',
+  },
   contenu: { padding: 16, gap: 12, paddingBottom: 24 },
   langues: { flexDirection: 'row', gap: 8 },
   langue: {

@@ -4,7 +4,7 @@ Toutes ces vues héritent de VuePerimetre : un compte hors du périmètre répon
 """
 
 from django.core.exceptions import ValidationError
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
@@ -17,14 +17,29 @@ from apps.perimetre.matrice import Action
 from apps.perimetre.perimetre import Perimetre, calculer_perimetre
 from apps.perimetre.vues import ENTETE_PAYS, VuePerimetre
 from apps.socle.erreurs import ErreurMetier
+from apps.socle.models import Pays
+from apps.socle.services import aujourdhui
 
 from . import services
-from .models import ROLES_DESIGNES_PAR_LE_SIEGE, ROLES_SANS_PAYS, Role, RoleUtilisateur, Utilisateur
+from .models import (
+    ROLES_DESIGNES_PAR_LE_SIEGE,
+    ROLES_SANS_PAYS,
+    AffectationPays,
+    Role,
+    RoleUtilisateur,
+    Transfert,
+    Utilisateur,
+)
 from .serializers_comptes import (
+    AffectationCreationSerializer,
+    AffectationSerializer,
     AttributionRoleSerializer,
     CreationUtilisateurSerializer,
+    FinAffectationSerializer,
     PerimetreSerializer,
     RoleSerializer,
+    TransfertCreationSerializer,
+    TransfertSerializer,
     UtilisateurSerializer,
 )
 
@@ -39,7 +54,22 @@ def _comptes_du_perimetre(perimetre: Perimetre):
         return qs.order_by("last_name", "first_name")
     if perimetre.pays_actif is None:
         return qs.none()
-    return qs.filter(pays_principal=perimetre.pays_actif).order_by("last_name", "first_name")
+    # Comptes du pays, et comptes d'autres pays affectés ici aujourd'hui (ORG-009).
+    jour = aujourdhui(perimetre.pays_actif)
+    affectes = AffectationPays.objects.filter(pays=perimetre.pays_actif, debut__lte=jour).filter(
+        Q(fin__isnull=True) | Q(fin__gt=jour)
+    )
+    return (
+        qs.filter(Q(pays_principal=perimetre.pays_actif) | Q(pk__in=affectes.values("utilisateur")))
+        .distinct()
+        .order_by("last_name", "first_name")
+    )
+
+
+def _roles_du_perimetre(perimetre: Perimetre, qs):
+    """Depuis un pays actif, seuls les rôles de ce pays : un compte affecté ailleurs garde
+    ses rôles d'origine hors de portée de l'administrateur du pays d'accueil (ORG-009)."""
+    return qs if perimetre.pays_actif is None else qs.filter(pays=perimetre.pays_actif)
 
 
 def _verifier_droit_sur_role(perimetre: Perimetre, role: str) -> None:
@@ -56,6 +86,9 @@ class VueComptes(VuePerimetre):
     def selection(self, perimetre):
         return _comptes_du_perimetre(perimetre)
 
+    def contexte(self) -> dict:
+        return {"pays": self.perimetre.pays_actif}
+
     def compte_vise(self) -> Utilisateur:
         return get_object_or_404(self.get_queryset(), pk=self.kwargs["id"])
 
@@ -65,7 +98,9 @@ class UtilisateursVue(VueComptes):
 
     @extend_schema(responses=UtilisateurSerializer(many=True), operation_id="utilisateurs_liste")
     def get(self, request):
-        return Response(UtilisateurSerializer(self.get_queryset(), many=True).data)
+        return Response(
+            UtilisateurSerializer(self.get_queryset(), many=True, context=self.contexte()).data
+        )
 
     @extend_schema(
         request=CreationUtilisateurSerializer,
@@ -94,7 +129,10 @@ class UtilisateursVue(VueComptes):
                 champs=getattr(erreur, "message_dict", {}),
             ) from erreur
         services.demander_reinitialisation(compte, par_administrateur=True)
-        return Response(UtilisateurSerializer(compte).data, status=status.HTTP_201_CREATED)
+        return Response(
+            UtilisateurSerializer(compte, context=self.contexte()).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class UtilisateurVue(VueComptes):
@@ -102,7 +140,7 @@ class UtilisateurVue(VueComptes):
 
     @extend_schema(responses=UtilisateurSerializer, operation_id="utilisateur_detail")
     def get(self, request, id):
-        return Response(UtilisateurSerializer(self.compte_vise()).data)
+        return Response(UtilisateurSerializer(self.compte_vise(), context=self.contexte()).data)
 
 
 class UtilisateurActionVue(VueComptes):
@@ -127,7 +165,7 @@ class UtilisateurActionVue(VueComptes):
         else:
             services.demander_reinitialisation(compte, par_administrateur=True)
         compte.refresh_from_db()
-        return Response(UtilisateurSerializer(compte).data)
+        return Response(UtilisateurSerializer(compte, context=self.contexte()).data)
 
 
 class RolesUtilisateurVue(VueComptes):
@@ -138,8 +176,11 @@ class RolesUtilisateurVue(VueComptes):
     @extend_schema(responses=RoleSerializer(many=True), operation_id="roles_liste")
     def get(self, request, id):
         compte = self.compte_vise()
-        roles = RoleUtilisateur.objects.select_related("pays", "attribue_par", "retire_par").filter(
-            utilisateur=compte
+        roles = _roles_du_perimetre(
+            self.perimetre,
+            RoleUtilisateur.objects.select_related("pays", "attribue_par", "retire_par").filter(
+                utilisateur=compte
+            ),
         )
         return Response(RoleSerializer(roles, many=True).data)
 
@@ -154,7 +195,12 @@ class RolesUtilisateurVue(VueComptes):
         donnees.is_valid(raise_exception=True)
         role = donnees.validated_data["role"]
         _verifier_droit_sur_role(self.perimetre, role)
-        pays = None if role in ROLES_SANS_PAYS else compte.pays_principal
+        # Rôle de pays : dans le pays actif (pays principal ou pays d'affectation du compte).
+        pays = (
+            None
+            if role in ROLES_SANS_PAYS
+            else (self.perimetre.pays_actif or compte.pays_principal)
+        )
         attribue = services.attribuer_role(compte, role, pays, par=request.user)
         return Response(RoleSerializer(attribue).data, status=status.HTTP_201_CREATED)
 
@@ -165,8 +211,11 @@ class RetraitRoleVue(VuePerimetre):
 
     def selection(self, perimetre):
         comptes = _comptes_du_perimetre(perimetre)
-        return RoleUtilisateur.objects.select_related("pays", "utilisateur").filter(
-            utilisateur__in=comptes
+        return _roles_du_perimetre(
+            perimetre,
+            RoleUtilisateur.objects.select_related("pays", "utilisateur").filter(
+                utilisateur__in=comptes
+            ),
         )
 
     @extend_schema(request=None, responses=RoleSerializer, operation_id="role_retirer")
@@ -197,6 +246,99 @@ class DesignationsVue(VuePerimetre):
     def get(self, request, code):
         roles = self.get_queryset().filter(pays__code=code.upper())
         return Response(RoleSerializer(roles, many=True).data)
+
+
+def _pays_cible(code: str) -> Pays:
+    pays = Pays.objects.filter(code=code.upper()).exclude(statut=Pays.Statut.ARCHIVE).first()
+    if pays is None:
+        raise ErreurMetier("pays_inconnu", _("Pays inconnu ou archivé."))
+    return pays
+
+
+class AffectationsVue(VueComptes):
+    """Affectations d'un compte dans d'autres pays (ORG-009) : le siège les accorde."""
+
+    actions = {"GET": Action.UTILISATEURS_LIRE, "POST": Action.AFFECTATIONS_GERER}
+
+    @extend_schema(responses=AffectationSerializer(many=True), operation_id="affectations_liste")
+    def get(self, request, id):
+        compte = self.compte_vise()
+        affectations = AffectationPays.objects.select_related(
+            "pays", "accorde_par", "retire_par"
+        ).filter(utilisateur=compte)
+        pays = self.perimetre.pays_actif
+        if pays is not None and compte.pays_principal_id != pays.pk:
+            affectations = affectations.filter(pays=pays)
+        return Response(AffectationSerializer(affectations, many=True).data)
+
+    @extend_schema(
+        request=AffectationCreationSerializer,
+        responses={201: AffectationSerializer},
+        operation_id="affectation_accorder",
+    )
+    def post(self, request, id):
+        compte = self.compte_vise()
+        donnees = AffectationCreationSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        v = donnees.validated_data
+        affectation = services.accorder_affectation(
+            compte, _pays_cible(v["pays"]), v["role"], v["motif"],
+            par=request.user, debut=v.get("debut"), fin=v.get("fin"),
+        )  # fmt: skip
+        return Response(AffectationSerializer(affectation).data, status=status.HTTP_201_CREATED)
+
+
+class AffectationFinVue(VuePerimetre):
+    serializer_class = AffectationSerializer
+    actions = {"POST": Action.AFFECTATIONS_GERER}
+
+    def selection(self, perimetre):
+        return AffectationPays.objects.select_related("pays", "utilisateur").filter(
+            utilisateur__in=_comptes_du_perimetre(perimetre)
+        )
+
+    @extend_schema(
+        request=FinAffectationSerializer,
+        responses=AffectationSerializer,
+        operation_id="affectation_terminer",
+    )
+    def post(self, request, id):
+        affectation = get_object_or_404(self.get_queryset(), pk=id)
+        donnees = FinAffectationSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        terminee = services.terminer_affectation(
+            affectation, par=request.user, fin=donnees.validated_data.get("fin")
+        )
+        return Response(AffectationSerializer(terminee).data)
+
+
+class TransfertsVue(VueComptes):
+    """Transferts d'un compte vers un autre pays (ORG-010) : le siège les autorise."""
+
+    actions = {"GET": Action.UTILISATEURS_LIRE, "POST": Action.AFFECTATIONS_GERER}
+
+    @extend_schema(responses=TransfertSerializer(many=True), operation_id="transferts_liste")
+    def get(self, request, id):
+        compte = self.compte_vise()
+        transferts = Transfert.objects.select_related(
+            "pays_origine", "pays_destination", "autorise_par"
+        ).filter(utilisateur=compte)
+        return Response(TransfertSerializer(transferts, many=True).data)
+
+    @extend_schema(
+        request=TransfertCreationSerializer,
+        responses={201: TransfertSerializer},
+        operation_id="transfert_autoriser",
+    )
+    def post(self, request, id):
+        compte = self.compte_vise()
+        donnees = TransfertCreationSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        v = donnees.validated_data
+        transfert = services.transferer(
+            compte, _pays_cible(v["pays"]), v["motif"], par=request.user, role=v.get("role")
+        )
+        return Response(TransfertSerializer(transfert).data, status=status.HTTP_201_CREATED)
 
 
 class PerimetreVue(APIView):

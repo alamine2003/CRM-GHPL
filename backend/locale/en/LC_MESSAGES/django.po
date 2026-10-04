@@ -4,18 +4,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 10:43+0000\n"
+"POT-Creation-Date: 2026-10-04 11:48+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: apps/identite/courriels.py:18
 msgid "INNOV CRM — réinitialisation de votre mot de passe"
 msgstr "INNOV CRM — reset your password"
 
-#: apps/identite/courriels.py:20
 #, python-format
 msgid ""
 "Bonjour %(prenom)s,\n"
@@ -32,11 +30,9 @@ msgstr ""
 "\n"
 "The link works only once. If you did not request this, ignore this message: your current password remains valid."
 
-#: apps/identite/courriels.py:31
 msgid "INNOV CRM — compte verrouillé temporairement"
 msgstr "INNOV CRM — account temporarily locked"
 
-#: apps/identite/courriels.py:33
 #, python-format
 msgid ""
 "Bonjour %(prenom)s,\n"
@@ -47,85 +43,204 @@ msgstr ""
 "\n"
 "After several wrong passwords, your account is locked for %(minutes)s minutes. If this was not you, tell your country administrator."
 
-#: apps/identite/services.py:58
 msgid "Un compte nominatif a un prénom et un nom (USR-001)."
 msgstr "A named account has a first name and a last name (USR-001)."
 
-#: apps/identite/services.py:100
 msgid "Ce compte est désactivé. Contactez votre administrateur pays."
 msgstr "This account is disabled. Contact your country administrator."
 
-#: apps/identite/services.py:106
 #, python-format
 msgid ""
 "Le pays %(pays)s est suspendu : la connexion est momentanément impossible."
 msgstr ""
 "The country %(pays)s is suspended: sign-in is temporarily unavailable."
 
-#: apps/identite/services.py:108
 #, python-format
 msgid "Le pays %(pays)s est archivé : la connexion n'est plus possible."
 msgstr "The country %(pays)s is archived: sign-in is no longer possible."
 
-#: apps/identite/services.py:132
 msgid "Identifiant ou mot de passe incorrect."
 msgstr "Incorrect username or password."
 
-#: apps/identite/services.py:140
 msgid "Trop d'essais : compte verrouillé temporairement. Réessayez plus tard."
 msgstr "Too many attempts: account temporarily locked. Try again later."
 
-#: apps/identite/services.py:228 apps/identite/views.py:106
-#: apps/socle/erreurs.py:29
 msgid "Session invalide ou expirée."
 msgstr "Invalid or expired session."
 
-#: apps/identite/services.py:233
 msgid "Votre session a expiré. Reconnectez-vous."
 msgstr "Your session has expired. Please sign in again."
 
-#: apps/identite/services.py:314
 msgid ""
 "Ce lien est invalide, déjà utilisé ou expiré. Faites une nouvelle demande."
 msgstr ""
 "This link is invalid, already used or expired. Please make a new request."
 
-#: apps/identite/services.py:325
 msgid "Le mot de passe actuel est incorrect."
 msgstr "The current password is incorrect."
 
-#: apps/identite/views.py:100
+msgid "Rôle inconnu."
+msgstr "Unknown role."
+
+msgid "Ce rôle est réservé aux comptes du siège."
+msgstr "This role is reserved for headquarters accounts."
+
+msgid "Ce rôle s'exerce dans un pays."
+msgstr "This role is exercised in a country."
+
+msgid ""
+"Ce rôle doit porter sur le pays principal de l'utilisateur ou un pays "
+"affecté."
+msgstr ""
+"This role must apply to the user's main country or an assigned country."
+
+msgid "Ce compte est désactivé."
+msgstr "This account is disabled."
+
+msgid "Ce rôle est déjà attribué."
+msgstr "This role is already assigned."
+
+msgid "Ce rôle est déjà terminé."
+msgstr "This role has already ended."
+
+msgid "La fin doit suivre le début du rôle."
+msgstr "The end must come after the start of the role."
+
+msgid "Un compte du siège voit déjà tous les pays."
+msgstr "A headquarters account already sees every country."
+
+msgid "C'est déjà le pays principal de cet utilisateur."
+msgstr "This is already the user's main country."
+
+msgid "Ce rôle ne s'exerce pas dans un pays."
+msgstr "This role is not exercised in a country."
+
+msgid "Le motif est obligatoire."
+msgstr "A reason is required."
+
+msgid "Une affectation ne peut pas commencer dans le passé."
+msgstr "An assignment cannot start in the past."
+
+msgid "La fin doit suivre le début."
+msgstr "The end must come after the start."
+
+msgid "Une affectation dans ce pays est déjà en cours ou prévue."
+msgstr "An assignment in this country is already ongoing or planned."
+
+msgid "Cette affectation est déjà terminée."
+msgstr "This assignment has already ended."
+
+msgid "La fin ne peut pas être dans le passé."
+msgstr "The end cannot be in the past."
+
+msgid "Un compte du siège n'a pas de pays principal."
+msgstr "A headquarters account has no main country."
+
+msgid "L'utilisateur est déjà dans ce pays."
+msgstr "The user is already in this country."
+
 msgid "En-tête X-Innov-Client manquant."
 msgstr "Missing X-Innov-Client header."
 
-#: apps/socle/erreurs.py:26
-msgid "Authentification requise."
-msgstr "Authentication required."
+msgid "Opération inconnue."
+msgstr "Unknown operation."
 
-#: apps/socle/erreurs.py:31
+msgid "Vous ne pouvez pas suspendre votre propre compte."
+msgstr "You cannot suspend your own account."
+
+msgid "Vous ne pouvez pas retirer votre propre rôle d'administrateur."
+msgstr "You cannot remove your own administrator role."
+
+msgid "Pays inconnu ou archivé."
+msgstr "Unknown or archived country."
+
+msgid "Ce libellé ou ce code est déjà utilisé."
+msgstr "This label or code is already in use."
+
+msgid "Ce champ est obligatoire."
+msgstr "This field is required."
+
+msgid "Élément inconnu ou archivé dans ce pays."
+msgstr "Unknown or archived item in this country."
+
+msgid "Un élément archivé ne se modifie plus."
+msgstr "An archived item can no longer be changed."
+
+msgid "Archivez d'abord les réseaux de cette division."
+msgstr "Archive this division's networks first."
+
+msgid "Archivez d'abord les secteurs de cette zone."
+msgstr "Archive this zone's sectors first."
+
+msgid "Terminez d'abord l'occupation de ce poste."
+msgstr "End this position's occupancy first."
+
+msgid "Type de poste inconnu."
+msgstr "Unknown position type."
+
+msgid "Ce lien est déjà terminé."
+msgstr "This link has already ended."
+
+msgid "La fin ne peut pas précéder le début."
+msgstr "The end cannot precede the start."
+
+msgid "Ce poste est archivé."
+msgstr "This position is archived."
+
+msgid "Seul un délégué ou un superviseur de ce pays peut occuper un poste."
+msgstr ""
+"Only a representative or a supervisor of this country can hold a position."
+
+msgid "Ce poste est déjà occupé à cette date."
+msgstr "This position is already held on that date."
+
+msgid "Cette personne occupe déjà ce poste."
+msgstr "This person already holds this position."
+
+msgid "Seul un superviseur ou un DM de ce pays peut être choisi."
+msgstr "Only a supervisor or a DM of this country can be chosen."
+
+msgid "Un rattachement commence déjà à cette date ou après."
+msgstr "A reporting line already starts on or after this date."
+
+msgid "Ce réseau est archivé."
+msgstr "This network is archived."
+
+msgid "Seul un DF ou un DM de ce pays a un périmètre de réseaux."
+msgstr "Only a DF or a DM of this country has a network scope."
+
+msgid "Ce réseau est déjà dans le périmètre."
+msgstr "This network is already in the scope."
+
+msgid "Choisissez d'abord un pays."
+msgstr "Choose a country first."
+
+msgid "Personne inconnue dans ce pays."
+msgstr "Unknown person in this country."
+
 msgid "Action non autorisée."
 msgstr "Action not allowed."
 
-#: apps/socle/erreurs.py:32
+msgid "Vous n'avez pas accès à ce pays."
+msgstr "You do not have access to this country."
+
+msgid "Authentification requise."
+msgstr "Authentication required."
+
 msgid "Ressource introuvable."
 msgstr "Resource not found."
 
-#: apps/socle/erreurs.py:35
 msgid "Trop de tentatives, réessayez plus tard."
 msgstr "Too many attempts, try again later."
 
-#: apps/socle/erreurs.py:37
 msgid "Données invalides."
 msgstr "Invalid data."
 
-#: apps/socle/views.py:46
 msgid "Bienvenue dans INNOV CRM."
 msgstr "Welcome to INNOV CRM."
 
-#: config/settings.py:119
 msgid "Français"
 msgstr "French"
 
-#: config/settings.py:119
 msgid "Anglais"
 msgstr "English"

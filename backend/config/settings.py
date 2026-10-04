@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "apps.socle",
     "apps.identite",
     "apps.perimetre",
+    "apps.organisation",
 ]
 
 AUTH_USER_MODEL = "identite.Utilisateur"
