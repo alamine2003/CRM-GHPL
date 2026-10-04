@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.1.4
+  version: 0.1.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -632,6 +632,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/Etablissement'
           description: ''
+  /api/v1/etablissements/{id}/exercices/:
+    get:
+      operationId: etablissement_exercices
+      description: |-
+        Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+        l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+        fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Exercice'
+          description: ''
   /api/v1/etablissements/{id}/valider/:
     post:
       operationId: etablissement_valider
@@ -685,6 +712,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyntheseEtablissements'
+          description: ''
+  /api/v1/exercices/{id}/:
+    patch:
+      operationId: exercice_modifier
+      description: |-
+        Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+        l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+        fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - exercices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationExercice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationExercice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationExercice'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exercice'
+          description: ''
+  /api/v1/exercices/{id}/terminer/:
+    post:
+      operationId: exercice_terminer
+      description: |-
+        Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+        l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+        fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - exercices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinExercice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FinExercice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FinExercice'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exercice'
           description: ''
   /api/v1/exploitation/:
     get:
@@ -1985,6 +2084,69 @@ paths:
               schema:
                 $ref: '#/components/schemas/Prospect'
           description: ''
+  /api/v1/prospects/{id}/exercices/:
+    get:
+      operationId: prospect_exercices
+      description: |-
+        Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+        l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+        fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - prospects
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Exercice'
+          description: ''
+    post:
+      operationId: prospect_exercice_creer
+      description: |-
+        Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+        l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+        fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - prospects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieExercice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieExercice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieExercice'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exercice'
+          description: ''
   /api/v1/prospects/{id}/valider/:
     post:
       operationId: prospect_valider
@@ -3249,6 +3411,37 @@ components:
       - type
       - type_code
       - type_libelle
+    EtablissementResume:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        nom:
+          type: string
+          maxLength: 160
+        type_code:
+          type: string
+        type_libelle:
+          type: string
+        secteur:
+          type: string
+        localite:
+          type: string
+          nullable: true
+        a_coordonnees:
+          type: boolean
+          readOnly: true
+        statut:
+          $ref: '#/components/schemas/StatutFicheEnum'
+      required:
+      - a_coordonnees
+      - id
+      - nom
+      - secteur
+      - type_code
+      - type_libelle
     EtapeDoubleAuth:
       type: object
       properties:
@@ -3340,6 +3533,43 @@ components:
       - role_contourne
       - tables_attendues
       - tables_protegees
+    Exercice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        prospect:
+          $ref: '#/components/schemas/ProspectResume'
+        etablissement:
+          $ref: '#/components/schemas/EtablissementResume'
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+          nullable: true
+        actif:
+          type: boolean
+          readOnly: true
+        principal:
+          type: boolean
+        presence:
+          type: string
+          maxLength: 120
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actif
+      - cree_le
+      - debut
+      - etablissement
+      - id
+      - prospect
     Fin:
       type: object
       properties:
@@ -3347,6 +3577,12 @@ components:
           type: string
           format: date
     FinAffectation:
+      type: object
+      properties:
+        fin:
+          type: string
+          format: date
+    FinExercice:
       type: object
       properties:
         fin:
@@ -3760,6 +3996,14 @@ components:
       type: object
       properties:
         libelle:
+          type: string
+          maxLength: 120
+    PatchedModificationExercice:
+      type: object
+      properties:
+        principal:
+          type: boolean
+        presence:
           type: string
           maxLength: 120
     PatchedModificationPoste:
@@ -4286,11 +4530,17 @@ components:
         modifiable:
           type: boolean
           readOnly: true
+        lieu_principal:
+          allOf:
+          - $ref: '#/components/schemas/Lieu'
+          nullable: true
+          readOnly: true
       required:
       - cree_le
       - cree_par
       - grade
       - id
+      - lieu_principal
       - localite
       - modifiable
       - nom
@@ -4299,6 +4549,37 @@ components:
       - secteur
       - specialite
       - type
+      - type_libelle
+    ProspectResume:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        civilite:
+          oneOf:
+          - $ref: '#/components/schemas/CiviliteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        prenom:
+          type: string
+          maxLength: 80
+        nom:
+          type: string
+          maxLength: 80
+        type_libelle:
+          type: string
+        specialite_libelle:
+          type: string
+          nullable: true
+        potentiel:
+          $ref: '#/components/schemas/PotentielEnum'
+        statut:
+          $ref: '#/components/schemas/StatutFicheEnum'
+      required:
+      - id
+      - nom
+      - potentiel
       - type_libelle
     Rafraichissement:
       type: object
@@ -4498,6 +4779,23 @@ components:
         telephone:
           type: string
           maxLength: 30
+    SaisieExercice:
+      type: object
+      properties:
+        etablissement:
+          type: string
+          format: uuid
+        debut:
+          type: string
+          format: date
+        principal:
+          type: boolean
+          nullable: true
+        presence:
+          type: string
+          maxLength: 120
+      required:
+      - etablissement
     SaisieProspect:
       type: object
       properties:
@@ -4760,11 +5058,15 @@ components:
           type: object
           additionalProperties:
             type: integer
+        sans_lieu:
+          type: integer
+          description: Fiches actives sans lieu d'exercice en cours.
       required:
       - a_valider
       - actifs
       - mes_a_valider
       - potentiels
+      - sans_lieu
     Transfert:
       type: object
       properties:

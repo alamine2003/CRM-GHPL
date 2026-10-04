@@ -421,6 +421,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/etablissements/{id}/exercices/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+     *     l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+     *     fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+     */
+    get: operations['etablissement_exercices'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/etablissements/{id}/valider/': {
     parameters: {
       query?: never;
@@ -467,6 +488,48 @@ export interface paths {
     get: operations['etablissements_synthese'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/exercices/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /**
+     * @description Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+     *     l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+     *     fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+     */
+    patch: operations['exercice_modifier'];
+    trace?: never;
+  };
+  '/api/v1/exercices/{id}/terminer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+     *     l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+     *     fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+     */
+    post: operations['exercice_terminer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1128,6 +1191,32 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/prospects/{id}/exercices/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+     *     l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+     *     fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+     */
+    get: operations['prospect_exercices'];
+    put?: never;
+    /**
+     * @description Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+     *     l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+     *     fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+     */
+    post: operations['prospect_exercice_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/prospects/{id}/valider/': {
     parameters: {
       query?: never;
@@ -1703,6 +1792,17 @@ export interface components {
       valide_le?: string | null;
       readonly modifiable: boolean;
     };
+    EtablissementResume: {
+      /** Format: uuid */
+      readonly id: string;
+      nom: string;
+      type_code: string;
+      type_libelle: string;
+      secteur: string;
+      localite?: string | null;
+      readonly a_coordonnees: boolean;
+      statut?: components['schemas']['StatutFicheEnum'];
+    };
     EtapeDoubleAuth: {
       /** @description « code_requis » : envoyer le code à connexion/code/. */
       etape: string;
@@ -1739,11 +1839,30 @@ export interface components {
       /** @description Vrai si le rôle PostgreSQL ignore la sécurité au niveau des lignes. */
       role_contourne: boolean;
     };
+    Exercice: {
+      /** Format: uuid */
+      readonly id: string;
+      prospect: components['schemas']['ProspectResume'];
+      etablissement: components['schemas']['EtablissementResume'];
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin?: string | null;
+      readonly actif: boolean;
+      principal?: boolean;
+      presence?: string;
+      /** Format: date-time */
+      readonly cree_le: string;
+    };
     Fin: {
       /** Format: date */
       fin?: string;
     };
     FinAffectation: {
+      /** Format: date */
+      fin?: string;
+    };
+    FinExercice: {
       /** Format: date */
       fin?: string;
     };
@@ -1921,6 +2040,10 @@ export interface components {
     };
     PatchedLibelle: {
       libelle?: string;
+    };
+    PatchedModificationExercice: {
+      principal?: boolean;
+      presence?: string;
     };
     PatchedModificationPoste: {
       libelle?: string;
@@ -2120,6 +2243,18 @@ export interface components {
       /** Format: date-time */
       valide_le?: string | null;
       readonly modifiable: boolean;
+      readonly lieu_principal: components['schemas']['Lieu'] | null;
+    };
+    ProspectResume: {
+      /** Format: uuid */
+      readonly id: string;
+      civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
+      prenom?: string;
+      nom: string;
+      type_libelle: string;
+      specialite_libelle?: string | null;
+      potentiel: components['schemas']['PotentielEnum'];
+      statut?: components['schemas']['StatutFicheEnum'];
     };
     Rafraichissement: {
       /** @description Application mobile uniquement ; le portail utilise le cookie. */
@@ -2217,6 +2352,14 @@ export interface components {
       /** Format: double */
       longitude?: number | null;
       telephone?: string;
+    };
+    SaisieExercice: {
+      /** Format: uuid */
+      etablissement: string;
+      /** Format: date */
+      debut?: string;
+      principal?: boolean | null;
+      presence?: string;
     };
     SaisieProspect: {
       civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
@@ -2335,6 +2478,8 @@ export interface components {
       potentiels: {
         [key: string]: number;
       };
+      /** @description Fiches actives sans lieu d'exercice en cours. */
+      sans_lieu: number;
     };
     Transfert: {
       /** Format: uuid */
@@ -3049,6 +3194,27 @@ export interface operations {
       };
     };
   };
+  etablissement_exercices: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Exercice'][];
+        };
+      };
+    };
+  };
   etablissement_valider: {
     parameters: {
       query?: never;
@@ -3104,6 +3270,60 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SyntheseEtablissements'];
+        };
+      };
+    };
+  };
+  exercice_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationExercice'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationExercice'];
+        'multipart/form-data': components['schemas']['PatchedModificationExercice'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Exercice'];
+        };
+      };
+    };
+  };
+  exercice_terminer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['FinExercice'];
+        'application/x-www-form-urlencoded': components['schemas']['FinExercice'];
+        'multipart/form-data': components['schemas']['FinExercice'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Exercice'];
         };
       };
     };
@@ -4324,6 +4544,54 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Prospect'];
+        };
+      };
+    };
+  };
+  prospect_exercices: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Exercice'][];
+        };
+      };
+    };
+  };
+  prospect_exercice_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieExercice'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieExercice'];
+        'multipart/form-data': components['schemas']['SaisieExercice'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Exercice'];
         };
       };
     };

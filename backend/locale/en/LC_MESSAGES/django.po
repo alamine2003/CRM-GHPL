@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 16:47+0000\n"
+"POT-Creation-Date: 2026-10-04 17:04+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -479,6 +479,22 @@ msgstr "The institution type is required."
 
 msgid "Indiquez la latitude et la longitude, ou aucune des deux."
 msgstr "Enter both latitude and longitude, or neither."
+
+msgid "Établissement inconnu dans ce pays."
+msgstr "Unknown facility in this country."
+
+msgid "Un exercice relie une fiche prospect et un établissement en service."
+msgstr ""
+"A practice links a prospect record and a facility that are in service."
+
+msgid "Ce prospect exerce déjà dans cet établissement."
+msgstr "This prospect already practises in this facility."
+
+msgid "Cet exercice est terminé."
+msgstr "This practice has ended."
+
+msgid "La fin ne peut précéder le début de l'exercice."
+msgstr "The end cannot precede the start of the practice."
 
 msgid "Seul l'administrateur pays modifie une fiche commune."
 msgstr "Only the country administrator edits a shared record."

@@ -21,6 +21,7 @@ import SearchRounded from '@mui/icons-material/SearchRounded';
 import StarRounded from '@mui/icons-material/StarRounded';
 import TaskAltRounded from '@mui/icons-material/TaskAltRounded';
 import TodayRounded from '@mui/icons-material/TodayRounded';
+import WrongLocationRounded from '@mui/icons-material/WrongLocationRounded';
 import VerifiedRounded from '@mui/icons-material/VerifiedRounded';
 import {
   Alert,
@@ -48,7 +49,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
-import { ChampsLieu, ChoixExercice } from '../composants/Lieu';
+import { LieuxExercice } from '../composants/Exercices';
+import { ChampsLieu, ChoixActivite } from '../composants/Lieu';
 import {
   EnTeteCarte,
   EnTetePage,
@@ -262,7 +264,7 @@ function DialogueProspect({
             </MenuItem>
           ))}
         </TextField>
-        <ChoixExercice valeur={f.activite ?? ''} changer={(v) => changer('activite', v)} />
+        <ChoixActivite valeur={f.activite ?? ''} changer={(v) => changer('activite', v)} />
       </Stack>
       <ChampsLieu
         secteurs={secteurs.data ?? []}
@@ -530,9 +532,7 @@ function FicheProspect({
             />
           </Section>
           <Section titre={t('prospect.fiche.etablissements')} icone={<ApartmentRounded />}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {t('prospect.fiche.etablissementsTexte')}
-            </Typography>
+            <LieuxExercice prospect={p} />
           </Section>
           <Section titre={t('prospect.fiche.visites')} icone={<TodayRounded />}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -663,6 +663,13 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
           valeur={s ? s.potentiels.A : <Skeleton width={40} />}
           icone={<StarRounded />}
           ton="secondary"
+        />
+        <Tuile
+          libelle={t('prospect.chiffres.sansLieu')}
+          valeur={s ? s.sans_lieu : <Skeleton width={40} />}
+          icone={<WrongLocationRounded />}
+          ton="info"
+          detail={t('prospect.chiffres.sansLieuDetail')}
         />
       </GrilleTuiles>
       {perimetre.actions.includes('prospects.creer') && !perimetre.pays_actif && (
@@ -817,7 +824,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
                       >
                         {[
                           p.specialite_libelle ?? p.type_libelle,
-                          p.localite?.libelle ?? p.secteur?.libelle,
+                          p.lieu_principal?.libelle ?? p.localite?.libelle ?? p.secteur?.libelle,
                         ]
                           .filter(Boolean)
                           .join(' · ')}

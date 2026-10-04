@@ -1,4 +1,4 @@
-import type { Exercice, SecteurSaisie } from '@innov/api-client';
+import type { ActiviteExercice, SecteurSaisie } from '@innov/api-client';
 import {
   ListSubheader,
   MenuItem,
@@ -103,15 +103,15 @@ export function ChampsLieu({
   );
 }
 
-const EXERCICES: Exercice[] = ['hospitalier', 'prive'];
+const ACTIVITES: ActiviteExercice[] = ['hospitalier', 'prive'];
 
-/** Exercice hospitalier ou privé (H/P), tel que le terrain le distingue. */
-export function ChoixExercice({
+/** Activité hospitalière ou privée (H/P), telle que le terrain la distingue. */
+export function ChoixActivite({
   valeur,
   changer,
 }: {
-  valeur: Exercice | '';
-  changer: (v: Exercice | '') => void;
+  valeur: ActiviteExercice | '';
+  changer: (v: ActiviteExercice | '') => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -123,10 +123,10 @@ export function ChoixExercice({
         exclusive
         size="small"
         value={valeur}
-        onChange={(_, v: Exercice | null) => changer(v ?? '')}
+        onChange={(_, v: ActiviteExercice | null) => changer(v ?? '')}
         aria-label={t('lieu.exercice')}
       >
-        {EXERCICES.map((e) => (
+        {ACTIVITES.map((e) => (
           <ToggleButton key={e} value={e} sx={{ px: 2 }}>
             {t(`lieu.exercices.${e}`)}
           </ToggleButton>

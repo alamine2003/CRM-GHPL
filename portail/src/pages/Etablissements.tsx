@@ -13,16 +13,12 @@ import CloseRounded from '@mui/icons-material/CloseRounded';
 import EditRounded from '@mui/icons-material/EditRounded';
 import GpsFixedRounded from '@mui/icons-material/GpsFixedRounded';
 import HourglassTopRounded from '@mui/icons-material/HourglassTopRounded';
-import LocalHospitalRounded from '@mui/icons-material/LocalHospitalRounded';
-import LocalPharmacyRounded from '@mui/icons-material/LocalPharmacyRounded';
 import LocationOffRounded from '@mui/icons-material/LocationOffRounded';
 import MapRounded from '@mui/icons-material/MapRounded';
-import MedicalServicesRounded from '@mui/icons-material/MedicalServicesRounded';
 import MyLocationRounded from '@mui/icons-material/MyLocationRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import PlaceRounded from '@mui/icons-material/PlaceRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
-import StoreRounded from '@mui/icons-material/StoreRounded';
 import TaskAltRounded from '@mui/icons-material/TaskAltRounded';
 import ViewListRounded from '@mui/icons-material/ViewListRounded';
 import {
@@ -60,7 +56,9 @@ import {
   Tuile,
 } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
-import { ChampsLieu, ChoixExercice, SelectSecteur } from '../composants/Lieu';
+import { ProspectsExercant } from '../composants/Exercices';
+import IconeType from '../composants/IconeEtablissement';
+import { ChampsLieu, ChoixActivite, SelectSecteur } from '../composants/Lieu';
 import { depuis } from '../composants/formats';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
@@ -69,17 +67,6 @@ import { messageErreur, useSession } from '../contexteSession';
 const Carte = lazy(() => import('../composants/Carte'));
 
 type FiltreStatut = 'tous' | StatutFiche;
-
-/** Icône par type d'établissement ; une valeur ajoutée par le pays prend l'icône générique. */
-function IconeType({ code }: { code: string }) {
-  const icones: Record<string, ReactNode> = {
-    hopital: <LocalHospitalRounded />,
-    clinique: <MedicalServicesRounded />,
-    pharmacie: <LocalPharmacyRounded />,
-    grossiste: <StoreRounded />,
-  };
-  return <>{icones[code] ?? <ApartmentRounded />}</>;
-}
 
 function ChargementCarte({ hauteur }: { hauteur: number }) {
   return <Skeleton variant="rounded" height={hauteur} />;
@@ -205,7 +192,7 @@ function DialogueEtablissement({
           type="tel"
           fullWidth
         />
-        <ChoixExercice valeur={f.activite ?? ''} changer={(v) => changer('activite', v)} />
+        <ChoixActivite valeur={f.activite ?? ''} changer={(v) => changer('activite', v)} />
       </Stack>
 
       <Box
@@ -489,9 +476,7 @@ function FicheEtablissement({
             />
           </Section>
           <Section titre={t('etablissement.fiche.prospects')} icone={<PeopleAltRounded />}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {t('etablissement.fiche.prospectsTexte')}
-            </Typography>
+            <ProspectsExercant etablissement={e.id} />
           </Section>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {t('prospect.fiche.creePar', {

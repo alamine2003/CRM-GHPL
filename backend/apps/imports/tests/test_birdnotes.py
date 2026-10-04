@@ -15,7 +15,7 @@ from apps.imports.birdnotes import FichierInvalide, importer, lire_fichier, rapp
 from apps.imports.models import LotImport, ReferenceExterne
 from apps.organisation.models import Localite, Secteur
 from apps.perimetre.tests.conftest import client_de
-from apps.prospects.models import Etablissement, Prospect, StatutFiche
+from apps.prospects.models import Etablissement, Exercice, Prospect, StatutFiche
 from apps.referentiel.models import Portefeuille, Produit
 
 pytestmark = pytest.mark.django_db
@@ -95,14 +95,19 @@ def export() -> dict:
                     Grade="Professeur",
                     GSM="77 000 00 01",
                     Établissement="PHARMACIE TEST",
+                    **{"Date création": "2026-04-02"},
                 ),
                 prospect(2, "Fictive", "MEDECIN GENERALISTE", potentiel="X"),
                 prospect(3, "Sansnom", "MEDECIN GENERALISTE", Nom="", **{"Nom complet": ""}),
-                prospect(4, "Faux", "MEDECIN GENERALISTE", GSM="12"),
+                prospect(
+                    4, "Faux", "MEDECIN GENERALISTE", GSM="12", Établissement="CABINET DISPARU"
+                ),
                 # Titre à la place du prénom, localité qui n'en est pas une.
                 prospect(5, "MOUSSA DIOP", "INFIRMIER", Prénom="DR", Localité="INTERMEDIARE 1"),
                 # Même nom qu'une autre fiche une fois le titre retiré : homonymes.
-                prospect(6, "Fictif", "INFIRMIER", Prénom="Dr Awa"),
+                prospect(
+                    6, "Fictif", "INFIRMIER", Prénom="Dr Awa", Établissement="POSTE DE SANTE TEST"
+                ),
             ],  # fmt: skip
             "Prospects en attente": [
                 prospect(10, "Attente", "MEDECIN GENERALISTE"),
@@ -212,6 +217,26 @@ def test_un_reimport_ne_cree_rien_de_nouveau(monde):
             Produit.objects.count()) == avant  # fmt: skip
     assert "crees" not in lot.compteurs.get("prospects", {})
     assert lot.compteurs["prospects"]["existants"] == 6
+
+
+def test_les_exercices_viennent_de_l_etablissement_de_la_fiche(monde):
+    """PRP-004 : le prospect exerce dans l'établissement nommé sur sa fiche BirdNotes."""
+    sn, admin = monde["sn"], monde["admin.sn"]
+    lot = importer(sn, admin, contenu(), "export.json", simulation=False)
+    assert lot.compteurs["exercices"] == {
+        "crees": 2, "sans_etablissement": 3, "etablissement_non_repris": 1,
+    }  # fmt: skip
+    fictif = Prospect.objects.get(nom="FICTIF", prenom="Awa", civilite="pr")
+    exercice = Exercice.objects.get(prospect=fictif)
+    assert exercice.etablissement.nom == "PHARMACIE TEST" and exercice.principal
+    assert str(exercice.debut) == "2026-04-02"
+    # Un import antérieur à 0.1.5 n'avait pas d'exercices : le réimport les complète, une fois.
+    ReferenceExterne.objects.filter(entite="exercice").delete()
+    Exercice.objects.all().delete()
+    lot = importer(sn, admin, contenu(), "export.json", simulation=False)
+    assert lot.compteurs["exercices"]["crees"] == 2 and Exercice.objects.count() == 2
+    lot = importer(sn, admin, contenu(), "export.json", simulation=False)
+    assert "crees" not in lot.compteurs["exercices"] and Exercice.objects.count() == 2
 
 
 def test_api_reservee_a_l_administrateur_pays(monde):

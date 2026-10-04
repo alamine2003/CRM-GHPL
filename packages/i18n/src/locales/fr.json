@@ -709,7 +709,9 @@
       "aValider": "À valider",
       "mesAValider": "Mes fiches à valider",
       "potentielA": "Potentiel A",
-      "repartition": "A {{a}} · B {{b}} · C {{c}}"
+      "repartition": "A {{a}} · B {{b}} · C {{c}}",
+      "sansLieu": "Sans lieu d'exercice",
+      "sansLieuDetail": "Fiches actives à rattacher à un établissement"
     },
     "nouveau": "Nouveau prospect",
     "rechercher": "Nom, téléphone ou n° d'ordre",
@@ -767,8 +769,7 @@
     "fiche": {
       "identite": "Identité",
       "coordonnees": "Coordonnées",
-      "etablissements": "Établissements",
-      "etablissementsTexte": "Les lieux d'exercice, datés, arrivent en version 0.1.5.",
+      "etablissements": "Lieux d'exercice",
       "visites": "Mes visites",
       "visitesTexte": "Vos visites et rapports sur ce prospect arriveront avec les visites (0.4).",
       "creePar": "Créée par {{personne}} {{quand}}",
@@ -836,7 +837,6 @@
       "ouvrirCarte": "Ouvrir dans OpenStreetMap",
       "coordonnees": "Coordonnées",
       "prospects": "Prospects qui y exercent",
-      "prospectsTexte": "Les exercices datés prospect ↔ établissement arrivent en version 0.1.5.",
       "validee": "Fiche validée : elle est désormais commune."
     },
     "nombre_one": "{{count}} établissement",
@@ -854,10 +854,10 @@
     }
   },
   "lieu": {
-    "exercice": "Exercice",
+    "exercice": "Activité",
     "exercices": {
-      "hospitalier": "Hospitalier",
-      "prive": "Privé"
+      "hospitalier": "Hospitalière",
+      "prive": "Privée"
     },
     "lieu": "Lieu",
     "aucuneLocalite": "Aucune localité dans ce secteur : ajoutez-en dans Organisation."
@@ -915,7 +915,8 @@
       "etablissements": "Établissements",
       "prospects": "Prospects",
       "demandes_modification": "Demandes de modification",
-      "zones": "Zones"
+      "zones": "Zones",
+      "exercices": "Lieux d'exercice"
     },
     "actions": {
       "crees": "créés",
@@ -928,7 +929,9 @@
       "non_reprises": "reportées",
       "fictives_ignorees": "fictives ignorées",
       "localite_a_preciser": "localité à préciser",
-      "prenom_a_separer": "prénom à séparer"
+      "prenom_a_separer": "prénom à séparer",
+      "sans_etablissement": "sans établissement",
+      "etablissement_non_repris": "établissement non repris"
     },
     "niveaux": {
       "rejet": "Ligne écartée",
@@ -946,5 +949,30 @@
     "lance_other": "{{personne}} · {{quand}} · {{count}} anomalies",
     "confirmerTitre": "Importer pour de bon ?",
     "confirmerTexte": "{{prospects}} prospects et {{etablissements}} établissements seront créés, comme dans la simulation. Les fiches reprises restent modifiables et archivables ; elles ne se suppriment pas."
+  },
+  "exercice": {
+    "etablissement": "Établissement",
+    "aucunEtablissement": "Aucun établissement trouvé : créez-le d'abord dans Établissements.",
+    "ajouter": "Ajouter un lieu d'exercice",
+    "aide": "Le prospect y exerce à partir de cette date ; un prospect peut exercer dans plusieurs établissements.",
+    "depuis": "Depuis le",
+    "depuisLe": "Depuis le {{date}}",
+    "presence": "Jours et horaires de présence",
+    "presenceAide": "Facultatif, par exemple « lundi et jeudi matin ».",
+    "principalChoix": "Lieu principal : proposé en premier pour la planification",
+    "principal": "Principal",
+    "lieuPrincipal": "Lieu d'exercice principal",
+    "rendrePrincipal": "Définir comme lieu principal",
+    "terminer": "Terminer",
+    "terminerTitre": "Terminer l'exercice · {{etablissement}}",
+    "terminerAide": "Le prospect n'exerce plus dans cet établissement à partir de cette date. L'exercice reste dans l'historique.",
+    "jusquau": "À partir du",
+    "aucun": "Aucun lieu d'exercice en cours.",
+    "historique_one": "{{count}} exercice terminé",
+    "historique_other": "{{count}} exercices terminés",
+    "periode": "{{etablissement}} : du {{debut}} au {{fin}}",
+    "aucunProspect": "Aucun prospect n'y exerce pour l'instant.",
+    "nombreProspects_one": "{{count}} prospect y exerce",
+    "nombreProspects_other": "{{count}} prospects y exercent"
   }
 }

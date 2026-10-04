@@ -8,6 +8,7 @@ aucun téléphone, aucun courriel joignable (CA2).
 """
 
 import random
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import timedelta
 
@@ -18,7 +19,8 @@ from apps.identite.models import Role, Utilisateur
 from apps.identite.services import attribuer_role, creer_utilisateur
 from apps.organisation import services as org
 from apps.organisation.models import TypePoste
-from apps.prospects.services import creer_etablissement, creer_prospect
+from apps.prospects.models import Etablissement, Prospect
+from apps.prospects.services import creer_etablissement, creer_exercice, creer_prospect
 from apps.referentiel import services as ref
 from apps.referentiel.models import Valeur
 from apps.socle.services import aujourdhui, creer_pays
@@ -295,9 +297,43 @@ class Generateur:
             "postes": len(postes),
             "delegues": len(delegues),
             "produits": produits_crees,
-            "prospects": self.prospects(pays, volumes.prospects, localites, delegues[0]),
             "etablissements": self.etablissements(pays, secteurs_par_zone, localites, delegues[0]),
+            "prospects": self.prospects(pays, volumes.prospects, localites, delegues[0]),
         }
+        self.bilan.pays[code]["exercices"] = self.exercices(pays)
+
+    def exercices(self, pays) -> int:
+        """Lieux d'exercice fictifs (PRP-004) : chaque prospect exerce dans un établissement de
+        son secteur adapté à son métier (l'officine en pharmacie, la sage-femme en poste ou
+        centre de santé…), un sur quatre dans un second, depuis une date passée."""
+        a = self.alea
+        lieux_par_metier = {
+            "pharmacie": ("pharmacie",),
+            "paramedical": ("poste_sante", "centre_sante", "hopital"),
+            "medecin": ("cabinet", "clinique", "hopital", "centre_sante"),
+        }
+        etablissements = defaultdict(list)
+        for e in Etablissement.objects.filter(pays=pays).select_related("type"):
+            etablissements[(e.secteur_id, e.type.code)].append(e)
+        jour, nombre = aujourdhui(pays), 0
+        prospects = Prospect.objects.filter(pays=pays).select_related("type", "localite")
+        for prospect in prospects:
+            secteur = prospect.localite.secteur_id if prospect.localite else None
+            types = lieux_par_metier.get(prospect.type.code, ("cabinet",))
+            possibles = [e for t in types for e in etablissements[(secteur, t)]]
+            if not possibles:
+                continue
+            for etablissement in a.sample(
+                possibles, k=min(len(possibles), a.choices([1, 2], [3, 1])[0])
+            ):
+                creer_exercice(
+                    prospect,
+                    etablissement,
+                    prospect.cree_par,
+                    debut=jour - timedelta(days=a.randrange(30, 900)),
+                )
+                nombre += 1
+        return nombre
 
     def localites(self, secteurs_par_zone) -> dict:
         """Deux à quatre localités fictives par secteur (« Centre », « Nord »…) : le terrain

@@ -74,7 +74,12 @@ def senegal(monde):
 
     localite = org.creer_localite(secteur, "Louga Centre")
     lot = importer(sn, monde["admin.sn"], b'{"donnees": {}}', "vide.json", simulation=True)
+    from apps.prospects.services import creer_exercice
+
+    exercice = creer_exercice(prospect, etab, monde["admin.sn"])
     return {
+        "prospect-exercices": prospect.pk, "etablissement-exercices": etab.pk,
+        "exercice": exercice.pk, "exercice-terminer": exercice.pk,
         "localite": localite.pk, "localite-archiver": localite.pk,
         "import": lot.pk, "import-rapport": lot.pk,
         "etablissement": etab.pk, "etablissement-valider": etab.pk,

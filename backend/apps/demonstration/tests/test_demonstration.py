@@ -26,6 +26,12 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     # Des postes vacants et sans superviseur, pour montrer les alertes.
     assert Poste.objects.count() > Occupation.objects.count()
     assert Poste.objects.count() > Rattachement.objects.count()
+    # Prospects reliés à leurs lieux d'exercice (PRP-004), quelques-uns à plusieurs.
+    from apps.prospects.models import Exercice, Prospect
+
+    exercices = Exercice.objects.filter(fin__isnull=True)
+    assert exercices.values("prospect").distinct().count() > Prospect.objects.count() // 2
+    assert exercices.count() > exercices.values("prospect").distinct().count()
 
 
 def test_aucune_donnee_reelle(monkeypatch):

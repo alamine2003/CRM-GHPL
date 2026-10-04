@@ -709,7 +709,9 @@
       "aValider": "To validate",
       "mesAValider": "My records to validate",
       "potentielA": "Potential A",
-      "repartition": "A {{a}} · B {{b}} · C {{c}}"
+      "repartition": "A {{a}} · B {{b}} · C {{c}}",
+      "sansLieu": "No place of practice",
+      "sansLieuDetail": "Active records to link to a facility"
     },
     "nouveau": "New prospect",
     "rechercher": "Name, phone or licence no.",
@@ -767,8 +769,7 @@
     "fiche": {
       "identite": "Identity",
       "coordonnees": "Contact details",
-      "etablissements": "Institutions",
-      "etablissementsTexte": "Dated places of practice arrive in version 0.1.5.",
+      "etablissements": "Places of practice",
       "visites": "My visits",
       "visitesTexte": "Your visits and reports on this prospect will come with visits (0.4).",
       "creePar": "Created by {{personne}} {{quand}}",
@@ -836,7 +837,6 @@
       "ouvrirCarte": "Open in OpenStreetMap",
       "coordonnees": "Coordinates",
       "prospects": "Prospects practising here",
-      "prospectsTexte": "Dated prospect ↔ institution practices arrive in version 0.1.5.",
       "validee": "Record validated: it is now shared."
     },
     "nombre_one": "{{count}} institution",
@@ -854,7 +854,7 @@
     }
   },
   "lieu": {
-    "exercice": "Practice",
+    "exercice": "Practice setting",
     "exercices": {
       "hospitalier": "Hospital",
       "prive": "Private"
@@ -915,7 +915,8 @@
       "etablissements": "Facilities",
       "prospects": "Prospects",
       "demandes_modification": "Change requests",
-      "zones": "Zones"
+      "zones": "Zones",
+      "exercices": "Places of practice"
     },
     "actions": {
       "crees": "created",
@@ -928,7 +929,9 @@
       "non_reprises": "postponed",
       "fictives_ignorees": "placeholders ignored",
       "localite_a_preciser": "locality to specify",
-      "prenom_a_separer": "first name to separate"
+      "prenom_a_separer": "first name to separate",
+      "sans_etablissement": "no facility",
+      "etablissement_non_repris": "facility not imported"
     },
     "niveaux": {
       "rejet": "Row set aside",
@@ -946,5 +949,30 @@
     "lance_other": "{{personne}} · {{quand}} · {{count}} anomalies",
     "confirmerTitre": "Import for real?",
     "confirmerTexte": "{{prospects}} prospects and {{etablissements}} facilities will be created, as in the simulation. Imported records remain editable and archivable; they are never deleted."
+  },
+  "exercice": {
+    "etablissement": "Facility",
+    "aucunEtablissement": "No facility found: create it first in Facilities.",
+    "ajouter": "Add a place of practice",
+    "aide": "The prospect practises there from this date; a prospect can practise in several facilities.",
+    "depuis": "Since",
+    "depuisLe": "Since {{date}}",
+    "presence": "Days and hours of presence",
+    "presenceAide": "Optional, for example \"Monday and Thursday morning\".",
+    "principalChoix": "Main place: offered first for planning",
+    "principal": "Main",
+    "lieuPrincipal": "Main place of practice",
+    "rendrePrincipal": "Set as main place",
+    "terminer": "End",
+    "terminerTitre": "End the practice · {{etablissement}}",
+    "terminerAide": "The prospect no longer practises in this facility from this date. The practice stays in the history.",
+    "jusquau": "From",
+    "aucun": "No current place of practice.",
+    "historique_one": "{{count}} ended practice",
+    "historique_other": "{{count}} ended practices",
+    "periode": "{{etablissement}}: from {{debut}} to {{fin}}",
+    "aucunProspect": "No prospect practises here yet.",
+    "nombreProspects_one": "{{count}} prospect practises here",
+    "nombreProspects_other": "{{count}} prospects practise here"
   }
 }

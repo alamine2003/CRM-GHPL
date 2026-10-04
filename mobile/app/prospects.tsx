@@ -47,7 +47,9 @@ function LigneProspect({ prospect }: { prospect: Prospect }) {
       <View style={{ flex: 1 }}>
         <Texte variante="fort">{nom}</Texte>
         <Texte variante="discret">
-          {[prospect.type_libelle, prospect.specialite_libelle].filter(Boolean).join(' · ')}
+          {[prospect.specialite_libelle ?? prospect.type_libelle, prospect.lieu_principal?.libelle]
+            .filter(Boolean)
+            .join(' · ')}
         </Texte>
       </View>
       {prospect.statut === 'a_valider' && (

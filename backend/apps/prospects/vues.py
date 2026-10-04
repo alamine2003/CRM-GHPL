@@ -22,7 +22,7 @@ from apps.socle.erreurs import ErreurMetier
 
 from . import serializers as s
 from . import services
-from .models import Etablissement, Potentiel, StatutFiche
+from .models import Etablissement, Exercice, Potentiel, StatutFiche
 
 #: Résultats renvoyés par une recherche ; pagination complète en 0.1.7 (PRP-005).
 LIMITE = 100
@@ -32,8 +32,15 @@ class VueProspects(VuePerimetre):
     serializer_class = s.ProspectSerializer
 
     def selection(self, perimetre):
-        return services.prospects_visibles(perimetre).select_related(
-            "pays", "type", "specialite", "grade", "secteur", "localite", "cree_par"
+        en_cours = Exercice.objects.filter(fin__isnull=True).select_related("etablissement")
+        return (
+            services.prospects_visibles(perimetre)
+            .select_related(
+                "pays", "type", "specialite", "grade", "secteur", "localite", "cree_par"
+            )
+            .prefetch_related(
+                Prefetch("exercices", queryset=en_cours, to_attr="exercices_en_cours")
+            )
         )
 
     def get_serializer_context(self):
@@ -165,6 +172,9 @@ class SyntheseProspectsVue(VueProspects):
             .values_list("potentiel", "n")
         )
         chiffres["potentiels"] = {p: potentiels.get(p, 0) for p in Potentiel.values}
+        # Qualité des données (PRP-004) : fiches actives sans lieu d'exercice en cours.
+        en_cours = Exercice.objects.filter(fin__isnull=True).values("prospect_id")
+        chiffres["sans_lieu"] = qs.filter(statut=StatutFiche.ACTIF).exclude(pk__in=en_cours).count()
         return Response(chiffres)
 
 
@@ -313,3 +323,111 @@ class SecteursEtablissementsVue(VuePerimetre):
                    operation_id="etablissements_secteurs")  # fmt: skip
     def get(self, request):
         return Response(s.SecteurSaisieSerializer(self.get_queryset(), many=True).data)
+
+
+# --- Exercices (PRP-004) ---------------------------------------------------------------------
+
+
+class VueExercices(VuePerimetre):
+    """Lieux d'exercice des fiches visibles. Les gère qui peut modifier la fiche prospect :
+    l'administrateur pays, ou le délégué sur sa fiche encore à valider (RG-041). Sur une
+    fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8)."""
+
+    serializer_class = s.ExerciceSerializer
+
+    def selection(self, perimetre):
+        return Exercice.objects.filter(
+            prospect__in=services.prospects_visibles(perimetre)
+        ).select_related(
+            "pays", "prospect__type", "prospect__specialite", "etablissement__type",
+            "etablissement__secteur", "etablissement__localite",
+        )  # fmt: skip
+
+    def exiger_modification(self, prospect):
+        if not services.peut_modifier(self.perimetre, prospect):
+            raise ErreurMetier(
+                "modification_interdite",
+                _("Seul l'administrateur pays modifie une fiche commune."),
+                status.HTTP_403_FORBIDDEN,
+            )
+
+    def rendu(self, exercice, statut=status.HTTP_200_OK):
+        exercice = self.selection(self.perimetre).get(pk=exercice.pk)
+        return Response(self.get_serializer(exercice).data, status=statut)
+
+
+class ExercicesProspectVue(VueExercices):
+    actions = {"GET": Action.PROSPECTS_LIRE, "POST": Action.PROSPECTS_LIRE}
+
+    @extend_schema(responses=s.ExerciceSerializer(many=True), operation_id="prospect_exercices")
+    def get(self, request, id):
+        prospect = get_object_or_404(services.prospects_visibles(self.perimetre), pk=id)
+        exercices = sorted(
+            self.get_queryset().filter(prospect=prospect),
+            key=lambda e: (e.fin is not None, not e.principal, e.debut),
+        )
+        return Response(self.get_serializer(exercices, many=True).data)
+
+    @extend_schema(request=s.SaisieExerciceSerializer, responses={201: s.ExerciceSerializer},
+                   operation_id="prospect_exercice_creer")  # fmt: skip
+    def post(self, request, id):
+        prospect = get_object_or_404(services.prospects_visibles(self.perimetre), pk=id)
+        self.exiger_modification(prospect)
+        v = _lire(s.SaisieExerciceSerializer, request)
+        etablissement = (
+            services.fiches_visibles(Etablissement, self.perimetre)
+            .filter(pk=v["etablissement"])
+            .first()
+        )
+        if etablissement is None:
+            raise ErreurMetier(
+                "etablissement_invalide",
+                _("Établissement inconnu dans ce pays."),
+                champ="etablissement",
+            )
+        exercice = services.creer_exercice(
+            prospect, etablissement, request.user, debut=v.get("debut"),
+            principal=v.get("principal"), presence=v.get("presence", ""),
+        )  # fmt: skip
+        return self.rendu(exercice, status.HTTP_201_CREATED)
+
+
+class ExerciceVue(VueExercices):
+    actions = {"PATCH": Action.PROSPECTS_LIRE}
+
+    @extend_schema(request=s.ModificationExerciceSerializer, responses=s.ExerciceSerializer,
+                   operation_id="exercice_modifier")  # fmt: skip
+    def patch(self, request, id):
+        exercice = get_object_or_404(self.get_queryset(), pk=id)
+        self.exiger_modification(exercice.prospect)
+        v = _lire(s.ModificationExerciceSerializer, request)
+        return self.rendu(services.modifier_exercice(exercice, **v))
+
+
+class ExerciceFinVue(VueExercices):
+    actions = {"POST": Action.PROSPECTS_LIRE}
+
+    @extend_schema(request=s.FinExerciceSerializer, responses=s.ExerciceSerializer,
+                   operation_id="exercice_terminer")  # fmt: skip
+    def post(self, request, id):
+        exercice = get_object_or_404(self.get_queryset(), pk=id)
+        self.exiger_modification(exercice.prospect)
+        v = _lire(s.FinExerciceSerializer, request)
+        return self.rendu(services.terminer_exercice(exercice, v.get("fin")))
+
+
+class ExercicesEtablissementVue(VueExercices):
+    actions = {"GET": Action.PROSPECTS_LIRE}
+
+    @extend_schema(
+        responses=s.ExerciceSerializer(many=True), operation_id="etablissement_exercices"
+    )
+    def get(self, request, id):
+        etablissement = get_object_or_404(
+            services.fiches_visibles(Etablissement, self.perimetre), pk=id
+        )
+        exercices = self.get_queryset().filter(etablissement=etablissement)
+        exercices = sorted(
+            exercices, key=lambda e: (e.fin is not None, e.prospect.nom, e.prospect.prenom)
+        )
+        return Response(self.get_serializer(exercices, many=True).data)

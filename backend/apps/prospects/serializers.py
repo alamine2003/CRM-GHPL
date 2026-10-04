@@ -1,6 +1,7 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import Activite, Civilite, Etablissement, Potentiel, Prospect
+from .models import Activite, Civilite, Etablissement, Exercice, Potentiel, Prospect
 
 
 class PersonneResumeSerializer(serializers.Serializer):
@@ -29,6 +30,7 @@ class ProspectSerializer(serializers.ModelSerializer):
     localite = LieuSerializer(allow_null=True)
     cree_par = PersonneResumeSerializer()
     modifiable = serializers.SerializerMethodField()
+    lieu_principal = serializers.SerializerMethodField()
 
     class Meta:
         model = Prospect
@@ -36,12 +38,25 @@ class ProspectSerializer(serializers.ModelSerializer):
             "id", "pays", "civilite", "nom", "prenom", "type", "type_libelle", "specialite",
             "specialite_libelle", "numero_ordre", "telephone_mobile", "telephone_pro",
             "courriel", "potentiel", "activite", "grade", "grade_libelle", "secteur", "localite",
-            "statut", "cree_par", "cree_le", "valide_le", "modifiable",
+            "statut", "cree_par", "cree_le", "valide_le", "modifiable", "lieu_principal",
         ]  # fmt: skip
 
     def get_modifiable(self, prospect) -> bool:
         decider = self.context.get("peut_modifier")
         return bool(decider and decider(prospect))
+
+    @extend_schema_field(LieuSerializer(allow_null=True))
+    def get_lieu_principal(self, prospect):
+        """Établissement principal en cours (PRP-004), ou le premier exercice en cours."""
+        en_cours = getattr(prospect, "exercices_en_cours", None)
+        if en_cours is None:
+            en_cours = list(
+                prospect.exercices.filter(fin__isnull=True).select_related("etablissement")
+            )
+        if not en_cours:
+            return None
+        exercice = next((e for e in en_cours if e.principal), en_cours[0])
+        return {"id": exercice.etablissement_id, "libelle": exercice.etablissement.nom}
 
 
 class ListeProspectsSerializer(serializers.Serializer):
@@ -76,6 +91,7 @@ class SyntheseProspectsSerializer(serializers.Serializer):
     a_valider = serializers.IntegerField()
     mes_a_valider = serializers.IntegerField()
     potentiels = serializers.DictField(child=serializers.IntegerField())
+    sans_lieu = serializers.IntegerField(help_text="Fiches actives sans lieu d'exercice en cours.")
 
 
 class SecteurResumeSerializer(serializers.Serializer):
@@ -142,3 +158,63 @@ class SyntheseEtablissementsSerializer(serializers.Serializer):
     sans_coordonnees = serializers.IntegerField()
     secteurs_couverts = serializers.IntegerField()
     types = serializers.DictField(child=serializers.IntegerField())
+
+
+# --- Exercices (PRP-004) ---------------------------------------------------------------------
+
+
+class ProspectResumeSerializer(serializers.ModelSerializer):
+    specialite_libelle = serializers.CharField(
+        source="specialite.libelle", allow_null=True, default=None
+    )
+    type_libelle = serializers.CharField(source="type.libelle")
+
+    class Meta:
+        model = Prospect
+        fields = ["id", "civilite", "prenom", "nom", "type_libelle", "specialite_libelle",
+                  "potentiel", "statut"]  # fmt: skip
+
+
+class EtablissementResumeSerializer(serializers.ModelSerializer):
+    type_code = serializers.CharField(source="type.code")
+    type_libelle = serializers.CharField(source="type.libelle")
+    secteur = serializers.CharField(source="secteur.libelle")
+    localite = serializers.CharField(source="localite.libelle", allow_null=True, default=None)
+    a_coordonnees = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Etablissement
+        fields = ["id", "nom", "type_code", "type_libelle", "secteur", "localite",
+                  "a_coordonnees", "statut"]  # fmt: skip
+
+
+class ExerciceSerializer(serializers.ModelSerializer):
+    prospect = ProspectResumeSerializer()
+    etablissement = EtablissementResumeSerializer()
+    actif = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Exercice
+        fields = ["id", "prospect", "etablissement", "debut", "fin", "actif", "principal",
+                  "presence", "cree_le"]  # fmt: skip
+
+    def get_actif(self, exercice) -> bool:
+        from apps.socle.services import aujourdhui
+
+        return exercice.actif_le(aujourdhui(exercice.pays))
+
+
+class SaisieExerciceSerializer(serializers.Serializer):
+    etablissement = serializers.UUIDField()
+    debut = serializers.DateField(required=False)
+    principal = serializers.BooleanField(required=False, allow_null=True, default=None)
+    presence = serializers.CharField(max_length=120, required=False, allow_blank=True)
+
+
+class ModificationExerciceSerializer(serializers.Serializer):
+    principal = serializers.BooleanField(required=False)
+    presence = serializers.CharField(max_length=120, required=False, allow_blank=True)
+
+
+class FinExerciceSerializer(serializers.Serializer):
+    fin = serializers.DateField(required=False)

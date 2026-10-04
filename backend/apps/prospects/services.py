@@ -20,8 +20,17 @@ from apps.perimetre.perimetre import Perimetre
 from apps.referentiel.models import Liste, Valeur
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
+from apps.socle.services import aujourdhui
 
-from .models import Activite, Civilite, Etablissement, Potentiel, Prospect, StatutFiche
+from .models import (
+    Activite,
+    Civilite,
+    Etablissement,
+    Exercice,
+    Potentiel,
+    Prospect,
+    StatutFiche,
+)
 
 #: Titres retirés du nom normalisé : « Dr Diop » et « Diop » sont la même personne.
 TITRES = {"dr", "docteur", "pr", "professeur", "m", "mr", "mme", "mlle", "madame", "monsieur"}
@@ -250,6 +259,9 @@ def archiver(fiche, motif: str = ""):
     fiche.statut = StatutFiche.ARCHIVE
     fiche.save(update_fields=["statut"])
     fiche.archiver()
+    # Une fiche archivée n'exerce plus : ses exercices en cours prennent fin ce jour.
+    for exercice in fiche.exercices.filter(fin__isnull=True):
+        terminer_exercice(exercice, aujourdhui(fiche.pays))
     _auditer("archivage", fiche, ancien=ancien, motif=motif.strip())
     return fiche
 
@@ -396,3 +408,112 @@ def rechercher_etablissements(qs: QuerySet, texte: str) -> QuerySet:
     if len(chiffres) >= 4:
         filtre |= Q(telephone__contains=chiffres)
     return qs.filter(filtre)
+
+
+# --- Exercices (PRP-004) ---------------------------------------------------------------------
+
+FICHES_EN_SERVICE = (StatutFiche.A_VALIDER, StatutFiche.ACTIF)
+
+
+def _auditer_exercice(action: str, exercice: Exercice, **details) -> None:
+    from apps.audit.services import enregistrer
+
+    enregistrer(
+        f"exercice.{action}", objet=exercice,
+        details={"prospect": str(exercice.prospect_id),
+                 "etablissement": str(exercice.etablissement_id), **details},
+    )  # fmt: skip
+
+
+def creer_exercice(
+    prospect: Prospect, etablissement: Etablissement, auteur: Utilisateur, *,
+    debut=None, principal: bool | None = None, presence: str = "",
+) -> Exercice:  # fmt: skip
+    """CA1 : un prospect peut exercer dans plusieurs établissements à la fois. Deux fiches en
+    service du même pays ; un seul exercice en cours par couple. Le premier exercice en cours
+    devient principal ; en désigner un autre retire ce rôle au précédent."""
+    if prospect.pays_id != etablissement.pays_id:
+        raise ErreurMetier(
+            "etablissement_invalide",
+            _("Établissement inconnu dans ce pays."),
+            champ="etablissement",
+        )
+    if prospect.statut not in FICHES_EN_SERVICE or etablissement.statut not in FICHES_EN_SERVICE:
+        raise ErreurMetier(
+            "fiche_hors_service",
+            _("Un exercice relie une fiche prospect et un établissement en service."),
+            champ="etablissement",
+        )
+    debut = debut or aujourdhui(prospect.pays)
+    en_cours = prospect.exercices.filter(fin__isnull=True)
+    if en_cours.filter(etablissement=etablissement).exists():
+        raise ErreurMetier(
+            "exercice_existant",
+            _("Ce prospect exerce déjà dans cet établissement."),
+            champ="etablissement",
+        )
+    if principal is None:
+        principal = not en_cours.filter(principal=True).exists()
+    exercice = Exercice(
+        pays=prospect.pays, prospect=prospect, etablissement=etablissement, debut=debut,
+        principal=principal, presence=(presence or "").strip()[:120], cree_par=auteur,
+    )  # fmt: skip
+    with transaction.atomic():
+        if principal:
+            _retirer_principal(prospect)
+        exercice.save()
+    _auditer_exercice("creation", exercice, debut=str(debut), principal=principal)
+    return exercice
+
+
+def _retirer_principal(prospect: Prospect, sauf: Exercice | None = None) -> None:
+    for autre in prospect.exercices.filter(fin__isnull=True, principal=True):
+        if sauf is None or autre.pk != sauf.pk:
+            autre.principal = False
+            autre.save(update_fields=["principal"])
+
+
+def modifier_exercice(exercice: Exercice, *, principal=None, presence=None) -> Exercice:
+    if exercice.fin is not None:
+        raise ErreurMetier("exercice_termine", _("Cet exercice est terminé."))
+    changes = {}
+    with transaction.atomic():
+        if principal is not None and principal != exercice.principal:
+            if principal:
+                _retirer_principal(exercice.prospect, sauf=exercice)
+            exercice.principal = principal
+            changes["principal"] = principal
+        if presence is not None and presence.strip() != exercice.presence:
+            exercice.presence = presence.strip()[:120]
+            changes["presence"] = exercice.presence
+        if changes:
+            exercice.save()
+    if changes:
+        _auditer_exercice("modification", exercice, **changes)
+    return exercice
+
+
+def terminer_exercice(exercice: Exercice, fin=None) -> Exercice:
+    """Le prospect quitte l'établissement : l'exercice reste dans l'historique, actif
+    jusqu'à la veille de `fin` (fin exclue)."""
+    if exercice.fin is not None:
+        raise ErreurMetier("exercice_termine", _("Cet exercice est terminé."))
+    fin = fin or aujourdhui(exercice.pays)
+    if fin < exercice.debut:
+        raise ErreurMetier(
+            "date_invalide", _("La fin ne peut précéder le début de l'exercice."), champ="fin"
+        )
+    exercice.fin, exercice.principal = fin, False
+    exercice.save(update_fields=["fin", "principal"])
+    _auditer_exercice("fin", exercice, fin=str(fin))
+    return exercice
+
+
+def exercice_actif(prospect: Prospect, etablissement: Etablissement, jour) -> bool:
+    """CA2 (RG-015) : une visite ne référence qu'un couple lié par un exercice actif à sa
+    date. Point de contrôle des visites (0.4)."""
+    return (
+        Exercice.objects.filter(prospect=prospect, etablissement=etablissement, debut__lte=jour)
+        .filter(Q(fin__isnull=True) | Q(fin__gt=jour))
+        .exists()
+    )

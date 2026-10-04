@@ -22,6 +22,7 @@ import json
 import zipfile
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from datetime import date
 
 import phonenumbers
 from django.db import transaction
@@ -31,7 +32,7 @@ from django.utils.translation import gettext as _
 from apps.identite.models import Utilisateur
 from apps.organisation.models import Division, Localite, Reseau, Secteur, Zone, actif_le
 from apps.prospects import services as prs
-from apps.prospects.models import Activite, Etablissement, Prospect, StatutFiche
+from apps.prospects.models import Activite, Etablissement, Exercice, Prospect, StatutFiche
 from apps.referentiel.models import Liste, Portefeuille, Produit, Valeur
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
@@ -388,6 +389,10 @@ class ImportBirdNotes:
         ident = ligne.get("ID prospect")
         if self.deja("prospect", ident):
             self.rapport.compter("prospects", "existants")
+            # Fiche reprise par un import antérieur à 0.1.5 : on complète ses exercices.
+            fiche = Prospect.objects.filter(pk=self.refs[("prospect", str(ident))]).first()
+            if fiche is not None:
+                self.exercice(ident, fiche, ligne)
             return
         titre, prenom, nom, a_separer = K.extraire_titre(
             ligne.get("Prénom"), (ligne.get("Nom") or "").strip() or ligne.get("Nom complet")
@@ -467,6 +472,51 @@ class ImportBirdNotes:
             gps=[latitude, longitude] if latitude and longitude else None,
         )  # fmt: skip
         self.rapport.compter("prospects", "crees")
+        self.exercice(ident, fiche, ligne)
+
+    # --- 5. exercices (PRP-004, 0.1.5) ------------------------------------------------------
+
+    def etablissements_par_nom(self) -> dict[str, list]:
+        """Établissements repris, par leur nom dans BirdNotes (lien texte côté prospect)."""
+        if not hasattr(self, "_par_nom"):
+            refs = ReferenceExterne.objects.filter(
+                pays=self.pays, source=Source.BIRDNOTES, entite="etablissement"
+            ).values_list("complements__nom_source", "objet_id")
+            fiches = Etablissement.objects.in_bulk([pk for _nom, pk in refs])
+            self._par_nom = defaultdict(list)
+            for nom, pk in refs:
+                if nom and pk in fiches:
+                    self._par_nom[nom.strip()].append(fiches[pk])
+        return self._par_nom
+
+    def exercice(self, ident, fiche: Prospect, ligne: dict) -> None:
+        """Le prospect exerce dans l'établissement nommé sur sa fiche BirdNotes, depuis la date
+        de création de la fiche. Sans établissement (27 % des fiches), il n'en a pas encore."""
+        if self.deja("exercice", ident):
+            return
+        nom = (ligne.get("Établissement") or "").strip()
+        if not nom:
+            self.rapport.compter("exercices", "sans_etablissement")
+            return
+        candidats = self.etablissements_par_nom().get(nom, [])
+        etablissement = next(
+            (e for e in candidats if e.secteur_id == fiche.secteur_id),
+            candidats[0] if candidats else None,
+        )
+        if etablissement is None or etablissement.statut not in prs.FICHES_EN_SERVICE:
+            self.rapport.compter("exercices", "etablissement_non_repris")
+            return
+        try:
+            debut = date.fromisoformat(str(ligne.get("Date création") or "")[:10])
+        except ValueError:
+            debut = self.jour
+        exercice = Exercice(
+            pays=self.pays, prospect=fiche, etablissement=etablissement,
+            debut=min(debut, self.jour), principal=True, cree_par=self.auteur,
+        )  # fmt: skip
+        exercice.save()
+        self.referencer("exercice", ident, exercice)
+        self.rapport.compter("exercices", "crees")
 
     def homonymes(self, lignes: list[dict]) -> dict[str, str]:
         """Fiches au même nom une fois le titre retiré (1 136 groupes dans l'export du

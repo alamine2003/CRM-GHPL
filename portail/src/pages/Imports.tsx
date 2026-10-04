@@ -59,6 +59,7 @@ const ENTITES = [
   'portefeuilles',
   'etablissements',
   'prospects',
+  'exercices',
   'demandes_modification',
 ];
 

@@ -180,3 +180,48 @@ class Etablissement(ModeleDePays):
     @property
     def a_coordonnees(self) -> bool:
         return self.latitude is not None and self.longitude is not None
+
+
+class Exercice(ModeleDePays):
+    """Lien daté entre un prospect et un établissement (§14.3, PRP-004).
+
+    Un prospect exerce dans un ou plusieurs établissements (CA1). Un exercice est actif le
+    jour `j` si `debut <= j < fin` (fin exclue, comme les liens de l'organisation). Une visite
+    ne référencera qu'un couple lié par un exercice actif à sa date (CA2, RG-015, 0.4).
+    """
+
+    prospect = models.ForeignKey(Prospect, on_delete=models.PROTECT, related_name="exercices")
+    etablissement = models.ForeignKey(
+        Etablissement, on_delete=models.PROTECT, related_name="exercices"
+    )
+    debut = models.DateField()
+    fin = models.DateField(null=True, blank=True)
+    #: Lieu d'exercice principal du prospect, proposé en premier à la planification.
+    principal = models.BooleanField(default=False)
+    #: Jours et horaires de présence, en clair [H] (« lundi et jeudi matin »).
+    presence = models.CharField(max_length=120, blank=True)
+    cree_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="exercices_crees"
+    )
+
+    class Meta:
+        ordering = ["-principal", "debut"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(fin__isnull=True) | Q(fin__gte=models.F("debut")),
+                name="exercice_fin_apres_debut",
+            ),
+            # Un seul exercice en cours par couple prospect / établissement.
+            models.UniqueConstraint(
+                fields=["prospect", "etablissement"],
+                condition=Q(fin__isnull=True),
+                name="exercice_en_cours_unique",
+            ),
+        ]
+        indexes = [models.Index(fields=["prospect", "debut"])]
+
+    def __str__(self):
+        return f"{self.prospect} → {self.etablissement}"
+
+    def actif_le(self, jour) -> bool:
+        return self.debut <= jour and (self.fin is None or jour < self.fin)

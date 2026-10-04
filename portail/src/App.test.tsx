@@ -1065,6 +1065,47 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
     modifiable: true,
   };
 
+  const CLINIQUE = {
+    id: 'e1',
+    pays: 'SN',
+    nom: 'Clinique du Cap',
+    type: 't1',
+    type_code: 'clinique',
+    type_libelle: 'Clinique',
+    secteur: { id: 's1', libelle: 'Plateau', zone: 'Dakar' },
+    localite: { id: 'l1', libelle: 'Centre' },
+    statut: 'actif',
+  };
+  const EXERCICE = {
+    id: 'x1',
+    prospect: {
+      id: 'p1',
+      civilite: 'dr',
+      prenom: 'Aïssatou',
+      nom: 'NDIAYE',
+      type_libelle: 'Médecin',
+      specialite_libelle: 'Cardiologie',
+      potentiel: 'A',
+      statut: 'a_valider',
+    },
+    etablissement: {
+      id: 'e1',
+      nom: 'Clinique du Cap',
+      type_code: 'clinique',
+      type_libelle: 'Clinique',
+      secteur: 'Plateau',
+      localite: 'Centre',
+      a_coordonnees: true,
+      statut: 'actif',
+    },
+    debut: '2026-04-02',
+    fin: null,
+    actif: true,
+    principal: true,
+    presence: 'Lundi matin',
+    cree_le: '2026-10-04T08:00:00Z',
+  };
+
   function clientProspects(perimetre: Perimetre) {
     const prospects = {
       liste: vi.fn(async () => ({ total: 1, limite: 100, resultats: [FICHE] })),
@@ -1073,6 +1114,7 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
         a_valider: 1,
         mes_a_valider: 1,
         potentiels: { A: 3, B: 4, C: 5 },
+        sans_lieu: 2,
       })),
       detail: vi.fn(async () => FICHE),
       creer: vi.fn(async () => FICHE),
@@ -1090,15 +1132,23 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
           localites: [{ id: 'l1', libelle: 'Centre' }],
         },
       ]),
+      liste: vi.fn(async () => ({ total: 1, limite: 100, resultats: [CLINIQUE] })),
+    };
+    const exercices = {
+      duProspect: vi.fn(async () => [EXERCICE]),
+      ajouter: vi.fn(async () => EXERCICE),
+      modifier: vi.fn(async () => EXERCICE),
+      terminer: vi.fn(async () => EXERCICE),
     };
     const client = fauxClient({
       reprendre: vi.fn(async () => JETONS),
       perimetre: vi.fn(async () => perimetre),
       prospects: prospects as unknown as ClientApi['prospects'],
       etablissements: etablissements as unknown as ClientApi['etablissements'],
+      exercices: exercices as unknown as ClientApi['exercices'],
       referentiel: referentiel as unknown as ClientApi['referentiel'],
     } as Partial<ClientApi>);
-    return { client, prospects };
+    return { client, prospects, exercices };
   }
   const ADMIN_P: Perimetre = {
     ...PERIMETRE_DELEGUE,
@@ -1122,6 +1172,27 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
     fireEvent.click(screen.getByText('Dr Aïssatou Ndiaye'));
     expect(await screen.findByText('+221771234567')).toBeInTheDocument();
     expect(screen.getByText('Potentiel A')).toBeInTheDocument();
+  });
+
+  it('la fiche montre ses lieux d’exercice et en ajoute un (PRP-004)', async () => {
+    const { client, exercices } = clientProspects(ADMIN_P);
+    rendre(client, '/prospects');
+    fireEvent.click(await screen.findByText('Dr Aïssatou Ndiaye'));
+    expect(await screen.findByText('Clinique du Cap')).toBeInTheDocument();
+    expect(screen.getByText('Principal')).toBeInTheDocument();
+    expect(screen.getByText(/Lundi matin/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Ajouter un lieu d.exercice/ }));
+    const dialogue = await screen.findByRole('dialog', { name: /Ajouter un lieu/ });
+    const champ = within(dialogue).getByLabelText(/^Établissement/);
+    fireEvent.change(champ, { target: { value: 'cap' } });
+    fireEvent.click(await screen.findByRole('option', { name: /Clinique du Cap/ }));
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Enregistrer' }));
+    await vi.waitFor(() =>
+      expect(exercices.ajouter).toHaveBeenCalledWith(
+        'p1',
+        expect.objectContaining({ etablissement: 'e1', principal: false }),
+      ),
+    );
   });
 
   it('l’administrateur pays valide une fiche à valider (RG-041)', async () => {
@@ -1243,6 +1314,7 @@ describe('portail — établissements (PRP-003)', () => {
         actions: ['prospects.lire', 'prospects.creer', 'prospects.gerer', 'pays.lire'],
       })),
       etablissements: etablissements as unknown as ClientApi['etablissements'],
+      exercices: { deLEtablissement: vi.fn(async () => []) } as unknown as ClientApi['exercices'],
       referentiel: referentiel as unknown as ClientApi['referentiel'],
     } as Partial<ClientApi>);
     return { client, etablissements };
@@ -1256,6 +1328,7 @@ describe('portail — établissements (PRP-003)', () => {
     expect(screen.getByText('Sans coordonnées GPS')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Cabinet Fall'));
     expect(await screen.findByText('Position non renseignée')).toBeInTheDocument();
+    expect(await screen.findByText(/Aucun prospect n.y exerce/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Positionner' })).toBeInTheDocument();
   });
 
@@ -1289,7 +1362,7 @@ describe('portail — établissements (PRP-003)', () => {
     // La localité proposée est celle du secteur choisi.
     fireEvent.mouseDown(within(dialogue).getByLabelText(/^Localité/));
     fireEvent.click(await screen.findByRole('option', { name: 'Plateau Centre' }));
-    fireEvent.click(within(dialogue).getByRole('button', { name: 'Hospitalier' }));
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Hospitalière' }));
     fireEvent.click(within(dialogue).getByRole('button', { name: 'Utiliser ma position' }));
     expect(await within(dialogue).findByText('Précision : 12 m')).toBeInTheDocument();
     fireEvent.click(within(dialogue).getByRole('button', { name: 'Enregistrer' }));

@@ -172,6 +172,18 @@ urlpatterns = [
         name="prospect-archiver",
     ),
     # Fiches établissements (PRP-003)
+    path(
+        "prospects/<uuid:id>/exercices/",
+        prs.ExercicesProspectVue.as_view(),
+        name="prospect-exercices",
+    ),
+    path("exercices/<uuid:id>/", prs.ExerciceVue.as_view(), name="exercice"),
+    path("exercices/<uuid:id>/terminer/", prs.ExerciceFinVue.as_view(), name="exercice-terminer"),
+    path(
+        "etablissements/<uuid:id>/exercices/",
+        prs.ExercicesEtablissementVue.as_view(),
+        name="etablissement-exercices",
+    ),
     path("etablissements/", prs.EtablissementsVue.as_view(), name="etablissements"),
     path(
         "etablissements/synthese/",

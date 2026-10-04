@@ -2,6 +2,47 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.5] — Lieux d'exercice des prospects ; design enrichi
+
+Cinquième jalon du cycle 0.1 « Référentiel ».
+
+### Ajouté — exercices datés prospect ↔ établissement (PRP-004, prd.md §14.3)
+
+- **Exercice** : lien daté entre un prospect et un établissement (début, fin facultative, lieu principal, jours et horaires de présence en clair [H]). Il est actif le jour `j` si `début <= j < fin` : la fin est exclue, comme pour les liens de l'organisation.
+- **CA1** : un prospect peut exercer dans plusieurs établissements à la fois. Le premier exercice devient le lieu principal ; en désigner un autre retire ce rôle au précédent. Il ne peut y avoir qu'un exercice en cours par couple prospect-établissement.
+- **CA2** : `exercice_actif(prospect, établissement, jour)` dit si un couple est lié à une date. C'est le contrôle que les visites appliqueront (RG-015, 0.4).
+- Un exercice relie deux fiches **en service** du même pays. Archiver un prospect ou un établissement termine ses exercices en cours. Un exercice terminé reste dans l'historique.
+- **Qui gère les exercices** : ceux qui peuvent modifier la fiche, c'est-à-dire l'administrateur pays, ou le délégué tant que sa fiche est à valider. Sur une fiche commune, le délégué proposera un nouvel exercice (PRP-014, 0.1.8).
+- Création, modification et fin sont auditées. La table est protégée par la sécurité au niveau des lignes, et les routes sont couvertes par les tests d'isolation.
+- API :
+  - `prospects/<id>/exercices/` (liste, ajout) ;
+  - `exercices/<id>/` (lieu principal, présence) ;
+  - `exercices/<id>/terminer/` ;
+  - `etablissements/<id>/exercices/`.
+- La fiche prospect donne son **lieu principal**. La synthèse compte les fiches actives **sans lieu d'exercice** : c'est un indicateur de qualité des données.
+
+### Import BirdNotes
+
+- Chaque prospect repris exerce dans l'établissement nommé sur sa fiche BirdNotes, depuis la date de création de la fiche. Les compteurs indiquent les fiches sans établissement et les établissements non repris.
+- Un réimport complète les fiches reprises en 0.1.4, une seule fois.
+
+### Portail et mobile
+
+- **Fiche prospect** : section « Lieux d'exercice » :
+  - cartes par établissement, avec icône du type, lieu principal en évidence, date de début et présence ;
+  - étoile pour changer de lieu principal ;
+  - fin d'un exercice à une date choisie ;
+  - historique repliable ;
+  - ajout par recherche d'établissement.
+- **Fiche établissement** : les prospects qui y exercent, avec leur spécialité, leur potentiel et le lieu principal marqué.
+- **Liste des prospects** : spécialité et lieu principal sous chaque nom. Nouvelle tuile « Sans lieu d'exercice ».
+- **Mobile** : le lieu principal s'affiche dans la liste des prospects.
+- **Vocabulaire** : le champ hospitalier/privé s'appelle désormais « Activité », pour ne pas le confondre avec l'exercice.
+
+### Démonstration
+
+- Chaque prospect fictif exerce dans un établissement de son secteur adapté à son métier : l'officine en pharmacie, le paramédical en poste ou centre de santé, le médecin en cabinet, clinique ou hôpital. Un prospect sur quatre a un second lieu d'exercice.
+
 ## [0.1.4] — Import BirdNotes et modèle aligné sur le terrain ; design enrichi
 
 Quatrième jalon du cycle 0.1 « Référentiel ». Le 4 octobre 2026, l'export réel du CRM en place au Sénégal (BirdNotes) a servi de point de départ « pour ne pas inventer » : les listes et paramètres suivent sa pratique, et l'import est avancé de 0.1.8 à 0.1.4. Le fichier, qui contient des données réelles, n'entre jamais dans le dépôt : seuls des libellés génériques et des proportions y figurent.

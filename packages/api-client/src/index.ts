@@ -8,8 +8,9 @@
  * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
  */
 import type {
-  DetailLot,
+  ActiviteExercice,
   Exercice,
+  DetailLot,
   Localite,
   LotImport,
   SecteurSaisie,
@@ -58,9 +59,10 @@ import type {
 } from '@innov/api-types';
 
 export type {
+  ActiviteExercice,
+  Exercice,
   AnomalieImport,
   DetailLot,
-  Exercice,
   Lieu,
   Localite,
   LotImport,
@@ -186,10 +188,18 @@ export interface SaisieProspect {
   telephone_pro?: string;
   courriel?: string;
   potentiel: Potentiel;
-  activite?: Exercice | '';
+  activite?: ActiviteExercice | '';
   grade?: string | null;
   secteur?: string | null;
   localite?: string | null;
+}
+
+/** Lieu d'exercice d'un prospect (PRP-004). */
+export interface SaisieExercice {
+  etablissement: string;
+  debut?: string;
+  principal?: boolean | null;
+  presence?: string;
 }
 
 export interface FiltresEtablissements {
@@ -206,7 +216,7 @@ export interface SaisieEtablissement {
   secteur: string | null;
   adresse?: string;
   localite?: string | null;
-  activite?: Exercice | '';
+  activite?: ActiviteExercice | '';
   latitude?: number | null;
   longitude?: number | null;
   telephone?: string;
@@ -514,6 +524,25 @@ export function creerClient(options: OptionsClient) {
         requete<Prospect>(`/api/v1/prospects/${id}/archiver/`, {
           methode: 'POST',
           corps: { motif },
+        }),
+    },
+    /** Lieux d'exercice datés prospect ↔ établissement (PRP-004). */
+    exercices: {
+      duProspect: (prospect: string) =>
+        requete<Exercice[]>(`/api/v1/prospects/${prospect}/exercices/`),
+      deLEtablissement: (etablissement: string) =>
+        requete<Exercice[]>(`/api/v1/etablissements/${etablissement}/exercices/`),
+      ajouter: (prospect: string, saisie: SaisieExercice) =>
+        requete<Exercice>(`/api/v1/prospects/${prospect}/exercices/`, {
+          methode: 'POST',
+          corps: saisie,
+        }),
+      modifier: (id: string, champs: { principal?: boolean; presence?: string }) =>
+        requete<Exercice>(`/api/v1/exercices/${id}/`, { methode: 'PATCH', corps: champs }),
+      terminer: (id: string, fin?: string) =>
+        requete<Exercice>(`/api/v1/exercices/${id}/terminer/`, {
+          methode: 'POST',
+          corps: fin ? { fin } : {},
         }),
     },
     /** Fiches établissements (PRP-003). */
