@@ -27,7 +27,7 @@ scripts/     outils de vérification
 Prérequis : Python 3.12, Node.js 22.12+, PostgreSQL 16 (ou Docker), gettext.
 
 ```bash
-docker compose up -d db redis     # ou un PostgreSQL local (innov/innov, base innov)
+docker compose up -d db redis     # ou un PostgreSQL local (rôle innov, base innov ; sinon DATABASE_URL)
 make installer                    # environnement Python, traductions, dépendances npm
 make serveur                      # API sur http://localhost:8000 (/api/health/)
 make portail                      # portail sur http://localhost:5173
