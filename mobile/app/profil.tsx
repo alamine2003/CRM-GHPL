@@ -1,9 +1,8 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { marque, zoneTactileMin } from '@innov/design';
+import { marque, rayon, zoneTactileMin } from '@innov/design';
 import { LANGUES, type Langue } from '@innov/i18n';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { identifiantInstallation } from '../src/appareil';
 import { Bouton, Carte, Ligne, Texte, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
@@ -41,7 +40,7 @@ export default function Profil() {
       </Carte>
 
       <Carte>
-        <Texte variante="libelle" style={{ marginBottom: 10 }}>
+        <Texte variante="sousTitre" style={{ marginBottom: 10 }}>
           {t('profilPage.langueTitre')}
         </Texte>
         <View style={styles.langues}>
@@ -72,14 +71,9 @@ export default function Profil() {
       </Carte>
 
       <Carte>
-        <View style={styles.titreTelephone}>
-          <MaterialIcons
-            name={Platform.OS === 'ios' ? 'phone-iphone' : 'phone-android'}
-            size={20}
-            color={marque.orange}
-          />
-          <Texte variante="fort">{t('mobile.ceTelephone')}</Texte>
-        </View>
+        <Texte variante="sousTitre" style={{ marginBottom: 4 }}>
+          {t('mobile.ceTelephone')}
+        </Texte>
         <Ligne libelle={t('accueil.versionClient')} valeur={VERSION_APP} />
         <Ligne
           libelle={t('mobile.identifiantInstallation')}
@@ -101,9 +95,8 @@ const styles = StyleSheet.create({
   langue: {
     minHeight: zoneTactileMin,
     paddingHorizontal: 18,
-    borderRadius: 999,
+    borderRadius: rayon,
     borderWidth: 1,
     justifyContent: 'center',
   },
-  titreTelephone: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
 });

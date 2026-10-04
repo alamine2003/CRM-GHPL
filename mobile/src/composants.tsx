@@ -1,4 +1,4 @@
-import { marque, paletteClaire, paletteSombre, zoneTactileMin } from '@innov/design';
+import { marque, paletteClaire, paletteSombre, rayon, zoneTactileMin } from '@innov/design';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -23,7 +23,7 @@ export function usePalette() {
 
 type Variante = 'titre' | 'sousTitre' | 'texte' | 'fort' | 'discret' | 'libelle';
 
-/** Texte typographié selon la maquette (Plus Jakarta Sans pour les titres, DM Sans sinon). */
+/** Texte typographié selon docs/design.md (Plus Jakarta Sans pour les titres, DM Sans sinon). */
 export function Texte({
   variante = 'texte',
   style,
@@ -31,24 +31,23 @@ export function Texte({
 }: TextProps & { variante?: Variante }) {
   const p = usePalette();
   const styles: Record<Variante, object> = {
-    titre: { fontFamily: police.titre, fontSize: 24, color: p.texte },
-    sousTitre: { fontFamily: police.titre, fontSize: 16, color: p.texte },
+    titre: { fontFamily: police.titre, fontSize: 20, lineHeight: 28, color: p.texte },
+    sousTitre: { fontFamily: police.titre, fontSize: 15, lineHeight: 22, color: p.texte },
     texte: { fontFamily: police.texte, fontSize: 15, lineHeight: 21, color: p.texte },
-    fort: { fontFamily: police.texteFort, fontSize: 15, color: p.texte },
+    fort: { fontFamily: police.texteFort, fontSize: 15, lineHeight: 21, color: p.texte },
     discret: { fontFamily: police.texte, fontSize: 13, lineHeight: 18, color: p.texteSecondaire },
     libelle: {
-      fontFamily: police.texteFort,
-      fontSize: 11,
-      letterSpacing: 0.6,
-      textTransform: 'uppercase',
-      color: p.texteDiscret,
+      fontFamily: police.texteMoyen,
+      fontSize: 13,
+      lineHeight: 18,
+      color: p.texteSecondaire,
     },
   };
   return <Text {...props} style={[styles[variante], style]} />;
 }
 
-/** Marque « IC » : carré arrondi orange. */
-export function Logo({ taille = 40 }: { taille?: number }) {
+/** Marque « IC » : monogramme blanc sur orange plein. */
+export function Logo({ taille = 32 }: { taille?: number }) {
   return (
     <View
       accessibilityElementsHidden
@@ -56,13 +55,13 @@ export function Logo({ taille = 40 }: { taille?: number }) {
       style={{
         width: taille,
         height: taille,
-        borderRadius: taille * 0.27,
+        borderRadius: rayon,
         backgroundColor: marque.orange,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Text style={{ color: '#FFFFFF', fontFamily: police.titreFort, fontSize: taille * 0.4 }}>
+      <Text style={{ color: '#FFFFFF', fontFamily: police.titre, fontSize: taille * 0.42 }}>
         {MONOGRAMME}
       </Text>
     </View>
@@ -96,7 +95,7 @@ export function Ligne({
       ]}
     >
       <Texte variante="discret">{libelle}</Texte>
-      <Texte variante="fort" style={{ flexShrink: 1, textAlign: 'right' }}>
+      <Texte style={{ flexShrink: 1, textAlign: 'right', fontFamily: police.texteMoyen }}>
         {valeur}
       </Texte>
     </View>
@@ -144,7 +143,7 @@ export function Bouton({
         styles.bouton,
         secondaire
           ? { borderWidth: 1, borderColor: p.ligne, backgroundColor: p.surface }
-          : { backgroundColor: marque.orange },
+          : { backgroundColor: marque.bleuMarine },
         (pressed || chargement) && { opacity: 0.8 },
       ]}
     >
@@ -155,7 +154,7 @@ export function Bouton({
           style={{
             color: secondaire ? p.texte : '#FFFFFF',
             fontFamily: police.texteFort,
-            fontSize: 16,
+            fontSize: 15,
           }}
         >
           {libelle}
@@ -190,28 +189,74 @@ export function Alerte({
 }
 
 const styles = StyleSheet.create({
-  carte: { borderWidth: 1, borderRadius: 14, padding: 16 },
+  carte: { borderWidth: StyleSheet.hairlineWidth, borderRadius: rayon, padding: 16 },
   ligne: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 10,
+    minHeight: zoneTactileMin,
   },
   champ: {
     minHeight: zoneTactileMin + 4,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    borderRadius: rayon,
+    paddingHorizontal: 12,
     fontSize: 16,
     fontFamily: police.texte,
   },
   bouton: {
-    minHeight: zoneTactileMin + 6,
-    borderRadius: 12,
+    minHeight: 48,
+    borderRadius: rayon,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
-  alerte: { borderLeftWidth: 4, borderRadius: 10, padding: 12 },
+  alerte: { borderLeftWidth: 3, borderRadius: rayon, padding: 12 },
 });
+
+/** Potentiel A/B/C : la seule « couleur métier » des listes (A orange, B marine, C gris). */
+export function MarquePotentiel({ valeur, libelle }: { valeur: string; libelle?: string }) {
+  const p = usePalette();
+  const couleur =
+    valeur === 'A' ? marque.orange : valeur === 'B' ? marque.bleuMarine : p.texteSecondaire;
+  return (
+    <View
+      accessibilityLabel={libelle}
+      style={{
+        width: 24,
+        height: 24,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: couleur,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Text style={{ color: couleur, fontFamily: police.titre, fontSize: 13 }}>{valeur}</Text>
+    </View>
+  );
+}
+
+/** État en texte coloré (« À valider »…) à la place d'une pastille. */
+export function Etiquette({
+  children,
+  ton = 'attention',
+}: {
+  children: ReactNode;
+  ton?: 'attention' | 'neutre';
+}) {
+  const p = usePalette();
+  return (
+    <Text
+      style={{
+        fontFamily: police.texteFort,
+        fontSize: 12,
+        color: ton === 'attention' ? p.attention : p.texteSecondaire,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}

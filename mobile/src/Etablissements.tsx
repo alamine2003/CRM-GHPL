@@ -1,11 +1,11 @@
 import type { Etablissement, SaisieEtablissement, SecteurSaisie } from '@innov/api-client';
-import { marque } from '@innov/design';
+import { marque, rayon } from '@innov/design';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Champ, Etiquette, Texte, usePalette } from './composants';
 import { police } from './polices';
 import { messageErreur, useSession } from './session';
 
@@ -27,8 +27,8 @@ export function Pilule({
       style={[
         styles.pilule,
         actif
-          ? { backgroundColor: marque.orange, borderColor: marque.orange }
-          : { borderColor: p.ligne, backgroundColor: p.surface2 },
+          ? { backgroundColor: marque.bleuMarine, borderColor: marque.bleuMarine }
+          : { borderColor: p.ligne, backgroundColor: p.surface },
       ]}
     >
       <Text style={[styles.piluleTexte, { color: actif ? '#FFFFFF' : p.texte }]}>{libelle}</Text>
@@ -41,9 +41,6 @@ export function LigneEtablissement({ etablissement }: { etablissement: Etablisse
   const p = usePalette();
   return (
     <View style={[styles.ligne, { borderColor: p.ligne }]}>
-      <View style={[styles.icone, { backgroundColor: p.surface2 }]}>
-        <MaterialIcons name="apartment" size={20} color={p.info} />
-      </View>
       <View style={{ flex: 1 }}>
         <Texte variante="fort">{etablissement.nom}</Texte>
         <Texte variante="discret">
@@ -51,11 +48,7 @@ export function LigneEtablissement({ etablissement }: { etablissement: Etablisse
         </Texte>
       </View>
       {etablissement.statut === 'a_valider' && (
-        <View style={[styles.badge, { backgroundColor: p.orangeDoux }]}>
-          <Text style={[styles.badgeTexte, { color: marque.orange }]}>
-            {t('prospect.statuts.a_valider')}
-          </Text>
-        </View>
+        <Etiquette>{t('prospect.statuts.a_valider')}</Etiquette>
       )}
       <MaterialIcons
         name={etablissement.a_coordonnees ? 'gps-fixed' : 'location-off'}
@@ -219,18 +212,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 10,
+    minHeight: 56,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  icone: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    alignItems: 'center',
+  pilules: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pilule: {
+    borderWidth: 1,
+    borderRadius: rayon,
+    paddingHorizontal: 12,
+    minHeight: 40,
     justifyContent: 'center',
   },
-  badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeTexte: { fontFamily: police.texteFort, fontSize: 11 },
-  pilules: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pilule: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
   piluleTexte: { fontFamily: police.texteFort, fontSize: 13 },
 });

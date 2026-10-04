@@ -1,4 +1,4 @@
-import { marque } from '@innov/design';
+import { marque, rayon } from '@innov/design';
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Alerte, Bouton, Champ, Logo, Texte, usePalette } from '../src/composants';
-import { PastilleDemonstration } from '../src/Demonstration';
+import { FiletDemonstration, MentionDemonstration } from '../src/Demonstration';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 
@@ -92,15 +92,15 @@ export default function Connexion() {
         keyboardShouldPersistTaps="handled"
         bounces={false}
       >
-        <View style={[styles.hero, { paddingTop: marges.top + 32 }]}>
+        <View style={[styles.hero, { paddingTop: marges.top + 20 }]}>
           <View style={styles.marque}>
-            <Logo taille={44} />
-            <View>
+            <Logo taille={32} />
+            <View style={{ flex: 1 }}>
               <Text style={styles.produit}>{t('commun.produit')}</Text>
               <Text style={styles.organisation}>{t('marque.organisation')}</Text>
             </View>
+            <MentionDemonstration />
           </View>
-          <PastilleDemonstration />
           <Text style={styles.bienvenue}>{t('mobile.bienvenue')}</Text>
           <Text style={styles.accroche}>{t('mobile.sousTitreConnexion')}</Text>
         </View>
@@ -157,7 +157,7 @@ export default function Connexion() {
                   }}
                   style={{ padding: 10 }}
                 >
-                  <Text style={[styles.lien, { color: p.info }]}>
+                  <Text style={[styles.lien, { color: marque.bleuMarine }]}>
                     {secours ? t('code.application') : t('code.secours')}
                   </Text>
                 </Pressable>
@@ -203,7 +203,7 @@ export default function Connexion() {
                     onPress={() => setVisible((v) => !v)}
                     style={{ alignSelf: 'flex-end', paddingVertical: 4 }}
                   >
-                    <Text style={[styles.lien, { color: p.info }]}>
+                    <Text style={[styles.lien, { color: marque.bleuMarine }]}>
                       {visible ? t('connexion.masquer') : t('connexion.afficher')}
                     </Text>
                   </Pressable>
@@ -228,7 +228,7 @@ export default function Connexion() {
                 }}
                 style={{ alignSelf: 'center', padding: 10 }}
               >
-                <Text style={[styles.lien, { color: p.info }]}>
+                <Text style={[styles.lien, { color: marque.bleuMarine }]}>
                   {modeOubli ? t('oubli.retour') : t('connexion.oublie')}
                 </Text>
               </Pressable>
@@ -236,31 +236,25 @@ export default function Connexion() {
           )}
         </View>
       </ScrollView>
+      <FiletDemonstration />
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { paddingHorizontal: 24, paddingBottom: 40, gap: 6 },
-  marque: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 28 },
-  produit: { color: '#FFFFFF', fontFamily: police.titreFort, fontSize: 18 },
+  hero: { paddingHorizontal: 16, paddingBottom: 24, gap: 4 },
+  marque: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
+  produit: { color: '#FFFFFF', fontFamily: police.titre, fontSize: 16 },
   organisation: { color: '#B9C4E8', fontFamily: police.texte, fontSize: 12 },
-  bienvenue: { color: '#FFFFFF', fontFamily: police.titreFort, fontSize: 30 },
-  accroche: { color: '#B9C4E8', fontFamily: police.texte, fontSize: 15, lineHeight: 21 },
-  feuille: {
-    flex: 1,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    gap: 16,
-  },
+  bienvenue: { color: '#FFFFFF', fontFamily: police.titre, fontSize: 22, lineHeight: 28 },
+  accroche: { color: '#B9C4E8', fontFamily: police.texte, fontSize: 14, lineHeight: 20 },
+  feuille: { flex: 1, paddingHorizontal: 16, paddingTop: 24, gap: 16 },
   lien: { fontFamily: police.texteFort, fontSize: 14 },
   liens: { flexDirection: 'row', justifyContent: 'space-between' },
   code: {
     borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderRadius: rayon,
+    paddingVertical: 12,
     fontFamily: 'monospace',
     fontSize: 28,
     letterSpacing: 10,

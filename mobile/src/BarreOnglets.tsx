@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePalette } from './composants';
 import { police } from './polices';
 
-/** Onglets de la maquette ; ceux d'une version future mènent à un écran « bientôt ». */
+/** Onglets ; ceux d'une version future mènent à un écran « bientôt ». */
 export const ONGLETS = [
   { cle: 'tournee', icone: 'home', chemin: '/' },
   { cle: 'semaine', icone: 'calendar-month', chemin: '/semaine', version: '0.2.1' },
@@ -27,12 +27,12 @@ export function BarreOnglets() {
       accessibilityRole="tablist"
       style={[
         styles.barre,
-        { backgroundColor: p.surface, borderTopColor: p.ligne, paddingBottom: marges.bottom + 8 },
+        { backgroundColor: p.surface, borderTopColor: p.ligne, paddingBottom: marges.bottom },
       ]}
     >
       {ONGLETS.map((onglet) => {
         const actif = chemin === onglet.chemin;
-        const couleur = actif ? marque.orange : p.texteDiscret;
+        const couleur = actif ? p.texte : p.texteDiscret;
         const futur = 'version' in onglet;
         return (
           <Pressable
@@ -43,9 +43,8 @@ export function BarreOnglets() {
             onPress={() => !actif && routeur.replace(onglet.chemin as Href)}
             style={styles.onglet}
           >
-            <View style={[styles.pastille, actif && { backgroundColor: p.orangeDoux }]}>
-              <MaterialIcons name={onglet.icone} size={22} color={couleur} />
-            </View>
+            <View style={[styles.repere, actif && { backgroundColor: marque.orange }]} />
+            <MaterialIcons name={onglet.icone} size={22} color={couleur} />
             <Text style={[styles.libelle, { color: couleur }, futur && !actif && { opacity: 0.7 }]}>
               {t(`mobile.onglets.${onglet.cle}`)}
             </Text>
@@ -57,8 +56,9 @@ export function BarreOnglets() {
 }
 
 const styles = StyleSheet.create({
-  barre: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 6 },
-  onglet: { flex: 1, alignItems: 'center', gap: 2, minHeight: 48 },
-  pastille: { paddingHorizontal: 14, paddingVertical: 3, borderRadius: 999 },
-  libelle: { fontFamily: police.texteMoyen, fontSize: 11 },
+  barre: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth },
+  // Zone tactile de 56 px ; l'onglet actif porte un repère orange de 2 px en haut.
+  onglet: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: 56 },
+  repere: { position: 'absolute', top: 0, left: '25%', right: '25%', height: 2 },
+  libelle: { fontFamily: police.texteMoyen, fontSize: 11.5 },
 });

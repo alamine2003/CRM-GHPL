@@ -13,9 +13,7 @@ export function oublierEnvironnement() {
   environnement = null;
 }
 
-/** Pastille « Démonstration » : des données fictives ne se confondent pas avec la production (DEM-001). */
-export function PastilleDemonstration() {
-  const { t } = useTranslation();
+function useDemonstration() {
   const { client } = useSession();
   const [demo, setDemo] = useState(false);
   useEffect(() => {
@@ -29,26 +27,38 @@ export function PastilleDemonstration() {
       actif = false;
     };
   }, [client]);
-  if (!demo) return null;
+  return demo;
+}
+
+/** Filet orange de 3 px en haut de l'écran sur une instance de démonstration (DEM-001). */
+export function FiletDemonstration() {
+  if (!useDemonstration()) return null;
+  return <View pointerEvents="none" style={styles.filet} />;
+}
+
+/** Le mot « Démonstration » dans l'en-tête : discret, permanent, sans bannière. */
+export function MentionDemonstration() {
+  const { t } = useTranslation();
+  if (!useDemonstration()) return null;
   return (
-    <View
+    <Text
       accessibilityRole="text"
       accessibilityLabel={`${t('demonstration.bandeau')} : ${t('demonstration.texte')}`}
-      style={styles.pastille}
+      style={styles.texte}
     >
-      <Text style={styles.texte}>{t('demonstration.bandeau')}</Text>
-    </View>
+      {t('demonstration.bandeau')}
+    </Text>
   );
 }
 
 const styles = StyleSheet.create({
-  pastille: {
-    alignSelf: 'flex-start',
+  filet: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
     backgroundColor: marque.orange,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    marginBottom: 6,
   },
-  texte: { color: marque.bleuMarine3, fontFamily: police.texteFort, fontSize: 12 },
+  texte: { color: marque.orange, fontFamily: police.texteFort, fontSize: 12 },
 });

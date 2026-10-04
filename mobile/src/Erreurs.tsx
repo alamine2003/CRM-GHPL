@@ -1,4 +1,3 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { marque } from '@innov/design';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,9 +28,6 @@ function EcranErreur({ reference, reessayer }: { reference: string; reessayer: (
   const p = usePalette();
   return (
     <View style={[styles.ecran, { backgroundColor: p.fond }]}>
-      <View style={[styles.icone, { backgroundColor: p.erreurDoux }]}>
-        <MaterialIcons name="error-outline" size={40} color={p.erreur} />
-      </View>
       <Texte variante="sousTitre" style={{ textAlign: 'center' }}>
         {t('erreurs.titre')}
       </Texte>
@@ -75,11 +71,4 @@ export class LimiteErreur extends Component<{ children: ReactNode }, { reference
 
 const styles = StyleSheet.create({
   ecran: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 14 },
-  icone: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

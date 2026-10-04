@@ -5,15 +5,22 @@ import type {
   SaisieProspect,
   ValeurReferentiel,
 } from '@innov/api-client';
-import { marque } from '@innov/design';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
-import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from '../src/composants';
+import { StyleSheet, View } from 'react-native';
+import {
+  Alerte,
+  Bouton,
+  Carte,
+  Champ,
+  Etiquette,
+  MarquePotentiel,
+  Texte,
+  usePalette,
+} from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { FormulaireEtablissement, LigneEtablissement, Pilule } from '../src/Etablissements';
 import { MaListeCible } from '../src/MaListe';
-import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 
 const POTENTIELS: Potentiel[] = ['A', 'B', 'C'];
@@ -30,21 +37,10 @@ function LigneProspect({ prospect }: { prospect: Prospect }) {
     .join(' ');
   return (
     <View style={[styles.ligne, { borderColor: p.ligne }]}>
-      <View
-        style={[
-          styles.potentiel,
-          { borderColor: prospect.potentiel === 'A' ? marque.orange : p.ligne },
-        ]}
-      >
-        <Text
-          style={[
-            styles.potentielTexte,
-            { color: prospect.potentiel === 'A' ? marque.orange : p.texteSecondaire },
-          ]}
-        >
-          {prospect.potentiel}
-        </Text>
-      </View>
+      <MarquePotentiel
+        valeur={prospect.potentiel}
+        libelle={t(`prospect.potentiels.${prospect.potentiel}`)}
+      />
       <View style={{ flex: 1 }}>
         <Texte variante="fort">{nom}</Texte>
         <Texte variante="discret">
@@ -53,13 +49,7 @@ function LigneProspect({ prospect }: { prospect: Prospect }) {
             .join(' · ')}
         </Texte>
       </View>
-      {prospect.statut === 'a_valider' && (
-        <View style={[styles.badge, { backgroundColor: p.orangeDoux }]}>
-          <Text style={[styles.badgeTexte, { color: marque.orange }]}>
-            {t('prospect.statuts.a_valider')}
-          </Text>
-        </View>
-      )}
+      {prospect.statut === 'a_valider' && <Etiquette>{t('prospect.statuts.a_valider')}</Etiquette>}
     </View>
   );
 }
@@ -338,18 +328,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 10,
+    minHeight: 56,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  potentiel: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  potentielTexte: { fontFamily: police.titreFort, fontSize: 14 },
-  badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeTexte: { fontFamily: police.texteFort, fontSize: 11 },
   pilules: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

@@ -120,8 +120,7 @@ describe('mobile — session', () => {
     await rendre(<Accueil />, fauxClient({ reprendre: jest.fn(async () => JETONS) }));
     expect(await screen.findByText('Bonjour Awa')).toBeTruthy();
     expect(screen.getAllByText(/Sénégal/).length).toBeGreaterThan(0);
-    expect(screen.getByText('v0.0.3')).toBeTruthy();
-    expect(screen.getByText('Délégué')).toBeTruthy();
+    // Version et rôles se lisent dans « Profil » : l'en-tête ne porte plus que le titre (0.1.8).
   });
 
   it('se connecte avec l’identifiant et le mot de passe', async () => {
@@ -303,10 +302,10 @@ describe('mobile — session', () => {
       } as unknown as Partial<ClientApi>),
     );
     expect(await screen.findByText('Mes produits')).toBeTruthy();
-    expect(screen.getByText('Produit 0')).toBeTruthy();
-    expect(screen.queryByText('Produit 9')).toBeNull();
+    expect(screen.getByText(/Produit 0/)).toBeTruthy();
+    expect(screen.queryByText(/Produit 9/)).toBeNull();
     await fireEvent.press(screen.getByText('+2'));
-    expect(screen.getByText('Produit 9')).toBeTruthy();
+    expect(screen.getByText(/Produit 9/)).toBeTruthy();
   });
 
   it('cherche un prospect et en crée un au statut à valider (PRP-006)', async () => {

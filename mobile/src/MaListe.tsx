@@ -1,10 +1,9 @@
 import type { ListeCible } from '@innov/api-client';
-import { marque } from '@innov/design';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { ecrire, lire } from './baseLocale';
-import { Alerte, Carte, Champ, Texte, usePalette } from './composants';
+import { Alerte, Carte, Champ, MarquePotentiel, Texte, usePalette } from './composants';
 import { police } from './polices';
 import { useSession } from './session';
 
@@ -100,19 +99,12 @@ export function MaListeCible() {
               ).includes(filtre),
             )
             .map((c) => {
-              const a = c.prospect.potentiel === 'A';
               return (
                 <View key={c.id} style={[styles.ligne, { borderColor: p.ligne }]}>
-                  <View style={[styles.potentiel, { borderColor: a ? marque.orange : p.ligne }]}>
-                    <Text
-                      style={[
-                        styles.potentielTexte,
-                        { color: a ? marque.orange : p.texteSecondaire },
-                      ]}
-                    >
-                      {c.prospect.potentiel}
-                    </Text>
-                  </View>
+                  <MarquePotentiel
+                    valeur={c.prospect.potentiel}
+                    libelle={t(`prospect.potentiels.${c.prospect.potentiel}`)}
+                  />
                   <View style={{ flex: 1 }}>
                     <Texte variante="fort">
                       {[
@@ -150,16 +142,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 10,
+    minHeight: 56,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  potentiel: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  potentielTexte: { fontFamily: police.titreFort, fontSize: 14 },
   frequence: { fontFamily: police.texteFort, fontSize: 12 },
 });

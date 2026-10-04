@@ -5,21 +5,25 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarreOnglets } from './BarreOnglets';
-import { PastilleDemonstration } from './Demonstration';
+import { FiletDemonstration, MentionDemonstration } from './Demonstration';
 import { usePalette } from './composants';
 import { police } from './polices';
 import { useSession } from './session';
 
-/** Gabarit d'un écran connecté : en-tête bleu marine, contenu défilant, onglets. */
+/**
+ * Gabarit d'un écran connecté (docs/design.md §4) : en-tête de 56 px (titre à gauche, action à
+ * droite), contenu défilant pleine largeur, onglets en bas. Aucune bannière.
+ */
 export function Ecran({
   titre,
   surTitre,
-  enTete,
+  action,
   children,
 }: {
   titre: string;
+  /** Contexte discret sous le titre (date, pays, personne). */
   surTitre?: string;
-  enTete?: ReactNode;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -28,38 +32,58 @@ export function Ecran({
   const { etat } = useSession();
   if (etat.statut === 'chargement') {
     return (
-      <View style={[styles.centre, { backgroundColor: marque.bleuMarine }]}>
-        <ActivityIndicator accessibilityLabel={t('session.chargement')} color="#FFFFFF" />
+      <View style={[styles.centre, { backgroundColor: p.fond }]}>
+        <ActivityIndicator accessibilityLabel={t('session.chargement')} color={marque.bleuMarine} />
       </View>
     );
   }
   if (etat.statut === 'anonyme') return <Redirect href="/connexion" />;
   return (
     <View style={{ flex: 1, backgroundColor: p.fond }}>
-      <View style={[styles.entete, { paddingTop: marges.top + 18 }]}>
-        <PastilleDemonstration />
-        {surTitre && <Text style={styles.surTitre}>{surTitre}</Text>}
-        <Text accessibilityRole="header" style={styles.titre}>
-          {titre}
-        </Text>
-        {enTete}
+      <View
+        style={[
+          styles.entete,
+          { paddingTop: marges.top, backgroundColor: p.surface, borderBottomColor: p.ligne },
+        ]}
+      >
+        <View style={styles.barre}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text
+              accessibilityRole="header"
+              numberOfLines={1}
+              style={[styles.titre, { color: p.texte }]}
+            >
+              {titre}
+            </Text>
+            {surTitre && (
+              <Text numberOfLines={1} style={[styles.surTitre, { color: p.texteSecondaire }]}>
+                {surTitre}
+              </Text>
+            )}
+          </View>
+          <MentionDemonstration />
+          {action}
+        </View>
       </View>
       <ScrollView contentContainerStyle={styles.contenu}>{children}</ScrollView>
       <BarreOnglets />
+      <FiletDemonstration />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  entete: {
-    backgroundColor: marque.bleuMarine,
-    paddingHorizontal: 20,
-    paddingBottom: 18,
-    borderBottomLeftRadius: 22,
-    borderBottomRightRadius: 22,
+  entete: { borderBottomWidth: StyleSheet.hairlineWidth },
+  barre: {
+    minHeight: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  surTitre: { color: '#B9C4E8', fontFamily: police.texte, fontSize: 13 },
-  titre: { color: '#FFFFFF', fontFamily: police.titreFort, fontSize: 24, marginTop: 2 },
-  contenu: { padding: 16, gap: 12, paddingBottom: 24 },
+  titre: { fontFamily: police.titre, fontSize: 18, lineHeight: 24 },
+  surTitre: { fontFamily: police.texte, fontSize: 13, lineHeight: 18 },
+  contenu: { padding: 16, gap: 16, paddingBottom: 24 },
 });
