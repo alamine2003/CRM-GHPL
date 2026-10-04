@@ -1,41 +1,21 @@
-import type { Potentiel, Prospect, SaisieProspect, ValeurReferentiel } from '@innov/api-client';
+import type {
+  Etablissement,
+  Potentiel,
+  Prospect,
+  SaisieProspect,
+  ValeurReferentiel,
+} from '@innov/api-client';
 import { marque } from '@innov/design';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
+import { FormulaireEtablissement, LigneEtablissement, Pilule } from '../src/Etablissements';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 
 const POTENTIELS: Potentiel[] = ['A', 'B', 'C'];
-
-function Pilule({
-  libelle,
-  actif,
-  onPress,
-}: {
-  libelle: string;
-  actif: boolean;
-  onPress: () => void;
-}) {
-  const p = usePalette();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected: actif }}
-      onPress={onPress}
-      style={[
-        styles.pilule,
-        actif
-          ? { backgroundColor: marque.orange, borderColor: marque.orange }
-          : { borderColor: p.ligne, backgroundColor: p.surface2 },
-      ]}
-    >
-      <Text style={[styles.piluleTexte, { color: actif ? '#FFFFFF' : p.texte }]}>{libelle}</Text>
-    </Pressable>
-  );
-}
 
 function LigneProspect({ prospect }: { prospect: Prospect }) {
   const { t } = useTranslation();
@@ -184,12 +164,17 @@ function Formulaire({ surTermine }: { surTermine: (p: Prospect) => void }) {
   );
 }
 
-/** Prospects du délégué : recherche dans les fiches communes et création (PRP-002, PRP-006). */
+type Segment = 'prospects' | 'etablissements';
+
+/** Prospects et établissements du délégué : recherche dans les fiches communes et création
+ * (PRP-002, PRP-003, PRP-006). */
 export default function EcranProspects() {
   const { t } = useTranslation();
   const { client, etat } = useSession();
+  const [segment, setSegment] = useState<Segment>('prospects');
   const [saisie, setSaisie] = useState('');
   const [fiches, setFiches] = useState<Prospect[] | null>(null);
+  const [lieux, setLieux] = useState<Etablissement[] | null>(null);
   const [total, setTotal] = useState(0);
   const [creation, setCreation] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -200,36 +185,76 @@ export default function EcranProspects() {
   useEffect(() => {
     let actif = true;
     const minuteur = setTimeout(() => {
-      client.prospects
-        .liste({ q: saisie })
-        .then((r) => {
-          if (!actif) return;
-          setFiches(r.resultats);
-          setTotal(r.total);
-        })
-        .catch(() => actif && setFiches([]));
+      const requete =
+        segment === 'prospects'
+          ? client.prospects.liste({ q: saisie }).then((r) => {
+              if (!actif) return;
+              setFiches(r.resultats);
+              setTotal(r.total);
+            })
+          : client.etablissements.liste({ q: saisie }).then((r) => {
+              if (!actif) return;
+              setLieux(r.resultats);
+              setTotal(r.total);
+            });
+      requete.catch(() => undefined);
     }, 300);
     return () => {
       actif = false;
       clearTimeout(minuteur);
     };
-  }, [client, saisie, version]);
+  }, [client, saisie, version, segment]);
+
+  const changerSegment = (s: Segment) => {
+    setSegment(s);
+    setCreation(false);
+    setMessage(null);
+  };
+  const liste = segment === 'prospects' ? fiches : lieux;
 
   return (
     <Ecran
       titre={t('prospect.mobile.titre')}
-      surTitre={fiches ? t('prospect.nombre', { count: total }) : undefined}
+      surTitre={
+        liste
+          ? segment === 'prospects'
+            ? t('prospect.nombre', { count: total })
+            : t('etablissement.nombre', { count: total })
+          : undefined
+      }
     >
+      <View style={styles.segments}>
+        <Pilule
+          libelle={t('etablissement.mobile.segmentProspects')}
+          actif={segment === 'prospects'}
+          onPress={() => changerSegment('prospects')}
+        />
+        <Pilule
+          libelle={t('etablissement.mobile.segmentEtablissements')}
+          actif={segment === 'etablissements'}
+          onPress={() => changerSegment('etablissements')}
+        />
+      </View>
       {message && <Alerte type="succes">{message}</Alerte>}
       {creation ? (
         <>
-          <Formulaire
-            surTermine={() => {
-              setCreation(false);
-              setMessage(t('prospect.mobile.creee'));
-              setVersion((v) => v + 1);
-            }}
-          />
+          {segment === 'prospects' ? (
+            <Formulaire
+              surTermine={() => {
+                setCreation(false);
+                setMessage(t('prospect.mobile.creee'));
+                setVersion((v) => v + 1);
+              }}
+            />
+          ) : (
+            <FormulaireEtablissement
+              surTermine={() => {
+                setCreation(false);
+                setMessage(t('etablissement.mobile.creee'));
+                setVersion((v) => v + 1);
+              }}
+            />
+          )}
           <Bouton
             secondaire
             libelle={t('prospect.mobile.retour')}
@@ -238,20 +263,19 @@ export default function EcranProspects() {
         </>
       ) : (
         <>
-          <View style={styles.barre}>
-            <View style={{ flex: 1 }}>
-              <Champ
-                libelle={t('prospect.mobile.rechercher')}
-                value={saisie}
-                onChangeText={setSaisie}
-                autoCorrect={false}
-                placeholder={t('prospect.rechercher')}
-              />
-            </View>
-          </View>
+          <Champ
+            libelle={
+              segment === 'prospects'
+                ? t('prospect.mobile.rechercher')
+                : t('etablissement.rechercher')
+            }
+            value={saisie}
+            onChangeText={setSaisie}
+            autoCorrect={false}
+          />
           {peutCreer && (
             <Bouton
-              libelle={t('prospect.nouveau')}
+              libelle={segment === 'prospects' ? t('prospect.nouveau') : t('etablissement.nouveau')}
               onPress={() => {
                 setMessage(null);
                 setCreation(true);
@@ -259,12 +283,16 @@ export default function EcranProspects() {
             />
           )}
           <Carte style={{ paddingVertical: 4 }}>
-            {fiches?.length === 0 && (
-              <Texte variante="discret">{t('prospect.aucunResultat')}</Texte>
+            {liste?.length === 0 && (
+              <Texte variante="discret">
+                {segment === 'prospects'
+                  ? t('prospect.aucunResultat')
+                  : t('etablissement.aucunResultat')}
+              </Texte>
             )}
-            {fiches?.map((prospect) => (
-              <LigneProspect key={prospect.id} prospect={prospect} />
-            ))}
+            {segment === 'prospects'
+              ? fiches?.map((prospect) => <LigneProspect key={prospect.id} prospect={prospect} />)
+              : lieux?.map((e) => <LigneEtablissement key={e.id} etablissement={e} />)}
           </Carte>
         </>
       )}
@@ -273,7 +301,7 @@ export default function EcranProspects() {
 }
 
 const styles = StyleSheet.create({
-  barre: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  segments: { flexDirection: 'row', gap: 8 },
   ligne: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -293,6 +321,4 @@ const styles = StyleSheet.create({
   badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
   badgeTexte: { fontFamily: police.texteFort, fontSize: 11 },
   pilules: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pilule: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
-  piluleTexte: { fontFamily: police.texteFort, fontSize: 13 },
 });

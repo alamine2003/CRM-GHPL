@@ -29,6 +29,13 @@ const config: ExpoConfig = {
     'expo-localization',
     'expo-secure-store',
     [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          "INNOV CRM enregistre la position d'un établissement quand vous le demandez.",
+      },
+    ],
+    [
       'expo-local-authentication',
       {
         faceIDPermission: 'INNOV CRM se déverrouille avec Face ID après 5 minutes en arrière-plan.',

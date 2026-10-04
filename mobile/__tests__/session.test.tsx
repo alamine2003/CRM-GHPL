@@ -31,6 +31,13 @@ jest.mock('expo-local-authentication', () => ({
   getEnrolledLevelAsync: jest.fn(async () => 3),
   authenticateAsync: jest.fn(async () => ({ success: true })),
 }));
+jest.mock('expo-location', () => ({
+  Accuracy: { High: 4 },
+  requestForegroundPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  getCurrentPositionAsync: jest.fn(async () => ({
+    coords: { latitude: 14.70001, longitude: -17.45002, accuracy: 9 },
+  })),
+}));
 jest.mock('react-native-safe-area-context', () => {
   const { View } = jest.requireActual('react-native');
   return {
@@ -343,6 +350,59 @@ describe('mobile — session', () => {
       expect.objectContaining({ nom: 'Sarr', type: 't1', specialite: 's1', potentiel: 'B' }),
     );
     expect(await screen.findByText(/à valider par l'administrateur pays/)).toBeTruthy();
+  });
+
+  it('crée un établissement avec la position du téléphone (PRP-003 CA2)', async () => {
+    const etablissements = {
+      liste: jest.fn(async () => ({ total: 0, limite: 100, resultats: [] })),
+      secteurs: jest.fn(async () => [{ id: 's1', libelle: 'Plateau', zone: 'Dakar' }]),
+      creer: jest.fn(async () => ({})),
+    };
+    await rendre(
+      <EcranProspects />,
+      fauxClient({
+        reprendre: jest.fn(async () => JETONS),
+        perimetre: jest.fn(async () => ({
+          ...PERIMETRE,
+          actions: ['prospects.lire', 'prospects.creer'],
+        })),
+        prospects: { liste: jest.fn(async () => ({ total: 0, limite: 100, resultats: [] })) },
+        etablissements,
+        referentiel: {
+          valeurs: jest.fn(async () => [
+            {
+              id: 't1',
+              liste: 'type_etablissement',
+              libelle: 'Pharmacie',
+              parent: null,
+              archive: false,
+            },
+          ]),
+          monPortefeuille: jest.fn(async () => []),
+        },
+      } as unknown as Partial<ClientApi>),
+    );
+    await fireEvent.press(await screen.findByText('Établissements'));
+    await fireEvent.press(await screen.findByText('Nouvel établissement'));
+    await fireEvent.changeText(
+      await screen.findByLabelText("Nom de l'établissement"),
+      'Pharmacie Médina',
+    );
+    await fireEvent.press(await screen.findByText('Pharmacie'));
+    await fireEvent.press(await screen.findByText('Plateau'));
+    await fireEvent.press(screen.getByText('Utiliser ma position'));
+    expect(await screen.findByText('Position enregistrée (9 m)')).toBeTruthy();
+    await fireEvent.press(screen.getByText("Créer l'établissement"));
+    expect(etablissements.creer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nom: 'Pharmacie Médina',
+        type: 't1',
+        secteur: 's1',
+        latitude: 14.70001,
+        longitude: -17.45002,
+      }),
+    );
+    expect(await screen.findByText(/Établissement créé/)).toBeTruthy();
   });
 
   it('bascule en anglais et mémorise la langue sur le compte (USR-004)', async () => {

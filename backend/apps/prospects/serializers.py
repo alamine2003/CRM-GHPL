@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Civilite, Potentiel, Prospect
+from .models import Civilite, Etablissement, Potentiel, Prospect
 
 
 class PersonneResumeSerializer(serializers.Serializer):
@@ -62,3 +62,60 @@ class SyntheseProspectsSerializer(serializers.Serializer):
     a_valider = serializers.IntegerField()
     mes_a_valider = serializers.IntegerField()
     potentiels = serializers.DictField(child=serializers.IntegerField())
+
+
+class SecteurResumeSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    libelle = serializers.CharField()
+    zone = serializers.CharField(source="zone.libelle")
+
+
+class EtablissementSerializer(serializers.ModelSerializer):
+    pays = serializers.CharField(source="pays.code", read_only=True)
+    type = serializers.UUIDField(source="type_id")
+    type_code = serializers.CharField(source="type.code")
+    type_libelle = serializers.CharField(source="type.libelle")
+    secteur = SecteurResumeSerializer()
+    latitude = serializers.FloatField(allow_null=True)
+    longitude = serializers.FloatField(allow_null=True)
+    a_coordonnees = serializers.BooleanField(read_only=True)
+    cree_par = PersonneResumeSerializer()
+    modifiable = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Etablissement
+        fields = [
+            "id", "pays", "nom", "type", "type_code", "type_libelle", "secteur", "adresse",
+            "localite", "latitude", "longitude", "a_coordonnees", "telephone", "statut",
+            "cree_par", "cree_le", "valide_le", "modifiable",
+        ]  # fmt: skip
+
+    def get_modifiable(self, fiche) -> bool:
+        decider = self.context.get("peut_modifier")
+        return bool(decider and decider(fiche))
+
+
+class ListeEtablissementsSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    limite = serializers.IntegerField()
+    resultats = EtablissementSerializer(many=True)
+
+
+class SaisieEtablissementSerializer(serializers.Serializer):
+    nom = serializers.CharField(max_length=160, required=False, allow_blank=True)
+    type = serializers.UUIDField(required=False, allow_null=True)
+    secteur = serializers.UUIDField(required=False, allow_null=True)
+    adresse = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    localite = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    latitude = serializers.FloatField(required=False, allow_null=True)
+    longitude = serializers.FloatField(required=False, allow_null=True)
+    telephone = serializers.CharField(max_length=30, required=False, allow_blank=True)
+
+
+class SyntheseEtablissementsSerializer(serializers.Serializer):
+    actifs = serializers.IntegerField()
+    a_valider = serializers.IntegerField()
+    mes_a_valider = serializers.IntegerField()
+    sans_coordonnees = serializers.IntegerField()
+    secteurs_couverts = serializers.IntegerField()
+    types = serializers.DictField(child=serializers.IntegerField())

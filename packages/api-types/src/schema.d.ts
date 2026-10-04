@@ -373,6 +373,106 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/etablissements/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['etablissements_liste'];
+    put?: never;
+    post: operations['etablissement_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/etablissements/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['etablissement_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['etablissement_modifier'];
+    trace?: never;
+  };
+  '/api/v1/etablissements/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['etablissement_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/etablissements/{id}/valider/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['etablissement_valider'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/etablissements/secteurs/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Secteurs actifs du pays proposés à la saisie d'un établissement (PRP-003 CA1) ; le
+     *     délégué, qui ne lit pas l'organisation, en a besoin pour créer une fiche.
+     */
+    get: operations['etablissements_secteurs'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/etablissements/synthese/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['etablissements_synthese'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/exploitation/': {
     parameters: {
       query?: never;
@@ -1425,6 +1525,32 @@ export interface components {
       ecran?: string;
       reference?: string;
     };
+    Etablissement: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly pays: string;
+      nom: string;
+      /** Format: uuid */
+      type: string;
+      type_code: string;
+      type_libelle: string;
+      secteur: components['schemas']['SecteurResume'];
+      adresse?: string;
+      localite?: string;
+      /** Format: double */
+      latitude: number | null;
+      /** Format: double */
+      longitude: number | null;
+      readonly a_coordonnees: boolean;
+      telephone?: string;
+      statut?: components['schemas']['StatutFicheEnum'];
+      cree_par: components['schemas']['PersonneResume'];
+      /** Format: date-time */
+      readonly cree_le: string;
+      /** Format: date-time */
+      valide_le?: string | null;
+      readonly modifiable: boolean;
+    };
     EtapeDoubleAuth: {
       /** @description « code_requis » : envoyer le code à connexion/code/. */
       etape: string;
@@ -1522,6 +1648,11 @@ export interface components {
       | 'type_etablissement'
       | 'classe_therapeutique'
       | 'motif_ecart';
+    ListeEtablissements: {
+      total: number;
+      limite: number;
+      resultats: components['schemas']['Etablissement'][];
+    };
     ListeProspects: {
       total: number;
       limite: number;
@@ -1613,6 +1744,20 @@ export interface components {
       ordre?: number;
       /** Format: uuid */
       parent?: string | null;
+    };
+    PatchedSaisieEtablissement: {
+      nom?: string;
+      /** Format: uuid */
+      type?: string | null;
+      /** Format: uuid */
+      secteur?: string | null;
+      adresse?: string;
+      localite?: string;
+      /** Format: double */
+      latitude?: number | null;
+      /** Format: double */
+      longitude?: number | null;
+      telephone?: string;
     };
     PatchedSaisieProspect: {
       civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
@@ -1841,6 +1986,20 @@ export interface components {
       | 'superviseur'
       | 'delegue'
       | 'admin_technique';
+    SaisieEtablissement: {
+      nom?: string;
+      /** Format: uuid */
+      type?: string | null;
+      /** Format: uuid */
+      secteur?: string | null;
+      adresse?: string;
+      localite?: string;
+      /** Format: double */
+      latitude?: number | null;
+      /** Format: double */
+      longitude?: number | null;
+      telephone?: string;
+    };
     SaisieProspect: {
       civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
       nom?: string;
@@ -1864,6 +2023,12 @@ export interface components {
       zone: string;
       zone_libelle: string;
       readonly archive: boolean;
+    };
+    SecteurResume: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+      zone: string;
     };
     Session: {
       /** Format: uuid */
@@ -1907,6 +2072,16 @@ export interface components {
       postes: number;
       postes_vacants: number;
       postes_sans_superviseur: number;
+    };
+    SyntheseEtablissements: {
+      actifs: number;
+      a_valider: number;
+      mes_a_valider: number;
+      sans_coordonnees: number;
+      secteurs_couverts: number;
+      types: {
+        [key: string]: number;
+      };
     };
     SyntheseProspects: {
       actifs: number;
@@ -2499,6 +2674,192 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  etablissements_liste: {
+    parameters: {
+      query?: {
+        /** @description Nom, localité, téléphone */
+        q?: string;
+        /** @description 1 */
+        sans_coordonnees?: string;
+        secteur?: string;
+        statut?: 'a_valider' | 'actif' | 'archive' | 'fusionne';
+        type?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListeEtablissements'];
+        };
+      };
+    };
+  };
+  etablissement_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SaisieEtablissement'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieEtablissement'];
+        'multipart/form-data': components['schemas']['SaisieEtablissement'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Etablissement'];
+        };
+      };
+    };
+  };
+  etablissement_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Etablissement'];
+        };
+      };
+    };
+  };
+  etablissement_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedSaisieEtablissement'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedSaisieEtablissement'];
+        'multipart/form-data': components['schemas']['PatchedSaisieEtablissement'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Etablissement'];
+        };
+      };
+    };
+  };
+  etablissement_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['ArchivageProspect'];
+        'application/x-www-form-urlencoded': components['schemas']['ArchivageProspect'];
+        'multipart/form-data': components['schemas']['ArchivageProspect'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Etablissement'];
+        };
+      };
+    };
+  };
+  etablissement_valider: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Etablissement'];
+        };
+      };
+    };
+  };
+  etablissements_secteurs: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SecteurResume'][];
+        };
+      };
+    };
+  };
+  etablissements_synthese: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SyntheseEtablissements'];
+        };
       };
     };
   };

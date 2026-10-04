@@ -54,3 +54,6 @@ export type SyntheseProspects = Schemas['SyntheseProspects'];
 export type Potentiel = Schemas['PotentielEnum'];
 export type Civilite = Schemas['CiviliteEnum'];
 export type StatutFiche = Schemas['StatutFicheEnum'];
+export type Etablissement = Schemas['Etablissement'];
+export type ListeEtablissements = Schemas['ListeEtablissements'];
+export type SyntheseEtablissements = Schemas['SyntheseEtablissements'];

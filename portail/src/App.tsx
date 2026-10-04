@@ -24,6 +24,7 @@ const PaysPage = lazy(() => import('./pages/PaysPage'));
 const Profil = lazy(() => import('./pages/Profil'));
 const Referentiels = lazy(() => import('./pages/Referentiels'));
 const Prospects = lazy(() => import('./pages/Prospects'));
+const Etablissements = lazy(() => import('./pages/Etablissements'));
 
 type Rendu = (utilisateur: Moi, perimetre: Perimetre) => ReactNode;
 
@@ -37,6 +38,10 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
   '/equipe': { titre: 'navigation.equipe', rendu: (_, p) => <Equipe perimetre={p} /> },
   '/parametres': { titre: 'navigation.parametres', rendu: (_, p) => <Parametres perimetre={p} /> },
   '/prospects': { titre: 'navigation.prospects', rendu: (_, p) => <Prospects perimetre={p} /> },
+  '/etablissements': {
+    titre: 'navigation.etablissements',
+    rendu: (_, p) => <Etablissements perimetre={p} />,
+  },
   '/referentiels': {
     titre: 'navigation.referentiels',
     rendu: (_, p) => <Referentiels perimetre={p} />,

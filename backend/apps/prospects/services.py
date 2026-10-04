@@ -1,10 +1,11 @@
-"""Services des fiches prospects (PRP-002, PRP-006, RG-041).
+"""Services des fiches prospects et établissements (PRP-002, PRP-003, PRP-006, RG-041).
 
 Les vues vérifient les droits (matrice) ; les règles et l'audit sont ici.
 """
 
 import re
 import unicodedata
+from decimal import Decimal, InvalidOperation
 
 import phonenumbers
 from django.db import IntegrityError, transaction
@@ -13,13 +14,14 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.identite.models import Role, Utilisateur
+from apps.organisation.models import Secteur
 from apps.perimetre.matrice import PAYS_CONSULTATION, SIEGE
 from apps.perimetre.perimetre import Perimetre
 from apps.referentiel.models import Liste, Valeur
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
 
-from .models import Civilite, Potentiel, Prospect, StatutFiche
+from .models import Civilite, Etablissement, Potentiel, Prospect, StatutFiche
 
 #: Titres retirés du nom normalisé : « Dr Diop » et « Diop » sont la même personne.
 TITRES = {"dr", "docteur", "pr", "professeur", "m", "mr", "mme", "mlle", "madame", "monsieur"}
@@ -28,10 +30,11 @@ TITRES = {"dr", "docteur", "pr", "professeur", "m", "mr", "mme", "mlle", "madame
 VOIENT_TOUT = SIEGE | PAYS_CONSULTATION
 
 
-def _auditer(action: str, prospect: Prospect, **details) -> None:
+def _auditer(action: str, fiche, **details) -> None:
     from apps.audit.services import enregistrer
 
-    enregistrer(f"prospect.{action}", objet=prospect, pays=prospect.pays, details=details)
+    prefixe = "etablissement" if isinstance(fiche, Etablissement) else "prospect"
+    enregistrer(f"{prefixe}.{action}", objet=fiche, pays=fiche.pays, details=details)
 
 
 def normaliser_nom(*parties: str) -> str:
@@ -168,38 +171,40 @@ def modifier_prospect(prospect: Prospect, **champs) -> Prospect:
     return prospect
 
 
-def valider(prospect: Prospect, par: Utilisateur) -> Prospect:
+def valider(fiche, par: Utilisateur):
     """L'administrateur pays rend commune une fiche créée par un délégué (RG-041). Le
     détecteur de doublons (0.1.7) fera ce passage automatiquement quand il ne trouve rien."""
-    if prospect.statut != StatutFiche.A_VALIDER:
+    if fiche.statut != StatutFiche.A_VALIDER:
         raise ErreurMetier("deja_valide", _("Cette fiche n'est pas à valider."))
-    prospect.statut, prospect.valide_par, prospect.valide_le = (
-        StatutFiche.ACTIF, par, timezone.now()
-    )  # fmt: skip
-    prospect.save(update_fields=["statut", "valide_par", "valide_le"])
-    _auditer("validation", prospect)
-    return prospect
+    fiche.statut, fiche.valide_par, fiche.valide_le = StatutFiche.ACTIF, par, timezone.now()
+    fiche.save(update_fields=["statut", "valide_par", "valide_le"])
+    _auditer("validation", fiche)
+    return fiche
 
 
-def archiver(prospect: Prospect, motif: str = "") -> Prospect:
+def archiver(fiche, motif: str = ""):
     """Aucune suppression (PRP-012 CA2) : une fiche archivée n'est plus proposée."""
-    if prospect.statut == StatutFiche.ARCHIVE:
-        return prospect
-    ancien = prospect.statut
-    prospect.statut = StatutFiche.ARCHIVE
-    prospect.save(update_fields=["statut"])
-    prospect.archiver()
-    _auditer("archivage", prospect, ancien=ancien, motif=motif.strip())
-    return prospect
+    if fiche.statut == StatutFiche.ARCHIVE:
+        return fiche
+    ancien = fiche.statut
+    fiche.statut = StatutFiche.ARCHIVE
+    fiche.save(update_fields=["statut"])
+    fiche.archiver()
+    _auditer("archivage", fiche, ancien=ancien, motif=motif.strip())
+    return fiche
 
 
 # --- Lectures -------------------------------------------------------------------------------
 
 
 def prospects_visibles(perimetre: Perimetre) -> QuerySet:
+    return fiches_visibles(Prospect, perimetre)
+
+
+def fiches_visibles(modele, perimetre: Perimetre) -> QuerySet:
     """Fiches du pays actif ; une fiche à valider n'est visible que de son auteur et de
     l'administration du pays (RG-041, PRP-006 CA1)."""
-    qs = perimetre.filtrer_par_pays(Prospect.objects.all())
+    qs = perimetre.filtrer_par_pays(modele.objects.all())
     if perimetre.roles & VOIENT_TOUT:
         return qs
     return qs.filter(
@@ -208,7 +213,7 @@ def prospects_visibles(perimetre: Perimetre) -> QuerySet:
     )
 
 
-def peut_modifier(perimetre: Perimetre, prospect: Prospect) -> bool:
+def peut_modifier(perimetre: Perimetre, prospect) -> bool:
     """L'administrateur pays modifie toute fiche ; l'auteur, sa fiche tant qu'elle est à
     valider. Les autres proposeront une modification (PRP-014, 0.1.7)."""
     if Role.ADMIN_PAYS in perimetre.roles:
@@ -230,4 +235,111 @@ def rechercher(qs: QuerySet, texte: str) -> QuerySet:
     if len(chiffres) >= 4:
         filtre |= Q(telephone_mobile__contains=chiffres) | Q(telephone_pro__contains=chiffres)
     filtre |= Q(numero_ordre__iexact=re.sub(r"\s+", "", texte))
+    return qs.filter(filtre)
+
+
+# --- Établissements (PRP-003) ---------------------------------------------------------------
+
+SUIVIS_ETABLISSEMENT = ["nom", "type", "secteur", "adresse", "localite", "latitude",
+                        "longitude", "telephone"]  # fmt: skip
+
+
+def _coordonnee(valeur, minimum: int, maximum: int, champ: str) -> Decimal | None:
+    if valeur in (None, ""):
+        return None
+    try:
+        nombre = Decimal(str(valeur)).quantize(Decimal("0.000001"))
+    except (InvalidOperation, ValueError):
+        nombre = None
+    if nombre is None or not minimum <= nombre <= maximum:
+        raise ErreurMetier("coordonnees_invalides", _("Coordonnées GPS invalides."), champ=champ)
+    return nombre
+
+
+def _verifier_etablissement(pays: Pays, champs: dict) -> dict:
+    """Nom, type et secteur obligatoires (PRP-003 CA1) ; les deux coordonnées ou aucune."""
+    nom = (champs.get("nom") or "").strip()
+    if not nom:
+        raise ErreurMetier("champ_requis", _("Le nom est obligatoire."), champ="nom")
+    type_ = _valeur(pays, champs.get("type"), Liste.TYPE_ETABLISSEMENT, "type")
+    if type_ is None:
+        raise ErreurMetier(
+            "champ_requis", _("Le type d'établissement est obligatoire."), champ="type"
+        )
+    secteur: Secteur | None = champs.get("secteur")
+    if secteur is None:
+        raise ErreurMetier(
+            "secteur_requis", _("Un établissement appartient à un secteur."), champ="secteur"
+        )
+    if secteur.pays_id != pays.pk or secteur.est_archive:
+        raise ErreurMetier(
+            "secteur_invalide", _("Secteur inconnu ou archivé dans ce pays."), champ="secteur"
+        )
+    latitude = _coordonnee(champs.get("latitude"), -90, 90, "latitude")
+    longitude = _coordonnee(champs.get("longitude"), -180, 180, "longitude")
+    if (latitude is None) != (longitude is None):
+        raise ErreurMetier(
+            "coordonnees_incompletes",
+            _("Indiquez la latitude et la longitude, ou aucune des deux."),
+            champ="latitude" if latitude is None else "longitude",
+        )
+    return {
+        "nom": nom,
+        "nom_normalise": normaliser_nom(nom),
+        "type": type_,
+        "secteur": secteur,
+        "adresse": (champs.get("adresse") or "").strip(),
+        "localite": (champs.get("localite") or "").strip(),
+        "latitude": latitude,
+        "longitude": longitude,
+        "telephone": normaliser_telephone(champs.get("telephone"), pays, "telephone"),
+    }
+
+
+def creer_etablissement(pays: Pays, auteur: Utilisateur, *, actif: bool, **champs):
+    """PRP-003 ; comme un prospect, créé par un délégué il est `a_valider` (§14.6)."""
+    etablissement = Etablissement(
+        pays=pays,
+        cree_par=auteur,
+        statut=StatutFiche.ACTIF if actif else StatutFiche.A_VALIDER,
+        **_verifier_etablissement(pays, champs),
+    )
+    if actif:
+        etablissement.valide_par, etablissement.valide_le = auteur, timezone.now()
+    etablissement.save()
+    _auditer("creation", etablissement, statut=etablissement.statut,
+             coordonnees=etablissement.a_coordonnees)  # fmt: skip
+    return etablissement
+
+
+def modifier_etablissement(etablissement, **champs):
+    if etablissement.statut not in (StatutFiche.A_VALIDER, StatutFiche.ACTIF):
+        raise ErreurMetier("archive", _("Une fiche archivée ne se modifie plus."))
+    actuels = {c: getattr(etablissement, c) for c in SUIVIS_ETABLISSEMENT}
+    valeurs = _verifier_etablissement(etablissement.pays, {**actuels, **champs})
+    changes = {}
+    for champ, nouvelle in valeurs.items():
+        ancienne = getattr(etablissement, champ)
+        if ancienne != nouvelle:
+            setattr(etablissement, champ, nouvelle)
+            if champ in SUIVIS_ETABLISSEMENT:
+                changes[champ] = {"ancien": str(ancienne or ""), "nouveau": str(nouvelle or "")}
+    if changes:
+        etablissement.save()
+        _auditer("modification", etablissement, **changes)
+    return etablissement
+
+
+def rechercher_etablissements(qs: QuerySet, texte: str) -> QuerySet:
+    """Par nom (tolérant aux accents et à la casse), localité ou téléphone."""
+    texte = (texte or "").strip()
+    if not texte:
+        return qs
+    filtre = Q()
+    for mot in normaliser_nom(texte).split():
+        filtre &= Q(nom_normalise__contains=mot)
+    filtre |= Q(localite__unaccent__icontains=texte)
+    chiffres = re.sub(r"\D", "", texte)
+    if len(chiffres) >= 4:
+        filtre |= Q(telephone__contains=chiffres)
     return qs.filter(filtre)

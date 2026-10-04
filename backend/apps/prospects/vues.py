@@ -13,6 +13,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from apps.identite.models import Role
+from apps.organisation.models import Secteur
 from apps.organisation.vues import _lire, _reference, pays_requis
 from apps.perimetre.matrice import SIEGE, Action
 from apps.perimetre.vues import VuePerimetre
@@ -21,7 +22,7 @@ from apps.socle.erreurs import ErreurMetier
 
 from . import serializers as s
 from . import services
-from .models import Potentiel, StatutFiche
+from .models import Etablissement, Potentiel, StatutFiche
 
 #: Résultats renvoyés par une recherche ; pagination complète en 0.1.6 (PRP-005).
 LIMITE = 100
@@ -161,3 +162,153 @@ class SyntheseProspectsVue(VueProspects):
         )
         chiffres["potentiels"] = {p: potentiels.get(p, 0) for p in Potentiel.values}
         return Response(chiffres)
+
+
+# --- Établissements (PRP-003) -------------------------------------------------------------
+
+
+class VueEtablissements(VueProspects):
+    serializer_class = s.EtablissementSerializer
+
+    def selection(self, perimetre):
+        return services.fiches_visibles(Etablissement, perimetre).select_related(
+            "pays", "type", "secteur__zone", "cree_par"
+        )
+
+    def references(self, v: dict) -> dict:
+        if v.get("type"):
+            v["type"] = _reference(Valeur, self.perimetre, v["type"], "valeur_invalide")
+        if v.get("secteur"):
+            v["secteur"] = _reference(Secteur, self.perimetre, v["secteur"], "secteur_invalide")
+        return v
+
+
+class EtablissementsVue(VueEtablissements):
+    actions = {"GET": Action.PROSPECTS_LIRE, "POST": Action.PROSPECTS_CREER}
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("q", str, required=False, description="Nom, localité, téléphone"),
+            OpenApiParameter("statut", enum=StatutFiche.values, required=False),
+            OpenApiParameter("type", str, required=False),
+            OpenApiParameter("secteur", str, required=False),
+            OpenApiParameter("sans_coordonnees", str, required=False, description="1"),
+        ],
+        responses=s.ListeEtablissementsSerializer,
+        operation_id="etablissements_liste",
+    )
+    def get(self, request):
+        qs = self.get_queryset()
+        p = request.query_params
+        statut = p.get("statut")
+        qs = qs.filter(statut=statut) if statut else qs.exclude(
+            statut__in=[StatutFiche.ARCHIVE, StatutFiche.FUSIONNE]
+        )  # fmt: skip
+        if p.get("type"):
+            qs = qs.filter(type_id=p["type"])
+        if p.get("secteur"):
+            qs = qs.filter(secteur_id=p["secteur"])
+        if p.get("sans_coordonnees") == "1":
+            qs = qs.filter(latitude__isnull=True)
+        qs = services.rechercher_etablissements(qs, p.get("q", ""))
+        resultats = list(qs.order_by(Lower("nom"))[:LIMITE])
+        return Response(
+            {
+                "total": qs.count(),
+                "limite": LIMITE,
+                "resultats": self.get_serializer(resultats, many=True).data,
+            }
+        )
+
+    @extend_schema(request=s.SaisieEtablissementSerializer,
+                   responses={201: s.EtablissementSerializer},
+                   operation_id="etablissement_creer")  # fmt: skip
+    def post(self, request):
+        v = self.references(_lire(s.SaisieEtablissementSerializer, request))
+        pays = pays_requis(self.perimetre)
+        actif = Role.ADMIN_PAYS in self.perimetre.roles
+        fiche = services.creer_etablissement(pays, request.user, actif=actif, **v)
+        return self.detail(fiche, status.HTTP_201_CREATED)
+
+
+class EtablissementVue(VueEtablissements):
+    actions = {"GET": Action.PROSPECTS_LIRE, "PATCH": Action.PROSPECTS_LIRE}
+
+    @extend_schema(responses=s.EtablissementSerializer, operation_id="etablissement_detail")
+    def get(self, request, id):
+        return self.detail(get_object_or_404(self.get_queryset(), pk=id))
+
+    @extend_schema(request=s.SaisieEtablissementSerializer, responses=s.EtablissementSerializer,
+                   operation_id="etablissement_modifier")  # fmt: skip
+    def patch(self, request, id):
+        fiche = get_object_or_404(self.get_queryset(), pk=id)
+        if not services.peut_modifier(self.perimetre, fiche):
+            raise ErreurMetier(
+                "modification_interdite",
+                _("Seul l'administrateur pays modifie une fiche commune."),
+                status.HTTP_403_FORBIDDEN,
+            )
+        v = self.references(_lire(s.SaisieEtablissementSerializer, request))
+        return self.detail(services.modifier_etablissement(fiche, **v))
+
+
+class EtablissementValidationVue(VueEtablissements):
+    actions = {"POST": Action.PROSPECTS_GERER}
+
+    @extend_schema(request=None, responses=s.EtablissementSerializer,
+                   operation_id="etablissement_valider")  # fmt: skip
+    def post(self, request, id):
+        fiche = get_object_or_404(self.get_queryset(), pk=id)
+        return self.detail(services.valider(fiche, request.user))
+
+
+class EtablissementArchivageVue(VueEtablissements):
+    actions = {"POST": Action.PROSPECTS_GERER}
+
+    @extend_schema(request=s.ArchivageProspectSerializer, responses=s.EtablissementSerializer,
+                   operation_id="etablissement_archiver")  # fmt: skip
+    def post(self, request, id):
+        fiche = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.ArchivageProspectSerializer, request)
+        return self.detail(services.archiver(fiche, v.get("motif", "")))
+
+
+class SyntheseEtablissementsVue(VueEtablissements):
+    actions = {"GET": Action.PROSPECTS_LIRE}
+
+    @extend_schema(responses=s.SyntheseEtablissementsSerializer,
+                   operation_id="etablissements_synthese")  # fmt: skip
+    def get(self, request):
+        qs = self.get_queryset()
+        actifs = qs.filter(statut=StatutFiche.ACTIF)
+        chiffres = qs.aggregate(
+            actifs=Count("id", filter=Q(statut=StatutFiche.ACTIF)),
+            a_valider=Count("id", filter=Q(statut=StatutFiche.A_VALIDER)),
+            mes_a_valider=Count(
+                "id", filter=Q(statut=StatutFiche.A_VALIDER, cree_par=request.user)
+            ),
+        )
+        chiffres["sans_coordonnees"] = actifs.filter(latitude__isnull=True).count()
+        chiffres["secteurs_couverts"] = actifs.values("secteur").distinct().count()
+        chiffres["types"] = dict(
+            actifs.values_list("type__code").annotate(n=Count("id")).values_list("type__code", "n")
+        )
+        return Response(chiffres)
+
+
+class SecteursEtablissementsVue(VuePerimetre):
+    """Secteurs actifs du pays proposés à la saisie d'un établissement (PRP-003 CA1) ; le
+    délégué, qui ne lit pas l'organisation, en a besoin pour créer une fiche."""
+
+    actions = {"GET": Action.PROSPECTS_LIRE}
+    serializer_class = s.SecteurResumeSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(
+            Secteur.objects.filter(archive_le__isnull=True).select_related("zone")
+        ).order_by("zone__libelle", "libelle")
+
+    @extend_schema(responses=s.SecteurResumeSerializer(many=True),
+                   operation_id="etablissements_secteurs")  # fmt: skip
+    def get(self, request):
+        return Response(s.SecteurResumeSerializer(self.get_queryset(), many=True).data)

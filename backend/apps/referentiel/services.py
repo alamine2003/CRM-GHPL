@@ -137,6 +137,7 @@ def est_utilisee(objet) -> bool:
             or objet.produits.exists()
             or objet.prospects_du_type.exists()
             or objet.prospects_de_la_specialite.exists()
+            or objet.etablissements_du_type.exists()
         )
     if isinstance(objet, Produit):
         return objet.portefeuilles.exists()

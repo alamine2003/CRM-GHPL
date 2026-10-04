@@ -13,6 +13,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 import axe from 'axe-core';
 import App from './App';
+
+// Leaflet ne s'affiche pas dans jsdom : la carte est remplacée par un témoin.
+vi.mock('./composants/Carte', () => ({
+  default: ({ points }: { points: { libelle: string }[] }) => (
+    <div data-testid="carte">{points.map((p) => p.libelle).join(', ')}</div>
+  ),
+}));
 import i18n from './i18n';
 import { ecrireApparence, lireApparence } from './preferences';
 import { FournisseurSession } from './session';
@@ -1134,6 +1141,154 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
     const { client } = clientProspects(ADMIN_P);
     const { container } = rendre(client, '/prospects');
     await screen.findByText('Dr Aïssatou Ndiaye');
+    expect(await violationsAccessibilite(container)).toEqual([]);
+  });
+});
+
+describe('portail — établissements (PRP-003)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const SECTEUR = { id: 's1', libelle: 'Plateau', zone: 'Dakar' };
+  const BASE = {
+    pays: 'SN',
+    type: 't1',
+    type_code: 'clinique',
+    type_libelle: 'Clinique',
+    secteur: SECTEUR,
+    adresse: '12 rue Carnot',
+    localite: 'Plateau',
+    telephone: '+221338210000',
+    statut: 'actif' as const,
+    valide_le: null,
+    modifiable: true,
+    cree_le: '2026-10-04T08:00:00Z',
+    cree_par: { id: 'u1', identifiant: 'ibrahima.sn', prenom: 'Ibrahima', nom: 'Sn' },
+  };
+  const AVEC = {
+    ...BASE,
+    id: 'e1',
+    nom: 'Clinique du Cap',
+    latitude: 14.66,
+    longitude: -17.43,
+    a_coordonnees: true,
+  };
+  const SANS = {
+    ...BASE,
+    id: 'e2',
+    nom: 'Cabinet Fall',
+    latitude: null,
+    longitude: null,
+    a_coordonnees: false,
+    type_code: 'cabinet',
+    type_libelle: 'Cabinet',
+  };
+
+  function clientEtab() {
+    const etablissements = {
+      liste: vi.fn(async () => ({ total: 2, limite: 100, resultats: [AVEC, SANS] })),
+      synthese: vi.fn(async () => ({
+        actifs: 2,
+        a_valider: 0,
+        mes_a_valider: 0,
+        sans_coordonnees: 1,
+        secteurs_couverts: 1,
+        types: { clinique: 1, cabinet: 1 },
+      })),
+      secteurs: vi.fn(async () => [SECTEUR]),
+      detail: vi.fn(async (id: string) => (id === 'e1' ? AVEC : SANS)),
+      creer: vi.fn(async () => AVEC),
+      modifier: vi.fn(async () => AVEC),
+      valider: vi.fn(async () => AVEC),
+      archiver: vi.fn(async () => AVEC),
+    };
+    const referentiel = {
+      valeurs: vi.fn(async () => [
+        {
+          id: 't1',
+          pays: 'SN',
+          liste: 'type_etablissement',
+          code: 'clinique',
+          libelle: 'Clinique',
+          ordre: 1,
+          parent: null,
+          archive: false,
+          utilisations: 1,
+        },
+      ]),
+    };
+    const client = fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => ({
+        ...PERIMETRE_DELEGUE,
+        roles: ['admin_pays'],
+        actions: ['prospects.lire', 'prospects.creer', 'prospects.gerer', 'pays.lire'],
+      })),
+      etablissements: etablissements as unknown as ClientApi['etablissements'],
+      referentiel: referentiel as unknown as ClientApi['referentiel'],
+    } as Partial<ClientApi>);
+    return { client, etablissements };
+  }
+
+  it('liste les établissements, leur secteur et signale ceux sans GPS (PRP-003 CA2)', async () => {
+    const { client } = clientEtab();
+    rendre(client, '/etablissements');
+    expect(await screen.findByText('Clinique du Cap')).toBeInTheDocument();
+    expect(screen.getAllByText('Dakar · Plateau').length).toBe(2);
+    expect(screen.getByText('Sans coordonnées GPS')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Cabinet Fall'));
+    expect(await screen.findByText('Position non renseignée')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Positionner' })).toBeInTheDocument();
+  });
+
+  it('montre la position d’un établissement sur la carte', async () => {
+    const { client } = clientEtab();
+    rendre(client, '/etablissements');
+    fireEvent.click(await screen.findByText('Clinique du Cap'));
+    expect(await screen.findByTestId('carte')).toHaveTextContent('Clinique du Cap');
+    expect(screen.getByRole('link', { name: 'Ouvrir dans OpenStreetMap' })).toBeInTheDocument();
+  });
+
+  it('crée un établissement dans un secteur, positionné avec la géolocalisation', async () => {
+    const { client, etablissements } = clientEtab();
+    const getCurrentPosition = vi.fn((succes: PositionCallback) =>
+      succes({
+        coords: { latitude: 14.7, longitude: -17.45, accuracy: 12 },
+      } as GeolocationPosition),
+    );
+    Object.defineProperty(navigator, 'geolocation', {
+      value: { getCurrentPosition },
+      configurable: true,
+    });
+    rendre(client, '/etablissements');
+    fireEvent.click(await screen.findByRole('button', { name: 'Nouvel établissement' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.change(within(dialogue).getByLabelText(/^Nom de l'établissement/), {
+      target: { value: 'Pharmacie Médina' },
+    });
+    fireEvent.mouseDown(within(dialogue).getByLabelText(/^Secteur/));
+    fireEvent.click(await screen.findByRole('option', { name: 'Plateau' }));
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Utiliser ma position' }));
+    expect(await within(dialogue).findByText('Précision : 12 m')).toBeInTheDocument();
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Enregistrer' }));
+    await vi.waitFor(() =>
+      expect(etablissements.creer).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nom: 'Pharmacie Médina',
+          secteur: 's1',
+          type: 't1',
+          latitude: 14.7,
+          longitude: -17.45,
+        }),
+      ),
+    );
+  });
+
+  it('la page Établissements ne présente aucune violation d’accessibilité détectable', async () => {
+    const { client } = clientEtab();
+    const { container } = rendre(client, '/etablissements');
+    await screen.findByText('Clinique du Cap');
     expect(await violationsAccessibilite(container)).toEqual([]);
   });
 });

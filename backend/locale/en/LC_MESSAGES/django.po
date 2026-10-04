@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 15:05+0000\n"
+"POT-Creation-Date: 2026-10-04 15:26+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -233,6 +233,9 @@ msgstr "Archive this division's networks first."
 msgid "Archivez d'abord les secteurs de cette zone."
 msgstr "Archive this zone's sectors first."
 
+msgid "Rattachez d'abord les établissements de ce secteur à un autre."
+msgstr "First attach this sector's institutions to another one."
+
 msgid "Terminez d'abord l'occupation de ce poste."
 msgstr "End this position's occupancy first."
 
@@ -317,6 +320,21 @@ msgstr "An archived record can no longer be edited."
 
 msgid "Cette fiche n'est pas à valider."
 msgstr "This record is not awaiting validation."
+
+msgid "Coordonnées GPS invalides."
+msgstr "Invalid GPS coordinates."
+
+msgid "Le type d'établissement est obligatoire."
+msgstr "The institution type is required."
+
+msgid "Un établissement appartient à un secteur."
+msgstr "An institution belongs to a sector."
+
+msgid "Secteur inconnu ou archivé dans ce pays."
+msgstr "Unknown or archived sector in this country."
+
+msgid "Indiquez la latitude et la longitude, ou aucune des deux."
+msgstr "Enter both latitude and longitude, or neither."
 
 msgid "Seul l'administrateur pays modifie une fiche commune."
 msgstr "Only the country administrator edits a shared record."

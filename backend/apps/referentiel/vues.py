@@ -57,6 +57,7 @@ class VueValeurs(VuePerimetre):
                 + Count("produits", distinct=True)
                 + Count("prospects_du_type", distinct=True)
                 + Count("prospects_de_la_specialite", distinct=True)
+                + Count("etablissements_du_type", distinct=True)
             )
         )
 

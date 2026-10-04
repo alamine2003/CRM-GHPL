@@ -128,6 +128,14 @@ def archiver(objet):
     }.get(type(objet))
     if enfants and getattr(objet, enfants[0]).filter(archive_le__isnull=True).exists():
         raise ErreurMetier("elements_actifs", enfants[1])
+    # Un établissement appartient toujours à un secteur actif (PRP-003 CA1).
+    if (
+        isinstance(objet, Secteur)
+        and objet.etablissements.filter(statut__in=["a_valider", "actif"]).exists()
+    ):
+        raise ErreurMetier(
+            "elements_actifs", _("Rattachez d'abord les établissements de ce secteur à un autre.")
+        )
     if isinstance(objet, Poste):
         jour = aujourdhui(objet.pays)
         if objet.occupations.filter(Q(fin__isnull=True) | Q(fin__gt=jour)).exists():

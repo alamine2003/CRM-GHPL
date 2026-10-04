@@ -163,5 +163,28 @@ urlpatterns = [
         prs.ProspectArchivageVue.as_view(),
         name="prospect-archiver",
     ),
+    # Fiches établissements (PRP-003)
+    path("etablissements/", prs.EtablissementsVue.as_view(), name="etablissements"),
+    path(
+        "etablissements/synthese/",
+        prs.SyntheseEtablissementsVue.as_view(),
+        name="etablissements-synthese",
+    ),
+    path(
+        "etablissements/secteurs/",
+        prs.SecteursEtablissementsVue.as_view(),
+        name="etablissements-secteurs",
+    ),
+    path("etablissements/<uuid:id>/", prs.EtablissementVue.as_view(), name="etablissement"),
+    path(
+        "etablissements/<uuid:id>/valider/",
+        prs.EtablissementValidationVue.as_view(),
+        name="etablissement-valider",
+    ),
+    path(
+        "etablissements/<uuid:id>/archiver/",
+        prs.EtablissementArchivageVue.as_view(),
+        name="etablissement-archiver",
+    ),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

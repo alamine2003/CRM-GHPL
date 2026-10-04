@@ -13,12 +13,14 @@ import type {
   Appareil,
   DescriptionAppareil,
   Division,
+  Etablissement,
   EtatDoubleAuth,
   EtatExploitation,
   InitialisationDoubleAuth,
   Informations,
   Civilite,
   Jetons,
+  ListeEtablissements,
   ListeProspects,
   ListeReferentiel,
   Moi,
@@ -39,6 +41,7 @@ import type {
   SessionOuverte,
   StatutFiche,
   StatutPays,
+  SyntheseEtablissements,
   SyntheseOrganisation,
   SyntheseProspects,
   Transfert,
@@ -56,12 +59,14 @@ export type {
   CodeRole,
   DescriptionAppareil,
   Division,
+  Etablissement,
   EtatDoubleAuth,
   EtatExploitation,
   InitialisationDoubleAuth,
   Informations,
   Civilite,
   Jetons,
+  ListeEtablissements,
   ListeProspects,
   ListeReferentiel,
   Moi,
@@ -85,6 +90,7 @@ export type {
   SessionOuverte,
   StatutFiche,
   StatutPays,
+  SyntheseEtablissements,
   SyntheseOrganisation,
   SyntheseProspects,
   Transfert,
@@ -168,6 +174,25 @@ export interface SaisieProspect {
   telephone_pro?: string;
   courriel?: string;
   potentiel: Potentiel;
+}
+
+export interface FiltresEtablissements {
+  q?: string;
+  statut?: StatutFiche;
+  type?: string;
+  secteur?: string;
+  sans_coordonnees?: '1';
+}
+
+export interface SaisieEtablissement {
+  nom: string;
+  type: string | null;
+  secteur: string | null;
+  adresse?: string;
+  localite?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  telephone?: string;
 }
 
 export interface StockageRafraichissement {
@@ -451,6 +476,35 @@ export function creerClient(options: OptionsClient) {
         requete<Prospect>(`/api/v1/prospects/${id}/valider/`, { methode: 'POST' }),
       archiver: (id: string, motif = '') =>
         requete<Prospect>(`/api/v1/prospects/${id}/archiver/`, {
+          methode: 'POST',
+          corps: { motif },
+        }),
+    },
+    /** Fiches établissements (PRP-003). */
+    etablissements: {
+      liste: (filtres: FiltresEtablissements = {}) => {
+        const params = new URLSearchParams(
+          Object.entries(filtres).filter((e): e is [string, string] => Boolean(e[1])),
+        ).toString();
+        return requete<ListeEtablissements>(`/api/v1/etablissements/${params ? `?${params}` : ''}`);
+      },
+      synthese: () => requete<SyntheseEtablissements>('/api/v1/etablissements/synthese/'),
+      secteurs: () =>
+        requete<{ id: string; libelle: string; zone: string }[]>(
+          '/api/v1/etablissements/secteurs/',
+        ),
+      detail: (id: string) => requete<Etablissement>(`/api/v1/etablissements/${id}/`),
+      creer: (fiche: SaisieEtablissement) =>
+        requete<Etablissement>('/api/v1/etablissements/', { methode: 'POST', corps: fiche }),
+      modifier: (id: string, champs: Partial<SaisieEtablissement>) =>
+        requete<Etablissement>(`/api/v1/etablissements/${id}/`, {
+          methode: 'PATCH',
+          corps: champs,
+        }),
+      valider: (id: string) =>
+        requete<Etablissement>(`/api/v1/etablissements/${id}/valider/`, { methode: 'POST' }),
+      archiver: (id: string, motif = '') =>
+        requete<Etablissement>(`/api/v1/etablissements/${id}/archiver/`, {
           methode: 'POST',
           corps: { motif },
         }),

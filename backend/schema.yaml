@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.1.2
+  version: 0.1.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -482,6 +482,210 @@ paths:
       responses:
         '202':
           description: No response body
+  /api/v1/etablissements/:
+    get:
+      operationId: etablissements_liste
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Nom, localité, téléphone
+      - in: query
+        name: sans_coordonnees
+        schema:
+          type: string
+        description: '1'
+      - in: query
+        name: secteur
+        schema:
+          type: string
+      - in: query
+        name: statut
+        schema:
+          type: string
+          enum:
+          - a_valider
+          - actif
+          - archive
+          - fusionne
+      - in: query
+        name: type
+        schema:
+          type: string
+      tags:
+      - etablissements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListeEtablissements'
+          description: ''
+    post:
+      operationId: etablissement_creer
+      tags:
+      - etablissements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieEtablissement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieEtablissement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieEtablissement'
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Etablissement'
+          description: ''
+  /api/v1/etablissements/{id}/:
+    get:
+      operationId: etablissement_detail
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Etablissement'
+          description: ''
+    patch:
+      operationId: etablissement_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSaisieEtablissement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSaisieEtablissement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSaisieEtablissement'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Etablissement'
+          description: ''
+  /api/v1/etablissements/{id}/archiver/:
+    post:
+      operationId: etablissement_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArchivageProspect'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ArchivageProspect'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ArchivageProspect'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Etablissement'
+          description: ''
+  /api/v1/etablissements/{id}/valider/:
+    post:
+      operationId: etablissement_valider
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Etablissement'
+          description: ''
+  /api/v1/etablissements/secteurs/:
+    get:
+      operationId: etablissements_secteurs
+      description: |-
+        Secteurs actifs du pays proposés à la saisie d'un établissement (PRP-003 CA1) ; le
+        délégué, qui ne lit pas l'organisation, en a besoin pour créer une fiche.
+      tags:
+      - etablissements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SecteurResume'
+          description: ''
+  /api/v1/etablissements/synthese/:
+    get:
+      operationId: etablissements_synthese
+      tags:
+      - etablissements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheseEtablissements'
+          description: ''
   /api/v1/exploitation/:
     get:
       operationId: exploitation_etat
@@ -2697,6 +2901,77 @@ components:
       - client
       - message
       - version
+    Etablissement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        pays:
+          type: string
+          readOnly: true
+        nom:
+          type: string
+          maxLength: 160
+        type:
+          type: string
+          format: uuid
+        type_code:
+          type: string
+        type_libelle:
+          type: string
+        secteur:
+          $ref: '#/components/schemas/SecteurResume'
+        adresse:
+          type: string
+          maxLength: 200
+        localite:
+          type: string
+          maxLength: 120
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        a_coordonnees:
+          type: boolean
+          readOnly: true
+        telephone:
+          type: string
+          maxLength: 20
+        statut:
+          $ref: '#/components/schemas/StatutFicheEnum'
+        cree_par:
+          $ref: '#/components/schemas/PersonneResume'
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        valide_le:
+          type: string
+          format: date-time
+          nullable: true
+        modifiable:
+          type: boolean
+          readOnly: true
+      required:
+      - a_coordonnees
+      - cree_le
+      - cree_par
+      - id
+      - latitude
+      - longitude
+      - modifiable
+      - nom
+      - pays
+      - secteur
+      - type
+      - type_code
+      - type_libelle
     EtapeDoubleAuth:
       type: object
       properties:
@@ -2903,6 +3178,21 @@ components:
         * `type_etablissement` - Types d'établissement
         * `classe_therapeutique` - Classes thérapeutiques
         * `motif_ecart` - Motifs d'écart
+    ListeEtablissements:
+      type: object
+      properties:
+        total:
+          type: integer
+        limite:
+          type: integer
+        resultats:
+          type: array
+          items:
+            $ref: '#/components/schemas/Etablissement'
+      required:
+      - limite
+      - resultats
+      - total
     ListeProspects:
       type: object
       properties:
@@ -3140,6 +3430,37 @@ components:
           type: string
           format: uuid
           nullable: true
+    PatchedSaisieEtablissement:
+      type: object
+      properties:
+        nom:
+          type: string
+          maxLength: 160
+        type:
+          type: string
+          format: uuid
+          nullable: true
+        secteur:
+          type: string
+          format: uuid
+          nullable: true
+        adresse:
+          type: string
+          maxLength: 200
+        localite:
+          type: string
+          maxLength: 120
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        telephone:
+          type: string
+          maxLength: 30
     PatchedSaisieProspect:
       type: object
       properties:
@@ -3710,6 +4031,37 @@ components:
         * `superviseur` - Superviseur
         * `delegue` - Délégué
         * `admin_technique` - Administrateur technique
+    SaisieEtablissement:
+      type: object
+      properties:
+        nom:
+          type: string
+          maxLength: 160
+        type:
+          type: string
+          format: uuid
+          nullable: true
+        secteur:
+          type: string
+          format: uuid
+          nullable: true
+        adresse:
+          type: string
+          maxLength: 200
+        localite:
+          type: string
+          maxLength: 120
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        telephone:
+          type: string
+          maxLength: 30
     SaisieProspect:
       type: object
       properties:
@@ -3776,6 +4128,20 @@ components:
       - pays
       - zone
       - zone_libelle
+    SecteurResume:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+        zone:
+          type: string
+      required:
+      - id
+      - libelle
+      - zone
     Session:
       type: object
       properties:
@@ -3870,6 +4236,30 @@ components:
       - reseaux
       - secteurs
       - zones
+    SyntheseEtablissements:
+      type: object
+      properties:
+        actifs:
+          type: integer
+        a_valider:
+          type: integer
+        mes_a_valider:
+          type: integer
+        sans_coordonnees:
+          type: integer
+        secteurs_couverts:
+          type: integer
+        types:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+      - a_valider
+      - actifs
+      - mes_a_valider
+      - sans_coordonnees
+      - secteurs_couverts
+      - types
     SyntheseProspects:
       type: object
       properties:

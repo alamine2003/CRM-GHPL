@@ -1,4 +1,4 @@
-"""Fiches prospects (prd.md §14.1, PRP-002, PRP-006).
+"""Fiches prospects et établissements (prd.md §14.1, §14.2 ; PRP-002, PRP-003, PRP-006).
 
 La fiche est **commune** à tous les réseaux du pays (§14.4) ; les visites resteront
 privées. Une fiche créée par un délégué est `a_valider` et visible par lui seul jusqu'à
@@ -83,3 +83,64 @@ class Prospect(ModeleDePays):
 
     def __str__(self):
         return " ".join(x for x in (self.get_civilite_display(), self.prenom, self.nom) if x)
+
+
+class Etablissement(ModeleDePays):
+    """Lieu d'exercice : cabinet, hôpital, pharmacie… (§14.2, PRP-003).
+
+    Il appartient à un secteur (CA1). Ses coordonnées GPS de référence sont facultatives
+    mais nécessaires au contrôle de distance des visites (CA2, 0.4). Comme une fiche
+    prospect, il est `a_valider` quand un délégué le crée (§14.6, RG-041).
+    """
+
+    nom = models.CharField(max_length=160)
+    nom_normalise = models.CharField(max_length=170, db_index=True, editable=False)
+    type = models.ForeignKey(
+        "referentiel.Valeur", on_delete=models.PROTECT, related_name="etablissements_du_type"
+    )
+    secteur = models.ForeignKey(
+        "organisation.Secteur", on_delete=models.PROTECT, related_name="etablissements"
+    )
+    adresse = models.CharField(max_length=200, blank=True)
+    #: Quartier ou ville [H] : texte libre en attendant un référentiel des localités.
+    localite = models.CharField(max_length=120, blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    telephone = models.CharField(max_length=20, blank=True)
+    statut = models.CharField(
+        max_length=10, choices=StatutFiche.choices, default=StatutFiche.A_VALIDER
+    )
+    cree_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="etablissements_crees"
+    )
+    valide_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="etablissements_valides",
+    )
+    valide_le = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "établissement"
+        ordering = ["nom"]
+        constraints = [
+            # Les deux coordonnées vont ensemble, dans des bornes valides.
+            models.CheckConstraint(
+                condition=(Q(latitude__isnull=True) & Q(longitude__isnull=True))
+                | (
+                    Q(latitude__gte=-90, latitude__lte=90)
+                    & Q(longitude__gte=-180, longitude__lte=180)
+                ),
+                name="etablissement_coordonnees_valides",
+            )
+        ]
+        indexes = [models.Index(fields=["pays", "statut"]), models.Index(fields=["secteur"])]
+
+    def __str__(self):
+        return self.nom
+
+    @property
+    def a_coordonnees(self) -> bool:
+        return self.latitude is not None and self.longitude is not None

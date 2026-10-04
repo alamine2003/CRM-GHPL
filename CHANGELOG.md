@@ -2,6 +2,46 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.3] — Fiches établissements, positions GPS et carte ; design enrichi
+
+Troisième jalon du cycle 0.1 « Référentiel ».
+
+### Ajouté — établissements (PRP-003)
+
+- **Fiche du §14.2** : nom, type (référentiel du pays), secteur, adresse, localité, téléphone (E.164), coordonnées GPS de référence, statut et auteur.
+- **CA1** : un établissement appartient toujours à un secteur actif du pays. On n'archive pas un secteur qui porte encore des établissements.
+- **CA2** : les coordonnées sont facultatives, mais nécessaires au contrôle de distance des visites (0.4) :
+  - les deux vont ensemble, dans des bornes valides ;
+  - un établissement sans position est signalé (tuile, filtre « Sans GPS », alerte sur la fiche).
+- **Création par le délégué** au statut `a_valider` (§14.6), visible de lui seul jusqu'à la validation de l'administrateur pays, comme un prospect. La validation, l'archivage avec motif et la modification suivent les mêmes règles et sont audités, y compris le changement de position.
+- Recherche tolérante par nom, localité ou téléphone ; filtres par statut, type et secteur ; synthèse (actifs, à valider, sans GPS, secteurs couverts, répartition par type).
+- Liste des secteurs accessible à la saisie : le délégué, qui ne lit pas l'organisation, peut choisir le secteur.
+- Mêmes droits que les prospects (`prospects.*`, ligne « Créer un prospect ou un établissement » du §6.3) ; table protégée par la sécurité au niveau des lignes, recherche par index trigramme, routes couvertes par les tests d'isolation.
+
+### Portail et mobile
+
+- **Page Établissements** (menu Activité) :
+  - icône par type et secteur en pastille ; indicateur de position (vert ou barré) ;
+  - vue **Carte** OpenStreetMap des établissements positionnés ; un clic sur un point ouvre sa fiche ; la carte se charge à la demande ;
+  - **fiche latérale** avec carte, coordonnées, lien OpenStreetMap ; bouton « Positionner » quand la position manque.
+- **Saisie** :
+  - secteurs groupés par zone ;
+  - **« Utiliser ma position »**, avec la précision obtenue ;
+  - aperçu sur la carte, et un clic sur la carte ajuste la position.
+- **Mobile** : l'onglet Prospects s'ouvre sur deux segments, Prospects et Établissements. On peut créer un établissement **devant la porte**, avec la position du téléphone (autorisation demandée à l'usage).
+
+### Démonstration
+
+- Établissements fictifs dans chaque secteur : cabinets, pharmacies, cliniques, un hôpital par zone. Positions tirées autour des zones, une sur cinq absente. Trois sont à valider.
+
+### Hypothèses
+
+- [H] La localité est un texte libre en attendant un référentiel des localités (architecture §13.2).
+
+### Reste à livrer
+
+- Exercices datés prospect ↔ établissement : 0.1.4.
+
 ## [0.1.2] — Fiches prospects et création par le délégué ; design enrichi
 
 Deuxième jalon du cycle 0.1 « Référentiel ».

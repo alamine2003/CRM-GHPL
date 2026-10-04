@@ -1,4 +1,5 @@
 import type { Perimetre } from '@innov/api-client';
+import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
 import AccountTreeRounded from '@mui/icons-material/AccountTreeRounded';
 import BarChartRounded from '@mui/icons-material/BarChartRounded';
 import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
@@ -39,6 +40,13 @@ export const ENTREES: Entree[] = [
     icone: <PeopleAltRounded />,
     section: 'activite',
     chemin: '/prospects',
+    visible: peut('prospects.lire'),
+  },
+  {
+    cle: 'etablissements',
+    icone: <ApartmentRounded />,
+    section: 'activite',
+    chemin: '/etablissements',
     visible: peut('prospects.lire'),
   },
   { cle: 'pilotage', icone: <BarChartRounded />, section: 'activite', version: '0.7.1' },

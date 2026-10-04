@@ -18,7 +18,7 @@ from apps.identite.models import Role, Utilisateur
 from apps.identite.services import attribuer_role, creer_utilisateur
 from apps.organisation import services as org
 from apps.organisation.models import TypePoste
-from apps.prospects.services import creer_prospect
+from apps.prospects.services import creer_etablissement, creer_prospect
 from apps.referentiel import services as ref
 from apps.referentiel.models import Valeur
 from apps.socle.services import aujourdhui, creer_pays
@@ -86,6 +86,10 @@ SYLLABES = ["Va", "No", "Ze", "Ka", "Lu", "Mi", "Sa", "To", "Ri", "Be", "Do", "F
             "Xa", "Qui", "Ro", "Ti", "Me", "La", "Cy"]  # fmt: skip
 DOSAGES = ["5 mg", "10 mg", "20 mg", "50 mg", "100 mg", "250 mg", "500 mg", "1 g", "sirop",
            "crème", "gel", "comprimés", "sachets"]  # fmt: skip
+
+
+# Centres approximatifs des zones de démonstration, pour des coordonnées plausibles.
+CENTRES = {"SN": [(14.6928, -17.4467), (14.7910, -16.9359)], "TG": [(6.1319, 1.2228)]}
 
 
 @dataclass
@@ -270,7 +274,39 @@ class Generateur:
             "delegues": len(delegues),
             "produits": produits_crees,
             "prospects": self.prospects(pays, volumes.prospects, delegues[0]),
+            "etablissements": self.etablissements(pays, secteurs_par_zone, delegues[0]),
         }
+
+    def etablissements(self, pays, secteurs_par_zone, delegue) -> int:
+        """Établissements fictifs (PRP-003) : dans chaque secteur, cabinets, pharmacies et une
+        clinique ; un hôpital par zone. Coordonnées tirées autour d'un point de la zone, une
+        fois sur cinq absentes pour montrer le signalement « sans GPS »."""
+        a = self.alea
+        types = {v.code: v for v in Valeur.objects.filter(pays=pays, liste="type_etablissement")}
+        admin = Utilisateur.objects.filter(roles__role=Role.ADMIN_PAYS, roles__pays=pays).first()
+        centres = CENTRES.get(pays.code, CENTRES["SN"])
+        nombre = 0
+        for z, secteurs in enumerate(secteurs_par_zone):
+            lat0, lon0 = centres[z % len(centres)]
+            secteur_hopital = secteurs[0]
+            plan = [("hopital", f"Hôpital régional {secteur_hopital.libelle}", secteur_hopital)]
+            for secteur in secteurs:
+                plan += [("cabinet", f"Cabinet médical {a.choice(NOMS)}", secteur)
+                         for _ in range(a.randint(1, 3))]  # fmt: skip
+                plan += [("pharmacie", f"Pharmacie {secteur.libelle}", secteur)]
+                if a.random() < 0.4:
+                    plan.append(("clinique", f"Clinique {a.choice(NOMS)}", secteur))
+            for code, nom, secteur in plan:
+                gps = a.random() > 0.2
+                a_valider = nombre < 3
+                creer_etablissement(
+                    pays, delegue if a_valider else admin, actif=not a_valider, nom=nom,
+                    type=types[code], secteur=secteur, localite=secteur.libelle,
+                    latitude=round(lat0 + a.uniform(-0.25, 0.25), 6) if gps else None,
+                    longitude=round(lon0 + a.uniform(-0.25, 0.25), 6) if gps else None,
+                )  # fmt: skip
+                nombre += 1
+        return nombre
 
     def prospects(self, pays, nombre: int, delegue) -> int:
         """Fiches fictives (DEM-001 CA2) : noms tirés des listes, aucun téléphone ni courriel ;
