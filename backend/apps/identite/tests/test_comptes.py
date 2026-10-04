@@ -14,7 +14,7 @@ from apps.identite.services import (
     suspendre_utilisateur,
 )
 
-from .conftest import MOT_DE_PASSE, mot_de_passe_solide
+from .conftest import MOT_DE_PASSE, TELEPHONE, mot_de_passe_solide
 
 pytestmark = pytest.mark.django_db
 
@@ -89,13 +89,13 @@ def test_super_utilisateur_django_interdit():
 
 def test_suspension_ferme_les_sessions_et_garde_les_donnees(delegue):
     """USR-003 CA1 et CA2."""
-    connecter("awa.diallo", MOT_DE_PASSE, "mobile")
+    connecter("awa.diallo", MOT_DE_PASSE, "mobile", appareil=TELEPHONE)
     suspendre_utilisateur(delegue)
     assert not Session.objects.filter(utilisateur=delegue, revoquee_le=None).exists()
     delegue.refresh_from_db()
     assert delegue.username == "awa.diallo" and not delegue.is_active
     reactiver_utilisateur(delegue)
-    assert connecter("awa.diallo", MOT_DE_PASSE, "mobile").session.est_active
+    assert connecter("awa.diallo", MOT_DE_PASSE, "mobile", appareil=TELEPHONE).session.est_active
 
 
 def test_commande_creer_utilisateur_envoie_le_lien(senegal, mailoutbox, capsys):

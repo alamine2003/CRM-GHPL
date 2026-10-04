@@ -42,6 +42,12 @@ urlpatterns = [
         comptes.UtilisateurActionVue.as_view(),
         name="utilisateur-action",
     ),
+    path("appareils/", comptes.AppareilsVue.as_view(), name="appareils"),
+    path(
+        "appareils/<uuid:id>/revoquer/",
+        comptes.AppareilRevocationVue.as_view(),
+        name="appareil-revoquer",
+    ),
     path("roles/<uuid:id>/retirer/", comptes.RetraitRoleVue.as_view(), name="role-retirer"),
     # Organisation du pays (ORG-003 à ORG-008)
     path("organisation/moi/", org.MonOrganisationVue.as_view(), name="mon-organisation"),

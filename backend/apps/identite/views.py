@@ -13,6 +13,7 @@ from apps.socle.erreurs import ErreurMetier
 from . import services
 from .models import Session
 from .serializers import (
+    ChangementLangueSerializer,
     ChangementSerializer,
     ConnexionSerializer,
     JetonsSerializer,
@@ -74,6 +75,7 @@ class ConnexionView(APIView):
             donnees.validated_data["client"],
             adresse_ip=_adresse_ip(request),
             agent=request.META.get("HTTP_USER_AGENT", ""),
+            appareil=donnees.validated_data.get("appareil"),
         )
         return _reponse_jetons(connexion)
 
@@ -123,6 +125,16 @@ class MoiView(APIView):
     @extend_schema(responses=MoiSerializer, operation_id="moi")
     def get(self, request):
         return Response(MoiSerializer(request.user).data)
+
+    @extend_schema(
+        request=ChangementLangueSerializer, responses=MoiSerializer, operation_id="moi_langue"
+    )
+    def patch(self, request):
+        """Change la langue de l'interface de l'utilisateur (USR-004)."""
+        donnees = ChangementLangueSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        utilisateur = services.changer_langue(request.user, donnees.validated_data["langue"])
+        return Response(MoiSerializer(utilisateur).data)
 
 
 class OubliView(APIView):

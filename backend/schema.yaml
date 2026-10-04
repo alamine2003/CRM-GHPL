@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.0.5
+  version: 0.0.6
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -35,6 +35,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Affectation'
+          description: ''
+  /api/v1/appareils/:
+    get:
+      operationId: appareils_liste
+      description: Téléphones des comptes du pays actif (USR-006 CA1).
+      tags:
+      - appareils
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appareil'
+          description: ''
+  /api/v1/appareils/{id}/revoquer/:
+    post:
+      operationId: appareil_revoquer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - appareils
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appareil'
           description: ''
   /api/v1/auth/connexion/:
     post:
@@ -77,6 +115,31 @@ paths:
       operationId: moi
       tags:
       - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Moi'
+          description: ''
+    patch:
+      operationId: moi_langue
+      description: Change la langue de l'interface de l'utilisateur (USR-004).
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedChangementLangue'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedChangementLangue'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedChangementLangue'
       security:
       - jetonAcces: []
       responses:
@@ -1494,6 +1557,58 @@ components:
       - motif
       - pays
       - role
+    Appareil:
+      type: object
+      description: 'Téléphone enregistré (USR-006 CA1 : appareil, système, version,
+        dernier contact).'
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        identifiant:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+        plateforme:
+          $ref: '#/components/schemas/PlateformeEnum'
+        plateforme_libelle:
+          type: string
+        systeme:
+          type: string
+          title: Version du système
+          maxLength: 60
+        modele:
+          type: string
+          maxLength: 80
+        version_app:
+          type: string
+          title: Version de l'application
+          maxLength: 20
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+        dernier_contact:
+          type: string
+          format: date-time
+        revoque:
+          type: boolean
+        revoque_le:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - cree_le
+      - id
+      - identifiant
+      - nom
+      - plateforme
+      - plateforme_libelle
+      - prenom
+      - revoque
     AttributionRole:
       type: object
       properties:
@@ -1532,6 +1647,10 @@ components:
           maxLength: 256
         client:
           $ref: '#/components/schemas/ClientEnum'
+        appareil:
+          allOf:
+          - $ref: '#/components/schemas/DescriptionAppareil'
+          description: Obligatoire pour l'application mobile (USR-006).
       required:
       - client
       - identifiant
@@ -1630,6 +1749,27 @@ components:
       - identifiant
       - nom
       - prenom
+    DescriptionAppareil:
+      type: object
+      properties:
+        identifiant_installation:
+          type: string
+          description: Tiré au hasard à l'installation de l'application.
+          pattern: ^[A-Za-z0-9-]{8,64}$
+        plateforme:
+          $ref: '#/components/schemas/PlateformeEnum'
+        systeme:
+          type: string
+          maxLength: 60
+        modele:
+          type: string
+          maxLength: 80
+        version_app:
+          type: string
+          maxLength: 20
+      required:
+      - identifiant_installation
+      - plateforme
     Division:
       type: object
       properties:
@@ -1895,6 +2035,11 @@ components:
       - hypothese
       - personnalise
       - valeur
+    PatchedChangementLangue:
+      type: object
+      properties:
+        langue:
+          $ref: '#/components/schemas/LangueEnum'
     PatchedLibelle:
       type: object
       properties:
@@ -2046,6 +2191,16 @@ components:
       - identifiant
       - nom
       - prenom
+    PlateformeEnum:
+      enum:
+      - android
+      - ios
+      - web
+      type: string
+      description: |-
+        * `android` - Android
+        * `ios` - iOS
+        * `web` - Web
     Poste:
       type: object
       description: Un poste avec son occupant et son superviseur du jour ; « vacant

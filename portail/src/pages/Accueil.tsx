@@ -7,6 +7,7 @@ import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
 import BadgeRounded from '@mui/icons-material/BadgeRounded';
 import MapRounded from '@mui/icons-material/MapRounded';
 import PersonOffRounded from '@mui/icons-material/PersonOffRounded';
+import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import RouteRounded from '@mui/icons-material/RouteRounded';
 import SupervisorAccountRounded from '@mui/icons-material/SupervisorAccountRounded';
 import {
@@ -21,10 +22,12 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
 import { EnTeteCarte, GrilleTuiles, Ligne, PastilleIcone, Tuile } from '../composants/Elements';
+import { drapeau } from '../composants/formats';
 import { useSession } from '../contexteSession';
 
 const VERSION_CLIENT = __INNOV_VERSION__;
@@ -372,6 +375,212 @@ function MonPoste({ perimetre }: { perimetre: Perimetre }) {
   );
 }
 
+function AFaire({ perimetre }: { perimetre: Perimetre }) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const cle = perimetre.pays_actif?.code ?? 'consolide';
+  const comptes = useQuery({
+    queryKey: ['equipe', cle, 'comptes'],
+    queryFn: () => client.utilisateurs(),
+    enabled: perimetre.actions.includes('utilisateurs.lire'),
+  });
+  const synthese = useQuery({
+    queryKey: ['organisation', cle, 'synthese'],
+    queryFn: () => client.organisation.synthese(),
+    enabled: perimetre.actions.includes('organisation.lire'),
+  });
+  const sansRole = (comptes.data ?? []).filter((c) => c.actif && !c.roles.length).length;
+  const lignes = [
+    { n: sansRole, cle: 'comptesSansRole', lien: '/equipe', ton: 'warning' as const },
+    {
+      n: synthese.data?.postes_vacants ?? 0,
+      cle: 'postesVacants',
+      lien: '/organisation',
+      ton: 'warning' as const,
+    },
+    {
+      n: synthese.data?.postes_sans_superviseur ?? 0,
+      cle: 'postesSansSuperviseur',
+      lien: '/organisation',
+      ton: 'error' as const,
+    },
+  ].filter((l) => l.n > 0);
+  return (
+    <Card>
+      <EnTeteCarte titre={t('accueil.aFaire')} />
+      <CardContent sx={{ py: 1 }}>
+        {lignes.length === 0 ? (
+          <Typography sx={{ color: 'text.secondary', py: 1 }}>{t('accueil.aFaireVide')}</Typography>
+        ) : (
+          lignes.map((l, i) => (
+            <Box key={l.cle}>
+              {i > 0 && <Divider />}
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 1.25 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    bgcolor: `${l.ton}.main`,
+                    flex: 'none',
+                  }}
+                />
+                <Typography sx={{ flexGrow: 1, fontWeight: 600 }}>
+                  {t(`accueil.${l.cle}`, { count: l.n })}
+                </Typography>
+                <Button
+                  component={LienRouteur}
+                  to={l.lien}
+                  size="small"
+                  endIcon={<ArrowForwardRounded />}
+                >
+                  {t('commun.voir')}
+                </Button>
+              </Stack>
+            </Box>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function MonEquipe({ perimetre }: { perimetre: Perimetre }) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const postes = useQuery({
+    queryKey: ['organisation', perimetre.pays_actif?.code ?? 'consolide', 'postes'],
+    queryFn: () => client.organisation.postes(),
+  });
+  const liste = (postes.data ?? []).filter((p) => !p.archive);
+  return (
+    <Card>
+      <EnTeteCarte
+        titre={t('accueil.monEquipe')}
+        action={<Chip size="small" color="secondary" label={liste.length} />}
+      />
+      <CardContent sx={{ py: 0.5 }}>
+        {liste.length === 0 && (
+          <Typography sx={{ color: 'text.secondary', py: 1 }}>
+            {t('accueil.monEquipeVide')}
+          </Typography>
+        )}
+        {liste.slice(0, 8).map((poste, i) => (
+          <Box key={poste.id}>
+            {i > 0 && <Divider />}
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 1 }}>
+              <PastilleIcone
+                icone={<BadgeRounded />}
+                ton={poste.vacant ? 'warning' : 'primary'}
+                taille={32}
+              />
+              <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                <Typography sx={{ fontWeight: 600 }} noWrap>
+                  {poste.occupant
+                    ? `${poste.occupant.prenom} ${poste.occupant.nom}`
+                    : t('organisation.vacant')}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap component="p">
+                  {poste.libelle}
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function LesPays() {
+  const { t } = useTranslation();
+  const { client, choisirPays } = useSession();
+  const pays = useQuery({ queryKey: ['pays', 'liste'], queryFn: () => client.pays.liste() });
+  return (
+    <Stack spacing={1.5}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" component="h2">
+          {t('accueil.lesPays')}
+        </Typography>
+        <Button component={LienRouteur} to="/pays" endIcon={<ArrowForwardRounded />} size="small">
+          {t('commun.voir')}
+        </Button>
+      </Stack>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
+        }}
+      >
+        {(pays.data ?? [])
+          .filter((p) => p.statut !== 'archive')
+          .map((p) => (
+            <Card
+              key={p.code}
+              component="button"
+              onClick={() => void choisirPays(p.code)}
+              sx={{
+                p: 1.75,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.25,
+                cursor: 'pointer',
+                textAlign: 'left',
+                font: 'inherit',
+                color: 'inherit',
+                bgcolor: 'background.paper',
+                transition: 'transform .15s, box-shadow .15s',
+                '&:hover': { transform: 'translateY(-2px)' },
+              }}
+            >
+              <Box aria-hidden sx={{ fontSize: 26, lineHeight: 1 }}>
+                {drapeau(p.code)}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700 }} noWrap>
+                  {p.nom}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: p.statut === 'actif' ? 'success.main' : 'warning.main',
+                    fontWeight: 600,
+                  }}
+                >
+                  {t(`paysPage.statuts.${p.statut}`)}
+                </Typography>
+              </Box>
+            </Card>
+          ))}
+      </Box>
+    </Stack>
+  );
+}
+
+function MaSemaine() {
+  const { t } = useTranslation();
+  return (
+    <Card
+      sx={{
+        borderColor: 'secondary.main',
+        bgcolor: (th) => alpha(th.palette.secondary.main, 0.06),
+      }}
+    >
+      <CardContent sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+        <PastilleIcone icone={<CalendarMonthRounded />} ton="secondary" />
+        <Box>
+          <Typography sx={{ fontWeight: 700 }}>{t('accueil.semaine')}</Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            {t('accueil.semaineTexte')}
+          </Typography>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Accueil adapté au rôle (prd.md §10) : chacun voit d'abord ce qui le concerne. */
 export default function Accueil({
   utilisateur,
   perimetre,
@@ -380,7 +589,10 @@ export default function Accueil({
   perimetre: Perimetre;
 }) {
   const { t } = useTranslation();
-  const lectureOrganisation = perimetre.actions.includes('organisation.lire');
+  const a = (role: string) => perimetre.roles.includes(role as never);
+  const siege = a('admin_siege') || a('direction_siege');
+  const pilotagePays = a('admin_pays') || a('responsable_pays') || (siege && perimetre.pays_actif);
+  const terrain = a('delegue') || a('superviseur');
 
   return (
     <Stack spacing={2.5}>
@@ -390,7 +602,10 @@ export default function Accueil({
           {t('roles.aucun')}
         </Alert>
       )}
-      {lectureOrganisation && <ChiffresOrganisation perimetre={perimetre} />}
+      {siege && perimetre.vue_consolidee && <LesPays />}
+      {perimetre.actions.includes('organisation.lire') && !a('superviseur') && (
+        <ChiffresOrganisation perimetre={perimetre} />
+      )}
       <Box
         sx={{
           display: 'grid',
@@ -400,11 +615,17 @@ export default function Accueil({
         }}
       >
         <Stack spacing={2}>
-          <MonPoste perimetre={perimetre} />
-          <FeuilleDeRoute />
+          {pilotagePays && <AFaire perimetre={perimetre} />}
+          {a('superviseur') && <MonEquipe perimetre={perimetre} />}
+          {(terrain || a('df') || a('dm')) && <MonPoste perimetre={perimetre} />}
+          {a('delegue') && <MaSemaine />}
+          {!terrain && <FeuilleDeRoute />}
+        </Stack>
+        <Stack spacing={2}>
+          <MonCompte utilisateur={utilisateur} perimetre={perimetre} />
+          {terrain && <FeuilleDeRoute />}
           <EtatService />
         </Stack>
-        <MonCompte utilisateur={utilisateur} perimetre={perimetre} />
       </Box>
     </Stack>
   );

@@ -52,6 +52,25 @@ describe('client mobile', () => {
     expect((init.headers as Record<string, string>)['Accept-Language']).toBe('fr');
   });
 
+  it('décrit le téléphone à la connexion (USR-006)', async () => {
+    const appel = vi.fn(async () => reponse(200, jetons('A1', 'R1')));
+    const appareil = {
+      identifiant_installation: '0b7e4c1a-2f6d-4e8b-9a31-5c2d7e8f9a10',
+      plateforme: 'android' as const,
+    };
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage: stockageMemoire(),
+      appareil: async () => appareil,
+      fetch: appel,
+    });
+    await client.connexion('awa.diallo', `${Date.now()}`);
+    const [, init] = appel.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string).appareil).toEqual(appareil);
+  });
+
   it('rafraîchit une seule fois sur 401 puis rejoue la requête', async () => {
     const stockage = stockageMemoire('R1');
     const appel = vi

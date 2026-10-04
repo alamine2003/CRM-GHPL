@@ -12,7 +12,15 @@
     "creer": "Create",
     "rechercher": "Search",
     "actions": "Actions",
-    "fermer": "Close"
+    "fermer": "Close",
+    "retour": "Back",
+    "oui": "Yes",
+    "non": "No",
+    "confirmer": "Confirm",
+    "jamais": "Never",
+    "tous": "All",
+    "copie": "Copied",
+    "voir": "View"
   },
   "accueil": {
     "titre": "Welcome",
@@ -27,7 +35,21 @@
     "reessayer": "Retry",
     "perimetre": "Scope",
     "chiffresOrganisation": "Your organisation today",
-    "voirOrganisation": "View the organisation"
+    "voirOrganisation": "View the organisation",
+    "aFaire": "To handle",
+    "aFaireVide": "Nothing to handle right now.",
+    "comptesSansRole_one": "{{count}} account without a role",
+    "comptesSansRole_other": "{{count}} accounts without a role",
+    "postesVacants_one": "{{count}} vacant position",
+    "postesVacants_other": "{{count}} vacant positions",
+    "postesSansSuperviseur_one": "{{count}} position without a supervisor",
+    "postesSansSuperviseur_other": "{{count}} positions without a supervisor",
+    "monEquipe": "My team",
+    "monEquipeVide": "No position reports to you.",
+    "mesReseaux": "My networks",
+    "lesPays": "Countries",
+    "semaine": "My week",
+    "semaineTexte": "Plan preparation arrives in version 0.2.1, visits in 0.4.1."
   },
   "connexion": {
     "titre": "Sign in",
@@ -79,7 +101,13 @@
     "parametres": "Settings",
     "bientot": "Soon",
     "disponibleEn": "Available in version {{version}}",
-    "organisation": "Organisation"
+    "organisation": "Organisation",
+    "sections": {
+      "activite": "Activity",
+      "administration": "Administration"
+    },
+    "pays": "Countries",
+    "profil": "My profile"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -123,11 +151,19 @@
       "tournee": "Round",
       "semaine": "Week",
       "prospects": "Prospects",
-      "chiffres": "My figures"
+      "chiffres": "My figures",
+      "profil": "Profile"
     },
     "bienvenue": "Welcome",
     "sousTitreConnexion": "Sign in to find your round.",
-    "prochainement": "Your round and visits arrive in the next versions."
+    "prochainement": "Your round and visits arrive in the next versions.",
+    "aVenir": {
+      "semaine": "Prepare your week from your target list and follow its approval.",
+      "prospects": "Find your prospects, even offline, and suggest new ones.",
+      "chiffres": "Track your visits, coverage and targets."
+    },
+    "ceTelephone": "This phone",
+    "telephoneAide": "Registered at sign-in; your country administrator can revoke it if it is lost."
   },
   "roles": {
     "titre": "Roles",
@@ -244,5 +280,174 @@
       "secteurs": "No sectors"
     },
     "enregistre": "Change saved."
+  },
+  "profilPage": {
+    "titre": "My profile",
+    "sousTitre": "Your details, language and password.",
+    "langueTitre": "Interface language",
+    "langueAide": "Your choice follows you on the portal and on your phone.",
+    "motDePasse": "Change password",
+    "actuel": "Current password",
+    "nouveau": "New password",
+    "change": "Password changed. Your other sessions were closed.",
+    "mesRoles": "My roles",
+    "paysPrincipal": "Main country"
+  },
+  "equipe": {
+    "titre": "Team",
+    "sousTitre": "Accounts, roles and phones · {{pays}}.",
+    "sousTitreConsolide": "Headquarters and all-country accounts.",
+    "onglets": {
+      "comptes": "Accounts",
+      "appareils": "Phones"
+    },
+    "chiffres": {
+      "comptes": "Accounts",
+      "actifs": "{{count}} active",
+      "sansRole": "Without a role",
+      "suspendus": "Suspended",
+      "telephones": "Phones"
+    },
+    "recherche": "Search a name, a username",
+    "filtres": {
+      "tous": "All",
+      "sansRole": "Without a role",
+      "suspendus": "Suspended"
+    },
+    "colonnes": {
+      "personne": "Person",
+      "roles": "Roles",
+      "pays": "Country",
+      "connexion": "Last sign-in",
+      "etat": "Status"
+    },
+    "actif": "Active",
+    "suspendu": "Suspended",
+    "aucunRole": "No role",
+    "nouveauCompte": "New account",
+    "nouveauCompteAide": "A link valid for 30 minutes is sent to choose the password. Username in the firstname.lastname format.",
+    "champs": {
+      "identifiant": "Username",
+      "prenom": "First name",
+      "nom": "Last name",
+      "courriel": "Email",
+      "langue": "Language",
+      "role": "Role",
+      "pays": "Country",
+      "motif": "Reason",
+      "debut": "Start",
+      "fin": "End (optional)"
+    },
+    "fiche": {
+      "roles": "Roles",
+      "historique": "History",
+      "attribuer": "Assign a role",
+      "retirer": "Remove",
+      "depuis": "since {{date}}",
+      "periode": "from {{debut}} to {{fin}}",
+      "suspendre": "Suspend",
+      "reactiver": "Reactivate",
+      "reinitialiser": "Send a password link",
+      "lienEnvoye": "Link sent.",
+      "affectations": "Assignments in other countries",
+      "accorder": "Grant an assignment",
+      "terminer": "End",
+      "transferer": "Transfer to another country",
+      "transfertAide": "The main country changes; roles, positions and reporting lines end in the former country, where the history stays.",
+      "transferts": "Transfers",
+      "aucuneAffectation": "No assignment.",
+      "active": "Ongoing",
+      "terminee": "Ended"
+    },
+    "vide": "No account matches"
+  },
+  "appareils": {
+    "colonnes": {
+      "appareil": "Phone",
+      "personne": "Person",
+      "version": "Version",
+      "contact": "Last contact"
+    },
+    "revoquer": "Revoke",
+    "revoqueLe": "Revoked on {{date}}",
+    "confirmer": "{{personne}} will no longer be able to sign in or sync from this phone. Continue?",
+    "vide": "No phone registered",
+    "videTexte": "A phone registers on its first sign-in to the mobile app.",
+    "contactAide": "Last exchange with the server; data sync arrives in version 0.8.1."
+  },
+  "parametres": {
+    "titre": "Settings",
+    "sousTitre": "Country rules · {{pays}}. A change applies from now on, never to the past.",
+    "choisirPays": "Choose a country to see its settings.",
+    "personnalise": "Customised",
+    "defaut": "Default value",
+    "hypothese": "To be confirmed",
+    "modifier": "Edit",
+    "groupes": {
+      "calendrier": "Calendar",
+      "planning": "Planning",
+      "visites": "Visits",
+      "rapports": "Reports",
+      "conservation": "Data retention"
+    },
+    "cles": {
+      "format_date": "Date display format",
+      "jours_ouvres": "Working days",
+      "echeance_soumission_planning": "Plan submission deadline",
+      "echeance_approbation_planning": "Plan approval deadline",
+      "heure_limite_rapport": "Report deadline",
+      "seuils_visites_jour": "Visits per day by position type",
+      "plage_horaire_visites": "Visit time window",
+      "visites_sans_gps_tolerees": "Visits without GPS allowed per day",
+      "distance_pointage_m": "Check-in distance (metres)",
+      "geolocalisation_active": "Visit geolocation",
+      "delai_escalade_heures_ouvrees": "Delay before escalation to the DM (working hours)",
+      "conservation": "Retention periods"
+    },
+    "jours": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    },
+    "semainePrecedente": "{{jour}} {{heure}}, previous week",
+    "de": "from {{debut}} to {{fin}}",
+    "activite": "Activity and audit: {{n}} years",
+    "gps": "GPS positions: {{n}} months",
+    "pieces": "Attachments: {{n}} years",
+    "min": "min",
+    "max": "max",
+    "champs": {
+      "jour": "Day",
+      "heure": "Time",
+      "debut": "Start",
+      "fin": "End",
+      "valeur": "Value",
+      "activite": "Activity (years)",
+      "gps": "GPS (months)",
+      "pieces": "Attachments (years)"
+    }
+  },
+  "paysPage": {
+    "titre": "Countries",
+    "sousTitre": "Subsidiaries and their status. Only the headquarters administrator changes them.",
+    "nouveau": "Open a country",
+    "code": "Country ISO code",
+    "codeAide": "Code of a subsidiary in the catalogue (e.g. CI, BJ, ML).",
+    "statuts": {
+      "actif": "Active",
+      "suspendu": "Suspended",
+      "archive": "Archived"
+    },
+    "suspendre": "Suspend",
+    "activer": "Reactivate",
+    "archiver": "Archive",
+    "confirmerSuspension": "Users in {{pays}} will no longer be able to sign in (headquarters keeps access).",
+    "confirmerArchivage": "{{pays}} will become read-only for headquarters. This change is final.",
+    "depuis": "Opened on {{date}}",
+    "ouvrir": "Work on this country"
   }
 }

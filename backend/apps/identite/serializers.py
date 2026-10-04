@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from .models import Session, Utilisateur
+from apps.socle.models import CHOIX_LANGUES
+
+from .models import Appareil, Session, Utilisateur
 
 
 class PaysResumeSerializer(serializers.Serializer):
@@ -23,10 +25,27 @@ class MoiSerializer(serializers.ModelSerializer):
                   "est_siege"]  # fmt: skip
 
 
+class DescriptionAppareilSerializer(serializers.Serializer):
+    identifiant_installation = serializers.RegexField(
+        r"^[A-Za-z0-9-]{8,64}$", help_text="Tiré au hasard à l'installation de l'application."
+    )
+    plateforme = serializers.ChoiceField(choices=Appareil.Plateforme.choices)
+    systeme = serializers.CharField(max_length=60, required=False, allow_blank=True)
+    modele = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    version_app = serializers.CharField(max_length=20, required=False, allow_blank=True)
+
+
 class ConnexionSerializer(serializers.Serializer):
     identifiant = serializers.CharField(max_length=150)
     mot_de_passe = serializers.CharField(max_length=256, trim_whitespace=False)
     client = serializers.ChoiceField(choices=Session.Client.choices)
+    appareil = DescriptionAppareilSerializer(
+        required=False, help_text="Obligatoire pour l'application mobile (USR-006)."
+    )
+
+
+class ChangementLangueSerializer(serializers.Serializer):
+    langue = serializers.ChoiceField(choices=CHOIX_LANGUES)
 
 
 class RafraichissementSerializer(serializers.Serializer):

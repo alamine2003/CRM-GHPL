@@ -12,7 +12,15 @@
     "creer": "Créer",
     "rechercher": "Rechercher",
     "actions": "Actions",
-    "fermer": "Fermer"
+    "fermer": "Fermer",
+    "retour": "Retour",
+    "oui": "Oui",
+    "non": "Non",
+    "confirmer": "Confirmer",
+    "jamais": "Jamais",
+    "tous": "Tous",
+    "copie": "Copié",
+    "voir": "Voir"
   },
   "accueil": {
     "titre": "Bienvenue",
@@ -27,7 +35,21 @@
     "reessayer": "Réessayer",
     "perimetre": "Périmètre",
     "chiffresOrganisation": "Votre organisation aujourd'hui",
-    "voirOrganisation": "Voir l'organisation"
+    "voirOrganisation": "Voir l'organisation",
+    "aFaire": "À traiter",
+    "aFaireVide": "Rien à traiter pour l’instant.",
+    "comptesSansRole_one": "{{count}} compte sans rôle",
+    "comptesSansRole_other": "{{count}} comptes sans rôle",
+    "postesVacants_one": "{{count}} poste vacant",
+    "postesVacants_other": "{{count}} postes vacants",
+    "postesSansSuperviseur_one": "{{count}} poste sans superviseur",
+    "postesSansSuperviseur_other": "{{count}} postes sans superviseur",
+    "monEquipe": "Mon équipe",
+    "monEquipeVide": "Aucun poste ne vous est rattaché.",
+    "mesReseaux": "Mes réseaux",
+    "lesPays": "Les pays",
+    "semaine": "Ma semaine",
+    "semaineTexte": "La préparation du planning arrive en version 0.2.1, les visites en 0.4.1."
   },
   "connexion": {
     "titre": "Connexion",
@@ -79,7 +101,13 @@
     "parametres": "Paramètres",
     "bientot": "Bientôt",
     "disponibleEn": "Disponible en version {{version}}",
-    "organisation": "Organisation"
+    "organisation": "Organisation",
+    "sections": {
+      "activite": "Activité",
+      "administration": "Administration"
+    },
+    "pays": "Pays",
+    "profil": "Mon profil"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -123,11 +151,19 @@
       "tournee": "Tournée",
       "semaine": "Semaine",
       "prospects": "Prospects",
-      "chiffres": "Mes chiffres"
+      "chiffres": "Mes chiffres",
+      "profil": "Profil"
     },
     "bienvenue": "Bienvenue",
     "sousTitreConnexion": "Connectez-vous pour retrouver votre tournée.",
-    "prochainement": "Votre tournée et vos visites arrivent dans les prochaines versions."
+    "prochainement": "Votre tournée et vos visites arrivent dans les prochaines versions.",
+    "aVenir": {
+      "semaine": "Préparez votre semaine depuis votre liste cible et suivez son approbation.",
+      "prospects": "Retrouvez vos prospects, même sans réseau, et proposez-en de nouveaux.",
+      "chiffres": "Suivez vos visites, votre couverture et vos objectifs."
+    },
+    "ceTelephone": "Ce téléphone",
+    "telephoneAide": "Enregistré à la connexion ; votre administrateur pays peut le révoquer s'il est perdu."
   },
   "roles": {
     "titre": "Rôles",
@@ -244,5 +280,174 @@
       "secteurs": "Aucun secteur"
     },
     "enregistre": "Modification enregistrée."
+  },
+  "profilPage": {
+    "titre": "Mon profil",
+    "sousTitre": "Vos informations, votre langue et votre mot de passe.",
+    "langueTitre": "Langue de l'interface",
+    "langueAide": "Votre choix vous suit sur le portail et sur le téléphone.",
+    "motDePasse": "Changer de mot de passe",
+    "actuel": "Mot de passe actuel",
+    "nouveau": "Nouveau mot de passe",
+    "change": "Mot de passe changé. Vos autres sessions ont été fermées.",
+    "mesRoles": "Mes rôles",
+    "paysPrincipal": "Pays principal"
+  },
+  "equipe": {
+    "titre": "Équipe",
+    "sousTitre": "Comptes, rôles et téléphones · {{pays}}.",
+    "sousTitreConsolide": "Comptes du siège et de tous les pays.",
+    "onglets": {
+      "comptes": "Comptes",
+      "appareils": "Téléphones"
+    },
+    "chiffres": {
+      "comptes": "Comptes",
+      "actifs": "{{count}} actifs",
+      "sansRole": "Sans rôle",
+      "suspendus": "Suspendus",
+      "telephones": "Téléphones"
+    },
+    "recherche": "Rechercher un nom, un identifiant",
+    "filtres": {
+      "tous": "Tous",
+      "sansRole": "Sans rôle",
+      "suspendus": "Suspendus"
+    },
+    "colonnes": {
+      "personne": "Personne",
+      "roles": "Rôles",
+      "pays": "Pays",
+      "connexion": "Dernière connexion",
+      "etat": "État"
+    },
+    "actif": "Actif",
+    "suspendu": "Suspendu",
+    "aucunRole": "Aucun rôle",
+    "nouveauCompte": "Nouveau compte",
+    "nouveauCompteAide": "Un lien valable 30 minutes est envoyé pour choisir le mot de passe. Identifiant au format prenom.nom.",
+    "champs": {
+      "identifiant": "Identifiant",
+      "prenom": "Prénom",
+      "nom": "Nom",
+      "courriel": "Courriel",
+      "langue": "Langue",
+      "role": "Rôle",
+      "pays": "Pays",
+      "motif": "Motif",
+      "debut": "Début",
+      "fin": "Fin (facultative)"
+    },
+    "fiche": {
+      "roles": "Rôles",
+      "historique": "Historique",
+      "attribuer": "Attribuer un rôle",
+      "retirer": "Retirer",
+      "depuis": "depuis le {{date}}",
+      "periode": "du {{debut}} au {{fin}}",
+      "suspendre": "Suspendre",
+      "reactiver": "Réactiver",
+      "reinitialiser": "Envoyer un lien de mot de passe",
+      "lienEnvoye": "Lien envoyé.",
+      "affectations": "Affectations dans d’autres pays",
+      "accorder": "Accorder une affectation",
+      "terminer": "Terminer",
+      "transferer": "Transférer vers un autre pays",
+      "transfertAide": "Le pays principal change ; rôles, postes et rattachements prennent fin dans l'ancien pays, où l'historique reste.",
+      "transferts": "Transferts",
+      "aucuneAffectation": "Aucune affectation.",
+      "active": "En cours",
+      "terminee": "Terminée"
+    },
+    "vide": "Aucun compte ne correspond"
+  },
+  "appareils": {
+    "colonnes": {
+      "appareil": "Téléphone",
+      "personne": "Personne",
+      "version": "Version",
+      "contact": "Dernier contact"
+    },
+    "revoquer": "Révoquer",
+    "revoqueLe": "Révoqué le {{date}}",
+    "confirmer": "{{personne}} ne pourra plus se connecter ni synchroniser depuis ce téléphone. Continuer ?",
+    "vide": "Aucun téléphone enregistré",
+    "videTexte": "Un téléphone s'enregistre à la première connexion à l'application mobile.",
+    "contactAide": "Dernier échange avec le serveur ; la synchronisation des données arrive en version 0.8.1."
+  },
+  "parametres": {
+    "titre": "Paramètres",
+    "sousTitre": "Règles du pays · {{pays}}. Une modification vaut pour la suite, jamais pour le passé.",
+    "choisirPays": "Choisissez un pays pour voir ses paramètres.",
+    "personnalise": "Personnalisé",
+    "defaut": "Valeur par défaut",
+    "hypothese": "À confirmer",
+    "modifier": "Modifier",
+    "groupes": {
+      "calendrier": "Calendrier",
+      "planning": "Planning",
+      "visites": "Visites",
+      "rapports": "Rapports",
+      "conservation": "Conservation des données"
+    },
+    "cles": {
+      "format_date": "Format d'affichage des dates",
+      "jours_ouvres": "Jours ouvrés",
+      "echeance_soumission_planning": "Échéance de soumission du planning",
+      "echeance_approbation_planning": "Échéance d'approbation du planning",
+      "heure_limite_rapport": "Heure limite du rapport",
+      "seuils_visites_jour": "Visites par jour et par type de poste",
+      "plage_horaire_visites": "Plage horaire des visites",
+      "visites_sans_gps_tolerees": "Visites sans GPS tolérées par jour",
+      "distance_pointage_m": "Distance de pointage (mètres)",
+      "geolocalisation_active": "Géolocalisation des visites",
+      "delai_escalade_heures_ouvrees": "Délai avant escalade au DM (heures ouvrées)",
+      "conservation": "Durées de conservation"
+    },
+    "jours": {
+      "1": "Lun",
+      "2": "Mar",
+      "3": "Mer",
+      "4": "Jeu",
+      "5": "Ven",
+      "6": "Sam",
+      "7": "Dim"
+    },
+    "semainePrecedente": "{{jour}} {{heure}}, semaine précédente",
+    "de": "de {{debut}} à {{fin}}",
+    "activite": "Activité et audit : {{n}} ans",
+    "gps": "Positions GPS : {{n}} mois",
+    "pieces": "Pièces jointes : {{n}} ans",
+    "min": "min",
+    "max": "max",
+    "champs": {
+      "jour": "Jour",
+      "heure": "Heure",
+      "debut": "Début",
+      "fin": "Fin",
+      "valeur": "Valeur",
+      "activite": "Activité (ans)",
+      "gps": "GPS (mois)",
+      "pieces": "Pièces jointes (ans)"
+    }
+  },
+  "paysPage": {
+    "titre": "Pays",
+    "sousTitre": "Les filiales et leur statut. Seul l’administrateur du siège les modifie.",
+    "nouveau": "Ouvrir un pays",
+    "code": "Code ISO du pays",
+    "codeAide": "Code d’une filiale du catalogue (par exemple CI, BJ, ML).",
+    "statuts": {
+      "actif": "Actif",
+      "suspendu": "Suspendu",
+      "archive": "Archivé"
+    },
+    "suspendre": "Suspendre",
+    "activer": "Réactiver",
+    "archiver": "Archiver",
+    "confirmerSuspension": "Les utilisateurs de {{pays}} ne pourront plus se connecter (le siège garde l’accès).",
+    "confirmerArchivage": "{{pays}} passera en lecture seule pour le siège. Ce changement est définitif.",
+    "depuis": "Ouvert le {{date}}",
+    "ouvrir": "Travailler sur ce pays"
   }
 }

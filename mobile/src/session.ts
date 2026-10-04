@@ -11,6 +11,8 @@ export interface Session {
   client: ClientApi;
   connexion(identifiant: string, motDePasse: string): Promise<void>;
   deconnexion(): Promise<void>;
+  /** Change la langue ; elle est mémorisée sur le compte (USR-004). */
+  changerLangue(langue: string): Promise<void>;
 }
 
 export const ContexteSession = createContext<Session | null>(null);

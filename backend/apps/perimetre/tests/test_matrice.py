@@ -30,6 +30,7 @@ ATTENDU = {
         "superviseur",
     },  # fmt: skip
     Action.AFFECTATIONS_GERER: {"admin_siege"},
+    Action.APPAREILS_REVOQUER: {"admin_siege", "admin_pays"},
     Action.PAYS_LIRE: {
         "admin_siege",
         "direction_siege",

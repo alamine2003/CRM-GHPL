@@ -20,6 +20,39 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/appareils/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Téléphones des comptes du pays actif (USR-006 CA1). */
+    get: operations['appareils_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/appareils/{id}/revoquer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['appareil_revoquer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/auth/connexion/': {
     parameters: {
       query?: never;
@@ -65,7 +98,8 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
-    patch?: never;
+    /** @description Change la langue de l'interface de l'utilisateur (USR-004). */
+    patch: operations['moi_langue'];
     trace?: never;
   };
   '/api/v1/auth/mot-de-passe/changement/': {
@@ -778,6 +812,28 @@ export interface components {
       /** Format: date */
       fin?: string | null;
     };
+    /** @description Téléphone enregistré (USR-006 CA1 : appareil, système, version, dernier contact). */
+    Appareil: {
+      /** Format: uuid */
+      readonly id: string;
+      identifiant: string;
+      prenom: string;
+      nom: string;
+      plateforme: components['schemas']['PlateformeEnum'];
+      plateforme_libelle: string;
+      /** Version du système */
+      systeme?: string;
+      modele?: string;
+      /** Version de l'application */
+      version_app?: string;
+      /** Format: date-time */
+      readonly cree_le: string;
+      /** Format: date-time */
+      dernier_contact?: string;
+      revoque: boolean;
+      /** Format: date-time */
+      revoque_le?: string | null;
+    };
     AttributionRole: {
       role: components['schemas']['RoleEnum'];
     };
@@ -795,6 +851,8 @@ export interface components {
       identifiant: string;
       mot_de_passe: string;
       client: components['schemas']['ClientEnum'];
+      /** @description Obligatoire pour l'application mobile (USR-006). */
+      appareil?: components['schemas']['DescriptionAppareil'];
     };
     CreationDivision: {
       libelle: string;
@@ -827,6 +885,14 @@ export interface components {
       nom: string;
       courriel?: string;
       langue?: components['schemas']['LangueEnum'];
+    };
+    DescriptionAppareil: {
+      /** @description Tiré au hasard à l'installation de l'application. */
+      identifiant_installation: string;
+      plateforme: components['schemas']['PlateformeEnum'];
+      systeme?: string;
+      modele?: string;
+      version_app?: string;
     };
     Division: {
       /** Format: uuid */
@@ -935,6 +1001,9 @@ export interface components {
       /** @description Valeur par défaut encore à confirmer. */
       hypothese: boolean;
     };
+    PatchedChangementLangue: {
+      langue?: components['schemas']['LangueEnum'];
+    };
     PatchedLibelle: {
       libelle?: string;
     };
@@ -989,6 +1058,13 @@ export interface components {
       prenom: string;
       nom: string;
     };
+    /**
+     * @description * `android` - Android
+     *     * `ios` - iOS
+     *     * `web` - Web
+     * @enum {string}
+     */
+    PlateformeEnum: 'android' | 'ios' | 'web';
     /** @description Un poste avec son occupant et son superviseur du jour ; « vacant » sans occupant. */
     Poste: {
       /** Format: uuid */
@@ -1192,6 +1268,46 @@ export interface operations {
       };
     };
   };
+  appareils_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Appareil'][];
+        };
+      };
+    };
+  };
+  appareil_revoquer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Appareil'];
+        };
+      };
+    };
+  };
   connexion: {
     parameters: {
       query?: never;
@@ -1243,6 +1359,31 @@ export interface operations {
       cookie?: never;
     };
     requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Moi'];
+        };
+      };
+    };
+  };
+  moi_langue: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedChangementLangue'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedChangementLangue'];
+        'multipart/form-data': components['schemas']['PatchedChangementLangue'];
+      };
+    };
     responses: {
       200: {
         headers: {

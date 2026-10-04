@@ -2,14 +2,25 @@ import { type ClientApi, ErreurApi, type Jetons } from '@innov/api-client';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import Connexion from '../app/connexion';
 import Accueil from '../app/index';
+import Profil from '../app/profil';
 import { FournisseurSession } from '../src/FournisseurSession';
 import i18n from '../src/i18n';
 
 jest.mock('expo-constants', () => ({ expoConfig: { version: '0.0.3', extra: {} } }));
 jest.mock('expo-router', () => {
   const { Text: Texte } = jest.requireActual('react-native');
-  return { Redirect: ({ href }: { href: string }) => <Texte>{`redirection:${href}`}</Texte> };
+  return {
+    Redirect: ({ href }: { href: string }) => <Texte>{`redirection:${href}`}</Texte>,
+    usePathname: () => '/',
+    useRouter: () => ({ replace: jest.fn() }),
+  };
 });
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(async () => null),
+  setItemAsync: jest.fn(async () => undefined),
+  deleteItemAsync: jest.fn(async () => undefined),
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY: 0,
+}));
 jest.mock('react-native-safe-area-context', () => {
   const { View } = jest.requireActual('react-native');
   return {
@@ -77,7 +88,7 @@ describe('mobile — session', () => {
     await rendre(<Accueil />, fauxClient({ reprendre: jest.fn(async () => JETONS) }));
     expect(await screen.findByText('Bonjour Awa')).toBeTruthy();
     expect(screen.getAllByText(/Sénégal/).length).toBeGreaterThan(0);
-    expect(screen.getByText('0.0.3')).toBeTruthy();
+    expect(screen.getByText('v0.0.3')).toBeTruthy();
     expect(screen.getByText('Délégué')).toBeTruthy();
   });
 
@@ -113,9 +124,9 @@ describe('mobile — session', () => {
     expect(await screen.findByText(/vient d'être envoyé/)).toBeTruthy();
   });
 
-  it('se déconnecte', async () => {
+  it('se déconnecte depuis le profil', async () => {
     const client = fauxClient({ reprendre: jest.fn(async () => JETONS) });
-    await rendre(<Accueil />, client);
+    await rendre(<Profil />, client);
     await fireEvent.press(await screen.findByText('Se déconnecter'));
     expect(client.deconnexion).toHaveBeenCalled();
     expect(await screen.findByText('redirection:/connexion')).toBeTruthy();
@@ -168,9 +179,17 @@ describe('mobile — session', () => {
     expect(screen.getByText(/pas de superviseur/)).toBeTruthy();
   });
 
-  it('bascule en anglais', async () => {
-    await rendre(<Accueil />, fauxClient({ reprendre: jest.fn(async () => JETONS) }));
+  it('bascule en anglais et mémorise la langue sur le compte (USR-004)', async () => {
+    const changerLangue = jest.fn(async () => ({ ...JETONS.utilisateur, langue: 'en' as const }));
+    await rendre(<Profil />, fauxClient({ reprendre: jest.fn(async () => JETONS), changerLangue }));
     await fireEvent.press(await screen.findByText('English'));
+    expect(await screen.findByText('Profile')).toBeTruthy();
+    expect(changerLangue).toHaveBeenCalledWith('en');
+  });
+
+  it('applique la langue enregistrée sur le compte à la connexion', async () => {
+    const anglais = { ...JETONS, utilisateur: { ...JETONS.utilisateur, langue: 'en' as const } };
+    await rendre(<Accueil />, fauxClient({ reprendre: jest.fn(async () => anglais) }));
     expect(await screen.findByText('Hello Awa')).toBeTruthy();
   });
 });

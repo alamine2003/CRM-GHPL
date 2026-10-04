@@ -1,25 +1,21 @@
 import type { Moi, Perimetre } from '@innov/api-client';
 import { barreLaterale, largeurBarreLaterale, marque } from '@innov/design';
-import AccountTreeRounded from '@mui/icons-material/AccountTreeRounded';
-import BarChartRounded from '@mui/icons-material/BarChartRounded';
-import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
-import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
-import GroupsRounded from '@mui/icons-material/GroupsRounded';
-import HomeRounded from '@mui/icons-material/HomeRounded';
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
+import PersonRounded from '@mui/icons-material/PersonRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
-import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
-import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import {
   Avatar,
   Box,
   Chip,
+  Divider,
   Drawer,
   IconButton,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -32,34 +28,65 @@ import { useSession } from '../contexteSession';
 import ChoixLangue from './ChoixLangue';
 import { initiales } from './initiales';
 import Logo from './Logo';
+import { ENTREES, type Entree } from './navigation';
 import SelecteurPays from './SelecteurPays';
 
-interface Entree {
-  cle: string;
-  icone: ReactNode;
-  /** Chemin de la page livrée ; absent pour une rubrique d'une version future. */
-  chemin?: string;
-  /** Action exigée pour voir la rubrique (le serveur reste seul juge). */
-  action?: string;
-  version?: string;
+function EntreeNavigation({
+  entree: { cle, icone, chemin, version },
+  courant,
+  surNavigation,
+}: {
+  entree: Entree;
+  courant: boolean;
+  surNavigation?: () => void;
+}) {
+  const { t } = useTranslation();
+  const actif = chemin !== undefined;
+  const bouton = (
+    <ListItemButton
+      {...(actif ? { component: LienNavigation, to: chemin, onClick: surNavigation } : {})}
+      selected={courant}
+      disabled={!actif}
+      aria-current={courant ? 'page' : undefined}
+      sx={{
+        color: barreLaterale.texte,
+        py: 0.9,
+        '&.Mui-selected, &.Mui-selected:hover': {
+          bgcolor: barreLaterale.actif,
+          color: '#FFFFFF',
+          boxShadow: `inset 3px 0 0 ${marque.orange}`,
+        },
+        '&:hover': { bgcolor: barreLaterale.survol },
+        '&.Mui-disabled': { opacity: 0.5 },
+      }}
+    >
+      <ListItemIcon sx={{ color: 'inherit', minWidth: 34 }}>{icone}</ListItemIcon>
+      <ListItemText
+        primary={t(`navigation.${cle}`)}
+        slotProps={{ primary: { sx: { fontWeight: 500, fontSize: 14 } } }}
+      />
+      {!actif && (
+        <Chip
+          size="small"
+          label={version}
+          sx={{
+            height: 20,
+            fontSize: 11,
+            bgcolor: 'rgba(255,255,255,.08)',
+            color: barreLaterale.texteDiscret,
+          }}
+        />
+      )}
+    </ListItemButton>
+  );
+  return actif ? (
+    bouton
+  ) : (
+    <Tooltip title={t('navigation.disponibleEn', { version })} placement="right">
+      <span>{bouton}</span>
+    </Tooltip>
+  );
 }
-
-/** Entrées de navigation ; celles d'une version future sont visibles mais inactives. */
-const ENTREES: Entree[] = [
-  { cle: 'accueil', icone: <HomeRounded />, chemin: '/' },
-  {
-    cle: 'organisation',
-    icone: <AccountTreeRounded />,
-    chemin: '/organisation',
-    action: 'organisation.lire',
-  },
-  { cle: 'visites', icone: <FactCheckRounded />, version: '0.4.1' },
-  { cle: 'planning', icone: <CalendarMonthRounded />, version: '0.2.1' },
-  { cle: 'prospects', icone: <PeopleAltRounded />, version: '0.1.2' },
-  { cle: 'pilotage', icone: <BarChartRounded />, version: '0.7.1' },
-  { cle: 'equipe', icone: <GroupsRounded />, version: '0.0.6' },
-  { cle: 'parametres', icone: <SettingsRounded />, version: '0.0.6' },
-];
 
 function BarreLaterale({
   utilisateur,
@@ -104,65 +131,35 @@ function BarreLaterale({
         </Box>
       </Box>
 
-      <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-        {ENTREES.filter((e) => !e.action || perimetre.actions.includes(e.action)).map(
-          ({ cle, icone, chemin, version }) => {
-            const actif = chemin !== undefined;
-            const courant = chemin === pathname;
-            const bouton = (
-              <ListItemButton
-                key={cle}
-                {...(actif
-                  ? { component: LienNavigation, to: chemin, onClick: surNavigation }
-                  : {})}
-                selected={courant}
-                disabled={!actif}
-                aria-current={courant ? 'page' : undefined}
-                sx={{
-                  color: barreLaterale.texte,
-                  py: 1.1,
-                  '&.Mui-selected, &.Mui-selected:hover': {
-                    bgcolor: barreLaterale.actif,
-                    color: '#FFFFFF',
-                    boxShadow: `inset 3px 0 0 ${marque.orange}`,
-                  },
-                  '&:hover': { bgcolor: barreLaterale.survol },
-                  '&.Mui-disabled': { opacity: 0.55 },
-                }}
+      <Box sx={{ overflowY: 'auto', flexGrow: 1, mx: -0.5, px: 0.5 }}>
+        {(['activite', 'administration'] as const).map((section) => {
+          const entrees = ENTREES.filter(
+            (e) => e.section === section && (!e.visible || e.visible(perimetre)),
+          );
+          if (!entrees.length) return null;
+          return (
+            <Box key={section} sx={{ mb: 1.5 }}>
+              <Typography
+                variant="overline"
+                component="p"
+                sx={{ px: 1.5, color: barreLaterale.texteDiscret, fontSize: 10.5, opacity: 0.8 }}
               >
-                <ListItemIcon sx={{ color: 'inherit', minWidth: 34 }}>{icone}</ListItemIcon>
-                <ListItemText
-                  primary={t(`navigation.${cle}`)}
-                  slotProps={{ primary: { sx: { fontWeight: 500, fontSize: 14 } } }}
-                />
-                {!actif && (
-                  <Chip
-                    size="small"
-                    label={version}
-                    sx={{
-                      height: 20,
-                      fontSize: 11,
-                      bgcolor: 'rgba(255,255,255,.08)',
-                      color: barreLaterale.texteDiscret,
-                    }}
+                {t(`navigation.sections.${section}`)}
+              </Typography>
+              <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                {entrees.map((entree) => (
+                  <EntreeNavigation
+                    key={entree.cle}
+                    entree={entree}
+                    courant={entree.chemin === pathname}
+                    surNavigation={surNavigation}
                   />
-                )}
-              </ListItemButton>
-            );
-            return actif ? (
-              bouton
-            ) : (
-              <Tooltip
-                key={cle}
-                title={t('navigation.disponibleEn', { version })}
-                placement="right"
-              >
-                <span>{bouton}</span>
-              </Tooltip>
-            );
-          },
-        )}
-      </List>
+                ))}
+              </List>
+            </Box>
+          );
+        })}
+      </Box>
 
       <Box
         sx={{
@@ -186,7 +183,13 @@ function BarreLaterale({
         >
           {initiales(utilisateur.prenom, utilisateur.nom)}
         </Avatar>
-        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+        <Box
+          component={LienNavigation}
+          to="/profil"
+          onClick={surNavigation}
+          aria-label={t('navigation.profil')}
+          sx={{ minWidth: 0, flexGrow: 1, textDecoration: 'none', borderRadius: 1 }}
+        >
           <Typography sx={{ color: '#FFFFFF', fontWeight: 600, fontSize: 13 }} noWrap>
             {utilisateur.prenom} {utilisateur.nom}
           </Typography>
@@ -206,6 +209,63 @@ function BarreLaterale({
         </Tooltip>
       </Box>
     </Box>
+  );
+}
+
+function MenuUtilisateur({ utilisateur }: { utilisateur: Moi }) {
+  const { t } = useTranslation();
+  const { deconnexion } = useSession();
+  const [ancre, setAncre] = useState<HTMLElement | null>(null);
+  return (
+    <>
+      <Tooltip title={t('navigation.profil')}>
+        <IconButton
+          aria-label={t('navigation.profil')}
+          onClick={(e) => setAncre(e.currentTarget)}
+          sx={{ p: 0.25 }}
+        >
+          <Avatar
+            sx={{ width: 34, height: 34, fontSize: 12, fontWeight: 700, bgcolor: 'secondary.main' }}
+          >
+            {initiales(utilisateur.prenom, utilisateur.nom)}
+          </Avatar>
+        </IconButton>
+      </Tooltip>
+      <Menu
+        anchorEl={ancre}
+        open={Boolean(ancre)}
+        onClose={() => setAncre(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Box sx={{ px: 2, py: 1 }}>
+          <Typography sx={{ fontWeight: 700 }}>
+            {utilisateur.prenom} {utilisateur.nom}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {utilisateur.identifiant}
+          </Typography>
+        </Box>
+        <Divider />
+        <MenuItem component={LienNavigation} to="/profil" onClick={() => setAncre(null)}>
+          <ListItemIcon>
+            <PersonRounded fontSize="small" />
+          </ListItemIcon>
+          {t('navigation.profil')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAncre(null);
+            void deconnexion();
+          }}
+        >
+          <ListItemIcon>
+            <LogoutRounded fontSize="small" />
+          </ListItemIcon>
+          {t('session.deconnexion')}
+        </MenuItem>
+      </Menu>
+    </>
   );
 }
 
@@ -273,6 +333,7 @@ export default function CadreApplication({
           </Typography>
           <SelecteurPays perimetre={perimetre} />
           <ChoixLangue />
+          <MenuUtilisateur utilisateur={utilisateur} />
         </Box>
         <Box
           component="main"

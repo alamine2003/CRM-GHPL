@@ -8,18 +8,26 @@
  * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
  */
 import type {
+  Affectation,
+  Appareil,
+  DescriptionAppareil,
   Division,
   Informations,
   Jetons,
   Moi,
   MonOrganisation,
   Occupation,
+  Parametre,
+  Pays,
   Perimetre,
   Poste,
   Rattachement,
   Reseau,
+  RoleAttribue,
   Secteur,
+  StatutPays,
   SyntheseOrganisation,
+  Transfert,
   TypeClient,
   TypePoste,
   Utilisateur,
@@ -27,7 +35,10 @@ import type {
 } from '@innov/api-types';
 
 export type {
+  Affectation,
+  Appareil,
   CodeRole,
+  DescriptionAppareil,
   Division,
   Informations,
   Jetons,
@@ -35,18 +46,41 @@ export type {
   MonOrganisation,
   MonPoste,
   Occupation,
+  Parametre,
+  Pays,
   Perimetre,
   Personne,
   Poste,
   Rattachement,
   Reseau,
+  RoleAttribue,
   Secteur,
+  StatutPays,
   SyntheseOrganisation,
+  Transfert,
   TypeClient,
   TypePoste,
   Utilisateur,
   Zone,
 } from '@innov/api-types';
+
+/** Données de création d'un compte (USR-003). */
+export interface NouveauCompte {
+  identifiant: string;
+  prenom: string;
+  nom: string;
+  courriel?: string;
+  langue?: 'fr' | 'en';
+}
+
+/** Affectation dans un autre pays (ORG-009). */
+export interface NouvelleAffectation {
+  pays: string;
+  role: string;
+  motif: string;
+  debut?: string;
+  fin?: string | null;
+}
 
 /** Données de création d'un poste (ORG-005). */
 export interface NouveauPoste {
@@ -81,13 +115,15 @@ export interface OptionsClient {
   langue: () => string;
   /** Obligatoire pour le mobile ; ignoré par le portail. */
   stockage?: StockageRafraichissement;
+  /** Mobile : description du téléphone envoyée à la connexion (USR-006). */
+  appareil?: () => Promise<DescriptionAppareil>;
   /** Appelé quand la session est définitivement perdue (expirée, révoquée). */
   surSessionPerdue?: () => void;
   fetch?: typeof fetch;
 }
 
 interface OptionsRequete {
-  methode?: 'GET' | 'POST' | 'PATCH';
+  methode?: 'GET' | 'POST' | 'PATCH' | 'PUT';
   corps?: unknown;
   authentifiee?: boolean;
 }
@@ -190,7 +226,12 @@ export function creerClient(options: OptionsClient) {
       return memoriser(
         await brute<Jetons>('/api/v1/auth/connexion/', {
           methode: 'POST',
-          corps: { identifiant, mot_de_passe: motDePasse, client: options.client },
+          corps: {
+            identifiant,
+            mot_de_passe: motDePasse,
+            client: options.client,
+            ...(options.appareil ? { appareil: await options.appareil() } : {}),
+          },
         }),
       );
     },
@@ -205,6 +246,14 @@ export function creerClient(options: OptionsClient) {
       }
     },
     moi: () => requete<Moi>('/api/v1/auth/moi/'),
+    /** Langue de l'interface, mémorisée sur le compte (USR-004). */
+    changerLangue: (langue: 'fr' | 'en') =>
+      requete<Moi>('/api/v1/auth/moi/', { methode: 'PATCH', corps: { langue } }),
+    changerMotDePasse: (actuel: string, nouveau: string) =>
+      requete<void>('/api/v1/auth/mot-de-passe/changement/', {
+        methode: 'POST',
+        corps: { actuel, nouveau },
+      }),
     /** Rôles, actions permises et pays accessibles pour le pays actif. */
     perimetre: () => requete<Perimetre>('/api/v1/auth/perimetre/'),
     /** Choisit le pays actif (code ISO) ; nul pour revenir au pays principal. */
@@ -263,6 +312,57 @@ export function creerClient(options: OptionsClient) {
     },
     /** Comptes du pays actif (USR-003). */
     utilisateurs: () => requete<Utilisateur[]>('/api/v1/utilisateurs/'),
+    comptes: {
+      creer: (compte: NouveauCompte) =>
+        requete<Utilisateur>('/api/v1/utilisateurs/', { methode: 'POST', corps: compte }),
+      operation: (id: string, operation: 'suspendre' | 'reactiver' | 'reinitialiser') =>
+        requete<Utilisateur>(`/api/v1/utilisateurs/${id}/${operation}/`, { methode: 'POST' }),
+      roles: (id: string) => requete<RoleAttribue[]>(`/api/v1/utilisateurs/${id}/roles/`),
+      attribuerRole: (id: string, role: string) =>
+        requete<RoleAttribue>(`/api/v1/utilisateurs/${id}/roles/`, {
+          methode: 'POST',
+          corps: { role },
+        }),
+      retirerRole: (role: string) =>
+        requete<RoleAttribue>(`/api/v1/roles/${role}/retirer/`, { methode: 'POST' }),
+      affectations: (id: string) =>
+        requete<Affectation[]>(`/api/v1/utilisateurs/${id}/affectations/`),
+      accorderAffectation: (id: string, affectation: NouvelleAffectation) =>
+        requete<Affectation>(`/api/v1/utilisateurs/${id}/affectations/`, {
+          methode: 'POST',
+          corps: affectation,
+        }),
+      terminerAffectation: (affectation: string) =>
+        requete<Affectation>(`/api/v1/affectations/${affectation}/terminer/`, {
+          methode: 'POST',
+          corps: {},
+        }),
+      transferts: (id: string) => requete<Transfert[]>(`/api/v1/utilisateurs/${id}/transferts/`),
+      transferer: (id: string, pays: string, motif: string, role?: string) =>
+        requete<Transfert>(`/api/v1/utilisateurs/${id}/transferts/`, {
+          methode: 'POST',
+          corps: { pays, motif, ...(role ? { role } : {}) },
+        }),
+    },
+    /** Téléphones des comptes du pays actif (USR-006). */
+    appareils: {
+      liste: () => requete<Appareil[]>('/api/v1/appareils/'),
+      revoquer: (id: string) =>
+        requete<Appareil>(`/api/v1/appareils/${id}/revoquer/`, { methode: 'POST' }),
+    },
+    /** Pays et paramètres (ORG-001, ORG-011). */
+    pays: {
+      liste: () => requete<Pays[]>('/api/v1/pays/'),
+      creer: (code: string) => requete<Pays>('/api/v1/pays/', { methode: 'POST', corps: { code } }),
+      changerStatut: (code: string, statut: StatutPays) =>
+        requete<Pays>(`/api/v1/pays/${code}/statut/`, { methode: 'POST', corps: { statut } }),
+      parametres: (code: string) => requete<Parametre[]>(`/api/v1/pays/${code}/parametres/`),
+      modifierParametre: (code: string, cle: string, valeur: unknown) =>
+        requete<Parametre>(`/api/v1/pays/${code}/parametres/${cle}/`, {
+          methode: 'PUT',
+          corps: { valeur },
+        }),
+    },
     requete,
     estConnecte: () => acces !== null,
   };

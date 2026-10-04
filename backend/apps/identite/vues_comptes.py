@@ -25,6 +25,7 @@ from .models import (
     ROLES_DESIGNES_PAR_LE_SIEGE,
     ROLES_SANS_PAYS,
     AffectationPays,
+    Appareil,
     Role,
     RoleUtilisateur,
     Transfert,
@@ -33,6 +34,7 @@ from .models import (
 from .serializers_comptes import (
     AffectationCreationSerializer,
     AffectationSerializer,
+    AppareilSerializer,
     AttributionRoleSerializer,
     CreationUtilisateurSerializer,
     FinAffectationSerializer,
@@ -339,6 +341,36 @@ class TransfertsVue(VueComptes):
             compte, _pays_cible(v["pays"]), v["motif"], par=request.user, role=v.get("role")
         )
         return Response(TransfertSerializer(transfert).data, status=status.HTTP_201_CREATED)
+
+
+class VueAppareils(VuePerimetre):
+    serializer_class = AppareilSerializer
+
+    def selection(self, perimetre):
+        return Appareil.objects.select_related("utilisateur").filter(
+            utilisateur__in=_comptes_du_perimetre(perimetre)
+        )
+
+
+class AppareilsVue(VueAppareils):
+    """Téléphones des comptes du pays actif (USR-006 CA1)."""
+
+    actions = {"GET": Action.UTILISATEURS_LIRE}
+
+    @extend_schema(responses=AppareilSerializer(many=True), operation_id="appareils_liste")
+    def get(self, request):
+        return Response(AppareilSerializer(self.get_queryset(), many=True).data)
+
+
+class AppareilRevocationVue(VueAppareils):
+    actions = {"POST": Action.APPAREILS_REVOQUER}
+
+    @extend_schema(request=None, responses=AppareilSerializer, operation_id="appareil_revoquer")
+    def post(self, request, id):
+        appareil = get_object_or_404(self.get_queryset(), pk=id)
+        return Response(
+            AppareilSerializer(services.revoquer_appareil(appareil, par=request.user)).data
+        )
 
 
 class PerimetreVue(APIView):

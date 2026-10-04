@@ -13,6 +13,8 @@ export interface Session {
   deconnexion(): Promise<void>;
   /** Change le pays actif (code ISO), ou revient au pays principal / à la vue consolidée. */
   choisirPays(code: string | null): Promise<void>;
+  /** Change la langue de l'interface ; connecté, elle est mémorisée sur le compte (USR-004). */
+  changerLangue(langue: string): Promise<void>;
 }
 
 export const ContexteSession = createContext<Session | null>(null);

@@ -48,6 +48,17 @@ L'administrateur pays construit ensuite l'organisation (zones, secteurs, divisio
 
 Variables utiles : `backend/.env.example` (serveur), `VITE_API_URL` (portail), `EXPO_PUBLIC_API_URL` (mobile).
 
+## Démonstration
+
+Une base de démonstration aux données **fictives** (volumes réels du Sénégal : 4 divisions, 19 réseaux, 48 secteurs, 227 postes, 207 délégués ; Togo réduit) se recrée d'une commande (DEM-001). Elle **efface toute la base** et n'est permise qu'en développement ou démonstration :
+
+```bash
+cd backend
+INNOV_DEMO_MOT_DE_PASSE='…' .venv/bin/python manage.py reinitialiser_demo --oui   # --echelle 0.2 pour une base légère
+```
+
+La commande affiche un compte par rôle (siège, responsable et administrateur pays, DF, DM, superviseur, délégué). Sans la variable, un mot de passe est tiré au hasard et affiché une fois. Les courriels finissent en `@demo.invalid` : aucun message ne peut partir vers une vraie boîte.
+
 ## Vérifier
 
 ```bash

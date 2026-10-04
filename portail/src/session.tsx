@@ -2,9 +2,14 @@ import type { ClientApi, Jetons } from '@innov/api-client';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { creerClientPortail } from './client';
 import { ContexteSession, type Etat, type Session } from './contexteSession';
+import i18n from './i18n';
 
 /** Une session ouverte charge aussitôt le périmètre (rôles, pays, actions permises). */
 async function ouvrir(client: ClientApi, jetons: Jetons): Promise<Etat> {
+  // La langue choisie par l'utilisateur le suit d'un appareil à l'autre (USR-004).
+  if (jetons.utilisateur.langue && jetons.utilisateur.langue !== i18n.language) {
+    await i18n.changeLanguage(jetons.utilisateur.langue);
+  }
   return {
     statut: 'connecte',
     utilisateur: jetons.utilisateur,
@@ -52,6 +57,12 @@ export function FournisseurSession({
         if (etat.statut !== 'connecte') return;
         client.choisirPays(code);
         setEtat({ ...etat, perimetre: await client.perimetre() });
+      },
+      async changerLangue(langue) {
+        await i18n.changeLanguage(langue);
+        if (etat.statut !== 'connecte' || etat.utilisateur.langue === langue) return;
+        const moi = await client.changerLangue(langue as 'fr' | 'en').catch(() => null);
+        if (moi) setEtat({ ...etat, utilisateur: moi });
       },
       async deconnexion() {
         await client.deconnexion().catch(() => undefined);

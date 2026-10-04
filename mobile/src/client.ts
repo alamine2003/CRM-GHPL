@@ -2,6 +2,7 @@ import { creerClient, type StockageRafraichissement } from '@innov/api-client';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { decrireAppareil } from './appareil';
 import i18n from './i18n';
 
 const CLE = 'innov.rafraichissement';
@@ -48,6 +49,7 @@ export function creerClientMobile(surSessionPerdue?: () => void) {
     client: 'mobile',
     langue: () => i18n.language,
     stockage: stockageSecurise,
+    appareil: decrireAppareil,
     surSessionPerdue,
   });
 }

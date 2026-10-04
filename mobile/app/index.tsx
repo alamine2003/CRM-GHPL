@@ -1,135 +1,74 @@
-import { marque, zoneTactileMin } from '@innov/design';
+import { marque } from '@innov/design';
 import { avancement } from '@innov/domaine';
-import { LANGUES, type Langue } from '@innov/i18n';
-import { Redirect } from 'expo-router';
+import type { Langue } from '@innov/i18n';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BarreOnglets } from '../src/BarreOnglets';
+import { StyleSheet, Text, View } from 'react-native';
+import { Alerte, Carte, Texte, usePalette } from '../src/composants';
+import { Ecran } from '../src/Ecran';
 import { MonPoste } from '../src/MonPoste';
-import { Alerte, Bouton, Carte, Ligne, Texte, usePalette } from '../src/composants';
 import { police } from '../src/polices';
 import { useSession } from '../src/session';
 import { VERSION_APP } from '../src/version';
 
-/** Accueil du délégué connecté. La tournée arrive au cycle 0.4 (prd.md §23). */
+/** Tournée du délégué connecté. Les visites arrivent au cycle 0.4 (prd.md §23). */
 export default function Accueil() {
   const { t, i18n } = useTranslation();
   const p = usePalette();
-  const marges = useSafeAreaInsets();
-  const { etat, deconnexion } = useSession();
+  const { etat } = useSession();
   const langue = i18n.language as Langue;
-
-  if (etat.statut === 'chargement') {
-    return (
-      <View style={[styles.centre, { backgroundColor: marque.bleuMarine }]}>
-        <ActivityIndicator accessibilityLabel={t('session.chargement')} color="#FFFFFF" />
-      </View>
-    );
-  }
-  if (etat.statut === 'anonyme') return <Redirect href="/connexion" />;
-  const { utilisateur, perimetre } = etat;
+  const connecte = etat.statut === 'connecte' ? etat : null;
   const a = avancement(VERSION_APP === 'inconnue' ? '0.0.1' : VERSION_APP);
   const date = new Intl.DateTimeFormat(langue, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    timeZone: utilisateur.pays_principal?.fuseau,
+    timeZone: connecte?.utilisateur.pays_principal?.fuseau,
   }).format(new Date());
-  const nomPays = perimetre.pays_actif?.nom ?? t('session.siege');
+  const nomPays = connecte?.perimetre.pays_actif?.nom ?? t('session.siege');
+  const roles = connecte?.perimetre.roles ?? [];
 
   return (
-    <View style={{ flex: 1, backgroundColor: p.fond }}>
-      <View style={[styles.entete, { paddingTop: marges.top + 18 }]}>
-        <Text style={styles.date}>
-          {date.charAt(0).toUpperCase() + date.slice(1)} · {nomPays}
-        </Text>
-        <Text accessibilityRole="header" style={styles.bonjour}>
-          {t('session.bonjour', { prenom: utilisateur.prenom })}
-        </Text>
-        {perimetre.roles.length > 0 && (
-          <View style={styles.pastilles}>
-            {perimetre.roles.map((role) => (
-              <Text key={role} style={styles.pastille}>
-                {t(`roles.${role}`)}
-              </Text>
-            ))}
+    <Ecran
+      surTitre={`${date.charAt(0).toUpperCase() + date.slice(1)} · ${nomPays}`}
+      titre={t('session.bonjour', { prenom: connecte?.utilisateur.prenom ?? '' })}
+      enTete={
+        <>
+          {roles.length > 0 && (
+            <View style={styles.pastilles}>
+              {roles.map((role) => (
+                <Text key={role} style={styles.pastille}>
+                  {t(`roles.${role}`)}
+                </Text>
+              ))}
+            </View>
+          )}
+          <View style={styles.progression}>
+            <Text style={styles.progressionTexte}>v{a.version}</Text>
+            <View style={styles.piste}>
+              <View
+                style={[styles.barre, { width: `${Math.max(4, (a.livrees / a.total) * 100)}%` }]}
+              />
+            </View>
+            <Text style={styles.progressionTexte}>
+              {a.stable ? t('feuilleRoute.stable') : t(`feuilleRoute.cycles.${a.codeCycle}`)}
+            </Text>
           </View>
-        )}
-        <View style={styles.progression}>
-          <Text style={styles.progressionTexte}>v{a.version}</Text>
-          <View style={styles.piste}>
-            <View
-              style={[styles.barre, { width: `${Math.max(4, (a.livrees / a.total) * 100)}%` }]}
-            />
-          </View>
-          <Text style={styles.progressionTexte}>
-            {a.stable ? t('feuilleRoute.stable') : t(`feuilleRoute.cycles.${a.codeCycle}`)}
-          </Text>
-        </View>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.contenu}>
-        {perimetre.roles.length === 0 && <Alerte type="info">{t('roles.aucun')}</Alerte>}
-        <MonPoste />
-        <Carte style={{ backgroundColor: p.orangeDoux, borderColor: marque.orange }}>
-          <Texte variante="fort">{t('mobile.onglets.tournee')}</Texte>
-          <Texte variante="discret" style={{ marginTop: 4 }}>
-            {t('mobile.prochainement')}
-          </Texte>
-        </Carte>
-
-        <Carte>
-          <Texte variante="sousTitre" style={{ marginBottom: 4 }}>
-            {t('profil.titre')}
-          </Texte>
-          <Ligne libelle={t('profil.identifiant')} valeur={utilisateur.identifiant} />
-          <Ligne libelle={t('profil.perimetre')} valeur={nomPays} />
-          <Ligne libelle={t('accueil.versionClient')} valeur={VERSION_APP} derniere />
-        </Carte>
-
-        <Carte>
-          <Texte variante="libelle" style={{ marginBottom: 10 }}>
-            {t('commun.langue')}
-          </Texte>
-          <View style={styles.langues}>
-            {LANGUES.map((code) => {
-              const actif = code === langue;
-              return (
-                <Pressable
-                  key={code}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: actif }}
-                  onPress={() => void i18n.changeLanguage(code)}
-                  style={[
-                    styles.langue,
-                    { borderColor: actif ? marque.bleuMarine : p.ligne },
-                    actif && { backgroundColor: marque.bleuMarine },
-                  ]}
-                >
-                  <Text
-                    style={{ color: actif ? '#FFFFFF' : p.texte, fontFamily: police.texteFort }}
-                  >
-                    {t(`commun.langues.${code}`)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </Carte>
-
-        <Bouton libelle={t('session.deconnexion')} secondaire onPress={() => void deconnexion()} />
-      </ScrollView>
-      <BarreOnglets />
-    </View>
+        </>
+      }
+    >
+      {roles.length === 0 && <Alerte type="info">{t('roles.aucun')}</Alerte>}
+      <MonPoste />
+      <Carte style={{ backgroundColor: p.orangeDoux, borderColor: marque.orange }}>
+        <Texte variante="fort">{t('mobile.onglets.tournee')}</Texte>
+        <Texte variante="discret" style={{ marginTop: 4 }}>
+          {t('mobile.prochainement')}
+        </Texte>
+      </Carte>
+    </Ecran>
   );
 }
 
 const styles = StyleSheet.create({
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  entete: { backgroundColor: marque.bleuMarine, paddingHorizontal: 20, paddingBottom: 18 },
-  date: { color: '#B9C4E8', fontFamily: police.texte, fontSize: 13 },
-  bonjour: { color: '#FFFFFF', fontFamily: police.titreFort, fontSize: 24, marginTop: 2 },
   progression: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
   progressionTexte: { color: '#DCE3F5', fontFamily: police.texteMoyen, fontSize: 12 },
   piste: {
@@ -150,14 +89,5 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,.14)',
-  },
-  contenu: { padding: 16, gap: 12, paddingBottom: 24 },
-  langues: { flexDirection: 'row', gap: 8 },
-  langue: {
-    minHeight: zoneTactileMin,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-    borderWidth: 1,
-    justifyContent: 'center',
   },
 });

@@ -33,3 +33,7 @@ export type MonOrganisation = Schemas['MonOrganisation'];
 export type MonPoste = Schemas['MonPoste'];
 export type Affectation = Schemas['Affectation'];
 export type Transfert = Schemas['Transfert'];
+export type Appareil = Schemas['Appareil'];
+export type DescriptionAppareil = Schemas['DescriptionAppareil'];
+export type Parametre = Schemas['Parametre'];
+export type StatutPays = Schemas['StatutEnum'];

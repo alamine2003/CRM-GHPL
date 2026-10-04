@@ -26,6 +26,7 @@ from . import courriels
 from .models import (
     ROLES_SANS_PAYS,
     AffectationPays,
+    Appareil,
     JetonReinitialisation,
     Role,
     RoleUtilisateur,
@@ -163,6 +164,7 @@ def connecter(
     *,
     adresse_ip: str | None = None,
     agent: str = "",
+    appareil: dict | None = None,
 ) -> Connexion:
     """Vérifie les identifiants et ouvre une session.
 
@@ -201,7 +203,10 @@ def connecter(
         raise erreur
 
     verifier_acces_autorise(utilisateur)
+    if client == Session.Client.MOBILE and not appareil:
+        raise ErreurMetier("appareil_requis", _("L'application doit décrire le téléphone."))
     with transaction.atomic():
+        telephone = _enregistrer_appareil(utilisateur, appareil) if appareil else None
         utilisateur.echecs_connexion = 0
         utilisateur.verrouille_jusqua = None
         utilisateur.last_login = timezone.now()
@@ -214,6 +219,7 @@ def connecter(
             expire_le=timezone.now() + duree_session(client),
             adresse_ip=adresse_ip,
             agent=agent[:300],
+            appareil=telephone,
         )
     acces, duree = _jeton_acces(session)
     return Connexion(session, acces, rafraichissement, duree)
@@ -229,7 +235,7 @@ def rafraichir(jeton: str) -> Connexion:
     with transaction.atomic():
         session = (
             Session.objects.select_for_update(of=("self",))
-            .select_related("utilisateur__pays_principal")
+            .select_related("utilisateur__pays_principal", "appareil")
             .filter(empreinte_rafraichissement=trace)
             .first()
         )
@@ -246,9 +252,15 @@ def rafraichir(jeton: str) -> Connexion:
                 _("Votre session a expiré. Reconnectez-vous."),
                 status.HTTP_401_UNAUTHORIZED,
             )
+        elif session.appareil_id and session.appareil.est_revoque:
+            _revoquer(session, "appareil_revoque")
+            erreur = _appareil_revoque()
         else:
             erreur = None
             verifier_acces_autorise(session.utilisateur)
+            if session.appareil_id:
+                session.appareil.dernier_contact = timezone.now()
+                session.appareil.save(update_fields=["dernier_contact"])
             nouveau = nouveau_jeton()
             session.empreinte_precedente = trace
             session.empreinte_rafraichissement = empreinte(nouveau)
@@ -259,6 +271,54 @@ def rafraichir(jeton: str) -> Connexion:
         raise erreur
     acces, duree = _jeton_acces(session)
     return Connexion(session, acces, nouveau, duree)
+
+
+def _appareil_revoque() -> ErreurMetier:
+    return ErreurMetier(
+        "appareil_revoque",
+        _("Ce téléphone a été révoqué. Contactez votre administrateur pays."),
+        status.HTTP_403_FORBIDDEN,
+    )
+
+
+def _enregistrer_appareil(utilisateur: Utilisateur, description: dict) -> Appareil:
+    """Enregistre le téléphone à la première connexion, puis met à jour sa description
+    (USR-006). Un appareil révoqué est refusé."""
+    appareil, _cree = Appareil.objects.select_for_update().get_or_create(
+        utilisateur=utilisateur,
+        identifiant_installation=description["identifiant_installation"],
+        defaults={"plateforme": description["plateforme"]},
+    )
+    if appareil.est_revoque:
+        raise _appareil_revoque()
+    appareil.plateforme = description["plateforme"]
+    appareil.systeme = description.get("systeme", "")[:60]
+    appareil.modele = description.get("modele", "")[:80]
+    appareil.version_app = description.get("version_app", "")[:20]
+    appareil.dernier_contact = timezone.now()
+    appareil.save()
+    return appareil
+
+
+@transaction.atomic
+def revoquer_appareil(appareil: Appareil, *, par: Utilisateur | None) -> Appareil:
+    """Révoque un téléphone : ses sessions sont fermées, il ne peut plus se reconnecter
+    (USR-006 CA2). L'effacement à distance des données locales arrive au cycle 0.8."""
+    if appareil.est_revoque:
+        raise ErreurMetier("appareil_deja_revoque", _("Ce téléphone est déjà révoqué."))
+    appareil.revoque_le = timezone.now()
+    appareil.revoque_par = par
+    appareil.save(update_fields=["revoque_le", "revoque_par"])
+    for session in appareil.sessions.filter(revoquee_le=None):
+        _revoquer(session, "appareil_revoque")
+    return appareil
+
+
+def changer_langue(utilisateur: Utilisateur, langue: str) -> Utilisateur:
+    """Langue de l'interface choisie par l'utilisateur (USR-004)."""
+    utilisateur.langue = langue
+    utilisateur.save(update_fields=["langue"])
+    return utilisateur
 
 
 def _revoquer(session: Session, motif: str) -> None:

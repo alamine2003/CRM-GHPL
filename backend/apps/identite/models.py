@@ -91,6 +91,51 @@ class Utilisateur(AbstractUser):
         return self.verrouille_jusqua is not None and self.verrouille_jusqua > timezone.now()
 
 
+class Appareil(models.Model):
+    """Téléphone enregistré à la première connexion mobile (USR-006).
+
+    L'identifiant d'installation est tiré au hasard par l'application et gardé
+    dans son magasin sécurisé. Un appareil révoqué ne peut plus se connecter
+    ni rafraîchir sa session, donc plus synchroniser (CA2).
+    """
+
+    class Plateforme(models.TextChoices):
+        ANDROID = "android", "Android"
+        IOS = "ios", "iOS"
+        WEB = "web", "Web"
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.PROTECT, related_name="appareils")
+    identifiant_installation = models.CharField(max_length=64)
+    plateforme = models.CharField(max_length=10, choices=Plateforme.choices)
+    systeme = models.CharField("version du système", max_length=60, blank=True)
+    modele = models.CharField(max_length=80, blank=True)
+    version_app = models.CharField("version de l'application", max_length=20, blank=True)
+    cree_le = models.DateTimeField(default=timezone.now, editable=False)
+    #: Dernier échange avec le serveur (connexion ou rafraîchissement). La synchronisation
+    #: des données arrive au cycle 0.8 ; ce contact en tient lieu jusque-là.
+    dernier_contact = models.DateTimeField(default=timezone.now)
+    revoque_le = models.DateTimeField(null=True, blank=True)
+    revoque_par = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+
+    class Meta:
+        ordering = ["-dernier_contact"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["utilisateur", "identifiant_installation"], name="appareil_unique"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.utilisateur} — {self.get_plateforme_display()} {self.modele}".strip()
+
+    @property
+    def est_revoque(self) -> bool:
+        return self.revoque_le is not None
+
+
 class Session(models.Model):
     """Session ouverte sur un client (portail ou mobile).
 
@@ -116,6 +161,9 @@ class Session(models.Model):
     motif_revocation = models.CharField(max_length=40, blank=True)
     adresse_ip = models.GenericIPAddressField(null=True, blank=True)
     agent = models.CharField(max_length=300, blank=True)
+    appareil = models.ForeignKey(
+        Appareil, on_delete=models.PROTECT, null=True, blank=True, related_name="sessions"
+    )
 
     class Meta:
         ordering = ["-cree_le"]

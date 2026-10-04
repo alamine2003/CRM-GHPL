@@ -45,12 +45,21 @@ def api():
     return APIClient()
 
 
+# Téléphone fictif décrit par l'application mobile à la connexion (USR-006).
+TELEPHONE = {
+    "identifiant_installation": "0b7e4c1a-2f6d-4e8b-9a31-5c2d7e8f9a10",
+    "plateforme": "android",
+    "systeme": "Android 14",
+    "modele": "Galaxy A15",
+    "version_app": "0.0.6",
+}
+
+
 def connecter(api, identifiant="awa.diallo", mot_de_passe=MOT_DE_PASSE, client="mobile"):
-    return api.post(
-        "/api/v1/auth/connexion/",
-        {"identifiant": identifiant, "mot_de_passe": mot_de_passe, "client": client},
-        format="json",
-    )
+    corps = {"identifiant": identifiant, "mot_de_passe": mot_de_passe, "client": client}
+    if client == "mobile":
+        corps["appareil"] = TELEPHONE
+    return api.post("/api/v1/auth/connexion/", corps, format="json")
 
 
 @pytest.fixture(autouse=True)

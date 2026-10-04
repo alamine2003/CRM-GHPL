@@ -8,7 +8,7 @@ import {
   type Poste,
 } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
 import App from './App';
@@ -391,5 +391,164 @@ describe('portail — organisation (ORG-003 à ORG-008)', () => {
   it('sans le droit de lecture, la page Organisation renvoie à l’accueil', async () => {
     rendre(fauxClient({ reprendre: vi.fn(async () => JETONS) }), '/organisation');
     expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
+  });
+});
+
+describe('portail — administration 0.0.6 (USR-003, USR-004, USR-006, ORG-011)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const ADMIN: Perimetre = {
+    ...PERIMETRE_DELEGUE,
+    roles: ['admin_pays'],
+    actions: [
+      'organisation.gerer',
+      'organisation.lire',
+      'pays.lire',
+      'utilisateurs.lire',
+      'utilisateurs.gerer',
+      'roles.attribuer',
+      'appareils.revoquer',
+      'parametres.lire',
+      'parametres.modifier',
+    ],
+  };
+  const COMPTES = [
+    {
+      id: 'u1',
+      identifiant: 'moussa.fall',
+      prenom: 'Moussa',
+      nom: 'Fall',
+      courriel: '',
+      langue: 'fr',
+      actif: true,
+      pays_principal: SENEGAL,
+      roles: ['delegue'],
+      last_login: null,
+    },
+    {
+      id: 'u2',
+      identifiant: 'awa.mbaye',
+      prenom: 'Awa',
+      nom: 'Mbaye',
+      courriel: '',
+      langue: 'fr',
+      actif: true,
+      pays_principal: SENEGAL,
+      roles: [],
+      last_login: null,
+    },
+  ];
+  const TELEPHONE = {
+    id: 't1',
+    identifiant: 'moussa.fall',
+    prenom: 'Moussa',
+    nom: 'Fall',
+    plateforme: 'android',
+    plateforme_libelle: 'Android',
+    systeme: 'Android 14',
+    modele: 'Galaxy A15',
+    version_app: '0.0.6',
+    cree_le: '2026-10-01T08:00:00Z',
+    dernier_contact: '2026-10-04T08:00:00Z',
+    revoque: false,
+    revoque_le: null,
+  };
+
+  function clientAdmin(surcharges: Partial<ClientApi> = {}) {
+    return fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => ADMIN),
+      utilisateurs: vi.fn(async () => COMPTES),
+      appareils: {
+        liste: vi.fn(async () => [TELEPHONE]),
+        revoquer: vi.fn(async () => ({ ...TELEPHONE, revoque: true })),
+      },
+      comptes: {
+        creer: vi.fn(async () => COMPTES[0]),
+        roles: vi.fn(async () => []),
+        affectations: vi.fn(async () => []),
+        transferts: vi.fn(async () => []),
+      } as unknown as ClientApi['comptes'],
+      ...surcharges,
+    } as Partial<ClientApi>);
+  }
+
+  it('la navigation suit le rôle : l’administrateur pays voit Équipe et Paramètres, pas Pays', async () => {
+    rendre(clientAdmin());
+    await screen.findByRole('heading', { name: 'Bonjour Awa' });
+    // Écran étroit : la navigation est dans le tiroir.
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    expect((await screen.findAllByRole('link', { name: 'Équipe' })).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Paramètres' }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('link', { name: 'Pays' })).not.toBeInTheDocument();
+    // Accueil par rôle : « À traiter » signale le compte sans rôle.
+    expect(await screen.findByText('1 compte sans rôle')).toBeInTheDocument();
+  });
+
+  it('liste les comptes, filtre ceux sans rôle et crée un compte', async () => {
+    const client = clientAdmin();
+    rendre(client, '/equipe');
+    expect(await screen.findByText('Moussa Fall')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Sans rôle' }));
+    expect(screen.queryByText('Moussa Fall')).not.toBeInTheDocument();
+    expect(screen.getByText('Awa Mbaye')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Nouveau compte' }));
+    await saisir(/^Prénom/, 'Ndèye');
+    await saisir(/^Nom/, 'Diop');
+    fireEvent.click(screen.getByRole('button', { name: 'Créer' }));
+    await vi.waitFor(() =>
+      expect(client.comptes.creer).toHaveBeenCalledWith(
+        expect.objectContaining({ identifiant: 'ndeye.diop', prenom: 'Ndèye', nom: 'Diop' }),
+      ),
+    );
+  });
+
+  it('affiche les téléphones et en révoque un après confirmation (USR-006)', async () => {
+    const client = clientAdmin();
+    rendre(client, '/equipe');
+    fireEvent.click(await screen.findByRole('tab', { name: 'Téléphones' }));
+    expect(await screen.findByText('Galaxy A15')).toBeInTheDocument();
+    expect(screen.getByText('Android 14')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Révoquer' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Révoquer' }));
+    await vi.waitFor(() => expect(client.appareils.revoquer).toHaveBeenCalledWith('t1'));
+  });
+
+  it('change la langue et la mémorise sur le compte (USR-004)', async () => {
+    const changerLangue = vi.fn(async () => ({ ...AWA, langue: 'en' as const }));
+    rendre(clientAdmin({ changerLangue }), '/profil');
+    fireEvent.click(await screen.findByRole('button', { name: 'English' }));
+    expect(await screen.findByRole('heading', { name: 'My profile' })).toBeInTheDocument();
+    expect(changerLangue).toHaveBeenCalledWith('en');
+  });
+
+  it('modifie un paramètre du pays (ORG-011)', async () => {
+    const modifierParametre = vi.fn(async () => ({}));
+    const parametres = vi.fn(async () => [
+      {
+        cle: 'distance_pointage_m',
+        description: 'Distance de pointage acceptée en mètres (VIS-010)',
+        valeur: 200,
+        defaut: 200,
+        personnalise: false,
+        hypothese: false,
+      },
+    ]);
+    rendre(
+      clientAdmin({
+        pays: { parametres, modifierParametre } as unknown as ClientApi['pays'],
+      }),
+      '/parametres',
+    );
+    expect(await screen.findByText('Distance de pointage (mètres)')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Modifier' }));
+    await saisir(/^Valeur/, '300');
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    await vi.waitFor(() =>
+      expect(modifierParametre).toHaveBeenCalledWith('SN', 'distance_pointage_m', 300),
+    );
   });
 });

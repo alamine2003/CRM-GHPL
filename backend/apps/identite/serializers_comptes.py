@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.socle.models import CHOIX_LANGUES
 
-from .models import AffectationPays, Role, RoleUtilisateur, Transfert, Utilisateur
+from .models import AffectationPays, Appareil, Role, RoleUtilisateur, Transfert, Utilisateur
 from .serializers import PaysResumeSerializer
 
 
@@ -110,3 +110,19 @@ class TransfertCreationSerializer(serializers.Serializer):
     pays = serializers.CharField(max_length=2)
     motif = serializers.CharField(max_length=300)
     role = serializers.ChoiceField(choices=Role.choices, required=False)
+
+
+class AppareilSerializer(serializers.ModelSerializer):
+    """Téléphone enregistré (USR-006 CA1 : appareil, système, version, dernier contact)."""
+
+    identifiant = serializers.CharField(source="utilisateur.username")
+    prenom = serializers.CharField(source="utilisateur.first_name")
+    nom = serializers.CharField(source="utilisateur.last_name")
+    plateforme_libelle = serializers.CharField(source="get_plateforme_display")
+    revoque = serializers.BooleanField(source="est_revoque")
+
+    class Meta:
+        model = Appareil
+        fields = ["id", "identifiant", "prenom", "nom", "plateforme", "plateforme_libelle",
+                  "systeme", "modele", "version_app", "cree_le", "dernier_contact", "revoque",
+                  "revoque_le"]  # fmt: skip

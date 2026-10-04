@@ -27,6 +27,7 @@ class Action(StrEnum):
     ORGANISATION_LIRE = "organisation.lire"
     ORGANISATION_GERER = "organisation.gerer"
     AFFECTATIONS_GERER = "affectations.gerer"
+    APPAREILS_REVOQUER = "appareils.revoquer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -58,4 +59,7 @@ MATRICE: dict[Action, frozenset[str]] = {
     ),
     # « Accorder une affectation multi-pays ou un transfert » : administrateur du siège.
     Action.AFFECTATIONS_GERER: frozenset({Role.ADMIN_SIEGE}),
+    # « Effacer à distance un appareil » : siège et administrateur pays. La révocation
+    # (USR-006 CA2) en est la première étape ; l'effacement des données locales suit en 0.8.
+    Action.APPAREILS_REVOQUER: frozenset({Role.ADMIN_SIEGE, Role.ADMIN_PAYS}),
 }
