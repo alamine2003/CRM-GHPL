@@ -1,0 +1,1096 @@
+# INNOV CRM — Document de référence produit (PRD)
+
+| Élément | Valeur |
+|---|---|
+| Produit | INNOV CRM — CRM multi-pays des délégués médicaux |
+| Remplace | BirdNotes (outil utilisé pendant la phase test de septembre 2026) |
+| Version du document | 1.0 |
+| Version produit visée | `1.0.0` (première version stable) |
+| Statut | Cadrage validé le 4 octobre 2026 |
+| Sources | Cahier des charges CRM multi-pays v1.0 · fichier `ORGANISATION_GHPL_2026_v1_3.xlsx` (Sénégal) · maquette « INNOV CRM » · entretien de cadrage |
+| Documents liés | [`architecture.md`](architecture.md) · [`architecture-essentials.md`](architecture-essentials.md) |
+
+**Conventions de ce document**
+
+- **[D]** : décision confirmée pendant le cadrage. **[H]** : hypothèse à confirmer, à traiter comme vraie tant qu'elle n'est pas remplacée. **[O]** : question ouverte.
+- Les identifiants d'exigence (`ORG-001`, `PLN-004`…) et de règle (`RG-001`…) sont **stables** : on ne les renumérote jamais. Une exigence supprimée garde son numéro avec la mention « retirée ».
+- Les noms de rôles, d'entités et de statuts de la section 26 (glossaire) sont les seuls autorisés, ici comme dans le code et l'interface.
+- Aucun nom de personne réelle n'apparaît dans ce document ; les exemples sont fictifs.
+
+---
+
+## Sommaire
+
+1. Résumé exécutif
+2. Vision du produit
+3. Problèmes à résoudre
+4. Objectifs métier
+5. Indicateurs de succès
+6. Utilisateurs et rôles
+7. Organisation multi-pays
+8. Périmètre de la version 1.0.0
+9. Fonctionnalités exclues ou reportées
+10. Parcours utilisateurs
+11. Workflow du planning
+12. Workflow des visites
+13. Workflow des rapports
+14. Gestion des prospects et établissements
+15. Exigences fonctionnelles
+16. Règles de gestion
+17. États et transitions
+18. Notifications
+19. Tableaux de bord
+20. Exigences non fonctionnelles
+21. Critères d'acceptation de la version 1.0.0
+22. Risques et dépendances
+23. Feuille de route de 0.0.1 à 1.0.0
+24. Questions ou décisions encore ouvertes
+25. Registre des décisions de cadrage
+26. Glossaire
+
+---
+
+## 1. Résumé exécutif
+
+INNOV CRM est l'outil unique de planification, d'exécution et de contrôle des visites des délégués médicaux de Generic Healthcare dans ses filiales africaines. Le siège, situé au Sénégal, administre les pays. Chaque pays gère sa propre organisation, ses utilisateurs, ses prospects et ses données.
+
+Le délégué prépare sa semaine sur une application mobile, la soumet à son superviseur, réalise ses visites même sans réseau, et rédige un rapport après chaque visite. Le superviseur approuve les plannings et valide les rapports depuis un portail web. Le DM, le DF, le responsable pays et le siège suivent l'activité sans intervenir dans les décisions.
+
+La priorité absolue du produit est de **prouver l'activité terrain** : chaque visite validée doit pouvoir être reliée à un planning approuvé, à des heures réelles, à une position GPS et à un rapport validé. La simplicité pour le délégué vient immédiatement après, car un outil contourné ne prouve rien.
+
+Le premier déploiement a lieu au **Sénégal** (pays distinct du siège), par réseau et par petits groupes de délégués, puis s'étend selon les résultats. Le système est dimensionné dès le départ pour **au moins 500 délégués par pays**.
+
+## 2. Vision du produit
+
+> Chaque visite d'un délégué médical, dans chaque pays, est planifiée, approuvée, réalisée, rapportée et validée dans un seul outil, avec une preuve exploitable et sans exposer les données d'un pays, d'un réseau ou d'un délégué à qui n'a pas à les voir.
+
+Principes produit :
+
+1. **La preuve avant le volume** : une visite non prouvée ne compte pas dans les indicateurs de réalisation.
+2. **Trois gestes pour une visite** sur mobile : démarrer, renseigner, envoyer.
+3. **Le terrain ne dépend pas du réseau** : tout ce dont le délégué a besoin pour sa semaine est sur son téléphone.
+4. **Une décision humaine, toujours tracée** : aucune validation automatique d'un planning ou d'un rapport.
+5. **Le pays est une frontière** : aucune donnée ne la traverse sans autorisation explicite, datée et auditée.
+6. **Démontrable à tout moment** : chaque version livrée peut être présentée à la direction avec des données fictives réalistes.
+
+## 3. Problèmes à résoudre
+
+| # | Problème constaté | Conséquence | Réponse d'INNOV CRM |
+|---|---|---|---|
+| P1 | Plannings et rapports dispersés (fichiers, messages, BirdNotes) | Pas de vision fiable de l'activité prévue et réalisée | Processus unique planning → visite → rapport |
+| P2 | Activité terrain difficile à prouver | Doute sur la réalité des visites | Heures réelles, GPS au début et à la fin, contrôles de conformité, validation tracée |
+| P3 | Validation lente ou absente des superviseurs | Plannings bloqués, rapports non relus | Échéances, rappels, validation par journée et par lot, remplaçant, escalade vers le DM |
+| P4 | Organisation matricielle complexe (division, réseau, secteur, superviseur multi-réseaux) | Outils inadaptés, affectations erronées | Modèle organisationnel natif : postes, réseaux, secteurs, périmètres datés |
+| P5 | Doublons de prospects (un même médecin vu par jusqu'à 12 réseaux) | Indicateurs faussés, historique éclaté | Fiche commune, détecteur de doublons, fusion contrôlée et réversible |
+| P6 | Connexion mobile faible ou absente | Rapports perdus ou saisis en retard | Fonctionnement hors connexion 7 jours, synchronisation sans perte ni doublon |
+| P7 | Pilotage multi-pays impossible sans mélanger les données | Pas de consolidation fiable | Isolation par pays, consolidation agrégée au siège, Grafana |
+
+## 4. Objectifs métier
+
+| ID | Objectif | Statut |
+|---|---|---|
+| OBJ-01 | Remplacer BirdNotes et les fichiers dispersés par un processus unique et traçable au Sénégal avant extension | [D] |
+| OBJ-02 | Donner au superviseur une vue claire et actionnable de l'activité prévue et réalisée de ses délégués | [D] |
+| OBJ-03 | Permettre au siège de piloter chaque pays sans exposer les données d'un pays à un autre | [D] |
+| OBJ-04 | Améliorer la qualité des comptes rendus (produits présentés, retour du prescripteur, prochaine action) | [D] |
+| OBJ-05 | Conserver l'historique complet des soumissions, révisions, corrections, validations et réouvertures | [D] |
+| OBJ-06 | Fonctionner dans les zones où la connexion mobile est faible ou intermittente | [D] |
+| OBJ-07 | Mesurer la couverture des prospects cibles par rapport aux fréquences et aux objectifs par réseau | [D] |
+
+## 5. Indicateurs de succès
+
+Mesurés pendant le pilote au Sénégal (version `0.9.7` à `0.9.9`), puis chaque mois après la version `1.0.0`. **Les valeurs cibles sont des hypothèses** [H] à ajuster par la direction métier ; les définitions sont confirmées [D].
+
+| ID | Indicateur | Définition | Cible [H] |
+|---|---|---|---|
+| KPI-01 | Plannings soumis à l'heure | Plannings soumis avant l'échéance (jeudi 18 h par défaut) / plannings attendus | ≥ 90 % |
+| KPI-02 | Délai de validation des plannings | Médiane entre soumission et décision du superviseur, en heures ouvrées | < 1 jour ouvré |
+| KPI-03 | Taux de réalisation | Visites approuvées au statut `effectuee` ou justifiées (`annulee`, `reportee`, `prospect_absent`, `non_realisee` avec motif) / visites approuvées | ≥ 85 % |
+| KPI-04 | Rapports dans le délai | Rapports soumis le jour de la visite avant 23 h 59 (heure du pays) / visites effectuées | ≥ 90 % |
+| KPI-05 | Adoption | Délégués du pilote ayant synchronisé au moins 3 jours dans la semaine / délégués du pilote | ≥ 80 % |
+| KPI-06 | Isolation | Données exposées hors périmètre (pays, réseau, délégué) lors des tests d'isolation automatisés et de recette | 0 |
+| KPI-07 | Fiabilité de synchronisation | Rapports créés hors connexion et jamais reçus par le serveur | 0 |
+| KPI-08 | Couverture A/B | Prospects de potentiel A ou B de la liste cible vus au moins à la fréquence cible sur la période / prospects A et B de la liste cible | Suivi sans cible en 1.0.0 [H] |
+| KPI-09 | Délai de validation des rapports | Médiane entre soumission du rapport et décision | < 1 jour ouvré [H] |
+
+Indicateurs techniques de suivi : synchronisations en erreur et temps moyen de résolution, incidents critiques par version, taux d'utilisateurs actifs par pays et par semaine.
+
+## 6. Utilisateurs et rôles
+
+### 6.1 Rôles [D]
+
+| Code | Rôle | Niveau | Canal principal | Responsabilités |
+|---|---|---|---|---|
+| `admin_siege` | Administrateur du siège | Siège | Portail | Crée, active, suspend et archive les pays ; désigne responsables et administrateurs pays ; accorde les affectations multi-pays et les transferts ; gère les règles globales ; consulte l'audit |
+| `direction_siege` | Direction du siège | Siège | Portail | Consulte les consolidations, les tableaux de bord et l'audit, **sans rien modifier** |
+| `responsable_pays` | Responsable pays (directeur général du pays) | Pays | Portail | Consulte toute l'activité de son pays ; ne gère pas les comptes |
+| `admin_pays` | Administrateur pays | Pays | Portail | Gère les utilisateurs, l'organisation (zones, secteurs, réseaux, postes, rattachements), les référentiels, les paramètres du pays, les doublons, les imports, les jours fériés |
+| `df` | DF | Pays (division) | Portail | Consulte plannings, visites, rapports et indicateurs des réseaux de son périmètre ; ne décide pas |
+| `dm` | DM | Pays (réseaux) | Portail | Consulte les réseaux de son périmètre ; fixe les objectifs de ses réseaux ; décide **par escalade** ou en remplacement ; approuve le planning d'un superviseur qui visite lui-même ; autorise les réouvertures au-delà de 30 jours |
+| `superviseur` | Superviseur | Pays (secteurs) | Portail (+ mobile s'il visite) | Approuve les plannings, valide les rapports, tient les listes cibles de ses délégués, traite les demandes de correction |
+| `delegue` | Délégué | Pays (poste) | Mobile | Prépare et soumet son planning, réalise ses visites, rédige ses rapports, propose des prospects |
+| `admin_technique` | Administrateur technique | Plateforme | Outils d'exploitation | Exploite la plateforme, surveille, restaure les sauvegardes ; **n'intervient jamais sur une décision métier** |
+
+Les intitulés complets de « DF » et « DM » sont ceux de l'organisation GHPL ; leur libellé exact reste à confirmer [O-05]. Le code `df` / `dm` ne change pas.
+
+### 6.2 Types de poste du délégué [D]
+
+| Code | Libellé | Prospects visités (principalement) |
+|---|---|---|
+| `vm` | Visiteur médical | Médecins, sages-femmes, infirmiers, chirurgiens-dentistes |
+| `vm_otc` | Visiteur médical OTC | Pharmacies, pharmaciens |
+| `kam` | Key Account Manager | Établissements (hôpitaux, cliniques), grossistes, décideurs |
+| `dermo` | Dermo-conseillère | Pharmacies, dermatologues |
+
+Tous les types de poste suivent **le même workflow** planning → visite → rapport. Un superviseur qui assure lui-même une activité terrain (KAM, OTC) occupe aussi un poste de délégué ; son planning est alors approuvé par son DM.
+
+### 6.3 Matrice des autorisations [D]
+
+« Périm. » = limité au périmètre de l'utilisateur (pays, réseaux, secteurs ou délégués rattachés).
+
+| Action | admin_siege | direction_siege | responsable_pays | admin_pays | df | dm | superviseur | delegue |
+|---|---|---|---|---|---|---|---|---|
+| Créer, suspendre, archiver un pays | Oui | Non | Non | Non | Non | Non | Non | Non |
+| Désigner responsable / admin pays | Oui | Non | Non | Non | Non | Non | Non | Non |
+| Accorder une affectation multi-pays ou un transfert | Oui | Non | Non | Non | Non | Non | Non | Non |
+| Gérer les utilisateurs d'un pays | Oui | Non | Non | Oui (son pays) | Non | Non | Non | Non |
+| Gérer l'organisation (zones, secteurs, réseaux, postes) | Oui | Non | Non | Oui | Non | Non | Non | Non |
+| Gérer les référentiels (produits, spécialités, types) | Oui | Non | Non | Oui | Non | Non | Non | Non |
+| Créer un prospect ou un établissement | Non | Non | Non | Oui | Non | Non | Selon délégation de l'administrateur pays [H] | Oui (statut `a_valider`) |
+| Trancher un doublon, fusionner, défusionner | Non | Non | Non | Oui | Non | Non | Non | Non |
+| Tenir une liste cible | Non | Non | Non | Oui | Non | Non | Oui (périm.) | Non |
+| Fixer les objectifs d'un réseau | Non | Non | Non | Oui | Non | Oui (périm.) | Non | Non |
+| Créer et soumettre un planning | Non | Non | Non | Non | Non | Non | Oui (s'il occupe un poste) | Oui (le sien) |
+| Approuver ou faire réviser un planning | Non | Non | Non | Non | Non | Escalade / remplacement / superviseur-visiteur | Oui (périm.) | Non |
+| Réaliser une visite, rédiger un rapport | Non | Non | Non | Non | Non | Non | Oui (s'il occupe un poste) | Oui |
+| Valider un rapport ou demander une correction | Non | Non | Non | Non | Non | Escalade / remplacement | Oui (périm.) | Non |
+| Rouvrir un rapport validé | Non | Non | Non | Non | Non | Oui (> 30 jours, périm.) | Oui (≤ 30 jours, périm.) | Non |
+| Désigner un remplaçant de superviseur | Non | Non | Non | Oui | Non | Oui (périm.) | Oui (pour lui-même) | Non |
+| Consulter les indicateurs | Global agrégé, nominatif audité | Global agrégé, nominatif audité | Pays nominatif | Pays nominatif | Réseaux nominatif | Réseaux nominatif | Délégués rattachés | Personnels |
+| Consulter le journal d'audit | Oui | Oui | Son pays | Son pays | Non | Non | Non | Non |
+| Exporter | Oui (audité) | Oui (audité) | Oui (audité) | Oui (audité) | Oui (audité) | Oui (audité) | Oui (audité) | Non |
+| Effacer à distance un appareil | Oui | Non | Non | Oui | Non | Non | Non | Non |
+
+## 7. Organisation multi-pays
+
+### 7.1 Hiérarchie et modèle matriciel [D]
+
+Le siège est une entité **distincte** de tout pays, même s'il est installé au Sénégal. Le pays « Sénégal » est un pays opérationnel comme les autres.
+
+L'organisation d'un pays est **matricielle** :
+
+- **Ligne produit** : Division → Réseau → DF → DM. Un réseau porte un **portefeuille de produits**.
+- **Ligne terrain** : Zone → Secteur → Superviseur → Poste de délégué.
+
+Constats issus du fichier d'organisation du Sénégal (2026), utilisés pour concevoir le modèle :
+
+| Constat | Ordre de grandeur (Sénégal) | Conséquence |
+|---|---|---|
+| Divisions | 4 | Entité `Division` |
+| Réseaux | 19 | Entité `Reseau` avec portefeuille de 6 à 25 produits |
+| Produits | ~156 distincts (308 au référentiel de la phase test), dont la moitié sur plusieurs réseaux | Référentiel produits par pays, relation n–n avec les réseaux |
+| Zones / secteurs | 2 zones, 48 secteurs | Entités `Zone`, `Secteur` |
+| Superviseurs | 24, dont certains encadrent jusqu'à 14 réseaux | Le superviseur est rattaché à des **postes**, pas à un réseau |
+| Postes / personnes | 227 postes pour 207 personnes ; postes vacants | Le **poste** est distinct de la **personne** qui l'occupe |
+| Secteurs partagés | 25 secteurs sur 48 couverts par plusieurs réseaux | Un même prospect est visité par plusieurs délégués |
+
+```mermaid
+flowchart TB
+  SIEGE[Siège] --> PAYS[Pays]
+  PAYS --> DIV[Division]
+  DIV --> RES[Réseau<br/>portefeuille produits]
+  PAYS --> ZONE[Zone]
+  ZONE --> SECT[Secteur]
+  RES -. porte .-> POSTE[Poste de délégué]
+  SECT -. couvre .-> POSTE
+  SUP[Superviseur] -- rattachement daté --> POSTE
+  DF[DF] -- périmètre daté --> RES
+  DM[DM] -- périmètre daté --> RES
+  POSTE -- occupation datée --> PERS[Personne / Utilisateur]
+```
+
+### 7.2 Exigences d'organisation
+
+Voir `ORG-001` à `ORG-014` (section 15.1).
+
+### 7.3 Appartenance à plusieurs pays et transferts [D]
+
+- Chaque utilisateur (hors siège) a **un pays principal**.
+- Le siège peut lui accorder des **affectations supplémentaires** dans d'autres pays, avec une date de début, une date de fin facultative, un motif et un rôle par pays. Exemple : un DF couvrant deux pays, un intérim.
+- L'utilisateur choisit son **pays actif** ; il ne voit jamais deux pays à la fois, sauf au siège.
+- Un **transfert** change le pays principal, exige l'autorisation du siège et laisse tout l'historique dans le pays d'origine.
+
+### 7.4 Séparation et consolidation des données [D]
+
+- Toute donnée métier appartient à un pays (`RG-001`).
+- Le siège voit des agrégats par pays, division, réseau et période ; il peut descendre au détail nominatif, **chaque consultation nominative étant auditée**.
+- Responsable pays, administrateur pays, DF, DM et superviseur voient le détail nominatif de leur périmètre.
+- Toute exception de visibilité est explicite, datée, limitée dans le temps et auditée.
+
+### 7.5 Paramètres configurables par pays [D]
+
+| Paramètre | Valeur par défaut |
+|---|---|
+| Langue par défaut | Français (`fr`) ; anglais (`en`) disponible |
+| Fuseau horaire | Celui du pays (Sénégal : `Africa/Dakar`) |
+| Format de date et d'heure | `JJ/MM/AAAA`, 24 h |
+| Devise (affichage futur) | XOF (FCFA) pour les pays UEMOA |
+| Jours ouvrés | Lundi à vendredi |
+| Jours fériés | Calendrier annuel tenu par l'administrateur pays, fêtes religieuses à date variable comprises |
+| Échéance de soumission du planning | Jeudi 18 h de la semaine précédente |
+| Échéance d'approbation du planning | Vendredi 18 h de la semaine précédente |
+| Délai de rapport | Jour de la visite, 23 h 59 |
+| Seuils de visites par jour | Par type de poste (ex. `vm` 6 à 10, `kam` 3 à 6) [H] |
+| Contrôles de conformité | Plage horaire 8 h–20 h ; visites sans GPS tolérées par journée : 0 [H] ; distance de pointage 200 m |
+| Géolocalisation | Activée ou désactivée par pays |
+| Champs supplémentaires du rapport | Aucun |
+| Libellés (division, réseau, zone, secteur) | Libellés standard, modifiables |
+| Durées de conservation | 5 ans (activité, audit), 12 mois (positions GPS), 3 ans (pièces jointes) |
+| Délai d'escalade | 24 heures ouvrées |
+
+## 8. Périmètre de la version 1.0.0
+
+| Domaine | Inclus en 1.0.0 [D] |
+|---|---|
+| Organisation | Siège, pays, divisions, réseaux, zones, secteurs, postes, occupations, rattachements, périmètres DF/DM, affectations multi-pays, transferts |
+| Comptes | Comptes nominatifs, 9 rôles, mot de passe, double authentification pour les rôles sensibles, gestion des appareils |
+| Référentiel | Prospects, établissements, exercices datés, spécialités, catégories, potentiel A/B/C, classes thérapeutiques, produits, portefeuilles |
+| Qualité des données | Détecteur de doublons, fusion automatique certaine, file des doublons probables, défusion |
+| Imports | Organisation (format du fichier d'organisation), référentiel produits, prospects et établissements depuis BirdNotes, rapport d'erreurs |
+| Ciblage | Liste cible par délégué, fréquence de visite par prospect, couverture |
+| Planning | Semaine lundi–vendredi, passages, absences, jours fériés, contrôles, kilométrage estimé, soumission, révision, approbation, versions, modifications mineures et majeures |
+| Visites | Programme du jour, GPS début/fin, statuts, report lié, visite imprévue, contrôles de conformité |
+| Rapports | Socle commun + champs par pays, produits présentés dans l'ordre, retour du prescripteur, échantillons et cadeaux remis, prochaine action, pièce jointe, brouillon, correction, validation par journée et par lot, réouverture, versions |
+| Supervision | Remplaçant daté, escalade vers le DM |
+| Notifications | Push qui ouvre l'action, centre de notifications, courriel de sécurité |
+| Pilotage | Tableaux de bord délégué, superviseur, DM/DF, pays, siège ; objectifs par réseau ; exports audités ; Grafana |
+| Mobile | Android et iOS, hors connexion 7 jours, chiffrement local, effacement à distance |
+| Exploitation | Audit, sauvegardes, supervision, environnements, instance de démonstration |
+| Langues | Français et anglais |
+
+## 9. Fonctionnalités exclues ou reportées
+
+| Élément | Décision | Remarque |
+|---|---|---|
+| Notes de frais et remboursements, montant des frais | Exclu de 1.0.0 [D] | Seul le kilométrage estimé est affiché |
+| Gestion de stock d'échantillons (dotations, soldes, inventaires) | Exclu de 1.0.0 [D] | La **remise** d'échantillons est saisie dans le rapport |
+| Commandes, livraisons, facturation, comptabilité, paie | Exclu [D] | — |
+| Campagnes marketing, envois massifs, segmentation avancée | Exclu [D] | — |
+| SMS | Exclu [D] | — |
+| WhatsApp | Après 1.0.0 [D] | Canal d'escalade uniquement |
+| Suivi GPS en continu | Exclu [D] | GPS au début et à la fin de visite seulement |
+| Signature électronique du prospect | Exclu [D] | — |
+| Gestion RH des congés, intégration à un outil RH | Exclu [D] | Les absences sont déclarées dans le planning |
+| Intégration ERP | Après 1.0.0 | Champ « non connecté » de la maquette |
+| Langues autres que français et anglais | Après 1.0.0 | Textes externalisés dès `0.0.1` |
+| Application de bureau, mode tablette dédié | Après 1.0.0 | Le portail fonctionne sur tablette en navigateur |
+
+## 10. Parcours utilisateurs
+
+### 10.1 Délégué — une semaine type
+
+1. **Jeudi** : ouvre « Semaine » sur son téléphone, glisse des prospects de sa liste cible dans les jours de la semaine suivante, regroupe trois médecins d'un hôpital en un passage, déclare une demi-journée de formation, voit le kilométrage estimé et les alertes (seuils, conflits, prospect A non planifié). Soumet avant 18 h.
+2. **Vendredi** : reçoit une notification « Révision demandée » ; l'ouvre, lit le commentaire, déplace deux visites, soumet la version 2. Reçoit « Planning approuvé ».
+3. **Lundi** : ouvre « Tournée » sans réseau ; démarre la première visite (GPS capturé, distance au cabinet affichée), coche les produits présentés dans l'ordre, note le retour du prescripteur, les échantillons remis, la prochaine action. Envoie : le rapport part dans la file d'attente locale (orange) et se synchronise seul au retour du réseau.
+4. **Mardi** : un médecin est absent : statut `prospect_absent` avec motif. Un autre demande un report : statut `reportee`, une nouvelle visite liée est créée. Il rencontre un prescripteur non prévu : visite imprévue justifiée.
+5. **Mercredi** : reçoit « Correction demandée » sur une visite ; corrige et renvoie.
+6. Consulte « Mes chiffres » : visites, couverture, rapports validés.
+
+### 10.2 Superviseur — une journée type
+
+1. Ouvre l'accueil du portail : rapports à valider, plannings en attente, délégués non synchronisés depuis plus de 48 h, demandes de prospect.
+2. Valide en un clic les journées « conformes » (horaires, GPS, distance) ; ouvre une journée « à vérifier », consulte la chronologie des visites, demande une correction motivée sur une visite précise.
+3. Ouvre un planning soumis, voit les alertes (prospect hors liste cible, seuil dépassé, kilométrage), approuve ou demande une révision avec commentaire.
+4. Met à jour la liste cible d'un délégué. Avant ses congés, désigne un autre superviseur comme remplaçant du 12 au 23.
+
+### 10.3 DM / DF
+
+Consultent les tableaux de bord de leurs réseaux, fixent les objectifs trimestriels (DM), reçoivent les escalades (DM) et décident à la place d'un superviseur défaillant, approuvent le planning d'un superviseur qui visite (DM).
+
+### 10.4 Administrateur pays
+
+Importe l'organisation et le référentiel, crée les comptes et les postes, rattache les postes aux superviseurs, tient le calendrier des jours fériés, configure les seuils et les champs du rapport, tranche la file des doublons probables, désactive le compte et efface à distance le téléphone d'un délégué qui quitte l'entreprise.
+
+### 10.5 Responsable pays et siège
+
+Le responsable pays consulte l'activité nationale. L'administrateur du siège crée un pays, désigne son responsable et son administrateur, accorde une affectation multi-pays. La direction du siège compare les pays dans les tableaux de bord et Grafana.
+
+## 11. Workflow du planning
+
+```mermaid
+sequenceDiagram
+  actor D as Délégué
+  participant M as Application mobile
+  participant S as Serveur
+  actor SUP as Superviseur
+  actor DM as DM
+  D->>M: Prépare la semaine (brouillon, hors connexion possible)
+  M->>S: Synchronise le brouillon
+  D->>M: Soumet (avant jeudi 18 h)
+  M->>S: Soumission (contrôles serveur)
+  S-->>SUP: Notification « Planning soumis »
+  alt Approuvé (avant vendredi 18 h)
+    SUP->>S: Approuver
+    S-->>D: « Planning approuvé »
+  else Révision demandée
+    SUP->>S: À réviser + commentaire obligatoire
+    S-->>D: « Révision demandée »
+    D->>M: Corrige, soumet la version n+1
+  end
+  opt Pas de décision 24 h ouvrées après soumission
+    S-->>DM: Escalade
+    DM->>S: Décide à la place (tracé « par escalade »)
+  end
+```
+
+Règles principales : `RG-010` à `RG-024`. Points clés :
+
+- Une semaine = un planning par délégué, avec des **versions** successives (`RG-012`).
+- Échéance de soumission : jeudi 18 h ; échéance d'approbation : vendredi 18 h ; paramétrables par pays (`RG-013`).
+- Contrôles **bloquants** à la soumission : champs obligatoires, prospect et établissement actifs du même pays, conflit horaire exact, doublon de visite (même prospect, même jour) (`RG-015`).
+- Contrôles **signalés** au superviseur, non bloquants : seuils de visites par jour, prospect hors liste cible, prospect hors secteur, prospect A non planifié sur le mois, soumission en retard (`RG-016`).
+- Après approbation : modification **mineure** libre et tracée (heure, même jour) ; modification **majeure** (jour, prospect, ajout, retrait) = nouvelle version soumise ; les visites non concernées restent exécutables (`RG-018`).
+
+## 12. Workflow des visites
+
+1. Le programme du jour liste les visites approuvées, ordonnées, avec la prochaine visite en tête et la distance au lieu (si le GPS est actif).
+2. **Démarrer** : statut `en_cours`, heure réelle de début et position GPS capturées automatiquement, même hors connexion.
+3. **Terminer** : statut `effectuee`, heure réelle de fin et position GPS capturées ; ouverture du rapport.
+4. **Écarts** : `annulee`, `reportee` (crée une nouvelle visite liée), `prospect_absent`, `non_realisee` — chacun exige un motif choisi dans une liste du pays et un commentaire facultatif.
+5. **Visite imprévue** : ajoutée le jour même, rattachée au jour réel, avec justification obligatoire ; elle ne nécessite pas d'approbation préalable mais apparaît comme « imprévue » au superviseur.
+6. **Contrôles de conformité** calculés par le serveur à la réception : hors plage horaire, sans GPS, distance supérieure au seuil, durée anormale [H : durée < 3 min ou > 3 h], visite non planifiée. Ils ne bloquent pas la saisie ; ils classent la journée « conforme » ou « à vérifier ».
+
+## 13. Workflow des rapports
+
+```mermaid
+stateDiagram-v2
+  [*] --> brouillon
+  brouillon --> soumis: le délégué soumet
+  soumis --> valide: le superviseur valide (unitaire, journée ou lot conforme)
+  soumis --> a_corriger: correction demandée + commentaire
+  a_corriger --> soumis: le délégué corrige et renvoie
+  valide --> rouvert: réouverture motivée (superviseur ≤ 30 j, DM > 30 j)
+  rouvert --> soumis: le délégué corrige et renvoie
+```
+
+- Un rapport par visite au statut `effectuee` (`RG-030`).
+- Attendu le jour même avant 23 h 59, heure du pays ; au-delà, marqué `en_retard` ; alerte au superviseur à 48 h (`RG-032`).
+- Le superviseur valide **visite par visite**, **par journée** d'un délégué, ou **par lot** de journées conformes ; chaque rapport validé porte l'identité du validateur et le mode (`unitaire`, `journee`, `lot`, `escalade`, `remplacement`) (`RG-034`).
+- Aucune validation automatique (`RG-035`).
+- Chaque soumission crée une version figée ; les versions sont consultables par le superviseur et au-dessus (`RG-037`).
+
+## 14. Gestion des prospects et établissements
+
+### 14.1 Prospect
+
+| Champ | Obligatoire | Remarque |
+|---|---|---|
+| Civilité, nom, prénom | Nom obligatoire | Normalisés pour la détection de doublons |
+| Type de prospect | Oui | `medecin`, `pharmacien`, `sage_femme`, `infirmier`, `chirurgien_dentiste`, `autre` (liste par pays) |
+| Spécialité | Selon le type | Référentiel par pays |
+| Numéro d'ordre professionnel | Non | Identifiant fort pour la fusion automatique |
+| Téléphone mobile personnel, téléphone professionnel, courriel | Non | Normalisés au format international |
+| Potentiel | Oui | `A`, `B`, `C` |
+| Pays | Oui | Ne change jamais (`RG-001`) |
+| Statut | Oui | `a_valider`, `actif`, `archive`, `fusionne` |
+
+### 14.2 Établissement
+
+Nom, type (`cabinet`, `hopital`, `clinique`, `centre_sante`, `pharmacie`, `grossiste`, `autre` — liste par pays), adresse, localité, secteur, coordonnées GPS de référence, téléphone, statut (`a_valider`, `actif`, `archive`, `fusionne`).
+
+### 14.3 Exercice (relation prospect ↔ établissement)
+
+Un prospect exerce dans **un ou plusieurs** établissements. Chaque exercice est daté (début, fin facultative) et peut porter des jours et horaires de présence [H]. Une visite référence toujours un prospect et un établissement liés par un exercice actif à la date de la visite.
+
+### 14.4 Fiche commune, visites privées [D]
+
+- La fiche d'un prospect est **commune** à tous les réseaux du pays.
+- Un délégué ne voit que **ses propres** visites et rapports sur ce prospect.
+- Le superviseur voit les visites des délégués rattachés ; DM et DF celles de leurs réseaux ; le responsable et l'administrateur pays tout le pays.
+
+### 14.5 Ciblage [D]
+
+- Chaque délégué (poste) a une **liste cible** tenue par son superviseur (ou l'administrateur pays), avec une **fréquence cible** par prospect (ex. 2 visites par mois).
+- Le délégué peut planifier un prospect de son secteur hors liste cible ; c'est signalé au superviseur.
+- La couverture se calcule sur la liste cible et les fréquences.
+
+### 14.6 Création et doublons [D]
+
+- Un délégué peut créer un prospect ou un établissement. La fiche est au statut `a_valider` et **utilisable immédiatement par lui seul**.
+- À la saisie, le système affiche les fiches ressemblantes (nom approchant, phonétique, téléphone, établissement, spécialité) et invite à réutiliser une fiche existante.
+- À l'enregistrement, le détecteur calcule un score :
+  - **certain** → fusion automatique dans la fiche existante. « Certain » signifie : même numéro d'ordre dans le même pays, ou même téléphone mobile personnel **avec** un nom similaire au-dessus du seuil [H : la condition sur le nom évite de fusionner deux médecins partageant le standard d'une clinique] ;
+  - **probable** → la fiche entre dans la **file des doublons probables**, tranchée par l'administrateur pays ;
+  - **aucun** → la fiche devient `actif` et commune.
+- Toute fusion est **réversible** (défusion) et auditée ; les visites, rapports, exercices et listes cibles suivent la fiche conservée.
+
+### 14.7 Import initial depuis BirdNotes [D, format O-01]
+
+Les prospects, établissements et l'historique utile de la phase test viennent de BirdNotes. L'import passe par un **format d'import standard** du CRM (CSV/Excel) vers lequel l'export BirdNotes est converti, avec simulation préalable, rapport d'erreurs ligne par ligne, détection de doublons et journal d'import.
+
+## 15. Exigences fonctionnelles
+
+Chaque exigence porte : un identifiant stable, la version de première livraison prévue, et des critères d'acceptation vérifiables (« CA »).
+
+### 15.1 Organisation — ORG
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| ORG-001 | L'administrateur du siège crée, active, suspend et archive un pays (code ISO, nom, fuseau, langue, statut). | 0.0.2 | CA1 : un pays créé apparaît dans la liste du siège au statut `actif`. CA2 : un pays `suspendu` refuse toute connexion de ses utilisateurs (hors siège) avec un message explicite. CA3 : un pays archivé reste consultable en lecture par le siège. CA4 : chaque changement de statut crée un événement d'audit. |
+| ORG-002 | Le siège désigne le responsable pays et l'administrateur pays ; l'historique des désignations est conservé. | 0.0.4 | CA1 : une désignation porte une date de début. CA2 : l'historique liste toutes les désignations passées avec auteur et dates. |
+| ORG-003 | L'administrateur pays gère zones et secteurs (création, renommage, archivage). | 0.0.5 | CA1 : un secteur appartient à une seule zone. CA2 : un secteur archivé n'est plus proposé à la planification mais reste visible dans l'historique. |
+| ORG-004 | L'administrateur pays gère divisions et réseaux, et le portefeuille de produits de chaque réseau. | 0.1.1 | CA1 : un réseau appartient à une division. CA2 : un produit peut appartenir à plusieurs réseaux. CA3 : le rapport d'un délégué ne propose que les produits du portefeuille de son réseau. |
+| ORG-005 | L'administrateur pays crée des **postes** (type de poste, réseau(x), secteur(s)), y compris vacants. | 0.0.5 | CA1 : un poste sans occupant s'affiche « vacant ». CA2 : un poste peut couvrir plusieurs secteurs. |
+| ORG-006 | Une personne occupe un ou plusieurs postes, avec des **occupations datées**. | 0.0.5 | CA1 : une occupation a une date de début et une date de fin facultative. CA2 : une personne sur deux réseaux a deux occupations actives et voit les deux portefeuilles. |
+| ORG-007 | Chaque poste est **rattaché** à un superviseur, avec historique daté. | 0.0.5 | CA1 : un délégué sans superviseur actif ne peut pas soumettre de planning (message explicite). CA2 : le changement de superviseur prend effet à la date indiquée sans modifier les décisions passées. |
+| ORG-008 | DF et DM ont un **périmètre de réseaux** daté. | 0.0.5 | CA1 : un DM ne voit que les plannings, visites et rapports des postes de ses réseaux. CA2 : retirer un réseau du périmètre retire l'accès à la date de fin. |
+| ORG-009 | Le siège accorde des **affectations supplémentaires** dans d'autres pays (rôle, dates, motif). | 0.0.5 | CA1 : l'utilisateur choisit un pays actif ; les écrans et API ne renvoient que les données de ce pays. CA2 : à la date de fin, l'accès au pays supplémentaire est retiré automatiquement. CA3 : l'octroi et le retrait sont audités. |
+| ORG-010 | Le siège autorise le **transfert** d'un utilisateur vers un autre pays. | 0.0.5 | CA1 : après transfert, l'utilisateur ne voit plus aucune donnée de l'ancien pays. CA2 : ses plannings, visites et rapports restent dans l'ancien pays, consultables par ce pays. |
+| ORG-011 | L'administrateur pays configure les paramètres du pays (section 7.5). | 0.0.2 | CA1 : chaque paramètre a une valeur par défaut. CA2 : une modification est auditée avec ancienne et nouvelle valeur. CA3 : un paramètre modifié s'applique aux objets créés ensuite, sans modifier rétroactivement les objets validés. |
+| ORG-012 | L'administrateur pays tient le calendrier des jours fériés. | 0.2.1 | CA1 : un jour férié est exclu des contrôles « semaine complète » et des seuils. CA2 : une date variable peut être modifiée jusqu'à la veille. |
+| ORG-013 | Le superviseur, le DM ou l'administrateur pays désigne un **remplaçant** daté pour un superviseur. | 0.3.4 | CA1 : pendant la période, le remplaçant voit et décide les plannings et rapports concernés. CA2 : toute décision porte le mode `remplacement` et l'identité du remplaçant. CA3 : à la fin de la période, l'accès cesse. |
+| ORG-014 | L'administrateur pays importe l'organisation depuis un fichier au format du fichier d'organisation (division, réseau, DF, DM, superviseur, zone, secteur, personne, type de poste, produits). | 0.1.8 | CA1 : une simulation affiche les créations et modifications sans rien écrire. CA2 : chaque ligne rejetée a un motif. CA3 : un poste « non pourvu » crée un poste vacant. CA4 : un réimport du même fichier ne crée aucun doublon. |
+
+### 15.2 Utilisateurs et accès — USR
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| USR-001 | Chaque utilisateur se connecte avec un compte **nominatif** et un rôle explicite par pays. | 0.0.3 | CA1 : aucun compte partagé ou générique n'est créable. CA2 : un utilisateur sans rôle actif dans le pays actif ne voit rien. |
+| USR-002 | Le système applique les permissions selon pays, rôle, réseau, secteur et rattachement, **côté serveur**. | 0.0.4 | CA1 : chaque cellule de la matrice 6.3 est couverte par un test automatisé. CA2 : un appel d'API hors périmètre renvoie « introuvable » sans révéler l'existence de l'objet. |
+| USR-003 | L'administrateur pays crée, modifie, suspend et réactive les comptes de son pays ; un compte n'est jamais supprimé. | 0.0.3 | CA1 : un compte suspendu ne peut plus se connecter ni synchroniser. CA2 : ses données restent intactes et attribuées. |
+| USR-004 | L'utilisateur choisit sa langue (français ou anglais) ; la langue par défaut est celle du pays. | 0.0.6 | CA1 : tous les écrans, messages d'erreur et notifications existent en `fr` et `en`. CA2 : aucun texte affiché n'est codé en dur. |
+| USR-005 | Récupération d'accès par lien à usage unique envoyé par courriel, ou réinitialisation par l'administrateur pays. | 0.0.3 | CA1 : le lien expire après 30 minutes et ne sert qu'une fois. CA2 : la réinitialisation est auditée. |
+| USR-006 | Gestion des **appareils** : chaque téléphone est enregistré à la première connexion ; l'administrateur pays voit les appareils, leur dernière synchronisation et la version de l'application. | 0.0.6 | CA1 : la liste affiche appareil, système, version, dernière synchronisation. CA2 : un appareil révoqué ne peut plus synchroniser. |
+
+### 15.3 Prospects et établissements — PRP
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| PRP-001 | Référentiels par pays : types de prospect, spécialités, types d'établissement, classes thérapeutiques, produits, motifs d'écart. | 0.1.1 | CA1 : chaque liste est modifiable par l'administrateur pays. CA2 : une valeur utilisée ne se supprime pas, elle s'archive. |
+| PRP-002 | Création et consultation des fiches prospects (section 14.1). | 0.1.2 | CA1 : un prospect sans nom ni type est refusé. CA2 : la fiche affiche ses établissements, son potentiel, et pour l'utilisateur ses visites autorisées. |
+| PRP-003 | Création et consultation des établissements (section 14.2). | 0.1.3 | CA1 : un établissement a un secteur. CA2 : les coordonnées GPS de référence sont facultatives mais nécessaires au contrôle de distance. |
+| PRP-004 | Exercices datés prospect ↔ établissement. | 0.1.4 | CA1 : un prospect peut avoir plusieurs exercices actifs. CA2 : une visite ne peut référencer qu'un couple prospect/établissement lié par un exercice actif à la date de la visite. |
+| PRP-005 | Recherche, filtres, tri et pagination (nom, spécialité, potentiel, localité, secteur, délégué). | 0.1.6 | CA1 : la recherche tolère accents et casse. CA2 : les résultats ne contiennent que des fiches du pays actif et du périmètre. CA3 : 20 résultats par page par défaut. |
+| PRP-006 | Création par le délégué au statut `a_valider`, utilisable immédiatement par lui seul. | 0.1.2 | CA1 : la fiche n'apparaît pas aux autres délégués avant de devenir `actif`. CA2 : le délégué peut la planifier aussitôt. |
+| PRP-007 | Suggestions de fiches ressemblantes pendant la saisie. | 0.1.7 | CA1 : saisir un nom approchant d'une fiche existante (faute de frappe, accent, préfixe « Dr ») affiche cette fiche parmi les suggestions. CA2 : la suggestion fonctionne hors connexion sur les fiches présentes sur le téléphone. |
+| PRP-008 | Détecteur de doublons à l'enregistrement : `certain` → fusion automatique ; `probable` → file ; `aucun` → `actif`. | 0.1.7 | CA1 : deux fiches avec le même numéro d'ordre dans le même pays fusionnent automatiquement. CA2 : deux fiches au même téléphone fixe d'établissement mais aux noms différents ne fusionnent pas. CA3 : chaque décision du détecteur est auditée avec le score et les critères. |
+| PRP-009 | File des doublons probables traitée par l'administrateur pays : fusionner, garder séparées, refuser. | 0.1.7 | CA1 : la comparaison affiche les deux fiches côte à côte. CA2 : « garder séparées » empêche que la même paire réapparaisse. |
+| PRP-010 | Défusion d'une fusion (automatique ou manuelle). | 0.1.7 | CA1 : après défusion, les deux fiches retrouvent leurs visites, rapports, exercices et listes cibles d'origine. CA2 : la défusion est auditée. |
+| PRP-011 | Liste cible par poste avec fréquence cible par prospect, tenue par le superviseur ou l'administrateur pays. | 0.1.5 | CA1 : ajouter ou retirer un prospect est audité. CA2 : la liste cible est disponible hors connexion sur le téléphone du délégué. |
+| PRP-012 | Modification contrôlée et archivage logique des fiches ; historique des changements. | 0.1.7 | CA1 : chaque modification est historisée (champ, ancienne valeur, nouvelle valeur, auteur, date). CA2 : aucune suppression physique. |
+| PRP-013 | Import contrôlé des prospects et établissements (format standard, depuis BirdNotes). | 0.1.8 | CA1 : simulation sans écriture. CA2 : rapport d'erreurs téléchargeable. CA3 : les doublons détectés vont dans la file. CA4 : un réimport idempotent ne crée rien de nouveau. |
+| PRP-014 | Le délégué propose une modification d'une fiche commune (adresse, téléphone, nouvel exercice) ; le superviseur ou l'administrateur pays l'accepte ou la refuse. | 0.1.7 | CA1 : la proposition ne modifie pas la fiche avant acceptation. CA2 : le délégué est notifié de la décision. |
+
+### 15.4 Planning — PLN
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| PLN-001 | Le délégué crée un planning hebdomadaire (lundi–vendredi par défaut, jours ouvrés du pays). | 0.2.1 | CA1 : un seul planning par délégué et par semaine (`RG-012`). CA2 : les jours fériés sont affichés et non planifiables. |
+| PLN-002 | Une visite planifiée contient date, heure, prospect, établissement, objectif, réseau ; note facultative. | 0.2.2 | CA1 : une visite incomplète est refusée à la soumission avec la liste des champs manquants. |
+| PLN-003 | Le délégué regroupe plusieurs visites d'un même établissement en un **passage**. | 0.2.3 | CA1 : un passage affiche une ligne « Établissement · n prescripteurs ». CA2 : chaque visite du passage garde son prospect et son rapport. |
+| PLN-004 | Contrôles bloquants à la soumission (`RG-015`) et signalements non bloquants (`RG-016`). | 0.2.4 | CA1 : deux visites à la même heure sont refusées. CA2 : un seuil dépassé n'empêche pas la soumission mais apparaît au superviseur. |
+| PLN-005 | Déplacer, copier, supprimer une visite avant soumission ; glisser-déposer depuis la liste cible. | 0.2.5 | CA1 : un glisser-déposer crée une visite pré-remplie (prospect, établissement principal). CA2 : copier la semaine précédente est possible. |
+| PLN-006 | Vues mobile semaine, jour, détail ; vue portail semaine. | 0.2.6 | CA1 : la vue semaine affiche le nombre de visites par jour et le statut du planning. |
+| PLN-007 | Sauvegarde automatique du brouillon et reprise. | 0.2.7 | CA1 : fermer l'application en cours de saisie ne perd aucune visite. |
+| PLN-008 | Soumission avec contrôle final ; marquage `en_retard` après l'échéance. | 0.2.8 | CA1 : une soumission après jeudi 18 h (heure du pays) est acceptée et marquée « en retard ». |
+| PLN-009 | Absences déclarées (`conge`, `formation`, `reunion`, `maladie`, `autre`) par jour ou demi-journée. | 0.2.3 | CA1 : une demi-journée d'absence réduit de moitié les seuils du jour. CA2 : l'absence est validée avec le planning. |
+| PLN-010 | Kilométrage estimé de la semaine (sans montant). | 0.2.6 | CA1 : le kilométrage est calculé à partir des coordonnées des établissements, à vol d'oiseau ou par itinéraire [H]. CA2 : aucun montant de frais n'est affiché. |
+| PLN-011 | Le superviseur dispose d'une file des plannings en attente. | 0.3.1 | CA1 : la file est triée par ancienneté de soumission et affiche les alertes. |
+| PLN-012 | Le superviseur approuve un planning complet. | 0.3.3 | CA1 : l'approbation fige la version. CA2 : le délégué reçoit une notification. |
+| PLN-013 | Le superviseur demande une révision, sur le planning ou une visite précise, avec commentaire obligatoire. | 0.3.4 | CA1 : une demande sans commentaire est refusée. CA2 : le délégué voit le commentaire sur la visite concernée. |
+| PLN-014 | Nouvelle version après révision ; historique et comparaison des versions. | 0.3.5 | CA1 : la comparaison montre les visites ajoutées, retirées, déplacées. CA2 : toutes les versions restent consultables. |
+| PLN-015 | Modifications après approbation : mineure libre et tracée, majeure soumise à nouvelle approbation (`RG-018`). | 0.3.7 | CA1 : changer l'heure d'une visite dans la même journée ne change pas le statut. CA2 : ajouter une visite crée une version soumise ; les autres visites restent exécutables. |
+| PLN-016 | Escalade vers le DM sans décision 24 h ouvrées après soumission ; alerte au DM si rien n'est approuvé le lundi matin. | 0.3.8 | CA1 : l'escalade notifie le DM du périmètre. CA2 : la décision du DM porte le mode `escalade`. |
+| PLN-017 | Le planning d'un superviseur qui occupe un poste de délégué est approuvé par son DM. | 0.3.3 | CA1 : il n'apparaît pas dans sa propre file. |
+
+### 15.5 Visites — VIS
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| VIS-001 | Programme du jour ordonné des visites approuvées, disponible hors connexion. | 0.4.1 | CA1 : en mode avion, le programme du jour et de la semaine s'affiche. |
+| VIS-002 | Détail d'une visite : prospect, établissement, objectif, coordonnées, historique de ses 3 dernières visites. | 0.4.2 | CA1 : l'historique ne montre que les visites du délégué. |
+| VIS-003 | Démarrer : `en_cours`, heure réelle de début, position GPS si le pays l'active. | 0.4.3 | CA1 : la position est capturée hors connexion. CA2 : sans GPS disponible, la visite démarre quand même et est marquée « sans GPS ». CA3 : la distance à l'établissement est affichée. |
+| VIS-004 | Terminer : `effectuee`, heure réelle de fin, position GPS. | 0.4.4 | CA1 : l'heure de fin est postérieure à l'heure de début. |
+| VIS-005 | `prospect_absent` avec motif. | 0.4.5 | CA1 : impossible sans motif. |
+| VIS-006 | `annulee` avec motif. | 0.4.6 | CA1 : impossible sans motif. |
+| VIS-007 | `reportee` avec motif ; crée une nouvelle visite liée à l'originale. | 0.4.7 | CA1 : la nouvelle visite référence la visite d'origine. CA2 : si elle tombe dans une semaine déjà approuvée, c'est une modification majeure. |
+| VIS-008 | Visite imprévue justifiée, rattachée au jour réel. | 0.4.8 | CA1 : impossible sans justification. CA2 : marquée « imprévue » dans toutes les vues. |
+| VIS-009 | `non_realisee` avec motif pour une visite prévue non faite. | 0.4.6 | CA1 : une visite encore `prevue` après la fin de sa journée apparaît « à justifier » au délégué. |
+| VIS-010 | Contrôles de conformité serveur (hors plage, sans GPS, distance, durée, imprévue) et classement de la journée `conforme` / `a_verifier`. | 0.4.9 | CA1 : une journée sans aucun écart est `conforme`. CA2 : les seuils viennent des paramètres du pays. CA3 : le résultat est recalculé si les paramètres changent avant validation, jamais après. |
+
+### 15.6 Rapports — RPT
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| RPT-001 | Un rapport par visite `effectuee`. | 0.5.1 | CA1 : une visite effectuée sans rapport soumis apparaît « rapport attendu ». |
+| RPT-002 | Socle obligatoire : produits présentés (portefeuille du réseau), résultat (liste courte), résumé, prochaine action. | 0.5.1 | CA1 : impossible de soumettre sans ces champs. |
+| RPT-003 | Rappel de l'objectif prévu et saisie du résultat obtenu. | 0.5.2 | CA1 : l'objectif planifié est affiché en tête du rapport. |
+| RPT-004 | Produits présentés **dans l'ordre**, avec **retour du prescripteur** par produit : `non_prescrit`, `peu`, `prescrit`, `tres_bien`. | 0.5.3 | CA1 : l'ordre saisi est conservé. CA2 : seuls les produits du portefeuille du réseau sont proposés, plus « autre » libre si le pays l'autorise. |
+| RPT-005 | Échantillons et cadeaux **remis** (produit ou article, quantité), sans stock. | 0.5.3 | CA1 : aucune notion de solde ni de dotation. |
+| RPT-006 | Prochaine action : type, échéance, éventuellement visite proposée. | 0.5.4 | CA1 : la prochaine action est rappelée lors de la visite suivante du même prospect par le même délégué. |
+| RPT-007 | Pièces jointes (photo, document) avec contrôle d'accès ; téléversement différé hors connexion. | 0.5.5 | CA1 : taille maximale 10 Mo par fichier, 3 par rapport [H]. CA2 : une pièce jointe n'est accessible qu'aux personnes qui voient le rapport. |
+| RPT-008 | Champs supplémentaires configurables par pays (texte, nombre, liste, case à cocher ; obligatoire ou non). | 0.5.1 | CA1 : un champ ajouté s'applique aux nouveaux rapports seulement. |
+| RPT-009 | Brouillon sauvegardé automatiquement, hors connexion. | 0.5.6 | CA1 : un brouillon survit à la fermeture de l'application et au redémarrage du téléphone. |
+| RPT-010 | Soumission avec contrôles ; marquage `en_retard` après 23 h 59 le jour de la visite. | 0.5.7 | CA1 : un rapport rédigé hors connexion le jour J et synchronisé le jour J+1 est **à l'heure** si son horodatage de soumission local est du jour J [H : l'horodatage local est accepté sauf incohérence avec l'horloge serveur de plus de 15 min, auquel cas il est signalé]. |
+| RPT-011 | Chronologie des rapports autorisés d'un prospect. | 0.5.8 | CA1 : un délégué ne voit que les siens. |
+| RPT-012 | File de travail du superviseur : rapports et journées en attente par délégué et date, avec contrôles. | 0.6.1 | CA1 : chaque journée affiche « conforme » ou « à vérifier » et le détail des écarts. |
+| RPT-013 | Validation unitaire, **par journée**, ou **par lot** des journées conformes. | 0.6.3 | CA1 : « Valider les n conformes » ne valide que les journées classées `conforme`. CA2 : chaque rapport validé porte validateur, date et mode. |
+| RPT-014 | Demande de correction motivée sur une visite précise, avec champs concernés et échéance. | 0.6.4 | CA1 : impossible sans commentaire. CA2 : les autres rapports de la journée peuvent être validés. |
+| RPT-015 | Correction et nouvelle soumission par le délégué. | 0.6.5 | CA1 : la version précédente reste consultable. |
+| RPT-016 | Réouverture d'un rapport validé : superviseur ≤ 30 jours, DM au-delà ; motif obligatoire. | 0.6.6 | CA1 : un superviseur ne peut pas rouvrir un rapport validé il y a 31 jours. CA2 : la réouverture est auditée et notifiée. |
+| RPT-017 | Identification des rapports en retard et alerte au superviseur à 48 h. | 0.6.7 | CA1 : la liste des retards est filtrable par délégué. |
+| RPT-018 | Validation par escalade (DM) ou remplacement. | 0.6.3 | CA1 : le mode est visible dans l'historique. |
+| RPT-019 | Export des rapports (CSV/Excel) dans le périmètre, audité. | 0.7.8 | CA1 : l'export ne contient que le périmètre de l'utilisateur. CA2 : chaque export crée un événement d'audit (filtres, nombre de lignes). |
+
+### 15.7 Notifications — NOT
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| NOT-001 | Centre de notifications dans l'application et le portail (lu / non lu). | 0.3.8 | CA1 : chaque notification ouvre directement l'écran de l'action attendue. |
+| NOT-002 | Notifications push mobiles pour les événements de la section 18. | 0.8.5 | CA1 : toucher la notification ouvre l'objet concerné, même après redémarrage. CA2 : aucune donnée de santé ni nom de prospect dans le texte affiché sur l'écran verrouillé. |
+| NOT-003 | Regroupement anti-saturation : au plus une notification push par type et par heure et par utilisateur ; les suivantes sont regroupées. | 0.8.5 | CA1 : 20 rapports soumis en 10 minutes produisent une seule notification « 20 rapports à valider ». |
+| NOT-004 | Courriel réservé à la sécurité du compte (récupération d'accès, nouvel appareil, double authentification) et au secours d'une décision en attente depuis plus de 48 h [H]. | 0.8.6 | CA1 : aucun autre courriel n'est envoyé. |
+| NOT-005 | Préférences par utilisateur dans les limites fixées par le pays (certaines notifications ne peuvent pas être désactivées : révision demandée, correction demandée, escalade). | 0.8.6 | CA1 : une notification obligatoire ne peut pas être désactivée. |
+| NOT-006 | Rappels : planning non soumis (mercredi), visite proche, rapport non soumis (18 h), délégué non synchronisé depuis 48 h (au superviseur). | 0.3.8 | CA1 : les heures suivent le fuseau du pays. |
+
+### 15.8 Tableaux de bord et pilotage — DSH
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| DSH-001 | Indicateurs du délégué : visites prévues/réalisées, couverture, rapports validés, retards. | 0.7.1 | CA1 : disponibles hors connexion pour la semaine en cours (dernière synchronisation affichée). |
+| DSH-002 | Indicateurs du superviseur par délégué rattaché. | 0.7.2 | CA1 : un délégué non rattaché n'apparaît jamais. |
+| DSH-003 | Indicateurs pays par zone, secteur, réseau ; vue DM/DF par réseau. | 0.7.3 | CA1 : les totaux d'un réseau égalent la somme de ses délégués. |
+| DSH-004 | Consolidation siège : comparaison et total par pays, agrégés ; descente nominative auditée. | 0.7.4 | CA1 : chaque consultation nominative par le siège crée un événement d'audit. |
+| DSH-005 | Filtres : période, pays, zone, secteur, division, réseau, superviseur, délégué, statut. | 0.7.5 | CA1 : les filtres proposés sont limités au périmètre. |
+| DSH-006 | Taux de réalisation et d'écarts (KPI-03). | 0.7.6 | CA1 : la définition est celle de la section 5. |
+| DSH-007 | Délais de validation des plannings et rapports (KPI-02, KPI-09). | 0.7.7 | CA1 : calculés en heures ouvrées du pays. |
+| DSH-008 | Exports contrôlés et audités. | 0.7.8 | Voir RPT-019. |
+| DSH-009 | Objectifs par réseau et par période (visites, couverture A/B, présentations d'un produit), saisis par le DM ou l'administrateur pays ; suivi réalisé / objectif. | 0.7.6 | CA1 : un objectif a une période, un réseau, un indicateur et une cible. CA2 : le tableau de bord affiche l'avance ou le retard. |
+| DSH-010 | Grafana : tableaux de bord sur des vues de pilotage en lecture seule, isolées par pays. | 0.7.9 | CA1 : un compte Grafana d'un pays ne lit que les vues de ce pays. CA2 : le siège lit des agrégats. CA3 : aucune donnée de rapport en texte libre n'est exposée à Grafana. |
+| DSH-011 | Fraîcheur : tableaux de bord du portail à jour à moins de 5 minutes ; Grafana à moins de 1 heure [H]. | 0.7.9 | CA1 : l'heure de dernière mise à jour est affichée. |
+
+### 15.9 Hors connexion et synchronisation — OFF
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| OFF-001 | Données locales : planning de la semaine, liste cible (fiches, établissements, exercices), portefeuilles, motifs, paramètres utiles, brouillons et rapports, historique des 3 dernières visites par prospect. | 0.8.1 | CA1 : après une synchronisation, 7 jours de travail sont possibles en mode avion. |
+| OFF-002 | Création et modification hors connexion des visites, rapports, absences et prospects. | 0.8.2 | CA1 : chaque objet créé hors connexion a un identifiant unique généré sur le téléphone. |
+| OFF-003 | File d'attente locale visible ; reprise automatique au retour du réseau. | 0.8.3 | CA1 : l'état « n éléments en attente » et l'heure de dernière synchronisation sont toujours visibles. CA2 : une coupure pendant l'envoi ne crée aucun doublon. |
+| OFF-004 | Détection et résolution des conflits sans perte silencieuse (`RG-050` à `RG-054`). | 0.8.4 | CA1 : une décision du superviseur n'est jamais écrasée par une donnée locale. CA2 : un conflit est présenté au délégué avec les deux versions. |
+| OFF-005 | Téléversement différé des pièces jointes. | 0.8.7 | CA1 : un rapport synchronisé sans sa pièce jointe l'indique « pièce en attente ». |
+| OFF-006 | Optimisation réseau faible : envois par petits lots, compression, reprise. | 0.8.8 | CA1 : une synchronisation quotidienne typique transfère moins de 500 Ko hors pièces jointes [H]. |
+| OFF-007 | Au-delà de 7 jours sans synchronisation, les données locales deviennent inaccessibles jusqu'à la prochaine connexion réussie. | 0.8.3 | CA1 : au 8ᵉ jour, l'application demande une connexion et n'affiche plus les données. CA2 : les éléments en attente ne sont pas effacés et partent à la connexion. |
+
+### 15.10 Sécurité — SEC
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| SEC-001 | Mot de passe : 12 caractères minimum, refus des mots de passe courants ou compromis, hachage fort. | 0.0.3 | CA1 : un mot de passe de 11 caractères est refusé. |
+| SEC-002 | Verrouillage temporaire après 5 échecs consécutifs (15 minutes), alerte à l'utilisateur. | 0.0.3 | CA1 : le 6ᵉ essai est refusé même avec le bon mot de passe pendant 15 minutes. |
+| SEC-003 | Double authentification (code à usage unique par application) **obligatoire** pour `admin_siege`, `direction_siege`, `responsable_pays`, `admin_pays`, `df`, `dm` ; facultative pour les autres. | 0.0.8 | CA1 : un compte de ces rôles ne peut pas accéder aux données sans l'avoir activée. |
+| SEC-004 | Sessions : expiration après inactivité (portail : 30 minutes ; mobile : verrouillage local par code ou biométrie après 5 minutes) ; révocation à distance. | 0.0.8 | CA1 : une session révoquée échoue à l'appel suivant. |
+| SEC-005 | Données mobiles chiffrées au repos ; clé protégée par le magasin sécurisé du téléphone. | 0.8.1 | CA1 : la base locale extraite du téléphone est illisible sans la clé. |
+| SEC-006 | Effacement à distance : un compte ou appareil désactivé efface les données locales à la connexion suivante. | 0.8.3 | CA1 : après révocation, l'application efface ses données et revient à l'écran de connexion. |
+| SEC-007 | Communications chiffrées (TLS 1.2+) ; aucun secret dans le code. | 0.0.1 | CA1 : l'analyse de secrets de la CI ne trouve rien. |
+| SEC-008 | Isolation par pays vérifiée par des tests automatisés, y compris recherche, export, pièces jointes, notifications et Grafana. | 0.9.1 | CA1 : la suite d'isolation passe à 100 % avant chaque livraison. |
+
+### 15.11 Audit — AUD
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| AUD-001 | Journal d'audit **immuable** : connexions, échecs, décisions (approbation, révision, validation, correction, réouverture), escalades, remplacements, changements de rôle, affectations, transferts, fusions, défusions, imports, exports, consultations nominatives du siège, modifications de paramètres, révocations d'appareil. | 0.0.8 | CA1 : chaque événement contient auteur, rôle, pays, action, objet, date, contexte (appareil, adresse), résultat. CA2 : aucun rôle applicatif ne peut modifier ou supprimer un événement. |
+| AUD-002 | Consultation et filtrage du journal par le siège et l'administrateur pays. | 0.9.2 | CA1 : l'administrateur pays ne voit que son pays. |
+| AUD-003 | Historisation des versions de planning et de rapport. | 0.3.6 | CA1 : chaque version est consultable dans son état exact au moment de sa soumission. |
+
+### 15.12 Démonstration — DEM
+
+| ID | Exigence | Version | Critères d'acceptation |
+|---|---|---|---|
+| DEM-001 | Une instance de démonstration, alimentée par des données **fictives** générées sur la structure réelle (divisions, réseaux, secteurs, volumes), est disponible à chaque version. | 0.0.6 | CA1 : la démonstration se réinitialise par une commande. CA2 : aucune donnée réelle (nom, téléphone, courriel) n'y figure. |
+
+## 16. Règles de gestion
+
+| ID | Règle | Statut |
+|---|---|---|
+| RG-001 | Chaque donnée métier appartient à un pays ; ce rattachement ne change jamais. | [D] |
+| RG-002 | Le siège n'est pas un pays ; il n'a ni prospects, ni plannings, ni visites. | [D] |
+| RG-003 | Un utilisateur a un pays principal et peut recevoir des affectations supplémentaires datées accordées par le siège. | [D] |
+| RG-004 | Un transfert change le pays principal sur autorisation du siège ; l'historique reste dans le pays d'origine. | [D] |
+| RG-005 | Les suppressions métier sont logiques (archivage) afin de préserver l'historique. | [D] |
+| RG-006 | Les dates sont stockées en UTC et affichées dans le fuseau du pays de l'objet. | [D] |
+| RG-007 | Un utilisateur qui quitte l'entreprise est désactivé, jamais supprimé. | [D] |
+| RG-010 | Un délégué possède un superviseur actif (via son poste) pour soumettre un planning. | [D] |
+| RG-011 | Une personne occupant plusieurs postes a **un seul planning** par semaine ; chaque visite porte le poste et le réseau concernés ; l'approbateur est le superviseur du poste principal. | [H] |
+| RG-012 | Une semaine ne possède qu'un planning par délégué, avec plusieurs versions successives. | [D] |
+| RG-013 | Soumission avant jeudi 18 h et approbation avant vendredi 18 h de la semaine précédente, paramétrables par pays. | [D] |
+| RG-014 | La période de planning est du lundi au vendredi par défaut, configurable par pays (jours ouvrés). | [D] |
+| RG-015 | Contrôles bloquants à la soumission : champs obligatoires ; prospect et établissement actifs, du même pays, liés par un exercice actif ; pas deux visites à la même heure ; pas deux visites du même prospect le même jour. | [D] |
+| RG-016 | Signalements non bloquants : seuils de visites par jour et type de poste ; prospect hors liste cible ; prospect hors secteur ; prospect A non planifié dans le mois ; soumission en retard. | [D] |
+| RG-017 | Le commentaire est obligatoire lors d'une demande de révision ou de correction. | [D] |
+| RG-018 | Après approbation : modification mineure (heure dans la même journée) libre et tracée ; modification majeure (jour, prospect, ajout, retrait) = nouvelle version à approuver ; les autres visites restent exécutables. | [D] |
+| RG-019 | Sans décision 24 heures ouvrées après la soumission, le DM du périmètre est alerté et peut décider ; sans planning approuvé le lundi matin, le DM est alerté. | [D] |
+| RG-020 | Un remplaçant désigné décide pendant sa période ; la décision porte le mode `remplacement`. | [D] |
+| RG-021 | Aucune approbation automatique d'un planning. | [D] |
+| RG-022 | Une absence déclarée réduit les seuils du jour au prorata ; un jour férié est exclu des contrôles. | [D] |
+| RG-023 | Le planning d'un superviseur occupant un poste de délégué est approuvé par son DM. | [D] |
+| RG-024 | Un prospect hors liste cible est planifiable s'il est dans le secteur du poste ; hors secteur, il est planifiable et signalé. | [D] |
+| RG-025 | Une visite référence un prospect et un établissement actifs dans le même pays. | [D] |
+| RG-026 | Une visite reportée crée une nouvelle occurrence liée à la visite d'origine. | [D] |
+| RG-027 | Une visite imprévue est justifiée et rattachée au jour réel de réalisation. | [D] |
+| RG-028 | Les positions GPS ne sont capturées qu'au démarrage et à la fin d'une visite, et seulement si le pays active la géolocalisation ; le délégué en est informé à l'installation. | [D] |
+| RG-029 | Les contrôles de conformité ne bloquent pas la saisie ; ils classent la journée `conforme` ou `a_verifier`. | [D] |
+| RG-030 | Une visite `effectuee` a exactement un rapport. | [D] |
+| RG-031 | Les annulations, reports, absences du prospect et non-réalisations exigent un motif. | [D] |
+| RG-032 | Le rapport est attendu le jour de la visite avant 23 h 59 (heure du pays) ; au-delà il est `en_retard` ; alerte au superviseur à 48 h. | [D] |
+| RG-033 | Seuls les produits du portefeuille du réseau de la visite sont proposés dans le rapport. | [D] |
+| RG-034 | Toute validation porte le validateur, la date et le mode (`unitaire`, `journee`, `lot`, `escalade`, `remplacement`). | [D] |
+| RG-035 | Aucune validation automatique d'un rapport. La validation par lot ne concerne que les journées `conforme`. | [D] |
+| RG-036 | Un rapport validé ne peut être modifié sans réouverture motivée : superviseur jusqu'à 30 jours après validation, DM au-delà. | [D] |
+| RG-037 | Chaque soumission de rapport ou de planning crée une version figée et consultable. | [D] |
+| RG-038 | Les échantillons et cadeaux remis sont enregistrés sans gestion de stock. | [D] |
+| RG-040 | Un délégué ne voit que ses propres visites et rapports ; la fiche prospect est commune au pays. | [D] |
+| RG-041 | Une fiche créée par un délégué est `a_valider` et visible par lui seul jusqu'à devenir `actif`. | [D] |
+| RG-042 | Fusion automatique uniquement si elle est certaine ; sinon file des doublons probables ; toute fusion est réversible et auditée. | [D] |
+| RG-043 | La liste cible est tenue par le superviseur ou l'administrateur pays. | [D] |
+| RG-050 | Une décision (approbation, révision, validation, correction, réouverture) prise sur le serveur n'est jamais écrasée par une donnée locale. | [D] |
+| RG-051 | Un objet soumis ne peut plus être modifié hors connexion tant qu'il n'est pas renvoyé au délégué (`a_reviser`, `a_corriger`, `rouvert`). | [D] |
+| RG-052 | Chaque enregistrement porte un identifiant unique global généré par son créateur et un numéro de version ; une écriture sur une version périmée est un conflit. | [D] |
+| RG-053 | Un conflit est présenté au délégué avec les deux versions ; il choisit ; rien n'est fusionné en silence. | [D] |
+| RG-054 | Au-delà de 7 jours sans synchronisation, les données locales deviennent inaccessibles ; les éléments en attente sont conservés et envoyés à la connexion suivante. | [D] |
+| RG-060 | Conservation : activité et audit 5 ans puis anonymisation ; positions GPS 12 mois ; pièces jointes 3 ans ; paramétrable par pays. | [D] |
+| RG-061 | Toute consultation nominative par le siège et tout export sont audités. | [D] |
+| RG-062 | Aucune donnée de santé ni nom de prospect dans le texte d'une notification push. | [D] |
+
+## 17. États et transitions
+
+### 17.1 Planning (`Planning.statut`)
+
+| Statut | Signification | Transitions autorisées | Acteur |
+|---|---|---|---|
+| `brouillon` | En préparation | → `soumis` | Délégué |
+| `soumis` | En attente de décision | → `approuve`, → `a_reviser` | Superviseur (ou DM, remplaçant) |
+| `a_reviser` | Révision demandée | → `soumis` | Délégué |
+| `approuve` | Référence d'exécution | → `en_cours` (automatique le premier jour), → `soumis` (modification majeure : nouvelle version), → `annule` | Système / Délégué / Superviseur |
+| `en_cours` | Semaine en cours d'exécution | → `termine` (automatique après le dernier jour ouvré), → `soumis` (modification majeure) | Système / Délégué |
+| `termine` | Semaine close | — | — |
+| `annule` | Semaine annulée (ex. congé long) | — | Superviseur, motif obligatoire |
+
+Pendant une modification majeure, la version approuvée précédente reste la référence pour les visites non concernées.
+
+### 17.2 Visite (`Visite.statut`)
+
+| Statut | Transitions | Condition |
+|---|---|---|
+| `prevue` | → `en_cours`, `annulee`, `reportee`, `prospect_absent`, `non_realisee` | Motif pour tout statut d'écart |
+| `en_cours` | → `effectuee`, `prospect_absent`, `annulee` | — |
+| `effectuee` | — (le rapport porte la suite) | Rapport obligatoire |
+| `annulee`, `prospect_absent`, `non_realisee` | — | Motif obligatoire |
+| `reportee` | — ; crée une visite `prevue` liée | Motif obligatoire |
+
+Attribut `est_imprevue` (booléen) ; attribut de conformité calculé (`conforme` / écarts).
+
+### 17.3 Rapport (`Rapport.statut`)
+
+| Statut | Transitions | Acteur |
+|---|---|---|
+| `brouillon` | → `soumis` | Délégué |
+| `soumis` | → `valide`, → `a_corriger` | Superviseur (ou DM, remplaçant) |
+| `a_corriger` | → `soumis` | Délégué |
+| `valide` | → `rouvert` | Superviseur (≤ 30 j) ou DM (> 30 j) |
+| `rouvert` | → `soumis` | Délégué |
+
+Attribut `en_retard` (booléen), indépendant du statut.
+
+### 17.4 Prospect et établissement (`statut`)
+
+`a_valider` → `actif` (détecteur sans doublon ou décision de l'administrateur pays) ; `a_valider` → `fusionne` (fusion) ; `actif` → `archive` ; `fusionne` → `actif` (défusion) ; `archive` → `actif`.
+
+### 17.5 Pays (`Pays.statut`)
+
+`actif` ↔ `suspendu` ; `actif` / `suspendu` → `archive`.
+
+## 18. Notifications
+
+| Événement | Destinataire | Canal | Désactivable | Message attendu (sans donnée de santé) |
+|---|---|---|---|---|
+| Planning soumis | Superviseur (ou remplaçant) | Push + centre | Oui | « Un planning attend votre décision » |
+| Planning approuvé | Délégué | Push + centre | Oui | « Votre planning de la semaine n est approuvé » |
+| Révision demandée | Délégué | Push + centre | **Non** | « Révision demandée sur votre planning » + accès au commentaire |
+| Rapport(s) soumis | Superviseur | Push regroupé + centre | Oui | « n rapports à valider » |
+| Rapport validé | Délégué | Centre (push regroupé quotidien) | Oui | « n rapports validés » |
+| Correction demandée | Délégué | Push + centre | **Non** | « Correction demandée sur une visite du JJ/MM » |
+| Réouverture | Délégué | Push + centre | **Non** | « Un rapport validé a été rouvert » |
+| Visite proche | Délégué | Push local (programmé sur le téléphone) | Oui | « Prochaine visite à HH:MM » |
+| Planning non soumis (mercredi), rapport non soumis (18 h) | Délégué | Push + centre | Oui | Rappel |
+| Délégué non synchronisé depuis 48 h | Superviseur | Centre | Oui | « n délégués non synchronisés » |
+| Escalade | DM | Push + centre | **Non** | « n décisions en attente dans vos réseaux » |
+| Remplacement attribué | Remplaçant | Push + centre | **Non** | « Vous remplacez un superviseur du JJ/MM au JJ/MM » |
+| Décision proposée sur un prospect | Délégué | Centre | Oui | « Votre proposition de fiche a été acceptée / refusée » |
+| Sécurité (nouvel appareil, récupération d'accès, double authentification) | Utilisateur | Courriel | **Non** | — |
+| Décision en attente > 48 h | Superviseur, DM | Courriel de secours [H] | Oui | — |
+
+## 19. Tableaux de bord
+
+| Vue | Utilisateurs | Indicateurs principaux | Niveau de détail |
+|---|---|---|---|
+| Mes chiffres (mobile) | Délégué | Visites prévues / réalisées, couverture de la liste cible, rapports à l'heure, validés, en correction | Personnel |
+| Accueil superviseur | Superviseur | À valider maintenant, plannings en attente, délégués non synchronisés, visites par délégué, couverture | Délégués rattachés |
+| Pilotage réseaux | DM, DF | Visites, couverture A/B, objectifs vs réalisé, produits les plus présentés, retours prescripteurs, délais de validation | Nominatif, réseaux du périmètre |
+| Pilotage pays | Responsable pays, administrateur pays | Idem par zone, secteur, division, réseau ; adoption ; synchronisation | Nominatif, pays |
+| Consolidation siège | admin_siege, direction_siege | Comparaison des pays, tendances, taux de réalisation, adoption | Agrégé ; nominatif audité |
+| Santé du système | admin_pays, admin_technique | Comptes actifs, jamais connectés, synchronisations, anomalies (doublons, GPS aberrants), versions d'application | Pays / plateforme |
+| Grafana | Siège, responsable pays, administrateur pays, DM, DF [H] | Tableaux de bord analytiques sur vues de pilotage | Selon organisation Grafana du pays |
+
+Exports : CSV et Excel, limités au périmètre, audités ; les rapports en texte libre ne sont exportables que par le superviseur et au-dessus dans leur périmètre.
+
+## 20. Exigences non fonctionnelles
+
+| ID | Domaine | Exigence | Cible |
+|---|---|---|---|
+| NFR-001 | Capacité | Dimensionnement minimal | 500 délégués actifs par pays, 17 pays à terme (≈ 8 500 délégués), ≈ 70 000 visites par jour au total [H] |
+| NFR-002 | Performance API | Temps de réponse des écrans courants | p95 < 500 ms côté serveur ; p95 < 2 s perçu sur réseau 3G |
+| NFR-003 | Performance mobile | Démarrage à froid, ouverture du programme du jour | < 3 s sur un téléphone Android économique récent [H] |
+| NFR-004 | Synchronisation | Volume et durée | Synchronisation initiale < 10 Mo ; synchronisation quotidienne < 500 Ko hors pièces jointes [H] |
+| NFR-005 | Disponibilité | Service | 99,5 % mesuré de 6 h à 22 h, heure du pays, du lundi au samedi [H] |
+| NFR-006 | Sauvegarde | Perte maximale admissible (RPO) / reprise (RTO) | RPO ≤ 1 h ; RTO ≤ 4 h [H] |
+| NFR-007 | Compatibilité mobile | Systèmes | Android 10+ et iOS 16+ [H] |
+| NFR-008 | Compatibilité portail | Navigateurs | Deux dernières versions de Chrome, Edge, Firefox, Safari ; largeur minimale 360 px |
+| NFR-009 | Accessibilité | Interface | Contraste AA, statuts jamais indiqués par la seule couleur, zones tactiles ≥ 44 px, navigation clavier sur le portail |
+| NFR-010 | Langues | Interface | Français et anglais complets ; aucun texte codé en dur |
+| NFR-011 | Confidentialité | Données personnelles | Collecte limitée au besoin métier ; conservation par pays (`RG-060`) ; droits d'accès et de rectification traités par l'administrateur pays selon la loi applicable |
+| NFR-012 | Conformité | Sénégal | Formalités auprès de la CDP (loi 2008-12) avant le pilote, y compris pour l'hébergement hors du Sénégal ; formalités équivalentes avant l'ouverture de chaque pays [O-03] |
+| NFR-013 | Observabilité | Suivi | Erreurs serveur et mobile, temps de réponse, échecs de synchronisation, échecs de notification, files de tâches, capacité |
+| NFR-014 | Qualité | Livraison | Aucune version livrée avec un test en échec ; couverture de tests des modules permissions, synchronisation et workflows ≥ 90 % [H] |
+| NFR-015 | Démonstration | Disponibilité | Instance de démonstration à jour à chaque version x.y.9 au minimum |
+
+## 21. Critères d'acceptation de la version 1.0.0
+
+### 21.1 Scénarios de recette obligatoires
+
+| ID | Scénario | Exigences couvertes |
+|---|---|---|
+| REC-01 | L'administrateur du siège crée deux pays et affecte un responsable et un administrateur différents à chacun. | ORG-001, ORG-002 |
+| REC-02 | L'administrateur d'un pays importe le fichier d'organisation, crée un superviseur, un délégué, un poste vacant, une zone, un secteur, un prospect et un établissement. | ORG-003 à ORG-007, ORG-014, PRP-002, PRP-003 |
+| REC-03 | Le délégué prépare une semaine complète ; le système bloque une visite dont les champs obligatoires manquent et signale un seuil dépassé. | PLN-002, PLN-004 |
+| REC-04 | Le superviseur demande une révision avec commentaire ; le délégué soumet une nouvelle version. | PLN-013, PLN-014 |
+| REC-05 | Le superviseur approuve le planning ; l'historique conserve les deux versions. | PLN-012, AUD-003 |
+| REC-06 | Le délégué consulte son programme hors connexion et rédige un rapport. | VIS-001, RPT-009, OFF-001 |
+| REC-07 | Le rapport se synchronise **une seule fois** après le retour de la connexion, y compris après une coupure pendant l'envoi. | OFF-003 |
+| REC-08 | Le superviseur demande une correction sur une visite, valide le reste de la journée, puis valide le rapport corrigé. | RPT-013, RPT-014, RPT-015 |
+| REC-09 | Le responsable d'un pays ne peut ni rechercher, ni consulter, ni exporter les données d'un autre pays (API, portail, Grafana). | USR-002, SEC-008, DSH-010 |
+| REC-10 | Le siège consulte les indicateurs consolidés, filtre par pays, descend au nominatif : la consultation est auditée. | DSH-004 |
+| REC-11 | Une visite annulée, reportée, prospect absent ou non réalisée exige un motif ; le report crée une visite liée. | VIS-005 à VIS-009 |
+| REC-12 | Le journal d'audit identifie l'auteur, la date, le mode et la décision pour chaque validation. | AUD-001, RG-034 |
+| REC-13 | Un délégué crée un prospect déjà existant avec le même numéro d'ordre : fusion automatique ; un homonyme sans identifiant fort entre dans la file ; l'administrateur pays défusionne une fusion. | PRP-008 à PRP-010 |
+| REC-14 | Un délégué ne voit pas les visites d'un délégué d'un autre réseau sur le même médecin. | RG-040 |
+| REC-15 | Le superviseur valide par lot les journées conformes ; une journée « à vérifier » reste en attente. | RPT-013, RG-035 |
+| REC-16 | Sans décision 24 h ouvrées, le DM reçoit l'escalade et décide ; un remplaçant décide pendant sa période. | PLN-016, ORG-013 |
+| REC-17 | Un téléphone révoqué efface ses données locales à la connexion suivante ; au 8ᵉ jour sans synchronisation, les données sont inaccessibles. | SEC-006, OFF-007 |
+| REC-18 | Un utilisateur avec une affectation supplémentaire bascule de pays et ne voit jamais les deux à la fois ; l'accès cesse à la date de fin. | ORG-009 |
+| REC-19 | Toute l'interface et les notifications existent en français et en anglais. | USR-004 |
+| REC-20 | Restauration complète de la production sur un environnement jetable dans le délai RTO. | NFR-006 |
+
+### 21.2 Conditions pour déclarer la version 1.0.0 stable
+
+1. Les scénarios REC-01 à REC-20 sont passés en préproduction et pendant le pilote.
+2. Aucun défaut critique ou majeur ouvert sur l'authentification, les permissions, l'isolation, la synchronisation, les workflows de validation ou l'audit.
+3. Les tests de non-régression, d'isolation, de sécurité, de charge (NFR-001 à NFR-004) et de restauration sont concluants.
+4. Le pilote au Sénégal a duré au moins 4 semaines avec au moins un réseau complet [H], et les indicateurs KPI-01 à KPI-07 sont mesurés et présentés.
+5. Les formalités CDP sont accomplies.
+6. L'hébergement de production est sur des offres payantes avec base persistante, sauvegardes et restauration testée.
+7. Les applications sont publiées sur Google Play et l'App Store (distribution privée ou publique [O-06]).
+8. Le guide utilisateur (délégué, superviseur, administrateur pays) et le guide d'exploitation existent.
+9. La direction générale autorise formellement la mise en production.
+
+### 21.3 Critères de passage entre deux versions
+
+| Passage | Critères | Valideur |
+|---|---|---|
+| x.y.z → x.y.(z+1) | CI au vert (lint, types, tests, isolation) ; critères d'acceptation des exigences livrées vérifiés ; journal de version rédigé ; instance de démonstration déployée | Responsable produit et technique (vous) |
+| x.y.9 → x.(y+1).1 | Idem + démonstration du cycle à un référent métier ; aucun défaut critique ouvert ; dette identifiée consignée | Responsable produit et technique, après démonstration |
+| 0.9.9 → 1.0.0 | Conditions de la section 21.2 | Direction générale |
+
+## 22. Risques et dépendances
+
+| ID | Risque | Probabilité | Impact | Réponse |
+|---|---|---|---|---|
+| RSK-01 | Une seule personne au développement pour un mobile hors connexion, un portail et un serveur | Élevée | Élevé | Monolithe modulaire, TypeScript partagé, CI stricte, documentation suffisante, agents de développement encadrés par `architecture-essentials.md`, cycles réordonnables |
+| RSK-02 | Hébergement gratuit inadapté à la production | Certaine si non traité | Élevé | Passage à des offres payantes (base persistante, sauvegardes) avant `0.9.7` |
+| RSK-03 | Formalités CDP et transfert de données hors du Sénégal | Moyenne | Bloquant pour le pilote | Dossier préparé pendant le cycle 0.8, condition d'entrée de `0.9.7` |
+| RSK-04 | Fusions de doublons erronées (homonymes) | Moyenne | Élevé | Fusion automatique seulement si certaine, défusion, audit |
+| RSK-05 | Hors connexion conçu trop tard | Moyenne | Élevé | Modèle de données prêt pour la synchronisation dès `0.0.2` (identifiants globaux, versions, journal des changements) |
+| RSK-06 | Superviseurs couvrant jusqu'à 14 réseaux : goulot de validation | Élevée | Moyen | Validation par journée et par lot conforme, escalade, remplaçant, indicateur de délai |
+| RSK-07 | Qualité et format de l'export BirdNotes | Moyenne | Moyen | Format d'import standard, simulation, rapport d'erreurs, saisie terrain en complément |
+| RSK-08 | Adoption : retour à BirdNotes ou aux messages | Moyenne | Élevé | Trois gestes par visite, pilote par petits groupes, formation, suivi de l'adoption |
+| RSK-09 | Publication sur l'App Store (comptes, revue Apple) | Moyenne | Moyen | Compte développeur entreprise ouvert tôt, builds de test dès le cycle 0.2 |
+| RSK-10 | Exposition des données via Grafana | Moyenne | Élevé | Vues agrégées, rôles de base de données en lecture seule par pays, pas de texte libre |
+| RSK-11 | Données personnelles réelles dans des maquettes ou documents partagés | Avérée | Moyen | Données fictives dans le dépôt, la démonstration et les documents |
+| RSK-12 | Une présentation demandée à tout moment | Élevée | Moyen | Instance de démonstration à jour, chaque version démontrable |
+
+Dépendances : export BirdNotes ; comptes développeur Google et Apple ; comptes Render, Cloudflare et Expo payants avant le pilote ; calendrier des jours fériés de chaque pays ; liste des motifs d'écart et des champs par pays ; désignation d'un référent métier pour les démonstrations de fin de cycle.
+
+## 23. Feuille de route de 0.0.1 à 1.0.0
+
+Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` → `0.9.9`, puis `1.0.0`. Les versions `x.y.0` n'existent pas (sauf `1.0.0`). Chaque version est étiquetée `vX.Y.Z` dans le dépôt. L'ordre interne d'un cycle peut changer après estimation sans modifier les critères de la `1.0.0`. Chaque version est démontrable (`DEM-001`).
+
+| Cycle | Domaine | Résultat attendu |
+|---|---|---|
+| 0.0 | Fondations | Plateforme, pays, comptes, rôles, organisation matricielle, sécurité initiale, démonstration |
+| 0.1 | Référentiel | Divisions, réseaux, produits, prospects, établissements, ciblage, doublons, imports |
+| 0.2 | Planning | Préparation complète de la semaine |
+| 0.3 | Validation des plannings | Approbation, révision, versions, escalade, remplacement |
+| 0.4 | Visites | Exécution, GPS, écarts, conformité |
+| 0.5 | Rapports | Compte rendu structuré après chaque visite |
+| 0.6 | Validation des rapports | Validation unitaire, par journée et par lot, correction, réouverture |
+| 0.7 | Pilotage | Indicateurs, objectifs, exports, Grafana |
+| 0.8 | Mobilité | Hors connexion complet, synchronisation, notifications push |
+| 0.9 | Production | Isolation, sécurité, performance, sauvegarde, pilote, recette |
+
+### Cycle 0.0 — Fondations
+
+| Version | Livraison principale |
+|---|---|
+| 0.0.1 | Dépôt, conventions, CI (lint, types, tests, analyse de secrets), squelettes serveur, portail et application mobile, premier écran, textes externalisés `fr`/`en` |
+| 0.0.2 | Base de données, migrations, modèle prêt pour la synchronisation (identifiants globaux, versions, horodatages), pays et paramètres pays |
+| 0.0.3 | Comptes nominatifs, connexion, sessions, politique de mot de passe, verrouillage, récupération d'accès |
+| 0.0.4 | Rôles, désignations du siège, moteur de périmètre et permissions côté serveur |
+| 0.0.5 | Organisation : zones, secteurs, postes, occupations, rattachements, périmètres DF/DM, affectations multi-pays, transferts |
+| 0.0.6 | Navigation portail et mobile, accueil par rôle, enregistrement des appareils, instance de démonstration avec données fictives |
+| 0.0.7 | Gestion des erreurs, journaux techniques, suivi des erreurs, premiers tests d'isolation |
+| 0.0.8 | Double authentification des rôles sensibles, sessions, journal d'audit immuable |
+| 0.0.9 | Stabilisation et démonstration du cycle |
+
+### Cycle 0.1 — Référentiel
+
+| Version | Livraison principale |
+|---|---|
+| 0.1.1 | Référentiels pays : types, spécialités, classes thérapeutiques, produits ; divisions et réseaux ; portefeuilles |
+| 0.1.2 | Fiches prospects ; création par le délégué au statut `a_valider` |
+| 0.1.3 | Fiches établissements |
+| 0.1.4 | Exercices datés prospect ↔ établissement |
+| 0.1.5 | Listes cibles, fréquences, potentiel A/B/C, affectation territoriale |
+| 0.1.6 | Recherche, filtres, tri, pagination |
+| 0.1.7 | Détecteur de doublons, fusion automatique certaine, file des doublons probables, défusion, propositions de modification, historique |
+| 0.1.8 | Imports : organisation, produits, prospects et établissements depuis BirdNotes, simulation et rapport d'erreurs |
+| 0.1.9 | Stabilisation, qualité des données, démonstration |
+
+### Cycle 0.2 — Planning hebdomadaire
+
+| Version | Livraison principale |
+|---|---|
+| 0.2.1 | Semaine, jours ouvrés, jours fériés |
+| 0.2.2 | Visites planifiées (prospect, établissement, réseau, objectif) |
+| 0.2.3 | Heure, ordre, notes, passages, absences |
+| 0.2.4 | Contrôles bloquants et signalements |
+| 0.2.5 | Déplacer, copier, supprimer, glisser-déposer depuis la liste cible |
+| 0.2.6 | Vues mobile semaine/jour/détail, vue portail, kilométrage estimé |
+| 0.2.7 | Brouillons sauvegardés automatiquement (y compris hors connexion de base) |
+| 0.2.8 | Soumission, marquage en retard, première build de test Android et iOS |
+| 0.2.9 | Stabilisation, démonstration |
+
+### Cycle 0.3 — Validation des plannings
+
+| Version | Livraison principale |
+|---|---|
+| 0.3.1 | File des plannings en attente |
+| 0.3.2 | Consultation semaine et détail avec alertes |
+| 0.3.3 | Approbation ; approbation par le DM du planning d'un superviseur-visiteur |
+| 0.3.4 | Révision motivée (planning ou visite) ; remplaçant daté |
+| 0.3.5 | Nouvelle version et resoumission |
+| 0.3.6 | Historique et comparaison des versions |
+| 0.3.7 | Verrouillage, modifications mineures et majeures après approbation |
+| 0.3.8 | Centre de notifications, rappels, escalade vers le DM |
+| 0.3.9 | Recette complète du workflow de planning, démonstration |
+
+### Cycle 0.4 — Exécution des visites
+
+| Version | Livraison principale |
+|---|---|
+| 0.4.1 | Programme du jour |
+| 0.4.2 | Détail de visite, historique récent |
+| 0.4.3 | Démarrage, heure réelle, GPS, distance |
+| 0.4.4 | Visite effectuée |
+| 0.4.5 | Prospect absent |
+| 0.4.6 | Annulation, non-réalisation |
+| 0.4.7 | Report avec visite liée |
+| 0.4.8 | Visite imprévue |
+| 0.4.9 | Contrôles de conformité, stabilisation, démonstration |
+
+### Cycle 0.5 — Rapports de visite
+
+| Version | Livraison principale |
+|---|---|
+| 0.5.1 | Formulaire : socle et champs par pays |
+| 0.5.2 | Objectif prévu et résultat obtenu |
+| 0.5.3 | Produits présentés dans l'ordre, retour du prescripteur, échantillons et cadeaux remis |
+| 0.5.4 | Prochaine action |
+| 0.5.5 | Pièces jointes |
+| 0.5.6 | Brouillon automatique |
+| 0.5.7 | Soumission, marquage en retard |
+| 0.5.8 | Chronologie des rapports |
+| 0.5.9 | Stabilisation, démonstration |
+
+### Cycle 0.6 — Validation des rapports
+
+| Version | Livraison principale |
+|---|---|
+| 0.6.1 | File de travail par délégué et par journée |
+| 0.6.2 | Consultation : rapport, visite, planning, contrôles |
+| 0.6.3 | Validation unitaire, par journée, par lot conforme ; escalade et remplacement |
+| 0.6.4 | Demande de correction motivée |
+| 0.6.5 | Correction et resoumission |
+| 0.6.6 | Réouverture (superviseur ≤ 30 j, DM > 30 j) |
+| 0.6.7 | Retards et alertes |
+| 0.6.8 | Notifications du workflow de rapport |
+| 0.6.9 | Recette complète, démonstration |
+
+### Cycle 0.7 — Pilotage multi-pays
+
+| Version | Livraison principale |
+|---|---|
+| 0.7.1 | Indicateurs délégué |
+| 0.7.2 | Indicateurs superviseur |
+| 0.7.3 | Indicateurs pays et réseaux (DM, DF) |
+| 0.7.4 | Consolidation siège, audit des consultations nominatives |
+| 0.7.5 | Filtres |
+| 0.7.6 | Taux de réalisation, objectifs par réseau |
+| 0.7.7 | Délais de validation |
+| 0.7.8 | Exports audités |
+| 0.7.9 | Grafana isolé par pays, fiabilité des calculs, démonstration |
+
+### Cycle 0.8 — Mobilité
+
+| Version | Livraison principale |
+|---|---|
+| 0.8.1 | Base locale chiffrée complète, données de la semaine |
+| 0.8.2 | Rapports et prospects hors connexion |
+| 0.8.3 | File d'attente, reprise, limite de 7 jours, effacement à distance |
+| 0.8.4 | Conflits sans perte silencieuse |
+| 0.8.5 | Notifications push, regroupement |
+| 0.8.6 | Courriels de sécurité, préférences |
+| 0.8.7 | Téléversement différé des pièces jointes |
+| 0.8.8 | Optimisation réseaux faibles ; dossier CDP prêt |
+| 0.8.9 | Tests terrain multi-réseaux, démonstration |
+
+### Cycle 0.9 — Sécurité et préparation de la production
+
+| Version | Livraison principale |
+|---|---|
+| 0.9.1 | Tests complets d'isolation par pays, rôle, réseau, délégué |
+| 0.9.2 | Consultation du journal d'audit |
+| 0.9.3 | Renforcement des sessions, fichiers et secrets ; revue de sécurité |
+| 0.9.4 | Tests de charge (500 délégués par pays), optimisation |
+| 0.9.5 | Offres payantes, sauvegardes automatisées, test de restauration |
+| 0.9.6 | Procédure de mise à jour, retour arrière, migration BirdNotes à blanc |
+| 0.9.7 | Pilote contrôlé au Sénégal : un superviseur, 2 à 5 délégués d'un réseau, puis extension selon résultats |
+| 0.9.8 | Correction des défauts, recette utilisateur |
+| 0.9.9 | Candidat final : gel fonctionnel, documentation, décision de lancement |
+
+### Version 1.0.0 — Première version stable
+
+Regroupe tout le périmètre de la section 8 ; déployée après réussite des conditions de la section 21.2 ; extension aux autres délégués du Sénégal par vagues, puis aux autres pays après validation de leurs paramètres et de leurs formalités de protection des données.
+
+## 24. Questions ou décisions encore ouvertes
+
+| ID | Question | Impact | Hypothèse en attendant |
+|---|---|---|---|
+| O-01 | Format et contenu de l'export BirdNotes (champs, historique de la phase test, identifiants) | Outil d'import (0.1.8) | Export CSV/Excel converti vers le format standard du CRM |
+| O-02 | Valeurs cibles des indicateurs KPI-01 à KPI-09 | Critères de succès | Valeurs de la section 5 |
+| O-03 | Position de la CDP sur l'hébergement en Europe ; formalités des autres pays | Pilote, ouverture des pays | Déclaration et demande d'autorisation de transfert avant 0.9.7 |
+| O-04 | Hébergement de Grafana (Grafana Cloud ou service dédié) | Cycle 0.7 | Service Grafana auto-hébergé sur Render [H] |
+| O-05 | Intitulés complets de DF et DM | Libellés | Libellés « DF » et « DM » |
+| O-06 | Distribution des applications : magasins publics ou privés (Managed Google Play, Apple Business Manager) | Publication | Magasins publics avec accès réservé aux comptes créés |
+| O-07 | Liste des univers pays (17 filiales GH) | Paramétrage | Les 17 filiales de JUSTI GH et AMM GH |
+| O-08 | Seuils de visites par jour et par type de poste, tolérance « sans GPS » | Contrôles | Valeurs de la section 7.5 |
+| O-09 | Approbateur d'une personne occupant plusieurs postes rattachés à des superviseurs différents (`RG-011`) | Planning | Superviseur du poste principal |
+| O-10 | Durée minimale du pilote et périmètre exact (réseau choisi) | Critères 1.0.0 | 4 semaines, un réseau |
+| O-11 | Comptes : courriel professionnel disponible pour tous les délégués ? | Récupération d'accès, double authentification | Courriel ou téléphone ; réinitialisation par l'administrateur pays sinon |
+
+## 25. Registre des décisions de cadrage
+
+| # | Décision | Source |
+|---|---|---|
+| DC-01 | Objectif n° 1 : prouver l'activité ; simplicité du délégué en second | Entretien Q1 |
+| DC-02 | Siège au Sénégal, distinct du pays Sénégal ; pilote au Sénégal | Q2 |
+| DC-03 | Au moins 500 délégués par pays | Q3 |
+| DC-04 | Pilote par réseau (2 à 5 délégués choisis par un superviseur), extension selon résultats | Q3 bis |
+| DC-05 | Organisation matricielle (fichier d'organisation) | Fichier Excel |
+| DC-06 | Le superviseur valide ; DM et DF suivent | Q4 |
+| DC-07 | Fiche prospect commune, visites privées | Q5 |
+| DC-08 | Responsable pays (DG) consulte ; administrateur pays gère | Q6 |
+| DC-09 | Même workflow pour tous les types de poste ; superviseur-visiteur approuvé par le DM | Q7 |
+| DC-10 | Siège : administrateur + direction en lecture | Q8 |
+| DC-11 | Pays principal + affectations datées accordées par le siège | Q9 |
+| DC-12 | Français et anglais en 1.0.0 | Q10 |
+| DC-13 | Une seule personne au développement | Q11 |
+| DC-14 | Pas d'échéance fixe ; démontrable à tout moment | Q12 |
+| DC-15 | Délégué crée ; détecteur de doublons ; fusion automatique si certaine, sinon administrateur pays | Q14 |
+| DC-16 | Données de départ depuis BirdNotes | Q15, maquette |
+| DC-17 | Liste cible par délégué avec fréquence | Q16 |
+| DC-18 | Soumission jeudi 18 h, approbation vendredi 18 h, paramétrables | Q17, C7 |
+| DC-19 | Seuils de visites par pays, alerte non bloquante | Q18 |
+| DC-20 | Modification mineure libre, majeure revalidée | Q19 |
+| DC-21 | Remplaçant daté + escalade DM à 24 h ouvrées | Q20 |
+| DC-22 | Jours fériés par pays + absences déclarées | Q21 |
+| DC-23 | GPS au début et à la fin de visite | Q22 |
+| DC-24 | Rapport : socle commun + champs par pays | Q23 |
+| DC-25 | Rapport le jour même avant 23 h 59 | Q24 |
+| DC-26 | Réouverture : superviseur ≤ 30 j, DM au-delà | Q25 |
+| DC-27 | Notification push ciblée qui ouvre l'action ; pas de spam | Q26, C5 |
+| DC-28 | Tableaux de bord nominatifs jusqu'au pays ; siège audité | Q27 |
+| DC-29 | Android et iOS | Q28 |
+| DC-30 | Hors connexion 7 jours | Q29 |
+| DC-31 | Chiffrement local + effacement à distance | Q30 |
+| DC-32 | Identifiant + mot de passe ; double authentification des rôles sensibles | Q31 |
+| DC-33 | Hébergement modèle AMM (Render, Cloudflare) | Q32 |
+| DC-34 | Conservation 5 ans, paramétrable | Q33 |
+| DC-35 | React Native + Expo | C4 |
+| DC-36 | Pile serveur et portail d'AMM GH | Q35 |
+| DC-37 | Vous validez les versions ; la direction autorise la 1.0.0 | Q36 |
+| DC-38 | Validation par lot des conformes ; jamais de validation automatique | C1 |
+| DC-39 | Échantillons remis sans stock | C2 |
+| DC-40 | Kilométrage sans frais | C3 |
+| DC-41 | Une visite = un prospect ; passages ; validation par journée | C6 |
+| DC-42 | Vocabulaire Division / Réseau / Classe thérapeutique | V1 |
+| DC-43 | Objectifs par réseau et Grafana en 1.0.0 | V2 |
+| DC-44 | Nom INNOV CRM, identité visuelle de la maquette | Maquette |
+
+## 26. Glossaire
+
+| Terme | Code | Définition |
+|---|---|---|
+| Siège | — | Entité d'administration globale, distincte de tout pays |
+| Pays | `Pays` | Filiale opérationnelle ; frontière d'isolation des données |
+| Division | `Division` | Regroupement de réseaux (ex. GHPL 1) |
+| Réseau | `Reseau` | Équipe commerciale portant un portefeuille de produits (ex. LEAP GYN) |
+| Classe thérapeutique | `ClasseTherapeutique` | Classement des produits (ex. Cardio, Diabéto) |
+| Produit | `Produit` | Spécialité promue, propre à un pays |
+| Portefeuille | `Portefeuille` | Produits d'un réseau |
+| Zone | `Zone` | Regroupement géographique de secteurs (ex. Dakar, Régions) |
+| Secteur | `Secteur` | Territoire commercial (ex. une ville ou un groupe de quartiers) |
+| Localité | `Localite` | Ville ou quartier d'un établissement |
+| Poste | `Poste` | Emplacement de l'organisation (type, réseau, secteur), occupé ou vacant |
+| Occupation | `Occupation` | Lien daté entre une personne et un poste |
+| Rattachement | `Rattachement` | Lien daté entre un poste et son superviseur |
+| Périmètre | `Perimetre` | Ensemble daté des réseaux (DF, DM) ou secteurs visibles par un utilisateur |
+| Affectation pays | `AffectationPays` | Droit daté d'un utilisateur dans un pays supplémentaire |
+| Délégué | `delegue` | Utilisateur occupant un poste terrain (VM, VM OTC, KAM, dermo) |
+| Prospect | `Prospect` | Professionnel visité (médecin, pharmacien, sage-femme…) |
+| Établissement | `Etablissement` | Lieu d'exercice (cabinet, hôpital, clinique, pharmacie…) |
+| Exercice | `Exercice` | Lien daté entre un prospect et un établissement |
+| Liste cible | `ListeCible` | Prospects attribués à un poste avec une fréquence cible |
+| Potentiel | — | Classement A, B, C d'un prospect |
+| Planning | `Planning` | Semaine de travail d'un délégué |
+| Version de planning | `VersionPlanning` | État figé d'un planning à une soumission |
+| Passage | `Passage` | Regroupement de visites dans un même établissement le même jour |
+| Visite | `Visite` | Rencontre planifiée ou imprévue d'un prospect dans un établissement |
+| Rapport | `Rapport` | Compte rendu d'une visite effectuée |
+| Présentation | `PresentationProduit` | Produit présenté pendant une visite, avec son ordre et le retour du prescripteur |
+| Remise | `RemiseEchantillon` | Échantillon ou cadeau remis pendant une visite |
+| Journée | — | Ensemble des visites d'un délégué un jour donné, unité de validation |
+| Conformité | — | Résultat des contrôles automatiques (horaire, GPS, distance, durée) |
+| Escalade | — | Transfert d'une décision en attente au DM |
+| Remplaçant | `Remplacement` | Superviseur désigné temporairement pour décider à la place d'un autre |
+| Objectif | `Objectif` | Cible chiffrée d'un réseau sur une période |
+| Appareil | `Appareil` | Téléphone enregistré d'un utilisateur |
+| Journal d'audit | `EvenementAudit` | Trace immuable d'une action |

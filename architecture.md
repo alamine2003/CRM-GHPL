@@ -1,0 +1,928 @@
+# INNOV CRM — Architecture
+
+| Élément | Valeur |
+|---|---|
+| Version du document | 1.0 |
+| Version produit visée | `1.0.0` |
+| Statut | Proposition issue du cadrage validé le 4 octobre 2026 |
+| Documents liés | [`prd.md`](prd.md) (référence métier, exigences `ORG-…`, règles `RG-…`) · [`architecture-essentials.md`](architecture-essentials.md) (règles non négociables) |
+
+**Conventions** : **[D]** décision confirmée au cadrage ; **[R]** recommandation de l'architecture, à confirmer au plus tard dans la version indiquée ; **[H]** hypothèse chiffrée à vérifier. Les décisions d'architecture sont numérotées `ADR-…` (section 28). Les noms d'entités, de rôles et de statuts sont ceux du glossaire de `prd.md` (section 26).
+
+---
+
+## Sommaire
+
+1. Objectifs et principes architecturaux
+2. Hypothèses techniques
+3. Vue d'ensemble du système
+4. Composants du système
+5. Architecture de l'application mobile
+6. Architecture du portail web
+7. Services métier
+8. Base de données
+9. Stockage des pièces jointes
+10. Notifications
+11. Authentification et autorisations
+12. Isolation des données par pays
+13. Modèle de données principal
+14. Synchronisation hors connexion
+15. Gestion des conflits
+16. Journalisation et audit
+17. Sécurité
+18. Sauvegarde et restauration
+19. Supervision et alertes
+20. Environnements
+21. Déploiement
+22. Tests
+23. Performance et capacité
+24. Disponibilité et continuité
+25. Intégrations
+26. Migrations de données
+27. Risques techniques
+28. Décisions architecturales
+29. Évolutions prévues après la version 1.0.0
+
+---
+
+## 1. Objectifs et principes architecturaux
+
+### 1.1 Objectifs
+
+| ID | Objectif | Exigences liées |
+|---|---|---|
+| AO-01 | Garantir qu'aucune donnée ne traverse la frontière d'un pays, d'un réseau ou d'un délégué sans autorisation | USR-002, SEC-008, RG-001, RG-040 |
+| AO-02 | Permettre au délégué de travailler 7 jours sans réseau, sans perte ni doublon | OFF-001 à OFF-007, RG-050 à RG-054 |
+| AO-03 | Rendre chaque décision traçable et non modifiable après coup | AUD-001, RG-034, RG-037 |
+| AO-04 | Supporter au moins 500 délégués par pays et 17 pays | NFR-001 à NFR-004 |
+| AO-05 | Être construit, exploité et dépanné par **une seule personne** | DC-13 |
+| AO-06 | Être démontrable à tout moment | DEM-001, NFR-015 |
+
+### 1.2 Principes
+
+1. **Monolithe modulaire** : un seul service serveur, découpé en modules aux frontières strictes ; pas de microservices (ADR-001).
+2. **Le serveur est la seule autorité** sur les permissions, les transitions d'état et les décisions. Les applications ne font que proposer.
+3. **Isolation par construction** : toute table métier porte `pays_id` ; toute lecture passe par le moteur de périmètre ; un test automatisé échoue si un point d'accès l'oublie (section 12).
+4. **Hors connexion d'abord pour le délégué** : la base locale du téléphone est la source de vérité de l'écran ; le réseau ne sert qu'à synchroniser (section 14).
+5. **Commandes plutôt que modifications** : les changements d'état (soumettre, approuver, démarrer une visite) sont des commandes métier validées par le serveur, pas des champs modifiés librement.
+6. **Append-only pour ce qui prouve** : audit, versions de planning et de rapport, positions GPS ne sont jamais modifiés.
+7. **Un seul langage par couche, un seul modèle de types** : Python au serveur, TypeScript partout ailleurs ; les types d'API sont générés depuis le schéma OpenAPI (ADR-012).
+8. **Simplicité opérationnelle** : services managés, pas de composant que l'unique développeur ne saurait restaurer seul.
+9. **Configuration par pays plutôt que code par pays** : aucun `if pays == …` dans le code (section 7.3).
+
+## 2. Hypothèses techniques
+
+| ID | Hypothèse | Statut | Conséquence si fausse |
+|---|---|---|---|
+| HT-01 | 17 pays à terme, ≤ 500 délégués actifs par pays au démarrage, ≈ 8 visites par délégué et par jour | [H] | Revoir partitionnement et dimensionnement (section 23) |
+| HT-02 | ~10 000 prospects et ~3 000 établissements par pays ; liste cible de 150 à 400 prospects par délégué | [H] | Revoir la taille de la synchronisation initiale |
+| HT-03 | Téléphones Android 10+ et iOS 16+, mélangés, personnels ou fournis | [D] Android+iOS ; [H] versions | Revoir la compatibilité Expo |
+| HT-04 | Réseau mobile 2G/3G intermittent hors des grandes villes | [H] | — |
+| HT-05 | Hébergement Render (région Francfort), Cloudflare Pages, Cloudflare R2 | [D] | — |
+| HT-06 | Offres payantes Render (base persistante, sauvegardes, PITR) avant le pilote `0.9.7` | [H] | Bloquant pour la production |
+| HT-07 | Render Postgres autorise les extensions `pg_trgm`, `unaccent`, `fuzzystrmatch` et la création de rôles supplémentaires | [H] à vérifier en `0.0.2` | Sans rôles : isolation Grafana par vues dédiées seulement (section 25.2) |
+| HT-08 | Les heures du téléphone peuvent être fausses | [D] | Double horodatage local/serveur (section 14.6) |
+| HT-09 | Export BirdNotes disponible en CSV ou Excel | [H] (O-01) | Développer un connecteur spécifique |
+
+## 3. Vue d'ensemble du système
+
+### 3.1 Contexte
+
+```mermaid
+flowchart LR
+  DEL([Délégué<br/>mobile Android / iOS])
+  SUP([Superviseur, DM, DF<br/>portail web])
+  PAYS([Responsable et administrateur pays<br/>portail web])
+  SIEGE([Administrateur et direction du siège<br/>portail web])
+  TECH([Administrateur technique])
+
+  subgraph INNOV[INNOV CRM]
+    API[Service central]
+  end
+
+  DEL <--> API
+  SUP <--> API
+  PAYS <--> API
+  SIEGE <--> API
+  TECH -. exploitation .-> INNOV
+
+  API --> PUSH[[Expo Push<br/>FCM / APNs]]
+  API --> MAIL[[Fournisseur de courriel<br/>transactionnel]]
+  API <--> R2[(Cloudflare R2<br/>pièces jointes, sauvegardes)]
+  GRAF[[Grafana]] --> API
+  BIRD[(Export BirdNotes)] -. import unique .-> API
+  STORES[[Google Play / App Store<br/>EAS Build et Update]] -. distribution .-> DEL
+```
+
+### 3.2 Composants principaux
+
+```mermaid
+flowchart TB
+  subgraph Clients
+    MOB[Application mobile<br/>React Native + Expo<br/>SQLite chiffrée]
+    WEB[Portail web<br/>React + MUI<br/>Cloudflare Pages]
+  end
+
+  subgraph Render[Render · Francfort]
+    WEBAPI[Service web<br/>Django + DRF<br/>API /api/v1]
+    WORKER[Worker Celery<br/>notifications, escalades,<br/>imports, doublons, agrégats]
+    BEAT[Ordonnanceur Celery beat]
+    PG[(PostgreSQL 16)]
+    REDIS[(Redis<br/>Key Value)]
+    GRAFANA[Grafana]
+  end
+
+  R2[(Cloudflare R2)]
+  SENTRY[[Sentry]]
+  PUSH[[Expo Push]]
+  MAIL[[Courriel transactionnel]]
+
+  MOB -- HTTPS JSON + sync --> WEBAPI
+  WEB -- HTTPS JSON --> WEBAPI
+  MOB -- URL signées --> R2
+  WEB -- URL signées --> R2
+  WEBAPI --> PG
+  WEBAPI --> REDIS
+  WORKER --> PG
+  WORKER --> REDIS
+  BEAT --> REDIS
+  WORKER --> PUSH
+  WORKER --> MAIL
+  WORKER --> R2
+  GRAFANA -- rôles lecture seule par pays --> PG
+  WEBAPI -. erreurs .-> SENTRY
+  MOB -. erreurs .-> SENTRY
+  WEB -. erreurs .-> SENTRY
+```
+
+## 4. Composants du système
+
+| Composant | Technologie | Hébergement | Responsabilité | Statut |
+|---|---|---|---|---|
+| Service central (API) | Python 3.12, Django 5.2 LTS, Django REST Framework, drf-spectacular | Render, service web Docker | Authentification, permissions, règles métier, synchronisation, API | [D] pile AMM |
+| Worker | Celery 5 | Render, background worker | Tâches asynchrones : notifications, rappels, escalades, imports, détection de doublons, agrégats, sauvegardes logiques, purges | [D] |
+| Ordonnanceur | Celery beat (planification en base) | Render, background worker | Déclenche les tâches périodiques à l'heure de chaque pays | [D] |
+| Base de données | PostgreSQL 16 | Render Postgres (offre payante en production) | Données métier, audit, journal des changements | [D] |
+| Cache et file | Redis 7 | Render Key Value | File Celery, limitation de débit, cache court | [D] |
+| Portail web | React 19, TypeScript, Vite, MUI, TanStack Query, react-router, react-hook-form, zod, i18next, Recharts | Cloudflare Pages | Interface des rôles du portail | [D] |
+| Application mobile | React Native, Expo (SDK courant), TypeScript, expo-router, expo-sqlite avec SQLCipher | Google Play, App Store via EAS | Interface du délégué, hors connexion | [D] React Native + Expo |
+| Stockage objet | Cloudflare R2 (compatible S3) | Cloudflare | Pièces jointes, imports, exports, sauvegardes | [D] |
+| Notifications push | Expo Push Service (FCM, APNs) | Expo | Acheminement des notifications | [R] `0.8.5` |
+| Courriel | Fournisseur transactionnel (Brevo, Postmark ou équivalent) | SaaS | Courriels de sécurité et de secours | [R] `0.0.3` |
+| BI | Grafana | Render (service Docker avec disque) ou Grafana Cloud | Tableaux de bord analytiques | [D] Grafana ; [R] hébergement `0.7.9` (O-04) |
+| Suivi des erreurs | Sentry | SaaS | Erreurs et performances serveur, portail, mobile | [R] `0.0.7` |
+| Surveillance de disponibilité | Sonde externe (Better Stack, UptimeRobot ou équivalent) | SaaS | Alerte si l'API ou le portail ne répond pas | [R] `0.0.7` |
+| CI/CD | GitHub Actions, EAS Build, EAS Update, EAS Submit | GitHub, Expo | Tests, livraisons | [D] |
+
+### 4.1 Organisation du dépôt [R] `0.0.1`
+
+```
+/
+├── backend/                 # Django : config/, apps/<module>/, tests/
+├── portail/                 # React + Vite
+├── mobile/                  # Expo (React Native)
+├── packages/
+│   ├── api-types/           # types TypeScript générés depuis backend/schema.yaml
+│   ├── domaine/             # statuts, transitions, règles pures partagées (TypeScript)
+│   ├── i18n/                # catalogues fr / en partagés portail + mobile
+│   └── design/              # jetons de design (couleurs, typographie) de la maquette
+├── deploy/                  # render.yaml, scripts de sauvegarde et de restauration
+├── docs/                    # guides, décisions détaillées
+├── prd.md
+├── architecture.md
+└── architecture-essentials.md
+```
+
+Espaces de travail npm pour `portail`, `mobile` et `packages/*`. Le schéma OpenAPI `backend/schema.yaml` est versionné ; la CI échoue s'il diffère du schéma généré.
+
+## 5. Architecture de l'application mobile
+
+### 5.1 Choix [D]
+
+React Native avec Expo : un seul code TypeScript pour Android et iOS, partage des types et des règles avec le portail, base locale chiffrée fiable, notifications push et mises à jour à distance du code JavaScript (EAS Update). La PWA a été écartée : stockage local purgeable par iOS, notifications et synchronisation en arrière-plan limitées, incompatibles avec 7 jours hors connexion (DC-35).
+
+### 5.2 Couches
+
+```mermaid
+flowchart TB
+  UI[Écrans expo-router<br/>Tournée · Semaine · Prospects · Mes chiffres · Visite · Rapport]
+  ETAT[État d'écran<br/>requêtes réactives sur la base locale]
+  DOM[packages/domaine<br/>statuts, transitions, contrôles locaux]
+  REPO[Dépôts locaux typés]
+  DB[(SQLite chiffrée SQLCipher)]
+  OUTBOX[(File d'opérations sortantes)]
+  SYNC[Moteur de synchronisation]
+  FILES[File des pièces jointes<br/>expo-file-system]
+  API[(API /api/v1/sync)]
+  SEC[Magasin sécurisé<br/>clé de base, jeton de rafraîchissement]
+
+  UI --> ETAT --> REPO --> DB
+  UI --> DOM
+  REPO --> OUTBOX
+  SYNC --> OUTBOX
+  SYNC --> DB
+  SYNC <--> API
+  FILES <--> API
+  DB -. clé .- SEC
+```
+
+### 5.3 Modules et bibliothèques [R] `0.2.8`
+
+| Besoin | Choix recommandé | Remarque |
+|---|---|---|
+| Navigation | expo-router | Liens profonds pour les notifications (`innovcrm://visite/<id>`) |
+| Base locale | expo-sqlite avec SQLCipher | Alternative évaluée : WatermelonDB (synchronisation imposée, moins adaptée aux commandes) |
+| Accès aux données | Couche de dépôts typés, migrations locales versionnées | Schéma local ≠ schéma serveur : seulement les données utiles au délégué |
+| Clés et jetons | expo-secure-store (Keychain / Keystore) | Clé SQLCipher aléatoire de 256 bits générée à l'installation |
+| Déverrouillage | expo-local-authentication (biométrie) + code local | Après 5 minutes d'inactivité (SEC-004) |
+| Position | expo-location, au premier plan uniquement, au démarrage et à la fin d'une visite | Jamais en arrière-plan (RG-028) |
+| Notifications | expo-notifications | Push distantes + rappels locaux de visite |
+| Fichiers | expo-image-picker, expo-document-picker, expo-file-system | Compression des photos avant mise en file |
+| Réseau | Détection d'état réseau (NetInfo) | Déclenche la synchronisation au retour du réseau |
+| Mises à jour | EAS Update (canaux par environnement), politique `runtimeVersion` | Le code natif change uniquement par une nouvelle build |
+| i18n | i18next + `packages/i18n` | Langue de l'utilisateur, à défaut celle du pays |
+| Erreurs | Sentry React Native | Sans données personnelles dans les traces |
+
+### 5.4 Écrans (maquette INNOV CRM)
+
+Tournée (programme du jour, prochaine visite en tête, distance, file hors connexion visible en orange) · Semaine (glisser-déposer depuis la liste cible, statut d'approbation, commentaires) · Visite en 3 étapes (démarrer avec GPS → produits dans l'ordre et retour du prescripteur → échantillons, prochaine action, commentaire) · Prospects (recherche locale sur la liste cible, recherche en ligne dans le secteur) · Mes chiffres · Notifications · Profil (langue, sécurité, état de synchronisation, déconnexion).
+
+### 5.5 Données présentes sur le téléphone (OFF-001)
+
+| Donnée | Portée | Renouvellement |
+|---|---|---|
+| Paramètres du pays utiles au délégué | Pays actif | Synchronisation |
+| Référentiels (types, spécialités, motifs, produits du portefeuille de ses réseaux) | Ses réseaux | Synchronisation |
+| Liste cible : prospects, établissements, exercices | Son poste | Synchronisation |
+| Plannings | Semaine en cours et suivante, plus la précédente en lecture | Synchronisation |
+| Visites et rapports | Les siens, 30 derniers jours + en cours | Purge locale au-delà |
+| Historique résumé | 3 dernières visites par prospect de sa liste cible | Synchronisation |
+| Brouillons, file d'opérations, pièces en attente | Les siens | Jusqu'à envoi confirmé |
+| Indicateurs personnels | Semaine en cours | Synchronisation |
+
+Volume estimé : < 10 Mo après la synchronisation initiale (NFR-004) [H].
+
+## 6. Architecture du portail web
+
+- Application monopage React 19 + TypeScript + Vite, servie statiquement par Cloudflare Pages.
+- MUI avec un thème construit depuis `packages/design` (jetons de la maquette : bleu marine `#1B2A5B`, orange `#F26B1D`, Plus Jakarta Sans pour les titres, DM Sans pour le texte, thème clair et sombre).
+- Données serveur via TanStack Query ; formulaires react-hook-form + zod (schémas partagés depuis `packages/domaine` quand la règle est identique au serveur) ; graphiques Recharts.
+- Espaces par rôle : Accueil (superviseur, direction, administration), Visites et rapports, Planning, Prospects, Pilotage, Équipe, Paramètres (6 espaces : utilisateurs et rôles, référentiels, règles de validation, notifications, intégrations, système).
+- Le pays actif est choisi dans l'en-tête quand l'utilisateur en a plusieurs ; il est transmis à chaque appel (section 11.4).
+- Aucune règle d'autorisation n'est décidée par le portail : il masque ce que l'API refuserait, mais l'API reste seule juge.
+- Mode tablette : mise en page fluide jusqu'à 360 px de large (NFR-008).
+
+## 7. Services métier
+
+### 7.1 Modules du serveur [R] `0.0.1`
+
+| Module (`backend/apps/`) | Contenu | Exigences |
+|---|---|---|
+| `socle` | Modèle de base (UUID, `pays_id`, version, horodatages, archivage), pays, paramètres pays, jours fériés, i18n, utilitaires de fuseau | ORG-001, ORG-011, ORG-012 |
+| `identite` | Utilisateurs, rôles par pays, affectations pays, transferts, appareils, double authentification, sessions | USR-*, ORG-002, ORG-009, ORG-010, SEC-* |
+| `organisation` | Divisions, réseaux, zones, secteurs, postes, occupations, rattachements, périmètres DF/DM, remplacements | ORG-003 à ORG-008, ORG-013 |
+| `perimetre` | Moteur de périmètre : calcule ce qu'un utilisateur voit et peut faire | USR-002 |
+| `referentiel` | Types, spécialités, classes thérapeutiques, produits, portefeuilles, motifs d'écart, modèles de champs de rapport | PRP-001, ORG-004, RPT-008 |
+| `prospects` | Prospects, établissements, exercices, listes cibles, propositions de modification, doublons, fusions | PRP-002 à PRP-014 |
+| `planning` | Plannings, versions, passages, absences, contrôles, kilométrage | PLN-* |
+| `visites` | Visites, positions GPS, écarts, imprévues, conformité | VIS-* |
+| `rapports` | Rapports, versions, présentations, remises, prochaines actions, champs pays, validations, réouvertures | RPT-* |
+| `notifications` | Boîte d'envoi, centre de notifications, préférences, push, courriel, regroupement | NOT-* |
+| `pilotage` | Objectifs, indicateurs, agrégats, exports, vues de pilotage pour Grafana | DSH-* |
+| `synchro` | Points d'accès de synchronisation, journal des changements, idempotence, conflits | OFF-* |
+| `audit` | Écriture et consultation du journal d'audit | AUD-* |
+| `imports` | Lots d'import, simulation, rapports d'erreurs, connecteurs (organisation, produits, BirdNotes) | ORG-014, PRP-013 |
+
+### 7.2 Règles entre modules
+
+- Un module n'écrit **jamais** dans les tables d'un autre ; il appelle ses **services** (fonctions Python explicites `services.py`).
+- Les lectures transverses passent par des **sélecteurs** (`selectors.py`) qui appliquent le périmètre.
+- Les effets secondaires (notification, audit, agrégat) sont déclenchés par des **événements de domaine** écrits dans la même transaction (boîte d'envoi transactionnelle), puis traités par le worker.
+- Les transitions d'état sont définies **une fois** par entité dans une machine à états (`etats.py`) ; le miroir TypeScript de `packages/domaine` est vérifié par un test de cohérence généré.
+
+### 7.3 Configuration par pays
+
+Toute variation entre pays (échéances, seuils, contrôles, champs du rapport, listes de valeurs, libellés, géolocalisation, durées de conservation) est une **donnée** dans `ParametrePays` ou les référentiels. Le code ne teste jamais un code pays.
+
+### 7.4 Machines à états et commandes
+
+Les commandes métier exposées par l'API (exemples) :
+
+| Commande | Entité | Transition | Garde |
+|---|---|---|---|
+| `soumettre` | Planning | `brouillon`/`a_reviser` → `soumis` | Délégué titulaire, superviseur actif (RG-010), contrôles bloquants (RG-015) |
+| `approuver` | Planning | `soumis` → `approuve` | Superviseur du poste, remplaçant actif, ou DM (escalade, RG-023) |
+| `demander_revision` | Planning | `soumis` → `a_reviser` | Idem + commentaire (RG-017) |
+| `demarrer` | Visite | `prevue` → `en_cours` | Délégué titulaire, planning approuvé ou visite imprévue |
+| `terminer` | Visite | `en_cours` → `effectuee` | Heure de fin ≥ heure de début |
+| `declarer_ecart` | Visite | `prevue`/`en_cours` → écart | Motif (RG-031) |
+| `soumettre` | Rapport | `brouillon`/`a_corriger`/`rouvert` → `soumis` | Socle complet (RPT-002) |
+| `valider` | Rapport | `soumis` → `valide` | Périmètre ; mode `unitaire`, `journee`, `lot` (journées `conforme` seulement), `escalade`, `remplacement` |
+| `demander_correction` | Rapport | `soumis` → `a_corriger` | Commentaire |
+| `rouvrir` | Rapport | `valide` → `rouvert` | Superviseur ≤ 30 j, DM > 30 j, motif (RG-036) |
+
+Chaque commande : vérifie le périmètre, vérifie la garde, applique la transition, écrit la version figée si besoin, écrit l'événement d'audit et l'événement de domaine — **dans une seule transaction**.
+
+**Workflow d'un planning** (statuts de `Planning`, PRD section 17.1) :
+
+```mermaid
+stateDiagram-v2
+  [*] --> brouillon: le délégué crée la semaine
+  brouillon --> soumis: soumettre (contrôles RG-015)
+  soumis --> approuve: approuver (superviseur, remplaçant ou DM)
+  soumis --> a_reviser: demander_revision + commentaire
+  a_reviser --> soumis: soumettre version n+1
+  approuve --> en_cours: premier jour ouvré (système)
+  approuve --> soumis: modification majeure (nouvelle version)
+  en_cours --> soumis: modification majeure (nouvelle version)
+  en_cours --> termine: après le dernier jour ouvré (système)
+  approuve --> annule: annuler + motif (superviseur)
+  termine --> [*]
+  annule --> [*]
+  note right of soumis
+    24 h ouvrées sans décision :
+    escalade vers le DM (RG-019)
+  end note
+```
+
+**Workflow d'un rapport** (statuts de `Rapport`, PRD section 17.3) :
+
+```mermaid
+stateDiagram-v2
+  [*] --> brouillon: visite terminée (effectuee)
+  brouillon --> soumis: soumettre (socle complet)
+  soumis --> valide: valider (unitaire, journée, lot conforme, escalade, remplacement)
+  soumis --> a_corriger: demander_correction + commentaire
+  a_corriger --> soumis: soumettre version n+1
+  valide --> rouvert: rouvrir + motif (superviseur ≤ 30 j, DM > 30 j)
+  rouvert --> soumis: soumettre version n+1
+  note right of brouillon
+    Attendu le jour même avant 23 h 59 ;
+    au-delà : en_retard = vrai (RG-032)
+  end note
+```
+
+### 7.5 Tâches périodiques (worker)
+
+| Tâche | Fréquence | Remarque |
+|---|---|---|
+| Rappels (planning non soumis, rapport non soumis) | Toutes les 15 min, évaluée à l'heure locale de chaque pays | Respecte les jours fériés |
+| Escalades et alertes de retard | Toutes les 15 min | Heures ouvrées du pays |
+| Passage `approuve` → `en_cours` → `termine` | Chaque nuit, heure du pays | — |
+| Délégués non synchronisés depuis 48 h | Toutes les heures | — |
+| Fin d'affectations, de remplacements, de périmètres datés | Chaque nuit | Audit à chaque retrait |
+| Agrégats de pilotage | Toutes les 5 min (portail), toutes les heures (Grafana) | DSH-011 |
+| Détection de doublons différée | Après chaque import, chaque nuit | — |
+| Sauvegarde logique et copie des pièces jointes | Chaque nuit | Section 18 |
+| Purges de conservation et anonymisation | Chaque semaine | RG-060 |
+
+## 8. Base de données
+
+- PostgreSQL 16, une **base unique** partagée par tous les pays, isolation par colonne `pays_id` + moteur de périmètre + sécurité au niveau des lignes (section 12) (ADR-003).
+- Clés primaires **UUID v7** (triables dans le temps), générées par le créateur de l'objet, y compris le téléphone (ADR-006).
+- Colonnes communes à toute table métier : `id`, `pays_id`, `version` (entier incrémenté à chaque écriture), `cree_le`, `cree_par`, `modifie_le`, `modifie_par`, `archive_le` (archivage logique, RG-005).
+- Horodatages en `timestamptz` (UTC) ; le fuseau d'affichage vient du pays (RG-006).
+- Extensions : `pg_trgm`, `unaccent`, `fuzzystrmatch` pour la recherche et les doublons (HT-07).
+- Index : `(pays_id, …)` en tête de tous les index des tables métier ; index trigramme sur les noms normalisés des prospects et établissements.
+- Partitionnement par mois des tables à forte croissance dès leur création : `evenement_audit`, `journal_changement`, `position_gps` ; à partir de `0.9.4`, selon les mesures, `visite`, `rapport`, `presentation_produit` par année [R].
+- Rôles de base : `innov_app` (service, sans `BYPASSRLS`, sans droit de modifier le schéma), `innov_migration` (migrations), `innov_grafana_<pays>` et `innov_grafana_siege` (lecture seule sur le schéma `pilotage`) [R] `0.0.4` (HT-07).
+- Schémas : `public` (métier), `pilotage` (vues et tables d'agrégats pour Grafana et tableaux de bord).
+
+## 9. Stockage des pièces jointes
+
+- Cloudflare R2, un compartiment par environnement (`innov-<env>-pieces`), **privé**.
+- Clé d'objet : `<pays>/<annee>/<mois>/<uuid>` — jamais de nom de personne ni de prospect dans la clé.
+- Téléversement : le client demande une URL signée (`PUT`, validité 15 minutes, taille et type imposés) **après** avoir synchronisé le rapport ; le serveur confirme l'objet (taille, type, empreinte SHA-256) avant de le rattacher.
+- Lecture : URL signée `GET` de 5 minutes, délivrée seulement si l'utilisateur voit le rapport (RPT-007).
+- Types acceptés : JPEG, PNG, HEIC converti en JPEG sur le téléphone, PDF ; 10 Mo maximum [H] ; photos redimensionnées à 1 600 px avant envoi.
+- Purge à 3 ans (RG-060) par tâche hebdomadaire ; copie nocturne vers le compartiment de sauvegarde (section 18).
+
+## 10. Notifications
+
+```mermaid
+flowchart LR
+  CMD[Commande métier] -->|même transaction| OUT[(boite_envoi)]
+  OUT --> W[Worker]
+  W --> REG{Regroupement<br/>type × utilisateur × heure}
+  REG --> CENTRE[(notification<br/>centre in-app)]
+  REG --> PUSH[Expo Push]
+  REG -->|sécurité, secours| MAIL[Courriel]
+  PUSH --> TEL[Téléphone<br/>lien profond vers l'action]
+```
+
+- Chaque événement de la table de la section 18 du PRD produit une ligne `notification` (centre) et, selon les préférences et le caractère obligatoire, un envoi push.
+- **Regroupement** (NOT-003) : une notification push au plus par type, utilisateur et heure ; les suivantes incrémentent un compteur et le texte devient « n … ».
+- **Contenu** : jamais de nom de prospect ni de donnée de santé dans le texte visible ; la charge utile ne contient que le type et l'identifiant de l'objet (RG-062).
+- **Rappels de visite** : programmés localement par l'application mobile à partir du planning, donc fonctionnels hors connexion.
+- **Jetons push** : stockés par appareil, supprimés à la révocation de l'appareil ; reçus d'erreur d'Expo traités (jeton invalide → suppression).
+- **Courriel** : uniquement sécurité du compte et secours > 48 h [H] (NOT-004) ; modèles `fr`/`en`.
+- **Après 1.0.0** : WhatsApp Business comme canal d'escalade (DC-27).
+
+## 11. Authentification et autorisations
+
+### 11.1 Authentification [D] méthode ; [R] détails `0.0.3`
+
+| Élément | Portail | Mobile |
+|---|---|---|
+| Identifiant | Nom d'utilisateur nominatif + mot de passe | Idem |
+| Hachage | Argon2id | — |
+| Double authentification | TOTP (application d'authentification) obligatoire pour `admin_siege`, `direction_siege`, `responsable_pays`, `admin_pays`, `df`, `dm` ; codes de secours | Idem si l'utilisateur a ces rôles et utilise le mobile |
+| Jeton d'accès | JWT signé, 15 minutes, en mémoire | JWT 15 minutes, en mémoire |
+| Jeton de rafraîchissement | Cookie `HttpOnly`, `Secure`, `SameSite=Strict`, rotation à chaque usage, détection de réutilisation | Magasin sécurisé, lié à l'identifiant de l'appareil, rotation, valide 7 jours sans usage (cohérent avec OFF-007) |
+| Verrouillage | 5 échecs → 15 minutes (SEC-002) | Idem côté serveur ; verrouillage local par code ou biométrie après 5 minutes |
+| Inactivité | Déconnexion après 30 minutes | Verrouillage local ; données inaccessibles après 7 jours sans synchronisation |
+
+Bibliothèques recommandées : `djangorestframework-simplejwt` (avec liste de révocation), `django-otp`, `argon2-cffi`, limitation de débit DRF + Redis.
+
+### 11.2 Modèle d'autorisation
+
+- **Rôles** : attribués **par pays** (`RoleUtilisateur(utilisateur, pays, role, debut, fin)`).
+- **Périmètre** : calculé par le module `perimetre` à chaque requête, pour le pays actif :
+  - `admin_siege`, `direction_siege` : tous les pays (agrégats ; nominatif audité) ;
+  - `responsable_pays`, `admin_pays` : tout le pays ;
+  - `df`, `dm` : postes dont un réseau est dans leur `Perimetre` daté ;
+  - `superviseur` : postes rattachés (`Rattachement` actif) + postes des remplacements actifs ;
+  - `delegue` : ses occupations actives ; prospects de sa liste cible et de ses secteurs ; ses propres visites et rapports.
+- **Permissions d'action** : vérifiées dans les commandes (section 7.4), jamais seulement dans l'interface.
+- **Réponse hors périmètre** : `404` (et non `403`) pour ne pas révéler l'existence de l'objet (USR-002 CA2).
+
+### 11.3 Matrice
+
+La matrice d'autorisations de référence est celle du PRD (section 6.3). Elle est traduite en une table de tests paramétrés (section 22.2) ; toute modification de la matrice modifie d'abord le PRD.
+
+### 11.4 Pays actif
+
+- Le client envoie l'en-tête `X-Pays: <code>` à chaque appel ; le serveur vérifie que l'utilisateur a un rôle actif dans ce pays (pays principal ou affectation en cours), sinon `403`.
+- Le siège peut omettre l'en-tête pour les vues consolidées ; il reçoit alors des agrégats uniquement.
+
+## 12. Isolation des données par pays
+
+L'isolation est la propriété la plus critique du système (AO-01). Elle repose sur **trois couches indépendantes** :
+
+| Couche | Mécanisme | Échoue si… |
+|---|---|---|
+| 1. Application | Toute vue d'API hérite d'une classe de base qui impose `get_queryset()` via `selectors` filtrés par le périmètre ; un test parcourt toutes les routes enregistrées et échoue si l'une n'hérite pas de la classe de base | un développeur ajoute une route sans filtre |
+| 2. Base de données | Sécurité au niveau des lignes (RLS) PostgreSQL sur `pays_id` : chaque transaction de requête exécute `SET LOCAL innov.pays = '<id>'` (ou la liste pour le siège) ; le rôle `innov_app` n'a pas `BYPASSRLS` ; les politiques refusent toute ligne d'un autre pays | la couche 1 est contournée (requête brute, bogue de sélecteur) |
+| 3. Tests | Suite d'isolation : deux pays, deux réseaux, deux superviseurs, deux délégués ; chaque rôle tente de lire, rechercher, exporter, télécharger une pièce jointe, recevoir une notification et interroger Grafana hors périmètre | une régression apparaît |
+
+Recommandation **[R] `0.0.4`** : activer la RLS dès le départ (ADR-003). Coût : chaque tâche Celery et chaque commande d'administration doit fixer explicitement son pays ; c'est voulu. Si HT-07 se révèle faux (rôles impossibles sur Render), la couche 2 est limitée à la RLS sur le rôle unique, et la couche 3 devient bloquante pour toute livraison.
+
+Autres règles :
+- Les **identifiants** ne sont jamais séquentiels (UUID) : impossible de deviner un objet d'un autre pays.
+- Les **exports, recherches, pièces jointes, notifications et synchronisations** passent par les mêmes sélecteurs.
+- Les **tâches du worker** reçoivent le pays en paramètre et ouvrent une transaction avec ce pays.
+- **Grafana** lit le schéma `pilotage` avec un rôle de base dédié au pays (section 25.2).
+
+## 13. Modèle de données principal
+
+### 13.1 Modèle simplifié
+
+```mermaid
+erDiagram
+  PAYS ||--o{ PARAMETRE_PAYS : configure
+  PAYS ||--o{ DIVISION : contient
+  DIVISION ||--o{ RESEAU : regroupe
+  RESEAU }o--o{ PRODUIT : portefeuille
+  CLASSE_THERAPEUTIQUE ||--o{ PRODUIT : classe
+  PAYS ||--o{ ZONE : contient
+  ZONE ||--o{ SECTEUR : regroupe
+  POSTE }o--o{ RESEAU : porte
+  POSTE }o--o{ SECTEUR : couvre
+  UTILISATEUR ||--o{ OCCUPATION : occupe
+  POSTE ||--o{ OCCUPATION : "occupé par"
+  POSTE ||--o{ RATTACHEMENT : "rattaché à"
+  UTILISATEUR ||--o{ RATTACHEMENT : supervise
+  UTILISATEUR ||--o{ ROLE_UTILISATEUR : "a des rôles"
+  UTILISATEUR ||--o{ AFFECTATION_PAYS : "affecté à"
+  UTILISATEUR ||--o{ PERIMETRE : "voit des réseaux"
+  UTILISATEUR ||--o{ APPAREIL : utilise
+  PROSPECT ||--o{ EXERCICE : exerce
+  ETABLISSEMENT ||--o{ EXERCICE : accueille
+  SECTEUR ||--o{ ETABLISSEMENT : situe
+  POSTE ||--o{ LISTE_CIBLE : cible
+  PROSPECT ||--o{ LISTE_CIBLE : "ciblé par"
+  UTILISATEUR ||--o{ PLANNING : prépare
+  PLANNING ||--o{ VERSION_PLANNING : versionne
+  PLANNING ||--o{ PASSAGE : regroupe
+  PLANNING ||--o{ VISITE : contient
+  PLANNING ||--o{ ABSENCE : déclare
+  VISITE }o--|| PROSPECT : rencontre
+  VISITE }o--|| ETABLISSEMENT : "a lieu dans"
+  VISITE }o--|| RESEAU : "au titre de"
+  VISITE ||--o| VISITE : "reportée en"
+  VISITE ||--o{ POSITION_GPS : localise
+  VISITE ||--o| RAPPORT : "rapportée par"
+  RAPPORT ||--o{ VERSION_RAPPORT : versionne
+  RAPPORT ||--o{ PRESENTATION_PRODUIT : présente
+  RAPPORT ||--o{ REMISE_ECHANTILLON : remet
+  RAPPORT ||--o{ PIECE_JOINTE : joint
+  RAPPORT ||--o{ VALIDATION : décide
+  RESEAU ||--o{ OBJECTIF : vise
+```
+
+### 13.2 Entités et attributs clés
+
+| Entité | Attributs clés (hors colonnes communes) | Remarques |
+|---|---|---|
+| `Pays` | `code` ISO, `nom`, `fuseau`, `langue`, `devise`, `statut` (`actif`, `suspendu`, `archive`) | Pas de `pays_id` (c'est la racine) |
+| `ParametrePays` | `cle`, `valeur` (JSON typé), `debut` | Historisé |
+| `JourFerie` | `date`, `libelle`, `demi_journee` | — |
+| `Utilisateur` | `identifiant`, `nom`, `prenom`, `courriel`, `telephone`, `pays_principal_id`, `langue`, `actif`, `otp_active` | Jamais supprimé |
+| `RoleUtilisateur` | `utilisateur_id`, `pays_id`, `role`, `debut`, `fin` | `role` ∈ 9 codes du PRD |
+| `AffectationPays` | `utilisateur_id`, `pays_id`, `motif`, `debut`, `fin`, `accorde_par` | Siège uniquement |
+| `Appareil` | `utilisateur_id`, `identifiant_installation`, `plateforme`, `version_app`, `jeton_push`, `derniere_synchro`, `revoque_le` | — |
+| `Division`, `Reseau` | `code`, `libelle`, `division_id` | — |
+| `ClasseTherapeutique`, `Produit` | `libelle`, `classe_id`, `actif` | `Portefeuille(reseau_id, produit_id)` |
+| `Zone`, `Secteur`, `Localite` | `libelle`, rattachements | — |
+| `Poste` | `type_poste` (`vm`, `vm_otc`, `kam`, `dermo`), `libelle`, réseaux (n–n), secteurs (n–n) | Peut être vacant |
+| `Occupation` | `poste_id`, `utilisateur_id`, `debut`, `fin`, `principal` | — |
+| `Rattachement` | `poste_id`, `superviseur_id`, `debut`, `fin` | — |
+| `Perimetre` | `utilisateur_id`, `reseau_id`, `debut`, `fin` | DF, DM |
+| `Remplacement` | `superviseur_id`, `remplacant_id`, `debut`, `fin`, `designe_par` | — |
+| `Prospect` | `type`, `specialite_id`, `civilite`, `nom`, `prenom`, `nom_normalise`, `cle_phonetique`, `numero_ordre`, `telephone_mobile`, `telephone_pro`, `courriel`, `potentiel` (`A`,`B`,`C`), `statut`, `cree_par_poste_id`, `fusionne_dans_id` | Fiche commune au pays |
+| `Etablissement` | `type`, `nom`, `nom_normalise`, `adresse`, `localite_id`, `secteur_id`, `latitude`, `longitude`, `statut` | — |
+| `Exercice` | `prospect_id`, `etablissement_id`, `debut`, `fin`, `principal` | — |
+| `ListeCible` | `poste_id`, `prospect_id`, `frequence_cible`, `periode` (mois), `debut`, `fin` | — |
+| `CandidatDoublon` | `fiche_a_id`, `fiche_b_id`, `score`, `criteres`, `decision`, `decide_par` | Paires « garder séparées » mémorisées |
+| `Fusion` | `conservee_id`, `absorbee_id`, `mode` (`automatique`, `manuelle`), `etat_avant` (JSON), `defusionnee_le` | Réversible |
+| `Planning` | `delegue_id`, `semaine` (lundi), `statut`, `version_courante`, `soumis_le`, `en_retard`, `approuve_par`, `mode_decision` | Unique `(delegue_id, semaine)` |
+| `VersionPlanning` | `planning_id`, `numero`, `contenu` (JSON figé), `statut`, `soumis_le`, `decide_le`, `decide_par`, `commentaire` | Append-only |
+| `Passage` | `planning_id`, `etablissement_id`, `date`, `heure` | — |
+| `Absence` | `planning_id`, `date`, `demi_journee`, `type` | — |
+| `Visite` | `planning_id`, `poste_id`, `reseau_id`, `prospect_id`, `etablissement_id`, `passage_id`, `date_prevue`, `heure_prevue`, `objectif`, `statut`, `est_imprevue`, `justification`, `motif_ecart_id`, `debut_reel`, `fin_reel`, `visite_origine_id`, `conformite` (JSON), `horodatage_local` | — |
+| `PositionGPS` | `visite_id`, `moment` (`debut`, `fin`), `latitude`, `longitude`, `precision_m`, `capturee_le`, `distance_etablissement_m` | Append-only, purge 12 mois |
+| `Rapport` | `visite_id` (unique), `statut`, `resultat`, `resume`, `observations`, `objections`, `champs_pays` (JSON), `soumis_le`, `en_retard`, `valide_le`, `valide_par`, `mode_validation` | — |
+| `VersionRapport` | `rapport_id`, `numero`, `contenu` (JSON figé), `soumis_le` | Append-only |
+| `PresentationProduit` | `rapport_id`, `produit_id`, `ordre`, `retour` (`non_prescrit`, `peu`, `prescrit`, `tres_bien`) | — |
+| `RemiseEchantillon` | `rapport_id`, `produit_id` ou `article`, `quantite` | Sans stock |
+| `ProchaineAction` | `rapport_id`, `type`, `echeance`, `note` | — |
+| `PieceJointe` | `rapport_id`, `cle_objet`, `type_mime`, `taille`, `empreinte`, `statut` (`en_attente`, `disponible`) | — |
+| `Decision` | `objet_type`, `objet_id`, `action`, `mode`, `auteur_id`, `commentaire`, `le` | Approbations, révisions, validations, corrections, réouvertures |
+| `Objectif` | `reseau_id`, `periode_debut`, `periode_fin`, `indicateur`, `cible`, `fixe_par` | — |
+| `Notification`, `PreferenceNotification`, `BoiteEnvoi` | — | Section 10 |
+| `EvenementAudit` | `le`, `acteur_id`, `role`, `pays_id`, `action`, `objet_type`, `objet_id`, `contexte` (JSON), `resultat`, `empreinte_precedente` | Append-only, partitionné |
+| `JournalChangement` | `sequence` (bigserial), `pays_id`, `entite`, `entite_id`, `version`, `operation`, `le` | Support de la synchronisation |
+| `OperationSync` | `id_operation` (UUID client), `appareil_id`, `recu_le`, `resultat` (JSON) | Idempotence |
+| `LotImport`, `LigneImport` | `type`, `source`, `statut`, `simulation`, `erreurs` | — |
+
+## 14. Synchronisation hors connexion
+
+### 14.1 Principes [D] règles ; [R] protocole `0.8.3`
+
+- **Protocole maison sur HTTPS** (ADR-005) en deux sens : **tirer** les changements depuis un curseur, **pousser** une file d'opérations.
+- Le téléphone génère les UUID ; chaque opération porte un **identifiant d'opération** unique : rejouer une opération ne produit aucun effet supplémentaire (OFF-003, REC-07).
+- Les changements d'état sont des **commandes** (section 7.4) rejouées sur le serveur, qui revérifie les gardes.
+- Les décisions du serveur gagnent toujours (RG-050).
+
+### 14.2 Séquence
+
+```mermaid
+sequenceDiagram
+  participant UI as Écran mobile
+  participant DB as SQLite chiffrée
+  participant Q as File d'opérations
+  participant S as Moteur de synchro
+  participant API as API /sync
+  participant PG as PostgreSQL
+
+  UI->>DB: Écrit le rapport (brouillon, version locale)
+  UI->>Q: Ajoute opérations (créer rapport, soumettre)
+  Note over UI,Q: Hors connexion : l'écran lit DB, la file attend
+  S->>S: Réseau revenu (ou minuteur)
+  S->>API: POST /sync/pousser [op1, op2] (lot ≤ 50)
+  API->>PG: Pour chaque op : idempotence ? garde ? version ?
+  PG-->>API: appliquée (nouvelle version) / conflit / refusée
+  API-->>S: Résultats par opération
+  S->>Q: Retire les ops appliquées, marque conflits et refus
+  S->>API: GET /sync/tirer?curseur=c (pages)
+  API->>PG: Changements de JournalChangement dans la portée de l'appareil
+  API-->>S: Objets modifiés, suppressions, nouveau curseur
+  S->>DB: Applique (les décisions serveur écrasent l'état local)
+  S->>UI: Met à jour l'écran et l'état de synchro
+  S->>API: Pièces en attente : URL signée puis PUT vers R2
+```
+
+### 14.3 Pousser
+
+`POST /api/v1/sync/pousser` — corps : lot ordonné d'opérations `{id_operation, entite, entite_id, type (creer | modifier | commande), commande?, version_base, donnees, horodatage_local}`.
+
+Traitement par opération, chacune dans sa propre transaction et dans l'ordre :
+1. `id_operation` déjà connu → renvoyer le résultat mémorisé.
+2. Vérifier le périmètre (même règle que l'API en ligne).
+3. `creer` : insérer avec l'UUID fourni (refus si l'UUID existe pour un autre objet).
+4. `modifier` : si `version_base` ≠ version serveur → **conflit** ; sinon appliquer.
+5. `commande` : vérifier la garde de la machine à états ; si l'état serveur a changé (ex. planning déjà approuvé) → **refus motivé** avec l'état serveur.
+6. Écrire `JournalChangement`, l'audit et les événements de domaine.
+
+Une opération refusée n'empêche pas les suivantes, **sauf** celles qui en dépendent (même `entite_id`), marquées « bloquées » jusqu'à résolution.
+
+### 14.4 Tirer
+
+`GET /api/v1/sync/tirer?curseur=<sequence>&limite=500` — renvoie les objets dont une ligne de `JournalChangement` a une séquence supérieure au curseur **et** qui entrent dans la portée de l'appareil (section 5.5), plus des **pierres tombales** pour les objets sortis de la portée (prospect retiré de la liste cible, semaine purgée). Un changement de portée (nouvelle occupation, nouveau prospect cible) déclenche l'envoi complet des objets entrés dans la portée.
+
+Synchronisation initiale : même mécanisme depuis le curseur `0`, paginé, reprenable.
+
+### 14.5 Cadence
+
+- Au démarrage de l'application, au retour du réseau, après chaque soumission, et toutes les 15 minutes au premier plan.
+- En arrière-plan : tâche système opportuniste (expo-background-task), sans garantie ; l'utilisateur voit toujours « n éléments en attente » et l'heure de dernière synchronisation.
+
+### 14.6 Horloge
+
+Chaque opération porte `horodatage_local` ; le serveur enregistre `recu_le`. L'écart d'horloge de l'appareil est estimé à chaque synchronisation. Un horodatage local est accepté pour le calcul « à l'heure » d'un rapport (RPT-010) si l'écart estimé est inférieur à 15 minutes [H] ; sinon l'opération est marquée « horloge incohérente » pour le superviseur.
+
+### 14.7 Limite de 7 jours et effacement à distance
+
+- L'application mémorise la date de la dernière synchronisation **réussie**. Au-delà de 7 jours (RG-054), elle n'affiche plus les données et exige une connexion ; la file d'opérations est conservée et envoyée à la connexion.
+- Si le serveur répond `appareil_revoque` ou `compte_desactive` à n'importe quel appel, l'application supprime la base, la clé, les fichiers et les jetons, puis revient à l'écran de connexion (SEC-006). Les opérations non envoyées sont perdues et le serveur le signale à l'administrateur pays via la dernière synchronisation connue de l'appareil.
+
+### 14.8 Version minimale de l'application
+
+Chaque appel envoie `X-Version-App`. Le serveur renvoie `426` avec la version minimale si l'application est trop ancienne pour le protocole ; l'application propose la mise à jour et continue d'afficher les données locales en lecture.
+
+## 15. Gestion des conflits
+
+| Situation | Règle | Résultat |
+|---|---|---|
+| Le délégué modifie un planning hors connexion pendant que le superviseur l'approuve | RG-050, RG-051 | La commande `soumettre`/modification est refusée ; l'état `approuve` est tiré ; les changements locaux deviennent une **proposition de modification majeure** présentée au délégué |
+| Le délégué modifie un rapport `soumis` hors connexion | RG-051 | Impossible localement : le rapport soumis est en lecture seule tant qu'il n'est pas renvoyé (`a_corriger`, `rouvert`) |
+| Le superviseur demande une correction pendant que le délégué complète une pièce jointe | — | La pièce jointe s'ajoute (opération d'ajout, sans conflit) ; le statut `a_corriger` est tiré |
+| Le même brouillon est modifié sur deux appareils | RG-052, RG-053 | Conflit : les deux versions sont présentées au délégué, qui choisit ; rien n'est fusionné en silence |
+| Une fiche prospect utilisée hors connexion est fusionnée sur le serveur | — | Le serveur accepte les opérations sur l'ancien UUID et les redirige vers la fiche conservée (`fusionne_dans_id`) ; le tirage remplace la fiche locale |
+| Une visite démarrée hors connexion sur un planning devenu `annule` | — | La visite est acceptée comme **imprévue** avec la mention « planning annulé » pour le superviseur ; aucune donnée terrain n'est perdue |
+| Données en ajout seul (positions GPS, présentations d'un brouillon, remises) | — | Pas de conflit : ajout idempotent par UUID |
+
+Les conflits non résolus sont visibles par le délégué (badge) et par l'administrateur pays (tableau de santé).
+
+## 16. Journalisation et audit
+
+### 16.1 Journal d'audit (AUD-001)
+
+- Table `evenement_audit` **append-only** : le rôle `innov_app` a seulement le droit `INSERT` ; un déclencheur refuse `UPDATE` et `DELETE` ; partitionnement mensuel.
+- **Chaînage** : chaque événement contient l'empreinte SHA-256 du précédent du même pays [R] `0.9.2` ; une tâche quotidienne vérifie la chaîne et alerte en cas de rupture.
+- Écrit **dans la même transaction** que l'action métier (une action sans audit n'existe pas).
+- Contenu : acteur, rôle, pays, action, objet, horodatage, contexte (appareil, adresse IP, version d'application, mode de décision), résultat ; **jamais** de mot de passe, jeton ou contenu de rapport en clair.
+- Conservation 5 ans puis anonymisation de l'acteur (RG-060).
+
+### 16.2 Historique métier
+
+- Versions figées : `VersionPlanning`, `VersionRapport` (JSON complet à chaque soumission).
+- Historique des champs des fiches prospect et établissement : table d'historique générique (champ, ancienne valeur, nouvelle valeur, auteur, date) (PRP-012).
+
+### 16.3 Journaux techniques
+
+- Journaux structurés JSON (niveau, identifiant de requête, utilisateur pseudonymisé, pays, durée) ; aucune donnée personnelle en clair.
+- Rétention des journaux techniques : 30 jours (Render + Sentry) [H].
+
+## 17. Sécurité
+
+| Domaine | Mesure | Exigence |
+|---|---|---|
+| Transport | TLS 1.2+ partout ; HSTS sur le portail et l'API | SEC-007 |
+| Secrets | Variables d'environnement Render et GitHub ; jamais dans le dépôt ; analyse de secrets en CI | SEC-007 |
+| Mots de passe | Argon2id, 12 caractères minimum, liste de mots de passe compromis | SEC-001 |
+| Comptes | Verrouillage après 5 échecs, double authentification des rôles sensibles, codes de secours | SEC-002, SEC-003 |
+| Sessions | Jetons courts, rotation, révocation, liaison à l'appareil | SEC-004 |
+| Mobile | SQLCipher, clé dans le Keychain/Keystore, verrouillage biométrique, effacement à distance, pas de données dans les sauvegardes du système (exclusion iCloud/Google), captures d'écran autorisées [H] | SEC-005, SEC-006 |
+| API | Validation stricte des entrées (sérialiseurs), limitation de débit par utilisateur et par IP, en-têtes de sécurité, CORS limité au domaine du portail | — |
+| Portail | Politique de sécurité du contenu (CSP) stricte, pas de stockage de jeton dans `localStorage` | — |
+| Fichiers | URL signées courtes, types et tailles imposés, compartiments privés | RPT-007 |
+| Données personnelles | Minimisation, conservation par pays, anonymisation, pas de données réelles hors production | NFR-011 |
+| Dépendances | Analyse automatique des vulnérabilités (Dependabot, `pip-audit`, `npm audit`) | — |
+| Revue | Revue de sécurité en `0.9.3` ; tests d'intrusion légers avant `0.9.7` [R] | — |
+
+## 18. Sauvegarde et restauration
+
+| Élément | Mécanisme | Fréquence | Conservation |
+|---|---|---|---|
+| Base (point dans le temps) | PITR de Render Postgres (offre payante) | Continue | Selon l'offre (≥ 7 jours) [H] |
+| Base (copie logique hors Render) | `pg_dump` chiffré (clé hors Render) vers un compartiment R2 de sauvegarde dédié | Chaque nuit | 30 quotidiennes + 12 mensuelles |
+| Pièces jointes | Copie incrémentale vers le compartiment de sauvegarde | Chaque nuit | Alignée sur RG-060 |
+| Configuration | `render.yaml` et scripts versionnés dans le dépôt | À chaque changement | Historique git |
+
+Restauration (NFR-006, REC-20) :
+- Script `deploy/restaurer.sh` : restaure une copie logique ou un point PITR dans une base jetable, vérifie le nombre de lignes et la chaîne d'audit.
+- **Test de restauration mensuel** automatisé (workflow planifié) dès `0.9.5`, et manuel avant chaque livraison majeure.
+- Cible : RPO ≤ 1 h (PITR), RTO ≤ 4 h [H].
+
+```mermaid
+flowchart LR
+  PG[(Render Postgres)] -- PITR continu --> PITR[(Sauvegarde Render)]
+  PG -- pg_dump chiffré, nuit --> B[(R2 sauvegarde)]
+  R2P[(R2 pièces)] -- copie nuit --> B
+  B -- restauration de test mensuelle --> TMP[(Base jetable)]
+  TMP --> CHK{Contrôles :<br/>comptes, chaîne d'audit}
+```
+
+## 19. Supervision et alertes
+
+| Signal | Outil | Seuil d'alerte [H] | Destinataire |
+|---|---|---|---|
+| Disponibilité API et portail | Sonde externe (1 min) | 2 échecs consécutifs | Administrateur technique |
+| Erreurs serveur, portail, mobile | Sentry | Nouvelle erreur, ou > 1 % des requêtes en 5 min | Administrateur technique |
+| Temps de réponse | Sentry Performance | p95 > 1 s pendant 10 min | Administrateur technique |
+| File Celery | Métrique applicative exposée et suivie | > 1 000 tâches en attente ou plus vieille > 10 min | Administrateur technique |
+| Échecs de synchronisation | Table `OperationSync` + Grafana technique | > 2 % d'opérations refusées par jour, conflits non résolus > 24 h | Administrateur technique, administrateur pays |
+| Échecs de notification | Reçus Expo | > 5 % | Administrateur technique |
+| Sauvegarde | Statut de la tâche nocturne | Échec ou absence | Administrateur technique |
+| Chaîne d'audit | Tâche quotidienne | Rupture | Administrateur technique, administrateur du siège |
+| Capacité base | Métriques Render | > 75 % disque ou mémoire | Administrateur technique |
+| Délégués non synchronisés | Tableau de santé | > 48 h | Superviseur, administrateur pays |
+
+Point d'accès `GET /api/health/` (base, Redis, version) pour la sonde et le déploiement.
+
+## 20. Environnements
+
+| Environnement | Rôle | Hébergement | Données | Mobile (canal EAS) |
+|---|---|---|---|---|
+| Développement | Construction quotidienne | Poste local : Docker Compose (Postgres, Redis, MinIO, API, worker), Vite, Expo | Fictives | `development` |
+| Recette / démonstration | Validation métier, démonstrations à tout moment | Render (offre minimale) + Cloudflare Pages | **Fictives**, réinitialisables par commande (DEM-001) | `recette` |
+| Préproduction | Reproduire la production, répéter les migrations et la migration BirdNotes à blanc | Render payant, mêmes réglages que la production | Fictives + copie **anonymisée** de production après 1.0.0 [R] | `preproduction` |
+| Production | Utilisateurs réels | Render payant (Francfort), Cloudflare Pages, R2 | Réelles | `production` |
+
+Chaque environnement a ses propres secrets, base, compartiments R2, projet Sentry et canal EAS. La variable `ENVIRONNEMENT` est affichée dans le portail et l'application hors production ; un environnement refuse une livraison destinée à un autre.
+
+## 21. Déploiement
+
+```mermaid
+flowchart LR
+  PR[Pull request] --> CI{CI GitHub Actions<br/>lint · types · tests · isolation<br/>schéma OpenAPI · secrets · build}
+  CI -- échec --> STOP[Bloqué]
+  CI -- vert + fusion --> MAIN[main]
+  MAIN --> RECETTE[Recette / démo<br/>Render + Pages<br/>EAS Update canal recette]
+  MAIN -- étiquette vX.Y.Z --> PREPROD[Préproduction<br/>migrations répétées]
+  PREPROD -- approbation manuelle --> PROD[Production<br/>Render pre-deploy : migrations<br/>Pages · EAS Update]
+  PROD --> SMOKE{Contrôles après livraison<br/>/api/health · parcours clés}
+  SMOKE -- échec --> ROLLBACK[Retour à la version précédente]
+  MAIN -. code natif modifié .-> BUILD[EAS Build<br/>puis EAS Submit vers les magasins]
+```
+
+- **Serveur** : image Docker construite par Render depuis le dépôt (ou publiée sur GHCR) ; commande de pré-déploiement `migrate` ; démarrage avec Gunicorn ; worker et beat déployés avec la même image.
+- **Migrations** : uniquement compatibles en avant et en arrière sur une version (méthode « étendre puis contracter ») pour permettre le retour arrière sans restauration.
+- **Portail** : build Vite publiée par Cloudflare Pages ; aperçus par pull request.
+- **Mobile** : EAS Update pour les changements JavaScript compatibles avec la `runtimeVersion` ; EAS Build + Submit pour les changements natifs ; version minimale imposée par l'API (section 14.8).
+- **Versions** : étiquette git `vX.Y.Z` (convention du PRD section 23) ; la même version est affichée par l'API (`/api/health/`), le portail et l'application ; journal de version `CHANGELOG.md`.
+- **Fonctionnalités incomplètes** : désactivables par drapeau de configuration (par pays si besoin) sans bloquer une livraison.
+- **Retour arrière** : redéploiement de l'image précédente (Render), retour au déploiement précédent (Pages), republication de la mise à jour précédente (EAS Update).
+
+## 22. Tests
+
+### 22.1 Pyramide
+
+| Niveau | Outils | Portée | Bloquant en CI |
+|---|---|---|---|
+| Unitaires serveur | pytest, pytest-django | Machines à états, règles RG-*, détecteur de doublons, calculs d'indicateurs | Oui |
+| API | pytest + client DRF, schéma OpenAPI | Chaque route : succès, validation, permissions | Oui |
+| **Isolation** | pytest paramétré par la matrice 6.3 du PRD | Chaque rôle × chaque action × objet du même / d'un autre pays, réseau, délégué ; recherche, export, pièce jointe, notification, synchronisation, Grafana | **Oui, toujours** |
+| Synchronisation | pytest (serveur) + tests du moteur mobile (Jest) | Idempotence, rejeu, coupure en plein lot, conflits, pierres tombales, fusion pendant hors connexion | Oui |
+| Domaine partagé | Vitest | `packages/domaine` ; test de cohérence avec les machines à états Python | Oui |
+| Portail | Vitest + Testing Library ; Playwright pour les parcours | Composants, parcours superviseur et administration | Oui (parcours clés) |
+| Mobile | Jest + React Native Testing Library ; Maestro pour les parcours sur émulateur [R] | Tournée, visite en 3 étapes, hors connexion | Oui (unitaires) ; parcours à partir de `0.4.9` |
+| Charge | k6 | 500 délégués d'un pays synchronisant entre 18 h et 20 h, 50 superviseurs validant | Avant `0.9.4` puis à chaque version majeure |
+| Restauration | Script de restauration | Section 18 | Mensuel à partir de `0.9.5` |
+| Terrain | Téléphones réels Android économiques et iPhone, réseau dégradé | Cycle 0.8 et pilote | Recette |
+
+### 22.2 Règles
+
+- Une exigence du PRD n'est livrée que si ses critères d'acceptation ont un test automatisé ou une procédure de recette écrite.
+- Couverture minimale [H] : 90 % pour `perimetre`, `synchro`, `planning`, `visites`, `rapports`, `audit` ; 80 % ailleurs.
+- Données de test **fictives** générées (jamais copiées de fichiers réels) ; un générateur produit un pays de démonstration au volume réaliste (divisions, réseaux, secteurs, 500 délégués, 10 000 prospects).
+
+## 23. Performance et capacité
+
+### 23.1 Volumétrie estimée [H]
+
+| Grandeur | Pilote Sénégal (500 délégués) | 17 pays à terme (≈ 8 500 délégués) |
+|---|---|---|
+| Visites par jour | ≈ 4 000 | ≈ 68 000 |
+| Visites par an (≈ 230 jours ouvrés) | ≈ 0,9 million | ≈ 15,6 millions |
+| Présentations de produits par an (≈ 3 par visite) | ≈ 2,8 millions | ≈ 47 millions |
+| Positions GPS par an (2 par visite) | ≈ 1,8 million | ≈ 31 millions (purge à 12 mois) |
+| Événements d'audit par an | ≈ 5 millions | ≈ 80 millions |
+| Volume base par an (hors index) | ≈ 3 Go | ≈ 50 Go |
+| Pièces jointes par an (10 % des rapports × 500 Ko) | ≈ 45 Go | ≈ 780 Go (R2) |
+| Pic de synchronisation | 500 appareils entre 17 h et 20 h | Étalé par fuseaux (UTC+0 à UTC+3) |
+
+### 23.2 Mesures
+
+- Index composites `(pays_id, …)` ; requêtes de liste toujours paginées (curseur) ; pas de requête N+1 (tests de nombre de requêtes sur les routes principales).
+- Agrégats de pilotage précalculés par le worker dans le schéma `pilotage` (tables d'agrégats par jour, délégué, réseau) plutôt que calculés à la volée.
+- Synchronisation : réponses compressées (gzip/brotli), lots de 50 opérations, pages de 500 objets, champs limités au besoin du mobile.
+- Dimensionnement initial [R] `0.9.4`, ajusté selon les tests de charge : 2 instances du service web, 1 worker, 1 beat, base avec 4 Go de mémoire pour le pilote ; montée en puissance verticale de la base avant tout découpage.
+- Cibles : NFR-002 à NFR-004 du PRD.
+
+## 24. Disponibilité et continuité
+
+- Cible : 99,5 % de 6 h à 22 h, heure des pays, du lundi au samedi [H] (NFR-005).
+- Le mode hors connexion est la première mesure de continuité : une panne serveur de quelques heures n'empêche ni les visites ni la saisie des rapports.
+- Région unique (Francfort) ; reprise par PITR ou copie logique (RTO ≤ 4 h).
+- Plan de reprise documenté dans `deploy/README.md` : panne de l'API, de la base, de R2, d'Expo Push, de Cloudflare Pages ; procédure, responsable, communication aux utilisateurs.
+- Plan de repli d'hébergement : l'API est un conteneur Docker standard, redéployable sur un autre fournisseur à partir d'une copie logique (comme le serveur Hetzner de JUSTI GH) [R].
+
+## 25. Intégrations
+
+### 25.1 En version 1.0.0
+
+| Intégration | Sens | Mécanisme |
+|---|---|---|
+| BirdNotes | Entrant, ponctuel | Fichiers exportés → format d'import standard → module `imports` (section 26) |
+| Fichier d'organisation | Entrant | Import Excel au format du fichier d'organisation (ORG-014) |
+| Expo Push (FCM, APNs) | Sortant | API Expo Push |
+| Courriel transactionnel | Sortant | SMTP ou API du fournisseur |
+| Grafana | Lecture | Rôles PostgreSQL en lecture seule sur le schéma `pilotage` |
+| Sentry | Sortant | SDK |
+
+### 25.2 Grafana isolé par pays [D] Grafana ; [R] isolation `0.7.9`
+
+- Le schéma `pilotage` ne contient que des **vues et agrégats** (pas de texte libre de rapport, pas de coordonnées de prospect).
+- Une **organisation Grafana par pays** utilise une source de données connectée avec le rôle `innov_grafana_<pays>` ; les politiques RLS de ce rôle ne laissent voir que son pays.
+- L'organisation **siège** utilise `innov_grafana_siege`, qui ne lit que des vues agrégées par pays (sans nom de délégué) ; la descente nominative se fait dans le portail, où elle est auditée (DSH-004).
+- Comptes Grafana nominatifs, créés par l'administrateur technique sur demande de l'administrateur du siège ou pays [H].
+- Si HT-07 est faux, chaque pays dispose de vues filtrées dédiées et d'un utilisateur Grafana unique par pays sur ces vues.
+
+### 25.3 API publique
+
+Pas d'API publique en 1.0.0. L'API `/api/v1` est réservée aux clients INNOV CRM ; son schéma OpenAPI est la référence pour les intégrations futures.
+
+## 26. Migrations de données
+
+### 26.1 Schéma
+
+Migrations Django versionnées, relues, testées en préproduction, compatibles « étendre puis contracter » ; une migration de données volumineuse s'exécute en tâche worker par lots, jamais dans le pré-déploiement.
+
+### 26.2 Import BirdNotes et organisation
+
+```mermaid
+flowchart LR
+  SRC[Export BirdNotes<br/>ou fichier d'organisation] --> CONV[Conversion vers<br/>le format standard]
+  CONV --> LOT[(LotImport + LigneImport<br/>zone de transit)]
+  LOT --> SIM{Simulation}
+  SIM --> RAP[Rapport : créations,<br/>modifications, erreurs, doublons]
+  RAP -- validation admin pays --> APPLI[Application idempotente]
+  APPLI --> DED[Détecteur de doublons]
+  DED --> FILE[File des doublons probables]
+  APPLI --> AUDIT[(Audit)]
+```
+
+- Chaque ligne garde sa **clé source** (`source`, `id_source`) : un réimport met à jour au lieu de dupliquer.
+- La simulation n'écrit que dans la zone de transit.
+- Répétition complète à blanc en préproduction en `0.9.6`, puis exécution réelle avant le pilote.
+- Données de la phase test BirdNotes : seuls les prospects, établissements et éventuellement l'historique de visites utile sont repris (O-01) ; les comptes utilisateurs sont recréés.
+
+## 27. Risques techniques
+
+| ID | Risque | Impact | Réponse |
+|---|---|---|---|
+| RT-01 | Complexité de la synchronisation hors connexion pour un développeur seul | Élevé | Protocole simple (curseur + file idempotente), commandes plutôt que fusion de champs, tests de rejeu et de coupure dès `0.2.7` |
+| RT-02 | Oubli d'un filtre de périmètre | Critique | Trois couches (section 12), test de couverture des routes |
+| RT-03 | Limites de Render (rôles, extensions, PITR, taille) | Élevé | Vérifier HT-07 en `0.0.2` ; conteneurs standard pour pouvoir changer d'hébergeur |
+| RT-04 | Offre gratuite Render (base supprimée après 30 jours) utilisée trop longtemps | Élevé | Recette sur offre minimale persistante dès qu'elle contient des démonstrations importantes ; production payante obligatoire |
+| RT-05 | Revue Apple et publication iOS | Moyen | Builds de test (TestFlight) dès `0.2.8` ; compte développeur ouvert tôt |
+| RT-06 | Mises à jour d'Expo et de React Native | Moyen | Mise à niveau du SDK une fois par cycle au plus, jamais pendant le pilote |
+| RT-07 | Horloges des téléphones fausses | Moyen | Double horodatage, détection d'écart (section 14.6) |
+| RT-08 | Volume de l'audit et des visites à 17 pays | Moyen | Partitionnement, agrégats, purge et anonymisation |
+| RT-09 | Téléphones Android économiques (mémoire, stockage) | Moyen | Portée locale limitée (section 5.5), images compressées, tests sur appareils réels |
+| RT-10 | Grafana contourne les permissions applicatives | Élevé | Schéma `pilotage` agrégé, rôles par pays, RLS, pas de texte libre |
+| RT-11 | Dépendance à Expo Push | Faible | En cas de panne, le centre de notifications et la synchronisation restent fonctionnels |
+
+## 28. Décisions architecturales
+
+| ID | Décision | Statut | Justification |
+|---|---|---|---|
+| ADR-001 | Monolithe modulaire Django (modules aux frontières strictes), pas de microservices | [D] | Un seul développeur ; cohérence transactionnelle des décisions et de l'audit |
+| ADR-002 | Pile serveur et portail d'AMM GH : Django 5.2 + DRF + PostgreSQL + Redis + Celery ; React 19 + TypeScript + MUI | [D] | Pile maîtrisée et déjà exploitée seul |
+| ADR-003 | Base unique multi-pays, isolation par `pays_id` + moteur de périmètre + RLS PostgreSQL | [D] base unique et `pays_id` ; [R] RLS `0.0.4` | Consolidation siège simple ; défense en profondeur |
+| ADR-004 | Application mobile React Native + Expo (EAS Build, Update, Submit) | [D] | Android + iOS, TypeScript partagé, hors connexion fiable ; PWA écartée |
+| ADR-005 | Synchronisation par protocole maison (tirer par curseur, pousser une file idempotente de commandes) sur SQLite chiffrée | [R] `0.8.3` | Contrôle total des règles RG-050 à RG-054 |
+| ADR-006 | Identifiants UUID v7 générés par le créateur, y compris le téléphone | [R] `0.0.2` | Création hors connexion sans collision, ordre temporel |
+| ADR-007 | Hébergement Render (Francfort) + Cloudflare Pages + R2 ; offres payantes en production | [D] modèle ; [H] offres payantes | Modèle AMM ; continuité de l'exploitation |
+| ADR-008 | Authentification nominative, JWT court + rafraîchissement rotatif lié à l'appareil, TOTP pour les rôles sensibles | [D] méthode ; [R] mécanisme `0.0.3` | Exigences SEC-001 à SEC-004 |
+| ADR-009 | Journal d'audit append-only, écrit dans la transaction métier, chaîné par pays | [D] append-only ; [R] chaînage `0.9.2` | Preuve et non-répudiation |
+| ADR-010 | Aucune validation ni approbation automatique ; validation par lot limitée aux journées conformes | [D] | Objectif n° 1 |
+| ADR-011 | Commandes métier et machines à états définies au serveur, miroir TypeScript vérifié | [R] `0.2.1` | Une seule source de vérité des transitions |
+| ADR-012 | Schéma OpenAPI versionné → types TypeScript générés pour portail et mobile | [R] `0.0.1` | Pas de divergence de contrat |
+| ADR-013 | Dépôt unique (monorepo) avec espaces de travail npm | [R] `0.0.1` | Partage de types, de règles, de traductions, de jetons de design |
+| ADR-014 | Notifications par boîte d'envoi transactionnelle, Expo Push, regroupement ; courriel limité à la sécurité | [D] canaux ; [R] mécanisme `0.3.8` | Pas de saturation ; pas de notification sans action |
+| ADR-015 | Grafana sur schéma `pilotage` agrégé, une organisation et un rôle de base par pays | [D] Grafana ; [R] isolation `0.7.9` | DSH-010 |
+| ADR-016 | Pièces jointes sur R2 privé, URL signées courtes, clés sans donnée personnelle | [D] R2 ; [R] détails `0.5.5` | RPT-007 |
+| ADR-017 | Configuration par pays en données (`ParametrePays`, référentiels), jamais en code | [D] | Ouverture de pays sans développement |
+| ADR-018 | Versions `0.0.1`…`0.9.9` puis `1.0.0`, étiquettes `vX.Y.Z`, version affichée partout | [D] | Convention du cadrage |
+| ADR-019 | Internationalisation `fr`/`en` dès `0.0.1` (i18next, gettext Django) | [D] | DC-12 |
+| ADR-020 | Données fictives uniquement hors production ; générateur de pays de démonstration | [D] | Démonstration à tout moment, protection des données |
+
+Toute nouvelle décision structurante est ajoutée ici avec un nouveau numéro, et répercutée dans `architecture-essentials.md` si elle crée une règle non négociable.
+
+## 29. Évolutions prévues après la version 1.0.0
+
+| Évolution | Prérequis architectural déjà prévu |
+|---|---|
+| Ouverture des autres pays | Configuration par pays, isolation, formalités par pays |
+| WhatsApp Business pour l'escalade | Boîte d'envoi et préférences de notification |
+| Gestion des stocks d'échantillons | Remises déjà enregistrées par produit |
+| Notes de frais | Kilométrage déjà calculé |
+| Connexion avec comptes Microsoft 365 ou Google Workspace | Couche d'authentification isolée dans `identite` |
+| Intégration RH (absences) et ERP | Module `imports`, API versionnée |
+| Langues supplémentaires (arabe, portugais…) | Textes externalisés ; prévoir l'écriture de droite à gauche pour l'arabe |
+| Partitionnement avancé ou base par grande région | Colonne `pays_id` en tête des index et des clés de partition |
+| API pour partenaires ou BI externes | Schéma OpenAPI, schéma `pilotage` |
+| Application tablette dédiée | Code mobile React Native réutilisable |
