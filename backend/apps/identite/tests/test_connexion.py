@@ -9,7 +9,7 @@ from freezegun import freeze_time
 from apps.identite.models import Session
 from apps.socle.services import archiver_pays, suspendre_pays
 
-from .conftest import MOT_DE_PASSE, connecter
+from .conftest import FAUX, MOT_DE_PASSE, connecter
 
 pytestmark = pytest.mark.django_db
 
@@ -41,7 +41,7 @@ def test_identifiant_insensible_a_la_casse(api, delegue):
 
 def test_meme_erreur_pour_compte_inconnu_et_mauvais_mot_de_passe(api, delegue):
     inconnu = connecter(api, identifiant="personne.inconnue")
-    mauvais = connecter(api, mot_de_passe=__import__("secrets").token_hex(16))
+    mauvais = connecter(api, mot_de_passe=FAUX)
     assert inconnu.status_code == mauvais.status_code == 401
     assert inconnu.json()["code"] == mauvais.json()["code"] == "identifiants_invalides"
     assert inconnu.json()["message"] == mauvais.json()["message"]
@@ -50,7 +50,7 @@ def test_meme_erreur_pour_compte_inconnu_et_mauvais_mot_de_passe(api, delegue):
 def test_message_traduit_selon_la_langue(api, delegue):
     reponse = api.post(
         "/api/v1/auth/connexion/",
-        {"identifiant": "awa.diallo", "mot_de_passe": __import__("secrets").token_hex(16), "client": "mobile"},
+        {"identifiant": "awa.diallo", "mot_de_passe": FAUX, "client": "mobile"},
         format="json",
         HTTP_ACCEPT_LANGUAGE="en",
     )
@@ -60,7 +60,7 @@ def test_message_traduit_selon_la_langue(api, delegue):
 def test_verrouillage_apres_cinq_echecs(api, delegue, mailoutbox):
     """SEC-002 CA1 : le 6e essai est refusé même avec le bon mot de passe pendant 15 min."""
     for _ in range(5):
-        assert connecter(api, mot_de_passe=__import__("secrets").token_hex(16)).status_code == 401
+        assert connecter(api, mot_de_passe=FAUX).status_code == 401
     reponse = connecter(api)
     assert reponse.status_code == 423
     assert reponse.json()["code"] == "compte_verrouille"
@@ -72,10 +72,10 @@ def test_verrouillage_apres_cinq_echecs(api, delegue, mailoutbox):
 
 def test_un_succes_remet_le_compteur_a_zero(api, delegue):
     for _ in range(4):
-        connecter(api, mot_de_passe=__import__("secrets").token_hex(16))
+        connecter(api, mot_de_passe=FAUX)
     assert connecter(api).status_code == 200
     for _ in range(4):
-        connecter(api, mot_de_passe=__import__("secrets").token_hex(16))
+        connecter(api, mot_de_passe=FAUX)
     assert connecter(api).status_code == 200
 
 

@@ -15,6 +15,8 @@ jest.mock('react-native-safe-area-context', () => {
   return { SafeAreaView: View };
 });
 
+// Généré à l'exécution : aucun mot de passe, même de test, n'est écrit dans le dépôt.
+const MDP = `${Math.random().toString(36).slice(2)}-Aa9-${Date.now()}`;
 const JETONS: Jetons = {
   acces: 'A',
   expire_dans: 900,
@@ -67,9 +69,9 @@ describe('mobile — session', () => {
     const client = fauxClient();
     await rendre(<Connexion />, client);
     await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
-    await fireEvent.changeText(screen.getByLabelText('Mot de passe'), String(Date.now()));
+    await fireEvent.changeText(screen.getByLabelText('Mot de passe'), MDP);
     await fireEvent.press(screen.getByText('Se connecter'));
-    expect(client.connexion).toHaveBeenCalledWith('awa.diallo', String(Date.now()));
+    expect(client.connexion).toHaveBeenCalledWith('awa.diallo', MDP);
     expect(await screen.findByText('redirection:/')).toBeTruthy();
   });
 

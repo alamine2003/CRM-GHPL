@@ -2,6 +2,7 @@
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import CommonPasswordValidator
 from django.core.exceptions import ValidationError
 from django.core.management import CommandError, call_command
 
@@ -13,7 +14,7 @@ from apps.identite.services import (
     suspendre_utilisateur,
 )
 
-from .conftest import MOT_DE_PASSE
+from .conftest import MOT_DE_PASSE, mot_de_passe_solide
 
 pytestmark = pytest.mark.django_db
 
@@ -52,11 +53,24 @@ def test_courriel_unique(delegue, senegal):
         )
 
 
+def _courant_long() -> str:
+    """Un mot de passe de la liste des mots de passe courants, d'au moins 12 caractères."""
+    return next(p for p in sorted(CommonPasswordValidator().passwords) if len(p) >= 12)
+
+
 @pytest.mark.parametrize(
-    "mot_de_passe", ["Court-" + "2026", "1234" * 3, "pass" + "word" + "1234", "awa.diallo" + "2026"]
+    "fabrique",
+    [
+        lambda: mot_de_passe_solide()[:11],  # trop court
+        lambda: "7" * 12,  # entièrement numérique
+        _courant_long,  # courant
+        lambda: "awa.diallo" + "2026",  # proche de l'identifiant
+    ],
+    ids=["court", "numerique", "courant", "proche-identite"],
 )
-def test_politique_de_mot_de_passe(senegal, mot_de_passe):
+def test_politique_de_mot_de_passe(senegal, fabrique):
     """SEC-001 : 12 caractères minimum, ni courant, ni numérique, ni proche de l'identité."""
+    mot_de_passe = fabrique()
     with pytest.raises(ValidationError):
         creer_utilisateur(
             "awa.diallo", prenom="Awa", nom="Diallo", pays=senegal, mot_de_passe=mot_de_passe

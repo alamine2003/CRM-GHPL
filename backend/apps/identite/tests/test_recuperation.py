@@ -9,11 +9,11 @@ from freezegun import freeze_time
 
 from apps.identite.models import Session
 
-from .conftest import MOT_DE_PASSE, connecter
+from .conftest import FAUX, MOT_DE_PASSE, connecter, mot_de_passe_solide
 
 pytestmark = pytest.mark.django_db
 
-NOUVEAU = __import__("secrets").token_hex(16)
+NOUVEAU = mot_de_passe_solide()
 
 
 def _demander(api, identifiant="awa.diallo"):
@@ -61,7 +61,7 @@ def test_lien_a_usage_unique(api, delegue, mailoutbox):
     _demander(api)
     jeton = _jeton(mailoutbox[0])
     assert _reinitialiser(api, jeton).status_code == 204
-    reponse = _reinitialiser(api, jeton, __import__("secrets").token_hex(16))
+    reponse = _reinitialiser(api, jeton, mot_de_passe_solide())
     assert reponse.status_code == 400 and reponse.json()["code"] == "lien_invalide"
 
 
@@ -86,7 +86,7 @@ def test_nouveau_mot_de_passe_soumis_a_la_politique(api, delegue, mailoutbox):
 
 def test_reinitialisation_deverrouille_le_compte(api, delegue, mailoutbox):
     for _ in range(5):
-        connecter(api, mot_de_passe=__import__("secrets").token_hex(16))
+        connecter(api, mot_de_passe=FAUX)
     assert connecter(api).status_code == 423
     _demander(api)
     _reinitialiser(api, _jeton(mailoutbox[-1]))
@@ -97,7 +97,7 @@ def test_changement_de_mot_de_passe_connecte(api, delegue):
     api.credentials(HTTP_AUTHORIZATION=f"Bearer {connecter(api).json()['acces']}")
     faux = api.post(
         "/api/v1/auth/mot-de-passe/changement/",
-        {"actuel": "faux", "nouveau": NOUVEAU},
+        {"actuel": FAUX, "nouveau": NOUVEAU},
         format="json",
     )
     assert faux.json()["code"] == "mot_de_passe_incorrect"

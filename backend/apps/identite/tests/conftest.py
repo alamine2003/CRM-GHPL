@@ -1,10 +1,19 @@
+import secrets
+
 import pytest
 from rest_framework.test import APIClient
 
 from apps.identite.services import creer_utilisateur
 from apps.socle.services import creer_pays
 
-MOT_DE_PASSE = __import__("secrets").token_hex(16)
+
+def mot_de_passe_solide() -> str:
+    """Généré à l'exécution : aucun mot de passe, même de test, n'est écrit dans le dépôt."""
+    return f"{secrets.token_urlsafe(12)}-Aa9"
+
+
+MOT_DE_PASSE = mot_de_passe_solide()
+FAUX = mot_de_passe_solide()
 
 
 @pytest.fixture

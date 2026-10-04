@@ -16,6 +16,9 @@ const AWA: Moi = {
   pays_principal: { code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' },
   est_siege: false,
 };
+// Généré à l'exécution : aucun mot de passe, même de test, n'est écrit dans le dépôt.
+const MDP = `${Math.random().toString(36).slice(2)}-Aa9-${Date.now()}`;
+const NOUVEAU = `${Math.random().toString(36).slice(2)}-Bb8-${Date.now()}`;
 const JETONS: Jetons = { acces: 'A', expire_dans: 900, rafraichissement: null, utilisateur: AWA };
 
 function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
@@ -80,10 +83,10 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
     const client = fauxClient();
     rendre(client);
     await saisir(/Identifiant/, 'awa.diallo');
-    await saisir(/^Mot de passe/, String(Date.now()));
+    await saisir(/^Mot de passe/, MDP);
     fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
     expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
-    expect(client.connexion).toHaveBeenCalledWith('awa.diallo', String(Date.now()));
+    expect(client.connexion).toHaveBeenCalledWith('awa.diallo', MDP);
     fireEvent.click(screen.getByRole('button', { name: 'Se déconnecter' }));
     expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeInTheDocument();
     expect(client.deconnexion).toHaveBeenCalled();
@@ -149,7 +152,7 @@ describe('portail — récupération d’accès (USR-005)', () => {
   it('refuse deux mots de passe différents sans appeler le serveur', async () => {
     const client = fauxClient();
     rendre(client, '/reinitialisation?jeton=abc');
-    await saisir(/^Nouveau mot de passe/, String(Date.now()));
+    await saisir(/^Nouveau mot de passe/, NOUVEAU);
     await saisir(/^Confirmez le mot de passe/, 'Autre-Chose-Encore');
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('ne correspondent pas');
@@ -159,11 +162,11 @@ describe('portail — récupération d’accès (USR-005)', () => {
   it('enregistre le nouveau mot de passe avec le jeton du lien', async () => {
     const client = fauxClient();
     rendre(client, '/reinitialisation?jeton=abc');
-    await saisir(/^Nouveau mot de passe/, String(Date.now()));
-    await saisir(/^Confirmez le mot de passe/, String(Date.now()));
+    await saisir(/^Nouveau mot de passe/, NOUVEAU);
+    await saisir(/^Confirmez le mot de passe/, NOUVEAU);
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
     expect(await screen.findByText(/Mot de passe enregistré/)).toBeInTheDocument();
-    expect(client.reinitialiser).toHaveBeenCalledWith('abc', String(Date.now()));
+    expect(client.reinitialiser).toHaveBeenCalledWith('abc', NOUVEAU);
   });
 
   it('signale un lien incomplet', async () => {

@@ -44,7 +44,7 @@ describe('client mobile', () => {
       stockage,
       fetch: appel,
     });
-    await client.connexion('awa.diallo', 'secret');
+    await client.connexion('awa.diallo', `${Date.now()}`);
     expect(stockage.valeur).toBe('R1');
     expect(client.estConnecte()).toBe(true);
     const [, init] = appel.mock.calls[0] as unknown as [string, RequestInit];

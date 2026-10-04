@@ -4,6 +4,7 @@ Les autres modules et les vues passent par ces fonctions (architecture §7.2).
 L'audit de ces actions (AUD-001) sera ajouté en 0.0.8.
 """
 
+import secrets
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -23,8 +24,8 @@ from apps.socle.models import Pays
 from . import courriels
 from .models import JetonReinitialisation, Session, Utilisateur, empreinte, nouveau_jeton
 
-# Empreinte factice : vérifier un mot de passe prend le même temps, que le compte existe ou non.
-_EMPREINTE_FACTICE = make_password(None)
+# Empreinte aléatoire : vérifier un mot de passe prend le même temps, que le compte existe ou non.
+_EMPREINTE_FACTICE = make_password(secrets.token_urlsafe(32))
 
 
 def _reglage(cle):
