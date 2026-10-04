@@ -14,6 +14,9 @@ import {
 } from 'react-native';
 import { police } from './polices';
 
+/** Monogramme de la marque, identique dans toutes les langues. */
+const MONOGRAMME = 'IC';
+
 export function usePalette() {
   return useColorScheme() === 'dark' ? paletteSombre : paletteClaire;
 }
@@ -60,7 +63,7 @@ export function Logo({ taille = 40 }: { taille?: number }) {
       }}
     >
       <Text style={{ color: '#FFFFFF', fontFamily: police.titreFort, fontSize: taille * 0.4 }}>
-        IC
+        {MONOGRAMME}
       </Text>
     </View>
   );

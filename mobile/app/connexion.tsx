@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Alerte, Bouton, Champ, Logo, Texte, usePalette } from '../src/composants';
+import { PastilleDemonstration } from '../src/Demonstration';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 
@@ -99,6 +100,7 @@ export default function Connexion() {
               <Text style={styles.organisation}>{t('marque.organisation')}</Text>
             </View>
           </View>
+          <PastilleDemonstration />
           <Text style={styles.bienvenue}>{t('mobile.bienvenue')}</Text>
           <Text style={styles.accroche}>{t('mobile.sousTitreConnexion')}</Text>
         </View>

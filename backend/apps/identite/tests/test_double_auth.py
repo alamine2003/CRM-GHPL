@@ -7,6 +7,7 @@ from apps.identite import double_auth
 from apps.identite.models import Role, Session
 from apps.identite.services import attribuer_role
 from apps.perimetre.tests.conftest import client_de
+from apps.perimetre.tests.test_matrice import COMPTE_PAR_ROLE
 
 from .conftest import MOT_DE_PASSE, connecter
 
@@ -31,6 +32,28 @@ def code_actuel(utilisateur, decalage=0):
 def activer(utilisateur):
     double_auth.initialiser(utilisateur)
     return double_auth.activer(utilisateur, code_actuel(utilisateur))
+
+
+# prd.md SEC-003 : rôles pour lesquels la double authentification est obligatoire.
+ROLES_SENSIBLES_PRD = {
+    "admin_siege", "direction_siege", "responsable_pays", "admin_pays", "df", "dm",
+}  # fmt: skip
+
+
+@pytest.mark.parametrize("role", list(COMPTE_PAR_ROLE))
+def test_chaque_role_sensible_est_bloque_sans_double_auth(monde, role):
+    """SEC-003 CA1, pour chacun des six rôles du PRD ; les autres rôles passent."""
+    from apps.identite.double_auth import ROLES_DOUBLE_AUTH
+
+    assert {str(r) for r in ROLES_DOUBLE_AUTH} == ROLES_SENSIBLES_PRD
+    compte = monde[COMPTE_PAR_ROLE[role]]
+    pays = "SN" if role in {"admin_siege", "direction_siege"} else None
+    reponse = client_de(compte, pays, double_auth=False).get("/api/v1/auth/perimetre/")
+    if role in ROLES_SENSIBLES_PRD:
+        assert reponse.status_code == 403
+        assert reponse.json()["code"] == "double_authentification_requise"
+    else:
+        assert reponse.status_code == 200, (role, reponse.status_code)
 
 
 def test_un_role_sensible_sans_double_auth_n_accede_a_aucune_donnee(api, admin_pays):

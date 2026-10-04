@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarreOnglets } from './BarreOnglets';
+import { PastilleDemonstration } from './Demonstration';
 import { usePalette } from './composants';
 import { police } from './polices';
 import { useSession } from './session';
@@ -36,6 +37,7 @@ export function Ecran({
   return (
     <View style={{ flex: 1, backgroundColor: p.fond }}>
       <View style={[styles.entete, { paddingTop: marges.top + 18 }]}>
+        <PastilleDemonstration />
         {surTitre && <Text style={styles.surTitre}>{surTitre}</Text>}
         <Text accessibilityRole="header" style={styles.titre}>
           {titre}

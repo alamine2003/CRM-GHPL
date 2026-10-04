@@ -69,6 +69,11 @@ def test_le_siege_designe_un_responsable_et_garde_l_historique(monde):
     responsables = [(r["role"], r["actif"]) for r in historique if r["role"] == "responsable_pays"]
     assert sorted(responsables) == [("responsable_pays", False), ("responsable_pays", True)]
     assert designation["debut"] is not None
+    # CA2 : chaque désignation garde son auteur et ses dates, y compris celle qui a pris fin.
+    passee = next(r for r in historique if r["id"] == str(ancien.id))
+    assert passee["fin"] is not None and passee["retire_par"] == monde["ada.siege"].username
+    nouvelle = next(r for r in historique if r["id"] == designation["id"])
+    assert nouvelle["attribue_par"] == monde["ada.siege"].username and nouvelle["fin"] is None
 
 
 def test_un_role_de_pays_porte_sur_le_pays_du_compte(monde):

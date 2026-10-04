@@ -21,7 +21,8 @@
     "tous": "All",
     "copie": "Copied",
     "voir": "View",
-    "enregistre": "Change saved."
+    "enregistre": "Change saved.",
+    "versionCourte": "v{{version}}"
   },
   "accueil": {
     "titre": "Welcome",
@@ -149,7 +150,10 @@
       "pilotage": "Analytics",
       "mobilite": "Mobility",
       "production": "Production"
-    }
+    },
+    "cycleTermine": "Cycle {{numero}} complete",
+    "prochain": "Next: cycle {{numero}} · {{nom}}",
+    "versionsDuCycle": "Cycle {{numero}} versions"
   },
   "profil": {
     "titre": "My account",
@@ -184,7 +188,8 @@
       "deverrouiller": "Unlock",
       "invite": "Unlock INNOV CRM",
       "sansProtection": "This phone has no passcode or biometrics: sign in again."
-    }
+    },
+    "identifiantInstallation": "ID"
   },
   "roles": {
     "titre": "Roles",
@@ -548,7 +553,8 @@
     "suivant": "Next",
     "activee": "Two-step verification is on.",
     "desactivee": "Two-step verification is off.",
-    "codeActuel": "Current app code"
+    "codeActuel": "Current app code",
+    "qrAlt": "QR code to scan with the authenticator app"
   },
   "sessionsPage": {
     "titre": "Open sessions",
@@ -578,5 +584,17 @@
       "double_auth_codes_secours": "New backup codes",
       "appareil_revocation": "Phone revoked"
     }
+  },
+  "apparence": {
+    "titre": "Appearance",
+    "clair": "Light",
+    "sombre": "Dark",
+    "systeme": "System",
+    "aide": "“System” follows your computer setting. This choice is remembered on this browser.",
+    "basculer": "Change appearance"
+  },
+  "demonstration": {
+    "bandeau": "Demo",
+    "texte": "Fictitious data: no real people or institutions."
   }
 }

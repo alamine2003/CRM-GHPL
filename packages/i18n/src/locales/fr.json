@@ -21,7 +21,8 @@
     "tous": "Tous",
     "copie": "Copié",
     "voir": "Voir",
-    "enregistre": "Modification enregistrée."
+    "enregistre": "Modification enregistrée.",
+    "versionCourte": "v{{version}}"
   },
   "accueil": {
     "titre": "Bienvenue",
@@ -149,7 +150,10 @@
       "pilotage": "Pilotage",
       "mobilite": "Mobilité",
       "production": "Production"
-    }
+    },
+    "cycleTermine": "Cycle {{numero}} terminé",
+    "prochain": "Prochain : cycle {{numero}} · {{nom}}",
+    "versionsDuCycle": "Versions du cycle {{numero}}"
   },
   "profil": {
     "titre": "Mon compte",
@@ -184,7 +188,8 @@
       "deverrouiller": "Déverrouiller",
       "invite": "Déverrouiller INNOV CRM",
       "sansProtection": "Ce téléphone n'a ni code ni biométrie : reconnectez-vous."
-    }
+    },
+    "identifiantInstallation": "Identifiant"
   },
   "roles": {
     "titre": "Rôles",
@@ -548,7 +553,8 @@
     "suivant": "Suivant",
     "activee": "Double authentification activée.",
     "desactivee": "Double authentification désactivée.",
-    "codeActuel": "Code actuel de l'application"
+    "codeActuel": "Code actuel de l'application",
+    "qrAlt": "QR code à scanner avec l'application d'authentification"
   },
   "sessionsPage": {
     "titre": "Sessions ouvertes",
@@ -578,5 +584,17 @@
       "double_auth_codes_secours": "Nouveaux codes de secours",
       "appareil_revocation": "Téléphone révoqué"
     }
+  },
+  "apparence": {
+    "titre": "Apparence",
+    "clair": "Clair",
+    "sombre": "Sombre",
+    "systeme": "Système",
+    "aide": "« Système » suit le réglage de votre ordinateur. Ce choix est mémorisé sur ce navigateur.",
+    "basculer": "Changer d'apparence"
+  },
+  "demonstration": {
+    "bandeau": "Démonstration",
+    "texte": "Données fictives : aucune personne ni aucun établissement réels."
   }
 }

@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChoixLangue from './ChoixLangue';
 import Logo from './Logo';
+import BandeauDemonstration from './BandeauDemonstration';
 
 const ATOUTS = ['planifier', 'visiter', 'valider'] as const;
 
@@ -96,6 +97,7 @@ export default function EcranPublic({ titre, children }: { titre: string; childr
           <ChoixLangue />
         </Box>
         <Card sx={{ width: '100%', maxWidth: 420 }}>
+          <BandeauDemonstration />
           <CardContent sx={{ p: { xs: 2.5, sm: 4 }, '&:last-child': { pb: { xs: 2.5, sm: 4 } } }}>
             <Typography variant="h5" component="h1" sx={{ mb: 2.5 }}>
               {titre}

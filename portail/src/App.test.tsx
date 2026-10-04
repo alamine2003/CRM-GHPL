@@ -11,8 +11,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router';
+import axe from 'axe-core';
 import App from './App';
 import i18n from './i18n';
+import { ecrireApparence, lireApparence } from './preferences';
 import { FournisseurSession } from './session';
 
 const AWA: Moi = {
@@ -155,6 +157,18 @@ function rendre(client: ClientApi, chemin = '/') {
   );
 }
 
+/** Contrôles d'accessibilité automatiques (WCAG 2.1 A et AA) ; le contraste, que jsdom
+ * ne sait pas calculer, est vérifié à part dans le thème. */
+async function violationsAccessibilite(conteneur: Element) {
+  const resultat = await axe.run(conteneur, {
+    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
+    rules: { 'color-contrast': { enabled: false } },
+  });
+  return resultat.violations.map(
+    (v) => `${v.id} : ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+  );
+}
+
 async function saisir(libelle: RegExp | string, valeur: string) {
   fireEvent.change(await screen.findByLabelText(libelle), { target: { value: valeur } });
 }
@@ -173,7 +187,8 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
     rendre(fauxClient({ reprendre: vi.fn(async () => JETONS) }));
     expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
     expect(screen.getAllByText('Sénégal').length).toBeGreaterThan(0);
-    expect(screen.getByText(/^Cycle 0\.\d · /)).toBeInTheDocument();
+    // Étape en cours (« Cycle 0.1 · Référentiel ») ou cycle terminé (« Cycle 0.0 terminé »).
+    expect(screen.getByText(/^Cycle 0\.\d( · | terminé)/)).toBeInTheDocument();
     expect(screen.getByText('Délégué')).toBeInTheDocument();
     expect(await screen.findByText('Service disponible')).toBeInTheDocument();
   });
@@ -249,6 +264,12 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Bonjour Awa' })).not.toBeInTheDocument();
     expect(client.perimetre).not.toHaveBeenCalled();
+  });
+
+  it('l’écran de connexion ne présente aucune violation d’accessibilité détectable', async () => {
+    const { container } = rendre(fauxClient());
+    await screen.findByRole('heading', { name: 'Connexion' });
+    expect(await violationsAccessibilite(container)).toEqual([]);
   });
 
   it('affiche ou masque le mot de passe', async () => {
@@ -641,6 +662,16 @@ describe('portail — administration 0.0.6 (USR-003, USR-004, USR-006, ORG-011)'
       expect(modifierParametre).toHaveBeenCalledWith('SN', 'distance_pointage_m', 300),
     );
   });
+
+  it.each(['/', '/equipe', '/profil', '/organisation'])(
+    'la page %s ne présente aucune violation d’accessibilité détectable',
+    async (chemin) => {
+      const { container } = rendre(clientAdmin(), chemin);
+      await screen.findByRole('heading', { level: 1 });
+      await act(async () => new Promise((r) => setTimeout(r, 50)));
+      expect(await violationsAccessibilite(container)).toEqual([]);
+    },
+  );
 });
 
 vi.mock('./signalement', () => ({
@@ -756,5 +787,50 @@ describe('portail — erreurs et exploitation (0.0.7)', () => {
     expect(await screen.findByText('Référence : ref1234567')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
     await vi.waitFor(() => expect(utilisateurs).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('portail — démonstration et apparence (0.0.9)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const INFOS = {
+    produit: 'INNOV CRM',
+    version: '0.0.9',
+    langue: 'fr',
+    message: '',
+    langues: [],
+  };
+
+  it('une instance de démonstration l’annonce sur chaque écran (DEM-001)', async () => {
+    rendre(
+      fauxClient({
+        informations: vi.fn(async () => ({ ...INFOS, environnement: 'demonstration' })),
+      }),
+    );
+    expect(await screen.findByText('Démonstration')).toBeInTheDocument();
+    expect(screen.getByText(/Données fictives/)).toBeInTheDocument();
+  });
+
+  it('la production n’affiche pas le bandeau de démonstration', async () => {
+    rendre(
+      fauxClient({
+        reprendre: vi.fn(async () => JETONS),
+        informations: vi.fn(async () => ({ ...INFOS, environnement: 'production' })),
+      }),
+    );
+    await screen.findByRole('heading', { name: 'Bonjour Awa' });
+    await act(async () => new Promise((r) => setTimeout(r, 20)));
+    expect(screen.queryByText('Démonstration')).not.toBeInTheDocument();
+  });
+
+  it('l’apparence choisie est mémorisée sur ce navigateur, « système » par défaut', () => {
+    ecrireApparence('systeme');
+    expect(lireApparence()).toBe('systeme');
+    ecrireApparence('sombre');
+    expect(lireApparence()).toBe('sombre');
+    ecrireApparence('systeme');
+    expect(lireApparence()).toBe('systeme');
   });
 });

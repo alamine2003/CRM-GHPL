@@ -7,6 +7,7 @@ import Accueil from '../app/index';
 import Profil from '../app/profil';
 import { FournisseurSession } from '../src/FournisseurSession';
 import i18n from '../src/i18n';
+import { oublierEnvironnement } from '../src/Demonstration';
 import { DELAI_VERROU_MS, horloge, Verrou } from '../src/Verrou';
 
 jest.mock('expo-constants', () => ({ expoConfig: { version: '0.0.3', extra: {} } }));
@@ -77,6 +78,7 @@ function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
     }),
     deconnexion: jest.fn(async () => undefined),
     demanderReinitialisation: jest.fn(async () => undefined),
+    informations: jest.fn(async () => ({ environnement: 'test' })),
     ...surcharges,
   } as unknown as ClientApi;
 }
@@ -91,6 +93,7 @@ describe('mobile — session', () => {
   });
   afterEach(() => {
     jest.restoreAllMocks();
+    oublierEnvironnement();
   });
 
   it('sans session enregistrée, l’accueil renvoie vers la connexion', async () => {
@@ -173,6 +176,16 @@ describe('mobile — session', () => {
     await fireEvent.press(screen.getByText('Déverrouiller'));
     expect(await screen.findByText('Bonjour Awa')).toBeTruthy();
     expect(authentifier).toHaveBeenCalledTimes(2);
+  });
+
+  it('signale une instance de démonstration dès l’écran de connexion (DEM-001)', async () => {
+    await rendre(
+      <Connexion />,
+      fauxClient({
+        informations: jest.fn(async () => ({ environnement: 'demonstration' })),
+      } as unknown as Partial<ClientApi>),
+    );
+    expect(await screen.findByText('Démonstration')).toBeTruthy();
   });
 
   it('affiche le message traduit du serveur en cas de refus', async () => {

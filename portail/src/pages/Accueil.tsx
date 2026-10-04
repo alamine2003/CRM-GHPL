@@ -1,6 +1,6 @@
 import type { Moi, MonOrganisation, Perimetre } from '@innov/api-client';
 import { marque } from '@innov/design';
-import { avancement } from '@innov/domaine';
+import { avancement, CYCLES } from '@innov/domaine';
 import CloudDoneRounded from '@mui/icons-material/CloudDoneRounded';
 import CloudOffRounded from '@mui/icons-material/CloudOffRounded';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
@@ -8,6 +8,8 @@ import BadgeRounded from '@mui/icons-material/BadgeRounded';
 import MapRounded from '@mui/icons-material/MapRounded';
 import PersonOffRounded from '@mui/icons-material/PersonOffRounded';
 import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
+import CheckRounded from '@mui/icons-material/CheckRounded';
+import EmojiEventsRounded from '@mui/icons-material/EmojiEventsRounded';
 import RouteRounded from '@mui/icons-material/RouteRounded';
 import SupervisorAccountRounded from '@mui/icons-material/SupervisorAccountRounded';
 import {
@@ -20,6 +22,7 @@ import {
   Divider,
   LinearProgress,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -36,13 +39,21 @@ function FeuilleDeRoute() {
   const { t } = useTranslation();
   const a = avancement(VERSION_CLIENT);
   const pourcentage = Math.round((a.livrees / a.total) * 100);
+  const termine = !a.stable && a.etape === 9;
+  const suivant = !a.stable && a.cycle !== null ? CYCLES[a.cycle + 1] : undefined;
   return (
     <Card>
       <EnTeteCarte
         titre={t('feuilleRoute.titre')}
-        action={<Chip size="small" color="secondary" label={`v${a.version}`} />}
+        action={
+          <Chip
+            size="small"
+            color="secondary"
+            label={t('commun.versionCourte', { version: a.version })}
+          />
+        }
       />
-      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.25 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <Box
             sx={{
@@ -51,28 +62,82 @@ function FeuilleDeRoute() {
               borderRadius: 2.5,
               display: 'grid',
               placeItems: 'center',
-              bgcolor: 'secondary.main',
+              bgcolor: termine ? 'success.main' : 'secondary.main',
               color: '#FFFFFF',
               flex: 'none',
             }}
           >
-            <RouteRounded />
+            {termine ? <EmojiEventsRounded /> : <RouteRounded />}
           </Box>
           <Box>
             <Typography sx={{ fontWeight: 700 }}>
               {a.stable
                 ? t('feuilleRoute.stable')
-                : t('feuilleRoute.cycle', {
-                    numero: `0.${a.cycle}`,
-                    nom: t(`feuilleRoute.cycles.${a.codeCycle}`),
-                  })}
+                : termine
+                  ? t('feuilleRoute.cycleTermine', { numero: `0.${a.cycle}` })
+                  : t('feuilleRoute.cycle', {
+                      numero: `0.${a.cycle}`,
+                      nom: t(`feuilleRoute.cycles.${a.codeCycle}`),
+                    })}
             </Typography>
             {!a.stable && (
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {t('feuilleRoute.etape', { etape: a.etape })}
+                {termine && suivant
+                  ? t('feuilleRoute.prochain', {
+                      numero: `0.${(a.cycle ?? 0) + 1}`,
+                      nom: t(`feuilleRoute.cycles.${suivant}`),
+                    })
+                  : t('feuilleRoute.etape', { etape: a.etape })}
               </Typography>
             )}
           </Box>
+        </Stack>
+        {!a.stable && (
+          <Box
+            role="img"
+            aria-label={`${t('feuilleRoute.versionsDuCycle', { numero: `0.${a.cycle}` })} : ${t('feuilleRoute.etape', { etape: a.etape })}`}
+            sx={{ display: 'grid', gridTemplateColumns: 'repeat(9, 1fr)', gap: 0.5 }}
+          >
+            {Array.from({ length: 9 }, (_, i) => (
+              <Box
+                key={i}
+                sx={{
+                  height: 8,
+                  borderRadius: 4,
+                  bgcolor:
+                    i + 1 < (a.etape ?? 0)
+                      ? 'secondary.main'
+                      : i + 1 === a.etape
+                        ? termine
+                          ? 'success.main'
+                          : 'secondary.light'
+                        : 'action.hover',
+                }}
+              />
+            ))}
+          </Box>
+        )}
+        <Stack direction="row" sx={{ gap: 0.5, flexWrap: 'wrap' }}>
+          {CYCLES.map((code, i) => {
+            const fait = a.stable || i < (a.cycle ?? 0) || (termine && i === a.cycle);
+            const courant = !a.stable && !termine && i === a.cycle;
+            return (
+              <Tooltip key={code} title={t(`feuilleRoute.cycles.${code}`)}>
+                <Chip
+                  size="small"
+                  label={`0.${i}`}
+                  color={fait ? 'secondary' : 'default'}
+                  variant={fait ? 'filled' : 'outlined'}
+                  icon={fait ? <CheckRounded /> : undefined}
+                  sx={{
+                    fontWeight: 700,
+                    ...(courant && { borderColor: 'secondary.main', borderWidth: 2 }),
+                    ...(!fait && !courant && { color: 'text.secondary' }),
+                  }}
+                />
+              </Tooltip>
+            );
+          })}
         </Stack>
         <Box>
           <LinearProgress

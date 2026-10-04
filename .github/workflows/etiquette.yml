@@ -1,0 +1,32 @@
+name: Étiquette de version
+
+# Chaque version est étiquetée vX.Y.Z dans le dépôt (prd.md §23) : à la fusion sur main,
+# l'étiquette de la version de VERSION est posée si elle n'existe pas encore.
+on:
+  push:
+    branches: [main]
+    paths: [VERSION]
+
+permissions:
+  contents: write
+
+jobs:
+  etiqueter:
+    name: Poser l'étiquette
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Vérifier la convention et étiqueter
+        run: |
+          ./scripts/verifier_version.sh
+          version="v$(tr -d '[:space:]' < VERSION)"
+          if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
+            echo "L'étiquette $version existe déjà."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$version" -m "INNOV CRM $version"
+          git push origin "$version"

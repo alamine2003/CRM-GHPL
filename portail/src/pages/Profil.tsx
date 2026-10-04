@@ -1,6 +1,7 @@
 import type { Moi, Perimetre } from '@innov/api-client';
 import { LANGUES } from '@innov/i18n';
 import LockRounded from '@mui/icons-material/LockRounded';
+import PaletteRounded from '@mui/icons-material/PaletteRounded';
 import TranslateRounded from '@mui/icons-material/TranslateRounded';
 import {
   Alert,
@@ -21,6 +22,7 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EnTeteCarte, EnTetePage, Ligne, PastilleIcone } from '../composants/Elements';
 import { initiales } from '../composants/initiales';
+import { ChoixApparence } from '../composants/Apparence';
 import { CarteActivite, CarteDoubleAuth, CarteSessions } from '../composants/SecuriteCompte';
 import { messageErreur, useSession } from '../contexteSession';
 
@@ -124,6 +126,18 @@ export default function Profil({
               </ToggleButtonGroup>
               <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1.5 }}>
                 {t('profilPage.langueAide')}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <EnTeteCarte
+              titre={t('apparence.titre')}
+              action={<PastilleIcone icone={<PaletteRounded />} ton="info" taille={32} />}
+            />
+            <CardContent>
+              <ChoixApparence />
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1.5 }}>
+                {t('apparence.aide')}
               </Typography>
             </CardContent>
           </Card>

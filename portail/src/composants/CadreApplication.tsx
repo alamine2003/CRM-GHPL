@@ -31,6 +31,8 @@ import { initiales } from './initiales';
 import Logo from './Logo';
 import { ENTREES, type Entree } from './navigation';
 import SelecteurPays from './SelecteurPays';
+import { BasculeApparence } from './Apparence';
+import BandeauDemonstration from './BandeauDemonstration';
 
 function EntreeNavigation({
   entree: { cle, icone, chemin, version },
@@ -303,6 +305,7 @@ export default function CadreApplication({
         </Drawer>
       )}
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+        <BandeauDemonstration />
         <Box
           component="header"
           sx={{
@@ -334,6 +337,7 @@ export default function CadreApplication({
           </Typography>
           <SelecteurPays perimetre={perimetre} />
           <ChoixLangue />
+          <BasculeApparence />
           <MenuUtilisateur utilisateur={utilisateur} />
         </Box>
         <BanniereHorsLigne />

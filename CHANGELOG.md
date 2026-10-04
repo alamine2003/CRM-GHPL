@@ -2,6 +2,43 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.0.9] — Stabilisation et démonstration du cycle 0.0 ; design enrichi
+
+Neuvième et dernier jalon du cycle 0.0 « Fondations ».
+
+### Recette du cycle
+
+- **Matrice de recette** [`recette-0.0.md`](recette-0.0.md) : chaque critère d'acceptation des 23 exigences du cycle est relié au test qui le prouve, avec son statut (couvert, partiel faute de la fonction d'un cycle suivant, reporté).
+- **Trous comblés** :
+  - audit des affectations, retraits et transferts (ORG-009 CA3) ;
+  - audit de la réinitialisation par l'administrateur (USR-005 CA2) ;
+  - matrice rôle × action complète : 9 rôles × 14 actions (USR-002 CA1) ;
+  - double authentification vérifiée pour chacun des 6 rôles sensibles du PRD (SEC-003 CA1) ;
+  - auteur et dates de l'historique des désignations (ORG-002 CA2) ;
+  - création puis lecture d'un pays par l'API (ORG-001 CA1 et CA3) ;
+  - HTTPS imposé en production et analyse de secrets de la CI (SEC-007) ;
+  - comptes, mots de passe, appareils, sessions et verrouillage audités (AUD-001 CA1).
+- **Traçabilité automatique** : un test échoue si une exigence livrée (version ≤ `VERSION`) n'est citée par aucun test.
+
+### Stabilisation
+
+- **Aucun texte codé en dur** (USR-004 CA2) : une règle ESLint bloque tout texte affiché ou libellé écrit en dur dans le portail et le mobile ; un test vérifie que chaque clé `t('…')` utilisée existe dans le catalogue.
+- **Accessibilité** : analyse automatique axe-core (WCAG 2.1 A et AA) de la connexion, de l'accueil, d'Équipe, de Mon profil et d'Organisation.
+- **Chargement plus léger du portail** : les pages d'administration et le générateur de QR code se chargent à la demande ; le paquet initial passe sous le seuil d'alerte.
+- **Étiquette de version** : à la fusion sur `main`, la CI pose l'étiquette `vX.Y.Z` de la version (prd.md §23).
+
+### Démonstration (DEM-001)
+
+- **Bandeau « Démonstration — données fictives »** sur chaque écran du portail et pastille sur le mobile, quand le serveur tourne en `ENVIRONNEMENT=demonstration` : une capture d'écran ne peut pas passer pour la production.
+- **Scénario de démonstration de fin de cycle** : [`demonstration-0.0.md`](demonstration-0.0.md) (déroulé par rôle, exigences montrées).
+- `reinitialiser_demo` signale les comptes qui devront activer la double authentification.
+
+### Design
+
+- **Apparence** : clair, sombre ou réglage du système, depuis Mon profil ou d'un clic dans la barre supérieure ; le choix est mémorisé sur le navigateur.
+- **Avancement du produit** : frise des dix cycles et des neuf versions du cycle en cours ; « Cycle 0.0 terminé », prochain cycle annoncé.
+- Chargement des pages : squelettes à la place d'un écran vide.
+
 ## [0.0.8] — Double authentification, sessions, journal d'audit immuable ; design enrichi
 
 Huitième jalon du cycle 0.0 « Fondations ».

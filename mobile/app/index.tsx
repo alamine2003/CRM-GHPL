@@ -43,7 +43,9 @@ export default function Accueil() {
             </View>
           )}
           <View style={styles.progression}>
-            <Text style={styles.progressionTexte}>v{a.version}</Text>
+            <Text style={styles.progressionTexte}>
+              {t('commun.versionCourte', { version: a.version })}
+            </Text>
             <View style={styles.piste}>
               <View
                 style={[styles.barre, { width: `${Math.max(4, (a.livrees / a.total) * 100)}%` }]}

@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.demonstration.generateur import Generateur, Volumes, vider
+from apps.identite.double_auth import ROLES_DOUBLE_AUTH
 
 ENVIRONNEMENTS_PERMIS = {"developpement", "demonstration", "test"}
 
@@ -47,7 +48,13 @@ class Command(BaseCommand):
             details = ", ".join(f"{v} {k}" for k, v in chiffres.items())
             self.stdout.write(f"  {code} : {details}")
         self.stdout.write("Comptes (même mot de passe pour tous) :")
+        sensibles = {str(r) for r in ROLES_DOUBLE_AUTH}
         for role, identifiant in bilan.comptes.items():
-            self.stdout.write(f"  {role:<26} {identifiant}")
+            marque = " *" if role.split(" ")[0] in sensibles else ""
+            self.stdout.write(f"  {role:<26} {identifiant}{marque}")
+        self.stdout.write(
+            "  * double authentification à activer à la première connexion (SEC-003) : "
+            "prévoir un téléphone avec une application d'authentification."
+        )
         if "INNOV_DEMO_MOT_DE_PASSE" not in os.environ:
             self.stdout.write(f"Mot de passe tiré au hasard : {mot_de_passe}")

@@ -1,4 +1,4 @@
-"""USR-002 CA1 : chaque cellule de la matrice prd.md §6.3 couverte par un test."""
+"""USR-002 CA1 : chaque cellule de la matrice prd.md §6.3 (rôle × action) couverte par un test."""
 
 import pytest
 
@@ -88,7 +88,37 @@ REQUETES = {
         {"identifiant": "nouveau.compte", "prenom": "N", "nom": "C"},
         201,
     ),  # fmt: skip
-}
+    # Routes qui désignent un objet : l'adresse dépend du jeu de données (fonction de `monde`).
+    Action.ROLES_ATTRIBUER: (
+        "post", lambda m: f"/api/v1/utilisateurs/{m['sansrole.sn'].pk}/roles/",
+        {"role": "delegue"}, 201,
+    ),
+    Action.DESIGNER_RESPONSABLES_PAYS: (
+        "post", lambda m: f"/api/v1/utilisateurs/{m['sansrole.sn'].pk}/roles/",
+        {"role": "responsable_pays"}, 201,
+    ),
+    Action.AFFECTATIONS_GERER: (
+        "post", lambda m: f"/api/v1/utilisateurs/{m['df.sn'].pk}/affectations/",
+        {"pays": "TG", "role": "df", "motif": "Intérim du DF Togo"}, 201,
+    ),
+    Action.APPAREILS_REVOQUER: (
+        "post", lambda m: f"/api/v1/appareils/{_telephone(m).pk}/revoquer/", {}, 200,
+    ),
+}  # fmt: skip
+
+
+def _telephone(monde):
+    from apps.identite.models import Appareil
+
+    return Appareil.objects.get_or_create(
+        utilisateur=monde["deleg.sn"], identifiant_installation="matrice-telephone-01",
+        defaults={"plateforme": "android"},
+    )[0]  # fmt: skip
+
+
+def test_chaque_action_a_sa_requete():
+    """Une nouvelle action sans requête représentative fait échouer la suite."""
+    assert set(REQUETES) == set(MATRICE)
 
 
 @pytest.mark.parametrize("role", list(COMPTE_PAR_ROLE))
@@ -98,9 +128,13 @@ def test_chaque_role_chaque_action(monde, role, action):
     # Le siège choisit le Sénégal ; l'administrateur technique n'a aucun pays.
     pays = "SN" if role in {"admin_siege", "direction_siege"} else None
     methode, url, corps, succes = REQUETES[action]
+    url = url(monde) if callable(url) else url
     reponse = getattr(client_de(compte, pays), methode)(url, corps, format="json")
     if role in MATRICE[action]:
         assert reponse.status_code == succes, reponse.content
-    else:
+    elif isinstance(REQUETES[action][1], str):
         assert reponse.status_code == 403, (role, action, reponse.status_code)
         assert reponse.json()["code"] == "interdit"
+    else:
+        # Un objet hors de vue répond « introuvable » sans en révéler l'existence (USR-002 CA2).
+        assert reponse.status_code in {403, 404}, (role, action, reponse.status_code)

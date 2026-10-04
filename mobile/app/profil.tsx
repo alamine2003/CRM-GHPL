@@ -81,7 +81,11 @@ export default function Profil() {
           <Texte variante="fort">{t('mobile.ceTelephone')}</Texte>
         </View>
         <Ligne libelle={t('accueil.versionClient')} valeur={VERSION_APP} />
-        <Ligne libelle="ID" valeur={installation ? `${installation.slice(0, 8)}…` : '—'} derniere />
+        <Ligne
+          libelle={t('mobile.identifiantInstallation')}
+          valeur={installation ? `${installation.slice(0, 8)}…` : '—'}
+          derniere
+        />
         <Texte variante="discret" style={{ marginTop: 8 }}>
           {t('mobile.telephoneAide')}
         </Texte>

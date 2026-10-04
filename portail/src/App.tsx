@@ -1,6 +1,6 @@
 import type { Moi, Perimetre } from '@innov/api-client';
-import { Box, CircularProgress } from '@mui/material';
-import type { ReactNode } from 'react';
+import { Box, CircularProgress, Skeleton, Stack } from '@mui/material';
+import { lazy, type ReactNode, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Route, Routes, useLocation } from 'react-router';
 import CadreApplication from './composants/CadreApplication';
@@ -10,15 +10,18 @@ import { useSession } from './contexteSession';
 import Accueil from './pages/Accueil';
 import ActivationRequise from './pages/ActivationRequise';
 import Connexion from './pages/Connexion';
-import Equipe from './pages/Equipe';
-import Exploitation from './pages/Exploitation';
 import Introuvable from './pages/Introuvable';
-import Organisation from './pages/Organisation';
 import Oubli from './pages/Oubli';
-import Parametres from './pages/Parametres';
-import PaysPage from './pages/PaysPage';
-import Profil from './pages/Profil';
 import Reinitialisation from './pages/Reinitialisation';
+
+// Les pages d'administration sont chargées à la demande : la connexion et l'accueil,
+// utilisés par tous, restent dans le paquet initial (téléphones et réseaux lents).
+const Equipe = lazy(() => import('./pages/Equipe'));
+const Exploitation = lazy(() => import('./pages/Exploitation'));
+const Organisation = lazy(() => import('./pages/Organisation'));
+const Parametres = lazy(() => import('./pages/Parametres'));
+const PaysPage = lazy(() => import('./pages/PaysPage'));
+const Profil = lazy(() => import('./pages/Profil'));
 
 type Rendu = (utilisateur: Moi, perimetre: Perimetre) => ReactNode;
 
@@ -38,6 +41,16 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
   },
   '/exploitation': { titre: 'navigation.exploitation', rendu: () => <Exploitation /> },
 };
+
+function ChargementPage() {
+  return (
+    <Stack spacing={2} aria-busy="true">
+      <Skeleton variant="rounded" height={56} width="40%" />
+      <Skeleton variant="rounded" height={160} />
+      <Skeleton variant="rounded" height={240} />
+    </Stack>
+  );
+}
 
 function Protegee() {
   const { t } = useTranslation();
@@ -65,7 +78,9 @@ function Protegee() {
     >
       {/* Une page qui plante n'emporte pas le cadre : la navigation reste utilisable. */}
       <LimiteErreur key={pathname}>
-        {page ? page.rendu(utilisateur, perimetre) : <Introuvable />}
+        <Suspense fallback={<ChargementPage />}>
+          {page ? page.rendu(utilisateur, perimetre) : <Introuvable />}
+        </Suspense>
       </LimiteErreur>
     </CadreApplication>
   );

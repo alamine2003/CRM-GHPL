@@ -41,6 +41,25 @@ export default tseslint.config(
     },
   },
   {
+    // USR-004 CA2 : aucun texte affiché n'est codé en dur ; tout passe par @innov/i18n.
+    files: ['portail/src/**/*.tsx', 'mobile/app/**/*.tsx', 'mobile/src/**/*.tsx'],
+    ignores: ['**/*.test.tsx', '**/__tests__/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'JSXText[value=/\\p{L}/u]',
+          message: 'Texte affiché codé en dur : passer par t() (USR-004 CA2).',
+        },
+        {
+          selector:
+            'JSXAttribute[name.name=/^(label|title|placeholder|alt|aria-label|accessibilityLabel|libelle|titre|helperText)$/] > Literal[value=/\\p{L}/u]',
+          message: 'Libellé codé en dur : passer par t() (USR-004 CA2).',
+        },
+      ],
+    },
+  },
+  {
     files: ['portail/src/**/*.tsx'],
     ignores: ['portail/src/main.tsx'],
     rules: { 'react-refresh/only-export-components': ['warn', { allowConstantExport: true }] },

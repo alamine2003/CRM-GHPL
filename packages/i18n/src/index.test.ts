@@ -39,3 +39,34 @@ describe('choisirLangue', () => {
     expect(choisirLangue([])).toBe('fr');
   });
 });
+
+describe('clés utilisées par les écrans (USR-004 CA1)', () => {
+  it('chaque clé littérale passée à t() existe dans le catalogue', async () => {
+    const { readFileSync, readdirSync, statSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const racine = join(__dirname, '..', '..', '..');
+    const fichiers: string[] = [];
+    const parcourir = (dossier: string) => {
+      for (const nom of readdirSync(dossier)) {
+        const chemin = join(dossier, nom);
+        if (nom === 'node_modules' || nom.startsWith('.')) continue;
+        if (statSync(chemin).isDirectory()) parcourir(chemin);
+        else if (/\.tsx?$/.test(nom) && !/\.test\.tsx?$/.test(nom)) fichiers.push(chemin);
+      }
+    };
+    for (const d of ['portail/src', 'mobile/app', 'mobile/src']) parcourir(join(racine, d));
+    const connues = new Set(cles(ressources.fr.translation));
+    // Les clés plurielles (_one, _other) s'appellent sans suffixe.
+    for (const c of [...connues]) connues.add(c.replace(/_(one|other)$/, ''));
+    const manquantes: string[] = [];
+    for (const fichier of fichiers) {
+      const source = readFileSync(fichier, 'utf8');
+      for (const [, cle] of source.matchAll(/\bt\(\s*'([a-zA-Z][\w.]*)'/g)) {
+        if (cle && !connues.has(cle))
+          manquantes.push(`${fichier.slice(racine.length + 1)} : ${cle}`);
+      }
+    }
+    expect(manquantes).toEqual([]);
+    expect(fichiers.length).toBeGreaterThan(20);
+  });
+});

@@ -15,7 +15,6 @@ import {
   Stepper,
   Typography,
 } from '@mui/material';
-import QRCode from 'qrcode';
 import { type FormEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { messageErreur, useSession } from '../contexteSession';
@@ -45,6 +44,8 @@ export default function AssistantDoubleAuth({ surTermine }: { surTermine: () => 
       .then(async ({ secret: s, uri }) => {
         if (!actif) return;
         setSecret(s);
+        // Chargé seulement pendant l'activation : inutile au reste du portail.
+        const QRCode = (await import('qrcode')).default;
         setQr(await QRCode.toDataURL(uri, { margin: 1, width: 220 }));
       })
       .catch((e: unknown) => actif && setErreur(messageErreur(e, t('erreurs.reseau'))));
@@ -97,7 +98,7 @@ export default function AssistantDoubleAuth({ surTermine }: { surTermine: () => 
           <Typography sx={{ color: 'text.secondary' }}>{t('doubleAuth.scannerTexte')}</Typography>
           <Paper variant="outlined" sx={{ p: 1.5, bgcolor: '#FFFFFF', borderRadius: 3 }}>
             {qr ? (
-              <img src={qr} alt="QR code" width={220} height={220} />
+              <img src={qr} alt={t('doubleAuth.qrAlt')} width={220} height={220} />
             ) : (
               <Skeleton variant="rectangular" width={220} height={220} />
             )}
