@@ -42,11 +42,15 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "corsheaders",
     "rest_framework",
     "drf_spectacular",
     "apps.socle",
+    "apps.identite",
 ]
+
+AUTH_USER_MODEL = "identite.Utilisateur"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
