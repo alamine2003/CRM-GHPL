@@ -46,6 +46,16 @@ cd backend
 
 L'administrateur pays construit ensuite l'organisation (zones, secteurs, divisions, réseaux, postes, occupants, superviseurs) depuis la page **Organisation** du portail. Les affectations dans un autre pays et les transferts se font par l'API (`/api/v1/utilisateurs/<id>/affectations/` et `/transferts/`) en attendant leurs écrans (0.0.6).
 
+### Sur un iPhone (ou un Android)
+
+1. Installer **Expo Go** depuis l'App Store, à jour.
+2. Brancher l'ordinateur et l'iPhone sur le **même Wi-Fi**.
+3. Sur l'ordinateur, la base démarrée (voir plus haut) : `make telephone`. Le script expose l'API sur le réseau local et affiche un QR code.
+4. Scanner le QR code avec l'**appareil photo** de l'iPhone, puis accepter l'accès au réseau local demandé par Expo Go.
+5. Se connecter avec un compte de démonstration (délégué pour l'application de terrain).
+
+Si l'adresse n'est pas trouvée : `INNOV_IP=192.168.1.20 make telephone` (adresse Wi-Fi de l'ordinateur). Dans Expo Go, la base locale du téléphone n'est pas chiffrée (SQLCipher n'existe que dans une vraie compilation) : n'y utiliser que la démonstration. Les versions de test installables (TestFlight) arrivent en 0.2.8.
+
 Variables utiles : `backend/.env.example` (serveur), `VITE_API_URL` (portail), `EXPO_PUBLIC_API_URL` (mobile).
 
 ## Démonstration

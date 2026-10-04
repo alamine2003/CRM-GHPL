@@ -448,3 +448,19 @@ class SaisiePropositionSerializer(serializers.Serializer):
 class DecisionPropositionSerializer(serializers.Serializer):
     decision = serializers.ChoiceField(choices=["accepter", "refuser"])
     motif = serializers.CharField(required=False, allow_blank=True, max_length=300)
+
+
+class QualiteSerializer(serializers.Serializer):
+    """Bilan de qualité des données du pays actif (0.1.9)."""
+
+    prospects = serializers.IntegerField()
+    sans_lieu = serializers.IntegerField()
+    sans_telephone = serializers.IntegerField()
+    sans_specialite = serializers.IntegerField()
+    hors_cible = serializers.IntegerField()
+    a_valider = serializers.IntegerField()
+    etablissements = serializers.IntegerField()
+    sans_coordonnees = serializers.IntegerField()
+    etablissements_a_valider = serializers.IntegerField()
+    doublons = serializers.IntegerField()
+    propositions = serializers.IntegerField()

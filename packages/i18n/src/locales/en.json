@@ -1205,5 +1205,23 @@
     "decisionsTitre_one": "{{count}} decision on your proposals",
     "decisionsTitre_other": "{{count}} decisions on your proposals",
     "vu": "Seen"
+  },
+  "qualite": {
+    "titre": "Data quality",
+    "aValider_one": "{{count}} prospect record to validate",
+    "aValider_other": "{{count}} prospect records to validate",
+    "etablissementsAValider_one": "{{count}} facility to validate",
+    "etablissementsAValider_other": "{{count}} facilities to validate",
+    "doublons_one": "{{count}} duplicate pair",
+    "doublons_other": "{{count}} duplicate pairs",
+    "propositions_one": "{{count}} change proposal",
+    "propositions_other": "{{count}} change proposals",
+    "sansLieu": "No place of practice",
+    "sansTelephone": "No phone number",
+    "sansSpecialite": "No speciality",
+    "horsCible": "Not on any target list",
+    "sansCoordonnees": "Facilities without a location",
+    "sur": "of {{total}}",
+    "complet": "All active records are complete."
   }
 }

@@ -33,6 +33,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import DialogueFormulaire from '../composants/Dialogue';
 import {
   BarreChiffres,
@@ -496,10 +497,14 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
 
   const [saisie, setSaisie] = useState('');
   const [q, setQ] = useState('');
-  const [statut, setStatut] = useState<FiltreStatut>('tous');
+  // Les liens de l'accueil (qualité des données) ouvrent la liste déjà filtrée.
+  const [adresse] = useSearchParams();
+  const [statut, setStatut] = useState<FiltreStatut>(() =>
+    adresse.get('statut') === 'a_valider' ? 'a_valider' : 'tous',
+  );
   const [type, setType] = useState('');
   const [secteur, setSecteur] = useState('');
-  const [sansGps, setSansGps] = useState(false);
+  const [sansGps, setSansGps] = useState(() => adresse.get('sans_coordonnees') === '1');
   const [vue, setVue] = useState<'liste' | 'carte'>('liste');
   const [tri, setTri] = useState<TriEtablissements>('nom');
 

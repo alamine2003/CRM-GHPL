@@ -1,5 +1,5 @@
 # Commandes courantes. Les mêmes vérifications tournent en CI (.github/workflows/ci.yml).
-.PHONY: installer serveur portail mobile schema messages lint tests verifier
+.PHONY: installer serveur portail mobile telephone schema messages lint tests verifier
 
 installer:
 	cd backend && python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
@@ -14,6 +14,10 @@ portail:
 
 mobile:
 	npm run start -w mobile
+
+# Application sur un vrai téléphone (même Wi-Fi) : API exposée sur le réseau local + Expo Go.
+telephone:
+	./scripts/telephone.sh
 
 # Régénère le schéma OpenAPI puis les types TypeScript (ADR-012).
 # Après tout nouveau message serveur : extraire, puis traduire dans locale/en (USR-004).

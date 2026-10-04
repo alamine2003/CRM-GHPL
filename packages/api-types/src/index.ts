@@ -75,6 +75,7 @@ export type ProspectCree = Schemas['ProspectCree'];
 export type Ressemblante = Schemas['Ressemblante'];
 export type ComparaisonFiche = Schemas['Comparaison'];
 export type DoublonProbable = Schemas['Doublon'];
+export type Qualite = Schemas['Qualite'];
 export type DecisionDoublon = Schemas['DecisionDoublon']['decision'];
 export type Fusion = Schemas['Fusion'];
 export type ChangementFiche = Schemas['ChangementFiche'];

@@ -177,6 +177,7 @@ urlpatterns = [
         name="etablissement-historique",
     ),
     path("doublons/", dbl.DoublonsVue.as_view(), name="doublons"),
+    path("qualite/", dbl.QualiteVue.as_view(), name="qualite"),
     path("doublons/<uuid:id>/trancher/", dbl.DoublonDecisionVue.as_view(), name="doublon-trancher"),
     path("fusions/", dbl.FusionsVue.as_view(), name="fusions"),
     path("fusions/<uuid:id>/defaire/", dbl.DefusionVue.as_view(), name="fusion-defaire"),

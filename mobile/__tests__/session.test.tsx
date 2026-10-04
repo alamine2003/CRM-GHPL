@@ -6,6 +6,7 @@ import Connexion from '../app/connexion';
 import Accueil from '../app/index';
 import Profil from '../app/profil';
 import EcranProspects from '../app/prospects';
+import { lire } from '../src/baseLocale';
 import { FournisseurSession } from '../src/FournisseurSession';
 import i18n from '../src/i18n';
 import { oublierEnvironnement } from '../src/Demonstration';
@@ -359,6 +360,65 @@ describe('mobile — session', () => {
       expect.objectContaining({ nom: 'Sarr', type: 't1', specialite: 's1', potentiel: 'B' }),
     );
     expect(await screen.findByText(/à valider par l'administrateur pays/)).toBeTruthy();
+  });
+
+  it('sans réseau, le formulaire suggère les fiches de la liste enregistrée (PRP-007 CA2)', async () => {
+    const cible = {
+      id: 'p1',
+      civilite: 'dr',
+      prenom: 'Aïssatou',
+      nom: 'NDIAYE',
+      type_libelle: 'Médecin',
+      specialite_libelle: 'Cardiologie',
+      potentiel: 'A',
+      statut: 'actif',
+      lieu_principal: { id: 'e1', libelle: 'Clinique du Cap' },
+      secteur: 'Plateau',
+    };
+    const autre = { ...cible, id: 'p2', prenom: 'Moussa', nom: 'DIOP' };
+    jest.mocked(lire).mockImplementation(async (cle: string) =>
+      cle === 'ciblage.moi'
+        ? {
+            valeur: [{ poste: { id: 'po1' }, cibles: [{ prospect: cible }, { prospect: autre }] }],
+            maj: '2026-10-04T08:00:00Z',
+          }
+        : null,
+    );
+    const ressemblants = jest.fn(async () => {
+      throw new Error('réseau');
+    });
+    try {
+      await rendre(
+        <EcranProspects />,
+        fauxClient({
+          reprendre: jest.fn(async () => JETONS),
+          perimetre: jest.fn(async () => ({
+            ...PERIMETRE,
+            actions: ['prospects.lire', 'prospects.creer'],
+          })),
+          prospects: {
+            liste: jest.fn(async () => ({ total: 0, limite: 100, resultats: [] })),
+            ressemblants,
+          },
+          ciblage: { mesListes: jest.fn(async () => []) },
+          referentiel: {
+            valeurs: jest.fn(async () => []),
+            monPortefeuille: jest.fn(async () => []),
+          },
+        } as unknown as Partial<ClientApi>),
+      );
+      await fireEvent.press(screen.getAllByText('Prospects')[1]!);
+      await fireEvent.press(await screen.findByText('Nouveau prospect'));
+      await fireEvent.changeText(await screen.findByLabelText('Nom'), 'Ndiay');
+      // Le serveur est injoignable : la liste cible du téléphone sert de référence.
+      expect(await screen.findByText('Aïssatou NDIAYE')).toBeTruthy();
+      expect(screen.getByText(/Hors connexion : comparaison avec votre liste cible/)).toBeTruthy();
+      expect(screen.getByText('Cardiologie · Clinique du Cap')).toBeTruthy();
+      expect(screen.queryByText('Moussa DIOP')).toBeNull();
+      expect(ressemblants).toHaveBeenCalledWith(expect.objectContaining({ nom: 'Ndiay' }));
+    } finally {
+      jest.mocked(lire).mockReset().mockResolvedValue(null);
+    }
   });
 
   it('crée un établissement avec la position du téléphone (PRP-003 CA2)', async () => {

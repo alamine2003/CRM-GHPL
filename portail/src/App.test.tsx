@@ -1520,6 +1520,54 @@ describe('portail — imports (PRP-013)', () => {
     expect(await screen.findByText('Import de export-fictif.zip')).toBeInTheDocument();
   });
 
+  it('simule un fichier d’organisation et affiche son bilan (ORG-014 CA1)', async () => {
+    const { client, imports } = clientImports();
+    const lotOrganisation = {
+      ...LOT,
+      source: 'organisation' as const,
+      fichier: 'organisation-fictive.xlsx',
+      compteurs: {
+        postes: { crees: 37, existants: 2, vacants: 5 },
+        comptes: { crees: 31 },
+        reseaux: { crees: 4 },
+        rattachements: { crees: 30, modifies: 3 },
+        lignes: { importees: 39, rejetes: 1 },
+      },
+      nb_anomalies: 1,
+      rejets: 1,
+      anomalies: [
+        {
+          entite: 'ligne',
+          identifiant: '12',
+          niveau: 'rejet',
+          motif: 'Fonction inconnue : « CHAUFFEUR ».',
+        },
+      ],
+    };
+    const organisation = vi.fn(async () => lotOrganisation);
+    (imports as Record<string, unknown>).organisation = organisation;
+    const { container } = rendre(client, '/imports');
+    fireEvent.click(await screen.findByRole('button', { name: 'Organisation' }));
+    const entree = container.querySelector('input[type="file"]') as HTMLInputElement;
+    const fichier = new File(['xlsx'], 'organisation-fictive.xlsx');
+    fireEvent.change(entree, { target: { files: [fichier] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Lancer la simulation' }));
+    await vi.waitFor(() =>
+      expect(organisation).toHaveBeenCalledWith(fichier, 'organisation-fictive.xlsx', true),
+    );
+    expect(imports.birdnotes).not.toHaveBeenCalled();
+    expect(await screen.findByText('Simulation de organisation-fictive.xlsx')).toBeInTheDocument();
+    // Créations et modifications : postes, vacants, comptes, puis le détail par donnée.
+    expect(screen.getByText('Postes créés')).toBeInTheDocument();
+    expect(screen.getByText('37')).toBeInTheDocument();
+    expect(screen.getByText('Postes vacants')).toBeInTheDocument();
+    expect(screen.getByText('31')).toBeInTheDocument();
+    expect(screen.getByText('Rattachements')).toBeInTheDocument();
+    expect(screen.getByText(/modifiés 3/)).toBeInTheDocument();
+    // CA2 : la ligne rejetée garde son motif.
+    expect(screen.getByText('Fonction inconnue : « CHAUFFEUR ».')).toBeInTheDocument();
+  });
+
   it('la page Imports ne présente aucune violation d’accessibilité détectable', async () => {
     const { client } = clientImports();
     const { container } = rendre(client, '/imports');
@@ -1738,8 +1786,9 @@ describe('portail — doublons et propositions (PRP-009, PRP-010, PRP-014)', () 
 
   it('compare les deux fiches côte à côte et garde la paire séparée (PRP-009)', async () => {
     const { client, doublons } = clientDoublons();
-    rendre(client, '/doublons');
+    const { container } = rendre(client, '/doublons');
     expect(await screen.findByText('Ressemblance 74 / 100')).toBeInTheDocument();
+    expect(await violationsAccessibilite(container)).toEqual([]);
     const table = screen.getByRole('table', { name: 'Comparaison des deux fiches' });
     expect(within(table).getByText('+221770000001')).toBeInTheDocument();
     expect(within(table).getByText('Clinique du Cap')).toBeInTheDocument();
@@ -1792,12 +1841,59 @@ describe('portail — doublons et propositions (PRP-009, PRP-010, PRP-014)', () 
       })),
       propositions: propositions as unknown as ClientApi['propositions'],
     } as Partial<ClientApi>);
-    rendre(client, '/propositions');
+    const { container } = rendre(client, '/propositions');
     expect(await screen.findByText('+221779998877')).toBeInTheDocument();
     expect(screen.getByText('+221770000000')).toBeInTheDocument();
+    expect(await violationsAccessibilite(container)).toEqual([]);
     fireEvent.click(screen.getByRole('button', { name: 'Accepter' }));
     await vi.waitFor(() => expect(propositions.trancher).toHaveBeenCalledWith('pr1', 'accepter'));
     // Seul l'auteur marque les décisions comme lues.
     expect(propositions.marquerVues).not.toHaveBeenCalled();
+  });
+});
+
+describe('portail — qualité des données (0.1.9)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  it("l'accueil de l'administrateur pays montre ce qui reste à trancher et à compléter", async () => {
+    const qualite = vi.fn(async () => ({
+      prospects: 234,
+      sans_lieu: 12,
+      sans_telephone: 0,
+      sans_specialite: 3,
+      hors_cible: 40,
+      a_valider: 2,
+      etablissements: 80,
+      sans_coordonnees: 9,
+      etablissements_a_valider: 0,
+      doublons: 4,
+      propositions: 1,
+    }));
+    const client = fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => ({
+        ...PERIMETRE_DELEGUE,
+        roles: ['admin_pays'],
+        actions: ['prospects.lire', 'prospects.gerer', 'pays.lire'],
+      })),
+      qualite,
+    } as Partial<ClientApi>);
+    rendre(client, '/');
+    expect(await screen.findByRole('heading', { name: 'Qualité des données' })).toBeInTheDocument();
+    expect(await screen.findByText('4 paires de doublons')).toBeInTheDocument();
+    expect(screen.getByText('2 fiches prospects à valider')).toBeInTheDocument();
+    expect(screen.getByText('1 proposition de modification')).toBeInTheDocument();
+    // Une ligne à zéro disparaît ; chaque ligne ouvre la liste filtrée.
+    expect(screen.queryByText('Sans téléphone')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Sans spécialité/ })).toHaveAttribute(
+      'href',
+      '/prospects?sans_specialite=1',
+    );
+    expect(screen.getByRole('link', { name: /Établissements sans position/ })).toHaveAttribute(
+      'href',
+      '/etablissements?sans_coordonnees=1',
+    );
   });
 });

@@ -2,6 +2,51 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.9] — Stabilisation, qualité des données et démonstration du cycle 0.1
+
+Neuvième et dernier jalon du cycle 0.1 « Référentiel ».
+
+### Décision consignée
+
+- **Doublons** : c'est l'administrateur pays qui tranche la file des doublons, pas le superviseur ([D] du 4 octobre 2026, prd.md §14.7). C'était déjà le comportement livré en 0.1.8.
+
+### Recette du cycle
+
+- **Matrice de recette** [`recette-0.1.md`](recette-0.1.md) : chaque critère d'acceptation des 16 exigences du cycle est relié au test qui le prouve. Bilan : 35 critères couverts, 6 partiels (la partie qui dépend des visites, du planning ou des rapports sera testée avec eux), aucun non couvert.
+- **Trous comblés** :
+  - PRP-007 CA2 : sur le téléphone, sans réseau, le formulaire suggère les fiches de la liste cible enregistrée ;
+  - PRP-008 CA3 : une décision « probable » est auditée avec son score et ses critères ;
+  - PRP-012 CA1 : historique champ par champ d'un établissement ;
+  - PRP-012 CA2 : aucune route ne supprime un prospect ni un établissement ;
+  - ORG-014 CA1 : la simulation compte les modifications (rattachements, portefeuilles) sans rien écrire, et le portail affiche son bilan.
+
+### Qualité des données
+
+- **Accueil de l'administrateur pays** :
+  - « À traiter » réunit désormais tout ce qui attend une décision : postes vacants ou sans superviseur, fiches prospects et établissements à valider, paires de doublons, propositions de modification ;
+  - nouvelle carte « Qualité des données » : fiches actives sans lieu d'exercice, sans téléphone, sans spécialité (quand leur type en propose), hors de toute liste cible, établissements sans position, chacune rapportée au total. Chaque ligne ouvre la liste filtrée ; une ligne à zéro disparaît.
+- **Nouveaux filtres** de la liste des prospects (PRP-005) : sans téléphone, sans spécialité, hors liste cible (administration du pays).
+- La page Établissements s'ouvre avec les filtres de l'adresse (`statut`, `sans_coordonnees`).
+- API `GET /api/v1/qualite/` (administrateur pays, pays actif seulement).
+
+### Démonstration (DEM-001)
+
+- La base de démonstration contient des paires de doublons probables, saisies par un délégué avec une faute de frappe, et une proposition de modification en attente : la 0.1.8 se montre sans rien préparer.
+- **Scénario de fin de cycle** : [`demonstration-0.1.md`](demonstration-0.1.md).
+- **Sur un iPhone** : `make telephone` expose l'API sur le Wi-Fi local et lance Expo ; on scanne le QR code avec l'appareil photo, dans Expo Go (README, « Sur un iPhone »).
+- L'accueil annonce « Cycle 0.1 terminé » et le cycle 0.2 « Planning ».
+
+### Design
+
+Revue de la carte « Qualité des données » et de la liste filtrée, à 360, 414, 834 et 1440 px, puis seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Accueil | « À trancher » répétait la carte « À traiter » juste au-dessus | Les décisions rejoignent « À traiter » ; la carte qualité ne garde que les fiches à compléter |
+| Accueil | Sous-titres de section aussi grands que le titre de la carte | Sous-titres supprimés, une seule liste |
+| Accueil | Lignes cliquables sans aucun indice | Libellés soulignés, comme des liens |
+| Prospects (360 px) | Interrupteurs de filtre de 24 px de haut, trop petits pour le doigt | 40 px sur téléphone |
+
 ## [0.1.8] — Doublons, propositions, historique, import de l'organisation ; refonte du design
 
 Huitième jalon du cycle 0.1 « Référentiel ».

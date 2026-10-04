@@ -130,6 +130,19 @@ def test_homonyme_sans_identifiant_fort_entre_dans_la_file(monde):
     assert deleg.get("/api/v1/doublons/").status_code == 403
 
 
+def test_la_decision_probable_est_auditee_avec_score_et_criteres(monde):
+    """PRP-008 CA3 : la décision « probable » est auditée, comme « certain » et « aucun »."""
+    existante = commune(monde)
+    deleg = client_de(monde["deleg.sn"])
+    r = deleg.post(URL, saisie(monde, prenom="Aissatou"), format="json")
+    assert r.json()["doublon"] == "probable"
+    detection = EvenementAudit.objects.get(action="prospect.detection_doublons")
+    assert detection.objet_id == r.json()["id"]
+    assert detection.details["niveau"] == "probable" and detection.details["score"] >= 50
+    assert "nom_similaire" in detection.details["criteres"]
+    assert detection.details["candidat"] == str(existante.pk)
+
+
 def test_garder_separees_ne_revient_plus(monde):
     """PRP-009 CA2."""
     commune(monde)

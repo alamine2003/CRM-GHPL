@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.1.8
+  version: 0.1.9
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -2413,6 +2413,11 @@ paths:
           - hospitalier
           - prive
       - in: query
+        name: hors_cible
+        schema:
+          type: string
+        description: '1'
+      - in: query
         name: localite
         schema:
           type: string
@@ -2447,6 +2452,16 @@ paths:
         description: Nom, téléphone, n° d'ordre, lieu d'exercice
       - in: query
         name: sans_lieu
+        schema:
+          type: string
+        description: '1'
+      - in: query
+        name: sans_specialite
+        schema:
+          type: string
+        description: '1'
+      - in: query
+        name: sans_telephone
         schema:
           type: string
         description: '1'
@@ -2760,6 +2775,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyntheseProspects'
+          description: ''
+  /api/v1/qualite/:
+    get:
+      operationId: qualite_bilan
+      description: |-
+        Qualité des données du pays actif (0.1.9) : l'administrateur pays, qui tient le
+        référentiel et tranche la file des doublons.
+      tags:
+      - qualite
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Qualite'
           description: ''
   /api/v1/referentiel/mon-portefeuille/:
     get:
@@ -5725,6 +5757,44 @@ components:
       - nom
       - potentiel
       - type_libelle
+    Qualite:
+      type: object
+      description: Bilan de qualité des données du pays actif (0.1.9).
+      properties:
+        prospects:
+          type: integer
+        sans_lieu:
+          type: integer
+        sans_telephone:
+          type: integer
+        sans_specialite:
+          type: integer
+        hors_cible:
+          type: integer
+        a_valider:
+          type: integer
+        etablissements:
+          type: integer
+        sans_coordonnees:
+          type: integer
+        etablissements_a_valider:
+          type: integer
+        doublons:
+          type: integer
+        propositions:
+          type: integer
+      required:
+      - a_valider
+      - doublons
+      - etablissements
+      - etablissements_a_valider
+      - hors_cible
+      - propositions
+      - prospects
+      - sans_coordonnees
+      - sans_lieu
+      - sans_specialite
+      - sans_telephone
     Rafraichissement:
       type: object
       properties:

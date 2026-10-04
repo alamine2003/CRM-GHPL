@@ -1205,5 +1205,23 @@
     "decisionsTitre_one": "{{count}} décision sur vos propositions",
     "decisionsTitre_other": "{{count}} décisions sur vos propositions",
     "vu": "Vu"
+  },
+  "qualite": {
+    "titre": "Qualité des données",
+    "aValider_one": "{{count}} fiche prospect à valider",
+    "aValider_other": "{{count}} fiches prospects à valider",
+    "etablissementsAValider_one": "{{count}} établissement à valider",
+    "etablissementsAValider_other": "{{count}} établissements à valider",
+    "doublons_one": "{{count}} paire de doublons",
+    "doublons_other": "{{count}} paires de doublons",
+    "propositions_one": "{{count}} proposition de modification",
+    "propositions_other": "{{count}} propositions de modification",
+    "sansLieu": "Sans lieu d'exercice",
+    "sansTelephone": "Sans téléphone",
+    "sansSpecialite": "Sans spécialité",
+    "horsCible": "Hors de toute liste cible",
+    "sansCoordonnees": "Établissements sans position",
+    "sur": "sur {{total}}",
+    "complet": "Toutes les fiches actives sont complètes."
   }
 }

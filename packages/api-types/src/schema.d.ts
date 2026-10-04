@@ -1538,6 +1538,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/qualite/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Qualité des données du pays actif (0.1.9) : l'administrateur pays, qui tient le
+     *     référentiel et tranche la file des doublons.
+     */
+    get: operations['qualite_bilan'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/referentiel/mon-portefeuille/': {
     parameters: {
       query?: never;
@@ -2753,6 +2773,20 @@ export interface components {
       specialite_libelle?: string | null;
       potentiel: components['schemas']['PotentielEnum'];
       statut?: components['schemas']['StatutFicheEnum'];
+    };
+    /** @description Bilan de qualité des données du pays actif (0.1.9). */
+    Qualite: {
+      prospects: number;
+      sans_lieu: number;
+      sans_telephone: number;
+      sans_specialite: number;
+      hors_cible: number;
+      a_valider: number;
+      etablissements: number;
+      sans_coordonnees: number;
+      etablissements_a_valider: number;
+      doublons: number;
+      propositions: number;
     };
     Rafraichissement: {
       /** @description Application mobile uniquement ; le portail utilise le cookie. */
@@ -5359,6 +5393,8 @@ export interface operations {
     parameters: {
       query?: {
         activite?: 'hospitalier' | 'prive';
+        /** @description 1 */
+        hors_cible?: string;
         localite?: string;
         page?: number;
         portee?: 'pays' | 'perimetre';
@@ -5369,6 +5405,10 @@ export interface operations {
         q?: string;
         /** @description 1 */
         sans_lieu?: string;
+        /** @description 1 */
+        sans_specialite?: string;
+        /** @description 1 */
+        sans_telephone?: string;
         secteur?: string;
         specialite?: string;
         statut?: 'a_valider' | 'actif' | 'archive' | 'fusionne';
@@ -5622,6 +5662,25 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SyntheseProspects'];
+        };
+      };
+    };
+  };
+  qualite_bilan: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Qualite'];
         };
       };
     };

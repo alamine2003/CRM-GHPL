@@ -21,7 +21,13 @@ from apps.organisation import services as org
 from apps.organisation.models import Poste, TypePoste
 from apps.prospects import ciblage
 from apps.prospects.models import Etablissement, Prospect
-from apps.prospects.services import creer_etablissement, creer_exercice, creer_prospect
+from apps.prospects.propositions import proposer
+from apps.prospects.services import (
+    creer_etablissement,
+    creer_exercice,
+    creer_prospect,
+    saisir_prospect,
+)
 from apps.referentiel import services as ref
 from apps.referentiel.models import Valeur
 from apps.socle.services import aujourdhui, creer_pays
@@ -303,6 +309,7 @@ class Generateur:
         }
         self.bilan.pays[code]["exercices"] = self.exercices(pays)
         self.bilan.pays[code]["cibles"] = self.cibles(pays)
+        self.bilan.pays[code].update(self.a_trancher(pays, delegues[0]))
 
     def exercices(self, pays) -> int:
         """Lieux d'exercice fictifs (PRP-004) : chaque prospect exerce dans un établissement de
@@ -352,6 +359,32 @@ class Generateur:
                     ciblage.modifier_frequence(cible, cible.frequence + 1)
                 nombre += 1
         return nombre
+
+    def a_trancher(self, pays, delegue) -> dict[str, int]:
+        """De quoi montrer la file des doublons (PRP-009) et les propositions (PRP-014) : un
+        délégué ressaisit quelques fiches existantes avec une faute de frappe, que le détecteur
+        verse dans la file (PRP-008), et propose un courriel fictif pour une fiche commune."""
+        a = self.alea
+        modeles = list(
+            Prospect.objects.filter(pays=pays, statut="actif", type__code="medecin")
+            .exclude(prenom="")
+            .order_by("nom", "prenom")[:200]
+        )
+        en_file = 0
+        for modele in a.sample(modeles, k=min(4, len(modeles))):
+            coupe = a.randrange(1, len(modele.nom))
+            _fiche, decision = saisir_prospect(
+                pays, delegue, actif=False, civilite=modele.civilite,
+                nom=modele.nom[:coupe] + modele.nom[coupe + 1 :], prenom=modele.prenom,
+                type=modele.type, specialite=modele.specialite, potentiel=modele.potentiel,
+            )  # fmt: skip
+            en_file += decision.niveau == "probable"
+        propositions = 0
+        if modeles:
+            proposer(delegue, a.choice(modeles), {"courriel": "cabinet@demo.invalid"},
+                     commentaire="Courriel donné lors de la visite.")  # fmt: skip
+            propositions = 1
+        return {"doublons": en_file, "propositions": propositions}
 
     def localites(self, secteurs_par_zone) -> dict:
         """Deux à quatre localités fictives par secteur (« Centre », « Nord »…) : le terrain

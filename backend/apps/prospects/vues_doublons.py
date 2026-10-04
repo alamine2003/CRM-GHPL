@@ -19,7 +19,7 @@ from apps.perimetre.matrice import Action
 from apps.perimetre.vues import VuePerimetre
 from apps.socle.erreurs import ErreurMetier
 
-from . import doublons, propositions, services
+from . import doublons, propositions, qualite, services
 from . import serializers as s
 from .models import (
     Changement,
@@ -275,3 +275,19 @@ class PropositionsVuesVue(VuePerimetre):
     def post(self, request):
         propositions.marquer_vues(request.user, pays_requis(self.perimetre))
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class QualiteVue(VuePerimetre):
+    """Qualité des données du pays actif (0.1.9) : l'administrateur pays, qui tient le
+    référentiel et tranche la file des doublons."""
+
+    actions = {"GET": Action.PROSPECTS_GERER}
+
+    def selection(self, perimetre):
+        return services.prospects_visibles(perimetre)
+
+    @extend_schema(responses=s.QualiteSerializer, operation_id="qualite_bilan")
+    def get(self, request):
+        pays = pays_requis(self.perimetre)
+        etablissements = services.fiches_visibles(Etablissement, self.perimetre)
+        return Response(qualite.bilan(self.get_queryset(), etablissements, pays))

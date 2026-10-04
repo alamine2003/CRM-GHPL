@@ -593,9 +593,17 @@ const CLES_FILTRES = [
   'localite',
   'poste',
   'sans_lieu',
+  'sans_telephone',
+  'sans_specialite',
+  'hors_cible',
   'portee',
   'tri',
 ] as const;
+const LIBELLES_QUALITE = {
+  sans_telephone: 'qualite.sansTelephone',
+  sans_specialite: 'qualite.sansSpecialite',
+  hors_cible: 'qualite.horsCible',
+} as const;
 const TRIS = ['nom', 'potentiel', 'specialite', 'secteur', 'recents'] as const;
 
 /** Liste déroulante d'un filtre, avec une première option « tous ». */
@@ -683,6 +691,9 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
     localite: f.localite || undefined,
     poste: f.poste || undefined,
     sans_lieu: f.sans_lieu === '1' ? '1' : undefined,
+    sans_telephone: f.sans_telephone === '1' ? '1' : undefined,
+    sans_specialite: f.sans_specialite === '1' ? '1' : undefined,
+    hors_cible: f.hors_cible === '1' ? '1' : undefined,
     portee: f.portee === 'pays' ? 'pays' : undefined,
     tri: (f.tri || undefined) as FiltresProspects['tri'],
     page,
@@ -705,6 +716,9 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
       ),
     },
     f.sans_lieu && { cle: 'sans_lieu', libelle: t('prospect.chiffres.sansLieu') },
+    ...(['sans_telephone', 'sans_specialite', 'hors_cible'] as const).map(
+      (cle) => f[cle] && { cle, libelle: t(LIBELLES_QUALITE[cle]) },
+    ),
     f.portee && { cle: 'portee', libelle: t('recherche.toutLePays') },
   ].filter(Boolean) as Puce[];
   const filtresActifs = puces.length + (f.q ? 1 : 0) + (statut !== 'tous' ? 1 : 0);
@@ -915,7 +929,10 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
                   changer={(v) => changer({ poste: v })}
                 />
               )}
-              <Stack spacing={0}>
+              <Stack
+                spacing={0}
+                sx={{ '& .MuiFormControlLabel-root': { minHeight: { xs: 40, sm: 'auto' } } }}
+              >
                 <FormControlLabel
                   control={
                     <Switch
@@ -926,6 +943,20 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
                   }
                   label={t('prospect.chiffres.sansLieu')}
                 />
+                {gerer &&
+                  (['sans_telephone', 'sans_specialite', 'hors_cible'] as const).map((cle) => (
+                    <FormControlLabel
+                      key={cle}
+                      control={
+                        <Switch
+                          size="small"
+                          checked={f[cle] === '1'}
+                          onChange={(e) => changer({ [cle]: e.target.checked ? '1' : '' })}
+                        />
+                      }
+                      label={t(LIBELLES_QUALITE[cle])}
+                    />
+                  ))}
                 {terrain && (
                   <FormControlLabel
                     control={

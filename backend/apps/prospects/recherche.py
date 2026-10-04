@@ -16,6 +16,7 @@ from django.utils.translation import gettext as _
 from apps.organisation.models import Secteur
 from apps.organisation.selecteurs import postes_visibles
 from apps.perimetre.perimetre import Perimetre
+from apps.referentiel.models import Liste, Valeur
 from apps.socle.erreurs import ErreurMetier
 
 from .models import Cible, Exercice, StatutFiche
@@ -82,7 +83,22 @@ def filtrer_prospects(qs: QuerySet, p) -> QuerySet:
         qs = qs.filter(pk__in=cibles.values("prospect_id"))
     if p.get("sans_lieu") == "1":
         qs = qs.exclude(pk__in=en_cours.values("prospect_id"))
+    # Qualité des données (0.1.9) : chaque indicateur ouvre la liste des fiches concernées.
+    if p.get("sans_telephone") == "1":
+        qs = qs.filter(telephone_mobile="", telephone_pro="")
+    if p.get("sans_specialite") == "1":
+        qs = sans_specialite(qs)
+    if p.get("hors_cible") == "1":
+        qs = qs.exclude(pk__in=Cible.objects.filter(fin__isnull=True).values("prospect_id"))
     return qs
+
+
+def sans_specialite(qs: QuerySet) -> QuerySet:
+    """Fiches sans spécialité alors que leur type en propose (un médecin sans spécialité ;
+    une sage-femme, dont le type n'en a pas, n'est pas comptée)."""
+    types = Valeur.objects.filter(liste=Liste.SPECIALITE, archive_le__isnull=True,
+                                  parent__isnull=False).values("parent_id")  # fmt: skip
+    return qs.filter(specialite__isnull=True, type_id__in=types)
 
 
 def filtrer_etablissements(qs: QuerySet, p) -> QuerySet:

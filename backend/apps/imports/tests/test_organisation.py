@@ -5,6 +5,7 @@ Aucune donnée réelle : noms, réseaux et produits sont inventés.
 
 import io
 import zipfile
+from datetime import timedelta
 from xml.sax.saxutils import escape
 
 import pytest
@@ -154,6 +155,35 @@ def test_import_motifs_poste_vacant_et_reimport(monde, produit):
     assert "crees" not in second.compteurs.get("postes", {})
     assert second.compteurs["postes"]["existants"] == 4
     assert EvenementAudit.objects.filter(action="import.organisation").count() == 2
+
+
+def test_la_simulation_compte_les_modifications(monde, produit):
+    """ORG-014 CA1 : sur une organisation déjà importée, la simulation compte aussi les
+    modifications (nouveau superviseur, produit ajouté au portefeuille) sans rien écrire."""
+    sn = monde["sn"]
+    importer(sn, monde["admin.sn"], classeur(), "orga.xlsx", simulation=False)
+    # Le premier import date d'un mois : un changement ne commence pas le jour même.
+    Rattachement.objects.update(debut=aujourdhui(sn) - timedelta(days=30))
+    ref.creer_produit(sn, "Fictivol 20 mg")
+    change = [list(ligne) for ligne in LIGNES]
+    change[0][5] = "DIEYNABA SECK"
+    change[0][10] = "Fictivol 10 mg ; Fictivol 20 mg"
+    alpha = Reseau.objects.get(libelle="RESEAU ALPHA")
+    occupe = Poste.objects.get(reseaux=alpha, secteurs__libelle="Plateau/Medina")
+    avant = (Poste.objects.count(), Utilisateur.objects.count(), Rattachement.objects.count())
+
+    lot = importer(sn, monde["admin.sn"], classeur(change), "orga.xlsx", simulation=True)
+    assert lot.statut == LotImport.Statut.SIMULE
+    assert lot.compteurs["rattachements"]["modifies"] == 1
+    assert lot.compteurs["portefeuilles"]["modifies"] == 1
+    # Rien n'est écrit : ni le compte du nouveau superviseur, ni le rattachement, ni le produit.
+    assert (Poste.objects.count(), Utilisateur.objects.count(),
+            Rattachement.objects.count()) == avant  # fmt: skip
+    assert not Utilisateur.objects.filter(username="dieynaba.seck").exists()
+    en_cours = Rattachement.objects.filter(poste=occupe, fin__isnull=True).get()
+    assert en_cours.superviseur.username == "coumba.diallo"
+    assert [p.produit.libelle for p in portefeuille_actif([alpha], aujourdhui(sn))] == [
+        "Fictivol 10 mg"]  # fmt: skip
 
 
 def test_api_import_organisation(monde, produit):

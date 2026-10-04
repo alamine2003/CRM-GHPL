@@ -1,6 +1,17 @@
 import type { Moi, MonOrganisation, Perimetre } from '@innov/api-client';
 import { avancement, CYCLES } from '@innov/domaine';
-import { Alert, Box, Button, Card, CardContent, Divider, Stack, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  Link,
+  Skeleton,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
@@ -318,20 +329,46 @@ function AFaire({ perimetre }: { perimetre: Perimetre }) {
     queryFn: () => client.organisation.synthese(),
     enabled: perimetre.actions.includes('organisation.lire'),
   });
+  // Qualité des données (0.1.9) : ce que l'administrateur pays doit trancher.
+  const qualite = useQuery({
+    queryKey: ['prospects', cle, 'qualite'],
+    queryFn: client.qualite,
+    enabled: perimetre.actions.includes('prospects.gerer') && perimetre.pays_actif !== null,
+  });
+  const q = qualite.data;
   const sansRole = (comptes.data ?? []).filter((c) => c.actif && !c.roles.length).length;
   const lignes = [
-    { n: sansRole, cle: 'comptesSansRole', lien: '/equipe', ton: 'warning' as const },
+    { n: sansRole, cle: 'accueil.comptesSansRole', lien: '/equipe', ton: 'warning' as const },
     {
       n: synthese.data?.postes_vacants ?? 0,
-      cle: 'postesVacants',
+      cle: 'accueil.postesVacants',
       lien: '/organisation',
       ton: 'warning' as const,
     },
     {
       n: synthese.data?.postes_sans_superviseur ?? 0,
-      cle: 'postesSansSuperviseur',
+      cle: 'accueil.postesSansSuperviseur',
       lien: '/organisation',
       ton: 'error' as const,
+    },
+    {
+      n: q?.a_valider ?? 0,
+      cle: 'qualite.aValider',
+      lien: '/prospects?statut=a_valider',
+      ton: 'warning' as const,
+    },
+    {
+      n: q?.etablissements_a_valider ?? 0,
+      cle: 'qualite.etablissementsAValider',
+      lien: '/etablissements?statut=a_valider',
+      ton: 'warning' as const,
+    },
+    { n: q?.doublons ?? 0, cle: 'qualite.doublons', lien: '/doublons', ton: 'warning' as const },
+    {
+      n: q?.propositions ?? 0,
+      cle: 'qualite.propositions',
+      lien: '/propositions',
+      ton: 'warning' as const,
     },
   ].filter((l) => l.n > 0);
   return (
@@ -354,12 +391,88 @@ function AFaire({ perimetre }: { perimetre: Perimetre }) {
                     flex: 'none',
                   }}
                 />
-                <Typography sx={{ flexGrow: 1 }}>
-                  {t(`accueil.${l.cle}`, { count: l.n })}
-                </Typography>
+                <Typography sx={{ flexGrow: 1 }}>{t(l.cle, { count: l.n })}</Typography>
                 <Button component={LienRouteur} to={l.lien} size="small">
                   {t('commun.voir')}
                 </Button>
+              </Stack>
+            </Box>
+          ))
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Qualité des données du pays (0.1.9) : fiches actives à compléter, chacune rapportée au
+ * total. Chaque ligne ouvre la liste filtrée ; une ligne à zéro disparaît. Ce qui reste à
+ * trancher (fiches à valider, doublons, propositions) figure dans « À traiter ».
+ */
+function QualiteDonnees({ pays }: { pays: string }) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const q = useQuery({ queryKey: ['prospects', pays, 'qualite'], queryFn: client.qualite });
+  if (q.isError) return null;
+  const d = q.data;
+  const lignes = d
+    ? [
+        { n: d.sans_lieu, total: d.prospects, cle: 'sansLieu', lien: '/prospects?sans_lieu=1' },
+        {
+          n: d.sans_telephone,
+          total: d.prospects,
+          cle: 'sansTelephone',
+          lien: '/prospects?sans_telephone=1',
+        },
+        {
+          n: d.sans_specialite,
+          total: d.prospects,
+          cle: 'sansSpecialite',
+          lien: '/prospects?sans_specialite=1',
+        },
+        { n: d.hors_cible, total: d.prospects, cle: 'horsCible', lien: '/prospects?hors_cible=1' },
+        {
+          n: d.sans_coordonnees,
+          total: d.etablissements,
+          cle: 'sansCoordonnees',
+          lien: '/etablissements?sans_coordonnees=1',
+        },
+      ].filter((l) => l.n > 0)
+    : [];
+  return (
+    <Card>
+      <EnTeteCarte titre={t('qualite.titre')} />
+      <CardContent sx={{ py: 1 }}>
+        {!d ? (
+          <Skeleton variant="rounded" height={120} />
+        ) : lignes.length === 0 ? (
+          <Typography sx={{ color: 'text.secondary', py: 1 }}>{t('qualite.complet')}</Typography>
+        ) : (
+          lignes.map((l, i) => (
+            <Box key={l.cle}>
+              {i > 0 && <Divider />}
+              <Stack
+                direction="row"
+                spacing={1.5}
+                sx={{ alignItems: 'baseline', justifyContent: 'space-between', py: 1.25 }}
+              >
+                <Link
+                  component={LienRouteur}
+                  to={l.lien}
+                  color="inherit"
+                  underline="always"
+                  sx={{ textDecorationColor: 'rgba(127,127,127,.4)', minWidth: 0 }}
+                >
+                  {t(`qualite.${l.cle}`)}
+                </Link>
+                <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                  <Box component="span" sx={{ fontWeight: 600 }}>
+                    {l.n.toLocaleString()}
+                  </Box>{' '}
+                  <Box component="span" sx={{ color: 'text.secondary' }}>
+                    {t('qualite.sur', { total: l.total.toLocaleString() })}
+                  </Box>
+                </Typography>
               </Stack>
             </Box>
           ))
@@ -532,6 +645,9 @@ export default function Accueil({
       >
         <Stack spacing={2}>
           {pilotagePays && <AFaire perimetre={perimetre} />}
+          {perimetre.actions.includes('prospects.gerer') && perimetre.pays_actif && (
+            <QualiteDonnees pays={perimetre.pays_actif.code} />
+          )}
           {a('superviseur') && <MonEquipe perimetre={perimetre} />}
           {(terrain || a('df') || a('dm')) && <MonPoste perimetre={perimetre} />}
           {a('delegue') && <MaSemaine />}

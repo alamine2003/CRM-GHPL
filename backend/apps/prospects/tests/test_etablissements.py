@@ -141,3 +141,37 @@ def test_le_delegue_obtient_les_secteurs_du_pays_pour_sa_saisie(monde, secteurs)
     ]  # fmt: skip
     # Chaque secteur arrive avec ses localités actives, pour le choix en cascade.
     assert [loc["libelle"] for loc in reponse[2]["localites"]] == ["Plateau centre"]
+
+
+def test_l_historique_d_un_etablissement_champ_par_champ(monde, secteurs):
+    """PRP-012 CA1 : champ, ancienne et nouvelle valeur, auteur et date, pour un établissement
+    comme pour un prospect ; l'archivage y figure aussi."""
+    admin = client_de(monde["admin.sn"])
+    cree = admin.post(URL, fiche(monde, secteurs), format="json").json()
+    modifie = admin.patch(f"{URL}{cree['id']}/", {"telephone": "33 822 11 11",
+                          "adresse": "14 rue Carnot"}, format="json")  # fmt: skip
+    assert modifie.status_code == 200, modifie.content
+    lignes = admin.get(f"{URL}{cree['id']}/historique/")
+    assert lignes.status_code == 200, lignes.content
+    par_champ = {x["champ"]: x for x in lignes.json()}
+    assert (par_champ["telephone"]["ancienne"], par_champ["telephone"]["nouvelle"]) == (
+        "+221338210000", "+221338221111")  # fmt: skip
+    assert (par_champ["adresse"]["ancienne"], par_champ["adresse"]["nouvelle"]) == (
+        "12 rue Carnot", "14 rue Carnot")  # fmt: skip
+    assert par_champ["adresse"]["auteur"]["identifiant"] == monde["admin.sn"].username
+    assert par_champ["adresse"]["le"]
+    admin.post(f"{URL}{cree['id']}/archiver/", {"motif": "Fermé"}, format="json")
+    statut = admin.get(f"{URL}{cree['id']}/historique/").json()[0]
+    assert (statut["champ"], statut["nouvelle"]) == ("statut", "archive")
+
+
+def test_aucune_route_ne_supprime_un_etablissement(monde, secteurs):
+    """PRP-012 CA2 : aucune suppression physique, ni par l'API ni par le modèle."""
+    from apps.prospects.models import Etablissement
+
+    admin = client_de(monde["admin.sn"])
+    cree = admin.post(URL, fiche(monde, secteurs), format="json").json()
+    assert admin.delete(f"{URL}{cree['id']}/").status_code in {403, 405}
+    assert Etablissement.objects.filter(pk=cree["id"]).exists()
+    with pytest.raises(TypeError):
+        Etablissement.objects.get(pk=cree["id"]).delete()

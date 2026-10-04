@@ -186,3 +186,14 @@ def test_isolation_et_consultation_du_siege_auditee(monde):
     assert siege.get(f"{URL}{cree['id']}/").status_code == 200
     e = EvenementAudit.objects.get(action="prospect.consultation")
     assert e.acteur == monde["ada.siege"] and e.objet_id == cree["id"]
+
+
+def test_aucune_route_ne_supprime_un_prospect(monde):
+    """PRP-012 CA2 : ni l'administrateur pays ni l'auteur ne suppriment une fiche par l'API."""
+    admin = client_de(monde["admin.sn"])
+    commune = admin.post(URL, fiche(monde), format="json").json()
+    deleg = client_de(monde["deleg.sn"])
+    sienne = deleg.post(URL, fiche(monde, nom="Faye", prenom="Ousmane"), format="json").json()
+    assert admin.delete(f"{URL}{commune['id']}/").status_code in {403, 405}
+    assert deleg.delete(f"{URL}{sienne['id']}/").status_code in {403, 405}
+    assert Prospect.objects.filter(pk__in=[commune["id"], sienne["id"]]).count() == 2

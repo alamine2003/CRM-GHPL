@@ -38,6 +38,11 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     cibles = Cible.objects.filter(fin__isnull=True)
     assert cibles.exists()
     assert not cibles.filter(poste__occupations__isnull=True).exists()
+    # De quoi trancher (0.1.9) : paires probables (PRP-009) et une proposition (PRP-014).
+    from apps.prospects.models import DoublonProbable, Proposition
+
+    assert DoublonProbable.objects.filter(pays__code="SN", statut="en_attente").count() >= 2
+    assert Proposition.objects.filter(pays__code="SN", statut="en_attente").count() == 1
 
 
 def test_aucune_donnee_reelle(monkeypatch):

@@ -9,6 +9,7 @@
  */
 import type {
   ChangementFiche,
+  Qualite,
   DecisionDoublon,
   DoublonProbable,
   Fusion,
@@ -73,6 +74,7 @@ import type {
 
 export type {
   ChangementFiche,
+  Qualite,
   ComparaisonFiche,
   DecisionDoublon,
   DoublonProbable,
@@ -220,6 +222,10 @@ export interface FiltresProspects extends Pagination {
   /** Liste cible du poste (le délégué qui l'occupe). */
   poste?: string;
   sans_lieu?: '1';
+  /** Qualité des données (0.1.9). */
+  sans_telephone?: '1';
+  sans_specialite?: '1';
+  hors_cible?: '1';
   tri?: TriProspects;
 }
 
@@ -592,6 +598,8 @@ export function creerClient(options: OptionsClient) {
           corps: { motif },
         }),
     },
+    /** Qualité des données du pays actif (0.1.9). */
+    qualite: () => requete<Qualite>('/api/v1/qualite/'),
     /** File des doublons probables (PRP-009). */
     doublons: {
       liste: (statut?: string) =>
