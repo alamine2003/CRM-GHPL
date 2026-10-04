@@ -171,7 +171,7 @@ flowchart TB
 | Courriel | Fournisseur transactionnel (Brevo, Postmark ou équivalent) | SaaS | Courriels de sécurité et de secours | [R] `0.0.3` |
 | BI | Grafana | Render (service Docker avec disque) ou Grafana Cloud | Tableaux de bord analytiques | [D] Grafana ; [R] hébergement `0.7.9` (O-04) |
 | Suivi des erreurs | Sentry | SaaS | Erreurs et performances serveur, portail, mobile | [R] `0.0.7` |
-| Surveillance de disponibilité | Sonde externe (Better Stack, UptimeRobot ou équivalent) | SaaS | Alerte si l'API ou le portail ne répond pas | [R] `0.0.7` |
+| Surveillance de disponibilité | UptimeRobot | SaaS | Alerte si l'API ou le portail ne répond pas ; sonde de l'API sur `/api/health/` | [D] (décidé le 4 octobre 2026) |
 | CI/CD | GitHub Actions, EAS Build, EAS Update, EAS Submit | GitHub, Expo | Tests, livraisons | [D] |
 
 ### 4.1 Organisation du dépôt [R] `0.0.1`
@@ -725,7 +725,7 @@ flowchart LR
 
 | Signal | Outil | Seuil d'alerte [H] | Destinataire |
 |---|---|---|---|
-| Disponibilité API et portail | Sonde externe (1 min) | 2 échecs consécutifs | Administrateur technique |
+| Disponibilité API et portail | UptimeRobot (`/api/health/` pour l'API, page d'accueil pour le portail ; intervalle selon l'offre) | 2 échecs consécutifs | Administrateur technique |
 | Erreurs serveur, portail, mobile | Sentry | Nouvelle erreur, ou > 1 % des requêtes en 5 min | Administrateur technique |
 | Temps de réponse | Sentry Performance | p95 > 1 s pendant 10 min | Administrateur technique |
 | File Celery | Métrique applicative exposée et suivie | > 1 000 tâches en attente ou plus vieille > 10 min | Administrateur technique |

@@ -62,7 +62,8 @@ La commande affiche un compte par rôle (siège, responsable et administrateur p
 ## Exploitation
 
 - Journaux : JSON sur la sortie standard (une ligne par requête, utilisateur pseudonymisé). En local, `JOURNAUX_LISIBLES=1` pour du texte.
-- Suivi des erreurs : fournir `SENTRY_DSN` à l'hébergeur pour l'activer ; sans lui, les erreurs restent dans les journaux.
+- Suivi des erreurs : fournir `SENTRY_DSN` à l'hébergeur pour l'activer ; sans lui, les erreurs restent dans les journaux. Le DSN se trouve dans Sentry : *Settings → Projects → (projet) → Client Keys (DSN)*. Seul le serveur en a besoin : le portail et le mobile lui remontent leurs erreurs.
+- Disponibilité : UptimeRobot surveille `https://<api>/api/health/` (réponse 200 et `"statut": "ok"` ; 503 si la base est indisponible) et la page d'accueil du portail.
 - Mise en ligne : `python manage.py check --deploy --database default` vérifie notamment que le rôle PostgreSQL de l'application ne contourne pas l'isolation des pays.
 - Le portail affiche l'état technique dans **Exploitation** (administrateur technique et siège).
 

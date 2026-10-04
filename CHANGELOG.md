@@ -33,6 +33,10 @@ Septième jalon du cycle 0.0 « Fondations ».
 
 - Historique de la branche réécrit : les anciens mots de passe de test et l'adresse de base de données avec mot de passe de la CI, signalés par GitGuardian, n'existent plus dans aucun commit.
 
+### Décidé
+
+- Surveillance de disponibilité : **UptimeRobot**, sur `/api/health/` (API) et la page d'accueil du portail.
+
 ### Corrigé
 
 - `/api/v1/pays/<code>/designations/` répondait 200 (liste vide) pour un pays hors périmètre au lieu de 404 : trouvé par la nouvelle suite d'isolation.
