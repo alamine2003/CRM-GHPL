@@ -763,7 +763,6 @@
     },
     "nombre_one": "{{count}} fiche",
     "nombre_other": "{{count}} fiches",
-    "limite": "{{limite}} premières fiches sur {{total}} : affinez la recherche.",
     "vide": "Aucune fiche pour l'instant",
     "videTexte": "Créez les fiches des prescripteurs du pays ; les délégués peuvent aussi en créer depuis leur téléphone.",
     "aucunResultat": "Aucune fiche ne correspond",
@@ -842,7 +841,6 @@
     },
     "nombre_one": "{{count}} établissement",
     "nombre_other": "{{count}} établissements",
-    "limite": "{{limite}} premiers établissements sur {{total}} : affinez la recherche.",
     "vide": "Aucun établissement pour l'instant",
     "videTexte": "Créez les lieux d'exercice des prospects ; les délégués peuvent aussi les créer depuis leur téléphone, devant la porte.",
     "aucunResultat": "Aucun établissement ne correspond",
@@ -1034,5 +1032,30 @@
       "resume_one": "{{count}} prospect · {{visites}} visites par cycle de {{semaines}} semaines",
       "resume_other": "{{count}} prospects · {{visites}} visites par cycle de {{semaines}} semaines"
     }
+  },
+  "recherche": {
+    "filtres": "Filtres",
+    "trierPar": "Trier par",
+    "tris": {
+      "nom": "Nom",
+      "potentiel": "Potentiel",
+      "specialite": "Spécialité",
+      "secteur": "Secteur",
+      "recents": "Plus récents",
+      "type": "Type"
+    },
+    "toutes": "Toutes",
+    "delegue": "Délégué (liste cible)",
+    "tousDelegues": "Tous les délégués",
+    "toutLePays": "Tout le pays",
+    "perimetreAide": "Recherche dans votre périmètre : vos secteurs, votre liste cible et vos fiches. « Tout le pays » cherche au-delà.",
+    "toutEffacer": "Tout effacer",
+    "plage": "{{debut}}–{{fin}} sur {{total}}",
+    "page": "Page {{numero}}",
+    "suivante": "Page suivante",
+    "precedente": "Page précédente",
+    "premiere": "Première page",
+    "derniere": "Dernière page",
+    "voirPlus": "Voir plus ({{reste}} restants)"
   }
 }

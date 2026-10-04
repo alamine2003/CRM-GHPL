@@ -304,9 +304,14 @@ def rechercher(qs: QuerySet, texte: str) -> QuerySet:
     texte = (texte or "").strip()
     if not texte:
         return qs
-    filtre = Q()
+    filtre, lieu = Q(), Q()
     for mot in normaliser_nom(texte).split():
         filtre &= Q(nom_normalise__contains=mot)
+        lieu &= Q(etablissement__nom_normalise__contains=mot)
+    # Le nom d'un lieu d'exercice en cours trouve ceux qui y exercent (« clinique du cap »).
+    if lieu:
+        exercent = Exercice.objects.filter(lieu, fin__isnull=True)
+        filtre |= Q(pk__in=exercent.values("prospect_id"))
     chiffres = re.sub(r"\D", "", texte)
     if len(chiffres) >= 4:
         filtre |= Q(telephone_mobile__contains=chiffres) | Q(telephone_pro__contains=chiffres)

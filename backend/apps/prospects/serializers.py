@@ -60,8 +60,11 @@ class ProspectSerializer(serializers.ModelSerializer):
 
 
 class ListeProspectsSerializer(serializers.Serializer):
+    """Une page de résultats (PRP-005 CA3)."""
+
     total = serializers.IntegerField()
-    limite = serializers.IntegerField()
+    page = serializers.IntegerField()
+    taille = serializers.IntegerField()
     resultats = ProspectSerializer(many=True)
 
 
@@ -134,8 +137,11 @@ class EtablissementSerializer(serializers.ModelSerializer):
 
 
 class ListeEtablissementsSerializer(serializers.Serializer):
+    """Une page de résultats (PRP-005 CA3)."""
+
     total = serializers.IntegerField()
-    limite = serializers.IntegerField()
+    page = serializers.IntegerField()
+    taille = serializers.IntegerField()
     resultats = EtablissementSerializer(many=True)
 
 

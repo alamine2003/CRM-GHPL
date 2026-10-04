@@ -11,6 +11,9 @@ from apps.referentiel.models import Valeur
 pytestmark = pytest.mark.django_db
 
 URL = "/api/v1/prospects/"
+#: Fiches communes de tout le pays (portée « pays », RG-024) ; la portée par défaut est le
+#: périmètre de l'utilisateur (PRP-005 CA2).
+PAYS = f"{URL}?portee=pays"
 
 
 def valeur(monde, liste, code, pays="sn"):
@@ -74,7 +77,7 @@ def test_la_fiche_creee_par_l_administrateur_est_commune(monde):
     assert (cree["nom"], cree["prenom"]) == ("NDIAYE", "Aïssatou")
     deleg = client_de(monde["deleg.sn"])
     assert deleg.get(f"{URL}{cree['id']}/").json()["potentiel"] == "A"
-    assert noms(deleg.get(URL)) == ["NDIAYE"]
+    assert noms(deleg.get(PAYS)) == ["NDIAYE"]
     assert EvenementAudit.objects.filter(action="prospect.creation").count() == 1
 
 
@@ -95,14 +98,14 @@ def test_la_fiche_du_delegue_est_a_valider_et_visible_par_lui_seul(monde):
     collegue = creer_utilisateur("fatou.sn", prenom="Fatou", nom="Sn", pays=monde["sn"])
     attribuer_role(collegue, Role.DELEGUE, monde["sn"], par=None)
     autre = client_de(collegue)
-    assert noms(autre.get(URL)) == []
+    assert noms(autre.get(PAYS)) == []
     assert autre.get(f"{URL}{identifiant}/").status_code == 404
     # L'administration du pays la voit et la valide : elle devient commune.
     admin = client_de(monde["admin.sn"])
     assert admin.get(f"{URL}synthese/").json()["a_valider"] == 1
     valide = admin.post(f"{URL}{identifiant}/valider/").json()
     assert valide["statut"] == "actif"
-    assert noms(autre.get(URL)) == ["SARR"]
+    assert noms(autre.get(PAYS)) == ["SARR"]
     # Devenue commune, le délégué ne la modifie plus directement (propositions en 0.1.8).
     refus = deleg.patch(f"{URL}{identifiant}/", {"potentiel": "C"}, format="json")
     assert refus.status_code == 403 and refus.json()["code"] == "modification_interdite"

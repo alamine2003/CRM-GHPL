@@ -5,7 +5,6 @@ validation, modification de toute fiche, archivage : `prospects.gerer` (administ
 """
 
 from django.db.models import Count, Prefetch, Q
-from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -20,12 +19,10 @@ from apps.perimetre.vues import VuePerimetre
 from apps.referentiel.models import Valeur
 from apps.socle.erreurs import ErreurMetier
 
+from . import recherche as rch
 from . import serializers as s
 from . import services
-from .models import Etablissement, Exercice, Potentiel, StatutFiche
-
-#: Résultats renvoyés par une recherche ; pagination complète en 0.1.7 (PRP-005).
-LIMITE = 100
+from .models import Activite, Etablissement, Exercice, Potentiel, StatutFiche
 
 
 class VueProspects(VuePerimetre):
@@ -69,34 +66,39 @@ class ProspectsVue(VueProspects):
 
     @extend_schema(
         parameters=[
-            OpenApiParameter("q", str, required=False, description="Nom, téléphone, n° d'ordre"),
+            OpenApiParameter(
+                "q",
+                str,
+                required=False,
+                description="Nom, téléphone, n° d'ordre, lieu d'exercice",
+            ),
             OpenApiParameter("statut", enum=StatutFiche.values, required=False),
             OpenApiParameter("type", str, required=False),
+            OpenApiParameter("specialite", str, required=False),
             OpenApiParameter("potentiel", enum=Potentiel.values, required=False),
+            OpenApiParameter("activite", enum=Activite.values, required=False),
+            OpenApiParameter("secteur", str, required=False),
+            OpenApiParameter("localite", str, required=False),
+            OpenApiParameter("poste", str, required=False, description="Liste cible du poste"),
+            OpenApiParameter("sans_lieu", str, required=False, description="1"),
+            OpenApiParameter("portee", enum=["perimetre", "pays"], required=False),
+            OpenApiParameter("tri", enum=list(rch.TRIS_PROSPECTS), required=False),
+            OpenApiParameter("page", int, required=False),
+            OpenApiParameter(
+                "taille", int, required=False, description="20 par défaut, 100 au plus"
+            ),
         ],
         responses=s.ListeProspectsSerializer,
         operation_id="prospects_liste",
     )
     def get(self, request):
-        qs = self.get_queryset()
+        """PRP-005 : recherche tolérante, filtres, tri et pagination, dans le périmètre."""
         p = request.query_params
-        statut = p.get("statut")
-        qs = qs.filter(statut=statut) if statut else qs.exclude(
-            statut__in=[StatutFiche.ARCHIVE, StatutFiche.FUSIONNE]
-        )  # fmt: skip
-        if p.get("type"):
-            qs = qs.filter(type_id=p["type"])
-        if p.get("potentiel"):
-            qs = qs.filter(potentiel=p["potentiel"])
-        qs = services.rechercher(qs, p.get("q", ""))
-        resultats = list(qs.order_by(Lower("nom"), Lower("prenom"))[:LIMITE])
-        return Response(
-            {
-                "total": qs.count(),
-                "limite": LIMITE,
-                "resultats": self.get_serializer(resultats, many=True).data,
-            }
-        )
+        qs = rch.dans_portee(self.get_queryset(), p, self.perimetre, rch.prospects_du_perimetre)
+        qs = rch.filtrer_prospects(rch.statut(qs, p.get("statut")), p)
+        qs = rch.trier(services.rechercher(qs, p.get("q", "")), p.get("tri"), rch.TRIS_PROSPECTS)
+        resultats, pagination = rch.paginer(qs, p)
+        return Response({**pagination, "resultats": self.get_serializer(resultats, many=True).data})
 
     @extend_schema(request=s.SaisieProspectSerializer, responses={201: s.ProspectSerializer},
                    operation_id="prospect_creer")  # fmt: skip
@@ -158,7 +160,7 @@ class SyntheseProspectsVue(VueProspects):
 
     @extend_schema(responses=s.SyntheseProspectsSerializer, operation_id="prospects_synthese")
     def get(self, request):
-        qs = self.get_queryset()
+        qs = rch.prospects_du_perimetre(self.get_queryset(), self.perimetre)
         moi = request.user
         chiffres = qs.aggregate(
             actifs=Count("id", filter=Q(statut=StatutFiche.ACTIF)),
@@ -199,33 +201,29 @@ class EtablissementsVue(VueEtablissements):
             OpenApiParameter("statut", enum=StatutFiche.values, required=False),
             OpenApiParameter("type", str, required=False),
             OpenApiParameter("secteur", str, required=False),
+            OpenApiParameter("localite", str, required=False),
+            OpenApiParameter("activite", enum=Activite.values, required=False),
             OpenApiParameter("sans_coordonnees", str, required=False, description="1"),
+            OpenApiParameter("portee", enum=["perimetre", "pays"], required=False),
+            OpenApiParameter("tri", enum=list(rch.TRIS_ETABLISSEMENTS), required=False),
+            OpenApiParameter("page", int, required=False),
+            OpenApiParameter("taille", int, required=False),
         ],
         responses=s.ListeEtablissementsSerializer,
         operation_id="etablissements_liste",
     )
     def get(self, request):
-        qs = self.get_queryset()
         p = request.query_params
-        statut = p.get("statut")
-        qs = qs.filter(statut=statut) if statut else qs.exclude(
-            statut__in=[StatutFiche.ARCHIVE, StatutFiche.FUSIONNE]
-        )  # fmt: skip
-        if p.get("type"):
-            qs = qs.filter(type_id=p["type"])
-        if p.get("secteur"):
-            qs = qs.filter(secteur_id=p["secteur"])
-        if p.get("sans_coordonnees") == "1":
-            qs = qs.filter(latitude__isnull=True)
-        qs = services.rechercher_etablissements(qs, p.get("q", ""))
-        resultats = list(qs.order_by(Lower("nom"))[:LIMITE])
-        return Response(
-            {
-                "total": qs.count(),
-                "limite": LIMITE,
-                "resultats": self.get_serializer(resultats, many=True).data,
-            }
+        qs = rch.dans_portee(
+            self.get_queryset(), p, self.perimetre, rch.etablissements_du_perimetre
         )
+        qs = rch.filtrer_etablissements(rch.statut(qs, p.get("statut")), p)
+        qs = rch.trier(
+            services.rechercher_etablissements(qs, p.get("q", "")), p.get("tri"),
+            rch.TRIS_ETABLISSEMENTS,
+        )  # fmt: skip
+        resultats, pagination = rch.paginer(qs, p)
+        return Response({**pagination, "resultats": self.get_serializer(resultats, many=True).data})
 
     @extend_schema(request=s.SaisieEtablissementSerializer,
                    responses={201: s.EtablissementSerializer},
@@ -286,7 +284,7 @@ class SyntheseEtablissementsVue(VueEtablissements):
     @extend_schema(responses=s.SyntheseEtablissementsSerializer,
                    operation_id="etablissements_synthese")  # fmt: skip
     def get(self, request):
-        qs = self.get_queryset()
+        qs = rch.etablissements_du_perimetre(self.get_queryset(), self.perimetre)
         actifs = qs.filter(statut=StatutFiche.ACTIF)
         chiffres = qs.aggregate(
             actifs=Count("id", filter=Q(statut=StatutFiche.ACTIF)),

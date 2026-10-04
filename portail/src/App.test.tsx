@@ -1108,7 +1108,7 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
 
   function clientProspects(perimetre: Perimetre) {
     const prospects = {
-      liste: vi.fn(async () => ({ total: 1, limite: 100, resultats: [FICHE] })),
+      liste: vi.fn(async () => ({ total: 1, page: 1, taille: 20, resultats: [FICHE] })),
       synthese: vi.fn(async () => ({
         actifs: 12,
         a_valider: 1,
@@ -1132,7 +1132,7 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
           localites: [{ id: 'l1', libelle: 'Centre' }],
         },
       ]),
-      liste: vi.fn(async () => ({ total: 1, limite: 100, resultats: [CLINIQUE] })),
+      liste: vi.fn(async () => ({ total: 1, page: 1, taille: 20, resultats: [CLINIQUE] })),
     };
     const exercices = {
       duProspect: vi.fn(async () => [EXERCICE]),
@@ -1193,6 +1193,31 @@ describe('portail — prospects (PRP-002, PRP-006)', () => {
         expect.objectContaining({ etablissement: 'e1', principal: false }),
       ),
     );
+  });
+
+  it('filtres gardés dans l’adresse, puces retirables et pagination (PRP-005)', async () => {
+    const { client, prospects } = clientProspects(ADMIN_P);
+    prospects.liste.mockResolvedValue({ total: 45, page: 1, taille: 20, resultats: [FICHE] });
+    rendre(client, '/prospects?potentiel=A&tri=potentiel');
+    await vi.waitFor(() =>
+      expect(prospects.liste).toHaveBeenCalledWith(
+        expect.objectContaining({ potentiel: 'A', tri: 'potentiel', page: 1 }),
+      ),
+    );
+    expect((await screen.findAllByText('1–20 sur 45')).length).toBe(2); // en haut et en bas
+    fireEvent.click(screen.getAllByRole('button', { name: 'Page 2' })[0]!);
+    await vi.waitFor(() =>
+      expect(prospects.liste).toHaveBeenCalledWith(expect.objectContaining({ page: 2 })),
+    );
+    // Retirer un filtre ramène à la première page.
+    const puce = screen.getByRole('button', { name: 'Potentiel A' });
+    fireEvent.click(within(puce).getByTestId('CancelIcon'));
+    await vi.waitFor(() =>
+      expect(prospects.liste).toHaveBeenLastCalledWith(
+        expect.not.objectContaining({ potentiel: 'A' }),
+      ),
+    );
+    expect(prospects.liste).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1 }));
   });
 
   it('l’administrateur pays valide une fiche à valider (RG-041)', async () => {
@@ -1275,7 +1300,7 @@ describe('portail — établissements (PRP-003)', () => {
 
   function clientEtab() {
     const etablissements = {
-      liste: vi.fn(async () => ({ total: 2, limite: 100, resultats: [AVEC, SANS] })),
+      liste: vi.fn(async () => ({ total: 2, page: 1, taille: 20, resultats: [AVEC, SANS] })),
       synthese: vi.fn(async () => ({
         actifs: 2,
         a_valider: 0,

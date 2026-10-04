@@ -180,11 +180,30 @@ export interface NouveauProduit {
   reseaux?: string[];
 }
 
-export interface FiltresProspects {
+/** Pagination commune aux listes (PRP-005 CA3 : 20 par page par défaut). */
+export interface Pagination {
+  page?: number;
+  taille?: number;
+  /** « perimetre » par défaut ; « pays » pour chercher hors de son secteur (RG-024). */
+  portee?: 'perimetre' | 'pays';
+}
+
+export type TriProspects = 'nom' | 'potentiel' | 'specialite' | 'secteur' | 'recents';
+export type TriEtablissements = 'nom' | 'type' | 'secteur' | 'recents';
+
+export interface FiltresProspects extends Pagination {
   q?: string;
   statut?: StatutFiche;
   type?: string;
+  specialite?: string;
   potentiel?: Potentiel;
+  activite?: ActiviteExercice;
+  secteur?: string;
+  localite?: string;
+  /** Liste cible du poste (le délégué qui l'occupe). */
+  poste?: string;
+  sans_lieu?: '1';
+  tri?: TriProspects;
 }
 
 export interface SaisieProspect {
@@ -212,12 +231,15 @@ export interface SaisieExercice {
   presence?: string;
 }
 
-export interface FiltresEtablissements {
+export interface FiltresEtablissements extends Pagination {
   q?: string;
   statut?: StatutFiche;
   type?: string;
   secteur?: string;
+  localite?: string;
+  activite?: ActiviteExercice;
   sans_coordonnees?: '1';
+  tri?: TriEtablissements;
 }
 
 export interface SaisieEtablissement {
@@ -518,7 +540,9 @@ export function creerClient(options: OptionsClient) {
     prospects: {
       liste: (filtres: FiltresProspects = {}) => {
         const params = new URLSearchParams(
-          Object.entries(filtres).filter((e): e is [string, string] => Boolean(e[1])),
+          Object.entries(filtres)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .map(([k, v]) => [k, String(v)]),
         ).toString();
         return requete<ListeProspects>(`/api/v1/prospects/${params ? `?${params}` : ''}`);
       },
@@ -562,7 +586,9 @@ export function creerClient(options: OptionsClient) {
         requete<ListeCible>(`/api/v1/ciblage/postes/${poste}/${historique ? '?historique=1' : ''}`),
       candidats: (poste: string, filtres: { q?: string; potentiel?: Potentiel } = {}) => {
         const params = new URLSearchParams(
-          Object.entries(filtres).filter((e): e is [string, string] => Boolean(e[1])),
+          Object.entries(filtres)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .map(([k, v]) => [k, String(v)]),
         ).toString();
         return requete<ProspectCible[]>(
           `/api/v1/ciblage/postes/${poste}/candidats/${params ? `?${params}` : ''}`,
@@ -589,7 +615,9 @@ export function creerClient(options: OptionsClient) {
     etablissements: {
       liste: (filtres: FiltresEtablissements = {}) => {
         const params = new URLSearchParams(
-          Object.entries(filtres).filter((e): e is [string, string] => Boolean(e[1])),
+          Object.entries(filtres)
+            .filter(([, v]) => v !== undefined && v !== null && v !== '')
+            .map(([k, v]) => [k, String(v)]),
         ).toString();
         return requete<ListeEtablissements>(`/api/v1/etablissements/${params ? `?${params}` : ''}`);
       },

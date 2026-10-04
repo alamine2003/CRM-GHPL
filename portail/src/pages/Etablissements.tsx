@@ -1,6 +1,7 @@
 import type {
   Etablissement,
   FiltresEtablissements,
+  TriEtablissements,
   Perimetre,
   SaisieEtablissement,
   SecteurSaisie,
@@ -58,6 +59,7 @@ import {
 import { ErreurChargement } from '../composants/Erreurs';
 import { ProspectsExercant } from '../composants/Exercices';
 import IconeType from '../composants/IconeEtablissement';
+import { BarrePagination } from '../composants/Recherche';
 import { ChampsLieu, ChoixActivite, SelectSecteur } from '../composants/Lieu';
 import { depuis } from '../composants/formats';
 import { useNotifier } from '../contexteNotifications';
@@ -529,6 +531,8 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
   const [secteur, setSecteur] = useState('');
   const [sansGps, setSansGps] = useState(false);
   const [vue, setVue] = useState<'liste' | 'carte'>('liste');
+  const [tri, setTri] = useState<TriEtablissements>('nom');
+
   const [ouverte, setOuverte] = useState<string | null>(null);
   const [dialogue, setDialogue] = useState<{ fiche: Etablissement | null } | null>(null);
 
@@ -546,12 +550,22 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
     queryKey: ['etablissements', cle, 'secteurs'],
     queryFn: client.etablissements.secteurs,
   });
+  // Un nouveau filtre ramène à la première page (PRP-005) : la page retenue ne vaut que pour
+  // la combinaison de filtres où elle a été choisie.
+  const cleFiltres = JSON.stringify([q, statut, type, secteur, sansGps, tri]);
+  const [pagination, setPagination] = useState({ cle: cleFiltres, page: 1 });
+  const page = pagination.cle === cleFiltres ? pagination.page : 1;
+  const setPage = (p: number) => setPagination({ cle: cleFiltres, page: p });
   const filtres: FiltresEtablissements = {
     q,
     statut: statut === 'tous' ? undefined : statut,
     type: type || undefined,
     secteur: secteur || undefined,
     sans_coordonnees: sansGps ? '1' : undefined,
+    tri: tri === 'nom' ? undefined : tri,
+    // La carte montre jusqu'à 100 établissements à la fois ; la liste, 20 par page.
+    page: vue === 'carte' ? 1 : page,
+    taille: vue === 'carte' ? 100 : undefined,
   };
   const liste = useQuery({
     queryKey: ['etablissements', cle, 'liste', filtres],
@@ -693,6 +707,20 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            select
+            size="small"
+            value={tri}
+            onChange={(e) => setTri(e.target.value as TriEtablissements)}
+            sx={{ minWidth: 150 }}
+            slotProps={{ htmlInput: { 'aria-label': t('recherche.trierPar') } }}
+          >
+            {(['nom', 'type', 'secteur', 'recents'] as const).map((v) => (
+              <MenuItem key={v} value={v}>
+                {t(`recherche.tris.${v}`)}
+              </MenuItem>
+            ))}
+          </TextField>
           <SelectSecteur
             secteurs={secteurs.data ?? []}
             valeur={secteur}
@@ -724,11 +752,12 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
         </Stack>
       ) : (
         <>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {liste.data.total > liste.data.limite
-              ? t('etablissement.limite', { limite: liste.data.limite, total: liste.data.total })
-              : t('etablissement.nombre', { count: liste.data.total })}
-          </Typography>
+          <BarrePagination
+            total={liste.data.total}
+            page={liste.data.page}
+            taille={liste.data.taille}
+            changer={setPage}
+          />
           {vue === 'carte' ? (
             <Card sx={{ p: 1 }}>
               <Suspense fallback={<ChargementCarte hauteur={520} />}>
@@ -831,6 +860,17 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
                 ))
               )}
             </Card>
+          )}
+          {vue === 'liste' && liste.data.total > liste.data.taille && (
+            <BarrePagination
+              total={liste.data.total}
+              page={liste.data.page}
+              taille={liste.data.taille}
+              changer={(p) => {
+                setPage(p);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
           )}
         </>
       )}

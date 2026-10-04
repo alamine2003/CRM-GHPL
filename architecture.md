@@ -447,6 +447,7 @@ Mise en œuvre (0.0.3) : le jeton d'accès porte l'identifiant de session (`sid`
   - `df`, `dm` : postes dont un réseau est dans leur `Perimetre` daté ;
   - `superviseur` : postes rattachés (`Rattachement` actif) + postes des remplacements actifs ;
   - `delegue` : ses occupations actives ; prospects de sa liste cible et de ses secteurs ; ses propres visites et rapports.
+- Mise en œuvre 0.1.7 (PRP-005 CA2) : la recherche des fiches applique ce périmètre (`prospects/recherche.py`) ; pour les rôles de terrain, le périmètre des fiches est formé des secteurs de leurs postes, de leurs listes cibles et de leurs propres fiches ; la portée « pays » se demande explicitement (RG-024) ; une fiche commune reste lisible par son identifiant.
 - **Permissions d'action** : vérifiées dans les commandes (section 7.4), jamais seulement dans l'interface.
 - **Réponse hors périmètre** : `404` (et non `403`) pour ne pas révéler l'existence de l'objet (USR-002 CA2).
 

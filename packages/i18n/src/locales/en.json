@@ -763,7 +763,6 @@
     },
     "nombre_one": "{{count}} record",
     "nombre_other": "{{count}} records",
-    "limite": "First {{limite}} records of {{total}}: refine your search.",
     "vide": "No records yet",
     "videTexte": "Create the country's prescriber records; reps can also create them from their phone.",
     "aucunResultat": "No matching record",
@@ -842,7 +841,6 @@
     },
     "nombre_one": "{{count}} institution",
     "nombre_other": "{{count}} institutions",
-    "limite": "First {{limite}} institutions of {{total}}: refine your search.",
     "vide": "No institutions yet",
     "videTexte": "Create the prospects' places of practice; reps can also create them from their phone, at the door.",
     "aucunResultat": "No matching institution",
@@ -1034,5 +1032,30 @@
       "resume_one": "{{count}} prospect · {{visites}} visits per {{semaines}}-week cycle",
       "resume_other": "{{count}} prospects · {{visites}} visits per {{semaines}}-week cycle"
     }
+  },
+  "recherche": {
+    "filtres": "Filters",
+    "trierPar": "Sort by",
+    "tris": {
+      "nom": "Name",
+      "potentiel": "Potential",
+      "specialite": "Specialty",
+      "secteur": "Sector",
+      "recents": "Most recent",
+      "type": "Type"
+    },
+    "toutes": "All",
+    "delegue": "Rep (target list)",
+    "tousDelegues": "All reps",
+    "toutLePays": "Whole country",
+    "perimetreAide": "Searching your scope: your sectors, your target list and your records. \"Whole country\" searches beyond.",
+    "toutEffacer": "Clear all",
+    "plage": "{{debut}}–{{fin}} of {{total}}",
+    "page": "Page {{numero}}",
+    "suivante": "Next page",
+    "precedente": "Previous page",
+    "premiere": "First page",
+    "derniere": "Last page",
+    "voirPlus": "Show more ({{reste}} left)"
   }
 }

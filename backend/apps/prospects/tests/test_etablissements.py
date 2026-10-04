@@ -96,10 +96,10 @@ def test_le_delegue_cree_un_etablissement_a_valider(monde, secteurs):
     cree = deleg.post(URL, fiche(monde, secteurs, nom="Pharmacie Médina"), format="json")
     assert cree.status_code == 201 and cree.json()["statut"] == "a_valider"
     assert noms(deleg.get(URL)) == ["Pharmacie Médina"]
-    assert noms(client_de(monde["sup.sn"]).get(URL)) == []
+    assert noms(client_de(monde["sup.sn"]).get(f"{URL}?portee=pays")) == []
     admin = client_de(monde["admin.sn"])
     admin.post(f"{URL}{cree.json()['id']}/valider/")
-    assert noms(client_de(monde["sup.sn"]).get(URL)) == ["Pharmacie Médina"]
+    assert noms(client_de(monde["sup.sn"]).get(f"{URL}?portee=pays")) == ["Pharmacie Médina"]
     refus = deleg.patch(f"{URL}{cree.json()['id']}/", {"nom": "X"}, format="json")
     assert refus.status_code == 403
 

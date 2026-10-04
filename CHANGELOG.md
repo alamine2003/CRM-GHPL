@@ -2,6 +2,34 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.7] — Recherche, filtres, tri et pagination ; design enrichi
+
+Septième jalon du cycle 0.1 « Référentiel ».
+
+### Ajouté — recherche des fiches (PRP-005)
+
+- **CA1** : recherche tolérante aux accents et à la casse sur le nom (titre ignoré), le téléphone, le n° d'ordre et, nouveauté, le nom d'un lieu d'exercice en cours : « clinique du cap » trouve ceux qui y exercent.
+- **CA2 — périmètre** : les résultats ne contiennent que des fiches du pays actif et du périmètre de l'utilisateur :
+  - administrateur pays, responsable pays et siège : tout le pays ;
+  - délégué, superviseur, DM et DF (architecture §11.2) : les secteurs de leurs postes (par la fiche ou par un lieu d'exercice), leurs listes cibles et les fiches qu'ils ont créées.
+
+  La synthèse suit le même périmètre. Un prospect hors secteur restant planifiable (RG-024), la portée « tout le pays » se demande explicitement (`portee=pays`) [H]. La fiche commune reste consultable par son lien.
+- **Filtres** : type, spécialité, potentiel, activité, secteur et localité (par la fiche ou par un lieu d'exercice en cours), délégué (liste cible de son poste), sans lieu d'exercice, statut.
+- **Tri** : nom, potentiel, spécialité, secteur, plus récents.
+- **CA3 — pagination** : 20 résultats par page par défaut, 100 au plus. La réponse donne `total`, `page` et `taille` ; le champ `limite` disparaît.
+- **Établissements** : même pagination et même périmètre ; filtres par localité et activité ; tri par nom, type, secteur, plus récents.
+
+### Portail et mobile
+
+- **Page Prospects** :
+  - barre de recherche en carte : recherche, statut, tri, et bouton « Filtres » avec le nombre de filtres actifs ;
+  - panneau de filtres repliable en grille : type, spécialité (selon le type), potentiel, activité, secteur, localité (selon le secteur), délégué, sans lieu d'exercice, tout le pays ;
+  - filtres actifs en puces retirables, avec « Tout effacer » ;
+  - filtres gardés dans l'adresse de la page : un lien rouvre la même recherche, un changement de filtre ramène à la page 1 ;
+  - « 21–40 sur 425 » et numéros de page en haut et en bas ; la liste s'estompe pendant le chargement de la page suivante.
+- **Page Établissements** : tri, pagination ; la carte affiche jusqu'à 100 établissements.
+- **Mobile** : pages de 20 et bouton « Voir plus ».
+
 ## [0.1.6] — Listes cibles et fréquences ; design enrichi
 
 Sixième jalon du cycle 0.1 « Référentiel ».

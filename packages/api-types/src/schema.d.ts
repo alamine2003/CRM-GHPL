@@ -1254,6 +1254,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
+    /** @description PRP-005 : recherche tolérante, filtres, tri et pagination, dans le périmètre. */
     get: operations['prospects_liste'];
     put?: never;
     post: operations['prospect_creer'];
@@ -2058,14 +2059,18 @@ export interface components {
       | 'classe_therapeutique'
       | 'grade'
       | 'motif_ecart';
+    /** @description Une page de résultats (PRP-005 CA3). */
     ListeEtablissements: {
       total: number;
-      limite: number;
+      page: number;
+      taille: number;
       resultats: components['schemas']['Etablissement'][];
     };
+    /** @description Une page de résultats (PRP-005 CA3). */
     ListeProspects: {
       total: number;
-      limite: number;
+      page: number;
+      taille: number;
       resultats: components['schemas']['Prospect'][];
     };
     Localite: {
@@ -3408,12 +3413,18 @@ export interface operations {
   etablissements_liste: {
     parameters: {
       query?: {
+        activite?: 'hospitalier' | 'prive';
+        localite?: string;
+        page?: number;
+        portee?: 'pays' | 'perimetre';
         /** @description Nom, localité, téléphone */
         q?: string;
         /** @description 1 */
         sans_coordonnees?: string;
         secteur?: string;
         statut?: 'a_valider' | 'actif' | 'archive' | 'fusionne';
+        taille?: number;
+        tri?: 'nom' | 'recents' | 'secteur' | 'type';
         type?: string;
       };
       header?: never;
@@ -4764,10 +4775,23 @@ export interface operations {
   prospects_liste: {
     parameters: {
       query?: {
+        activite?: 'hospitalier' | 'prive';
+        localite?: string;
+        page?: number;
+        portee?: 'pays' | 'perimetre';
+        /** @description Liste cible du poste */
+        poste?: string;
         potentiel?: 'A' | 'B' | 'C';
-        /** @description Nom, téléphone, n° d'ordre */
+        /** @description Nom, téléphone, n° d'ordre, lieu d'exercice */
         q?: string;
+        /** @description 1 */
+        sans_lieu?: string;
+        secteur?: string;
+        specialite?: string;
         statut?: 'a_valider' | 'actif' | 'archive' | 'fusionne';
+        /** @description 20 par défaut, 100 au plus */
+        taille?: number;
+        tri?: 'nom' | 'potentiel' | 'recents' | 'secteur' | 'specialite';
         type?: string;
       };
       header?: never;

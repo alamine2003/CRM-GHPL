@@ -18,27 +18,33 @@ import LocalHospitalRounded from '@mui/icons-material/LocalHospitalRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import PhoneRounded from '@mui/icons-material/PhoneRounded';
 import SearchRounded from '@mui/icons-material/SearchRounded';
+import SortRounded from '@mui/icons-material/SortRounded';
 import StarRounded from '@mui/icons-material/StarRounded';
 import TaskAltRounded from '@mui/icons-material/TaskAltRounded';
 import TodayRounded from '@mui/icons-material/TodayRounded';
+import TuneRounded from '@mui/icons-material/TuneRounded';
 import WrongLocationRounded from '@mui/icons-material/WrongLocationRounded';
 import VerifiedRounded from '@mui/icons-material/VerifiedRounded';
 import {
   Alert,
   Avatar,
+  Badge,
   Box,
   Button,
   ButtonBase,
   Card,
   Chip,
+  Collapse,
   Divider,
   Drawer,
+  FormControlLabel,
   IconButton,
   InputAdornment,
   Link,
   MenuItem,
   Skeleton,
   Stack,
+  Switch,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -50,7 +56,9 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
 import { LieuxExercice } from '../composants/Exercices';
-import { ChampsLieu, ChoixActivite } from '../composants/Lieu';
+import { ChampsLieu, ChoixActivite, SelectSecteur } from '../composants/Lieu';
+import { useFiltresUrl } from '../composants/filtresUrl';
+import { BarrePagination, type Puce, PucesFiltres } from '../composants/Recherche';
 import {
   EnTeteCarte,
   EnTetePage,
@@ -572,6 +580,55 @@ function FicheProspect({
 
 // --- Page --------------------------------------------------------------------------------------
 
+const CLES_FILTRES = [
+  'q',
+  'statut',
+  'type',
+  'specialite',
+  'potentiel',
+  'activite',
+  'secteur',
+  'localite',
+  'poste',
+  'sans_lieu',
+  'portee',
+  'tri',
+] as const;
+const TRIS = ['nom', 'potentiel', 'specialite', 'secteur', 'recents'] as const;
+
+/** Liste déroulante d'un filtre, avec une première option « tous ». */
+function ChoixFiltre({
+  libelle,
+  vide,
+  valeur,
+  options,
+  changer,
+}: {
+  libelle: string;
+  vide: string;
+  valeur: string;
+  options: { id: string; libelle: string }[];
+  changer: (v: string) => void;
+}) {
+  return (
+    <TextField
+      select
+      size="small"
+      label={libelle}
+      value={options.some((o) => o.id === valeur) ? valeur : ''}
+      onChange={(e) => changer(e.target.value)}
+      slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+    >
+      <MenuItem value="">{vide}</MenuItem>
+      {options.map((o) => (
+        <MenuItem key={o.id} value={o.id}>
+          {o.libelle}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+}
+
 /** Fiches prospects (PRP-002) ; création par le délégué au statut « à valider » (PRP-006). */
 export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
   const { t } = useTranslation();
@@ -584,26 +641,71 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
   const delegue = perimetre.roles.includes('delegue') && !gerer;
   const { types, specialites, grades } = useValeurs();
 
-  const [saisie, setSaisie] = useState('');
-  const [q, setQ] = useState('');
-  const [statut, setStatut] = useState<FiltreStatut>('tous');
-  const [type, setType] = useState('');
-  const [potentiel, setPotentiel] = useState<Potentiel | ''>('');
+  // Filtres dans l'adresse de la page : un lien rouvre la même recherche (PRP-005).
+  const { valeurs: f, changer, effacer, page } = useFiltresUrl(CLES_FILTRES);
+  const statut = (f.statut || 'tous') as FiltreStatut;
+  const [saisie, setSaisie] = useState(f.q);
+  const [panneau, setPanneau] = useState(false);
   const [ouverte, setOuverte] = useState<string | null>(null);
   const [dialogue, setDialogue] = useState<{ prospect: Prospect | null } | null>(null);
+  const terrain = !perimetre.roles.some((r) =>
+    ['admin_pays', 'responsable_pays', 'admin_siege', 'direction_siege'].includes(r),
+  );
 
   // La recherche part 300 ms après la dernière frappe.
   useEffect(() => {
-    const minuteur = setTimeout(() => setQ(saisie), 300);
+    if (saisie === f.q) return;
+    const minuteur = setTimeout(() => changer({ q: saisie }), 300);
     return () => clearTimeout(minuteur);
-  }, [saisie]);
+  }, [saisie, f.q, changer]);
+
+  const secteurs = useQuery({
+    queryKey: ['etablissements', cle, 'secteurs'],
+    queryFn: () => client.etablissements.secteurs(),
+    enabled: panneau || Boolean(f.secteur || f.localite),
+  });
+  const postes = useQuery({
+    queryKey: ['ciblage', 'postes', cle],
+    queryFn: () => client.ciblage.postes(),
+    enabled: perimetre.actions.includes('cibles.lire') && (panneau || Boolean(f.poste)),
+  });
 
   const filtres: FiltresProspects = {
-    q,
+    q: f.q || undefined,
     statut: statut === 'tous' ? undefined : statut,
-    type: type || undefined,
-    potentiel: potentiel || undefined,
+    type: f.type || undefined,
+    specialite: f.specialite || undefined,
+    potentiel: (f.potentiel || undefined) as Potentiel | undefined,
+    activite: (f.activite || undefined) as FiltresProspects['activite'],
+    secteur: f.secteur || undefined,
+    localite: f.localite || undefined,
+    poste: f.poste || undefined,
+    sans_lieu: f.sans_lieu === '1' ? '1' : undefined,
+    portee: f.portee === 'pays' ? 'pays' : undefined,
+    tri: (f.tri || undefined) as FiltresProspects['tri'],
+    page,
   };
+  const libelle = (liste: { id: string; libelle: string }[] | undefined, id: string) =>
+    liste?.find((x) => x.id === id)?.libelle ?? '…';
+  const localites = (secteurs.data ?? []).flatMap((x) => x.localites);
+  const puces: Puce[] = [
+    f.type && { cle: 'type', libelle: libelle(types, f.type) },
+    f.specialite && { cle: 'specialite', libelle: libelle(specialites, f.specialite) },
+    f.potentiel && { cle: 'potentiel', libelle: t(`prospect.potentiels.${f.potentiel}`) },
+    f.activite && { cle: 'activite', libelle: t(`lieu.exercices.${f.activite}`) },
+    f.secteur && { cle: 'secteur', libelle: libelle(secteurs.data, f.secteur) },
+    f.localite && { cle: 'localite', libelle: libelle(localites, f.localite) },
+    f.poste && {
+      cle: 'poste',
+      libelle: libelle(
+        postes.data?.map((x) => ({ id: x.id, libelle: x.occupant ?? x.libelle })),
+        f.poste,
+      ),
+    },
+    f.sans_lieu && { cle: 'sans_lieu', libelle: t('prospect.chiffres.sansLieu') },
+    f.portee && { cle: 'portee', libelle: t('recherche.toutLePays') },
+  ].filter(Boolean) as Puce[];
+  const filtresActifs = puces.length + (f.q ? 1 : 0) + (statut !== 'tous' ? 1 : 0);
   const liste = useQuery({
     queryKey: ['prospects', cle, 'liste', filtres],
     queryFn: () => client.prospects.liste(filtres),
@@ -676,85 +778,203 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
         <Alert severity="info">{t('prospect.choisirPays')}</Alert>
       )}
 
-      <Stack
-        direction={{ xs: 'column', lg: 'row' }}
-        spacing={1.25}
-        sx={{ alignItems: { lg: 'center' } }}
-      >
-        <TextField
-          size="small"
-          placeholder={t('prospect.rechercher')}
-          value={saisie}
-          onChange={(e) => setSaisie(e.target.value)}
-          sx={{ flexGrow: 1 }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchRounded fontSize="small" />
-                </InputAdornment>
-              ),
-            },
-            htmlInput: { 'aria-label': t('prospect.rechercher') },
-          }}
-        />
-        <ToggleButtonGroup
-          exclusive
-          size="small"
-          value={statut}
-          onChange={(_, valeur: FiltreStatut | null) => valeur && setStatut(valeur)}
-          sx={{ '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 600, px: 1.5 } }}
-        >
-          {(
-            [
-              'tous',
-              'a_valider',
-              'actif',
-              ...(gerer ? (['archive'] as const) : []),
-            ] as FiltreStatut[]
-          ).map((v) => (
-            <ToggleButton key={v} value={v}>
-              {t(`prospect.filtres.${v}`)}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-        <TextField
-          select
-          size="small"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          sx={{ minWidth: 170 }}
-          slotProps={{
-            select: { displayEmpty: true },
-            htmlInput: { 'aria-label': t('prospect.champs.type') },
-          }}
-        >
-          <MenuItem value="">{t('prospect.tousTypes')}</MenuItem>
-          {types.map((v) => (
-            <MenuItem key={v.id} value={v.id}>
-              {v.libelle}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          size="small"
-          value={potentiel}
-          onChange={(e) => setPotentiel(e.target.value as Potentiel | '')}
-          sx={{ minWidth: 160 }}
-          slotProps={{
-            select: { displayEmpty: true },
-            htmlInput: { 'aria-label': t('prospect.champs.potentiel') },
-          }}
-        >
-          <MenuItem value="">{t('prospect.tousPotentiels')}</MenuItem>
-          {POTENTIELS.map((p) => (
-            <MenuItem key={p} value={p}>
-              {t(`prospect.potentiels.${p}`)}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Stack>
+      <Card sx={{ p: 1.5 }}>
+        <Stack spacing={1.25}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1.25}
+            sx={{ alignItems: { md: 'center' } }}
+          >
+            <TextField
+              size="small"
+              placeholder={t('prospect.rechercher')}
+              value={saisie}
+              onChange={(e) => setSaisie(e.target.value)}
+              sx={{ flexGrow: 1 }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRounded fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+                htmlInput: { 'aria-label': t('prospect.rechercher') },
+              }}
+            />
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={statut}
+              onChange={(_, valeur: FiltreStatut | null) =>
+                valeur && changer({ statut: valeur === 'tous' ? '' : valeur })
+              }
+              sx={{
+                '& .MuiToggleButton-root': { textTransform: 'none', fontWeight: 600, px: 1.5 },
+              }}
+            >
+              {(
+                [
+                  'tous',
+                  'a_valider',
+                  'actif',
+                  ...(gerer ? (['archive'] as const) : []),
+                ] as FiltreStatut[]
+              ).map((v) => (
+                <ToggleButton key={v} value={v}>
+                  {t(`prospect.filtres.${v}`)}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+            <TextField
+              select
+              size="small"
+              value={f.tri || 'nom'}
+              onChange={(e) => changer({ tri: e.target.value === 'nom' ? '' : e.target.value })}
+              sx={{ minWidth: 170 }}
+              slotProps={{
+                htmlInput: { 'aria-label': t('recherche.trierPar') },
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SortRounded fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            >
+              {TRIS.map((tri) => (
+                <MenuItem key={tri} value={tri}>
+                  {t(`recherche.tris.${tri}`)}
+                </MenuItem>
+              ))}
+            </TextField>
+            <Button
+              variant={panneau ? 'contained' : 'outlined'}
+              color="primary"
+              startIcon={
+                <Badge badgeContent={puces.length} color="secondary">
+                  <TuneRounded />
+                </Badge>
+              }
+              onClick={() => setPanneau((v) => !v)}
+              aria-expanded={panneau}
+            >
+              {t('recherche.filtres')}
+            </Button>
+          </Stack>
+          <Collapse in={panneau} unmountOnExit>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 1.25,
+                pt: 0.5,
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, minmax(0, 1fr))' },
+              }}
+            >
+              <ChoixFiltre
+                libelle={t('prospect.champs.type')}
+                vide={t('prospect.tousTypes')}
+                valeur={f.type}
+                options={types}
+                changer={(v) => changer({ type: v, specialite: '' })}
+              />
+              <ChoixFiltre
+                libelle={t('prospect.champs.specialite')}
+                vide={t('recherche.toutes')}
+                valeur={f.specialite}
+                options={specialites.filter((x) => !f.type || x.parent === f.type)}
+                changer={(v) => changer({ specialite: v })}
+              />
+              <ChoixFiltre
+                libelle={t('prospect.champs.potentiel')}
+                vide={t('prospect.tousPotentiels')}
+                valeur={f.potentiel}
+                options={POTENTIELS.map((p) => ({ id: p, libelle: t(`prospect.potentiels.${p}`) }))}
+                changer={(v) => changer({ potentiel: v })}
+              />
+              <ChoixFiltre
+                libelle={t('lieu.exercice')}
+                vide={t('recherche.toutes')}
+                valeur={f.activite}
+                options={(['hospitalier', 'prive'] as const).map((a) => ({
+                  id: a,
+                  libelle: t(`lieu.exercices.${a}`),
+                }))}
+                changer={(v) => changer({ activite: v })}
+              />
+              <SelectSecteur
+                secteurs={secteurs.data ?? []}
+                valeur={f.secteur}
+                changer={(v) => changer({ secteur: v, localite: '' })}
+                libelle={t('etablissement.champs.secteur')}
+                vide={t('etablissement.tousSecteurs')}
+                taille="small"
+              />
+              <ChoixFiltre
+                libelle={t('etablissement.champs.localite')}
+                vide={t('recherche.toutes')}
+                valeur={f.localite}
+                options={
+                  f.secteur
+                    ? (secteurs.data?.find((x) => x.id === f.secteur)?.localites ?? [])
+                    : localites
+                }
+                changer={(v) => changer({ localite: v })}
+              />
+              {perimetre.actions.includes('cibles.lire') && (
+                <ChoixFiltre
+                  libelle={t('recherche.delegue')}
+                  vide={t('recherche.tousDelegues')}
+                  valeur={f.poste}
+                  options={(postes.data ?? []).map((x) => ({
+                    id: x.id,
+                    libelle: x.occupant ? `${x.occupant} · ${x.libelle}` : x.libelle,
+                  }))}
+                  changer={(v) => changer({ poste: v })}
+                />
+              )}
+              <Stack spacing={0}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      size="small"
+                      checked={f.sans_lieu === '1'}
+                      onChange={(e) => changer({ sans_lieu: e.target.checked ? '1' : '' })}
+                    />
+                  }
+                  label={t('prospect.chiffres.sansLieu')}
+                />
+                {terrain && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        size="small"
+                        checked={f.portee === 'pays'}
+                        onChange={(e) => changer({ portee: e.target.checked ? 'pays' : '' })}
+                      />
+                    }
+                    label={t('recherche.toutLePays')}
+                  />
+                )}
+              </Stack>
+            </Box>
+          </Collapse>
+          <PucesFiltres
+            puces={puces}
+            retirer={(c) => changer({ [c]: '' })}
+            effacer={() => {
+              setSaisie('');
+              effacer();
+            }}
+          />
+        </Stack>
+      </Card>
+      {terrain && f.portee !== 'pays' && (
+        <Typography variant="caption" sx={{ color: 'text.secondary', mt: -1.5 }}>
+          {t('recherche.perimetreAide')}
+        </Typography>
+      )}
 
       {liste.isError ? (
         <ErreurChargement erreur={liste.error} reessayer={() => void liste.refetch()} />
@@ -766,14 +986,15 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
         </Stack>
       ) : (
         <>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {liste.data.total > liste.data.limite
-              ? t('prospect.limite', { limite: liste.data.limite, total: liste.data.total })
-              : t('prospect.nombre', { count: liste.data.total })}
-          </Typography>
-          <Card>
+          <BarrePagination
+            total={liste.data.total}
+            page={liste.data.page}
+            taille={liste.data.taille}
+            changer={(p) => changer({ page: p > 1 ? String(p) : '' })}
+          />
+          <Card sx={{ opacity: liste.isPlaceholderData ? 0.6 : 1, transition: 'opacity .2s' }}>
             {fiches.length === 0 ? (
-              q || type || potentiel || statut !== 'tous' ? (
+              filtresActifs > 0 ? (
                 <EtatVide icone={<SearchRounded />} titre={t('prospect.aucunResultat')} />
               ) : (
                 <EtatVide
@@ -857,6 +1078,17 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
               ))
             )}
           </Card>
+          {liste.data.total > liste.data.taille && (
+            <BarrePagination
+              total={liste.data.total}
+              page={liste.data.page}
+              taille={liste.data.taille}
+              changer={(p) => {
+                changer({ page: p > 1 ? String(p) : '' });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          )}
         </>
       )}
 

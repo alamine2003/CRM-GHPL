@@ -182,6 +182,9 @@ export default function EcranProspects() {
   const [creation, setCreation] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  // Pages de 20 (PRP-005 CA3) : « Voir plus » ajoute la suivante.
+  const [page, setPage] = useState(1);
+  const [suite, setSuite] = useState(false);
   const peutCreer =
     etat.statut === 'connecte' && etat.perimetre.actions.includes('prospects.creer');
 
@@ -189,28 +192,31 @@ export default function EcranProspects() {
     let actif = true;
     if (segment === 'cible') return;
     const minuteur = setTimeout(() => {
+      const ajouter = page > 1;
       const requete =
         segment === 'prospects'
-          ? client.prospects.liste({ q: saisie }).then((r) => {
+          ? client.prospects.liste({ q: saisie, page }).then((r) => {
               if (!actif) return;
-              setFiches(r.resultats);
+              setFiches((avant) => (ajouter && avant ? [...avant, ...r.resultats] : r.resultats));
               setTotal(r.total);
             })
-          : client.etablissements.liste({ q: saisie }).then((r) => {
+          : client.etablissements.liste({ q: saisie, page }).then((r) => {
               if (!actif) return;
-              setLieux(r.resultats);
+              setLieux((avant) => (ajouter && avant ? [...avant, ...r.resultats] : r.resultats));
               setTotal(r.total);
             });
+      requete.finally(() => actif && setSuite(false));
       requete.catch(() => undefined);
     }, 300);
     return () => {
       actif = false;
       clearTimeout(minuteur);
     };
-  }, [client, saisie, version, segment]);
+  }, [client, saisie, version, segment, page]);
 
   const changerSegment = (s: Segment) => {
     setSegment(s);
+    setPage(1);
     setCreation(false);
     setMessage(null);
   };
@@ -281,7 +287,10 @@ export default function EcranProspects() {
                 : t('etablissement.rechercher')
             }
             value={saisie}
-            onChangeText={setSaisie}
+            onChangeText={(texte) => {
+              setSaisie(texte);
+              setPage(1);
+            }}
             autoCorrect={false}
           />
           {peutCreer && (
@@ -305,6 +314,17 @@ export default function EcranProspects() {
               ? fiches?.map((prospect) => <LigneProspect key={prospect.id} prospect={prospect} />)
               : lieux?.map((e) => <LigneEtablissement key={e.id} etablissement={e} />)}
           </Carte>
+          {liste && liste.length < total && (
+            <Bouton
+              secondaire
+              libelle={t('recherche.voirPlus', { reste: total - liste.length })}
+              chargement={suite}
+              onPress={() => {
+                setSuite(true);
+                setPage((p) => p + 1);
+              }}
+            />
+          )}
         </>
       )}
     </Ecran>
