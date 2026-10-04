@@ -147,7 +147,7 @@ class Generateur:
             courriel=f"{identifiant}@demo.invalid",
         )
         compte.set_password(self.mot_de_passe)
-        compte.save(update_fields=["password"])
+        compte.save()
         if role:
             attribuer_role(compte, role, pays, par=None)
         return compte
