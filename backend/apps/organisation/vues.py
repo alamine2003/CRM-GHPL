@@ -423,6 +423,9 @@ class MonOrganisationVue(APIView):
 
     @extend_schema(responses=s.MonOrganisationSerializer, operation_id="mon_organisation")
     def get(self, request):
+        from apps.identite.views import exiger_double_auth
+
+        exiger_double_auth(request)
         perimetre = calculer_perimetre(request.user, request.META.get(ENTETE_PAYS))
         vide = {"postes": [], "postes_supervises": 0, "reseaux": [], "superviseur_manquant": False}
         pays = perimetre.pays_actif

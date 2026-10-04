@@ -16,6 +16,7 @@ from django.db.models import QuerySet
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import BasePermission, IsAuthenticated
 
+from apps.audit.services import definir_roles
 from apps.socle import journalisation
 
 from . import isolation
@@ -47,7 +48,12 @@ class VuePerimetre(GenericAPIView):
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
+        # SEC-003 CA1 : un rôle sensible sans double authentification n'accède à rien.
+        from apps.identite.views import exiger_double_auth
+
+        exiger_double_auth(request)
         isolation.appliquer(self.perimetre)
+        definir_roles(self.perimetre.roles, self.perimetre.pays_actif)
         journalisation.pays.set(
             self.perimetre.pays_actif.code if self.perimetre.pays_actif else "consolide"
         )

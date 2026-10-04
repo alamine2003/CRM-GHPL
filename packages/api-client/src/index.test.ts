@@ -44,12 +44,37 @@ describe('client mobile', () => {
       stockage,
       fetch: appel,
     });
-    await client.connexion('awa.diallo', `${Date.now()}`);
+    const resultat = await client.connexion('awa.diallo', `${Date.now()}`);
+    expect(resultat.etape).toBe('connecte');
     expect(stockage.valeur).toBe('R1');
     expect(client.estConnecte()).toBe(true);
     const [, init] = appel.mock.calls[0] as unknown as [string, RequestInit];
     expect(init.credentials).toBe('omit');
     expect((init.headers as Record<string, string>)['Accept-Language']).toBe('fr');
+  });
+
+  it('annonce l’étape du code puis ouvre la session avec le code (SEC-003)', async () => {
+    const stockage = stockageMemoire();
+    const appel = vi
+      .fn()
+      .mockResolvedValueOnce(
+        reponse(202, { etape: 'code_requis', jeton_etape: 'E1', expire_dans: 300 }),
+      )
+      .mockResolvedValueOnce(reponse(200, jetons('A1', 'R1')));
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage,
+      fetch: appel,
+    });
+    const premiere = await client.connexion('awa.diallo', `${Date.now()}`);
+    expect(premiere).toEqual({ etape: 'code_requis', jetonEtape: 'E1' });
+    expect(client.estConnecte()).toBe(false);
+    await client.connexionCode('E1', '123456');
+    expect(client.estConnecte()).toBe(true);
+    const [, init] = appel.mock.calls[1] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({ jeton_etape: 'E1', code: '123456' });
   });
 
   it('décrit le téléphone à la connexion (USR-006)', async () => {

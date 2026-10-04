@@ -23,11 +23,19 @@ const AWA: Moi = {
   courriel: 'awa.diallo@exemple.org',
   pays_principal: { code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' },
   est_siege: false,
+  double_auth_active: false,
+  double_auth_requise: false,
 };
 // Généré à l'exécution : aucun mot de passe, même de test, n'est écrit dans le dépôt.
 const MDP = `${Math.random().toString(36).slice(2)}-Aa9-${Date.now()}`;
 const NOUVEAU = `${Math.random().toString(36).slice(2)}-Bb8-${Date.now()}`;
-const JETONS: Jetons = { acces: 'A', expire_dans: 900, rafraichissement: null, utilisateur: AWA };
+const JETONS: Jetons = {
+  acces: 'A',
+  expire_dans: 900,
+  rafraichissement: null,
+  utilisateur: AWA,
+  double_auth_a_activer: false,
+};
 
 const SENEGAL = { code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' };
 const TOGO = { code: 'TG', nom: 'Togo', fuseau: 'Africa/Lome' };
@@ -98,7 +106,7 @@ function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
     perimetre: vi.fn(async () => PERIMETRE_DELEGUE),
     choisirPays: vi.fn(),
     paysActif: () => null,
-    connexion: vi.fn(async () => JETONS),
+    connexion: vi.fn(async () => ({ etape: 'connecte' as const, jetons: JETONS })),
     reprendre: vi.fn(async () => {
       throw new ErreurApi(401, 'session_invalide', 'Session invalide');
     }),
@@ -116,6 +124,20 @@ function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
     reinitialiser: vi.fn(async () => undefined),
     requete: vi.fn(),
     estConnecte: () => false,
+    doubleAuth: {
+      etat: vi.fn(async () => ({
+        active: false,
+        requise: false,
+        active_le: null,
+        codes_secours_restants: 0,
+      })),
+    } as unknown as ClientApi['doubleAuth'],
+    sessions: {
+      liste: vi.fn(async () => []),
+      revoquer: vi.fn(async () => undefined),
+      revoquerAutres: vi.fn(async () => undefined),
+    } as unknown as ClientApi['sessions'],
+    activite: vi.fn(async () => []),
     ...surcharges,
   } as ClientApi;
 }
@@ -196,6 +218,37 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
     await saisir(/^Mot de passe/, 'x');
     fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Service injoignable');
+  });
+
+  it('demande le code à 6 chiffres quand la double authentification est active (SEC-003)', async () => {
+    const client = fauxClient({
+      connexion: vi.fn(async () => ({ etape: 'code_requis' as const, jetonEtape: 'E1' })),
+      connexionCode: vi.fn(async () => JETONS),
+    });
+    rendre(client);
+    await saisir(/Identifiant/, 'awa.diallo');
+    await saisir(/^Mot de passe/, MDP);
+    fireEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Vérification en deux étapes' }),
+    ).toBeInTheDocument();
+    await saisir('Code de vérification', '12a3456');
+    expect(screen.getByLabelText('Code de vérification')).toHaveValue('123456');
+    fireEvent.click(screen.getByRole('button', { name: 'Valider' }));
+    expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
+    expect(client.connexionCode).toHaveBeenCalledWith('E1', '123456');
+  });
+
+  it('un rôle sensible sans double authentification doit l’activer avant de continuer (SEC-003)', async () => {
+    const client = fauxClient({
+      reprendre: vi.fn(async () => ({ ...JETONS, double_auth_a_activer: true })),
+    });
+    rendre(client);
+    expect(
+      await screen.findByRole('heading', { name: 'Protégez votre compte' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Bonjour Awa' })).not.toBeInTheDocument();
+    expect(client.perimetre).not.toHaveBeenCalled();
   });
 
   it('affiche ou masque le mot de passe', async () => {
@@ -525,6 +578,43 @@ describe('portail — administration 0.0.6 (USR-003, USR-004, USR-006, ORG-011)'
     expect(changerLangue).toHaveBeenCalledWith('en');
   });
 
+  it('le profil montre les sessions ouvertes et en ferme une (SEC-004)', async () => {
+    const SESSION = {
+      id: 's1',
+      client: 'portail' as const,
+      appareil: null,
+      adresse: '196.200.x.x',
+      cree_le: '2026-10-04T08:00:00Z',
+      utilisee_le: '2026-10-04T09:00:00Z',
+      courante: true,
+    };
+    const sessions = {
+      liste: vi.fn(async () => [
+        SESSION,
+        { ...SESSION, id: 's2', client: 'mobile' as const, courante: false },
+      ]),
+      revoquer: vi.fn(async () => undefined),
+      revoquerAutres: vi.fn(async () => undefined),
+    };
+    const activite = vi.fn(async () => [
+      {
+        action: 'connexion',
+        resultat: 'echec',
+        le: '2026-10-04T07:00:00Z',
+        client: 'portail',
+        adresse: null,
+      },
+    ]);
+    rendre(clientAdmin({ sessions, activite } as unknown as Partial<ClientApi>), '/profil');
+    expect(await screen.findByText('Cette session')).toBeInTheDocument();
+    expect(await screen.findByText('Connexion refusée')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Activer la double authentification' }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Fermer' }));
+    await vi.waitFor(() => expect(sessions.revoquer).toHaveBeenCalledWith('s2'));
+  });
+
   it('modifie un paramètre du pays (ORG-011)', async () => {
     const modifierParametre = vi.fn(async () => ({}));
     const parametres = vi.fn(async () => [
@@ -577,6 +667,7 @@ describe('portail — erreurs et exploitation (0.0.7)', () => {
     base: { disponible: true, latence_ms: 1.2, migrations_en_attente: 0 },
     isolation: { tables_protegees: 10, tables_attendues: 10, role_contourne: false },
     suivi_erreurs_actif: true,
+    audit_immuable: true,
     verification_fuites_active: true,
     format_journaux: 'json',
   };
@@ -598,6 +689,7 @@ describe('portail — erreurs et exploitation (0.0.7)', () => {
     );
     expect(await screen.findByText('Tout est opérationnel')).toBeInTheDocument();
     expect(screen.getByText('10 / 10')).toBeInTheDocument();
+    expect(screen.getByText('Immuable : la base refuse toute modification.')).toBeInTheDocument();
   });
 
   it('signale les points d’attention', async () => {

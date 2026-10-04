@@ -1,15 +1,28 @@
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { Alert, Button, IconButton, InputAdornment, Link, TextField } from '@mui/material';
+import {
+  Alert,
+  Button,
+  IconButton,
+  InputAdornment,
+  Link,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Link as LienRouteur } from 'react-router';
 import { messageErreur, useSession } from '../contexteSession';
+import ChampCode from '../composants/ChampCode';
 import EcranPublic from '../composants/EcranPublic';
 
 export default function Connexion() {
   const { t } = useTranslation();
-  const { etat, connexion } = useSession();
+  const { etat, connexion, validerCode } = useSession();
+  const [jetonEtape, setJetonEtape] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [secours, setSecours] = useState(false);
   const [identifiant, setIdentifiant] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [visible, setVisible] = useState(false);
@@ -23,13 +36,82 @@ export default function Connexion() {
     setErreur(null);
     setEnvoi(true);
     try {
-      await connexion(identifiant, motDePasse);
+      const etape = await connexion(identifiant, motDePasse);
+      if (etape) setJetonEtape(etape);
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));
       setMotDePasse('');
     } finally {
       setEnvoi(false);
     }
+  }
+
+  async function soumettreCode(evenement: FormEvent) {
+    evenement.preventDefault();
+    if (!jetonEtape) return;
+    setErreur(null);
+    setEnvoi(true);
+    try {
+      await validerCode(jetonEtape, code);
+    } catch (e) {
+      setErreur(messageErreur(e, t('erreurs.reseau')));
+      setCode('');
+    } finally {
+      setEnvoi(false);
+    }
+  }
+
+  if (jetonEtape) {
+    return (
+      <EcranPublic titre={t('code.titre')}>
+        <Typography sx={{ color: 'text.secondary' }}>
+          {secours ? t('code.explicationSecours') : t('code.explication')}
+        </Typography>
+        {erreur && (
+          <Alert severity="error" role="alert">
+            {erreur}
+          </Alert>
+        )}
+        <form
+          onSubmit={(e) => void soumettreCode(e)}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+        >
+          <ChampCode valeur={code} changer={setCode} secours={secours} />
+          <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            size="large"
+            disabled={envoi || (secours ? code.length < 8 : code.length !== 6)}
+          >
+            {t('code.valider')}
+          </Button>
+        </form>
+        <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+          <Link
+            component="button"
+            type="button"
+            onClick={() => {
+              setJetonEtape(null);
+              setCode('');
+              setMotDePasse('');
+            }}
+          >
+            {t('code.retour')}
+          </Link>
+          <Link
+            component="button"
+            type="button"
+            onClick={() => {
+              setSecours((s) => !s);
+              setCode('');
+            }}
+          >
+            {secours ? t('code.application') : t('code.secours')}
+          </Link>
+        </Stack>
+      </EcranPublic>
+    );
   }
 
   return (

@@ -66,6 +66,8 @@ La commande affiche un compte par rôle (siège, responsable et administrateur p
 - Disponibilité : UptimeRobot surveille `https://<api>/api/health/` (réponse 200 et `"statut": "ok"` ; 503 si la base est indisponible) et la page d'accueil du portail.
 - Mise en ligne : `python manage.py check --deploy --database default` vérifie notamment que le rôle PostgreSQL de l'application ne contourne pas l'isolation des pays.
 - Le portail affiche l'état technique dans **Exploitation** (administrateur technique et siège).
+- Double authentification : fournir `INNOV_CLE_CHIFFREMENT` (longue chaîne aléatoire, distincte de `DJANGO_SECRET_KEY`) ; elle chiffre les secrets des applications d'authentification. La perdre oblige à réinitialiser la double authentification de chaque compte.
+- Journal d'audit : en production, n'accorder au rôle de l'application que `INSERT` et `SELECT` sur `audit_evenementaudit` ; les déclencheurs refusent de toute façon modification, suppression et troncature.
 
 ## Vérifier
 

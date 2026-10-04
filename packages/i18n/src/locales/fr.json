@@ -176,7 +176,15 @@
       "chiffres": "Suivez vos visites, votre couverture et vos objectifs."
     },
     "ceTelephone": "Ce téléphone",
-    "telephoneAide": "Enregistré à la connexion ; votre administrateur pays peut le révoquer s'il est perdu."
+    "telephoneAide": "Enregistré à la connexion ; votre administrateur pays peut le révoquer s'il est perdu.",
+    "doubleAuthPortail": "Votre rôle impose la double authentification. Activez-la depuis le portail web (Mon profil), puis reconnectez-vous ici.",
+    "verrou": {
+      "titre": "Application verrouillée",
+      "texte": "Par sécurité, l'application se verrouille après 5 minutes en arrière-plan.",
+      "deverrouiller": "Déverrouiller",
+      "invite": "Déverrouiller INNOV CRM",
+      "sansProtection": "Ce téléphone n'a ni code ni biométrie : reconnectez-vous."
+    }
   },
   "roles": {
     "titre": "Rôles",
@@ -370,7 +378,11 @@
       "transferts": "Transferts",
       "aucuneAffectation": "Aucune affectation.",
       "active": "En cours",
-      "terminee": "Terminée"
+      "terminee": "Terminée",
+      "fermerSessions": "Fermer ses sessions",
+      "sessionsFermees": "Sessions fermées.",
+      "reinitialiserDoubleAuth": "Réinitialiser la double authentification",
+      "doubleAuthReinitialisee": "Double authentification réinitialisée : elle sera reconfigurée à la prochaine connexion."
     },
     "vide": "Aucun compte ne correspond"
   },
@@ -489,6 +501,82 @@
     "actif": "Active",
     "inactif": "Inactive",
     "ok": "OK",
-    "attention": "À vérifier"
+    "attention": "À vérifier",
+    "audit": "Journal d'audit",
+    "auditImmuable": "Immuable : la base refuse toute modification.",
+    "auditModifiable": "Les protections du journal d'audit sont désactivées."
+  },
+  "code": {
+    "titre": "Vérification en deux étapes",
+    "explication": "Saisissez le code à 6 chiffres affiché par votre application d'authentification.",
+    "champ": "Code de vérification",
+    "valider": "Valider",
+    "secours": "Utiliser un code de secours",
+    "application": "Utiliser l'application",
+    "champSecours": "Code de secours",
+    "retour": "Retour",
+    "explicationSecours": "Saisissez l'un des codes de secours notés lors de l'activation."
+  },
+  "doubleAuth": {
+    "titre": "Double authentification",
+    "obligatoire": "Obligatoire pour votre rôle",
+    "active": "Active",
+    "inactive": "Inactive",
+    "description": "Un code à usage unique, affiché par une application sur votre téléphone, protège votre compte même si votre mot de passe est volé.",
+    "requiseTitre": "Protégez votre compte",
+    "requiseTexte": "Votre rôle donne accès à des données sensibles : la double authentification est obligatoire avant de continuer. Cela prend deux minutes.",
+    "activer": "Activer la double authentification",
+    "desactiver": "Désactiver",
+    "regenerer": "Nouveaux codes de secours",
+    "codesRestants_one": "{{count}} code de secours restant",
+    "codesRestants_other": "{{count}} codes de secours restants",
+    "etapes": {
+      "installer": "Installer une application",
+      "scanner": "Scanner le QR code",
+      "confirmer": "Confirmer",
+      "codes": "Codes de secours"
+    },
+    "installerTexte": "Installez sur votre téléphone une application d'authentification gratuite : Google Authenticator, Microsoft Authenticator ou une application équivalente.",
+    "scannerTexte": "Dans l'application, ajoutez un compte et scannez ce QR code.",
+    "cleManuelle": "Impossible de scanner ? Saisissez cette clé :",
+    "confirmerTexte": "Saisissez le code à 6 chiffres que l'application affiche maintenant.",
+    "codesTexte": "Gardez ces codes en lieu sûr, hors de votre téléphone. Chacun remplace une fois le code de l'application si vous perdez votre téléphone. Ils ne seront plus affichés.",
+    "copier": "Copier",
+    "telecharger": "Télécharger",
+    "notes": "J'ai mis mes codes en lieu sûr",
+    "terminer": "Terminer",
+    "suivant": "Suivant",
+    "activee": "Double authentification activée.",
+    "desactivee": "Double authentification désactivée.",
+    "codeActuel": "Code actuel de l'application"
+  },
+  "sessionsPage": {
+    "titre": "Sessions ouvertes",
+    "cetAppareil": "Cette session",
+    "portail": "Portail web",
+    "mobile": "Application mobile",
+    "activite": "Dernière activité {{quand}}",
+    "revoquer": "Fermer",
+    "revoquerAutres": "Fermer toutes les autres",
+    "revoquee": "Session fermée."
+  },
+  "activitePage": {
+    "titre": "Activité récente du compte",
+    "vide": "Aucune activité enregistrée.",
+    "actions": {
+      "connexion": "Connexion",
+      "connexion_echec": "Connexion refusée",
+      "connexion_verrouillage": "Compte verrouillé",
+      "deconnexion": "Déconnexion",
+      "session_revocation": "Session fermée à distance",
+      "session_jeton_rejoue": "Réutilisation de session bloquée",
+      "mot_de_passe_changement": "Mot de passe changé",
+      "mot_de_passe_reinitialisation": "Mot de passe réinitialisé",
+      "double_auth_activation": "Double authentification activée",
+      "double_auth_desactivation": "Double authentification désactivée",
+      "double_auth_reinitialisation": "Double authentification réinitialisée",
+      "double_auth_codes_secours": "Nouveaux codes de secours",
+      "appareil_revocation": "Téléphone révoqué"
+    }
   }
 }

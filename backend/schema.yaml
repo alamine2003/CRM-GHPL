@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.0.7
+  version: 0.0.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -74,9 +74,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Appareil'
           description: ''
+  /api/v1/auth/activite/:
+    get:
+      operationId: mon_activite
+      description: 'Les 20 derniers événements de sécurité du compte : repérer une
+        connexion inconnue.'
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activite'
+          description: ''
   /api/v1/auth/connexion/:
     post:
       operationId: connexion
+      description: |-
+        Ouvre une session ; si la double authentification est active, répond 202 et
+        attend le code sur connexion/code/ (SEC-003).
       tags:
       - auth
       requestBody:
@@ -100,6 +121,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/Jetons'
           description: ''
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EtapeDoubleAuth'
+          description: ''
+  /api/v1/auth/connexion/code/:
+    post:
+      operationId: connexion_code
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnexionCode'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ConnexionCode'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ConnexionCode'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Jetons'
+          description: ''
   /api/v1/auth/deconnexion/:
     post:
       operationId: deconnexion
@@ -110,6 +163,108 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/auth/double-auth/:
+    get:
+      operationId: double_auth_etat
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EtatDoubleAuth'
+          description: ''
+  /api/v1/auth/double-auth/activer/:
+    post:
+      operationId: double_auth_activer
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Code'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Code'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Code'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodesSecours'
+          description: ''
+  /api/v1/auth/double-auth/codes-secours/:
+    post:
+      operationId: double_auth_codes_secours
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Code'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Code'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Code'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodesSecours'
+          description: ''
+  /api/v1/auth/double-auth/desactiver/:
+    post:
+      operationId: double_auth_desactiver
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Code'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Code'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Code'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/double-auth/initialiser/:
+    post:
+      operationId: double_auth_initialiser
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitialisationDoubleAuth'
+          description: ''
   /api/v1/auth/moi/:
     get:
       operationId: moi
@@ -257,6 +412,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/Jetons'
           description: ''
+  /api/v1/auth/sessions/:
+    get:
+      operationId: sessions_liste
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Session'
+          description: ''
+  /api/v1/auth/sessions/{id}/revoquer/:
+    post:
+      operationId: session_revoquer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/auth/sessions/autres/revoquer/:
+    post:
+      operationId: sessions_revoquer_autres
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/erreurs-clients/:
     post:
       operationId: erreur_client
@@ -1546,6 +1744,30 @@ paths:
           description: ''
 components:
   schemas:
+    Activite:
+      type: object
+      description: Événement d'audit de l'utilisateur lui-même (connexions, sécurité
+        du compte).
+      properties:
+        le:
+          type: string
+          format: date-time
+        action:
+          type: string
+        resultat:
+          type: string
+        client:
+          type: string
+          nullable: true
+        adresse:
+          type: string
+          nullable: true
+      required:
+      - action
+      - adresse
+      - client
+      - le
+      - resultat
     Affectation:
       type: object
       properties:
@@ -1679,6 +1901,23 @@ components:
       description: |-
         * `portail` - Portail web
         * `mobile` - Application mobile
+    Code:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 20
+      required:
+      - code
+    CodesSecours:
+      type: object
+      properties:
+        codes_secours:
+          type: array
+          items:
+            type: string
+      required:
+      - codes_secours
     Connexion:
       type: object
       properties:
@@ -1698,6 +1937,19 @@ components:
       - client
       - identifiant
       - mot_de_passe
+    ConnexionCode:
+      type: object
+      properties:
+        jeton_etape:
+          type: string
+          maxLength: 2000
+        code:
+          type: string
+          description: Code de l'application ou de secours.
+          maxLength: 20
+      required:
+      - code
+      - jeton_etape
     CreationDivision:
       type: object
       properties:
@@ -1862,6 +2114,20 @@ components:
       - client
       - message
       - version
+    EtapeDoubleAuth:
+      type: object
+      properties:
+        etape:
+          type: string
+          description: '« code_requis » : envoyer le code à connexion/code/.'
+        jeton_etape:
+          type: string
+        expire_dans:
+          type: integer
+      required:
+      - etape
+      - expire_dans
+      - jeton_etape
     EtatBase:
       type: object
       properties:
@@ -1877,9 +2143,26 @@ components:
       - disponible
       - latence_ms
       - migrations_en_attente
+    EtatDoubleAuth:
+      type: object
+      properties:
+        active:
+          type: boolean
+        requise:
+          type: boolean
+        codes_secours_restants:
+          type: integer
+      required:
+      - active
+      - codes_secours_restants
+      - requise
     EtatExploitation:
       type: object
       properties:
+        audit_immuable:
+          type: boolean
+          description: Vrai si la base refuse toute modification du journal d'audit
+            (AUD-001 CA2).
         version:
           type: string
         environnement:
@@ -1898,6 +2181,7 @@ components:
         format_journaux:
           type: string
       required:
+      - audit_immuable
       - base
       - environnement
       - format_journaux
@@ -1958,6 +2242,18 @@ components:
       - message
       - produit
       - version
+    InitialisationDoubleAuth:
+      type: object
+      properties:
+        secret:
+          type: string
+          description: À saisir à la main si le QR code ne passe pas.
+        uri:
+          type: string
+          description: Adresse otpauth:// à afficher en QR code.
+      required:
+      - secret
+      - uri
     Jetons:
       type: object
       properties:
@@ -1974,8 +2270,13 @@ components:
             HttpOnly).
         utilisateur:
           $ref: '#/components/schemas/Moi'
+        double_auth_a_activer:
+          type: boolean
+          description: Vrai si le compte doit activer la double authentification avant
+            tout accès.
       required:
       - acces
+      - double_auth_a_activer
       - expire_dans
       - rafraichissement
       - utilisateur
@@ -2034,8 +2335,17 @@ components:
           nullable: true
         est_siege:
           type: boolean
+        double_auth_active:
+          type: boolean
+          readOnly: true
+        double_auth_requise:
+          type: boolean
+          description: 'Rôle sensible (SEC-003) : la double authentification est obligatoire.'
+          readOnly: true
       required:
       - courriel
+      - double_auth_active
+      - double_auth_requise
       - est_siege
       - id
       - identifiant
@@ -2558,6 +2868,46 @@ components:
       - pays
       - zone
       - zone_libelle
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        client:
+          $ref: '#/components/schemas/ClientEnum'
+        appareil:
+          type: string
+          nullable: true
+          readOnly: true
+        adresse:
+          type: string
+          nullable: true
+          description: 'Adresse partiellement masquée : assez pour reconnaître, pas
+            pour pister.'
+          readOnly: true
+        cree_le:
+          type: string
+          format: date-time
+        utilisee_le:
+          type: string
+          format: date-time
+        expire_le:
+          type: string
+          format: date-time
+        double_auth_validee:
+          type: boolean
+        courante:
+          type: boolean
+          readOnly: true
+      required:
+      - adresse
+      - appareil
+      - client
+      - courante
+      - expire_le
+      - id
     StatutEnum:
       enum:
       - actif

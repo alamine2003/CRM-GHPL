@@ -147,7 +147,9 @@ class UtilisateurVue(VueComptes):
 
 class UtilisateurActionVue(VueComptes):
     actions = {"POST": Action.UTILISATEURS_GERER}
-    OPERATIONS = ("suspendre", "reactiver", "reinitialiser")
+    OPERATIONS = (
+        "suspendre", "reactiver", "reinitialiser", "fermer_sessions", "reinitialiser_double_auth",
+    )  # fmt: skip
 
     @extend_schema(
         request=None, responses={200: UtilisateurSerializer}, operation_id="utilisateur_action"
@@ -164,6 +166,13 @@ class UtilisateurActionVue(VueComptes):
             services.suspendre_utilisateur(compte)
         elif operation == "reactiver":
             services.reactiver_utilisateur(compte)
+        elif operation == "fermer_sessions":
+            for session in compte.sessions.filter(revoquee_le=None):
+                services.revoquer_session(session, motif="fermee_par_administrateur")
+        elif operation == "reinitialiser_double_auth":
+            from . import double_auth
+
+            double_auth.reinitialiser(compte)
         else:
             services.demander_reinitialisation(compte, par_administrateur=True)
         compte.refresh_from_db()
@@ -385,6 +394,9 @@ class PerimetreVue(APIView):
 
     @extend_schema(responses=PerimetreSerializer, operation_id="perimetre")
     def get(self, request):
+        from .views import exiger_double_auth
+
+        exiger_double_auth(request)
         p = calculer_perimetre(request.user, request.META.get(ENTETE_PAYS))
         return Response(
             PerimetreSerializer(

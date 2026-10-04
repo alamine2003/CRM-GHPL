@@ -1,4 +1,4 @@
-import type { ClientApi, Jetons } from '@innov/api-client';
+import type { ClientApi, Jetons, Perimetre } from '@innov/api-client';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { creerClientPortail } from './client';
 import { ContexteSession, type Etat, type Session } from './contexteSession';
@@ -10,12 +10,30 @@ async function ouvrir(client: ClientApi, jetons: Jetons): Promise<Etat> {
   if (jetons.utilisateur.langue && jetons.utilisateur.langue !== i18n.language) {
     await i18n.changeLanguage(jetons.utilisateur.langue);
   }
+  if (jetons.double_auth_a_activer) {
+    // Le serveur refuse toute donnée avant l'activation : pas de périmètre à charger.
+    return {
+      statut: 'connecte',
+      utilisateur: jetons.utilisateur,
+      perimetre: PERIMETRE_VIDE,
+      doubleAuthAActiver: true,
+    };
+  }
   return {
     statut: 'connecte',
     utilisateur: jetons.utilisateur,
     perimetre: await client.perimetre(),
+    doubleAuthAActiver: false,
   };
 }
+
+const PERIMETRE_VIDE: Perimetre = {
+  pays_actif: null,
+  vue_consolidee: false,
+  roles: [],
+  actions: [],
+  pays_accessibles: [],
+};
 
 export function FournisseurSession({
   children,
@@ -50,8 +68,18 @@ export function FournisseurSession({
       etat,
       client,
       async connexion(identifiant, motDePasse) {
-        const jetons = await client.connexion(identifiant, motDePasse);
-        setEtat(await ouvrir(client, jetons));
+        const resultat = await client.connexion(identifiant, motDePasse);
+        if (resultat.etape === 'code_requis') return resultat.jetonEtape;
+        setEtat(await ouvrir(client, resultat.jetons));
+        return null;
+      },
+      async validerCode(jetonEtape, code) {
+        setEtat(await ouvrir(client, await client.connexionCode(jetonEtape, code)));
+      },
+      async doubleAuthActivee() {
+        if (etat.statut !== 'connecte') return;
+        const [utilisateur, perimetre] = await Promise.all([client.moi(), client.perimetre()]);
+        setEtat({ statut: 'connecte', utilisateur, perimetre, doubleAuthAActiver: false });
       },
       async choisirPays(code) {
         if (etat.statut !== 'connecte') return;

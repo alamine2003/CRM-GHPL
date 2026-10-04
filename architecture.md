@@ -669,6 +669,7 @@ Les conflits non résolus sont visibles par le délégué (badge) et par l'admin
 - Écrit **dans la même transaction** que l'action métier (une action sans audit n'existe pas).
 - Contenu : acteur, rôle, pays, action, objet, horodatage, contexte (appareil, adresse IP, version d'application, mode de décision), résultat ; **jamais** de mot de passe, jeton ou contenu de rapport en clair.
 - Conservation 5 ans puis anonymisation de l'acteur (RG-060).
+- Mise en œuvre (0.0.8) : `apps.audit` (`EvenementAudit`, service `enregistrer`) ; contexte (client, appareil, session, adresse, référence) posé par le middleware et l'authentification ; déclencheurs `audit_immuable` et `audit_sans_troncature` ; double authentification dans `apps.identite.double_auth` (TOTP, secret chiffré Fernet, codes de secours en empreintes SHA-256, connexion en deux étapes par jeton signé).
 
 ### 16.2 Historique métier
 

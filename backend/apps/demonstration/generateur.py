@@ -100,13 +100,22 @@ class Bilan:
 
 
 def vider() -> None:
-    """Vide toutes les tables métier (démonstration uniquement)."""
+    """Vide toutes les tables métier et le journal d'audit (démonstration uniquement).
+
+    L'audit est immuable (AUD-001) : ses déclencheurs ne sont suspendus que le temps de
+    vider cette base fictive, par le propriétaire des tables.
+    """
     tables = []
-    for etiquette in ("socle", "identite", "organisation"):
+    for etiquette in ("socle", "identite", "organisation", "audit"):
         for modele in apps.get_app_config(etiquette).get_models(include_auto_created=True):
             tables.append(connection.ops.quote_name(modele._meta.db_table))
     with connection.cursor() as curseur:
+        # Contrôles différés en attente : les exécuter avant de vider.
+        curseur.execute("SET CONSTRAINTS ALL IMMEDIATE")
+        curseur.execute("ALTER TABLE audit_evenementaudit DISABLE TRIGGER audit_sans_troncature")
         curseur.execute(f"TRUNCATE {', '.join(sorted(set(tables)))} RESTART IDENTITY CASCADE")
+        curseur.execute("ALTER TABLE audit_evenementaudit ENABLE TRIGGER audit_sans_troncature")
+        curseur.execute("SET CONSTRAINTS ALL DEFERRED")
 
 
 class Generateur:

@@ -21,6 +21,7 @@ import { type FormEvent, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EnTeteCarte, EnTetePage, Ligne, PastilleIcone } from '../composants/Elements';
 import { initiales } from '../composants/initiales';
+import { CarteActivite, CarteDoubleAuth, CarteSessions } from '../composants/SecuriteCompte';
 import { messageErreur, useSession } from '../contexteSession';
 
 export default function Profil({
@@ -165,6 +166,20 @@ export default function Profil({
             </CardContent>
           </Card>
         </Stack>
+      </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          alignItems: 'start',
+        }}
+      >
+        <Stack spacing={2}>
+          <CarteDoubleAuth />
+          <CarteSessions />
+        </Stack>
+        <CarteActivite />
       </Box>
     </Stack>
   );

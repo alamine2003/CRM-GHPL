@@ -10,17 +10,25 @@ from rest_framework.views import APIView
 
 from apps.socle.erreurs import ErreurMetier
 
-from . import services
-from .models import Session
+from . import double_auth, services
+from .models import Session, Utilisateur
 from .serializers import (
+    ActiviteSerializer,
     ChangementLangueSerializer,
     ChangementSerializer,
+    CodeSerializer,
+    CodesSecoursSerializer,
+    ConnexionCodeSerializer,
     ConnexionSerializer,
+    EtapeDoubleAuthSerializer,
+    EtatDoubleAuthSerializer,
+    InitialisationDoubleAuthSerializer,
     JetonsSerializer,
     MoiSerializer,
     OubliSerializer,
     RafraichissementSerializer,
     ReinitialisationSerializer,
+    SessionSerializer,
 )
 
 ENTETE_CLIENT = "HTTP_X_INNOV_CLIENT"
@@ -37,6 +45,7 @@ def _reponse_jetons(connexion: services.Connexion, statut=status.HTTP_200_OK) ->
         "expire_dans": connexion.expire_dans,
         "rafraichissement": None if portail else connexion.rafraichissement,
         "utilisateur": MoiSerializer(connexion.session.utilisateur).data,
+        "double_auth_a_activer": doit_activer_double_auth(connexion.session),
     }
     reponse = Response(corps, status=statut)
     reponse["Cache-Control"] = "no-store"
@@ -54,6 +63,22 @@ def _reponse_jetons(connexion: services.Connexion, statut=status.HTTP_200_OK) ->
     return reponse
 
 
+def doit_activer_double_auth(session: Session) -> bool:
+    """SEC-003 CA1 : rôle sensible sans code validé à l'ouverture de la session."""
+    return not session.double_auth_validee and double_auth.exige_double_auth(session.utilisateur)
+
+
+def exiger_double_auth(request) -> None:
+    """Bloque l'accès aux données tant que la double authentification obligatoire manque."""
+    session = getattr(request, "session_innov", None)
+    if session is not None and doit_activer_double_auth(session):
+        raise ErreurMetier(
+            "double_authentification_requise",
+            _("Votre rôle impose la double authentification : activez-la pour continuer."),
+            status.HTTP_403_FORBIDDEN,
+        )
+
+
 def _adresse_ip(request) -> str | None:
     return request.META.get("REMOTE_ADDR")
 
@@ -64,18 +89,48 @@ class ConnexionView(APIView):
     throttle_scope = "connexion"
 
     @extend_schema(
-        request=ConnexionSerializer, responses=JetonsSerializer, operation_id="connexion"
+        request=ConnexionSerializer,
+        responses={200: JetonsSerializer, 202: EtapeDoubleAuthSerializer},
+        operation_id="connexion",
     )
     def post(self, request):
+        """Ouvre une session ; si la double authentification est active, répond 202 et
+        attend le code sur connexion/code/ (SEC-003)."""
         donnees = ConnexionSerializer(data=request.data)
         donnees.is_valid(raise_exception=True)
-        connexion = services.connecter(
+        resultat = services.connecter(
             donnees.validated_data["identifiant"],
             donnees.validated_data["mot_de_passe"],
             donnees.validated_data["client"],
             adresse_ip=_adresse_ip(request),
             agent=request.META.get("HTTP_USER_AGENT", ""),
             appareil=donnees.validated_data.get("appareil"),
+        )
+        if isinstance(resultat, services.EtapeDoubleAuth):
+            return Response(
+                {"etape": "code_requis", "jeton_etape": resultat.jeton_etape,
+                 "expire_dans": resultat.expire_dans},
+                status=status.HTTP_202_ACCEPTED,
+            )  # fmt: skip
+        return _reponse_jetons(resultat)
+
+
+class ConnexionCodeView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = "connexion"
+
+    @extend_schema(
+        request=ConnexionCodeSerializer, responses=JetonsSerializer, operation_id="connexion_code"
+    )
+    def post(self, request):
+        donnees = ConnexionCodeSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        connexion = services.connecter_avec_code(
+            donnees.validated_data["jeton_etape"],
+            donnees.validated_data["code"],
+            adresse_ip=_adresse_ip(request),
+            agent=request.META.get("HTTP_USER_AGENT", ""),
         )
         return _reponse_jetons(connexion)
 
@@ -185,3 +240,169 @@ class ChangementView(APIView):
             request.user, donnees.validated_data["actuel"], donnees.validated_data["nouveau"]
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# --- Double authentification (SEC-003) -------------------------------------------------
+
+
+class DoubleAuthView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=EtatDoubleAuthSerializer, operation_id="double_auth_etat")
+    def get(self, request):
+        d = double_auth.dossier(request.user)
+        return Response(
+            EtatDoubleAuthSerializer(
+                {
+                    "active": bool(d and d.est_active),
+                    "requise": double_auth.exige_double_auth(request.user),
+                    "codes_secours_restants": len(d.codes_secours) if d and d.est_active else 0,
+                }
+            ).data
+        )
+
+
+class DoubleAuthInitialisationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=None,
+        responses=InitialisationDoubleAuthSerializer,
+        operation_id="double_auth_initialiser",
+    )
+    def post(self, request):
+        secret, uri = double_auth.initialiser(request.user)
+        reponse = Response(InitialisationDoubleAuthSerializer({"secret": secret, "uri": uri}).data)
+        reponse["Cache-Control"] = "no-store"
+        return reponse
+
+
+class DoubleAuthActivationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=CodeSerializer, responses=CodesSecoursSerializer, operation_id="double_auth_activer"
+    )
+    def post(self, request):
+        donnees = CodeSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        codes = double_auth.activer(request.user, donnees.validated_data["code"])
+        # La session courante a désormais prouvé le second facteur.
+        session = request.session_innov
+        session.double_auth_validee = True
+        session.save(update_fields=["double_auth_validee"])
+        reponse = Response(CodesSecoursSerializer({"codes_secours": codes}).data)
+        reponse["Cache-Control"] = "no-store"
+        return reponse
+
+
+class DoubleAuthCodesSecoursView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=CodeSerializer,
+        responses=CodesSecoursSerializer,
+        operation_id="double_auth_codes_secours",
+    )
+    def post(self, request):
+        donnees = CodeSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        codes = double_auth.regenerer_codes(request.user, donnees.validated_data["code"])
+        reponse = Response(CodesSecoursSerializer({"codes_secours": codes}).data)
+        reponse["Cache-Control"] = "no-store"
+        return reponse
+
+
+class DoubleAuthDesactivationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=CodeSerializer, responses={204: None}, operation_id="double_auth_desactiver"
+    )
+    def post(self, request):
+        donnees = CodeSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        double_auth.desactiver(request.user, donnees.validated_data["code"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# --- Sessions (SEC-004) ------------------------------------------------------------------
+
+
+def _mes_sessions(utilisateur: Utilisateur):
+    from django.utils import timezone
+
+    return (
+        Session.objects.select_related("appareil")
+        .filter(utilisateur=utilisateur, revoquee_le=None, expire_le__gt=timezone.now())
+        .order_by("-utilisee_le")
+    )
+
+
+class SessionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=SessionSerializer(many=True), operation_id="sessions_liste")
+    def get(self, request):
+        contexte = {"courante": request.session_innov.pk}
+        return Response(
+            SessionSerializer(_mes_sessions(request.user), many=True, context=contexte).data
+        )
+
+
+class SessionRevocationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(request=None, responses={204: None}, operation_id="session_revoquer")
+    def post(self, request, id):
+        from django.shortcuts import get_object_or_404
+
+        session = get_object_or_404(_mes_sessions(request.user), pk=id)
+        services.revoquer_session(session, motif="revoquee_par_utilisateur")
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SessionsAutresRevocationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(request=None, responses={204: None}, operation_id="sessions_revoquer_autres")
+    def post(self, request):
+        for session in _mes_sessions(request.user).exclude(pk=request.session_innov.pk):
+            services.revoquer_session(session, motif="revoquee_par_utilisateur")
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+ACTIONS_PERSONNELLES = (
+    "connexion", "connexion.verrouillage", "deconnexion", "session.revocation",
+    "session.jeton_rejoue", "mot_de_passe.changement", "mot_de_passe.reinitialisation",
+    "double_auth.activation", "double_auth.desactivation", "double_auth.reinitialisation",
+    "double_auth.codes_secours", "appareil.revocation",
+)  # fmt: skip
+
+
+class ActiviteView(APIView):
+    """Les 20 derniers événements de sécurité du compte : repérer une connexion inconnue."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=ActiviteSerializer(many=True), operation_id="mon_activite")
+    def get(self, request):
+        from apps.audit.models import EvenementAudit
+
+        evenements = EvenementAudit.objects.filter(
+            objet_type="identite.utilisateur",
+            objet_id=str(request.user.pk),
+            action__in=ACTIONS_PERSONNELLES,
+        ).order_by("-le")[:20]
+        masque = SessionSerializer().get_adresse
+        lignes = [
+            {
+                "le": e.le,
+                "action": e.action,
+                "resultat": e.resultat,
+                "client": e.contexte.get("client"),
+                "adresse": masque(type("S", (), {"adresse_ip": e.contexte.get("adresse_ip")})),
+            }
+            for e in evenements
+        ]
+        return Response(ActiviteSerializer(lignes, many=True).data)

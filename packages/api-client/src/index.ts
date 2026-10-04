@@ -8,11 +8,14 @@
  * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
  */
 import type {
+  Activite,
   Affectation,
   Appareil,
   DescriptionAppareil,
   Division,
+  EtatDoubleAuth,
   EtatExploitation,
+  InitialisationDoubleAuth,
   Informations,
   Jetons,
   Moi,
@@ -26,6 +29,7 @@ import type {
   Reseau,
   RoleAttribue,
   Secteur,
+  SessionOuverte,
   StatutPays,
   SyntheseOrganisation,
   Transfert,
@@ -36,12 +40,15 @@ import type {
 } from '@innov/api-types';
 
 export type {
+  Activite,
   Affectation,
   Appareil,
   CodeRole,
   DescriptionAppareil,
   Division,
+  EtatDoubleAuth,
   EtatExploitation,
+  InitialisationDoubleAuth,
   Informations,
   Jetons,
   Moi,
@@ -57,6 +64,7 @@ export type {
   Reseau,
   RoleAttribue,
   Secteur,
+  SessionOuverte,
   StatutPays,
   SyntheseOrganisation,
   Transfert,
@@ -65,6 +73,10 @@ export type {
   Utilisateur,
   Zone,
 } from '@innov/api-types';
+
+/** Résultat d'une connexion : une session, ou l'attente du code (SEC-003). */
+export type ResultatConnexion =
+  { etape: 'connecte'; jetons: Jetons } | { etape: 'code_requis'; jetonEtape: string };
 
 /** Erreur d'un client signalée au serveur (architecture §19), sans donnée saisie. */
 export interface RapportErreur {
@@ -170,7 +182,7 @@ export function creerClient(options: OptionsClient) {
       body: opts.corps === undefined ? undefined : JSON.stringify(opts.corps),
       credentials: portail ? 'include' : 'omit',
     });
-    if (reponse.status === 204 || reponse.status === 202) return undefined as T;
+    if (reponse.status === 204) return undefined as T;
     const texte = await reponse.text();
     const donnees = texte ? JSON.parse(texte) : {};
     if (!reponse.ok) {
@@ -235,10 +247,11 @@ export function creerClient(options: OptionsClient) {
   }
 
   return {
-    /** Ouvre une session. */
-    async connexion(identifiant: string, motDePasse: string): Promise<Jetons> {
-      return memoriser(
-        await brute<Jetons>('/api/v1/auth/connexion/', {
+    /** Ouvre une session, ou annonce que le code à usage unique est attendu. */
+    async connexion(identifiant: string, motDePasse: string): Promise<ResultatConnexion> {
+      const reponse = await brute<Jetons | { etape: string; jeton_etape: string }>(
+        '/api/v1/auth/connexion/',
+        {
           methode: 'POST',
           corps: {
             identifiant,
@@ -246,6 +259,18 @@ export function creerClient(options: OptionsClient) {
             client: options.client,
             ...(options.appareil ? { appareil: await options.appareil() } : {}),
           },
+        },
+      );
+      if ('jeton_etape' in reponse)
+        return { etape: 'code_requis', jetonEtape: reponse.jeton_etape };
+      return { etape: 'connecte', jetons: await memoriser(reponse) };
+    },
+    /** Deuxième étape : code de l'application ou code de secours. */
+    async connexionCode(jetonEtape: string, code: string): Promise<Jetons> {
+      return memoriser(
+        await brute<Jetons>('/api/v1/auth/connexion/code/', {
+          methode: 'POST',
+          corps: { jeton_etape: jetonEtape, code },
         }),
       );
     },
@@ -329,8 +354,15 @@ export function creerClient(options: OptionsClient) {
     comptes: {
       creer: (compte: NouveauCompte) =>
         requete<Utilisateur>('/api/v1/utilisateurs/', { methode: 'POST', corps: compte }),
-      operation: (id: string, operation: 'suspendre' | 'reactiver' | 'reinitialiser') =>
-        requete<Utilisateur>(`/api/v1/utilisateurs/${id}/${operation}/`, { methode: 'POST' }),
+      operation: (
+        id: string,
+        operation:
+          | 'suspendre'
+          | 'reactiver'
+          | 'reinitialiser'
+          | 'fermer_sessions'
+          | 'reinitialiser_double_auth',
+      ) => requete<Utilisateur>(`/api/v1/utilisateurs/${id}/${operation}/`, { methode: 'POST' }),
       roles: (id: string) => requete<RoleAttribue[]>(`/api/v1/utilisateurs/${id}/roles/`),
       attribuerRole: (id: string, role: string) =>
         requete<RoleAttribue>(`/api/v1/utilisateurs/${id}/roles/`, {
@@ -377,6 +409,36 @@ export function creerClient(options: OptionsClient) {
           corps: { valeur },
         }),
     },
+    /** Double authentification du compte (SEC-003). */
+    doubleAuth: {
+      etat: () => requete<EtatDoubleAuth>('/api/v1/auth/double-auth/'),
+      initialiser: () =>
+        requete<InitialisationDoubleAuth>('/api/v1/auth/double-auth/initialiser/', {
+          methode: 'POST',
+        }),
+      activer: (code: string) =>
+        requete<{ codes_secours: string[] }>('/api/v1/auth/double-auth/activer/', {
+          methode: 'POST',
+          corps: { code },
+        }),
+      codesSecours: (code: string) =>
+        requete<{ codes_secours: string[] }>('/api/v1/auth/double-auth/codes-secours/', {
+          methode: 'POST',
+          corps: { code },
+        }),
+      desactiver: (code: string) =>
+        requete<void>('/api/v1/auth/double-auth/desactiver/', { methode: 'POST', corps: { code } }),
+    },
+    /** Sessions ouvertes du compte et révocation à distance (SEC-004). */
+    sessions: {
+      liste: () => requete<SessionOuverte[]>('/api/v1/auth/sessions/'),
+      revoquer: (id: string) =>
+        requete<void>(`/api/v1/auth/sessions/${id}/revoquer/`, { methode: 'POST' }),
+      revoquerAutres: () =>
+        requete<void>('/api/v1/auth/sessions/autres/revoquer/', { methode: 'POST' }),
+    },
+    /** Derniers événements de sécurité du compte (AUD-001). */
+    activite: () => requete<Activite[]>('/api/v1/auth/activite/'),
     /** État technique du service (administrateur technique, siège). */
     exploitation: () => requete<EtatExploitation>('/api/v1/exploitation/'),
     /** Signale une erreur du client ; ne lève jamais (le signalement est un renfort). */

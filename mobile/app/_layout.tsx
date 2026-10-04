@@ -5,6 +5,7 @@ import { LimiteErreur } from '../src/Erreurs';
 import { FournisseurSession } from '../src/FournisseurSession';
 import '../src/i18n';
 import { POLICES } from '../src/polices';
+import { Verrou } from '../src/Verrou';
 
 export default function Disposition() {
   const [policesChargees, erreurPolices] = useFonts(POLICES);
@@ -15,7 +16,9 @@ export default function Disposition() {
     <LimiteErreur>
       <FournisseurSession>
         <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }} />
+        <Verrou>
+          <Stack screenOptions={{ headerShown: false }} />
+        </Verrou>
       </FournisseurSession>
     </LimiteErreur>
   );

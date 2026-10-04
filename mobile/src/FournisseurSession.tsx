@@ -6,6 +6,11 @@ import { ContexteSession, type Etat, type Session } from './session';
 
 /** Une session ouverte charge aussitôt le périmètre (rôles, pays, actions permises). */
 async function ouvrir(client: ClientApi, jetons: Jetons): Promise<Etat> {
+  // L'activation se fait depuis le portail (QR code) : l'application ne garde pas la session.
+  if (jetons.double_auth_a_activer) {
+    await client.deconnexion().catch(() => undefined);
+    return { statut: 'anonyme', doubleAuthRequise: true };
+  }
   // La langue choisie sur le compte suit l'utilisateur d'un appareil à l'autre (USR-004).
   if (jetons.utilisateur.langue && jetons.utilisateur.langue !== i18n.language) {
     await i18n.changeLanguage(jetons.utilisateur.langue);
@@ -49,8 +54,13 @@ export function FournisseurSession({
       etat,
       client,
       async connexion(identifiant, motDePasse) {
-        const jetons = await client.connexion(identifiant, motDePasse);
-        setEtat(await ouvrir(client, jetons));
+        const resultat = await client.connexion(identifiant, motDePasse);
+        if (resultat.etape === 'code_requis') return resultat.jetonEtape;
+        setEtat(await ouvrir(client, resultat.jetons));
+        return null;
+      },
+      async validerCode(jetonEtape, code) {
+        setEtat(await ouvrir(client, await client.connexionCode(jetonEtape, code)));
       },
       async changerLangue(langue) {
         await i18n.changeLanguage(langue);

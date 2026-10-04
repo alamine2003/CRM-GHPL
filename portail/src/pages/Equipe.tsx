@@ -8,6 +8,8 @@ import type {
 import AddRounded from '@mui/icons-material/AddRounded';
 import BlockRounded from '@mui/icons-material/BlockRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
+import LogoutRounded from '@mui/icons-material/LogoutRounded';
+import PhonelinkLockRounded from '@mui/icons-material/PhonelinkLockRounded';
 import FlightTakeoffRounded from '@mui/icons-material/FlightTakeoffRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import KeyRounded from '@mui/icons-material/KeyRounded';
@@ -242,6 +244,33 @@ function FicheCompte({
             }
           >
             {t('equipe.fiche.reinitialiser')}
+          </Button>
+          <Button
+            startIcon={<LogoutRounded />}
+            variant="outlined"
+            size="small"
+            onClick={() =>
+              void agir(
+                () => client.comptes.operation(compte.id, 'fermer_sessions'),
+                t('equipe.fiche.sessionsFermees'),
+              )
+            }
+          >
+            {t('equipe.fiche.fermerSessions')}
+          </Button>
+          <Button
+            startIcon={<PhonelinkLockRounded />}
+            variant="outlined"
+            size="small"
+            color="warning"
+            onClick={() =>
+              void agir(
+                () => client.comptes.operation(compte.id, 'reinitialiser_double_auth'),
+                t('equipe.fiche.doubleAuthReinitialisee'),
+              )
+            }
+          >
+            {t('equipe.fiche.reinitialiserDoubleAuth')}
           </Button>
         </Stack>
       )}

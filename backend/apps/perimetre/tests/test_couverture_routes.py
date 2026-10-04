@@ -12,7 +12,10 @@ from apps.perimetre.vues import VuePerimetre
 EXCEPTIONS = {
     "sante", "informations", "schema", "connexion", "rafraichir", "deconnexion", "moi",
     "mot-de-passe-oubli", "mot-de-passe-reinitialisation", "mot-de-passe-changement",
-    "perimetre", "mon-organisation", "erreurs-clients",
+    "perimetre", "mon-organisation", "erreurs-clients", "connexion-code", "double-auth",
+    "double-auth-initialiser", "double-auth-activer", "double-auth-codes-secours",
+    "double-auth-desactiver", "sessions", "sessions-revoquer-autres", "session-revoquer",
+    "mon-activite",
 }  # fmt: skip
 
 

@@ -1,9 +1,8 @@
 """Services du module socle : cycle de vie des pays et paramètres (ORG-001, ORG-011).
 
 Les autres modules passent par ces fonctions, jamais par les tables directement
-(architecture §7.2). L'audit des changements de statut et de paramètres
-(ORG-001 CA4, ORG-011 CA2) sera écrit ici quand le journal d'audit existera
-(version 0.0.8, AUD-001).
+(architecture §7.2). Les changements de statut et de paramètres sont audités
+(ORG-001 CA4, ORG-011 CA2, AUD-001).
 """
 
 from datetime import date, datetime, time
@@ -17,6 +16,13 @@ from django.utils import timezone
 from .catalogue_pays import CATALOGUE as CATALOGUE_PAYS
 from .models import ParametrePays, Pays
 from .parametres import definition
+
+
+def _auditer(action: str, pays: Pays, *, details: dict) -> None:
+    from apps.audit.services import enregistrer
+
+    enregistrer(action, objet=pays, pays=pays, details=details)
+
 
 # Transitions autorisées du statut d'un pays (prd.md §17.5).
 TRANSITIONS_PAYS: dict[str, set[str]] = {
@@ -45,6 +51,7 @@ def creer_pays(code: str, **surcharges: Any) -> Pays:
     pays = Pays(code=code, statut=Pays.Statut.ACTIF, **valeurs)
     pays.full_clean()
     pays.save()
+    _auditer("pays.creation", pays, details={"code": code})
     return pays
 
 
@@ -56,10 +63,13 @@ def changer_statut_pays(pays: Pays, statut: str) -> Pays:
         raise ValidationError(
             f"Transition interdite : {pays.get_statut_display()} → {Pays.Statut(statut).label}."
         )
+    ancien = pays.statut
     pays.statut = statut
     if statut == Pays.Statut.ARCHIVE:
         pays.archive_le = timezone.now()
     pays.save(update_fields=["statut", "archive_le"])
+    # ORG-001 CA4 : chaque changement de statut crée un événement d'audit.
+    _auditer("pays.statut", pays, details={"ancien": ancien, "nouveau": statut})
     return pays
 
 
@@ -106,9 +116,14 @@ def definir_parametre(
     defn.valider(valeur)
     if pays.statut == Pays.Statut.ARCHIVE:
         raise ValidationError("Un pays archivé est en lecture seule (ORG-001 CA3).")
-    return ParametrePays.objects.create(
+    ancienne = valeur_parametre(pays, cle)
+    ligne = ParametrePays.objects.create(
         pays=pays, cle=cle, valeur=valeur, debut=debut or timezone.now()
     )
+    # ORG-011 CA2 : la modification est auditée avec l'ancienne et la nouvelle valeur.
+    _auditer("parametre.modification", pays, details={"cle": cle, "ancienne": ancienne,
+                                                       "nouvelle": valeur})  # fmt: skip
+    return ligne
 
 
 def aujourdhui(pays: Pays) -> date:

@@ -8,6 +8,7 @@ import { LimiteErreur } from './composants/Erreurs';
 import { ENTREES } from './composants/navigation';
 import { useSession } from './contexteSession';
 import Accueil from './pages/Accueil';
+import ActivationRequise from './pages/ActivationRequise';
 import Connexion from './pages/Connexion';
 import Equipe from './pages/Equipe';
 import Exploitation from './pages/Exploitation';
@@ -51,6 +52,7 @@ function Protegee() {
   }
   if (etat.statut === 'anonyme') return <Navigate to="/connexion" replace />;
   const { utilisateur, perimetre } = etat;
+  if (etat.doubleAuthAActiver) return <ActivationRequise />;
   const page = PAGES[pathname];
   const entree = ENTREES.find((e) => e.chemin === pathname);
   // Une page connue mais non permise renvoie à l'accueil ; une adresse inconnue affiche 404.

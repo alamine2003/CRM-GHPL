@@ -24,7 +24,17 @@ const config: ExpoConfig = {
     },
   },
   web: { favicon: './assets/favicon.png' },
-  plugins: ['expo-router', 'expo-localization', 'expo-secure-store'],
+  plugins: [
+    'expo-router',
+    'expo-localization',
+    'expo-secure-store',
+    [
+      'expo-local-authentication',
+      {
+        faceIDPermission: 'INNOV CRM se déverrouille avec Face ID après 5 minutes en arrière-plan.',
+      },
+    ],
+  ],
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000',
   },

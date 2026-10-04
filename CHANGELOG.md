@@ -2,6 +2,46 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.0.8] — Double authentification, sessions, journal d'audit immuable ; design enrichi
+
+Huitième jalon du cycle 0.0 « Fondations ».
+
+### Ajouté — double authentification (SEC-003)
+
+- **Code à usage unique** par application d'authentification (Google Authenticator, Microsoft Authenticator…) : la connexion se fait en deux étapes ; après le mot de passe, le serveur répond `202` avec un jeton d'étape signé, valable 5 minutes, puis `POST /api/v1/auth/connexion/code/` ouvre la session. Un code déjà utilisé est refusé (rejeu) ; les échecs comptent dans le verrouillage du compte.
+- **Obligatoire** pour `admin_siege`, `direction_siege`, `responsable_pays`, `admin_pays`, `df`, `dm` (CA1) : tant qu'elle n'est pas activée, toute route métier répond `403 double_authentification_requise` ; le portail n'affiche que l'assistant d'activation. Facultative pour les autres rôles.
+- **Assistant d'activation** (portail) en quatre étapes : installer une application, scanner le QR code (ou saisir la clé), confirmer avec un premier code, noter les **10 codes de secours** (copier, télécharger ; chacun ne sert qu'une fois, conservé seulement sous forme d'empreinte).
+- Le secret est **chiffré** en base (Fernet, clé `INNOV_CLE_CHIFFREMENT`, à défaut dérivée de `DJANGO_SECRET_KEY`).
+- Mobile : étape du code (ou d'un code de secours) à la connexion ; un rôle qui doit encore l'activer est renvoyé vers le portail, sans session ouverte.
+- Équipe : « Réinitialiser la double authentification » d'un compte (téléphone perdu) ; ses sessions sont fermées.
+
+### Ajouté — sessions (SEC-004)
+
+- **Mon profil → Sessions ouvertes** : portail ou mobile, appareil, adresse masquée, dernière activité ; fermer une session ou toutes les autres. Une session fermée échoue à l'appel suivant (CA1).
+- Équipe : « Fermer ses sessions » pour un compte.
+- **Verrouillage local du mobile** : après 5 minutes en arrière-plan, l'application demande la biométrie ou le code du téléphone ; un téléphone sans aucune protection doit se reconnecter.
+- Portail : la session expire toujours après 30 minutes d'inactivité (0.0.3).
+
+### Ajouté — journal d'audit (AUD-001)
+
+- **Table `audit_evenementaudit`** : connexions et échecs (dont verrouillage, appareil révoqué, code invalide, rejeu de jeton), déconnexions, mots de passe, comptes, rôles, affectations, transferts, révocations d'appareil et de session, double authentification, organisation (création, renommage, archivage, occupations, rattachements), pays (création, statut) et paramètres (ancienne et nouvelle valeur).
+- Chaque événement porte auteur, rôles, pays, action, objet, date, contexte (client, appareil, session, adresse IP, navigateur, référence de requête) et résultat (CA1) ; jamais de mot de passe, jeton, secret ni code.
+- **Immuable** (CA2) : un déclencheur PostgreSQL refuse toute modification, suppression ou troncature, quel que soit le rôle applicatif ; l'application elle-même refuse `save` d'un événement existant et `delete`.
+- Écrit dans la **même transaction** que l'action : une action annulée ne laisse pas d'événement, un échec de connexion en laisse un.
+- **Mon profil → Activité récente** : les 20 derniers événements de sécurité du compte, pour repérer une connexion inconnue.
+- Page Exploitation : carte « Journal d'audit » (déclencheurs d'immuabilité actifs).
+
+### Design
+
+- Connexion : étape du code avec grand champ à chiffres espacés, bascule code de secours.
+- Mon profil : centre de sécurité (double authentification, sessions, frise d'activité).
+- Mobile : écran de verrouillage aux couleurs de la marque.
+
+### Écarts assumés
+
+- **Chaînage** des événements par empreinte (architecture §16.1) : `0.9.2`, comme prévu. **Partitionnement mensuel** : quand les volumes le justifieront (§13).
+- Le droit `INSERT`/`SELECT` seul pour le rôle de production sur la table d'audit est une consigne de mise en ligne (README) ; le déclencheur protège déjà contre toute modification.
+
 ## [0.0.7] — Erreurs, journaux, suivi, isolation renforcée ; design enrichi
 
 Septième jalon du cycle 0.0 « Fondations ».

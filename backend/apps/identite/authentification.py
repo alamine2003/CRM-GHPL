@@ -41,6 +41,14 @@ class AuthentificationSession(JWTAuthentication):
             raise echec from erreur
         request.session_innov = session
         journalisation.utilisateur.set(journalisation.pseudonyme(session.utilisateur_id))
+        from apps.audit.services import definir_acteur
+
+        definir_acteur(
+            session.utilisateur,
+            client=session.client,
+            appareil=str(session.appareil_id) if session.appareil_id else None,
+            session=str(session.pk),
+        )
         return session.utilisateur, jeton
 
     def authenticate_header(self, request):

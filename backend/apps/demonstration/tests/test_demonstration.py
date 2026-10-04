@@ -8,7 +8,7 @@ from apps.identite.models import Utilisateur
 from apps.organisation.models import Occupation, Poste, Rattachement, Secteur
 from apps.socle.models import Pays
 
-pytestmark = pytest.mark.django_db(transaction=True)
+pytestmark = pytest.mark.django_db
 
 
 def lancer(monkeypatch, **options):

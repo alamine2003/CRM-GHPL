@@ -57,8 +57,12 @@ def api():
     return APIClient()
 
 
-def client_de(utilisateur, pays=None):
-    """Client authentifié par une vraie session (jeton d'accès lié à une session)."""
+def client_de(utilisateur, pays=None, *, double_auth=True):
+    """Client authentifié par une vraie session (jeton d'accès lié à une session).
+
+    Par défaut, la session a validé la double authentification (SEC-003), comme celle d'un
+    rôle sensible qui l'a activée ; `double_auth=False` simule un compte qui ne l'a pas fait.
+    """
     from django.utils import timezone
 
     from apps.identite.models import Session
@@ -69,6 +73,7 @@ def client_de(utilisateur, pays=None):
         client=Session.Client.PORTAIL,
         empreinte_rafraichissement=secrets.token_hex(32),
         expire_le=timezone.now() + duree_session("portail"),
+        double_auth_validee=double_auth,
     )
     acces, _ = _jeton_acces(session)
     client = APIClient()

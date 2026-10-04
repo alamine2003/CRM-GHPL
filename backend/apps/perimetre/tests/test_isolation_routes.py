@@ -48,7 +48,14 @@ def senegal(monde):
         plateforme="android",
     )  # fmt: skip
     compte = monde["resp.sn"]
+    from apps.identite.models import Session
+
+    session_sn = Session.objects.create(
+        utilisateur=compte, client="portail", empreinte_rafraichissement="sn" * 32,
+        expire_le=compte.date_joined.replace(year=2099),
+    )  # fmt: skip
     return {
+        "session-revoquer": session_sn.pk,
         "utilisateur": compte.pk,
         "roles": compte.pk,
         "utilisateur-action": compte.pk,
@@ -83,9 +90,13 @@ def test_aucune_route_n_ouvre_un_objet_d_un_autre_pays(monde, senegal):
     testees, fuites, oubliees = 0, [], []
     for chemin, motif in _routes(get_resolver().url_patterns):
         vue = getattr(motif.callback, "view_class", None)
-        actions = getattr(vue, "actions", None) or {}
-        if "<uuid:id>" not in chemin and "<str:code>" not in chemin:
+        if vue is None or ("<uuid:id>" not in chemin and "<str:code>" not in chemin):
             continue
+        actions = [
+            m.upper()
+            for m in vue.http_method_names
+            if m not in ("options", "head") and hasattr(vue, m)
+        ]
         if motif.name in ROUTES_PAR_CODE:
             identifiant = None
         elif motif.name in senegal:

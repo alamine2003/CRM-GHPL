@@ -3,13 +3,20 @@ import { createContext, useContext } from 'react';
 
 export type Etat =
   | { statut: 'chargement' }
-  | { statut: 'anonyme'; sessionExpiree?: boolean }
+  | {
+      statut: 'anonyme';
+      sessionExpiree?: boolean;
+      /** Rôle sensible sans double authentification : l'activer depuis le portail (SEC-003). */
+      doubleAuthRequise?: boolean;
+    }
   | { statut: 'connecte'; utilisateur: Moi; perimetre: Perimetre };
 
 export interface Session {
   etat: Etat;
   client: ClientApi;
-  connexion(identifiant: string, motDePasse: string): Promise<void>;
+  /** Renvoie le jeton d'étape si un code de double authentification est demandé (SEC-003). */
+  connexion(identifiant: string, motDePasse: string): Promise<string | null>;
+  validerCode(jetonEtape: string, code: string): Promise<void>;
   deconnexion(): Promise<void>;
   /** Change la langue ; elle est mémorisée sur le compte (USR-004). */
   changerLangue(langue: string): Promise<void>;

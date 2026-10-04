@@ -164,6 +164,8 @@ class Session(models.Model):
     appareil = models.ForeignKey(
         Appareil, on_delete=models.PROTECT, null=True, blank=True, related_name="sessions"
     )
+    #: Vrai si la session a été ouverte avec un code à usage unique (SEC-003).
+    double_auth_validee = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-cree_le"]
@@ -337,3 +339,30 @@ class Transfert(models.Model):
 
     def __str__(self):
         return f"{self.utilisateur} : {self.pays_origine_id} → {self.pays_destination_id}"
+
+
+class DoubleAuthentification(models.Model):
+    """Code à usage unique par application d'authentification (TOTP, SEC-003).
+
+    Le secret est chiffré en base ; les codes de secours ne sont gardés qu'en empreinte.
+    `dernier_pas` empêche de rejouer un code déjà utilisé.
+    """
+
+    utilisateur = models.OneToOneField(
+        Utilisateur, on_delete=models.PROTECT, primary_key=True, related_name="double_auth"
+    )
+    secret_chiffre = models.TextField()
+    active_le = models.DateTimeField(null=True, blank=True)
+    dernier_pas = models.BigIntegerField(default=0)
+    codes_secours = models.JSONField(default=list, blank=True)
+    cree_le = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        verbose_name = "double authentification"
+
+    def __str__(self):
+        return f"{self.utilisateur} — {'active' if self.active_le else 'en attente'}"
+
+    @property
+    def est_active(self) -> bool:
+        return self.active_le is not None

@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "apps.perimetre",
     "apps.organisation",
     "apps.demonstration",
+    "apps.audit",
 ]
 
 AUTH_USER_MODEL = "identite.Utilisateur"
@@ -101,6 +102,11 @@ INNOV_AUTH = {
     "COOKIE_RAFRAICHISSEMENT": "innov_rafraichissement",
     "COOKIE_SECURISE": ENVIRONNEMENT not in {"developpement", "test"},
 }
+
+# Chiffrement des secrets de double authentification (SEC-003). Une clé distincte de
+# DJANGO_SECRET_KEY permet de changer l'une sans invalider l'autre ; à défaut, la clé
+# est dérivée de DJANGO_SECRET_KEY.
+INNOV_CLE_CHIFFREMENT = os.environ.get("INNOV_CLE_CHIFFREMENT", "")
 
 MIDDLEWARE = [
     "apps.socle.journalisation.ReferenceRequete",

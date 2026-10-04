@@ -23,6 +23,8 @@ from django.conf import settings
 reference = contextvars.ContextVar("reference", default=None)
 utilisateur = contextvars.ContextVar("utilisateur", default=None)
 pays = contextvars.ContextVar("pays", default=None)
+#: Contexte de la requête pour l'audit (AUD-001 CA1) : acteur, rôles, adresse, appareil.
+audit = contextvars.ContextVar("audit", default=None)
 
 REFERENCE_VALIDE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 journal = logging.getLogger("innov.requetes")
@@ -67,7 +69,17 @@ class ReferenceRequete:
     def __call__(self, request):
         recue = request.headers.get("X-Request-Id", "")
         valeur = recue if REFERENCE_VALIDE.match(recue) else uuid.uuid4().hex
-        jetons = [reference.set(valeur), utilisateur.set(None), pays.set(None)]
+        jetons = [
+            reference.set(valeur),
+            utilisateur.set(None),
+            pays.set(None),
+            audit.set(
+                {
+                    "adresse_ip": request.META.get("REMOTE_ADDR"),
+                    "agent": request.headers.get("User-Agent", "")[:200],
+                }
+            ),
+        ]
         request.reference = valeur
         debut = time.perf_counter()
         try:
@@ -87,5 +99,5 @@ class ReferenceRequete:
                 )
             return reponse
         finally:
-            for variable, jeton in zip((reference, utilisateur, pays), jetons, strict=True):
+            for variable, jeton in zip((reference, utilisateur, pays, audit), jetons, strict=True):
                 variable.reset(jeton)

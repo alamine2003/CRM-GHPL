@@ -76,3 +76,6 @@ def _courriels_immediats(monkeypatch):
     from django.db import transaction
 
     monkeypatch.setattr(transaction, "on_commit", lambda fonction, *a, **k: fonction())
+
+
+from apps.perimetre.tests.conftest import monde  # noqa: E402, F401 — jeu de données à deux pays

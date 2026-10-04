@@ -18,11 +18,24 @@ class MoiSerializer(serializers.ModelSerializer):
     courriel = serializers.CharField(source="email")
     pays_principal = PaysResumeSerializer(allow_null=True)
     est_siege = serializers.BooleanField()
+    double_auth_active = serializers.SerializerMethodField()
+    double_auth_requise = serializers.SerializerMethodField()
 
     class Meta:
         model = Utilisateur
         fields = ["id", "identifiant", "prenom", "nom", "courriel", "langue", "pays_principal",
-                  "est_siege"]  # fmt: skip
+                  "est_siege", "double_auth_active", "double_auth_requise"]  # fmt: skip
+
+    def get_double_auth_active(self, utilisateur) -> bool:
+        from .double_auth import est_active
+
+        return est_active(utilisateur)
+
+    def get_double_auth_requise(self, utilisateur) -> bool:
+        """Rôle sensible (SEC-003) : la double authentification est obligatoire."""
+        from .double_auth import exige_double_auth
+
+        return exige_double_auth(utilisateur)
 
 
 class DescriptionAppareilSerializer(serializers.Serializer):
@@ -63,6 +76,65 @@ class JetonsSerializer(serializers.Serializer):
         help_text="Application mobile uniquement ; nul pour le portail (cookie HttpOnly).",
     )
     utilisateur = MoiSerializer()
+    double_auth_a_activer = serializers.BooleanField(
+        help_text="Vrai si le compte doit activer la double authentification avant tout accès."
+    )
+
+
+class EtapeDoubleAuthSerializer(serializers.Serializer):
+    etape = serializers.CharField(help_text="« code_requis » : envoyer le code à connexion/code/.")
+    jeton_etape = serializers.CharField()
+    expire_dans = serializers.IntegerField()
+
+
+class ConnexionCodeSerializer(serializers.Serializer):
+    jeton_etape = serializers.CharField(max_length=2000)
+    code = serializers.CharField(max_length=20, help_text="Code de l'application ou de secours.")
+
+
+class CodeSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=20)
+
+
+class EtatDoubleAuthSerializer(serializers.Serializer):
+    active = serializers.BooleanField()
+    requise = serializers.BooleanField()
+    codes_secours_restants = serializers.IntegerField()
+
+
+class InitialisationDoubleAuthSerializer(serializers.Serializer):
+    secret = serializers.CharField(help_text="À saisir à la main si le QR code ne passe pas.")
+    uri = serializers.CharField(help_text="Adresse otpauth:// à afficher en QR code.")
+
+
+class CodesSecoursSerializer(serializers.Serializer):
+    codes_secours = serializers.ListField(child=serializers.CharField())
+
+
+class SessionSerializer(serializers.ModelSerializer):
+    appareil = serializers.SerializerMethodField()
+    adresse = serializers.SerializerMethodField()
+    courante = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Session
+        fields = ["id", "client", "appareil", "adresse", "cree_le", "utilisee_le", "expire_le",
+                  "double_auth_validee", "courante"]  # fmt: skip
+
+    def get_appareil(self, session) -> str | None:
+        a = session.appareil
+        return f"{a.modele or a.get_plateforme_display()} · {a.systeme}".strip(" ·") if a else None
+
+    def get_adresse(self, session) -> str | None:
+        """Adresse partiellement masquée : assez pour reconnaître, pas pour pister."""
+        ip = session.adresse_ip or ""
+        if ":" in ip:
+            return ":".join(ip.split(":")[:3]) + ":x"
+        parties = ip.split(".")
+        return ".".join(parties[:2] + ["x", "x"]) if len(parties) == 4 else None
+
+    def get_courante(self, session) -> bool:
+        return str(session.pk) == str(self.context.get("courante"))
 
 
 class OubliSerializer(serializers.Serializer):
@@ -77,3 +149,13 @@ class ReinitialisationSerializer(serializers.Serializer):
 class ChangementSerializer(serializers.Serializer):
     actuel = serializers.CharField(max_length=256, trim_whitespace=False)
     nouveau = serializers.CharField(max_length=256, trim_whitespace=False)
+
+
+class ActiviteSerializer(serializers.Serializer):
+    """Événement d'audit de l'utilisateur lui-même (connexions, sécurité du compte)."""
+
+    le = serializers.DateTimeField()
+    action = serializers.CharField()
+    resultat = serializers.CharField()
+    client = serializers.CharField(allow_null=True)
+    adresse = serializers.CharField(allow_null=True)

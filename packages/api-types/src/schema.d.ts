@@ -53,6 +53,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/auth/activite/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Les 20 derniers événements de sécurité du compte : repérer une connexion inconnue. */
+    get: operations['mon_activite'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/auth/connexion/': {
     parameters: {
       query?: never;
@@ -62,7 +79,27 @@ export interface paths {
     };
     get?: never;
     put?: never;
+    /**
+     * @description Ouvre une session ; si la double authentification est active, répond 202 et
+     *     attend le code sur connexion/code/ (SEC-003).
+     */
     post: operations['connexion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/connexion/code/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['connexion_code'];
     delete?: never;
     options?: never;
     head?: never;
@@ -79,6 +116,86 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['deconnexion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/double-auth/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['double_auth_etat'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/double-auth/activer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['double_auth_activer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/double-auth/codes-secours/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['double_auth_codes_secours'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/double-auth/desactiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['double_auth_desactiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/double-auth/initialiser/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['double_auth_initialiser'];
     delete?: never;
     options?: never;
     head?: never;
@@ -180,6 +297,54 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['rafraichir'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/sessions/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['sessions_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/sessions/{id}/revoquer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['session_revoquer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/sessions/autres/revoquer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['sessions_revoquer_autres'];
     delete?: never;
     options?: never;
     head?: never;
@@ -829,6 +994,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** @description Événement d'audit de l'utilisateur lui-même (connexions, sécurité du compte). */
+    Activite: {
+      /** Format: date-time */
+      le: string;
+      action: string;
+      resultat: string;
+      client: string | null;
+      adresse: string | null;
+    };
     Affectation: {
       /** Format: uuid */
       readonly id: string;
@@ -886,12 +1060,23 @@ export interface components {
      * @enum {string}
      */
     ClientEnum: 'portail' | 'mobile';
+    Code: {
+      code: string;
+    };
+    CodesSecours: {
+      codes_secours: string[];
+    };
     Connexion: {
       identifiant: string;
       mot_de_passe: string;
       client: components['schemas']['ClientEnum'];
       /** @description Obligatoire pour l'application mobile (USR-006). */
       appareil?: components['schemas']['DescriptionAppareil'];
+    };
+    ConnexionCode: {
+      jeton_etape: string;
+      /** @description Code de l'application ou de secours. */
+      code: string;
     };
     CreationDivision: {
       libelle: string;
@@ -949,13 +1134,26 @@ export interface components {
       ecran?: string;
       reference?: string;
     };
+    EtapeDoubleAuth: {
+      /** @description « code_requis » : envoyer le code à connexion/code/. */
+      etape: string;
+      jeton_etape: string;
+      expire_dans: number;
+    };
     EtatBase: {
       disponible: boolean;
       /** Format: double */
       latence_ms: number | null;
       migrations_en_attente: number;
     };
+    EtatDoubleAuth: {
+      active: boolean;
+      requise: boolean;
+      codes_secours_restants: number;
+    };
     EtatExploitation: {
+      /** @description Vrai si la base refuse toute modification du journal d'audit (AUD-001 CA2). */
+      audit_immuable: boolean;
       version: string;
       environnement: string;
       /** Format: date-time */
@@ -989,6 +1187,12 @@ export interface components {
       message: string;
       langues: components['schemas']['Langue'][];
     };
+    InitialisationDoubleAuth: {
+      /** @description À saisir à la main si le QR code ne passe pas. */
+      secret: string;
+      /** @description Adresse otpauth:// à afficher en QR code. */
+      uri: string;
+    };
     Jetons: {
       /** @description Jeton d'accès, à envoyer en « Bearer ». */
       acces: string;
@@ -997,6 +1201,8 @@ export interface components {
       /** @description Application mobile uniquement ; nul pour le portail (cookie HttpOnly). */
       rafraichissement: string | null;
       utilisateur: components['schemas']['Moi'];
+      /** @description Vrai si le compte doit activer la double authentification avant tout accès. */
+      double_auth_a_activer: boolean;
     };
     Langue: {
       code: string;
@@ -1024,6 +1230,9 @@ export interface components {
       langue?: components['schemas']['LangueEnum'];
       pays_principal: components['schemas']['PaysResume'] | null;
       est_siege: boolean;
+      readonly double_auth_active: boolean;
+      /** @description Rôle sensible (SEC-003) : la double authentification est obligatoire. */
+      readonly double_auth_requise: boolean;
     };
     MonOrganisation: {
       postes: components['schemas']['MonPoste'][];
@@ -1235,6 +1444,22 @@ export interface components {
       zone_libelle: string;
       readonly archive: boolean;
     };
+    Session: {
+      /** Format: uuid */
+      readonly id: string;
+      client: components['schemas']['ClientEnum'];
+      readonly appareil: string | null;
+      /** @description Adresse partiellement masquée : assez pour reconnaître, pas pour pister. */
+      readonly adresse: string | null;
+      /** Format: date-time */
+      cree_le?: string;
+      /** Format: date-time */
+      utilisee_le?: string;
+      /** Format: date-time */
+      expire_le: string;
+      double_auth_validee?: boolean;
+      readonly courante: boolean;
+    };
     /**
      * @description * `actif` - Actif
      *     * `suspendu` - Suspendu
@@ -1378,6 +1603,25 @@ export interface operations {
       };
     };
   };
+  mon_activite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Activite'][];
+        };
+      };
+    };
+  };
   connexion: {
     parameters: {
       query?: never;
@@ -1390,6 +1634,39 @@ export interface operations {
         'application/json': components['schemas']['Connexion'];
         'application/x-www-form-urlencoded': components['schemas']['Connexion'];
         'multipart/form-data': components['schemas']['Connexion'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Jetons'];
+        };
+      };
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EtapeDoubleAuth'];
+        };
+      };
+    };
+  };
+  connexion_code: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ConnexionCode'];
+        'application/x-www-form-urlencoded': components['schemas']['ConnexionCode'];
+        'multipart/form-data': components['schemas']['ConnexionCode'];
       };
     };
     responses: {
@@ -1418,6 +1695,118 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  double_auth_etat: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['EtatDoubleAuth'];
+        };
+      };
+    };
+  };
+  double_auth_activer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Code'];
+        'application/x-www-form-urlencoded': components['schemas']['Code'];
+        'multipart/form-data': components['schemas']['Code'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CodesSecours'];
+        };
+      };
+    };
+  };
+  double_auth_codes_secours: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Code'];
+        'application/x-www-form-urlencoded': components['schemas']['Code'];
+        'multipart/form-data': components['schemas']['Code'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CodesSecours'];
+        };
+      };
+    };
+  };
+  double_auth_desactiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Code'];
+        'application/x-www-form-urlencoded': components['schemas']['Code'];
+        'multipart/form-data': components['schemas']['Code'];
+      };
+    };
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  double_auth_initialiser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InitialisationDoubleAuth'];
+        };
       };
     };
   };
@@ -1578,6 +1967,63 @@ export interface operations {
         content: {
           'application/json': components['schemas']['Jetons'];
         };
+      };
+    };
+  };
+  sessions_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Session'][];
+        };
+      };
+    };
+  };
+  session_revoquer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  sessions_revoquer_autres: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

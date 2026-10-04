@@ -176,7 +176,15 @@
       "chiffres": "Track your visits, coverage and targets."
     },
     "ceTelephone": "This phone",
-    "telephoneAide": "Registered at sign-in; your country administrator can revoke it if it is lost."
+    "telephoneAide": "Registered at sign-in; your country administrator can revoke it if it is lost.",
+    "doubleAuthPortail": "Your role requires two-step verification. Turn it on from the web portal (My profile), then sign in here again.",
+    "verrou": {
+      "titre": "App locked",
+      "texte": "For security, the app locks after 5 minutes in the background.",
+      "deverrouiller": "Unlock",
+      "invite": "Unlock INNOV CRM",
+      "sansProtection": "This phone has no passcode or biometrics: sign in again."
+    }
   },
   "roles": {
     "titre": "Roles",
@@ -370,7 +378,11 @@
       "transferts": "Transfers",
       "aucuneAffectation": "No assignment.",
       "active": "Ongoing",
-      "terminee": "Ended"
+      "terminee": "Ended",
+      "fermerSessions": "Sign out everywhere",
+      "sessionsFermees": "Sessions closed.",
+      "reinitialiserDoubleAuth": "Reset two-step verification",
+      "doubleAuthReinitialisee": "Two-step verification reset: it will be set up again at next sign-in."
     },
     "vide": "No account matches"
   },
@@ -489,6 +501,82 @@
     "actif": "Active",
     "inactif": "Inactive",
     "ok": "OK",
-    "attention": "To check"
+    "attention": "To check",
+    "audit": "Audit log",
+    "auditImmuable": "Immutable: the database refuses any change.",
+    "auditModifiable": "Audit log protections are disabled."
+  },
+  "code": {
+    "titre": "Two-step verification",
+    "explication": "Enter the 6-digit code shown by your authenticator app.",
+    "champ": "Verification code",
+    "valider": "Verify",
+    "secours": "Use a backup code",
+    "application": "Use the app",
+    "champSecours": "Backup code",
+    "retour": "Back",
+    "explicationSecours": "Enter one of the backup codes saved when you turned it on."
+  },
+  "doubleAuth": {
+    "titre": "Two-step verification",
+    "obligatoire": "Required for your role",
+    "active": "On",
+    "inactive": "Off",
+    "description": "A one-time code shown by an app on your phone protects your account even if your password is stolen.",
+    "requiseTitre": "Protect your account",
+    "requiseTexte": "Your role gives access to sensitive data: two-step verification is required before you continue. It takes two minutes.",
+    "activer": "Turn on two-step verification",
+    "desactiver": "Turn off",
+    "regenerer": "New backup codes",
+    "codesRestants_one": "{{count}} backup code left",
+    "codesRestants_other": "{{count}} backup codes left",
+    "etapes": {
+      "installer": "Install an app",
+      "scanner": "Scan the QR code",
+      "confirmer": "Confirm",
+      "codes": "Backup codes"
+    },
+    "installerTexte": "Install a free authenticator app on your phone: Google Authenticator, Microsoft Authenticator or an equivalent app.",
+    "scannerTexte": "In the app, add an account and scan this QR code.",
+    "cleManuelle": "Cannot scan? Enter this key:",
+    "confirmerTexte": "Enter the 6-digit code the app shows now.",
+    "codesTexte": "Keep these codes somewhere safe, away from your phone. Each one replaces the app code once if you lose your phone. They will not be shown again.",
+    "copier": "Copy",
+    "telecharger": "Download",
+    "notes": "I have stored my codes safely",
+    "terminer": "Finish",
+    "suivant": "Next",
+    "activee": "Two-step verification is on.",
+    "desactivee": "Two-step verification is off.",
+    "codeActuel": "Current app code"
+  },
+  "sessionsPage": {
+    "titre": "Open sessions",
+    "cetAppareil": "This session",
+    "portail": "Web portal",
+    "mobile": "Mobile app",
+    "activite": "Last active {{quand}}",
+    "revoquer": "Sign out",
+    "revoquerAutres": "Sign out all others",
+    "revoquee": "Session closed."
+  },
+  "activitePage": {
+    "titre": "Recent account activity",
+    "vide": "No activity recorded.",
+    "actions": {
+      "connexion": "Sign-in",
+      "connexion_echec": "Sign-in refused",
+      "connexion_verrouillage": "Account locked",
+      "deconnexion": "Sign-out",
+      "session_revocation": "Session closed remotely",
+      "session_jeton_rejoue": "Session reuse blocked",
+      "mot_de_passe_changement": "Password changed",
+      "mot_de_passe_reinitialisation": "Password reset",
+      "double_auth_activation": "Two-step verification turned on",
+      "double_auth_desactivation": "Two-step verification turned off",
+      "double_auth_reinitialisation": "Two-step verification reset",
+      "double_auth_codes_secours": "New backup codes",
+      "appareil_revocation": "Phone revoked"
+    }
   }
 }

@@ -132,4 +132,5 @@ def test_etat_d_exploitation(monde):
     assert etat["base"]["disponible"] and etat["base"]["migrations_en_attente"] == 0
     assert etat["isolation"]["tables_protegees"] == etat["isolation"]["tables_attendues"] > 5
     assert etat["format_journaux"] in {"json", "texte"}
+    assert etat["audit_immuable"] is True
     assert client_de(monde["admin.sn"]).get("/api/v1/exploitation/").status_code == 403

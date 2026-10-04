@@ -85,6 +85,7 @@ def creer_utilisateur(
         utilisateur.set_unusable_password()
     utilisateur.full_clean()
     utilisateur.save()
+    _auditer("compte.creation", utilisateur, identifiant=utilisateur.username)
     return utilisateur
 
 
@@ -94,12 +95,15 @@ def suspendre_utilisateur(utilisateur: Utilisateur) -> Utilisateur:
     utilisateur.is_active = False
     utilisateur.save(update_fields=["is_active"])
     revoquer_sessions(utilisateur, "compte_suspendu")
+    _auditer("compte.suspension", utilisateur)
     return utilisateur
 
 
+@transaction.atomic
 def reactiver_utilisateur(utilisateur: Utilisateur) -> Utilisateur:
     utilisateur.is_active = True
     utilisateur.save(update_fields=["is_active"])
+    _auditer("compte.reactivation", utilisateur)
     return utilisateur
 
 
@@ -157,20 +161,66 @@ def _compte_verrouille(utilisateur: Utilisateur) -> ErreurMetier:
     )
 
 
-def connecter(
-    identifiant: str,
-    mot_de_passe: str,
-    client: str,
-    *,
-    adresse_ip: str | None = None,
-    agent: str = "",
-    appareil: dict | None = None,
-) -> Connexion:
-    """Vérifie les identifiants et ouvre une session.
+def _auditer(action: str, objet, **details) -> None:
+    from apps.audit.services import enregistrer
 
-    Après 5 échecs consécutifs, le compte est verrouillé 15 minutes, même pour le
-    bon mot de passe, et l'utilisateur est prévenu par courriel (SEC-002).
+    pays = getattr(objet, "pays", None) or getattr(objet, "pays_principal", None)
+    enregistrer(action, objet=objet, pays=pays, details=details)
+
+
+def _auditer_connexion(action, utilisateur, resultat, **details):
+    from apps.audit.services import enregistrer
+
+    enregistrer(
+        action,
+        objet=utilisateur,
+        acteur=utilisateur,
+        pays=getattr(utilisateur, "pays_principal", None),
+        resultat=resultat,
+        details=details,
+    )
+
+
+def _compter_echec(utilisateur: Utilisateur, motif: str) -> ErreurMetier:
+    """Un échec (mot de passe ou code) compte pour le verrouillage (SEC-002) et s'audite.
+
+    À appeler dans une transaction qui sera validée : l'échec doit survivre à l'erreur.
     """
+    utilisateur.echecs_connexion += 1
+    champs = ["echecs_connexion"]
+    if utilisateur.echecs_connexion >= _reglage("ECHECS_AVANT_VERROUILLAGE"):
+        minutes = _reglage("DUREE_VERROUILLAGE_MINUTES")
+        utilisateur.verrouille_jusqua = timezone.now() + timedelta(minutes=minutes)
+        utilisateur.echecs_connexion = 0
+        champs.append("verrouille_jusqua")
+        utilisateur.save(update_fields=champs)
+        transaction.on_commit(lambda: courriels.courriel_verrouillage(utilisateur, minutes))
+        _auditer_connexion("connexion.verrouillage", utilisateur, "echec", motif=motif)
+    else:
+        utilisateur.save(update_fields=champs)
+    _auditer_connexion("connexion", utilisateur, "echec", motif=motif)
+    return _identifiants_invalides() if motif == "mot_de_passe" else _code_invalide()
+
+
+def _code_invalide() -> ErreurMetier:
+    return ErreurMetier(
+        "code_invalide", _("Code incorrect ou expiré."), status.HTTP_401_UNAUTHORIZED
+    )
+
+
+@dataclass
+class EtapeDoubleAuth:
+    """Mot de passe accepté ; le code à usage unique est encore attendu (SEC-003)."""
+
+    jeton_etape: str
+    expire_dans: int
+
+
+SEL_ETAPE = "innov.connexion.double-auth"
+DUREE_ETAPE = 300
+
+
+def _verifier_identifiants(identifiant: str, mot_de_passe: str) -> Utilisateur:
     with transaction.atomic():
         utilisateur = (
             Utilisateur.objects.select_for_update(of=("self",))
@@ -180,31 +230,53 @@ def connecter(
         )
         if utilisateur is None:
             check_password(mot_de_passe, _EMPREINTE_FACTICE)
-            raise _identifiants_invalides()
-        if utilisateur.est_verrouille:
-            raise _compte_verrouille(utilisateur)
-        if not utilisateur.check_password(mot_de_passe):
-            utilisateur.echecs_connexion += 1
-            champs = ["echecs_connexion"]
-            if utilisateur.echecs_connexion >= _reglage("ECHECS_AVANT_VERROUILLAGE"):
-                minutes = _reglage("DUREE_VERROUILLAGE_MINUTES")
-                utilisateur.verrouille_jusqua = timezone.now() + timedelta(minutes=minutes)
-                utilisateur.echecs_connexion = 0
-                champs.append("verrouille_jusqua")
-                utilisateur.save(update_fields=champs)
-                transaction.on_commit(lambda: courriels.courriel_verrouillage(utilisateur, minutes))
-            else:
-                utilisateur.save(update_fields=champs)
-            # Les échecs comptés doivent survivre à l'erreur renvoyée.
+            from apps.audit.services import enregistrer
+
+            enregistrer(
+                "connexion",
+                acteur=None,
+                pays=None,
+                resultat="echec",
+                details={"motif": "identifiant_inconnu", "identifiant": identifiant[:150]},
+            )
             erreur = _identifiants_invalides()
+        elif utilisateur.est_verrouille:
+            _auditer_connexion("connexion", utilisateur, "echec", motif="compte_verrouille")
+            erreur = _compte_verrouille(utilisateur)
+        elif not utilisateur.check_password(mot_de_passe):
+            # Les échecs comptés doivent survivre à l'erreur renvoyée.
+            erreur = _compter_echec(utilisateur, "mot_de_passe")
         else:
             erreur = None
     if erreur is not None:
         raise erreur
+    try:
+        verifier_acces_autorise(utilisateur)
+    except ErreurMetier as refus:
+        with transaction.atomic():
+            _auditer_connexion("connexion", utilisateur, "echec", motif=refus.code)
+        raise
+    return utilisateur
 
-    verifier_acces_autorise(utilisateur)
-    if client == Session.Client.MOBILE and not appareil:
-        raise ErreurMetier("appareil_requis", _("L'application doit décrire le téléphone."))
+
+def _ouvrir_session(
+    utilisateur, client, *, adresse_ip, agent, appareil, double_auth_validee
+) -> Connexion:
+    try:
+        return _creer_session(
+            utilisateur, client, adresse_ip=adresse_ip, agent=agent, appareil=appareil,
+            double_auth_validee=double_auth_validee,
+        )  # fmt: skip
+    except ErreurMetier as refus:
+        if refus.code == "appareil_revoque":
+            with transaction.atomic():
+                _auditer_connexion("connexion", utilisateur, "echec", motif=refus.code)
+        raise
+
+
+def _creer_session(
+    utilisateur, client, *, adresse_ip, agent, appareil, double_auth_validee
+) -> Connexion:
     with transaction.atomic():
         telephone = _enregistrer_appareil(utilisateur, appareil) if appareil else None
         utilisateur.echecs_connexion = 0
@@ -220,9 +292,88 @@ def connecter(
             adresse_ip=adresse_ip,
             agent=agent[:300],
             appareil=telephone,
+            double_auth_validee=double_auth_validee,
+        )
+        from apps.audit.services import definir_acteur
+
+        definir_acteur(
+            utilisateur, client=client, appareil=str(telephone.pk) if telephone else None
+        )
+        _auditer_connexion(
+            "connexion", utilisateur, "succes", client=client, double_auth=double_auth_validee
         )
     acces, duree = _jeton_acces(session)
     return Connexion(session, acces, rafraichissement, duree)
+
+
+def connecter(
+    identifiant: str,
+    mot_de_passe: str,
+    client: str,
+    *,
+    adresse_ip: str | None = None,
+    agent: str = "",
+    appareil: dict | None = None,
+) -> Connexion | EtapeDoubleAuth:
+    """Vérifie les identifiants ; ouvre une session, ou demande le code (SEC-003).
+
+    Après 5 échecs consécutifs, le compte est verrouillé 15 minutes, même pour le
+    bon mot de passe, et l'utilisateur est prévenu par courriel (SEC-002). Chaque
+    tentative, réussie ou non, est auditée (AUD-001).
+    """
+    from django.core import signing
+
+    from . import double_auth
+
+    utilisateur = _verifier_identifiants(identifiant, mot_de_passe)
+    if client == Session.Client.MOBILE and not appareil:
+        raise ErreurMetier("appareil_requis", _("L'application doit décrire le téléphone."))
+    if double_auth.est_active(utilisateur):
+        jeton = signing.dumps(
+            {"u": str(utilisateur.pk), "c": client, "a": appareil}, salt=SEL_ETAPE
+        )
+        return EtapeDoubleAuth(jeton, DUREE_ETAPE)
+    return _ouvrir_session(
+        utilisateur, client, adresse_ip=adresse_ip, agent=agent, appareil=appareil,
+        double_auth_validee=False,
+    )  # fmt: skip
+
+
+def connecter_avec_code(
+    jeton_etape: str, code: str, *, adresse_ip: str | None = None, agent: str = ""
+) -> Connexion:
+    """Deuxième étape : le code de l'application (ou un code de secours) ouvre la session."""
+    from django.core import signing
+
+    from . import double_auth
+
+    try:
+        etape = signing.loads(jeton_etape, salt=SEL_ETAPE, max_age=DUREE_ETAPE)
+    except signing.BadSignature as erreur:
+        raise ErreurMetier(
+            "etape_expiree",
+            _("Le délai est dépassé : reconnectez-vous."),
+            status.HTTP_401_UNAUTHORIZED,
+        ) from erreur
+    with transaction.atomic():
+        utilisateur = (
+            Utilisateur.objects.select_for_update(of=("self",))
+            .select_related("pays_principal")
+            .get(pk=etape["u"])
+        )
+        if utilisateur.est_verrouille:
+            erreur = _compte_verrouille(utilisateur)
+        elif not double_auth.verifier(utilisateur, code):
+            erreur = _compter_echec(utilisateur, "code")
+        else:
+            erreur = None
+    if erreur is not None:
+        raise erreur
+    verifier_acces_autorise(utilisateur)
+    return _ouvrir_session(
+        utilisateur, etape["c"], adresse_ip=adresse_ip, agent=agent, appareil=etape["a"],
+        double_auth_validee=True,
+    )  # fmt: skip
 
 
 def rafraichir(jeton: str) -> Connexion:
@@ -243,6 +394,9 @@ def rafraichir(jeton: str) -> Connexion:
             rejouee = Session.objects.filter(empreinte_precedente=trace, revoquee_le=None).first()
             if rejouee is not None:
                 _revoquer(rejouee, "jeton_rejoue")
+                _auditer_connexion(
+                    "session.jeton_rejoue", rejouee.utilisateur, "echec", session=str(rejouee.pk)
+                )
             erreur = ErreurMetier(
                 "session_invalide", _("Session invalide ou expirée."), status.HTTP_401_UNAUTHORIZED
             )
@@ -311,6 +465,10 @@ def revoquer_appareil(appareil: Appareil, *, par: Utilisateur | None) -> Apparei
     appareil.save(update_fields=["revoque_le", "revoque_par"])
     for session in appareil.sessions.filter(revoquee_le=None):
         _revoquer(session, "appareil_revoque")
+    _auditer(
+        "appareil.revocation", appareil.utilisateur,
+        appareil=str(appareil.pk), modele=appareil.modele, plateforme=appareil.plateforme,
+    )  # fmt: skip
     return appareil
 
 
@@ -327,9 +485,20 @@ def _revoquer(session: Session, motif: str) -> None:
     session.save(update_fields=["revoquee_le", "motif_revocation"])
 
 
+@transaction.atomic
 def deconnecter(session: Session) -> None:
     if session.revoquee_le is None:
         _revoquer(session, "deconnexion")
+        _auditer_connexion("deconnexion", session.utilisateur, "succes", session=str(session.pk))
+
+
+@transaction.atomic
+def revoquer_session(session: Session, *, motif: str) -> None:
+    """Révocation à distance d'une session (SEC-004) : elle échoue à l'appel suivant."""
+    _revoquer(session, motif)
+    _auditer_connexion(
+        "session.revocation", session.utilisateur, "succes", session=str(session.pk), motif=motif
+    )
 
 
 def revoquer_sessions(utilisateur: Utilisateur, motif: str) -> int:
@@ -359,6 +528,7 @@ def demander_reinitialisation(utilisateur: Utilisateur, *, par_administrateur=Fa
         demande_par_administrateur=par_administrateur,
     )
     transaction.on_commit(lambda: courriels.courriel_reinitialisation(utilisateur, jeton, minutes))
+    _auditer("mot_de_passe.lien_envoye", utilisateur, par_administrateur=par_administrateur)
     return jeton
 
 
@@ -390,13 +560,16 @@ def reinitialiser_mot_de_passe(jeton: str, nouveau: str) -> Utilisateur:
     _definir_mot_de_passe(utilisateur, nouveau)
     ligne.utilise_le = timezone.now()
     ligne.save(update_fields=["utilise_le"])
+    _auditer("mot_de_passe.reinitialisation", utilisateur)
     return utilisateur
 
 
+@transaction.atomic
 def changer_mot_de_passe(utilisateur: Utilisateur, actuel: str, nouveau: str) -> None:
     if not utilisateur.check_password(actuel):
         raise ErreurMetier("mot_de_passe_incorrect", _("Le mot de passe actuel est incorrect."))
     _definir_mot_de_passe(utilisateur, nouveau)
+    _auditer("mot_de_passe.changement", utilisateur)
 
 
 def _definir_mot_de_passe(utilisateur: Utilisateur, nouveau: str) -> None:
@@ -463,7 +636,7 @@ def attribuer_role(
         raise ErreurMetier("compte_desactive", _("Ce compte est désactivé."))
     if _role_deja_actif(utilisateur, role, pays):
         raise ErreurMetier("role_deja_attribue", _("Ce rôle est déjà attribué."))
-    return RoleUtilisateur.objects.create(
+    attribue = RoleUtilisateur.objects.create(
         utilisateur=utilisateur,
         role=role,
         pays=pays,
@@ -471,6 +644,14 @@ def attribuer_role(
         fin=fin,
         attribue_par=par,
     )
+    from apps.audit.services import enregistrer
+
+    enregistrer(
+        "role.attribution", objet=utilisateur, pays=pays,
+        details={"role": role, "debut": attribue.debut.isoformat(),
+                 "fin": attribue.fin.isoformat() if attribue.fin else None},
+    )  # fmt: skip
+    return attribue
 
 
 @transaction.atomic
@@ -484,6 +665,12 @@ def retirer_role(role: RoleUtilisateur, *, par: Utilisateur | None, fin=None) ->
     role.fin = fin
     role.retire_par = par
     role.save(update_fields=["fin", "retire_par"])
+    from apps.audit.services import enregistrer
+
+    enregistrer(
+        "role.retrait", objet=role.utilisateur, pays=role.pays,
+        details={"role": role.role, "fin": role.fin.isoformat()},
+    )  # fmt: skip
     return role
 
 
@@ -545,6 +732,13 @@ def accorder_affectation(
         utilisateur, role, pays, par=par,
         debut=_instant(pays, debut), fin=debut_du_jour(pays, fin) if fin else None,
     )  # fmt: skip
+    from apps.audit.services import enregistrer
+
+    enregistrer(
+        "affectation.octroi", objet=utilisateur, pays=pays,
+        details={"role": role, "motif": affectation.motif, "debut": str(debut),
+                 "fin": str(fin) if fin else None},
+    )  # fmt: skip
     return affectation
 
 
@@ -564,6 +758,11 @@ def terminer_affectation(
     affectation.retire_par = par
     affectation.save(update_fields=["fin", "retire_par"])
     _terminer_roles(affectation.utilisateur, pays, _instant(pays, fin), par)
+    from apps.audit.services import enregistrer
+
+    enregistrer(
+        "affectation.fin", objet=affectation.utilisateur, pays=pays, details={"fin": str(fin)}
+    )
     return affectation
 
 
@@ -621,4 +820,10 @@ def transferer(
     )  # fmt: skip
     if role and not _role_deja_actif(utilisateur, role, destination):
         attribuer_role(utilisateur, role, destination, par=par)
+    from apps.audit.services import enregistrer
+
+    enregistrer(
+        "transfert", objet=utilisateur, pays=destination,
+        details={"origine": origine.code, "destination": destination.code, "motif": motif.strip()},
+    )  # fmt: skip
     return transfert

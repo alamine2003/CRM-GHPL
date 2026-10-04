@@ -37,16 +37,25 @@ ROLES_RATTACHEMENT = {Role.SUPERVISEUR, Role.DM}
 ROLES_PERIMETRE_RESEAUX = {Role.DF, Role.DM}
 
 
+def _auditer(action: str, objet, **details) -> None:
+    from apps.audit.services import enregistrer
+
+    enregistrer(f"organisation.{action}", objet=objet, details=details)
+
+
 def _doublon(erreur: IntegrityError) -> ErreurMetier:
     return ErreurMetier("libelle_deja_utilise", _("Ce libellé ou ce code est déjà utilisé."))
 
 
 def _enregistrer(objet):
+    creation = objet._state.adding
     try:
         with transaction.atomic():
             objet.save()
     except IntegrityError as erreur:
         raise _doublon(erreur) from erreur
+    if creation:
+        _auditer(f"{type(objet).__name__.lower()}.creation", objet)
     return objet
 
 
@@ -97,12 +106,16 @@ def creer_secteur(pays: Pays, zone: Zone, libelle: str) -> Secteur:
 def renommer(objet, libelle: str):
     if objet.est_archive:
         raise ErreurMetier("archive", _("Un élément archivé ne se modifie plus."))
+    ancien = objet.libelle
     objet.libelle = _texte(libelle, "libelle")
     try:
         with transaction.atomic():
             objet.save(update_fields=["libelle"])
     except IntegrityError as erreur:
         raise _doublon(erreur) from erreur
+    _auditer(
+        f"{type(objet).__name__.lower()}.renommage", objet, ancien=ancien, nouveau=objet.libelle
+    )
     return objet
 
 
@@ -123,6 +136,7 @@ def archiver(objet):
             rattachement.fin = max(jour, rattachement.debut)
             rattachement.save(update_fields=["fin"])
     objet.archiver()
+    _auditer(f"{type(objet).__name__.lower()}.archivage", objet)
     return objet
 
 
@@ -170,6 +184,7 @@ def modifier_poste(poste: Poste, *, libelle=None, type_poste=None, reseaux=None,
         poste.reseaux.set(reseaux)
     if secteurs is not None:
         poste.secteurs.set(secteurs)
+    _auditer("poste.modification", poste)
     return poste
 
 
@@ -208,6 +223,7 @@ def terminer(lien, fin: date | None = None):
         raise ErreurMetier("fin_invalide", _("La fin ne peut pas précéder le début."))
     lien.fin = fin
     lien.save(update_fields=["fin"])
+    _auditer(f"{type(lien).__name__.lower()}.fin", lien, fin=str(fin))
     return lien
 
 
