@@ -35,6 +35,8 @@ class Action(StrEnum):
     PROSPECTS_CREER = "prospects.creer"
     PROSPECTS_GERER = "prospects.gerer"
     IMPORTS_GERER = "imports.gerer"
+    CIBLES_LIRE = "cibles.lire"
+    CIBLES_GERER = "cibles.gerer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -94,6 +96,13 @@ MATRICE: dict[Action, frozenset[str]] = {
     # Imports (ORG-014, PRP-013) : l'administrateur pays « importe l'organisation et le
     # référentiel » (prd.md §5).
     Action.IMPORTS_GERER: frozenset({Role.ADMIN_PAYS}),
+    # « Tenir une liste cible » (§6.3, RG-043) : administrateur pays, superviseur sur les postes
+    # qui lui sont rattachés. La consultation suit la visibilité des postes (architecture §11.2) ;
+    # le délégué lit la liste de son poste.
+    Action.CIBLES_LIRE: frozenset(
+        SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
+    ),
+    Action.CIBLES_GERER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
 }
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.

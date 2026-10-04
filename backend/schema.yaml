@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.1.5
+  version: 0.1.6
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -455,6 +455,196 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/ciblage/cibles/{id}/:
+    patch:
+      operationId: cible_frequence
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ciblage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFrequence'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFrequence'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFrequence'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cible'
+          description: ''
+  /api/v1/ciblage/cibles/{id}/retirer/:
+    post:
+      operationId: cible_retirer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ciblage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetraitCible'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RetraitCible'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RetraitCible'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cible'
+          description: ''
+  /api/v1/ciblage/moi/:
+    get:
+      operationId: ciblage_moi
+      description: |-
+        Listes des postes que l'utilisateur occupe : celle du délégué, à emporter sur le
+        téléphone (CA2).
+      tags:
+      - ciblage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListeCible'
+          description: ''
+  /api/v1/ciblage/postes/:
+    get:
+      operationId: ciblage_postes
+      tags:
+      - ciblage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PosteCible'
+          description: ''
+  /api/v1/ciblage/postes/{id}/:
+    get:
+      operationId: ciblage_liste
+      parameters:
+      - in: query
+        name: historique
+        schema:
+          type: string
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ciblage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListeCible'
+          description: ''
+    post:
+      operationId: ciblage_ajouter
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ciblage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AjoutCibles'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AjoutCibles'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AjoutCibles'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultatAjout'
+          description: ''
+  /api/v1/ciblage/postes/{id}/candidats/:
+    get:
+      operationId: ciblage_candidats
+      description: |-
+        Prospects actifs des secteurs du poste, pas encore ciblés (affectation
+        territoriale) ; potentiel A d'abord.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: potentiel
+        schema:
+          type: string
+      - in: query
+        name: q
+        schema:
+          type: string
+      tags:
+      - ciblage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProspectCible'
+          description: ''
   /api/v1/erreurs-clients/:
     post:
       operationId: erreur_client
@@ -2885,6 +3075,23 @@ components:
       - motif
       - pays
       - role
+    AjoutCibles:
+      type: object
+      properties:
+        prospects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 500
+          minItems: 1
+        frequence:
+          type: integer
+          maximum: 20
+          minimum: 1
+          nullable: true
+      required:
+      - prospects
     Anomalie:
       type: object
       properties:
@@ -2981,6 +3188,43 @@ components:
       required:
       - actuel
       - nouveau
+    Cible:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        poste:
+          type: string
+          format: uuid
+        prospect:
+          $ref: '#/components/schemas/ProspectCible'
+        frequence:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+          nullable: true
+        en_cours:
+          type: boolean
+          readOnly: true
+        hors_secteur:
+          type: boolean
+          readOnly: true
+      required:
+      - debut
+      - en_cours
+      - frequence
+      - hors_secteur
+      - id
+      - poste
+      - prospect
     CiviliteEnum:
       enum:
       - dr
@@ -3699,6 +3943,18 @@ components:
       required:
       - id
       - libelle
+    ListeCible:
+      type: object
+      properties:
+        poste:
+          $ref: '#/components/schemas/PosteCible'
+        cibles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cible'
+      required:
+      - cibles
+      - poste
     ListeEnum:
       enum:
       - type_prospect
@@ -3992,6 +4248,13 @@ components:
       properties:
         langue:
           $ref: '#/components/schemas/LangueEnum'
+    PatchedFrequence:
+      type: object
+      properties:
+        frequence:
+          type: integer
+          maximum: 20
+          minimum: 1
     PatchedLibelle:
       type: object
       properties:
@@ -4377,6 +4640,36 @@ components:
       - type_libelle
       - type_poste
       - vacant
+    PosteCible:
+      type: object
+      description: Poste et l'état de sa liste cible, pour le choix du poste.
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+        type_poste:
+          type: string
+        occupant:
+          type: string
+          nullable: true
+        secteurs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lieu'
+        gerable:
+          type: boolean
+        synthese:
+          $ref: '#/components/schemas/SyntheseCible'
+      required:
+      - gerable
+      - id
+      - libelle
+      - occupant
+      - secteurs
+      - synthese
+      - type_poste
     PotentielEnum:
       enum:
       - A
@@ -4550,6 +4843,46 @@ components:
       - specialite
       - type
       - type_libelle
+    ProspectCible:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        civilite:
+          oneOf:
+          - $ref: '#/components/schemas/CiviliteEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        prenom:
+          type: string
+          maxLength: 80
+        nom:
+          type: string
+          maxLength: 80
+        type_libelle:
+          type: string
+        specialite_libelle:
+          type: string
+          nullable: true
+        potentiel:
+          $ref: '#/components/schemas/PotentielEnum'
+        statut:
+          $ref: '#/components/schemas/StatutFicheEnum'
+        lieu_principal:
+          allOf:
+          - $ref: '#/components/schemas/Lieu'
+          nullable: true
+          readOnly: true
+        secteur:
+          type: string
+          nullable: true
+      required:
+      - id
+      - lieu_principal
+      - nom
+      - potentiel
+      - type_libelle
     ProspectResume:
       type: object
       properties:
@@ -4677,6 +5010,16 @@ components:
       - code
       - id
       - libelle
+    ResultatAjout:
+      type: object
+      properties:
+        ajoutes:
+          type: integer
+        deja_presents:
+          type: integer
+      required:
+      - ajoutes
+      - deja_presents
     Resume:
       type: object
       properties:
@@ -4688,6 +5031,12 @@ components:
       required:
       - id
       - libelle
+    RetraitCible:
+      type: object
+      properties:
+        motif:
+          type: string
+          maxLength: 200
     Role:
       type: object
       properties:
@@ -5021,6 +5370,34 @@ components:
       - reseaux
       - secteurs
       - zones
+    SyntheseCible:
+      type: object
+      properties:
+        total:
+          type: integer
+        potentiels:
+          type: object
+          additionalProperties:
+            type: integer
+        visites_par_cycle:
+          type: integer
+        visites_par_jour:
+          type: number
+          format: double
+        cycle_semaines:
+          type: integer
+        seuil_min:
+          type: integer
+          nullable: true
+        seuil_max:
+          type: integer
+          nullable: true
+      required:
+      - cycle_semaines
+      - potentiels
+      - total
+      - visites_par_cycle
+      - visites_par_jour
     SyntheseEtablissements:
       type: object
       properties:

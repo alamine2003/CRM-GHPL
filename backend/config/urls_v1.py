@@ -9,6 +9,7 @@ from apps.identite import vues_comptes as comptes
 from apps.imports import vues as imp
 from apps.organisation import vues as org
 from apps.prospects import vues as prs
+from apps.prospects import vues_ciblage as cib
 from apps.referentiel import vues as ref
 from apps.socle import vues_exploitation as exploitation
 from apps.socle import vues_pays as pays
@@ -184,6 +185,16 @@ urlpatterns = [
         prs.ExercicesEtablissementVue.as_view(),
         name="etablissement-exercices",
     ),
+    path("ciblage/postes/", cib.PostesCiblageVue.as_view(), name="ciblage-postes"),
+    path("ciblage/postes/<uuid:id>/", cib.ListeCibleVue.as_view(), name="ciblage-liste"),
+    path(
+        "ciblage/postes/<uuid:id>/candidats/",
+        cib.CandidatsCiblageVue.as_view(),
+        name="ciblage-candidats",
+    ),
+    path("ciblage/cibles/<uuid:id>/", cib.CibleVue.as_view(), name="cible"),
+    path("ciblage/cibles/<uuid:id>/retirer/", cib.CibleRetraitVue.as_view(), name="cible-retirer"),
+    path("ciblage/moi/", cib.MaListeCibleVue.as_view(), name="ciblage-moi"),
     path("etablissements/", prs.EtablissementsVue.as_view(), name="etablissements"),
     path(
         "etablissements/synthese/",

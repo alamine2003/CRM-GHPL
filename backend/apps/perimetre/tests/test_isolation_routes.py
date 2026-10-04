@@ -77,7 +77,12 @@ def senegal(monde):
     from apps.prospects.services import creer_exercice
 
     exercice = creer_exercice(prospect, etab, monde["admin.sn"])
+    from apps.prospects.ciblage import ajouter
+
+    cible = ajouter(poste, [prospect], monde["admin.sn"])["creees"][0]
     return {
+        "ciblage-liste": poste.pk, "ciblage-candidats": poste.pk,
+        "cible": cible.pk, "cible-retirer": cible.pk,
         "prospect-exercices": prospect.pk, "etablissement-exercices": etab.pk,
         "exercice": exercice.pk, "exercice-terminer": exercice.pk,
         "localite": localite.pk, "localite-archiver": localite.pk,
@@ -152,7 +157,8 @@ LISTES = ["/api/v1/utilisateurs/", "/api/v1/appareils/", "/api/v1/pays/",
           "/api/v1/organisation/divisions/", "/api/v1/organisation/reseaux/",
           "/api/v1/organisation/zones/", "/api/v1/organisation/secteurs/",
           "/api/v1/organisation/postes/", "/api/v1/organisation/localites/",
-          "/api/v1/imports/", "/api/v1/referentiel/produits/",
+          "/api/v1/imports/", "/api/v1/ciblage/postes/", "/api/v1/ciblage/moi/",
+          "/api/v1/referentiel/produits/",
           "/api/v1/referentiel/portefeuilles/"]  # fmt: skip
 PAGINEES = ["/api/v1/prospects/", "/api/v1/etablissements/"]
 

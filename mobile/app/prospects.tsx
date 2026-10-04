@@ -12,6 +12,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { FormulaireEtablissement, LigneEtablissement, Pilule } from '../src/Etablissements';
+import { MaListeCible } from '../src/MaListe';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 
@@ -166,14 +167,14 @@ function Formulaire({ surTermine }: { surTermine: (p: Prospect) => void }) {
   );
 }
 
-type Segment = 'prospects' | 'etablissements';
+type Segment = 'cible' | 'prospects' | 'etablissements';
 
 /** Prospects et établissements du délégué : recherche dans les fiches communes et création
  * (PRP-002, PRP-003, PRP-006). */
 export default function EcranProspects() {
   const { t } = useTranslation();
   const { client, etat } = useSession();
-  const [segment, setSegment] = useState<Segment>('prospects');
+  const [segment, setSegment] = useState<Segment>('cible');
   const [saisie, setSaisie] = useState('');
   const [fiches, setFiches] = useState<Prospect[] | null>(null);
   const [lieux, setLieux] = useState<Etablissement[] | null>(null);
@@ -186,6 +187,7 @@ export default function EcranProspects() {
 
   useEffect(() => {
     let actif = true;
+    if (segment === 'cible') return;
     const minuteur = setTimeout(() => {
       const requete =
         segment === 'prospects'
@@ -218,7 +220,7 @@ export default function EcranProspects() {
     <Ecran
       titre={t('prospect.mobile.titre')}
       surTitre={
-        liste
+        liste && segment !== 'cible'
           ? segment === 'prospects'
             ? t('prospect.nombre', { count: total })
             : t('etablissement.nombre', { count: total })
@@ -226,6 +228,11 @@ export default function EcranProspects() {
       }
     >
       <View style={styles.segments}>
+        <Pilule
+          libelle={t('ciblage.mobile.segment')}
+          actif={segment === 'cible'}
+          onPress={() => changerSegment('cible')}
+        />
         <Pilule
           libelle={t('etablissement.mobile.segmentProspects')}
           actif={segment === 'prospects'}
@@ -238,7 +245,9 @@ export default function EcranProspects() {
         />
       </View>
       {message && <Alerte type="succes">{message}</Alerte>}
-      {creation ? (
+      {segment === 'cible' ? (
+        <MaListeCible />
+      ) : creation ? (
         <>
           {segment === 'prospects' ? (
             <Formulaire

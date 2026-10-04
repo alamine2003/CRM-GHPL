@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 17:04+0000\n"
+"POT-Creation-Date: 2026-10-04 17:28+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -422,6 +422,21 @@ msgstr "Action not allowed."
 msgid "Vous n'avez pas accès à ce pays."
 msgstr "You do not have access to this country."
 
+msgid "La fréquence cible va de 1 à 20 visites par cycle."
+msgstr "The target frequency ranges from 1 to 20 visits per cycle."
+
+msgid ""
+"Seuls le superviseur du poste et l'administrateur pays tiennent cette liste."
+msgstr ""
+"Only the position's supervisor and the country administrator maintain this "
+"list."
+
+msgid "Seule une fiche active du pays entre dans une liste cible."
+msgstr "Only an active record of the country can enter a target list."
+
+msgid "Ce prospect n'est plus dans la liste cible."
+msgstr "This prospect is no longer in the target list."
+
 msgid "Ce numéro de téléphone n'est pas valide."
 msgstr "This phone number is not valid."
 
@@ -470,6 +485,9 @@ msgstr "An archived record can no longer be edited."
 
 msgid "Cette fiche n'est pas à valider."
 msgstr "This record is not awaiting validation."
+
+msgid "Fiche archivée"
+msgstr "Record archived"
 
 msgid "Coordonnées GPS invalides."
 msgstr "Invalid GPS coordinates."

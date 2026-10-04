@@ -28,6 +28,8 @@ const config: ExpoConfig = {
     'expo-router',
     'expo-localization',
     'expo-secure-store',
+    // Base locale chiffrée (architecture-essentials §5) : SQLCipher, clé dans le Keychain.
+    ['expo-sqlite', { useSQLCipher: true }],
     [
       'expo-location',
       {

@@ -1,7 +1,7 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from .models import Activite, Civilite, Etablissement, Exercice, Potentiel, Prospect
+from .models import Activite, Cible, Civilite, Etablissement, Exercice, Potentiel, Prospect
 
 
 class PersonneResumeSerializer(serializers.Serializer):
@@ -218,3 +218,86 @@ class ModificationExerciceSerializer(serializers.Serializer):
 
 class FinExerciceSerializer(serializers.Serializer):
     fin = serializers.DateField(required=False)
+
+
+# --- Listes cibles (PRP-011) -----------------------------------------------------------------
+
+
+class ProspectCibleSerializer(ProspectResumeSerializer):
+    lieu_principal = serializers.SerializerMethodField()
+    secteur = serializers.CharField(source="secteur.libelle", allow_null=True, default=None)
+
+    class Meta(ProspectResumeSerializer.Meta):
+        fields = [*ProspectResumeSerializer.Meta.fields, "lieu_principal", "secteur"]
+
+    @extend_schema_field(LieuSerializer(allow_null=True))
+    def get_lieu_principal(self, prospect):
+        return ProspectSerializer.get_lieu_principal(self, prospect)
+
+
+class CibleSerializer(serializers.ModelSerializer):
+    poste = serializers.UUIDField(source="poste_id")
+    prospect = ProspectCibleSerializer()
+    hors_secteur = serializers.SerializerMethodField()
+    en_cours = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cible
+        fields = ["id", "poste", "prospect", "frequence", "debut", "fin", "en_cours",
+                  "hors_secteur"]  # fmt: skip
+
+    def get_hors_secteur(self, cible) -> bool:
+        from .ciblage import hors_secteur
+
+        secteurs = self.context.get("secteurs_poste")
+        if secteurs is None:
+            secteurs = set(cible.poste.secteurs.values_list("pk", flat=True))
+        return hors_secteur(cible.prospect, secteurs)
+
+    def get_en_cours(self, cible) -> bool:
+        return cible.fin is None
+
+
+class SyntheseCibleSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    potentiels = serializers.DictField(child=serializers.IntegerField())
+    visites_par_cycle = serializers.IntegerField()
+    visites_par_jour = serializers.FloatField()
+    cycle_semaines = serializers.IntegerField()
+    seuil_min = serializers.IntegerField(allow_null=True, required=False)
+    seuil_max = serializers.IntegerField(allow_null=True, required=False)
+
+
+class PosteCibleSerializer(serializers.Serializer):
+    """Poste et l'état de sa liste cible, pour le choix du poste."""
+
+    id = serializers.UUIDField()
+    libelle = serializers.CharField()
+    type_poste = serializers.CharField()
+    occupant = serializers.CharField(allow_null=True)
+    secteurs = LieuSerializer(many=True)
+    gerable = serializers.BooleanField()
+    synthese = SyntheseCibleSerializer()
+
+
+class ListeCibleSerializer(serializers.Serializer):
+    poste = PosteCibleSerializer()
+    cibles = CibleSerializer(many=True)
+
+
+class AjoutCiblesSerializer(serializers.Serializer):
+    prospects = serializers.ListField(child=serializers.UUIDField(), min_length=1, max_length=500)
+    frequence = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=20)
+
+
+class ResultatAjoutSerializer(serializers.Serializer):
+    ajoutes = serializers.IntegerField()
+    deja_presents = serializers.IntegerField()
+
+
+class FrequenceSerializer(serializers.Serializer):
+    frequence = serializers.IntegerField(min_value=1, max_value=20)
+
+
+class RetraitCibleSerializer(serializers.Serializer):
+    motif = serializers.CharField(max_length=200, required=False, allow_blank=True)

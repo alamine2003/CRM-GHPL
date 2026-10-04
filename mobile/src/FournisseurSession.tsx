@@ -1,5 +1,6 @@
 import type { ClientApi, Jetons } from '@innov/api-client';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { effacer } from './baseLocale';
 import { creerClientMobile } from './client';
 import i18n from './i18n';
 import { ContexteSession, type Etat, type Session } from './session';
@@ -70,6 +71,8 @@ export function FournisseurSession({
       },
       async deconnexion() {
         await client.deconnexion().catch(() => undefined);
+        // Rien ne reste sur le téléphone après la déconnexion.
+        await effacer().catch(() => undefined);
         setEtat({ statut: 'anonyme' });
       },
     }),

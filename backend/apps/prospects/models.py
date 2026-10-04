@@ -225,3 +225,42 @@ class Exercice(ModeleDePays):
 
     def actif_le(self, jour) -> bool:
         return self.debut <= jour and (self.fin is None or jour < self.fin)
+
+
+class Cible(ModeleDePays):
+    """Prospect de la liste cible d'un poste, avec sa fréquence cible (§14.5, PRP-011).
+
+    La liste est tenue par le superviseur du poste ou l'administrateur pays (RG-043). La
+    fréquence se compte en visites par cycle (paramètre `cycle_visite_semaines`, 4 semaines
+    au Sénégal). Une cible est en cours le jour `j` si `debut <= j < fin`.
+    """
+
+    poste = models.ForeignKey("organisation.Poste", on_delete=models.PROTECT, related_name="cibles")
+    prospect = models.ForeignKey(Prospect, on_delete=models.PROTECT, related_name="cibles")
+    frequence = models.PositiveSmallIntegerField()
+    debut = models.DateField()
+    fin = models.DateField(null=True, blank=True)
+    ajoute_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="cibles_ajoutees"
+    )
+
+    class Meta:
+        ordering = ["prospect__nom", "prospect__prenom"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(frequence__gte=1) & Q(frequence__lte=20), name="cible_frequence_bornee"
+            ),
+            models.CheckConstraint(
+                condition=Q(fin__isnull=True) | Q(fin__gte=models.F("debut")),
+                name="cible_fin_apres_debut",
+            ),
+            models.UniqueConstraint(
+                fields=["poste", "prospect"],
+                condition=Q(fin__isnull=True),
+                name="cible_en_cours_unique",
+            ),
+        ]
+        indexes = [models.Index(fields=["poste", "fin"])]
+
+    def __str__(self):
+        return f"{self.poste} → {self.prospect}"

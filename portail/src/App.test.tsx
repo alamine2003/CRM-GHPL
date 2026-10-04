@@ -1479,3 +1479,124 @@ describe('portail — imports (PRP-013)', () => {
     expect(await violationsAccessibilite(container)).toEqual([]);
   });
 });
+
+describe('portail — listes cibles (PRP-011)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  const SYNTHESE = {
+    total: 2,
+    potentiels: { A: 1, B: 1, C: 0 },
+    visites_par_cycle: 3,
+    visites_par_jour: 0.2,
+    cycle_semaines: 4,
+    seuil_min: 6,
+    seuil_max: 10,
+  };
+  const POSTE = {
+    id: 'po1',
+    libelle: 'VM Plateau',
+    type_poste: 'vm',
+    occupant: 'Awa Diop',
+    secteurs: [{ id: 's1', libelle: 'Plateau' }],
+    gerable: true,
+    synthese: SYNTHESE,
+  };
+  const prospect = (id: string, nom: string, potentiel: 'A' | 'B' | 'C') => ({
+    id,
+    civilite: 'dr',
+    prenom: 'Awa',
+    nom,
+    type_libelle: 'Médecin',
+    specialite_libelle: 'Cardiologie',
+    potentiel,
+    statut: 'actif',
+    lieu_principal: { id: 'e1', libelle: 'Clinique du Cap' },
+    secteur: 'Plateau',
+  });
+  const CIBLES = [
+    {
+      id: 'c1',
+      poste: 'po1',
+      prospect: prospect('p1', 'NDIAYE', 'A'),
+      frequence: 2,
+      debut: '2026-10-01',
+      fin: null,
+      en_cours: true,
+      hors_secteur: false,
+    },
+    {
+      id: 'c2',
+      poste: 'po1',
+      prospect: prospect('p2', 'FALL', 'B'),
+      frequence: 1,
+      debut: '2026-10-01',
+      fin: null,
+      en_cours: true,
+      hors_secteur: true,
+    },
+  ];
+
+  function clientCiblage() {
+    const ciblage = {
+      postes: vi.fn(async () => [
+        POSTE,
+        {
+          ...POSTE,
+          id: 'po2',
+          libelle: 'VM Fann',
+          occupant: null,
+          gerable: false,
+          synthese: { ...SYNTHESE, total: 0, potentiels: { A: 0, B: 0, C: 0 } },
+        },
+      ]),
+      liste: vi.fn(async () => ({ poste: POSTE, cibles: CIBLES })),
+      candidats: vi.fn(async () => [prospect('p3', 'SARR', 'A')]),
+      ajouter: vi.fn(async () => ({ ajoutes: 1, deja_presents: 0 })),
+      frequence: vi.fn(async () => CIBLES[0]),
+      retirer: vi.fn(async () => CIBLES[0]),
+    };
+    const client = fauxClient({
+      reprendre: vi.fn(async () => JETONS),
+      perimetre: vi.fn(async () => ({
+        ...PERIMETRE_DELEGUE,
+        roles: ['superviseur'],
+        actions: ['cibles.lire', 'cibles.gerer', 'pays.lire'],
+      })),
+      ciblage: ciblage as unknown as ClientApi['ciblage'],
+    } as Partial<ClientApi>);
+    return { client, ciblage };
+  }
+
+  it('montre la liste d’un poste, sa charge et les prospects hors secteur', async () => {
+    const { client, ciblage } = clientCiblage();
+    rendre(client, '/ciblage');
+    expect(await screen.findByRole('heading', { name: 'VM Plateau' })).toBeInTheDocument();
+    expect(screen.getByText('Poste vacant')).toBeInTheDocument();
+    expect(screen.getByText('Dr Awa NDIAYE')).toBeInTheDocument();
+    expect(screen.getByText('Hors secteur', { selector: '.MuiChip-label' })).toBeInTheDocument();
+    expect(screen.getByText('Repère du poste : 6 à 10 par jour')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Une visite de plus par cycle · Dr Awa NDIAYE' }),
+    );
+    await vi.waitFor(() => expect(ciblage.frequence).toHaveBeenCalledWith('c1', 3));
+  });
+
+  it('ajoute des prospects du secteur à la liste (PRP-011 CA1)', async () => {
+    const { client, ciblage } = clientCiblage();
+    rendre(client, '/ciblage');
+    fireEvent.click(await screen.findByRole('button', { name: 'Ajouter des prospects' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.click(await within(dialogue).findByRole('checkbox', { name: 'Dr Awa SARR' }));
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Ajouter 1 prospect' }));
+    await vi.waitFor(() => expect(ciblage.ajouter).toHaveBeenCalledWith('po1', ['p3']));
+  });
+
+  it('la page Listes cibles ne présente aucune violation d’accessibilité détectable', async () => {
+    const { client } = clientCiblage();
+    const { container } = rendre(client, '/ciblage');
+    await screen.findByText('Dr Awa NDIAYE');
+    expect(await violationsAccessibilite(container)).toEqual([]);
+  });
+});

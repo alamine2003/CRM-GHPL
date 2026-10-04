@@ -262,6 +262,10 @@ def archiver(fiche, motif: str = ""):
     # Une fiche archivée n'exerce plus : ses exercices en cours prennent fin ce jour.
     for exercice in fiche.exercices.filter(fin__isnull=True):
         terminer_exercice(exercice, aujourdhui(fiche.pays))
+    if isinstance(fiche, Prospect):
+        from .ciblage import retirer_partout
+
+        retirer_partout(fiche, _("Fiche archivée"))
     _auditer("archivage", fiche, ancien=ancien, motif=motif.strip())
     return fiche
 

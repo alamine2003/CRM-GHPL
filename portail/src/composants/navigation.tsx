@@ -12,6 +12,7 @@ import MonitorHeartRounded from '@mui/icons-material/MonitorHeartRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import PublicRounded from '@mui/icons-material/PublicRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
+import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded';
 import type { ReactNode } from 'react';
 
 export type Section = 'activite' | 'administration';
@@ -49,6 +50,13 @@ export const ENTREES: Entree[] = [
     section: 'activite',
     chemin: '/etablissements',
     visible: peut('prospects.lire'),
+  },
+  {
+    cle: 'ciblage',
+    icone: <TrackChangesRounded />,
+    section: 'activite',
+    chemin: '/ciblage',
+    visible: peut('cibles.lire'),
   },
   { cle: 'pilotage', icone: <BarChartRounded />, section: 'activite', version: '0.7.1' },
   {

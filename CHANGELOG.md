@@ -2,6 +2,50 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.1.6] — Listes cibles et fréquences ; design enrichi
+
+Sixième jalon du cycle 0.1 « Référentiel ».
+
+### Ajouté — listes cibles par poste (PRP-011, RG-043, RG-024)
+
+- **Cible** : prospect de la liste d'un poste, avec sa **fréquence cible** en visites par cycle. Le cycle dure 4 semaines au Sénégal (paramètre `cycle_visite_semaines`). La cible est datée (début, fin exclue) ; un retrait la garde dans l'historique du poste.
+- **Fréquence par défaut selon le potentiel** : nouveaux paramètres pays `frequence_cible_a`, `frequence_cible_b` et `frequence_cible_c`, valant 2, 1 et 1 [H]. L'export BirdNotes ne donne pas de fréquences : ses « poids » de potentiel (10, 8, 6) n'en sont pas.
+- **Qui tient la liste** (RG-043, nouveaux droits `cibles.lire` et `cibles.gerer`) :
+  - l'administrateur pays, pour tous les postes du pays ;
+  - le superviseur, pour les postes qui lui sont rattachés ;
+  - la lecture suit la visibilité des postes : DF et DM pour leurs réseaux, le délégué pour son poste.
+- **CA1** : chaque ajout, retrait (avec motif) et changement de fréquence est audité.
+- **Affectation territoriale** : le CRM propose les prospects actifs des secteurs du poste, repérés par leur fiche ou par un lieu d'exercice en cours, potentiel A d'abord. Une recherche dans tout le pays reste possible ; un prospect hors secteur est alors ciblable mais signalé (RG-024).
+- **Charge du poste** : taille de la liste, répartition A/B/C, visites attendues par cycle et par jour ouvré, comparées aux seuils de visites par jour du type de poste (RG-016).
+- Un prospect archivé sort de toutes les listes.
+- La table est protégée par la sécurité au niveau des lignes ; les routes sont couvertes par la matrice et les tests d'isolation.
+- API : `ciblage/postes/`, `ciblage/postes/<id>/` (liste, ajout), `…/candidats/`, `ciblage/cibles/<id>/` (fréquence), `…/retirer/`, `ciblage/moi/`.
+
+### Ajouté — liste cible hors connexion (PRP-011 CA2)
+
+- **Base locale chiffrée du téléphone** (architecture-essentials §5) : SQLite chiffrée par SQLCipher (`expo-sqlite`). La clé de 256 bits est tirée au hasard et gardée dans le Keychain ou le Keystore.
+- La liste cible du délégué y est enregistrée à chaque consultation. Sans réseau, il retrouve la dernière liste enregistrée, avec sa date.
+- La base est vidée à la déconnexion.
+- La synchronisation complète (OFF-001, 0.8) reprendra cette base.
+
+### Portail et mobile
+
+- **Page Listes cibles** (menu Activité) :
+  - postes à gauche, avec occupant (ou « poste vacant »), nombre de prospects et barre de répartition A/B/C ;
+  - poste choisi à droite, avec ses secteurs et quatre tuiles : prospects ciblés, visites par cycle, visites par jour ouvré face aux seuils du poste, prospects hors secteur ;
+  - liste colorée par potentiel ; fréquence réglable par « − » et « + » ; retrait avec motif ; filtre A/B/C ;
+  - ajout en lot : candidats du secteur, recherche, filtre de potentiel, « tout sélectionner » ;
+  - alerte quand la liste demande plus de visites par jour que le maximum du type de poste.
+- **Mobile** : l'onglet Prospects s'ouvre sur « Ma liste » (prospects, fréquences, lieu principal, recherche locale), disponible hors connexion.
+
+### Démonstration
+
+- Chaque poste occupé a une liste cible : jusqu'à 60 prospects de ses secteurs, potentiel A d'abord, avec quelques fréquences relevées. Les postes vacants restent sans liste.
+
+### Reste à faire
+
+- Reprendre les listes cibles de BirdNotes (onglet « Affectation prospects », 11 349 lignes délégué ↔ prospect). Il faut d'abord relier chaque délégué BirdNotes à un poste, ce que permettra l'import du fichier d'organisation (ORG-014, 0.1.8).
+
 ## [0.1.5] — Lieux d'exercice des prospects ; design enrichi
 
 Cinquième jalon du cycle 0.1 « Référentiel ».

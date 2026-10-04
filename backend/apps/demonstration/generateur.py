@@ -18,7 +18,8 @@ from django.db import connection, transaction
 from apps.identite.models import Role, Utilisateur
 from apps.identite.services import attribuer_role, creer_utilisateur
 from apps.organisation import services as org
-from apps.organisation.models import TypePoste
+from apps.organisation.models import Poste, TypePoste
+from apps.prospects import ciblage
 from apps.prospects.models import Etablissement, Prospect
 from apps.prospects.services import creer_etablissement, creer_exercice, creer_prospect
 from apps.referentiel import services as ref
@@ -301,6 +302,7 @@ class Generateur:
             "prospects": self.prospects(pays, volumes.prospects, localites, delegues[0]),
         }
         self.bilan.pays[code]["exercices"] = self.exercices(pays)
+        self.bilan.pays[code]["cibles"] = self.cibles(pays)
 
     def exercices(self, pays) -> int:
         """Lieux d'exercice fictifs (PRP-004) : chaque prospect exerce dans un établissement de
@@ -332,6 +334,22 @@ class Generateur:
                     prospect.cree_par,
                     debut=jour - timedelta(days=a.randrange(30, 900)),
                 )
+                nombre += 1
+        return nombre
+
+    def cibles(self, pays) -> int:
+        """Listes cibles fictives (PRP-011) : chaque poste occupé cible les prospects de ses
+        secteurs, potentiel A d'abord, jusqu'à 60 ; fréquences par défaut selon le potentiel,
+        quelques-unes relevées. Les postes vacants restent sans liste."""
+        a = self.alea
+        admin = Utilisateur.objects.filter(roles__role=Role.ADMIN_PAYS, roles__pays=pays).first()
+        nombre = 0
+        occupes = Poste.objects.filter(pays=pays, occupations__isnull=False).distinct()
+        for poste in occupes.order_by("libelle"):
+            prospects = list(ciblage.candidats(poste).order_by("potentiel", "nom")[:60])
+            for cible in ciblage.ajouter(poste, prospects, admin)["creees"]:
+                if cible.prospect.potentiel == "A" and a.random() < 0.3:
+                    ciblage.modifier_frequence(cible, cible.frequence + 1)
                 nombre += 1
         return nombre
 

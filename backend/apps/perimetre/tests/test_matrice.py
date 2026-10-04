@@ -46,6 +46,17 @@ ATTENDU = {
     Action.PROSPECTS_CREER: {"admin_pays", "delegue"},
     Action.PROSPECTS_GERER: {"admin_pays"},
     Action.IMPORTS_GERER: {"admin_pays"},
+    Action.CIBLES_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+        "delegue",
+    },  # fmt: skip
+    Action.CIBLES_GERER: {"admin_pays", "superviseur"},
     Action.REFERENTIELS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -135,10 +146,30 @@ REQUETES = {
         "post", lambda m: f"/api/v1/prospects/{_prospect_a_valider(m).pk}/valider/", {}, 200,
     ),
     Action.IMPORTS_GERER: ("get", "/api/v1/imports/", None, 200),
+    Action.CIBLES_LIRE: ("get", "/api/v1/ciblage/postes/", None, 200),
+    # Sur un poste rattaché au superviseur (le périmètre fin est vérifié dans test_ciblage).
+    Action.CIBLES_GERER: (
+        "get", lambda m: f"/api/v1/ciblage/postes/{_poste_rattache(m).pk}/candidats/", None, 200,
+    ),
     Action.APPAREILS_REVOQUER: (
         "post", lambda m: f"/api/v1/appareils/{_telephone(m).pk}/revoquer/", {}, 200,
     ),
 }  # fmt: skip
+
+
+def _poste_rattache(monde):
+    """Poste rattaché au superviseur du Sénégal : le superviseur et l'administrateur pays le
+    gèrent."""
+    from apps.organisation import services as org
+    from apps.organisation.models import Poste
+
+    poste = Poste.objects.filter(libelle="VM Matrice").first()
+    if poste is None:
+        sn = monde["sn"]
+        secteur = org.creer_secteur(sn, org.creer_zone(sn, "Zone matrice"), "Secteur matrice")
+        poste = org.creer_poste(sn, "vm", "VM Matrice", [], [secteur])
+        org.rattacher(poste, monde["sup.sn"])
+    return poste
 
 
 def _telephone(monde):

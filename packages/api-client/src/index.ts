@@ -8,6 +8,11 @@
  * - Une réponse 401 déclenche un seul rafraîchissement puis un nouvel essai.
  */
 import type {
+  Cible,
+  ListeCible,
+  PosteCible,
+  ProspectCible,
+  ResultatAjoutCibles,
   ActiviteExercice,
   Exercice,
   DetailLot,
@@ -59,6 +64,11 @@ import type {
 } from '@innov/api-types';
 
 export type {
+  Cible,
+  ListeCible,
+  PosteCible,
+  ProspectCible,
+  ResultatAjoutCibles,
   ActiviteExercice,
   Exercice,
   AnomalieImport,
@@ -544,6 +554,36 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: fin ? { fin } : {},
         }),
+    },
+    /** Listes cibles par poste et fréquences cibles (PRP-011). */
+    ciblage: {
+      postes: () => requete<PosteCible[]>('/api/v1/ciblage/postes/'),
+      liste: (poste: string, historique = false) =>
+        requete<ListeCible>(`/api/v1/ciblage/postes/${poste}/${historique ? '?historique=1' : ''}`),
+      candidats: (poste: string, filtres: { q?: string; potentiel?: Potentiel } = {}) => {
+        const params = new URLSearchParams(
+          Object.entries(filtres).filter((e): e is [string, string] => Boolean(e[1])),
+        ).toString();
+        return requete<ProspectCible[]>(
+          `/api/v1/ciblage/postes/${poste}/candidats/${params ? `?${params}` : ''}`,
+        );
+      },
+      ajouter: (poste: string, prospects: string[], frequence?: number) =>
+        requete<ResultatAjoutCibles>(`/api/v1/ciblage/postes/${poste}/`, {
+          methode: 'POST',
+          corps: { prospects, ...(frequence ? { frequence } : {}) },
+        }),
+      frequence: (cible: string, frequence: number) =>
+        requete<Cible>(`/api/v1/ciblage/cibles/${cible}/`, {
+          methode: 'PATCH',
+          corps: { frequence },
+        }),
+      retirer: (cible: string, motif = '') =>
+        requete<Cible>(`/api/v1/ciblage/cibles/${cible}/retirer/`, {
+          methode: 'POST',
+          corps: { motif },
+        }),
+      mesListes: () => requete<ListeCible[]>('/api/v1/ciblage/moi/'),
     },
     /** Fiches établissements (PRP-003). */
     etablissements: {

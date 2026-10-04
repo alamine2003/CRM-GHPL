@@ -455,7 +455,7 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
             texte={t('imports.aucunLotTexte')}
           />
         ) : (
-          <List disablePadding>
+          <List component="div" disablePadding>
             {lots.data.map((lot) => (
               <ListItemButton
                 key={lot.id}

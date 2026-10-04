@@ -38,6 +38,12 @@ jest.mock('expo-location', () => ({
     coords: { latitude: 14.70001, longitude: -17.45002, accuracy: 9 },
   })),
 }));
+// Base locale chiffrée (SQLCipher) : propre au téléphone, remplacée ici.
+jest.mock('../src/baseLocale', () => ({
+  lire: jest.fn(async () => null),
+  ecrire: jest.fn(async () => undefined),
+  effacer: jest.fn(async () => undefined),
+}));
 jest.mock('react-native-safe-area-context', () => {
   const { View } = jest.requireActual('react-native');
   return {
@@ -333,12 +339,16 @@ describe('mobile — session', () => {
           actions: ['prospects.lire', 'prospects.creer'],
         })),
         prospects,
+        ciblage: { mesListes: jest.fn(async () => []) },
         referentiel: {
           valeurs: jest.fn(async () => valeurs),
           monPortefeuille: jest.fn(async () => []),
         },
       } as unknown as Partial<ClientApi>),
     );
+    // L'onglet s'ouvre sur « Ma liste » ; la recherche dans les fiches est à côté.
+    expect(await screen.findByText(/aucun poste/)).toBeTruthy();
+    await fireEvent.press(screen.getAllByText('Prospects')[1]!);
     expect(await screen.findByText('Dr Awa Ndiaye')).toBeTruthy();
     expect(screen.getByText('À valider')).toBeTruthy();
     await fireEvent.press(screen.getByText('Nouveau prospect'));
@@ -367,6 +377,7 @@ describe('mobile — session', () => {
           actions: ['prospects.lire', 'prospects.creer'],
         })),
         prospects: { liste: jest.fn(async () => ({ total: 0, limite: 100, resultats: [] })) },
+        ciblage: { mesListes: jest.fn(async () => []) },
         etablissements,
         referentiel: {
           valeurs: jest.fn(async () => [

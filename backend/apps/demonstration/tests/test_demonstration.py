@@ -32,6 +32,12 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     exercices = Exercice.objects.filter(fin__isnull=True)
     assert exercices.values("prospect").distinct().count() > Prospect.objects.count() // 2
     assert exercices.count() > exercices.values("prospect").distinct().count()
+    # Chaque poste occupé a sa liste cible (PRP-011) ; les postes vacants n'en ont pas.
+    from apps.prospects.models import Cible
+
+    cibles = Cible.objects.filter(fin__isnull=True)
+    assert cibles.exists()
+    assert not cibles.filter(poste__occupations__isnull=True).exists()
 
 
 def test_aucune_donnee_reelle(monkeypatch):

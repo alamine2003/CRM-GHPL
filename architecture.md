@@ -249,6 +249,8 @@ Tournée (programme du jour, prochaine visite en tête, distance, file hors conn
 
 ### 5.5 Données présentes sur le téléphone (OFF-001)
 
+Mise en œuvre 0.1.6 : la base locale chiffrée existe (`mobile/src/baseLocale.ts`, SQLCipher par `expo-sqlite`, clé de 256 bits dans le Keychain/Keystore) ; elle garde la liste cible du délégué (PRP-011 CA2) et se vide à la déconnexion. La synchronisation (0.8) la reprendra.
+
 | Donnée | Portée | Renouvellement |
 |---|---|---|
 | Paramètres du pays utiles au délégué | Pays actif | Synchronisation |
@@ -548,7 +550,7 @@ Mise en œuvre (0.0.5) : les liens datés de l'organisation (`Occupation`, `Ratt
 | `Prospect` | `type`, `specialite_id`, `grade_id`, `activite` (`hospitalier`, `prive`), `secteur_id`, `localite_id`, `civilite`, `nom`, `prenom`, `nom_normalise`, `cle_phonetique`, `numero_ordre`, `telephone_mobile`, `telephone_pro`, `courriel`, `potentiel` (`A`,`B`,`C`), `statut`, `cree_par_poste_id`, `fusionne_dans_id` | Fiche commune au pays ; grade, activité, secteur et localité facultatifs (0.1.4) |
 | `Etablissement` | `type`, `nom`, `nom_normalise`, `adresse`, `localite_id`, `secteur_id`, `activite`, `latitude`, `longitude`, `statut` | La localité appartient au secteur ; elle le donne quand il est omis |
 | `Exercice` | `prospect_id`, `etablissement_id`, `debut`, `fin`, `principal` | Mise en œuvre 0.1.5 : `presence` (jours et horaires en clair [H]) ; actif si `debut <= j < fin` ; un seul exercice en cours par couple ; `services.exercice_actif` sert au contrôle RG-015 des visites |
-| `ListeCible` | `poste_id`, `prospect_id`, `frequence_cible`, `periode` (mois), `debut`, `fin` | — |
+| `ListeCible` | `poste_id`, `prospect_id`, `frequence_cible`, `periode` (mois), `debut`, `fin` | Mise en œuvre 0.1.6 : entité `Cible(poste, prospect, frequence, debut, fin)` ; la fréquence se compte par cycle de visite (`cycle_visite_semaines`) et non par mois ; défaut selon le potentiel (`frequence_cible_a|b|c`) |
 | `CandidatDoublon` | `fiche_a_id`, `fiche_b_id`, `score`, `criteres`, `decision`, `decide_par` | Paires « garder séparées » mémorisées |
 | `Fusion` | `conservee_id`, `absorbee_id`, `mode` (`automatique`, `manuelle`), `etat_avant` (JSON), `defusionnee_le` | Réversible |
 | `Planning` | `delegue_id`, `semaine` (lundi), `statut`, `version_courante`, `soumis_le`, `en_retard`, `approuve_par`, `mode_decision` | Unique `(delegue_id, semaine)` |

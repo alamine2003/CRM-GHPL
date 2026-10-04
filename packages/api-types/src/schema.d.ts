@@ -351,6 +351,110 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/ciblage/cibles/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['cible_frequence'];
+    trace?: never;
+  };
+  '/api/v1/ciblage/cibles/{id}/retirer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['cible_retirer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ciblage/moi/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Listes des postes que l'utilisateur occupe : celle du délégué, à emporter sur le
+     *     téléphone (CA2).
+     */
+    get: operations['ciblage_moi'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ciblage/postes/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ciblage_postes'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ciblage/postes/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ciblage_liste'];
+    put?: never;
+    post: operations['ciblage_ajouter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ciblage/postes/{id}/candidats/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Prospects actifs des secteurs du poste, pas encore ciblés (affectation
+     *     territoriale) ; potentiel A d'abord.
+     */
+    get: operations['ciblage_candidats'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/erreurs-clients/': {
     parameters: {
       query?: never;
@@ -1592,6 +1696,10 @@ export interface components {
       /** Format: date */
       fin?: string | null;
     };
+    AjoutCibles: {
+      prospects: string[];
+      frequence?: number | null;
+    };
     Anomalie: {
       entite: string;
       identifiant: string;
@@ -1631,6 +1739,20 @@ export interface components {
     Changement: {
       actuel: string;
       nouveau: string;
+    };
+    Cible: {
+      /** Format: uuid */
+      readonly id: string;
+      /** Format: uuid */
+      poste: string;
+      prospect: components['schemas']['ProspectCible'];
+      frequence: number;
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin?: string | null;
+      readonly en_cours: boolean;
+      readonly hors_secteur: boolean;
     };
     /**
      * @description * `dr` - Dr
@@ -1916,6 +2038,10 @@ export interface components {
       id: string;
       libelle: string;
     };
+    ListeCible: {
+      poste: components['schemas']['PosteCible'];
+      cibles: components['schemas']['Cible'][];
+    };
     /**
      * @description * `type_prospect` - Types de prospect
      *     * `specialite` - Spécialités
@@ -2037,6 +2163,9 @@ export interface components {
     };
     PatchedChangementLangue: {
       langue?: components['schemas']['LangueEnum'];
+    };
+    PatchedFrequence: {
+      frequence?: number;
     };
     PatchedLibelle: {
       libelle?: string;
@@ -2186,6 +2315,17 @@ export interface components {
       readonly vacant: boolean;
       readonly archive: boolean;
     };
+    /** @description Poste et l'état de sa liste cible, pour le choix du poste. */
+    PosteCible: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+      type_poste: string;
+      occupant: string | null;
+      secteurs: components['schemas']['Lieu'][];
+      gerable: boolean;
+      synthese: components['schemas']['SyntheseCible'];
+    };
     /**
      * @description * `A` - A
      *     * `B` - B
@@ -2245,6 +2385,19 @@ export interface components {
       readonly modifiable: boolean;
       readonly lieu_principal: components['schemas']['Lieu'] | null;
     };
+    ProspectCible: {
+      /** Format: uuid */
+      readonly id: string;
+      civilite?: components['schemas']['CiviliteEnum'] | components['schemas']['BlankEnum'];
+      prenom?: string;
+      nom: string;
+      type_libelle: string;
+      specialite_libelle?: string | null;
+      potentiel: components['schemas']['PotentielEnum'];
+      statut?: components['schemas']['StatutFicheEnum'];
+      readonly lieu_principal: components['schemas']['Lieu'] | null;
+      secteur?: string | null;
+    };
     ProspectResume: {
       /** Format: uuid */
       readonly id: string;
@@ -2296,10 +2449,17 @@ export interface components {
       code: string;
       libelle: string;
     };
+    ResultatAjout: {
+      ajoutes: number;
+      deja_presents: number;
+    };
     Resume: {
       /** Format: uuid */
       id: string;
       libelle: string;
+    };
+    RetraitCible: {
+      motif?: string;
     };
     Role: {
       /** Format: uuid */
@@ -2460,6 +2620,18 @@ export interface components {
       postes: number;
       postes_vacants: number;
       postes_sans_superviseur: number;
+    };
+    SyntheseCible: {
+      total: number;
+      potentiels: {
+        [key: string]: number;
+      };
+      visites_par_cycle: number;
+      /** Format: double */
+      visites_par_jour: number;
+      cycle_semaines: number;
+      seuil_min?: number | null;
+      seuil_max?: number | null;
     };
     SyntheseEtablissements: {
       actifs: number;
@@ -3040,6 +3212,172 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  cible_frequence: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedFrequence'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedFrequence'];
+        'multipart/form-data': components['schemas']['PatchedFrequence'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Cible'];
+        };
+      };
+    };
+  };
+  cible_retirer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['RetraitCible'];
+        'application/x-www-form-urlencoded': components['schemas']['RetraitCible'];
+        'multipart/form-data': components['schemas']['RetraitCible'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Cible'];
+        };
+      };
+    };
+  };
+  ciblage_moi: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListeCible'][];
+        };
+      };
+    };
+  };
+  ciblage_postes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PosteCible'][];
+        };
+      };
+    };
+  };
+  ciblage_liste: {
+    parameters: {
+      query?: {
+        historique?: string;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ListeCible'];
+        };
+      };
+    };
+  };
+  ciblage_ajouter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AjoutCibles'];
+        'application/x-www-form-urlencoded': components['schemas']['AjoutCibles'];
+        'multipart/form-data': components['schemas']['AjoutCibles'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ResultatAjout'];
+        };
+      };
+    };
+  };
+  ciblage_candidats: {
+    parameters: {
+      query?: {
+        potentiel?: string;
+        q?: string;
+      };
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProspectCible'][];
+        };
       };
     };
   };

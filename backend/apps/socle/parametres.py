@@ -169,6 +169,17 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             4,
             _entier(1, 12),
         ),
+        *(
+            DefinitionParametre(
+                f"frequence_cible_{potentiel.lower()}",
+                f"Fréquence cible par défaut d'un prospect {potentiel}, en visites par cycle "
+                "(PRP-011)",
+                defaut,
+                _entier(1, 20),
+                hypothese=True,
+            )
+            for potentiel, defaut in (("A", 2), ("B", 1), ("C", 1))
+        ),
         DefinitionParametre(
             "geolocalisation_active",
             "Géolocalisation au début et à la fin des visites (RG-028)",
