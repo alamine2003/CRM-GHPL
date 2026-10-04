@@ -466,11 +466,7 @@ function DetailPoste({ id }: { id: string }) {
               : undefined
           }
         />
-        <Chiffre
-          libelle={t('ciblage.chiffres.horsSecteur')}
-          valeur={horsSecteur}
-          ton="warning"
-        />
+        <Chiffre libelle={t('ciblage.chiffres.horsSecteur')} valeur={horsSecteur} ton="warning" />
       </BarreChiffres>
       {surcharge && <Alert severity="warning">{t('ciblage.surcharge')}</Alert>}
 
@@ -651,10 +647,7 @@ export default function Ciblage({ perimetre }: { perimetre: Perimetre }) {
         <Skeleton variant="rounded" height={360} />
       ) : liste.length === 0 ? (
         <Card>
-          <EtatVide
-            titre={t('ciblage.aucunPoste')}
-            texte={t('ciblage.aucunPosteTexte')}
-          />
+          <EtatVide titre={t('ciblage.aucunPoste')} texte={t('ciblage.aucunPosteTexte')} />
         </Card>
       ) : (
         <>

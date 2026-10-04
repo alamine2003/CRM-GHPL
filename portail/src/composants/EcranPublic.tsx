@@ -108,7 +108,9 @@ export default function EcranPublic({ titre, children }: { titre: string; childr
         </Box>
         <Box sx={{ width: '100%', maxWidth: 400 }}>
           <Card>
-            <CardContent sx={{ p: { xs: 2, sm: 3.5 }, '&:last-child': { pb: { xs: 2.5, sm: 3.5 } } }}>
+            <CardContent
+              sx={{ p: { xs: 2, sm: 3.5 }, '&:last-child': { pb: { xs: 2.5, sm: 3.5 } } }}
+            >
               <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
                 {titre}
               </Typography>

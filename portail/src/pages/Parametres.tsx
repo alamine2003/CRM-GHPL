@@ -285,10 +285,7 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
 
   return (
     <Stack spacing={2}>
-      <EnTetePage
-        titre={t('parametres.titre')}
-        sousTitre={pays?.nom}
-      />
+      <EnTetePage titre={t('parametres.titre')} sousTitre={pays?.nom} />
       {!pays ? (
         <Alert severity="info">{t('parametres.choisirPays')}</Alert>
       ) : parametres.isError ? (
@@ -306,9 +303,7 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
         >
           {GROUPES.map((groupe) => (
             <Card key={groupe.cle}>
-              <EnTeteCarte
-                titre={t(`parametres.groupes.${groupe.cle}`)}
-              />
+              <EnTeteCarte titre={t(`parametres.groupes.${groupe.cle}`)} />
               {groupe.parametres
                 .map((cle) => parCle.get(cle))
                 .filter((p): p is Parametre => p !== undefined)
@@ -347,10 +342,7 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
                       </Box>
                     </Box>
                     {modifier && (
-                      <Button
-                        size="small"
-                        onClick={() => setEdition(p)}
-                      >
+                      <Button size="small" onClick={() => setEdition(p)}>
                         {t('parametres.modifier')}
                       </Button>
                     )}

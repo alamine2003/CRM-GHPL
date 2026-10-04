@@ -276,10 +276,7 @@ function FicheCompte({
             titre={t('equipe.fiche.affectations')}
             action={
               affecter && (
-                <Button
-                  size="small"
-                  onClick={() => setDialogue('affectation')}
-                >
+                <Button size="small" onClick={() => setDialogue('affectation')}>
                   {t('equipe.fiche.accorder')}
                 </Button>
               )
@@ -322,10 +319,7 @@ function FicheCompte({
                 titre={t('equipe.fiche.transferts')}
                 action={
                   affecter && (
-                    <Button
-                      size="small"
-                      onClick={() => setDialogue('transfert')}
-                    >
+                    <Button size="small" onClick={() => setDialogue('transfert')}>
                       {t('equipe.fiche.transferer')}
                     </Button>
                   )
@@ -753,10 +747,7 @@ function ListeAppareils({ appareils, revoquer }: { appareils: Appareil[]; revoqu
   if (!appareils.length) {
     return (
       <Card>
-        <EtatVide
-          titre={t('appareils.vide')}
-          texte={t('appareils.videTexte')}
-        />
+        <EtatVide titre={t('appareils.vide')} texte={t('appareils.videTexte')} />
       </Card>
     );
   }
@@ -875,10 +866,7 @@ export default function Equipe({ perimetre }: { perimetre: Perimetre }) {
         sousTitre={perimetre.pays_actif?.nom ?? t('pays.consolide')}
         actions={
           gerer && (
-            <Button
-              variant="contained"
-              onClick={() => setCreation(true)}
-            >
+            <Button variant="contained" onClick={() => setCreation(true)}>
               {t('equipe.nouveauCompte')}
             </Button>
           )
@@ -919,11 +907,7 @@ export default function Equipe({ perimetre }: { perimetre: Perimetre }) {
       </BarreChiffres>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs
-          value={onglet}
-          onChange={(_, v) => setOnglet(v)}
-          textColor="inherit"
-        >
+        <Tabs value={onglet} onChange={(_, v) => setOnglet(v)} textColor="inherit">
           <Tab value="comptes" label={t('equipe.onglets.comptes')} />
           <Tab value="appareils" label={t('equipe.onglets.appareils')} />
         </Tabs>

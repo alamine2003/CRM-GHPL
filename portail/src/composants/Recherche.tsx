@@ -1,4 +1,12 @@
-import { Button, Chip, Pagination, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Button,
+  Chip,
+  Pagination,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
 export interface Puce {

@@ -234,9 +234,7 @@ export function CarteActivite() {
   const liste = activite.data ?? [];
   return (
     <Card>
-      <EnTeteCarte
-        titre={t('activitePage.titre')}
-      />
+      <EnTeteCarte titre={t('activitePage.titre')} />
       <CardContent>
         {activite.isPending && <Skeleton height={48} />}
         {activite.isSuccess && liste.length === 0 && (

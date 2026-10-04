@@ -1604,7 +1604,9 @@ describe('portail — listes cibles (PRP-011)', () => {
     expect(screen.getAllByText('Hors secteur').length).toBe(2);
     // Sur petit écran, les postes se choisissent dans une liste déroulante.
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Poste' }));
-    expect(await screen.findByRole('option', { name: /VM Fann · Poste vacant/ })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('option', { name: /VM Fann · Poste vacant/ }),
+    ).toBeInTheDocument();
     fireEvent.keyDown(screen.getByRole('listbox'), { key: 'Escape' });
     expect(screen.getByText('Repère du poste : 6 à 10 par jour')).toBeInTheDocument();
     fireEvent.click(

@@ -36,10 +36,7 @@ export default function PaysPage({ perimetre }: { perimetre: Perimetre }) {
         titre={t('paysPage.titre')}
         actions={
           perimetre.actions.includes('pays.creer') && (
-            <Button
-              variant="contained"
-              onClick={() => setCreation(true)}
-            >
+            <Button variant="contained" onClick={() => setCreation(true)}>
               {t('paysPage.nouveau')}
             </Button>
           )
@@ -58,10 +55,7 @@ export default function PaysPage({ perimetre }: { perimetre: Perimetre }) {
           }}
         >
           {liste.data.map((pays) => (
-            <Card
-              key={pays.code}
-              sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}
-            >
+            <Card key={pays.code} sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                 <Box aria-hidden sx={{ fontSize: 24, lineHeight: 1 }}>
                   {drapeau(pays.code)}
@@ -74,7 +68,9 @@ export default function PaysPage({ perimetre }: { perimetre: Perimetre }) {
                     {pays.code} · {pays.fuseau} · {pays.devise} · {pays.langue.toUpperCase()}
                   </Typography>
                 </Box>
-                <Etiquette ton={COULEUR[pays.statut]}>{t(`paysPage.statuts.${pays.statut}`)}</Etiquette>
+                <Etiquette ton={COULEUR[pays.statut]}>
+                  {t(`paysPage.statuts.${pays.statut}`)}
+                </Etiquette>
               </Stack>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {t('paysPage.depuis', { date: dateCourte(pays.cree_le, i18n.language) })}

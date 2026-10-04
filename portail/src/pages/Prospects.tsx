@@ -421,13 +421,7 @@ function FicheProspect({
             />
             <Ligne
               libelle={t('prospect.champs.numeroOrdre')}
-              valeur={
-                p.numero_ordre ? (
-                  p.numero_ordre
-                ) : (
-                  aucun
-                )
-              }
+              valeur={p.numero_ordre ? p.numero_ordre : aucun}
             />
             <Ligne
               libelle={t('prospect.champs.potentiel')}
@@ -903,10 +897,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
               filtresActifs > 0 ? (
                 <EtatVide titre={t('prospect.aucunResultat')} />
               ) : (
-                <EtatVide
-                  titre={t('prospect.vide')}
-                  texte={t('prospect.videTexte')}
-                />
+                <EtatVide titre={t('prospect.vide')} texte={t('prospect.videTexte')} />
               )
             ) : (
               fiches.map((p, i) => (

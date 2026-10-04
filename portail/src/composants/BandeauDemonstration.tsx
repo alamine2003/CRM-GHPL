@@ -19,7 +19,15 @@ export function FiletDemonstration() {
   return (
     <Box
       aria-hidden
-      sx={{ position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: 1300, bgcolor: marque.orange }}
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 3,
+        zIndex: 1300,
+        bgcolor: marque.orange,
+      }}
     />
   );
 }

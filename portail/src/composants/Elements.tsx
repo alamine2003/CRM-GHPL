@@ -225,7 +225,15 @@ export function Potentiel({ valeur, libelle }: { valeur: string; libelle?: strin
 }
 
 /** Section d'un panneau de détail : titre de section, filet, contenu ; sans carte imbriquée. */
-export function Section({ titre, action, children }: { titre: string; action?: ReactNode; children: ReactNode }) {
+export function Section({
+  titre,
+  action,
+  children,
+}: {
+  titre: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <Box component="section">
       <Stack
@@ -251,7 +259,13 @@ export function Section({ titre, action, children }: { titre: string; action?: R
 }
 
 /** État en texte coloré (« Vacant », « Échec »…) : remplace les pastilles dans les listes. */
-export function Etiquette({ ton = 'neutre', children }: { ton?: Ton | 'info'; children: ReactNode }) {
+export function Etiquette({
+  ton = 'neutre',
+  children,
+}: {
+  ton?: Ton | 'info';
+  children: ReactNode;
+}) {
   return (
     <Typography
       component="span"
@@ -259,7 +273,8 @@ export function Etiquette({ ton = 'neutre', children }: { ton?: Ton | 'info'; ch
       sx={{
         fontWeight: 600,
         whiteSpace: 'nowrap',
-        color: ton === 'info' ? 'info.main' : ton === 'neutre' ? 'text.secondary' : COULEUR_TON[ton],
+        color:
+          ton === 'info' ? 'info.main' : ton === 'neutre' ? 'text.secondary' : COULEUR_TON[ton],
       }}
     >
       {children}

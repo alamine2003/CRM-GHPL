@@ -82,9 +82,7 @@ export default function Profil({
         </Card>
         <Stack spacing={2}>
           <Card>
-            <EnTeteCarte
-              titre={t('profilPage.langueTitre')}
-            />
+            <EnTeteCarte titre={t('profilPage.langueTitre')} />
             <CardContent>
               <ToggleButtonGroup
                 exclusive
@@ -104,9 +102,7 @@ export default function Profil({
             </CardContent>
           </Card>
           <Card>
-            <EnTeteCarte
-              titre={t('apparence.titre')}
-            />
+            <EnTeteCarte titre={t('apparence.titre')} />
             <CardContent>
               <ChoixApparence />
               <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1.5 }}>
@@ -115,9 +111,7 @@ export default function Profil({
             </CardContent>
           </Card>
           <Card component="form" onSubmit={changerMotDePasse}>
-            <EnTeteCarte
-              titre={t('profilPage.motDePasse')}
-            />
+            <EnTeteCarte titre={t('profilPage.motDePasse')} />
             <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 type="password"

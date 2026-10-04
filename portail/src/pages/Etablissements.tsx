@@ -34,7 +34,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
-import { BarreChiffres, Chiffre, EnTetePage, EtatVide, Ligne, Section } from '../composants/Elements';
+import {
+  BarreChiffres,
+  Chiffre,
+  EnTetePage,
+  EtatVide,
+  Ligne,
+  Section,
+} from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { ProspectsExercant } from '../composants/Exercices';
 import { BarrePagination } from '../composants/Recherche';
@@ -720,10 +727,7 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
                 q || type || secteur || sansGps || statut !== 'tous' ? (
                   <EtatVide titre={t('etablissement.aucunResultat')} />
                 ) : (
-                  <EtatVide
-                    titre={t('etablissement.vide')}
-                    texte={t('etablissement.videTexte')}
-                  />
+                  <EtatVide titre={t('etablissement.vide')} texte={t('etablissement.videTexte')} />
                 )
               ) : (
                 fiches.map((e, i) => (

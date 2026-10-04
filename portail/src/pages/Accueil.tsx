@@ -1,15 +1,6 @@
 import type { Moi, MonOrganisation, Perimetre } from '@innov/api-client';
 import { avancement, CYCLES } from '@innov/domaine';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Divider,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Divider, Stack, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
@@ -215,10 +206,7 @@ function ChiffresOrganisation({ perimetre }: { perimetre: Perimetre }) {
         </Button>
       </Stack>
       <BarreChiffres>
-        <Chiffre
-          libelle={t('organisation.chiffres.postes')}
-          valeur={s.postes}
-        />
+        <Chiffre libelle={t('organisation.chiffres.postes')} valeur={s.postes} />
         <Chiffre
           libelle={t('organisation.chiffres.vacants')}
           valeur={s.postes_vacants}

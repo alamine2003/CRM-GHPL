@@ -171,10 +171,7 @@ function ResultatLot({ lot }: { lot: DetailLot }) {
           <EnTeteCarte
             titre={t('imports.anomalies')}
             action={
-              <Button
-                size="small"
-                onClick={() => void telecharger()}
-              >
+              <Button size="small" onClick={() => void telecharger()}>
                 {t('imports.rapportCsv')}
               </Button>
             }
@@ -293,14 +290,9 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
 
   return (
     <Stack spacing={2}>
-      <EnTetePage
-        titre={t('imports.titre')}
-        sousTitre={perimetre.pays_actif.nom}
-      />
+      <EnTetePage titre={t('imports.titre')} sousTitre={perimetre.pays_actif.nom} />
       <Card>
-        <EnTeteCarte
-          titre={t('imports.birdnotes')}
-        />
+        <EnTeteCarte titre={t('imports.birdnotes')} />
         <Stack spacing={2} sx={{ p: 2 }}>
           <Stepper activeStep={etape} alternativeLabel>
             {(['fichier', 'simulation', 'import'] as const).map((e) => (
@@ -407,9 +399,7 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
       )}
 
       <Card>
-        <EnTeteCarte
-          titre={t('imports.historique')}
-        />
+        <EnTeteCarte titre={t('imports.historique')} />
         {lots.isError ? (
           <Box sx={{ p: 2 }}>
             <ErreurChargement erreur={lots.error} reessayer={() => void lots.refetch()} />
@@ -417,10 +407,7 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
         ) : !lots.data ? (
           <Skeleton variant="rounded" height={120} sx={{ m: 2 }} />
         ) : lots.data.length === 0 ? (
-          <EtatVide
-            titre={t('imports.aucunLot')}
-            texte={t('imports.aucunLotTexte')}
-          />
+          <EtatVide titre={t('imports.aucunLot')} texte={t('imports.aucunLotTexte')} />
         ) : (
           <List component="div" disablePadding>
             {lots.data.map((lot) => (

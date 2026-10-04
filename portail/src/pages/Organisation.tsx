@@ -446,7 +446,10 @@ function ListePostes({
               <Occupant poste={poste} />
               <SuperviseurPoste poste={poste} />
             </Box>
-            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}
+            >
               {[...poste.reseaux, ...poste.secteurs].map((e) => e.libelle).join(' · ')}
             </Typography>
           </Box>
@@ -548,10 +551,7 @@ function OngletPostes({
           texte={t('organisation.vides.postesTexte')}
           action={
             gerer && (
-              <Button
-                variant="contained"
-                onClick={() => ouvrir({ type: 'poste' })}
-              >
+              <Button variant="contained" onClick={() => ouvrir({ type: 'poste' })}>
                 {t('organisation.actions.nouveauPoste')}
               </Button>
             )
@@ -681,10 +681,7 @@ function OngletZones({
           texte={t('organisation.vides.zonesTexte')}
           action={
             gerer && (
-              <Button
-                variant="contained"
-                onClick={() => ouvrir({ type: 'zone' })}
-              >
+              <Button variant="contained" onClick={() => ouvrir({ type: 'zone' })}>
                 {t('organisation.actions.nouvelleZone')}
               </Button>
             )
@@ -711,10 +708,7 @@ function OngletZones({
             action={
               gerer &&
               !zone.archive && (
-                <Button
-                  size="small"
-                  onClick={() => ouvrir({ type: 'secteur', zone })}
-                >
+                <Button size="small" onClick={() => ouvrir({ type: 'secteur', zone })}>
                   {t('organisation.actions.nouveauSecteur')}
                 </Button>
               )
@@ -746,10 +740,7 @@ function OngletReseaux({
           texte={t('organisation.vides.reseauxTexte')}
           action={
             gerer && (
-              <Button
-                variant="contained"
-                onClick={() => ouvrir({ type: 'division' })}
-              >
+              <Button variant="contained" onClick={() => ouvrir({ type: 'division' })}>
                 {t('organisation.actions.nouvelleDivision')}
               </Button>
             )
@@ -834,10 +825,7 @@ export default function Organisation({ perimetre }: { perimetre: Perimetre }) {
         sousTitre={perimetre.pays_actif?.nom ?? t('pays.consolide')}
         actions={
           gerer && (
-            <Button
-              variant="contained"
-              onClick={() => setDialogue(boutonAjout[onglet].dialogue)}
-            >
+            <Button variant="contained" onClick={() => setDialogue(boutonAjout[onglet].dialogue)}>
               {boutonAjout[onglet].libelle}
             </Button>
           )
@@ -875,9 +863,7 @@ export default function Organisation({ perimetre }: { perimetre: Perimetre }) {
         <Alert severity="info">{t('organisation.choisirPays')}</Alert>
       )}
       {!perimetre.actions.includes('organisation.gerer') && (
-        <Alert severity="info">
-          {t('organisation.lectureSeule')}
-        </Alert>
+        <Alert severity="info">{t('organisation.lectureSeule')}</Alert>
       )}
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>

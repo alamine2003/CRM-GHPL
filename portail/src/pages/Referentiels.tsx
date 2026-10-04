@@ -476,10 +476,7 @@ function DialoguePortefeuille({
       <Box sx={{ maxHeight: 380, overflowY: 'auto', mx: -1 }}>
         {groupes.map(([classe, liste]) => (
           <Box key={classe} sx={{ mb: 1 }}>
-            <Typography
-              variant="overline"
-              sx={{ px: 1, color: 'text.secondary' }}
-            >
+            <Typography variant="overline" sx={{ px: 1, color: 'text.secondary' }}>
               {classe || t('referentiel.produit.sansClasse')}
             </Typography>
             {liste.map((p) => (
@@ -702,9 +699,7 @@ function OngletListes({ valeurs, gerer }: { valeurs: ValeurReferentiel[]; gerer:
         </List>
       </Card>
       <Card>
-        <EnTeteCarte
-          titre={t(`referentiel.listes.${liste}`)}
-        />
+        <EnTeteCarte titre={t(`referentiel.listes.${liste}`)} />
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             {t(`referentiel.aides.${liste}`)}
@@ -740,11 +735,7 @@ function OngletListes({ valeurs, gerer }: { valeurs: ValeurReferentiel[]; gerer:
                   ))}
                 </TextField>
               )}
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={!nouvelle.trim()}
-              >
+              <Button type="submit" variant="contained" disabled={!nouvelle.trim()}>
                 {t('referentiel.valeur.ajouter')}
               </Button>
             </Stack>

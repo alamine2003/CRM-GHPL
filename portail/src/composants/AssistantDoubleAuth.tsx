@@ -152,9 +152,7 @@ export default function AssistantDoubleAuth({ surTermine }: { surTermine: () => 
             ))}
           </Box>
           <Stack direction="row" spacing={1}>
-            <Button
-              onClick={() => void navigator.clipboard?.writeText(texteCodes)}
-            >
+            <Button onClick={() => void navigator.clipboard?.writeText(texteCodes)}>
               {t('doubleAuth.copier')}
             </Button>
             <Button
