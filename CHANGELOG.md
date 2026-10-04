@@ -2,6 +2,17 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [Non publié] — Sécurité renforcée (décisions du 4 octobre 2026)
+
+### Ajouté
+
+- **Sécurité au niveau des lignes PostgreSQL** (ADR-003, architecture §12, couche 2) : chaque table rattachée à un pays (organisation, paramètres, journal des changements) n'accepte, pendant une requête métier, que les lignes du pays actif — en lecture comme en écriture, même si un filtre applicatif manquait. Le siège reste autorisé sur tous les pays ; un utilisateur sans rôle ne voit rien. Les tests s'exécutent sous un rôle PostgreSQL ordinaire ; un test échoue si une nouvelle table de pays n'est pas protégée ; `check --deploy` signale un rôle de base qui contournerait ces règles.
+- **Mots de passe compromettants refusés** (SEC-001) : un mot de passe ne peut plus contenir un mot de la liste `mots_compromettants.txt` (nom de l'entreprise, mots du métier, pays et villes des filiales, mots de passe courants), même déguisé (« D@k4r », « P4ssw0rd ») ; message : « Ce mot de passe peut être compromettant : il contient « dakar » ». Hors développement, un mot de passe paru dans des fuites publiques est aussi refusé (Have I Been Pwned, k-anonymat : seuls 5 caractères de son empreinte quittent le serveur) ; si ce service ne répond pas, la vérification n'empêche pas l'utilisateur d'avancer.
+
+### Sécurité du dépôt
+
+- Historique de la branche réécrit : les anciens mots de passe de test et l'adresse de base de données avec mot de passe de la CI, signalés par GitGuardian, n'existent plus dans aucun commit.
+
 ## [0.0.6] — Navigation, accueil par rôle, administration, appareils et démonstration ; design enrichi
 
 Sixième jalon du cycle 0.0 « Fondations ».

@@ -72,7 +72,7 @@
   },
   "reinitialisation": {
     "titre": "Nouveau mot de passe",
-    "explication": "Au moins 12 caractères, ni trop courant, ni proche de votre nom ou de votre identifiant.",
+    "explication": "Au moins 12 caractères, ni trop courant, ni proche de votre nom, sans mot compromettant (nom de l'entreprise, du métier, d'un pays ou d'une ville).",
     "nouveau": "Nouveau mot de passe",
     "confirmation": "Confirmez le mot de passe",
     "differents": "Les deux mots de passe ne correspondent pas.",

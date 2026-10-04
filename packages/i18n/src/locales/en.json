@@ -72,7 +72,7 @@
   },
   "reinitialisation": {
     "titre": "New password",
-    "explication": "At least 12 characters, not too common, and not close to your name or username.",
+    "explication": "At least 12 characters, not too common, not close to your name, and without a compromising word (company, business, country or city name).",
     "nouveau": "New password",
     "confirmation": "Confirm the password",
     "differents": "The two passwords do not match.",

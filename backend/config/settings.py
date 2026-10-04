@@ -77,6 +77,17 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    # Mots compromettants (entreprise, métier, pays, mots courants), même déguisés.
+    {"NAME": "apps.identite.mots_de_passe.MotsCompromettantsValidator"},
+    # Fuites publiques (k-anonymat) ; désactivable en local sans réseau.
+    {
+        "NAME": "apps.identite.mots_de_passe.FuitesConnuesValidator",
+        "OPTIONS": {
+            "actif": env_bool(
+                "INNOV_VERIFIER_FUITES", ENVIRONNEMENT not in {"developpement", "test"}
+            )
+        },
+    },
 ]
 
 # Connexion et sessions (SEC-002, architecture §11.1).

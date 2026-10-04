@@ -3,17 +3,20 @@
 Une vue métier hérite de `VuePerimetre` :
 - elle déclare l'action requise par méthode HTTP (`actions`) ;
 - ses objets viennent de `selection(perimetre)`, déjà filtrée par le périmètre ;
-- un objet hors périmètre répond 404, jamais 403 (USR-002 CA2).
+- un objet hors périmètre répond 404, jamais 403 (USR-002 CA2) ;
+- la base n'accepte, pour la durée de la requête, que les lignes du pays actif (ADR-003).
 
 Un test parcourt toutes les routes et échoue si une vue métier n'en hérite pas.
 """
 
 from functools import cached_property
 
+from django.db import transaction
 from django.db.models import QuerySet
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import BasePermission, IsAuthenticated
 
+from . import isolation
 from .matrice import Action
 from .perimetre import Perimetre, calculer_perimetre
 
@@ -33,6 +36,16 @@ class VuePerimetre(GenericAPIView):
     permission_classes = [IsAuthenticated, ExigeAction]
     #: Action exigée par méthode HTTP, par exemple {"GET": Action.PAYS_LIRE}.
     actions: dict[str, Action] = {}
+
+    def dispatch(self, request, *args, **kwargs):
+        # Une transaction par requête métier : l'isolation fixée dans la base ne vaut
+        # que pour elle (couche 2, ADR-003).
+        with transaction.atomic():
+            return super().dispatch(request, *args, **kwargs)
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        isolation.appliquer(self.perimetre)
 
     @cached_property
     def perimetre(self) -> Perimetre:

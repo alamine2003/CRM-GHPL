@@ -8,8 +8,16 @@ from apps.socle.services import creer_pays
 
 
 def mot_de_passe_solide() -> str:
-    """Généré à l'exécution : aucun mot de passe, même de test, n'est écrit dans le dépôt."""
-    return f"{secrets.token_urlsafe(12)}-Aa9"
+    """Généré à l'exécution : aucun mot de passe, même de test, n'est écrit dans le dépôt.
+
+    Le tirage recommence si, par hasard, il contient un mot compromettant.
+    """
+    from apps.identite.mots_de_passe import mot_compromettant
+
+    while True:
+        candidat = f"{secrets.token_urlsafe(12)}-Aa9"
+        if mot_compromettant(candidat) is None:
+            return candidat
 
 
 MOT_DE_PASSE = mot_de_passe_solide()

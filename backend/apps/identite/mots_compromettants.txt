@@ -1,0 +1,84 @@
+# Mots qu'un mot de passe ne doit pas contenir : trop faciles à deviner pour un attaquant
+# qui connaît l'entreprise, le métier ou le pays. Un mot par ligne, en minuscules, sans
+# accents. La recherche ignore les accents, la casse et les substitutions courantes
+# (0→o, 1→i, 3→e, 4→a, 5→s, 7→t, @→a, $→s, !→i).
+# Toute ligne ajoutée ici s'applique aux prochains changements de mot de passe.
+
+# Entreprise et produit
+innov
+innovpharma
+ghpl
+generic
+healthcare
+pharma
+pharmacie
+laboratoire
+
+# Métier
+medecin
+medical
+delegue
+visiteur
+visite
+superviseur
+planning
+rapport
+tournee
+terrain
+prospect
+echantillon
+
+# Pays et villes des filiales
+senegal
+dakar
+thies
+touba
+togo
+lome
+benin
+cotonou
+abidjan
+ivoire
+bamako
+conakry
+guinee
+ouagadougou
+burkina
+niamey
+cameroun
+douala
+yaounde
+gabon
+libreville
+mauritanie
+nouakchott
+afrique
+africa
+
+# Mots de passe les plus essayés
+password
+passwd
+motdepasse
+azerty
+qwerty
+qwertz
+bonjour
+soleil
+admin
+secret
+welcome
+bienvenue
+changeme
+letmein
+iloveyou
+jetaime
+football
+dragon
+monkey
+master
+123456
+654321
+000000
+111111
+121212
+abcdef

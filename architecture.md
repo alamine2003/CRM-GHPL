@@ -467,9 +467,9 @@ L'isolation est la propriété la plus critique du système (AO-01). Elle repose
 | 2. Base de données | Sécurité au niveau des lignes (RLS) PostgreSQL sur `pays_id` : chaque transaction de requête exécute `SET LOCAL innov.pays = '<id>'` (ou la liste pour le siège) ; le rôle `innov_app` n'a pas `BYPASSRLS` ; les politiques refusent toute ligne d'un autre pays | la couche 1 est contournée (requête brute, bogue de sélecteur) |
 | 3. Tests | Suite d'isolation : deux pays, deux réseaux, deux superviseurs, deux délégués ; chaque rôle tente de lire, rechercher, exporter, télécharger une pièce jointe, recevoir une notification et interroger Grafana hors périmètre | une régression apparaît |
 
-État en 0.0.4 : la couche 1 (`VuePerimetre`, test de couverture des routes) et la couche 3 (matrice rôle × action, isolation entre deux pays) sont en place ; la couche 2 (RLS) reste à confirmer.
+État : les trois couches sont en place. Couche 2 **[D]** (décision du 4 octobre 2026) : politiques `isolation_pays` (ENABLE + FORCE) sur toutes les tables portant `pays_id` ; `VuePerimetre` ouvre une transaction par requête et y fixe `innov.pays` (identifiant du pays actif, `*` pour le siège, `aucun` sans rôle) ; hors requête métier (migrations, commandes, authentification) la variable est vide et rien n'est filtré. Un test vérifie que toute table de `ModeleDePays` est protégée ; `check --deploy --database default` refuse un rôle SUPERUSER ou BYPASSRLS. Les tests d'isolation s'exécutent sous un rôle ordinaire.
 
-Recommandation **[R]** : activer la RLS (ADR-003). Coût : chaque tâche Celery et chaque commande d'administration doit fixer explicitement son pays ; c'est voulu. Si HT-07 se révèle faux (rôles impossibles sur Render), la couche 2 est limitée à la RLS sur le rôle unique, et la couche 3 devient bloquante pour toute livraison.
+Décision **[D]** : RLS activée (ADR-003). Coût : chaque tâche Celery et chaque commande d'administration doit fixer explicitement son pays ; c'est voulu. Si HT-07 se révèle faux (rôles impossibles sur Render), la couche 2 est limitée à la RLS sur le rôle unique, et la couche 3 devient bloquante pour toute livraison.
 
 Autres règles :
 - Les **identifiants** ne sont jamais séquentiels (UUID) : impossible de deviner un objet d'un autre pays.
@@ -897,7 +897,7 @@ flowchart LR
 |---|---|---|---|
 | ADR-001 | Monolithe modulaire Django (modules aux frontières strictes), pas de microservices | [D] | Un seul développeur ; cohérence transactionnelle des décisions et de l'audit |
 | ADR-002 | Pile serveur et portail d'AMM GH : Django 5.2 + DRF + PostgreSQL + Redis + Celery ; React 19 + TypeScript + MUI | [D] | Pile maîtrisée et déjà exploitée seul |
-| ADR-003 | Base unique multi-pays, isolation par `pays_id` + moteur de périmètre + RLS PostgreSQL | [D] base unique et `pays_id` ; [R] RLS `0.0.4` | Consolidation siège simple ; défense en profondeur |
+| ADR-003 | Base unique multi-pays, isolation par `pays_id` + moteur de périmètre + RLS PostgreSQL | [D] base unique, `pays_id` et RLS (décidée le 4 octobre 2026) | Consolidation siège simple ; défense en profondeur |
 | ADR-004 | Application mobile React Native + Expo (EAS Build, Update, Submit) | [D] | Android + iOS, TypeScript partagé, hors connexion fiable ; PWA écartée |
 | ADR-005 | Synchronisation par protocole maison (tirer par curseur, pousser une file idempotente de commandes) sur SQLite chiffrée | [R] `0.8.3` | Contrôle total des règles RG-050 à RG-054 |
 | ADR-006 | Identifiants UUID v7 générés par le créateur, y compris le téléphone | [R] `0.0.2` | Création hors connexion sans collision, ordre temporel |
