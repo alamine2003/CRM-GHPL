@@ -7,6 +7,8 @@ import {
   DialogTitle,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { type FormEvent, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +42,8 @@ export default function DialogueFormulaire({
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
   const notifier = useNotifier();
+  // Sur téléphone, le formulaire occupe tout l'écran : champs plus larges, clavier mieux géré.
+  const telephone = !useMediaQuery(useTheme().breakpoints.up('sm'));
 
   async function valider(evenement: FormEvent) {
     evenement.preventDefault();
@@ -61,6 +65,7 @@ export default function DialogueFormulaire({
       open={ouvert}
       onClose={surFermer}
       fullWidth
+      fullScreen={telephone}
       maxWidth="xs"
       slotProps={{ paper: { component: 'form', onSubmit: valider } }}
     >

@@ -208,6 +208,7 @@ function DialogueAjout({ poste, surFermer }: { poste: PosteCible; surFermer: () 
   const [choix, setChoix] = useState<Set<string>>(new Set());
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const telephone = !useMediaQuery(useTheme().breakpoints.up('sm'));
   useEffect(() => {
     const minuteur = setTimeout(() => setQ(saisie), 250);
     return () => clearTimeout(minuteur);
@@ -242,7 +243,14 @@ function DialogueAjout({ poste, surFermer }: { poste: PosteCible; surFermer: () 
   }
 
   return (
-    <Dialog open onClose={surFermer} maxWidth="sm" fullWidth aria-labelledby="titre-ajout-cibles">
+    <Dialog
+      open
+      onClose={surFermer}
+      maxWidth="sm"
+      fullWidth
+      fullScreen={telephone}
+      aria-labelledby="titre-ajout-cibles"
+    >
       <DialogTitle id="titre-ajout-cibles">
         {t('ciblage.ajouterTitre', { poste: poste.libelle })}
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -279,6 +287,7 @@ function DialogueAjout({ poste, surFermer }: { poste: PosteCible; surFermer: () 
           <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
             <Button
               size="small"
+              sx={{ flex: 'none', whiteSpace: 'nowrap' }}
               disabled={liste.length === 0}
               onClick={() =>
                 setChoix((avant) => {
@@ -293,7 +302,7 @@ function DialogueAjout({ poste, surFermer }: { poste: PosteCible; surFermer: () 
             >
               {tous ? t('ciblage.toutDeselectionner') : t('ciblage.toutSelectionner')}
             </Button>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', textAlign: 'right' }}>
               {t('ciblage.frequenceDefaut')}
             </Typography>
           </Stack>

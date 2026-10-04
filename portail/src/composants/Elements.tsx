@@ -94,8 +94,13 @@ export function Chiffre({
         {libelle}
         {detail && (
           <>
-            {' · '}
-            <Box component="span" sx={{ color: 'text.disabled' }}>
+            <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
+              {' · '}
+            </Box>
+            <Box
+              component="span"
+              sx={{ color: 'text.disabled', display: { xs: 'none', md: 'inline' } }}
+            >
               {detail}
             </Box>
           </>
@@ -112,10 +117,12 @@ export function BarreChiffres({ children }: { children: ReactNode }) {
       component="section"
       sx={{
         display: 'grid',
-        overflow: 'hidden',
-        gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'none' },
-        gridAutoFlow: { md: 'column' },
-        gridAutoColumns: { md: 'minmax(0, 1fr)' },
+        // Une seule rangée ; sur téléphone elle défile latéralement plutôt que d'occuper
+        // tout le premier écran.
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        gridAutoFlow: 'column',
+        gridAutoColumns: { xs: 'minmax(128px, 1fr)', md: 'minmax(0, 1fr)' },
         // Filets internes : chaque cellule porte un filet gauche et haut, masqués au bord.
         '& > *': { borderLeft: 1, borderTop: 1, borderColor: 'divider', ml: '-1px', mt: '-1px' },
       }}
@@ -155,7 +162,15 @@ export function EnTetePage({
           {titre}
         </Typography>
         {sousTitre && (
-          <Typography variant="body2" component="p" sx={{ color: 'text.secondary' }}>
+          <Typography
+            variant="body2"
+            component="p"
+            // Sur téléphone, le titre et l'action principale passent avant le contexte.
+            sx={{
+              color: 'text.secondary',
+              display: { xs: actions ? 'none' : 'block', sm: 'block' },
+            }}
+          >
             {sousTitre}
           </Typography>
         )}

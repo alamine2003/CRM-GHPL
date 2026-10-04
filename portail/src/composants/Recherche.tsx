@@ -64,6 +64,7 @@ export function BarrePagination({
   const debut = total === 0 ? 0 : (page - 1) * taille + 1;
   const fin = Math.min(total, page * taille);
   const nombre = (n: number) => n.toLocaleString(i18n.language);
+  if (total === 0) return null;
   return (
     <Stack
       direction={{ xs: 'column', sm: 'row' }}

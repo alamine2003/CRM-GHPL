@@ -157,11 +157,11 @@ function FicheCompte({
           <CloseRounded />
         </IconButton>
       </Stack>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
+      <Stack direction="row" sx={{ alignItems: 'baseline', columnGap: 0.75 }}>
         <Etat actif={compte.actif} />
         {compte.pays_principal && (
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            · {compte.pays_principal.nom}
+            {`· ${compte.pays_principal.nom}`}
           </Typography>
         )}
       </Stack>
@@ -213,7 +213,6 @@ function FicheCompte({
           <Button
             variant="outlined"
             size="small"
-            color="warning"
             onClick={() =>
               void agir(
                 () => client.comptes.operation(compte.id, 'reinitialiser_double_auth'),
@@ -663,7 +662,7 @@ function ListeComptes({
           >
             <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 1 }}>
               <Personne compte={c} detail={c.identifiant} />
-              <Etat actif={c.actif} />
+              {!c.actif && <Etat actif={false} />}
             </Stack>
             <Box sx={{ mt: 0.5 }}>
               <PastillesRoles roles={c.roles} />

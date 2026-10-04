@@ -358,20 +358,17 @@ function FicheProspect({
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   {[p.type_libelle, p.specialite_libelle].filter(Boolean).join(' · ')}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: 600,
-                    color:
-                      p.statut === 'a_valider'
-                        ? 'warning.main'
-                        : p.statut === 'actif'
-                          ? 'success.main'
-                          : 'text.secondary',
-                  }}
-                >
-                  {t(`prospect.statuts.${p.statut}`)}
-                </Typography>
+                {p.statut !== 'actif' && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: p.statut === 'a_valider' ? 'warning.main' : 'text.secondary',
+                    }}
+                  >
+                    {t(`prospect.statuts.${p.statut}`)}
+                  </Typography>
+                )}
               </Stack>
             </Box>
             <IconButton aria-label={t('commun.fermer')} onClick={surFermer}>

@@ -385,7 +385,7 @@ export function ProspectsExercant({ etablissement }: { etablissement: string }) 
             <Tooltip title={t('exercice.lieuPrincipal')}>
               <StarRounded
                 fontSize="small"
-                color="secondary"
+                sx={{ color: 'text.secondary' }}
                 aria-label={t('exercice.lieuPrincipal')}
               />
             </Tooltip>

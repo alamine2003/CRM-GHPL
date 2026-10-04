@@ -1608,7 +1608,7 @@ describe('portail — listes cibles (PRP-011)', () => {
       await screen.findByRole('option', { name: /VM Fann · Poste vacant/ }),
     ).toBeInTheDocument();
     fireEvent.keyDown(screen.getByRole('listbox'), { key: 'Escape' });
-    expect(screen.getByText('Repère du poste : 6 à 10 par jour')).toBeInTheDocument();
+    expect(screen.getByText('Repère 6–10')).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole('button', { name: 'Une visite de plus par cycle · Dr Awa NDIAYE' }),
     );
