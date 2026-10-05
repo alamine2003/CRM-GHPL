@@ -41,6 +41,24 @@ const cleSemaine = (jour?: string) => {
   return `semaine.${jourIso(d)}`;
 };
 
+/**
+ * Une saisie interrompue ne se reprend que sur un planning modifiable, et seulement si ce
+ * qu'elle modifiait existe encore (retiré depuis le portail, par exemple).
+ */
+function empechementBrouillon(
+  b: Brouillon,
+  semaine: Semaine,
+  t: ReturnType<typeof useTranslation>['t'],
+) {
+  if (b.semaine !== semaine.semaine) return undefined;
+  if (!semaine.planning || !semaine.modifiable) return t('brouillon.nonModifiable');
+  const disparu =
+    b.objet === 'visite'
+      ? !!b.visite && !semaine.visites.some((v) => v.id === b.visite)
+      : !!b.absence && !semaine.absences.some((a) => a.id === b.absence);
+  return disparu ? t('brouillon.disparu') : undefined;
+}
+
 const jourIso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -345,6 +363,7 @@ export default function EcranSemaine() {
       {brouillon && semaine && (
         <BandeauBrouillon
           brouillon={brouillon}
+          empechement={empechementBrouillon(brouillon, semaine, t)}
           surReprendre={() => reprendreBrouillon(brouillon)}
           surAbandonner={() => {
             void oublierBrouillon();
@@ -375,7 +394,11 @@ export default function EcranSemaine() {
             {semaine.planning ? (
               <>
                 <Texte>{t(`semaine.statuts.${semaine.planning.statut}`)}</Texte>
-                <EtatSoumission planning={semaine.planning} modifiable={modifiable} />
+                <EtatSoumission
+                  planning={semaine.planning}
+                  modifiable={modifiable}
+                  fuseau={semaine.fuseau}
+                />
                 <Texte variante="discret">
                   {visites.length === 0
                     ? modifiable

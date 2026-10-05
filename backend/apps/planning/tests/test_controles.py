@@ -13,7 +13,6 @@ from apps.planning import controles, services
 from apps.planning.models import Visite
 from apps.prospects.ciblage import ajouter
 from apps.prospects.services import creer_etablissement, creer_exercice, creer_prospect
-from apps.socle.erreurs import ErreurMetier
 
 from .conftest import SEMAINE, valeur
 
@@ -46,6 +45,10 @@ def visite(terrain, prospect=None, jour=MARDI, heure=None, planning=None, **cham
     )  # fmt: skip
 
 
+def soumettre(terrain):
+    return f"/api/v1/plannings/{terrain['planning'].pk}/soumettre/"
+
+
 def codes(anomalies):
     return sorted(a.code for a in anomalies)
 
@@ -56,9 +59,12 @@ def test_ca1_deux_visites_a_la_meme_heure_sont_bloquantes(monde, terrain):
     (anomalie,) = controles.bloquants(terrain["planning"])
     assert anomalie.code == "meme_heure" and anomalie.heure == "09:00"
     assert sorted(anomalie.visites) == sorted([str(a.pk), str(b.pk)])
-    with pytest.raises(ErreurMetier) as refus:
-        controles.exiger_sans_bloquant(terrain["planning"])
-    assert refus.value.code == "planning_bloque"
+    # Refusées à la soumission, avec l'heure et les visites en cause.
+    org.rattacher(terrain["poste"], monde["sup.sn"], date(2026, 1, 1))
+    r = client_de(monde["deleg.sn"]).post(soumettre(terrain))
+    assert r.status_code == 400 and r.json()["code"] == "planning_bloque"
+    (refus,) = r.json()["details"]["anomalies"]
+    assert (refus["code"], refus["heure"]) == ("meme_heure", "09:00")
     # Les visites d'un même passage partagent leur heure : ce n'est pas un conflit.
     services.regrouper(terrain["planning"], [a, b])
     assert controles.bloquants(terrain["planning"]) == []
@@ -108,7 +114,12 @@ def test_ca2_les_seuils_du_jour_sont_signales_au_prorata_des_absences(monde, ter
         visite(terrain, medecin(monde, terrain, f"Confrere{n}"), heure=time(8 + n % 10, 30))
     hauts = [a for a in controles.signalements(terrain["planning"]) if a.code == "seuil_haut"]
     assert [(a.date, a.nombre, a.max) for a in hauts] == [(MARDI, 11, 10)]
-    controles.exiger_sans_bloquant(terrain["planning"])
+    org.rattacher(terrain["poste"], monde["sup.sn"], date(2026, 1, 1))
+    r = client_de(monde["deleg.sn"]).post(soumettre(terrain))
+    assert r.status_code == 200 and r.json()["statut"] == "soumis"
+    # … et reste dit pour le superviseur (sa revue arrive au cycle 0.3).
+    terrain["planning"].refresh_from_db()
+    assert "seuil_haut" in codes(controles.signalements(terrain["planning"]))
 
 
 def test_un_jour_ferie_ou_une_journee_d_absence_sort_des_seuils(monde, terrain):
@@ -147,6 +158,13 @@ def test_rg016_prospect_a_non_planifie_dans_le_mois(monde, terrain):
     fin = services.creer_planning(monde["sn"], monde["deleg.sn"], date(2026, 10, 26))
     (oubli,) = [a for a in controles.signalements(fin) if a.code == "a_non_planifie"]
     assert oubli.mois == "2026-10" and oubli.date == date(2026, 10, 30)
+    assert [p["id"] for p in oubli.prospects] == [str(oublie.pk)]
+    # Ciblé aussi par un second poste du délégué, il n'est nommé qu'une fois (0.2.9).
+    second = org.creer_poste(monde["sn"], "vm", "VM Plateau 2", [terrain["cardio"]],
+                             [terrain["secteur"]])  # fmt: skip
+    org.occuper(second, monde["deleg.sn"], date(2026, 1, 1))
+    ajouter(second, [oublie], monde["admin.sn"])
+    (oubli,) = [a for a in controles.signalements(fin) if a.code == "a_non_planifie"]
     assert [p["id"] for p in oubli.prospects] == [str(oublie.pk)]
 
 

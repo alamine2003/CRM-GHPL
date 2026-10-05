@@ -10,31 +10,42 @@ import { View } from 'react-native';
 import { Alerte, Bouton, Carte, Etiquette, Texte, usePalette } from './composants';
 import { messageErreur, useSession } from './session';
 
-/** « jeudi 8 octobre à 18:00 », dans la langue du délégué. */
-export function dateHeure(iso: string, langue: string) {
-  return new Intl.DateTimeFormat(langue, {
+/**
+ * « jeudi 8 octobre à 18:00 », dans la langue du délégué et à l'heure du pays (l'échéance est
+ * « jeudi 18 h, heure du pays », quel que soit le réglage du téléphone).
+ */
+export function dateHeure(iso: string, langue: string, fuseau?: string) {
+  const options: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(iso));
+  };
+  try {
+    return new Intl.DateTimeFormat(langue, { ...options, timeZone: fuseau }).format(new Date(iso));
+  } catch {
+    // Fuseau inconnu du moteur : l'heure du téléphone plutôt que rien.
+    return new Intl.DateTimeFormat(langue, options).format(new Date(iso));
+  }
 }
 
 /** Ligne d'état sous le statut : l'échéance tant qu'on prépare, la date de soumission après. */
 export function EtatSoumission({
   planning,
   modifiable,
+  fuseau,
 }: {
   planning: NonNullable<Semaine['planning']>;
   modifiable: boolean;
+  fuseau: string;
 }) {
   const { t, i18n } = useTranslation();
   if (planning.soumis_le && !modifiable) {
     return (
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 8 }}>
         <Texte variante="discret">
-          {t('soumission.soumisLe', { date: dateHeure(planning.soumis_le, i18n.language) })}
+          {t('soumission.soumisLe', { date: dateHeure(planning.soumis_le, i18n.language, fuseau) })}
         </Texte>
         {planning.en_retard && <Etiquette>{t('soumission.enRetard')}</Etiquette>}
       </View>
@@ -45,7 +56,7 @@ export function EtatSoumission({
   return (
     <Texte variante="discret">
       {t(passee ? 'soumission.echeancePassee' : 'soumission.echeance', {
-        date: dateHeure(planning.echeance, i18n.language),
+        date: dateHeure(planning.echeance, i18n.language, fuseau),
       })}
     </Texte>
   );

@@ -44,6 +44,7 @@ const SEMAINE: Semaine = {
   precedente: '2026-10-19',
   suivante: '2026-11-02',
   courante: false,
+  fuseau: 'Africa/Dakar',
   jours: [
     { date: '2026-10-26', ferie: null, planifiable: true },
     { date: '2026-10-27', ferie: null, planifiable: true },
@@ -823,4 +824,54 @@ test('ORG-007 CA1 : le refus du serveur se lit sur la carte de soumission', asyn
   await fireEvent.press(screen.getByText('Oui, soumettre'));
   expect(await screen.findByText('Votre poste n’est rattaché à aucun superviseur.')).toBeTruthy();
   expect(screen.getByText('Oui, soumettre')).toBeTruthy();
+});
+
+test('PLN-007 : la saisie d’une visite retirée depuis ne se reprend pas', async () => {
+  mockMemoire.set('planning.brouillon', {
+    valeur: {
+      objet: 'visite',
+      semaine: '2026-10-26',
+      visite: 'v-retiree',
+      champs: {
+        date: '2026-10-28',
+        heure: '9h',
+        prospect: null,
+        lieu: null,
+        reseau: 'r1',
+        objectif: 'Remettre les échantillons',
+        note: '',
+      },
+    },
+    maj: '2026-10-26T08:00:00.000Z',
+  });
+  await rendre({ semaine: jest.fn(async () => EN_PREPARATION) });
+  expect(
+    await screen.findByText(
+      "Ce qu'elle modifiait a été retiré depuis : elle ne peut plus être reprise.",
+    ),
+  ).toBeTruthy();
+  expect(screen.queryByText('Reprendre la saisie')).toBeNull();
+  await fireEvent.press(screen.getByText('Abandonner cette saisie'));
+  expect(mockMemoire.has('planning.brouillon')).toBe(false);
+});
+
+test('PLN-004 : prospect et lieu inactifs ensemble se disent chacun', async () => {
+  await rendre({
+    semaine: jest.fn(async () => ({
+      ...EN_PREPARATION,
+      controles: {
+        bloquants: (['prospect', 'etablissement'] as const).map((fiche) => ({
+          code: 'fiche_inactive' as const,
+          gravite: 'bloquant' as const,
+          date: '2026-10-27',
+          visites: ['v1'],
+          fiche,
+        })),
+        signalements: [],
+        objectifs: [],
+      },
+    })),
+  });
+  expect(await screen.findByText('Fiche du prospect devenue inactive')).toBeTruthy();
+  expect(screen.getByText('Fiche du lieu devenue inactive')).toBeTruthy();
 });

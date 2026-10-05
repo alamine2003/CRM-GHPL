@@ -27,6 +27,7 @@ import {
   useLien,
   usePalette,
 } from './composants';
+import type { Alerte as AlerteVisite } from './Controles';
 import { Pilule } from './Etablissements';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
@@ -86,7 +87,7 @@ export function LigneVisite({
   onPress?: () => void;
   dansPassage?: boolean;
   /** Contrôles qui concernent cette visite (PLN-004). */
-  alertes?: { texte: string; ton: 'erreur' | 'attention' }[];
+  alertes?: AlerteVisite[];
 }) {
   const { t } = useTranslation();
   const p = usePalette();
@@ -133,7 +134,7 @@ export function LigneVisite({
         ) : null}
         {alertes.map((a) => (
           <Text
-            key={a.texte}
+            key={a.cle}
             style={[styles.manquants, { color: a.ton === 'erreur' ? p.erreur : p.attention }]}
           >
             {a.texte}

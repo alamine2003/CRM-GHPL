@@ -1,5 +1,7 @@
 """DEM-001 : instance de démonstration réinitialisable, aux données fictives."""
 
+from datetime import timedelta
+
 import pytest
 from django.core.management import CommandError, call_command
 
@@ -47,15 +49,18 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     from apps.planning.models import JourFerie
 
     assert JourFerie.objects.filter(pays__code="SN", libelle="Toussaint").count() == 2
-    # Une semaine en préparation avec ses visites, dont une à compléter (PLN-001, PLN-002).
-    from apps.planning.models import Visite
+    # Deux semaines du premier délégué (cycle 0.2) : la semaine en cours soumise à temps
+    # (PLN-008), la suivante en préparation, dont une visite à compléter (PLN-001, PLN-002).
+    from apps.planning.models import Absence, Passage, Planning
 
-    visites = Visite.objects.filter(pays__code="SN")
-    assert visites.count() == 6 and visites.filter(heure__isnull=True).count() == 1
-    # Un passage de deux confrères et une demi-journée de formation (PLN-003, PLN-009).
-    from apps.planning.models import Absence, Passage
-
-    assert Passage.objects.filter(pays__code="SN").get().visites.count() == 2
+    soumis, prepare = Planning.objects.filter(pays__code="SN").order_by("semaine")
+    assert (soumis.statut, soumis.en_retard, prepare.statut) == ("soumis", False, "brouillon")
+    assert soumis.soumis_le is not None and prepare.semaine == soumis.semaine + timedelta(days=7)
+    assert soumis.visites.count() == 6 and not soumis.visites.filter(heure__isnull=True).exists()
+    assert prepare.visites.count() == 6 and prepare.visites.filter(heure__isnull=True).count() == 1
+    # Chaque semaine a son passage de deux confrères ; la formation est à préparer (PLN-003,
+    # PLN-009).
+    assert [p.visites.count() for p in Passage.objects.filter(pays__code="SN")] == [2, 2]
     assert Absence.objects.filter(pays__code="SN", periode="apres_midi").count() == 1
 
 

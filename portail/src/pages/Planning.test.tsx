@@ -1,7 +1,9 @@
 import type { ClientApi, Semaine, Visite } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import axe from 'axe-core';
 import { createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ContexteNotifications } from '../contexteNotifications';
 import { ContexteSession, type Session } from '../contexteSession';
 import i18n from '../i18n';
 import Planning from './Planning';
@@ -34,6 +36,7 @@ const SEMAINE: Semaine = {
   precedente: '2026-10-19',
   suivante: '2026-11-02',
   courante: false,
+  fuseau: 'Africa/Dakar',
   jours: [
     { date: '2026-10-26', ferie: null, planifiable: true },
     { date: '2026-10-27', ferie: null, planifiable: true },
@@ -97,16 +100,32 @@ const LISTES = [
   },
 ];
 
+/** Les notifications passent par le cadre de l'application : ici, on les relève. */
+const notifier = vi.fn();
+
 function rendre(client: Partial<Record<keyof ClientApi, unknown>>) {
   const session = { etat: { statut: 'chargement' }, client } as unknown as Session;
   return render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <ContexteSession.Provider value={session}>
-        <Planning />
-      </ContexteSession.Provider>
+      <ContexteNotifications.Provider value={notifier}>
+        <ContexteSession.Provider value={session}>
+          <Planning />
+        </ContexteSession.Provider>
+      </ContexteNotifications.Provider>
     </QueryClientProvider>,
+  );
+}
+
+/** WCAG 2.1 A et AA ; le contraste, que jsdom ne calcule pas, est vérifié dans le thème. */
+async function violations(conteneur: Element) {
+  const resultat = await axe.run(conteneur, {
+    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
+    rules: { 'color-contrast': { enabled: false } },
+  });
+  return resultat.violations.map(
+    (v) => `${v.id} : ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
   );
 }
 
@@ -129,6 +148,7 @@ function deposer(source: HTMLElement, cible: HTMLElement) {
 }
 
 beforeEach(async () => {
+  notifier.mockClear();
   await i18n.changeLanguage('fr');
 });
 
@@ -242,5 +262,65 @@ describe('PLN-006 : vue semaine du portail', () => {
     expect(await screen.findByText(/^Soumis le /)).toBeTruthy();
     expect(screen.getByText('En retard')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Soumettre le planning' })).toBeNull();
+  });
+
+  it('accessibilité : la semaine en préparation et la confirmation de soumission (WCAG 2.1 AA)', async () => {
+    const pret = { ...SEMAINE, controles: { ...SEMAINE.controles!, bloquants: [] } };
+    const { container } = rendre({
+      plannings: { semaine: vi.fn(async () => pret) },
+      ciblage: { mesListes: vi.fn(async () => LISTES) },
+    });
+    await screen.findByText('Dr Moussa EXEMPLE');
+    expect(await violations(container)).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Soumettre le planning' }));
+    expect(await violations(await screen.findByRole('dialog'))).toEqual([]);
+  });
+
+  it('PLN-005 CA2 : la reprise dit les visites reprises et les jours sautés', async () => {
+    const reprendre = vi.fn(async () => ({
+      copiees: 2,
+      ignorees: [{ visite: 'x', date: '2026-10-30', raison: 'jour_ferie' as const }],
+    }));
+    rendre({
+      plannings: {
+        semaine: vi.fn(async () => ({ ...SEMAINE, visites: [], reprenables: 3 })),
+        reprendre,
+      },
+      ciblage: { mesListes: vi.fn(async () => LISTES) },
+    });
+    const bouton = await screen.findByRole('button', { name: /Reprendre/ });
+    fireEvent.click(bouton);
+    await waitFor(() =>
+      expect(notifier).toHaveBeenCalledWith(
+        '2 visites reprises de la semaine précédente. ' +
+          "1 visite non reprise (ven. 30 : jour férié ou d'absence).",
+      ),
+    );
+    expect(reprendre).toHaveBeenCalledTimes(1);
+  });
+
+  it('PLN-008 : le message de soumission suit la réponse du serveur, pas l’horloge du navigateur', async () => {
+    // Échéance passée pour le navigateur, mais le serveur l'a reçue à temps.
+    const pret = {
+      ...SEMAINE,
+      planning: { ...SEMAINE.planning!, echeance: '2026-01-01T18:00:00Z' },
+      controles: { ...SEMAINE.controles!, bloquants: [] },
+    };
+    const soumettre = vi.fn(async () => ({
+      ...SEMAINE.planning!,
+      statut: 'soumis' as const,
+      en_retard: false,
+    }));
+    rendre({
+      plannings: { semaine: vi.fn(async () => pret), soumettre },
+      ciblage: { mesListes: vi.fn(async () => LISTES) },
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Soumettre le planning' }));
+    fireEvent.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Oui, soumettre' }),
+    );
+    await waitFor(() =>
+      expect(notifier).toHaveBeenCalledWith('Planning soumis à votre superviseur.'),
+    );
   });
 });

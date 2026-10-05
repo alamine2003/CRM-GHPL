@@ -2,6 +2,54 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.9] — Stabilisation et démonstration du cycle 0.2
+
+Neuvième et dernier jalon du cycle 0.2 « Planning ».
+
+### Recette du cycle
+
+- **Matrice de recette** [`recette-0.2.md`](recette-0.2.md) : chaque critère d'acceptation des 11 exigences du cycle (ORG-012, PLN-001 à PLN-010), plus ORG-007 CA1 reporté du cycle 0.0, est relié au test qui le prouve. Aucun critère non couvert ; trois partiels attendent la validation des plannings (0.3) et les rapports (0.5).
+- **Trous comblés** :
+  - PLN-002 CA1 : le refus de soumission donne désormais les champs manquants de chaque visite (et la fiche ou l'heure en cause pour les autres points) ; l'ancienne garde, que la soumission n'appelait pas, est retirée ;
+  - PLN-004 CA1 et CA2 : prouvés par la route de soumission elle-même ;
+  - analyse d'accessibilité (WCAG 2.1 AA) de la page Planning et du dialogue de soumission.
+
+### Corrigé — revue du code du cycle
+
+- **Jour devenu férié ou d'absence** (PLN-001 CA2, RG-022) : une visite posée avant l'annonce d'un jour férié, ou d'une absence toute la journée, bloque désormais la soumission (« à déplacer »). Elle passait sans rien dire.
+- **Matin et après-midi d'absence** valent une journée entière : le jour ne reçoit plus de visite, et la seconde demi-journée ne se déclare pas sur un jour qui en a.
+- **Commandes concurrentes** : chaque commande relit le statut du planning sous verrou. Une soumission ne laisse plus entrer une visite rejouée par le téléphone au même moment, et un double clic sur « Reprendre la semaine précédente » ne duplique plus les visites (le bouton du portail attend aussi la réponse).
+- **File d'attente du téléphone** (PLN-007) : un seul rejeu à la fois ; un envoi mis en attente pendant un rejeu n'est plus écrasé, et deux rejeux simultanés n'envoient plus la même visite deux fois.
+- **Saisie interrompue** : elle ne se reprend plus si la visite qu'elle modifiait a été retirée entre-temps (elle en recréait une), ou si le planning n'est plus modifiable.
+- **Heure du pays** : l'échéance et la date de soumission s'affichent dans le fuseau du pays, quel que soit le réglage de l'appareil.
+- **Portail** :
+  - la reprise annonce les visites vraiment reprises et les jours sautés (elle comptait aussi les visites ignorées) ;
+  - le message de soumission suit la réponse du serveur, pas l'horloge du navigateur.
+- **Contrôles** : prospect et lieu inactifs ensemble se disent chacun (« Fiche du prospect… », « Fiche du lieu… ») ; un prospect A ciblé par deux postes n'est nommé qu'une fois.
+- **Poser depuis la liste cible** : le lieu « à valider » créé par un autre n'est plus proposé comme lieu principal.
+- **Traçabilité** : l'ordre de la journée et les passages gardent la version et le journal des changements de chaque visite (support de la synchronisation, cycle 0.8) ; les modifications de visite et d'absence sont auditées.
+
+### À trancher
+
+- Un poste occupé une partie de la semaine seulement (arrivée le mercredi, départ le mardi) : aujourd'hui, l'occupation se lit au lundi (prd.md §14.16).
+
+### Démonstration (DEM-001)
+
+- La base de démonstration raconte le cycle : la **semaine en cours** du premier délégué est déjà **soumise à temps**, la **suivante** est **en préparation** (une visite à compléter, un passage, une demi-journée de formation), avec son échéance à venir.
+- **Accueil du délégué** : la carte « Ma semaine » (portail et téléphone) dit où en sont cette semaine et la suivante, avec l'échéance, et ouvre le planning. Elle remplace le texte « La préparation du planning arrive en version 0.2.1 ».
+- **Scénario de fin de cycle** : [`demonstration-0.2.md`](demonstration-0.2.md).
+- L'accueil annonce « Cycle 0.2 terminé » et le cycle 0.3 « Validation des plannings ».
+
+### Design
+
+Revue sur le rendu réel de la démonstration : mobile à 360 px et à 390 px en thème sombre, portail bureau, tablette, téléphone et sombre. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Accueil du délégué (portail) | « La préparation du planning arrive en version 0.2.1 » : texte resté de l'avant-cycle | Carte « Ma semaine » : état des deux semaines, échéance, « Ouvrir le planning » |
+| Accueil du délégué (téléphone) | Rien sur le planning, seulement « Tournée : prochainement » | Même carte, en tête ; chaque ligne ouvre sa semaine |
+| Semaine de démonstration | La semaine préparée était déjà en retard le jour même | Semaine en cours soumise à temps, suivante à préparer avant jeudi |
+
 ## [0.2.8] — Soumission du planning, marquage en retard, builds de test
 
 Huitième jalon du cycle 0.2 « Planning ».

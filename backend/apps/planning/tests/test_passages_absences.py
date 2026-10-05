@@ -166,15 +166,23 @@ def test_pln009_ca1_une_demi_journee_reduit_de_moitie_les_seuils(monde, terrain)
     planning = terrain["planning"]
     jour = Absence.objects.get().date
     assert services.part_travaillee(planning, jour) == 0.5
-    # L'après-midi se déclare aussi ; la journée entière ne chevauche pas.
+    # La journée entière chevauche le matin.
     r = deleg.post(absences(terrain), {"date": "2026-10-15", "periode": "journee",
                                        "type": "conge"}, format="json")  # fmt: skip
     assert r.status_code == 409 and r.json()["code"] == "absence_chevauchement"
-    deleg.post(absences(terrain), {"date": "2026-10-15", "periode": "apres_midi",
-                                   "type": "reunion"}, format="json")  # fmt: skip
+    # Une demi-journée d'absence laisse planifier des visites ce jour-là…
+    visite = poser(deleg, terrain, date="2026-10-15")
+    # … mais l'autre demi-journée ferait une journée entière : pas avec une visite (0.2.9).
+    apres_midi = {"date": "2026-10-15", "periode": "apres_midi", "type": "reunion"}
+    r = deleg.post(absences(terrain), apres_midi, format="json")
+    assert r.status_code == 409 and r.json()["code"] == "absence_avec_visites"
+    deleg.post(f"/api/v1/visites/{visite['id']}/retirer/")
+    assert deleg.post(absences(terrain), apres_midi, format="json").status_code == 201
     assert services.part_travaillee(planning, jour) == 0.0
-    # Une demi-journée d'absence laisse planifier des visites ce jour-là.
-    poser(deleg, terrain, date="2026-10-15")
+    # Matin et après-midi : la journée ne reçoit plus de visite.
+    r = deleg.post(f"/api/v1/plannings/{planning.pk}/visites/", {"date": "2026-10-15"},
+                   format="json")  # fmt: skip
+    assert r.status_code == 400 and r.json()["code"] == "jour_absent"
     semaine = deleg.get(SEMAINE, {"semaine": "2026-10-12"}).json()
     assert [a["periode"] for a in semaine["absences"]] == ["apres_midi", "matin"]
     assert EvenementAudit.objects.filter(action="absence.declaration").count() == 2

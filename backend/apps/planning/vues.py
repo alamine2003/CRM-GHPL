@@ -119,6 +119,7 @@ class SemaineVue(VuePlannings):
             "precedente": debut - timedelta(days=7),
             "suivante": debut + timedelta(days=7),
             "courante": debut == courante,
+            "fuseau": pays.fuseau,
             "jours": [
                 {
                     "date": j.date,

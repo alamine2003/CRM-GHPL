@@ -2290,6 +2290,7 @@ export interface components {
      *     * `sans_exercice` - sans_exercice
      *     * `meme_heure` - meme_heure
      *     * `meme_prospect` - meme_prospect
+     *     * `jour_non_planifiable` - jour_non_planifiable
      *     * `seuil_bas` - seuil_bas
      *     * `seuil_haut` - seuil_haut
      *     * `hors_cible` - hors_cible
@@ -2305,6 +2306,7 @@ export interface components {
       | 'sans_exercice'
       | 'meme_heure'
       | 'meme_prospect'
+      | 'jour_non_planifiable'
       | 'seuil_bas'
       | 'seuil_haut'
       | 'hors_cible'
@@ -3526,6 +3528,7 @@ export interface components {
       /** Format: date */
       suivante: string;
       courante: boolean;
+      fuseau: string;
       jours: components['schemas']['JourSemaine'][];
       planning: components['schemas']['Planning'] | null;
       peut_creer: boolean;

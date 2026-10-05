@@ -151,24 +151,17 @@ def champs_manquants(visite: Visite) -> list[str]:
     return [champ for champ in CHAMPS_EXIGES if not getattr(visite, champ)]
 
 
-def exiger_complet(planning: Planning) -> None:
-    """CA1 : la soumission (0.2.8) refuse un planning dont une visite est incomplète, avec la
-    liste des champs manquants de chacune."""
-    incompletes = [
-        {"visite": str(v.pk), "date": str(v.date), "manquants": manquants}
-        for v in planning.visites.filter(archive_le__isnull=True)
-        if (manquants := champs_manquants(v))
-    ]
-    if incompletes:
-        raise ErreurMetier(
-            "planning_incomplet",
-            _("Des visites sont incomplètes : complétez les champs indiqués avant de soumettre."),
-            status.HTTP_400_BAD_REQUEST,
-            visites=incompletes,
-        )
+def _verrouiller(planning: Planning) -> None:
+    """Sérialise les commandes sur un même planning (0.2.9) : une soumission et le rejeu de la
+    file du téléphone, ou deux reprises lancées par un double clic, ne se croisent pas. Le
+    statut est relu sous le verrou."""
+    planning.statut = (
+        Planning.objects.select_for_update().values_list("statut", flat=True).get(pk=planning.pk)
+    )
 
 
 def _exiger_modifiable(planning: Planning) -> None:
+    _verrouiller(planning)
     if planning.statut not in MODIFIABLES:
         raise ErreurMetier(
             "planning_non_modifiable",
@@ -241,6 +234,15 @@ def _appliquer(visite: Visite, champs: dict) -> None:
             setattr(visite, cle, (champs[cle] or "").strip())
 
 
+def _changer(visites, **champs) -> None:
+    """Change quelques visites une à une, et non par `update()` : chacune garde sa version et
+    sa ligne du journal des changements, dont la synchronisation tirera le fil (§13)."""
+    for visite in visites:
+        for cle, valeur in champs.items():
+            setattr(visite, cle, valeur)
+        visite.save(update_fields=list(champs))
+
+
 def _visites_du_jour(planning: Planning, jour: date):
     return planning.visites.filter(archive_le__isnull=True, date=jour).order_by("ordre", "cree_le")
 
@@ -273,7 +275,7 @@ def ranger(planning: Planning, jour: date, ordre: list | None = None) -> None:
         for v in unite:
             rang += 1
             if v.ordre != rang:
-                Visite.objects.filter(pk=v.pk).update(ordre=rang)
+                _changer([v], ordre=rang)
 
 
 def _dernier_rang(planning: Planning, jour: date) -> int:
@@ -299,7 +301,8 @@ def _accorder_passage(visite: Visite) -> Passage | None:
             # L'heure d'une visite du passage est celle du passage : elle change pour toutes.
             ancien.heure = visite.heure
             ancien.save(update_fields=["heure", "modifie_le"])
-            ancien.visites.filter(archive_le__isnull=True).update(heure=visite.heure)
+            _changer(ancien.visites.filter(archive_le__isnull=True).exclude(pk=visite.pk),
+                     heure=visite.heure)  # fmt: skip
         else:
             visite.heure = visite.passage.heure
     return ancien if ancien is not None and visite.passage != ancien else None
@@ -308,7 +311,7 @@ def _accorder_passage(visite: Visite) -> Passage | None:
 def _dissoudre_si_seul(passage: Passage | None) -> None:
     """Un passage n'a de sens qu'à partir de deux visites."""
     if passage is not None and passage.visites.filter(archive_le__isnull=True).count() < 2:
-        passage.visites.update(passage=None)
+        _changer(passage.visites.all(), passage=None)
         passage.archiver()
 
 
@@ -329,6 +332,7 @@ def _deja_envoye(modele, planning: Planning, identifiant):
 
 @transaction.atomic
 def ajouter_visite(planning: Planning, id=None, **champs) -> Visite:
+    _verrouiller(planning)
     if existante := _deja_envoye(Visite, planning, id):
         return existante
     _exiger_modifiable(planning)
@@ -355,6 +359,8 @@ def modifier_visite(visite: Visite, **champs) -> Visite:
     if visite.date != avant:
         visite.ordre = _dernier_rang(visite.planning, visite.date) + 1
     visite.save()
+    _auditer("visite.modification", visite, planning=str(visite.planning_id),
+             champs=sorted(champs))  # fmt: skip
     _dissoudre_si_seul(quitte)
     ranger(visite.planning, visite.date)
     if visite.date != avant:
@@ -454,12 +460,21 @@ def soumettre(planning: Planning) -> Planning:
 # --- Copier, reprendre, poser depuis la liste cible (PLN-005) ---------------------------------
 
 
-def lieu_principal(prospect, jour: date):
-    """Établissement principal du prospect ce jour-là, sinon son plus ancien lieu actif."""
-    from apps.prospects.models import Exercice
+def lieu_principal(prospect, jour: date, delegue=None):
+    """Établissement principal du prospect ce jour-là, sinon son plus ancien lieu actif ; un
+    lieu « à valider » ne compte que pour son auteur (PRP-006)."""
+    from django.db.models import Q
+
+    from apps.prospects.models import Exercice, StatutFiche
 
     exercice = (
-        Exercice.objects.filter(actif_le(jour), prospect=prospect)
+        Exercice.objects.filter(
+            actif_le(jour), prospect=prospect, etablissement__archive_le__isnull=True
+        )
+        .filter(
+            Q(etablissement__statut=StatutFiche.ACTIF)
+            | Q(etablissement__statut=StatutFiche.A_VALIDER, etablissement__cree_par=delegue)
+        )  # fmt: skip
         .select_related("etablissement")
         .order_by("-principal", "debut")
         .first()
@@ -472,7 +487,9 @@ def poser_depuis_cible(planning: Planning, jour: date, prospects: list) -> list[
     """CA1 : des prospects de la liste cible posés sur un jour deviennent des visites
     pré-remplies — prospect et établissement principal ; le reste se complète ensuite."""
     return [
-        ajouter_visite(planning, date=jour, prospect=p, etablissement=lieu_principal(p, jour))
+        ajouter_visite(
+            planning, date=jour, prospect=p, etablissement=lieu_principal(p, jour, planning.delegue)
+        )
         for p in prospects
     ]
 
@@ -520,8 +537,7 @@ def reprendre_semaine_precedente(planning: Planning) -> dict:
             status.HTTP_404_NOT_FOUND,
         )
     jours = {j.date: j for j in jours_de_la_semaine(planning.pays, planning.semaine)}
-    absents = set(planning.absences.filter(archive_le__isnull=True, periode=Periode.JOURNEE)
-                  .values_list("date", flat=True))  # fmt: skip
+    absents = {j for j in jours if jour_absent(planning, j)}
     copies: list[Visite] = []
     ignorees: list[dict] = []
     par_passage: dict = {}
@@ -585,9 +601,8 @@ def regrouper(planning: Planning, visites: list[Visite]) -> Passage:
             heure=min(heures) if heures else None,
         )  # fmt: skip
         _auditer("passage.creation", passage, planning=str(planning.pk), date=str(jour))
-    Visite.objects.filter(pk__in=[v.pk for v in visites]).update(
-        passage=passage, heure=passage.heure
-    )
+    _changer(Visite.objects.filter(pk__in=[v.pk for v in visites]), passage=passage,
+             heure=passage.heure)  # fmt: skip
     ranger(planning, jour)
     return passage
 
@@ -596,7 +611,7 @@ def regrouper(planning: Planning, visites: list[Visite]) -> Passage:
 def dissocier(passage: Passage) -> Passage:
     """Les visites redeviennent indépendantes et gardent l'heure du passage."""
     _exiger_modifiable(passage.planning)
-    passage.visites.update(passage=None)
+    _changer(passage.visites.all(), passage=None)
     passage.archiver()
     _auditer("passage.dissociation", passage, planning=str(passage.planning_id),
              date=str(passage.date))  # fmt: skip
@@ -616,10 +631,14 @@ def part_travaillee(planning: Planning, jour: date) -> float:
     return max(0.0, 1.0 - sum(PART_ABSENTE[a.periode] for a in absences))
 
 
+def jour_absent(planning: Planning, jour: date) -> bool:
+    """Absent toute la journée : une absence « journée », ou matin et après-midi."""
+    return part_travaillee(planning, jour) == 0
+
+
 def _exiger_present(planning: Planning, jour: date) -> None:
     """Une journée entière d'absence ne reçoit pas de visite."""
-    if planning.absences.filter(archive_le__isnull=True, date=jour,
-                                periode=Periode.JOURNEE).exists():  # fmt: skip
+    if jour_absent(planning, jour):
         raise ErreurMetier(
             "jour_absent",
             _("Vous êtes absent toute cette journée : elle ne reçoit pas de visite."),
@@ -648,7 +667,9 @@ def _verifier_absence(absence: Absence) -> None:
             status.HTTP_409_CONFLICT,
             champ="periode",
         )
-    if absence.periode == Periode.JOURNEE:
+    # Une absence qui couvre la journée entière (seule, ou avec l'autre demi-journée) ne
+    # laisse pas de visite ce jour-là.
+    if PART_ABSENTE[absence.periode] + sum(PART_ABSENTE[a.periode] for a in autres) >= 1:
         nombre = _visites_du_jour(absence.planning, absence.date).count()
         if nombre:
             raise ErreurMetier(
@@ -663,6 +684,7 @@ def _verifier_absence(absence: Absence) -> None:
 @transaction.atomic
 def declarer_absence(planning: Planning, *, date: date, type: str, periode: str = Periode.JOURNEE,
                      commentaire: str = "", id=None) -> Absence:  # fmt: skip
+    _verrouiller(planning)
     if existante := _deja_envoye(Absence, planning, id):
         return existante
     _exiger_modifiable(planning)
@@ -686,6 +708,8 @@ def modifier_absence(absence: Absence, **champs) -> Absence:
         setattr(absence, cle, valeur)
     _verifier_absence(absence)
     absence.save()
+    _auditer("absence.modification", absence, planning=str(absence.planning_id),
+             champs=sorted(champs))  # fmt: skip
     return absence
 
 

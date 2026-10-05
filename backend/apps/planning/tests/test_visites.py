@@ -9,12 +9,10 @@ from freezegun import freeze_time
 
 from apps.organisation import services as org
 from apps.perimetre.tests.conftest import client_de
-from apps.planning import services
 from apps.planning.etats import StatutPlanning
 from apps.planning.models import Planning, Visite
 from apps.planning.services import creer_jour_ferie
 from apps.prospects.services import creer_prospect
-from apps.socle.erreurs import ErreurMetier
 
 from .conftest import SEMAINE, valeur
 
@@ -58,22 +56,24 @@ def test_une_visite_complete_reprend_tous_les_champs(monde, terrain):
 
 def test_ca1_une_visite_incomplete_est_refusee_a_la_soumission(monde, terrain):
     deleg = client_de(monde["deleg.sn"])
+    org.rattacher(terrain["poste"], monde["sup.sn"], date(2026, 1, 1))
+    soumettre = f"/api/v1/plannings/{terrain['planning'].pk}/soumettre/"
     # En préparation, une visite peut rester incomplète : elle dit ce qui lui manque.
     r = deleg.post(url(terrain), {"date": "2026-10-14"}, format="json")
     assert r.status_code == 201
     assert r.json()["manquants"] == ["heure", "prospect", "etablissement", "objectif"]
     deleg.post(url(terrain), complete(terrain), format="json")
-    with pytest.raises(ErreurMetier) as refus:
-        services.exiger_complet(terrain["planning"])
-    assert refus.value.code == "planning_incomplet"
-    assert refus.value.details["visites"] == [
-        {"visite": r.json()["id"], "date": "2026-10-14",
+    # À la soumission, refus avec la liste des champs manquants de chaque visite.
+    refus = deleg.post(soumettre)
+    assert refus.status_code == 400 and refus.json()["code"] == "planning_bloque"
+    assert refus.json()["details"]["anomalies"] == [
+        {"code": "incomplete", "date": "2026-10-14", "visites": [r.json()["id"]],
          "manquants": ["heure", "prospect", "etablissement", "objectif"]},
     ]  # fmt: skip
     # Complétée, elle passe.
     deleg.patch(f"/api/v1/visites/{r.json()['id']}/", complete(terrain, date="2026-10-14",
                 heure="11:00"), format="json")  # fmt: skip
-    services.exiger_complet(terrain["planning"])
+    assert deleg.post(soumettre).status_code == 200
 
 
 def test_une_visite_se_pose_sur_un_jour_ouvre_non_ferie_de_la_semaine(monde, terrain):

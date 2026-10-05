@@ -129,10 +129,12 @@ export default function Planning() {
     new Intl.DateTimeFormat(i18n.language, options).format(new Date(`${iso}T12:00:00`));
   const jourCourt = (iso: string) => date(iso, { weekday: 'short', day: 'numeric' });
 
-  async function agir(action: () => Promise<unknown>, succes?: string) {
+  /** Lance une action, puis dit son résultat ; le message peut dépendre de la réponse. */
+  async function agir<T>(action: () => Promise<T>, succes?: string | ((resultat: T) => string)) {
     try {
-      await action();
-      if (succes) notifier(succes);
+      const resultat = await action();
+      const texte = typeof succes === 'function' ? succes(resultat) : succes;
+      if (texte) notifier(texte);
     } catch (e) {
       notifier(messageErreur(e, t('erreurs.reseau')), 'error');
     }
@@ -254,15 +256,17 @@ function Resume({
   jourCourt,
 }: {
   semaine: Semaine;
-  agir: (action: () => Promise<unknown>, succes?: string) => Promise<void>;
+  agir: <T>(action: () => Promise<T>, succes?: string | ((resultat: T) => string)) => Promise<void>;
   jourCourt: (iso: string) => string;
 }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
+  const [reprise, setReprise] = useState(false);
   const km = s.kilometrage;
   const aCompleter = s.visites.filter((v) => v.manquants.length > 0).length;
   const controles = s.controles;
   const [confirmer, setConfirmer] = useState(false);
+  // À l'heure du pays : l'échéance est « jeudi 18 h, heure du pays » (RG-013).
   const dateHeure = (iso: string) =>
     new Intl.DateTimeFormat(i18n.language, {
       weekday: 'long',
@@ -270,6 +274,7 @@ function Resume({
       month: 'long',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: s.fuseau,
     }).format(new Date(iso));
   const enRetard = !!s.planning && new Date(s.planning.echeance) < new Date();
   return (
@@ -362,12 +367,28 @@ function Resume({
                   <Box>
                     <Button
                       variant="outlined"
-                      onClick={() =>
+                      disabled={reprise}
+                      onClick={() => {
+                        setReprise(true);
                         void agir(
                           () => client.plannings.reprendre(s.planning!.id),
-                          t('pose.reprises', { count: s.reprenables }),
-                        )
-                      }
+                          // Les visites vraiment reprises, et les jours sautés (PLN-005 CA2).
+                          (r) =>
+                            [
+                              t('pose.reprises', { count: r.copiees }),
+                              r.ignorees.length
+                                ? t('pose.ignorees', {
+                                    count: r.ignorees.length,
+                                    jours: [...new Set(r.ignorees.map((x) => x.date))]
+                                      .map(jourCourt)
+                                      .join(', '),
+                                  })
+                                : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' '),
+                        ).finally(() => setReprise(false));
+                      }}
                     >
                       {t('pose.reprendre', { count: s.reprenables })}
                     </Button>
@@ -437,7 +458,8 @@ function Resume({
                 setConfirmer(false);
                 void agir(
                   () => client.plannings.soumettre(s.planning!.id),
-                  t(enRetard ? 'soumission.succesRetard' : 'soumission.succes'),
+                  // Le serveur seul dit si la soumission est en retard.
+                  (p) => t(p.en_retard ? 'soumission.succesRetard' : 'soumission.succes'),
                 );
               }}
             >

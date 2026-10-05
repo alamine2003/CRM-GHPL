@@ -472,14 +472,14 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
   - « Dissocier » rend les visites indépendantes ; elles gardent l'heure du passage.
 - **Absence** (PLN-009) : congé, formation, réunion, maladie ou autre, sur la journée, le matin ou l'après-midi.
   - Une absence « autre » exige un motif [H] (comme les écarts de visite, RG-031).
-  - Une journée entière d'absence ne reçoit pas de visite, et ne se déclare pas tant que des visites y sont prévues [H] ; une demi-journée laisse planifier le reste du jour.
+  - Une journée entière d'absence ne reçoit pas de visite, et ne se déclare pas tant que des visites y sont prévues [H] ; une demi-journée laisse planifier le reste du jour. Le matin et l'après-midi déclarés ensemble valent une journée entière (0.2.9) [H].
   - Une demi-journée compte pour moitié dans la part travaillée du jour (CA1, RG-022) ; les seuils qui l'utilisent arrivent avec les contrôles de 0.2.4. La validation avec le planning (CA2) vient avec le cycle 0.3.
 - La démonstration ajoute à la semaine du premier délégué un passage de deux confrères et une demi-journée de formation.
 
 ### 14.11 Contrôles du planning (mise en œuvre 0.2.4)
 
 - Le délégué voit les contrôles **pendant la préparation**, pas seulement à la soumission : une carte « À vérifier » sépare ce qu'il faut corriger avant de soumettre (RG-015) de ce qui sera signalé au superviseur (RG-016) ; chaque visite concernée porte sa marque et chaque jour montre son nombre de visites face au seuil.
-- **Bloquants** (RG-015) : visite incomplète ; fiche du prospect ou du lieu devenue inactive (une fiche « à valider » reste permise à son auteur, PRP-006) ; prospect sans exercice actif dans ce lieu à la date de la visite ; deux visites à la même heure (PLN-004 CA1) — les visites d'un même passage partagent la leur et ne se gênent pas ; le même prospect deux fois le même jour. La soumission (0.2.8) les refuse avec la liste (`planning_bloque`).
+- **Bloquants** (RG-015) : visite incomplète ; fiche du prospect ou du lieu devenue inactive (une fiche « à valider » reste permise à son auteur, PRP-006) ; prospect sans exercice actif dans ce lieu à la date de la visite ; deux visites à la même heure (PLN-004 CA1) — les visites d'un même passage partagent la leur et ne se gênent pas ; le même prospect deux fois le même jour ; une visite restée sur un jour devenu férié ou d'absence toute la journée après sa pose (0.2.9). La soumission (0.2.8) les refuse avec la liste et le détail de chaque point, champs manquants compris (`planning_bloque`).
 - **Signalements** (RG-016), qui n'empêchent pas la soumission (CA2) :
   - seuil de visites par jour selon le type de poste (`seuils_visites_jour`), au prorata de la part travaillée : minimum arrondi à l'entier inférieur, maximum à l'entier supérieur [H] ; jours fériés et journées d'absence exclus (RG-022) ; pour qui occupe des postes de types différents, la fourchette la plus large [H] ;
   - prospect hors de la liste cible des postes occupés ; lieu (ou, sans lieu, prospect) hors des secteurs de ces postes (RG-024) ;
@@ -516,6 +516,14 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 - **En retard** (CA1, RG-016) : après l'échéance, la soumission est acceptée et marquée « en retard » ; le planning le garde (`en_retard`, `soumis_le`) et le signalement « Soumis après l'échéance » remplace « Échéance de soumission dépassée ». La soumission est auditée.
 - La soumission demande le réseau : elle ne part pas dans la file d'attente du téléphone [H], pour que le délégué sache tout de suite si elle est acceptée.
 - **Builds de test** : profils EAS `apercu` (installation directe : `.apk`, iPhone déclarés), `simulateur` (simulateur iOS, sans compte Apple payant) et `recette` (TestFlight, piste de test interne de Google Play). Ils demandent les comptes Expo, Apple Developer et Google Play du titulaire ; aucun identifiant de compte n'est versionné (README, « Builds de test »).
+
+### 14.16 Stabilisation et démonstration du cycle (mise en œuvre 0.2.9)
+
+- **Recette** : [`recette-0.2.md`](recette-0.2.md) relie chaque critère d'acceptation du cycle au test qui le prouve ; scénario de démonstration : [`demonstration-0.2.md`](demonstration-0.2.md).
+- **Robustesse** : les commandes sur un planning relisent son statut sous verrou (une soumission ne se croise pas avec le rejeu de la file du téléphone, ni deux reprises avec un double clic) ; la file d'attente du téléphone ne rejoue qu'une fois à la fois et ne perd pas un envoi ajouté pendant un rejeu ; une saisie interrompue ne se reprend pas si ce qu'elle modifiait a été retiré, ou si le planning n'est plus modifiable.
+- **Heure du pays** : l'échéance et la date de soumission s'affichent dans le fuseau du pays, quel que soit le réglage de l'appareil.
+- **Démonstration** : la semaine en cours du premier délégué est déjà soumise à temps ; la suivante est en préparation.
+- **À trancher** : un poste occupé seulement une partie de la semaine (arrivée le mercredi, départ le mardi) ; aujourd'hui, l'occupation se lit au lundi de la semaine.
 
 ## 15. Exigences fonctionnelles
 

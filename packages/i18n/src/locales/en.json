@@ -51,7 +51,13 @@
     "mesReseaux": "My networks",
     "lesPays": "Countries",
     "semaine": "My week",
-    "semaineTexte": "Plan preparation arrives in version 0.2.1, visits in 0.4.1."
+    "cetteSemaine": "This week",
+    "semaineProchaine": "Next week",
+    "aPreparer": "To prepare",
+    "rienDePrevu": "No plan",
+    "visites_one": "{{count}} visit",
+    "visites_other": "{{count}} visits",
+    "ouvrirPlanning": "Open the plan"
   },
   "connexion": {
     "titre": "Sign in",
@@ -1430,9 +1436,11 @@
       "meme_heure": "Same time as another visit",
       "meme_prospect": "Same prospect twice this day",
       "sans_exercice": "Does not practise at this place",
-      "fiche_inactive": "Record no longer active",
       "hors_cible": "Outside target list",
-      "hors_secteur": "Outside your sectors"
+      "hors_secteur": "Outside your sectors",
+      "jour_non_planifiable": "Day became a holiday or an absence: move it",
+      "fiche_inactive_prospect": "Prospect record no longer active",
+      "fiche_inactive_etablissement": "Place record no longer active"
     },
     "objectif_one": "{{count}} visit, target {{min}} to {{max}}",
     "objectif_other": "{{count}} visits, target {{min}} to {{max}}",
@@ -1440,7 +1448,9 @@
     "incomplete_one": "{{jour}}: visit to complete ({{champs}})",
     "incomplete_other": "{{jour}}: {{count}} visits to complete ({{champs}})",
     "echeance_depassee": "Submission deadline passed: the plan will be marked late",
-    "soumis_en_retard": "Submitted after the deadline"
+    "soumis_en_retard": "Submitted after the deadline",
+    "jour_non_planifiable_one": "{{jour}}: visit on a day that became a holiday or an absence, to move",
+    "jour_non_planifiable_other": "{{jour}}: {{count}} visits on a day that became a holiday or an absence, to move"
   },
   "pose": {
     "titre": "From my target list",
@@ -1530,7 +1540,9 @@
     "absence": "An absence was not saved.",
     "aide": "What you were typing was kept on this phone when the app closed.",
     "reprendre": "Resume",
-    "abandonner": "Discard this entry"
+    "abandonner": "Discard this entry",
+    "nonModifiable": "This plan can no longer be changed: this entry cannot be resumed.",
+    "disparu": "What it was changing has since been removed: it cannot be resumed."
   },
   "soumission": {
     "titre": "Submit to your supervisor",

@@ -245,6 +245,8 @@ class SemaineSerializer(serializers.Serializer):
     precedente = serializers.DateField()
     suivante = serializers.DateField()
     courante = serializers.BooleanField()
+    #: Fuseau du pays (IANA) : l'échéance et la soumission s'affichent à l'heure du pays.
+    fuseau = serializers.CharField()
     jours = JourSemaineSerializer(many=True)
     planning = PlanningSerializer(allow_null=True)
     #: Faux pour une semaine passée ou sans poste occupé.

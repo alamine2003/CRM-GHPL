@@ -12,10 +12,13 @@ import { police } from './polices';
 /** « Une saisie n'a pas été enregistrée » : la reprendre ou l'abandonner. */
 export function BandeauBrouillon({
   brouillon,
+  empechement,
   surReprendre,
   surAbandonner,
 }: {
   brouillon: Brouillon;
+  /** Pourquoi la saisie ne peut plus être reprise (visite retirée, planning soumis). */
+  empechement?: string;
   surReprendre: () => void;
   surAbandonner: () => void;
 }) {
@@ -28,8 +31,8 @@ export function BandeauBrouillon({
           ? t(brouillon.visite ? 'brouillon.visiteModifiee' : 'brouillon.visite')
           : t('brouillon.absence')}
       </Texte>
-      <Texte variante="discret">{t('brouillon.aide')}</Texte>
-      <Bouton libelle={t('brouillon.reprendre')} onPress={surReprendre} />
+      <Texte variante="discret">{empechement ?? t('brouillon.aide')}</Texte>
+      {!empechement && <Bouton libelle={t('brouillon.reprendre')} onPress={surReprendre} />}
       <Bouton secondaire libelle={t('brouillon.abandonner')} onPress={surAbandonner} />
     </Carte>
   );

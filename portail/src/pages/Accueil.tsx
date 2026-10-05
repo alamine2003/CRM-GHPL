@@ -1,4 +1,4 @@
-import type { Moi, MonOrganisation, Perimetre } from '@innov/api-client';
+import type { Moi, MonOrganisation, Perimetre, Semaine } from '@innov/api-client';
 import { avancement, CYCLES } from '@innov/domaine';
 import {
   Alert,
@@ -595,15 +595,75 @@ function LesPays() {
   );
 }
 
+/** Où en sont cette semaine et la suivante, avec l'échéance (PLN-006, RG-013). */
 function MaSemaine() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { client } = useSession();
+  const semaines = useQuery({
+    queryKey: ['planning-semaine', 'accueil'],
+    queryFn: async () => {
+      const courante = await client.plannings.semaine();
+      return [courante, await client.plannings.semaine(courante.suivante)] as const;
+    },
+  });
+  const etat = (s: Semaine) =>
+    !s.planning
+      ? s.peut_creer
+        ? t('accueil.aPreparer')
+        : t('accueil.rienDePrevu')
+      : `${t(`semaine.statuts.${s.planning.statut}`)} · ${t('accueil.visites', {
+          count: s.visites.length,
+        })}`;
+  const echeance = (s: Semaine) =>
+    s.planning && s.modifiable
+      ? t(
+          new Date(s.planning.echeance) < new Date()
+            ? 'soumission.echeancePassee'
+            : 'soumission.echeance',
+          {
+            date: new Intl.DateTimeFormat(i18n.language, {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: s.fuseau,
+            }).format(new Date(s.planning.echeance)),
+          },
+        )
+      : null;
   return (
     <Card>
       <EnTeteCarte titre={t('accueil.semaine')} />
       <CardContent>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {t('accueil.semaineTexte')}
-        </Typography>
+        {semaines.isError ? (
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {t('erreurs.reseau')}
+          </Typography>
+        ) : !semaines.data ? (
+          <Skeleton height={96} />
+        ) : (
+          <Stack spacing={0.5}>
+            {semaines.data.map((s, i) => (
+              <Box key={s.semaine}>
+                <Ligne
+                  libelle={i === 0 ? t('accueil.cetteSemaine') : t('accueil.semaineProchaine')}
+                  valeur={etat(s)}
+                />
+                {echeance(s) && (
+                  <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'right' }}>
+                    {echeance(s)}
+                  </Typography>
+                )}
+              </Box>
+            ))}
+            <Box sx={{ pt: 1 }}>
+              <Button component={LienRouteur} to="/planning" variant="outlined">
+                {t('accueil.ouvrirPlanning')}
+              </Button>
+            </Box>
+          </Stack>
+        )}
       </CardContent>
     </Card>
   );

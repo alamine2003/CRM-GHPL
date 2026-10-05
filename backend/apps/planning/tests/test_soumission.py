@@ -67,8 +67,9 @@ def test_un_planning_vide_ou_bloque_n_est_pas_soumis(monde, terrain):
     visite = services.ajouter_visite(terrain["planning"], date=MARDI)
     r = soumettre(monde, terrain)
     assert r.status_code == 400 and r.json()["code"] == "planning_bloque"
-    assert r.json()["details"]["anomalies"][0] | {"code": "incomplete"} == {
-        "code": "incomplete", "date": "2026-10-13", "visites": [str(visite.pk)]}  # fmt: skip
+    assert r.json()["details"]["anomalies"][0] == {
+        "code": "incomplete", "date": "2026-10-13", "visites": [str(visite.pk)],
+        "manquants": ["heure", "prospect", "etablissement", "objectif"]}  # fmt: skip
 
 
 def test_ca1_soumis_a_temps_puis_plus_modifiable(monde, terrain):

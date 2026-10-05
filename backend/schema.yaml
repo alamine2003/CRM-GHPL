@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.8
+  version: 0.2.9
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/absences/{id}/:
@@ -4248,6 +4248,7 @@ components:
       - sans_exercice
       - meme_heure
       - meme_prospect
+      - jour_non_planifiable
       - seuil_bas
       - seuil_haut
       - hors_cible
@@ -4262,6 +4263,7 @@ components:
         * `sans_exercice` - sans_exercice
         * `meme_heure` - meme_heure
         * `meme_prospect` - meme_prospect
+        * `jour_non_planifiable` - jour_non_planifiable
         * `seuil_bas` - seuil_bas
         * `seuil_haut` - seuil_haut
         * `hors_cible` - hors_cible
@@ -7294,6 +7296,8 @@ components:
           format: date
         courante:
           type: boolean
+        fuseau:
+          type: string
         jours:
           type: array
           items:
@@ -7336,6 +7340,7 @@ components:
       - absences
       - controles
       - courante
+      - fuseau
       - jours
       - kilometrage
       - modifiable

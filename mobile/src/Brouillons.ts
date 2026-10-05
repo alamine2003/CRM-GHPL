@@ -102,30 +102,45 @@ async function garderAttente(envois: Envoi[]) {
   else await oublier(CLE_ATTENTE).catch(() => undefined);
 }
 
+/**
+ * Toute écriture de la file passe ici, l'une après l'autre : elle relit la file juste avant
+ * d'écrire, pour qu'un envoi ajouté pendant un rejeu ne soit jamais écrasé (0.2.9).
+ */
+let fileOccupee: Promise<unknown> = Promise.resolve();
+function modifierFile(changer: (envois: Envoi[]) => Envoi[]): Promise<void> {
+  const suite = fileOccupee.then(async () => garderAttente(changer(await lireAttente())));
+  fileOccupee = suite.catch(() => undefined);
+  return suite;
+}
+
 /** Ajoute un envoi à la file (après un échec de réseau). */
 export async function mettreEnAttente(envoi: Envoi) {
-  await garderAttente([...(await lireAttente()), envoi]);
+  await modifierFile((envois) => [...envois, envoi]);
 }
 
 export async function abandonnerEnvoi(id: string) {
-  await garderAttente((await lireAttente()).filter((e) => e.id !== id));
+  await modifierFile((envois) => envois.filter((e) => e.id !== id));
 }
 
 /**
  * Rejoue la file dans l'ordre. Un envoi réussi en sort ; un refus du serveur reste, avec son
  * message, pour que le délégué corrige ou abandonne ; une panne de réseau arrête tout.
- * Rend le nombre d'envois partis.
+ * Un seul rejeu à la fois : un second appel reçoit la réponse du premier, sans rien renvoyer
+ * deux fois. Rend le nombre d'envois partis.
  */
-export async function envoyerAttente(client: ClientApi): Promise<number> {
+let rejeuEnCours: Promise<number> | null = null;
+export function envoyerAttente(client: ClientApi): Promise<number> {
+  rejeuEnCours ??= rejouer(client).finally(() => {
+    rejeuEnCours = null;
+  });
+  return rejeuEnCours;
+}
+
+async function rejouer(client: ClientApi): Promise<number> {
   const envois = await lireAttente();
-  const restants: Envoi[] = [];
-  let partis = 0;
-  let coupure = false;
+  const partis = new Set<string>();
+  const refus = new Map<string, string>();
   for (const envoi of envois) {
-    if (coupure) {
-      restants.push(envoi);
-      continue;
-    }
     try {
       if (envoi.type === 'ajout_visite') {
         await client.plannings.ajouterVisite(envoi.planning, envoi.saisie);
@@ -134,16 +149,17 @@ export async function envoyerAttente(client: ClientApi): Promise<number> {
       } else {
         await client.plannings.declarerAbsence(envoi.planning, envoi.saisie);
       }
-      partis += 1;
+      partis.add(envoi.id);
     } catch (e) {
-      if (estTransitoire(e)) {
-        coupure = true;
-        restants.push(envoi);
-      } else {
-        restants.push({ ...envoi, erreur: e instanceof Error ? e.message : String(e) });
-      }
+      if (estTransitoire(e)) break;
+      refus.set(envoi.id, e instanceof Error ? e.message : String(e));
     }
   }
-  await garderAttente(restants);
-  return partis;
+  // Seuls les envois rejoués changent ; ce qui s'est ajouté entre-temps reste tel quel.
+  await modifierFile((actuels) =>
+    actuels
+      .filter((e) => !partis.has(e.id))
+      .map((e) => (refus.has(e.id) ? { ...e, erreur: refus.get(e.id) } : e)),
+  );
+  return partis.size;
 }

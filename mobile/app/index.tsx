@@ -2,6 +2,7 @@ import type { Langue } from '@innov/i18n';
 import { useTranslation } from 'react-i18next';
 import { Alerte, Carte, Texte } from '../src/composants';
 import { Ecran } from '../src/Ecran';
+import { MaSemaine } from '../src/MaSemaine';
 import { MesProduits } from '../src/MesProduits';
 import { MesPropositions } from '../src/MesPropositions';
 import { MonPoste } from '../src/MonPoste';
@@ -29,6 +30,7 @@ export default function Accueil() {
     >
       {roles.length === 0 && <Alerte type="info">{t('roles.aucun')}</Alerte>}
       <MesPropositions />
+      {roles.includes('delegue') && <MaSemaine />}
       <MonPoste />
       <MesProduits />
       <Carte>

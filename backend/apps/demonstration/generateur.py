@@ -326,7 +326,7 @@ class Generateur:
         self.bilan.pays[code]["cibles"] = self.cibles(pays)
         self.bilan.pays[code].update(self.a_trancher(pays, delegues[0]))
         self.bilan.pays[code]["jours_feries"] = self.jours_feries(pays)
-        self.bilan.pays[code]["visites"] = self.semaine_en_preparation(pays, delegues[0])
+        self.bilan.pays[code]["visites"] = self.plannings(pays, delegues[0])
 
     def exercices(self, pays) -> int:
         """Lieux d'exercice fictifs (PRP-004) : chaque prospect exerce dans un établissement de
@@ -377,26 +377,69 @@ class Generateur:
                 nombre += 1
         return nombre
 
-    def semaine_en_preparation(self, pays, delegue) -> int:
-        """Planning de la semaine en cours du premier délégué (PLN-001, PLN-002) : quelques
-        visites de sa liste cible, dont une encore à compléter (heure et objectif)."""
+    def plannings(self, pays, delegue) -> int:
+        """Le cycle 0.2 en deux semaines du premier délégué : la semaine en cours, déjà soumise
+        à temps (PLN-008), et la suivante en préparation (PLN-001 à PLN-009)."""
+        from apps.planning.calendrier import lundi
+
+        courante = lundi(aujourdhui(pays))
+        return self.semaine_soumise(pays, delegue, courante) + self.semaine_en_preparation(
+            pays, delegue, courante + timedelta(days=7)
+        )
+
+    def semaine_soumise(self, pays, delegue, semaine) -> int:
+        """Visites complètes et un passage, soumis au superviseur avant l'échéance : la semaine
+        se lit, sans se modifier."""
+        from apps.planning import controles
         from apps.planning import services as pln
-        from apps.planning.calendrier import jours_planifiables, lundi
+        from apps.planning.etats import StatutPlanning
+
+        planning, jours, reseau, cibles = self._planning(pays, delegue, semaine)
+        if planning is None:
+            return 0
+        nombre = self._visites(planning, jours, reseau, cibles, a_completer=False)
+        nombre += self._passage_et_absence(planning, jours, reseau, cibles, absence=False)
+        if controles.bloquants(planning) or pln.postes_sans_superviseur(planning):
+            return nombre
+        # Soumis la veille de l'échéance, en fin d'après-midi : à temps (RG-013).
+        type(planning).objects.filter(pk=planning.pk).update(
+            statut=StatutPlanning.SOUMIS, en_retard=False,
+            soumis_le=pln.echeance(planning) - timedelta(days=1, hours=1),
+        )  # fmt: skip
+        return nombre
+
+    def semaine_en_preparation(self, pays, delegue, semaine) -> int:
+        """Quelques visites de la liste cible, dont une encore à compléter (heure et objectif),
+        un passage et une demi-journée de formation (PLN-002, PLN-003, PLN-009)."""
+        planning, jours, reseau, cibles = self._planning(pays, delegue, semaine)
+        if planning is None:
+            return 0
+        nombre = self._visites(planning, jours, reseau, cibles, a_completer=True)
+        return nombre + self._passage_et_absence(planning, jours, reseau, cibles)
+
+    @staticmethod
+    def _planning(pays, delegue, semaine):
+        from apps.planning import services as pln
+        from apps.planning.calendrier import jours_planifiables
         from apps.prospects.models import Cible
 
-        semaine = lundi(aujourdhui(pays))
         if not pln.occupe_un_poste(delegue, pays, semaine):
-            return 0
+            return None, [], None, []
         planning = pln.creer_planning(pays, delegue, semaine)
-        jours = jours_planifiables(pays, semaine)
         reseau = next((r for p in pln.postes_de_la_semaine(planning) for r in p.reseaux.all()),
                       None)  # fmt: skip
-        cibles = (
+        cibles = list(
             Cible.objects.filter(fin__isnull=True, poste__occupations__utilisateur=delegue)
             .select_related("prospect")
             .order_by("-prospect__potentiel", "prospect__nom")[:20]
         )
-        heures = ["09:00", "10:30", "15:00"]
+        return planning, jours_planifiables(pays, semaine), reseau, cibles
+
+    @staticmethod
+    def _visites(planning, jours, reseau, cibles, a_completer: bool) -> int:
+        from apps.planning import services as pln
+
+        heures = ["09:00", "10:30", "15:00", "16:30"]
         nombre = 0
         for cible in cibles:
             lieu = cible.prospect.exercices.filter(fin__isnull=True).order_by("-principal").first()
@@ -404,7 +447,7 @@ class Generateur:
                 continue
             if nombre == 4:
                 break
-            complete = nombre < 3
+            complete = nombre < 3 or not a_completer
             pln.ajouter_visite(
                 planning, date=jours[nombre % len(jours)], prospect=cible.prospect,
                 etablissement=lieu.etablissement, reseau=reseau,
@@ -412,10 +455,10 @@ class Generateur:
                 objectif="Présenter le produit du mois" if complete else "",
             )  # fmt: skip
             nombre += 1
-        return nombre + self._passage_et_absence(planning, jours, reseau, cibles)
+        return nombre
 
     @staticmethod
-    def _passage_et_absence(planning, jours, reseau, cibles) -> int:
+    def _passage_et_absence(planning, jours, reseau, cibles, absence=True) -> int:
         """PLN-003 et PLN-009 : deux confrères vus au même lieu le même jour, regroupés en un
         passage, et une demi-journée de formation en fin de semaine."""
         from collections import defaultdict
@@ -441,8 +484,9 @@ class Generateur:
         ]  # fmt: skip
         if visites:
             pln.regrouper(planning, visites)
-        pln.declarer_absence(planning, date=jours[-1], periode="apres_midi", type="formation",
-                             commentaire="Formation produit")  # fmt: skip
+        if absence:
+            pln.declarer_absence(planning, date=jours[-1], periode="apres_midi",
+                                 type="formation", commentaire="Formation produit")  # fmt: skip
         return len(visites)
 
     def jours_feries(self, pays) -> int:

@@ -14,7 +14,7 @@ import { police } from './polices';
 type Traduire = ReturnType<typeof useTranslation>['t'];
 
 /** Marque portée par une ligne de visite. */
-export type Alerte = { texte: string; ton: 'erreur' | 'attention' };
+export type Alerte = { cle: string; texte: string; ton: 'erreur' | 'attention' };
 
 /** Ce qui concerne une visite précise ; « À compléter » est déjà dit par la ligne elle-même. */
 export function alertesDeVisite(
@@ -29,12 +29,22 @@ export function alertesDeVisite(
   for (const c of controles.bloquants) {
     if (c.code === 'incomplete' || (dansPassage && c.code === 'meme_heure')) continue;
     if (c.visites.includes(visite)) {
-      alertes.push({ texte: t(`controles.visite.${c.code}`, { heure: c.heure }), ton: 'erreur' });
+      // Prospect et lieu peuvent être inactifs ensemble : chaque fiche a sa ligne.
+      const cle = c.code === 'fiche_inactive' ? `fiche_inactive_${c.fiche}` : c.code;
+      alertes.push({
+        cle: `${cle}-${alertes.length}`,
+        texte: t(`controles.visite.${cle}`, { heure: c.heure }),
+        ton: 'erreur',
+      });
     }
   }
   for (const c of controles.signalements) {
     if (c.visites.includes(visite)) {
-      alertes.push({ texte: t(`controles.visite.${c.code}`), ton: 'attention' });
+      alertes.push({
+        cle: `${c.code}-${alertes.length}`,
+        texte: t(`controles.visite.${c.code}`),
+        ton: 'attention',
+      });
     }
   }
   return alertes;

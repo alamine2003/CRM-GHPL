@@ -51,7 +51,13 @@
     "mesReseaux": "Mes réseaux",
     "lesPays": "Les pays",
     "semaine": "Ma semaine",
-    "semaineTexte": "La préparation du planning arrive en version 0.2.1, les visites en 0.4.1."
+    "cetteSemaine": "Cette semaine",
+    "semaineProchaine": "Semaine prochaine",
+    "aPreparer": "À préparer",
+    "rienDePrevu": "Aucun planning",
+    "visites_one": "{{count}} visite",
+    "visites_other": "{{count}} visites",
+    "ouvrirPlanning": "Ouvrir le planning"
   },
   "connexion": {
     "titre": "Connexion",
@@ -1430,9 +1436,11 @@
       "meme_heure": "Même heure qu'une autre visite",
       "meme_prospect": "Même prospect deux fois ce jour",
       "sans_exercice": "N'exerce pas dans ce lieu",
-      "fiche_inactive": "Fiche devenue inactive",
       "hors_cible": "Hors liste cible",
-      "hors_secteur": "Hors de vos secteurs"
+      "hors_secteur": "Hors de vos secteurs",
+      "jour_non_planifiable": "Jour devenu férié ou d'absence : à déplacer",
+      "fiche_inactive_prospect": "Fiche du prospect devenue inactive",
+      "fiche_inactive_etablissement": "Fiche du lieu devenue inactive"
     },
     "objectif_one": "{{count}} visite, objectif {{min}} à {{max}}",
     "objectif_other": "{{count}} visites, objectif {{min}} à {{max}}",
@@ -1440,7 +1448,9 @@
     "incomplete_one": "{{jour}} : visite à compléter ({{champs}})",
     "incomplete_other": "{{jour}} : {{count}} visites à compléter ({{champs}})",
     "echeance_depassee": "Échéance de soumission dépassée : le planning sera marqué en retard",
-    "soumis_en_retard": "Soumis après l'échéance"
+    "soumis_en_retard": "Soumis après l'échéance",
+    "jour_non_planifiable_one": "{{jour}} : visite sur un jour devenu férié ou d'absence, à déplacer",
+    "jour_non_planifiable_other": "{{jour}} : {{count}} visites sur un jour devenu férié ou d'absence, à déplacer"
   },
   "pose": {
     "titre": "Depuis ma liste cible",
@@ -1530,7 +1540,9 @@
     "absence": "Une absence n'a pas été enregistrée.",
     "aide": "La saisie a été gardée sur ce téléphone quand l'application s'est fermée.",
     "reprendre": "Reprendre la saisie",
-    "abandonner": "Abandonner cette saisie"
+    "abandonner": "Abandonner cette saisie",
+    "nonModifiable": "Ce planning n'est plus modifiable : cette saisie ne peut plus être reprise.",
+    "disparu": "Ce qu'elle modifiait a été retiré depuis : elle ne peut plus être reprise."
   },
   "soumission": {
     "titre": "Soumettre au superviseur",

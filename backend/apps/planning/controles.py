@@ -14,7 +14,7 @@ Le délégué voit les uns et les autres pendant la préparation, pour corriger 
 import datetime as dt
 import math
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import date, timedelta
 
 from django.utils.translation import gettext as _
@@ -33,6 +33,7 @@ GRAVITES = (BLOQUANT, SIGNALEMENT)
 CODES = (
     # Bloquants (RG-015)
     "incomplete", "fiche_inactive", "sans_exercice", "meme_heure", "meme_prospect",
+    "jour_non_planifiable",
     # Signalements (RG-016)
     "seuil_bas", "seuil_haut", "hors_cible", "hors_secteur", "a_non_planifie",
     "echeance_depassee", "soumis_en_retard",
@@ -93,10 +94,17 @@ def _fiche_utilisable(fiche, planning: Planning) -> bool:
 def bloquants(planning: Planning, visites: list[Visite] | None = None) -> list[Anomalie]:
     from apps.prospects.models import Exercice
 
-    from .services import champs_manquants
+    from .services import champs_manquants, jour_absent
 
     visites = _visites(planning) if visites is None else visites
     anomalies: list[Anomalie] = []
+    # Un jour devenu férié, ou d'absence toute la journée, après la pose de ses visites
+    # (PLN-001 CA2, RG-022) : elles sont à déplacer avant de soumettre.
+    planifiables = {j.date for j in jours_de_la_semaine(planning.pays, planning.semaine)
+                    if j.planifiable and not jour_absent(planning, j.date)}  # fmt: skip
+    for jour in sorted({v.date for v in visites} - planifiables):
+        anomalies.append(Anomalie("jour_non_planifiable", BLOQUANT, jour,
+                                  [str(v.pk) for v in visites if v.date == jour]))  # fmt: skip
     for v in visites:
         if manquants := champs_manquants(v):
             anomalies.append(Anomalie("incomplete", BLOQUANT, v.date, [str(v.pk)],
@@ -228,8 +236,10 @@ def signalements(
             .order_by("prospect__nom", "prospect__prenom")
             .distinct()
         )
-        prospects = [{"id": str(c.prospect_id), "nom": f"{c.prospect.prenom} {c.prospect.nom}"
-                      .strip()} for c in oublies]  # fmt: skip
+        # Un prospect ciblé par deux postes n'est nommé qu'une fois.
+        uniques = {c.prospect_id: c.prospect for c in oublies}
+        prospects = [{"id": str(pk), "nom": f"{p.prenom} {p.nom}".strip()}
+                     for pk, p in uniques.items()]  # fmt: skip
         if prospects:
             anomalies.append(Anomalie("a_non_planifie", SIGNALEMENT, fin_de_mois,
                                       mois=fin_de_mois.strftime("%Y-%m"),
@@ -259,6 +269,13 @@ def bilan(planning: Planning) -> Bilan:
     )
 
 
+def _detail(anomalie: Anomalie) -> dict:
+    detail = {k: v for k, v in asdict(anomalie).items() if v is not None and k != "gravite"}
+    if anomalie.date:
+        detail["date"] = str(anomalie.date)
+    return detail
+
+
 def exiger_sans_bloquant(planning: Planning) -> None:
     """Garde de la soumission (0.2.8) : refus motivé, avec la liste des contrôles bloquants."""
     if anomalies := bloquants(planning):
@@ -266,8 +283,7 @@ def exiger_sans_bloquant(planning: Planning) -> None:
             "planning_bloque",
             _("Le planning ne peut pas être soumis : corrigez les points signalés."),
             status.HTTP_400_BAD_REQUEST,
-            anomalies=[
-                {"code": a.code, "date": str(a.date) if a.date else None, "visites": a.visites}
-                for a in anomalies
-            ],  # fmt: skip
+            # Tout le détail de chaque point (champs manquants, fiche, heure…), comme dans la
+            # semaine : le refus suffit à corriger (PLN-002 CA1).
+            anomalies=[_detail(a) for a in anomalies],
         )
