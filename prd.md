@@ -523,7 +523,45 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 - **Robustesse** : les commandes sur un planning relisent son statut sous verrou (une soumission ne se croise pas avec le rejeu de la file du téléphone, ni deux reprises avec un double clic) ; la file d'attente du téléphone ne rejoue qu'une fois à la fois et ne perd pas un envoi ajouté pendant un rejeu ; une saisie interrompue ne se reprend pas si ce qu'elle modifiait a été retiré, ou si le planning n'est plus modifiable.
 - **Heure du pays** : l'échéance et la date de soumission s'affichent dans le fuseau du pays, quel que soit le réglage de l'appareil.
 - **Démonstration** : la semaine en cours du premier délégué est déjà soumise à temps ; la suivante est en préparation.
-- **À trancher** : un poste occupé seulement une partie de la semaine (arrivée le mercredi, départ le mardi) ; aujourd'hui, l'occupation se lit au lundi de la semaine.
+- **Poste de la semaine** [D, 5 octobre 2026] : le délégué planifie et visite du lundi au vendredi sur son poste ; l'occupation se lit au lundi de la semaine, sans cas particulier pour un changement de poste en cours de semaine.
+
+### 14.17 Activités connexes et cas spéciaux (prévu en 0.3.1)
+
+Décisions du 5 octobre 2026 [D] :
+- L'activité principale et obligatoire du délégué, ce sont les **visites aux prospects** ; un planning rédigé doit être visité, tout écart se justifie (RG-031, VIS-009).
+- Pas de déplacement hors de son secteur sauf s'il est **justifié** ou **demandé par le superviseur**.
+- Cas spéciaux : congé, maladie, jour férié, **commandos** (à renseigner en détail), déplacements pour aider ou accompagner un collègue, accompagnement du superviseur.
+- Une visite faite en binôme ou pour aider un collègue **compte à celui qui la fait**.
+- Un commando est renseigné et expliqué par le délégué qui y participe, qu'il vienne de lui ou de sa hiérarchie.
+
+Proposition de mise en œuvre [H, à valider] :
+- Les absences (PLN-009) deviennent des **activités connexes**, sur la journée, le matin ou l'après-midi :
+  - **sans visite** : congé, maladie, formation, réunion, autre — elles réduisent l'objectif du jour ; une journée entière ne reçoit pas de visite (comportement actuel) ;
+  - **avec visites** : commando, déplacement (aide ou accompagnement d'un collègue), accompagnement du superviseur — explication obligatoire (où, avec qui, pourquoi) ; pour un déplacement, « demandé par le superviseur » ou non.
+- Les visites de ces journées, hors secteur ou hors liste cible, ne sont plus des signalements d'anomalie : le superviseur voit l'activité et son explication. Hors de ces journées, une visite hors secteur reste signalée (RG-024).
+
+### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
+
+Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :
+
+| Indicateur | Définition |
+|---|---|
+| Prospects planifiés | prospects distincts du planning approuvé de la semaine |
+| Base retenue | base de la couverture (égale aux prospects planifiés dans l'exemple ; cas où elle diffère : à préciser) |
+| Prospects visités | prospects distincts visités, planifiés ou non |
+| Planifiés visités | prospects planifiés effectivement visités |
+| Visites non planifiées | prospects visités hors planning (visites imprévues) |
+| Visites géolocalisées | visites avec position GPS (définition exacte : à préciser) |
+| Taux de géolocalisation | visites géolocalisées / prospects visités |
+| Taux de couverture | prospects visités / base retenue |
+| Taux de réalisation du plan | planifiés visités / prospects planifiés |
+| Taux de respect du plan | planifiés visités / prospects visités |
+| Volume relatif | prospects visités / plus grand nombre de prospects visités de l'équipe |
+
+- **Score / 100** = somme pondérée des cinq taux ; pondérations par défaut : géolocalisation 40 %, couverture 23 %, réalisation du plan 19 %, respect du plan 9 %, volume relatif 9 % ; modifiables par pays, total 100 %.
+- **Appréciation** : Excellent, Bon, À consolider, Insuffisant, Aucune activité (aucune visite). Seuils déduits de l'exemple [H, à confirmer] : Bon dès 40, À consolider dès 15, Insuffisant en dessous ; le seuil d'Excellent est entre 44,4 et 69,3.
+- Une ligne « Moyenne de l'équipe » résume chaque colonne.
+- Points proposés à la discussion [H] : rapporter le volume à l'objectif du poste plutôt qu'au meilleur de l'équipe ; tenir compte des jours non travaillés (fériés, congés, commandos) ; signaler une visite faite sans planning.
 
 ## 15. Exigences fonctionnelles
 
@@ -667,6 +705,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | DSH-009 | Objectifs par réseau et par période (visites, couverture A/B, présentations d'un produit), saisis par le DM ou l'administrateur pays ; suivi réalisé / objectif. | 0.7.6 | CA1 : un objectif a une période, un réseau, un indicateur et une cible. CA2 : le tableau de bord affiche l'avance ou le retard. |
 | DSH-010 | Grafana : tableaux de bord sur des vues de pilotage en lecture seule, isolées par pays. | 0.7.9 | CA1 : un compte Grafana d'un pays ne lit que les vues de ce pays. CA2 : le siège lit des agrégats. CA3 : aucune donnée de rapport en texte libre n'est exposée à Grafana. |
 | DSH-011 | Fraîcheur : tableaux de bord du portail à jour à moins de 5 minutes ; Grafana à moins de 1 heure [H]. | 0.7.9 | CA1 : l'heure de dernière mise à jour est affichée. |
+| DSH-012 | Classement hebdomadaire des délégués d'une équipe par un score composite sur 100 (§14.18). | 0.7.2 | CA1 : le score est la somme pondérée des cinq taux ; les pondérations sont des paramètres du pays dont le total vaut 100 %. CA2 : chaque délégué a une appréciation selon son score ; sans aucune visite, « Aucune activité ». |
 
 ### 15.9 Hors connexion et synchronisation — OFF
 

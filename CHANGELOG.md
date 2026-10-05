@@ -30,9 +30,11 @@ Neuvième et dernier jalon du cycle 0.2 « Planning ».
 - **Poser depuis la liste cible** : le lieu « à valider » créé par un autre n'est plus proposé comme lieu principal.
 - **Traçabilité** : l'ordre de la journée et les passages gardent la version et le journal des changements de chaque visite (support de la synchronisation, cycle 0.8) ; les modifications de visite et d'absence sont auditées.
 
-### À trancher
+### Décisions consignées (5 octobre 2026)
 
-- Un poste occupé une partie de la semaine seulement (arrivée le mercredi, départ le mardi) : aujourd'hui, l'occupation se lit au lundi (prd.md §14.16).
+- Le délégué planifie et visite du lundi au vendredi sur son poste ; l'occupation se lit au lundi (prd.md §14.16).
+- Les visites sont l'activité principale et obligatoire ; cas spéciaux (congés, maladie, fériés, commandos, déplacements justifiés ou demandés par le superviseur) : **activités connexes**, proposées pour 0.3.1 (prd.md §14.17).
+- Évaluation hebdomadaire des délégués par un score composite pondéré : nouvelle exigence DSH-012 (cycle 0.7, prd.md §14.18).
 
 ### Démonstration (DEM-001)
 
