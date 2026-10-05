@@ -31,6 +31,7 @@ const Doublons = lazy(() => import('./pages/Doublons'));
 const Propositions = lazy(() => import('./pages/Propositions'));
 const Planning = lazy(() => import('./pages/Planning'));
 const Validation = lazy(() => import('./pages/Validation'));
+const ConsultationPlanning = lazy(() => import('./pages/ConsultationPlanning'));
 
 type Rendu = (utilisateur: Moi, perimetre: Perimetre) => ReactNode;
 
@@ -69,6 +70,21 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
   '/exploitation': { titre: 'navigation.exploitation', rendu: () => <Exploitation /> },
 };
 
+/** Pages d'un objet : la visibilité de l'entrée de navigation parente s'y applique. */
+const PAGES_OBJET: {
+  motif: RegExp;
+  parent: string;
+  titre: string;
+  rendu: (id: string) => ReactNode;
+}[] = [
+  {
+    motif: /^\/validation\/([0-9a-f-]{36})$/,
+    parent: '/validation',
+    titre: 'navigation.validation',
+    rendu: (id) => <ConsultationPlanning id={id} />,
+  },
+];
+
 function ChargementPage() {
   return (
     <Stack spacing={2} aria-busy="true">
@@ -94,19 +110,30 @@ function Protegee() {
   const { utilisateur, perimetre } = etat;
   if (etat.doubleAuthAActiver) return <ActivationRequise />;
   const page = PAGES[pathname];
-  const entree = ENTREES.find((e) => e.chemin === pathname);
+  const objet = page
+    ? undefined
+    : PAGES_OBJET.map((o) => ({ ...o, id: o.motif.exec(pathname)?.[1] })).find((o) => o.id);
+  const entree = ENTREES.find((e) => e.chemin === (objet ? objet.parent : pathname));
   // Une page connue mais non permise renvoie à l'accueil ; une adresse inconnue affiche 404.
-  if (page && entree?.visible && !entree.visible(perimetre)) return <Navigate to="/" replace />;
+  if ((page || objet) && entree?.visible && !entree.visible(perimetre)) {
+    return <Navigate to="/" replace />;
+  }
   return (
     <CadreApplication
       utilisateur={utilisateur}
       perimetre={perimetre}
-      titre={t(page ? page.titre : 'erreurs.introuvableTitre')}
+      titre={t(page ? page.titre : objet ? objet.titre : 'erreurs.introuvableTitre')}
     >
       {/* Une page qui plante n'emporte pas le cadre : la navigation reste utilisable. */}
       <LimiteErreur key={pathname}>
         <Suspense fallback={<ChargementPage />}>
-          {page ? page.rendu(utilisateur, perimetre) : <Introuvable />}
+          {page ? (
+            page.rendu(utilisateur, perimetre)
+          ) : objet ? (
+            objet.rendu(objet.id!)
+          ) : (
+            <Introuvable />
+          )}
         </Suspense>
       </LimiteErreur>
     </CadreApplication>

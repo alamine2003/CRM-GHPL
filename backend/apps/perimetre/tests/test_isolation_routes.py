@@ -111,7 +111,7 @@ def senegal(monde):
         "planning-visites": planning.pk, "visite": visite.pk, "visite-retirer": visite.pk,
         "planning-ordre": planning.pk, "planning-passages": planning.pk,
         "planning-poser": planning.pk, "planning-reprendre": planning.pk,
-        "planning-soumettre": planning.pk,
+        "planning-soumettre": planning.pk, "planning-consultation": planning.pk,
         "visite-copier": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,
         "activite": activite.pk, "activite-retirer": activite.pk,

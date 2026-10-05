@@ -2,6 +2,42 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.2] — Consultation d'un planning soumis
+
+Deuxième jalon du cycle 0.3 « Validation des plannings ».
+
+### Ajouté — consultation par le superviseur (PLN-011 CA2, PLN-004 CA2)
+
+- Dans « Plannings à valider », chaque carte s'ouvre (« Consulter la semaine ») sur le planning soumis :
+  - le délégué, son poste, la semaine ; « File des plannings » pour revenir, « Suivant : … » pour passer au planning suivant de la file ;
+  - le résumé : statut, soumission (et « En retard »), visites, kilométrage estimé (PLN-010) ;
+  - « À vérifier » : les contrôles, dont les seuils du jour (un seuil dépassé apparaît au superviseur, PLN-004 CA2) ;
+  - les activités de la semaine avec leur explication et qui les a demandées (PLN-018) ;
+  - la semaine, un jour par colonne, comme le délégué l'a préparée ; chaque visite dit le nombre de ses alertes (« 2 alertes ») ;
+  - le détail d'une visite : prospect (spécialité, potentiel), lieu, passage, objectif, réseau, note et chacune de ses alertes.
+- Rien ne s'y modifie. Un planning en préparation, ou d'un délégué qu'il ne supervise pas cette semaine-là, lui est introuvable. La décision (approuver, demander une révision) arrive en 0.3.3 et 0.3.4.
+
+### Modifié
+
+- Renommage technique : le modèle `Absence` devient `Activite`, comme dans l'interface depuis 0.3.1. Routes `plannings/{id}/activites/`, `activites/{id}/`, `activites/{id}/retirer/` ; codes d'erreur `activite_chevauchement`, `activite_avec_visites` ; audit `activite.declaration`, `activite.modification`, `activite.retrait`. Le vocabulaire métier « absence » (congé, maladie…) reste dans les textes.
+- Les textes des contrôles ne s'adressent plus au délégué (« prospect hors liste cible », « lieu hors secteur ») : le superviseur les lit aussi.
+
+### Démonstration
+
+- La semaine soumise du premier délégué porte une visite le jeudi chez un prospect hors liste cible, dans un autre secteur, sans activité déclarée : le superviseur la repère dans la file puis sur la visite.
+
+### Design
+
+Revue sur le rendu réel : portail bureau, tablette, téléphone et sombre (file, consultation, détail d'une visite), plus la vue du délégué après le partage des composants. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| File (toutes tailles) | La carte rendue cliquable centrait son contenu, laissant une marge vide à gauche. | Grille pleine largeur, texte aligné à gauche. |
+| File | Rien ne disait que la carte s'ouvre, notamment au toucher. | « Consulter la semaine » et un chevron en pied de carte. |
+| Consultation | L'explication d'une activité apparaissait deux fois (carte des activités et colonne du jour). | La colonne ne garde que la ligne de l'activité ; l'explication est dans la carte. |
+| Consultation | La démonstration n'avait aucune alerte sur une visite : la nouveauté ne se voyait pas. | Visite hors liste cible ajoutée à la démonstration. |
+| Contrôles | « hors de votre liste cible » se lisait faux pour le superviseur. | Textes neutres, pour le délégué comme pour le superviseur. |
+
 ## [0.3.1] — Activités connexes et file des plannings en attente
 
 Premier jalon du cycle 0.3 « Validation des plannings ». Décisions du 5 octobre 2026 (prd.md §14.17).

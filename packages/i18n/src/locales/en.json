@@ -1438,8 +1438,8 @@
     "seuil_bas_other": "Below the minimum of visits: {{jours}}",
     "seuil_haut_one": "Above the maximum of visits: {{jours}}",
     "seuil_haut_other": "Above the maximum of visits: {{jours}}",
-    "hors_cible": "{{jour}}: prospect outside your target list",
-    "hors_secteur": "{{jour}}: place outside your sectors",
+    "hors_cible": "{{jour}}: prospect outside the target list",
+    "hors_secteur": "{{jour}}: place outside the sectors",
     "a_non_planifie_one": "A prospect with no visit in {{mois}}: {{noms}}",
     "a_non_planifie_other": "{{count}} A prospects with no visit in {{mois}}: {{noms}}{{suite}}",
     "etAutres_one": " and {{count}} other",
@@ -1449,7 +1449,7 @@
       "meme_prospect": "Same prospect twice this day",
       "sans_exercice": "Does not practise at this place",
       "hors_cible": "Outside target list",
-      "hors_secteur": "Outside your sectors",
+      "hors_secteur": "Outside the sectors",
       "jour_non_planifiable": "Day became a holiday or an absence: move it",
       "fiche_inactive_prospect": "Prospect record no longer active",
       "fiche_inactive_etablissement": "Place record no longer active"
@@ -1600,5 +1600,18 @@
     "depuis_one": "Waiting for {{count}} day",
     "depuis_other": "Waiting for {{count}} days",
     "depuisAujourdhui": "Submitted today"
+  },
+  "consultation": {
+    "retour": "Planning queue",
+    "suivant": "Next: {{nom}}",
+    "activites": "Activities this week",
+    "semaine": "Planning week",
+    "lectureSeule": "Read-only: nothing can be changed here.",
+    "alertes_one": "{{count}} alert",
+    "alertes_other": "{{count}} alerts",
+    "potentiel": "potential {{valeur}}",
+    "passage": "Stop",
+    "consulter": "Open {{nom}}'s planning",
+    "ouvrir": "Open the week"
   }
 }

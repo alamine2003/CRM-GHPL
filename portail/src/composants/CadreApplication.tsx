@@ -151,7 +151,10 @@ function BarreLaterale({
                   <EntreeNavigation
                     key={entree.cle}
                     entree={entree}
-                    courant={entree.chemin === pathname}
+                    courant={
+                      entree.chemin === pathname ||
+                      (entree.chemin !== '/' && pathname.startsWith(`${entree.chemin}/`))
+                    }
                     surNavigation={surNavigation}
                   />
                 ))}

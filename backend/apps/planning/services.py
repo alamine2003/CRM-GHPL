@@ -428,12 +428,21 @@ def postes_sans_superviseur(planning: Planning) -> list:
             if superviseur_du_poste(p, planning.semaine) is None]  # fmt: skip
 
 
-def plannings_a_valider(superviseur, pays) -> list[Planning]:
-    """PLN-011 : plannings soumis des délégués dont un poste occupé cette semaine-là est rattaché
-    au superviseur, du plus ancien au plus récent (CA1). Son propre planning n'y est pas : celui
-    d'un superviseur-visiteur va à son DM (PLN-017, 0.3.3)."""
+def supervise(superviseur, planning: Planning) -> bool:
+    """Un poste occupé par le délégué la semaine du planning est rattaché à ce superviseur. Son
+    propre planning n'en fait pas partie : celui d'un superviseur-visiteur va à son DM (PLN-017,
+    0.3.3)."""
     from apps.organisation.services import superviseur_du_poste
 
+    return planning.delegue_id != superviseur.pk and any(
+        superviseur_du_poste(poste, planning.semaine) == superviseur
+        for poste in postes_de_la_semaine(planning)
+    )
+
+
+def plannings_a_valider(superviseur, pays) -> list[Planning]:
+    """PLN-011 : plannings soumis des délégués qu'il supervise cette semaine-là, du plus ancien
+    au plus récent (CA1)."""
     candidats = (
         Planning.objects.filter(pays=pays, statut=StatutPlanning.SOUMIS,
                                 delegue__occupations__poste__rattachements__superviseur=superviseur)
@@ -441,12 +450,7 @@ def plannings_a_valider(superviseur, pays) -> list[Planning]:
         .select_related("delegue")
         .distinct()
     )  # fmt: skip
-    return sorted(
-        (p for p in candidats
-         if any(superviseur_du_poste(poste, p.semaine) == superviseur
-                for poste in postes_de_la_semaine(p))),
-        key=lambda p: p.soumis_le,
-    )  # fmt: skip
+    return sorted((p for p in candidats if supervise(superviseur, p)), key=lambda p: p.soumis_le)
 
 
 @transaction.atomic

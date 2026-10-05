@@ -80,6 +80,7 @@ export type JourFerie = Schemas['JourFerie'];
 export type Planning = Schemas['Planning'];
 /** Ligne de la file du superviseur (PLN-011). */
 export type PlanningEnAttente = Schemas['PlanningEnAttente'];
+export type ConsultationPlanning = Schemas['Consultation'];
 export type Semaine = Schemas['Semaine'];
 export type JourSemaine = Schemas['JourSemaine'];
 // Visites planifiées (PLN-002).

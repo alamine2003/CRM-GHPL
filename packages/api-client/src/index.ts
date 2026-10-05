@@ -9,6 +9,7 @@
  */
 import type {
   ChangementFiche,
+  ConsultationPlanning,
   JourFerie,
   Planning,
   PlanningEnAttente,
@@ -105,6 +106,7 @@ export type {
   SaisieVisite,
   StatutVisite,
   Visite,
+  ConsultationPlanning,
   Planning,
   PlanningEnAttente,
   Qualite,
@@ -647,6 +649,9 @@ export function creerClient(options: OptionsClient) {
     plannings: {
       /** File du superviseur : plannings soumis de son équipe, du plus ancien (PLN-011). */
       aValider: () => requete<PlanningEnAttente[]>('/api/v1/plannings/a-valider/'),
+      /** Un planning soumis consulté par son superviseur, sans rien y modifier (0.3.2). */
+      consulter: (id: string) =>
+        requete<ConsultationPlanning>(`/api/v1/plannings/${id}/consultation/`),
       semaine: (jour?: string) =>
         requete<Semaine>(`/api/v1/plannings/semaine/${jour ? `?semaine=${jour}` : ''}`),
       creer: (semaine: string) =>

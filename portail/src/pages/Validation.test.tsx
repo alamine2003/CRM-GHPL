@@ -2,6 +2,7 @@ import type { ClientApi, PlanningEnAttente } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import axe from 'axe-core';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContexteSession, type Session } from '../contexteSession';
 import i18n from '../i18n';
@@ -49,7 +50,9 @@ function rendre(aValider: () => Promise<PlanningEnAttente[]>) {
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
       <ContexteSession.Provider value={session}>
-        <Validation />
+        <MemoryRouter>
+          <Validation />
+        </MemoryRouter>
       </ContexteSession.Provider>
     </QueryClientProvider>,
   );
@@ -81,6 +84,9 @@ describe('PLN-011 : file des plannings en attente', () => {
       screen.getAllByText('mar. 13 · Déplacement · Journée · Demandé par le superviseur'),
     ).toHaveLength(2);
     expect(screen.getAllByText('Aide à un collègue à Mbour')).toHaveLength(2);
+    // 0.3.2 : chaque carte ouvre la consultation de son planning.
+    const liens = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
+    expect(liens).toEqual(['/validation/pl1', '/validation/pl2']);
     const resultat = await axe.run(container, {
       runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
       rules: { 'color-contrast': { enabled: false } },

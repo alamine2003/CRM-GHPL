@@ -301,3 +301,11 @@ class PlanningEnAttenteSerializer(serializers.Serializer):
     @extend_schema_field(ActiviteSerializer(many=True))
     def get_activites(self, ligne) -> list[dict]:
         return ActiviteSerializer(ligne["activites"], many=True).data
+
+
+class ConsultationSerializer(SemaineSerializer):
+    """0.3.2 : un planning soumis consulté par son superviseur ; la semaine telle que le
+    délégué l'a préparée, avec le délégué et ses postes de la semaine."""
+
+    delegue = DelegueSerializer()
+    postes = serializers.ListField(child=serializers.CharField())

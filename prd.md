@@ -646,7 +646,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | PLN-008 | Soumission avec contrôle final ; marquage `en_retard` après l'échéance. | 0.2.8 | CA1 : une soumission après jeudi 18 h (heure du pays) est acceptée et marquée « en retard ». |
 | PLN-009 | Absences déclarées (`conge`, `formation`, `reunion`, `maladie`, `autre`) par jour ou demi-journée. | 0.2.3 | CA1 : une demi-journée d'absence réduit de moitié les seuils du jour. CA2 : l'absence est validée avec le planning. |
 | PLN-010 | Kilométrage estimé de la semaine (sans montant). | 0.2.6 | CA1 : le kilométrage est calculé à partir des coordonnées des établissements, à vol d'oiseau ou par itinéraire [H]. CA2 : aucun montant de frais n'est affiché. |
-| PLN-011 | Le superviseur dispose d'une file des plannings en attente. | 0.3.1 | CA1 : la file est triée par ancienneté de soumission et affiche les alertes. |
+| PLN-011 | Le superviseur dispose d'une file des plannings en attente et consulte chacun en détail. | 0.3.1, 0.3.2 | CA1 : la file est triée par ancienneté de soumission et affiche les alertes. CA2 (0.3.2) : il ouvre un planning de la file et voit la semaine, ses activités, ses contrôles, le kilométrage et le détail de chaque visite avec ses alertes, sans rien pouvoir modifier ; un planning en préparation ou d'un délégué qu'il ne supervise pas lui est introuvable. |
 | PLN-012 | Le superviseur approuve un planning complet. | 0.3.3 | CA1 : l'approbation fige la version. CA2 : le délégué reçoit une notification. |
 | PLN-013 | Le superviseur demande une révision, sur le planning ou une visite précise, avec commentaire obligatoire. | 0.3.4 | CA1 : une demande sans commentaire est refusée. CA2 : le délégué voit le commentaire sur la visite concernée. |
 | PLN-014 | Nouvelle version après révision ; historique et comparaison des versions. | 0.3.5 | CA1 : la comparaison montre les visites ajoutées, retirées, déplacées. CA2 : toutes les versions restent consultables. |
@@ -1046,7 +1046,7 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 | Version | Livraison principale |
 |---|---|
 | 0.3.1 | File des plannings en attente ; activités connexes (commandos, déplacements, accompagnements) |
-| 0.3.2 | Consultation semaine et détail avec alertes |
+| 0.3.2 | Consultation semaine et détail avec alertes (PLN-011 CA2) ; le modèle `Absence` devient `Activite` |
 | 0.3.3 | Approbation ; approbation par le DM du planning d'un superviseur-visiteur |
 | 0.3.4 | Révision motivée (planning ou visite) ; remplaçant daté |
 | 0.3.5 | Nouvelle version et resoumission |

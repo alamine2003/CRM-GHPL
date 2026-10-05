@@ -56,13 +56,17 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     soumis, prepare = Planning.objects.filter(pays__code="SN").order_by("semaine")
     assert (soumis.statut, soumis.en_retard, prepare.statut) == ("soumis", False, "brouillon")
     assert soumis.soumis_le is not None and prepare.semaine == soumis.semaine + timedelta(days=7)
-    assert soumis.visites.count() == 6 and not soumis.visites.filter(heure__isnull=True).exists()
+    assert soumis.visites.count() == 7 and not soumis.visites.filter(heure__isnull=True).exists()
     assert prepare.visites.count() == 6 and prepare.visites.filter(heure__isnull=True).count() == 1
     # Chaque semaine a son passage de deux confrères ; la formation est à préparer (PLN-003,
     # PLN-009).
     assert [p.visites.count() for p in Passage.objects.filter(pays__code="SN")] == [2, 2]
     # La semaine soumise montre une matinée d'accompagnement du superviseur (PLN-018).
     assert soumis.activites.get().type == "accompagnement"
+    # Une visite hors liste cible, à trouver en consultant la semaine (0.3.2).
+    from apps.planning import controles
+
+    assert "hors_cible" in {a.code for a in controles.signalements(soumis)}
     assert Activite.objects.filter(pays__code="SN", periode="apres_midi").count() == 1
 
 

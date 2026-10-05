@@ -465,7 +465,7 @@ test('PLN-004 CA2 : les signalements sont dits, sans rien bloquer', async () => 
   expect(await screen.findByText('Signalé à votre superviseur')).toBeTruthy();
   expect(screen.queryByText(/À corriger/)).toBeNull();
   expect(screen.getByText('Sous le minimum de visites : lun. 26, mar. 27')).toBeTruthy();
-  expect(screen.getByText('mar. 27 : prospect hors de votre liste cible')).toBeTruthy();
+  expect(screen.getByText('mar. 27 : prospect hors liste cible')).toBeTruthy();
   expect(screen.getByText('Hors liste cible')).toBeTruthy();
   expect(
     screen.getByText(

@@ -7,6 +7,7 @@
 
 from datetime import date, timedelta
 
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -22,7 +23,7 @@ from apps.socle.services import aujourdhui
 from . import controles, kilometrage, services
 from . import serializers as s
 from .calendrier import jours_de_la_semaine, lundi
-from .etats import MODIFIABLES
+from .etats import MODIFIABLES, StatutPlanning
 from .models import Activite, JourFerie, Passage, Planning, Visite
 
 GERER = Action.JOURS_FERIES_GERER
@@ -112,38 +113,45 @@ class SemaineVue(VuePlannings):
                 "semaine_invalide", _("Date invalide : format AAAA-MM-JJ attendu."), champ="semaine"
             ) from erreur
         debut = lundi(jour)
-        courante = lundi(aujourdhui(pays))
         planning = self.get_queryset().filter(semaine=debut).first()
-        donnees = {
-            "semaine": debut,
-            "precedente": debut - timedelta(days=7),
-            "suivante": debut + timedelta(days=7),
-            "courante": debut == courante,
-            "fuseau": pays.fuseau,
-            "jours": [
-                {
-                    "date": j.date,
-                    "ferie": j.ferie.libelle if j.ferie else None,
-                    "planifiable": j.planifiable,
-                }
-                for j in jours_de_la_semaine(pays, debut)
-            ],  # fmt: skip
-            "planning": planning,
+        donnees = _semaine(pays, debut, planning) | {
             "peut_creer": planning is None
-            and debut >= courante
+            and debut >= lundi(aujourdhui(pays))
             and services.occupe_un_poste(request.user, pays, debut),
             "modifiable": bool(planning) and planning.statut in MODIFIABLES,
-            "visites": _visites(planning) if planning else [],
-            "passages": _passages(planning) if planning else [],
-            "activites": list(planning.activites.filter(archive_le__isnull=True))
-            if planning
-            else [],
-            "controles": controles.bilan(planning) if planning else None,
-            "kilometrage": kilometrage.estimer(planning) if planning else None,
             "reprenables": _reprenables(planning),
-            "reseaux": _reseaux(planning) if planning else [],
         }
         return Response(s.SemaineSerializer(donnees).data)
+
+
+def _semaine(pays, debut: date, planning: Planning | None) -> dict:
+    """La semaine et son planning : jours, visites, passages, activités, contrôles, kilomètres.
+    Le délégué la prépare (PLN-006) ; le superviseur la consulte (0.3.2)."""
+    return {
+        "semaine": debut,
+        "precedente": debut - timedelta(days=7),
+        "suivante": debut + timedelta(days=7),
+        "courante": debut == lundi(aujourdhui(pays)),
+        "fuseau": pays.fuseau,
+        "jours": [
+            {
+                "date": j.date,
+                "ferie": j.ferie.libelle if j.ferie else None,
+                "planifiable": j.planifiable,
+            }
+            for j in jours_de_la_semaine(pays, debut)
+        ],  # fmt: skip
+        "planning": planning,
+        "peut_creer": False,
+        "modifiable": False,
+        "reprenables": 0,
+        "visites": _visites(planning) if planning else [],
+        "passages": _passages(planning) if planning else [],
+        "activites": list(planning.activites.filter(archive_le__isnull=True)) if planning else [],
+        "controles": controles.bilan(planning) if planning else None,
+        "kilometrage": kilometrage.estimer(planning) if planning else None,
+        "reseaux": _reseaux(planning) if planning else [],
+    }
 
 
 class PlanningsVue(VuePlannings):
@@ -394,6 +402,32 @@ class FileValidationVue(VuePerimetre):
                 "activites": list(planning.activites.filter(archive_le__isnull=True)),
             })  # fmt: skip
         return Response(s.PlanningEnAttenteSerializer(lignes, many=True).data)
+
+
+class ConsultationVue(VuePerimetre):
+    """0.3.2 : le superviseur consulte un planning soumis d'un délégué qu'il supervise : la
+    semaine, ses visites, activités, contrôles et kilomètres, sans rien y modifier. Un planning
+    en préparation, ou d'un délégué qu'il ne supervise pas, n'existe pas pour lui (404)."""
+
+    actions = {"GET": Action.PLANNINGS_VALIDER}
+    serializer_class = s.ConsultationSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(
+            Planning.objects.exclude(statut=StatutPlanning.BROUILLON).select_related("delegue")
+        )
+
+    @extend_schema(responses=s.ConsultationSerializer, operation_id="planning_consulter")
+    def get(self, request, id):
+        pays = pays_requis(self.perimetre)
+        planning = get_object_or_404(self.get_queryset().filter(pays=pays), pk=id)
+        if not services.supervise(request.user, planning):
+            raise Http404
+        donnees = _semaine(pays, planning.semaine, planning) | {
+            "delegue": planning.delegue,
+            "postes": [p.libelle for p in services.postes_de_la_semaine(planning)],
+        }
+        return Response(s.ConsultationSerializer(donnees).data)
 
 
 class SoumissionVue(VuePlannings):

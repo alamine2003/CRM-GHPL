@@ -195,6 +195,11 @@ urlpatterns = [
     path("plannings/<uuid:id>/ordre/", pln.OrdreVue.as_view(), name="planning-ordre"),
     path("plannings/<uuid:id>/poser/", pln.PoseVue.as_view(), name="planning-poser"),
     path("plannings/<uuid:id>/soumettre/", pln.SoumissionVue.as_view(), name="planning-soumettre"),
+    path(
+        "plannings/<uuid:id>/consultation/",
+        pln.ConsultationVue.as_view(),
+        name="planning-consultation",
+    ),
     path("plannings/<uuid:id>/reprendre/", pln.RepriseVue.as_view(), name="planning-reprendre"),
     path("visites/<uuid:id>/copier/", pln.VisiteCopieVue.as_view(), name="visite-copier"),
     path(

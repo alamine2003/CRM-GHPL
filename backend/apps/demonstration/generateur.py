@@ -404,6 +404,7 @@ class Generateur:
             pln.declarer_activite(planning, date=jours[2], periode="matin", type="accompagnement",
                                  commentaire="Double visite avec le superviseur : coaching sur "
                                  "la présentation du produit du mois")  # fmt: skip
+        nombre += self._hors_cible(planning, jours, reseau)
         if controles.bloquants(planning) or pln.postes_sans_superviseur(planning):
             return nombre
         # Soumis la veille de l'échéance, en fin d'après-midi : à temps (RG-013).
@@ -461,6 +462,34 @@ class Generateur:
             )  # fmt: skip
             nombre += 1
         return nombre
+
+    @staticmethod
+    def _hors_cible(planning, jours, reseau) -> int:
+        """Un prospect hors liste cible, dans un autre secteur, vu le jeudi sans activité
+        déclarée : le superviseur trouve les alertes sur la visite en consultant la semaine
+        (PLN-004 CA2, 0.3.2)."""
+        from apps.planning import services as pln
+        from apps.prospects.models import Cible, Exercice, StatutFiche
+
+        if len(jours) < 4:
+            return 0
+        postes = pln.postes_de_la_semaine(planning)
+        exercice = (
+            Exercice.objects.filter(fin__isnull=True, prospect__pays=planning.pays,
+                                    prospect__statut=StatutFiche.ACTIF)
+            .exclude(prospect__in=Cible.objects.filter(fin__isnull=True, poste__in=postes)
+                     .values("prospect"))
+            .exclude(prospect__in=planning.visites.values("prospect"))
+            .select_related("prospect", "etablissement")
+            .order_by("prospect__nom")
+            .first()
+        )  # fmt: skip
+        if exercice is None:
+            return 0
+        pln.ajouter_visite(planning, date=jours[3], prospect=exercice.prospect,
+                           etablissement=exercice.etablissement, reseau=reseau,
+                           heure=time(11, 0), objectif="Présenter le produit du mois")  # fmt: skip
+        return 1
 
     @staticmethod
     def _passage_et_absence(planning, jours, reseau, cibles, absence=True) -> int:

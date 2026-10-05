@@ -1438,8 +1438,8 @@
     "seuil_bas_other": "Sous le minimum de visites : {{jours}}",
     "seuil_haut_one": "Au-dessus du maximum de visites : {{jours}}",
     "seuil_haut_other": "Au-dessus du maximum de visites : {{jours}}",
-    "hors_cible": "{{jour}} : prospect hors de votre liste cible",
-    "hors_secteur": "{{jour}} : lieu hors de vos secteurs",
+    "hors_cible": "{{jour}} : prospect hors liste cible",
+    "hors_secteur": "{{jour}} : lieu hors secteur",
     "a_non_planifie_one": "Prospect A sans visite en {{mois}} : {{noms}}",
     "a_non_planifie_other": "{{count}} prospects A sans visite en {{mois}} : {{noms}}{{suite}}",
     "etAutres_one": " et {{count}} autre",
@@ -1449,7 +1449,7 @@
       "meme_prospect": "Même prospect deux fois ce jour",
       "sans_exercice": "N'exerce pas dans ce lieu",
       "hors_cible": "Hors liste cible",
-      "hors_secteur": "Hors de vos secteurs",
+      "hors_secteur": "Hors secteur",
       "jour_non_planifiable": "Jour devenu férié ou d'absence : à déplacer",
       "fiche_inactive_prospect": "Fiche du prospect devenue inactive",
       "fiche_inactive_etablissement": "Fiche du lieu devenue inactive"
@@ -1600,5 +1600,18 @@
     "depuis_one": "En attente depuis {{count}} jour",
     "depuis_other": "En attente depuis {{count}} jours",
     "depuisAujourdhui": "Soumis aujourd'hui"
+  },
+  "consultation": {
+    "retour": "File des plannings",
+    "suivant": "Suivant : {{nom}}",
+    "activites": "Activités de la semaine",
+    "semaine": "Semaine du planning",
+    "lectureSeule": "Consultation : rien ne se modifie ici.",
+    "alertes_one": "{{count}} alerte",
+    "alertes_other": "{{count}} alertes",
+    "potentiel": "potentiel {{valeur}}",
+    "passage": "Passage",
+    "consulter": "Consulter le planning de {{nom}}",
+    "ouvrir": "Consulter la semaine"
   }
 }

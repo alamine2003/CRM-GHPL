@@ -1475,6 +1475,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/plannings/{id}/consultation/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description 0.3.2 : le superviseur consulte un planning soumis d'un délégué qu'il supervise : la
+     *     semaine, ses visites, activités, contrôles et kilomètres, sans rien y modifier. Un planning
+     *     en préparation, ou d'un délégué qu'il ne supervise pas, n'existe pas pour lui (404).
+     */
+    get: operations['planning_consulter'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/{id}/ordre/': {
     parameters: {
       query?: never;
@@ -2370,6 +2391,33 @@ export interface components {
       jeton_etape: string;
       /** @description Code de l'application ou de secours. */
       code: string;
+    };
+    /**
+     * @description 0.3.2 : un planning soumis consulté par son superviseur ; la semaine telle que le
+     *     délégué l'a préparée, avec le délégué et ses postes de la semaine.
+     */
+    Consultation: {
+      /** Format: date */
+      semaine: string;
+      /** Format: date */
+      precedente: string;
+      /** Format: date */
+      suivante: string;
+      courante: boolean;
+      fuseau: string;
+      jours: components['schemas']['JourSemaine'][];
+      planning: components['schemas']['Planning'] | null;
+      peut_creer: boolean;
+      modifiable: boolean;
+      visites: components['schemas']['Visite'][];
+      passages: components['schemas']['Passage'][];
+      activites: components['schemas']['Activite'][];
+      reprenables: number;
+      kilometrage: components['schemas']['Kilometrage'] | null;
+      controles: components['schemas']['Controles'] | null;
+      reseaux: components['schemas']['Resume'][];
+      delegue: components['schemas']['Delegue'];
+      postes: string[];
     };
     /** @description Contrôle du planning (PLN-004) : `bloquant` (RG-015) ou `signalement` (RG-016). */
     ControlePlanning: {
@@ -6194,6 +6242,27 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Activite'];
+        };
+      };
+    };
+  };
+  planning_consulter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Consultation'];
         };
       };
     };

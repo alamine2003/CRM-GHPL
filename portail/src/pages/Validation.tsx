@@ -1,28 +1,22 @@
-import type { Activite, PlanningEnAttente } from '@innov/api-client';
-import DirectionsCarRounded from '@mui/icons-material/DirectionsCarRounded';
-import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
-import GroupsRounded from '@mui/icons-material/GroupsRounded';
-import SupervisorAccountRounded from '@mui/icons-material/SupervisorAccountRounded';
-import { Box, Card, Chip, Skeleton, Stack, Typography } from '@mui/material';
+import type { PlanningEnAttente } from '@innov/api-client';
+import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
+import { Box, Card, CardActionArea, Chip, Skeleton, Stack, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link as LienRouteur } from 'react-router';
 import { EnTetePage } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
+import { ListeActivites } from '../composants/SemainePlanning';
 import { useSession } from '../contexteSession';
 
 type Traduire = ReturnType<typeof useTranslation>['t'];
 
-const ICONES: Partial<Record<Activite['type'], ReactNode>> = {
-  commando: <GroupsRounded fontSize="small" />,
-  deplacement: <DirectionsCarRounded fontSize="small" />,
-  accompagnement: <SupervisorAccountRounded fontSize="small" />,
-};
-
 /**
  * File des plannings en attente du superviseur (PLN-011, 0.3.1) : les plannings soumis de son
  * équipe, du plus ancien au plus récent (CA1), avec leurs alertes et leurs activités connexes
- * expliquées (PLN-018). Consultation détaillée et décision : 0.3.2 et 0.3.3.
+ * expliquées (PLN-018). Chaque carte ouvre la consultation du planning (0.3.2) ; la décision
+ * arrive en 0.3.3.
  */
 export default function Validation() {
   const { t } = useTranslation();
@@ -83,96 +77,84 @@ function CartePlanning({ ligne, maintenant }: { ligne: PlanningEnAttente; mainte
     ? Math.floor((maintenant - new Date(planning.soumis_le).getTime()) / 86_400_000)
     : 0;
   return (
-    <Card sx={{ p: 2, display: 'grid', gap: 1.5 }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={1}
-        sx={{ justifyContent: 'space-between', alignItems: { sm: 'baseline' } }}
+    <Card>
+      <CardActionArea
+        component={LienRouteur}
+        to={`/validation/${planning.id}`}
+        sx={{
+          p: 2,
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr)',
+          justifyContent: 'stretch',
+          gap: 1.5,
+          textAlign: 'left',
+        }}
       >
-        <Box sx={{ minWidth: 0 }}>
-          <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
-            {delegue.prenom} {delegue.nom}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {[
-              ligne.postes.join(', '),
-              t('semaine.periode', {
-                debut: jour(planning.semaine, { day: 'numeric', month: 'short' }),
-                fin: fin.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' }),
-              }),
-              t('validation.visites', { count: ligne.visites }),
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </Typography>
-        </Box>
-        <Box sx={{ flex: 'none', textAlign: { sm: 'right' } }}>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {jours > 0
-              ? t('validation.depuis', { count: jours })
-              : t('validation.depuisAujourdhui')}
-          </Typography>
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ alignItems: 'baseline', justifyContent: { sm: 'flex-end' } }}
-          >
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {t('soumission.soumisLe', { date: soumisLe })}
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          sx={{ justifyContent: 'space-between', alignItems: { sm: 'baseline' } }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
+              {delegue.prenom} {delegue.nom}
             </Typography>
-            {planning.en_retard && (
-              <Typography variant="body2" sx={{ color: 'warning.main', fontWeight: 600 }}>
-                {t('soumission.enRetard')}
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {[
+                ligne.postes.join(', '),
+                t('semaine.periode', {
+                  debut: jour(planning.semaine, { day: 'numeric', month: 'short' }),
+                  fin: fin.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' }),
+                }),
+                t('validation.visites', { count: ligne.visites }),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </Typography>
+          </Box>
+          <Box sx={{ flex: 'none', textAlign: { sm: 'right' } }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {jours > 0
+                ? t('validation.depuis', { count: jours })
+                : t('validation.depuisAujourdhui')}
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: 'baseline', justifyContent: { sm: 'flex-end' } }}
+            >
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {t('soumission.soumisLe', { date: soumisLe })}
               </Typography>
-            )}
-          </Stack>
-        </Box>
-      </Stack>
-      {alertes.length > 0 && (
-        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-          {alertes.map((a) => (
-            <Chip
-              key={a.code}
-              size="small"
-              variant="outlined"
-              color="warning"
-              label={libelleAlerte(a.code, a.nombre, t)}
-            />
-          ))}
-        </Stack>
-      )}
-      {ligne.activites.length > 0 && (
-        <Stack spacing={1}>
-          {ligne.activites.map((a) => (
-            <Stack key={a.id} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
-              <Box
-                sx={{
-                  color: a.avec_visites ? 'primary.main' : 'text.secondary',
-                  display: 'flex',
-                  pt: 0.25,
-                }}
-              >
-                {ICONES[a.type] ?? <EventBusyRounded fontSize="small" />}
-              </Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {jour(a.date, { weekday: 'short', day: 'numeric' })} ·{' '}
-                  {t('activites.ligne', {
-                    type: t(`activites.types.${a.type}`),
-                    periode: t(`activites.periodes.${a.periode ?? 'journee'}`),
-                  })}
-                  {a.demande_superviseur ? ` · ${t('activites.parSuperviseur')}` : ''}
+              {planning.en_retard && (
+                <Typography variant="body2" sx={{ color: 'warning.main', fontWeight: 600 }}>
+                  {t('soumission.enRetard')}
                 </Typography>
-                {a.commentaire && (
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    {a.commentaire}
-                  </Typography>
-                )}
-              </Box>
+              )}
             </Stack>
-          ))}
+          </Box>
         </Stack>
-      )}
+        {alertes.length > 0 && (
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+            {alertes.map((a) => (
+              <Chip
+                key={a.code}
+                size="small"
+                variant="outlined"
+                color="warning"
+                label={libelleAlerte(a.code, a.nombre, t)}
+              />
+            ))}
+          </Stack>
+        )}
+        {ligne.activites.length > 0 && <ListeActivites activites={ligne.activites} />}
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'primary.main' }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {t('consultation.ouvrir')}
+          </Typography>
+          <ChevronRightRounded fontSize="small" />
+        </Stack>
+      </CardActionArea>
     </Card>
   );
 }
