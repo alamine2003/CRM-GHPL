@@ -2,6 +2,47 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.4] — Contrôles bloquants et signalements
+
+Quatrième jalon du cycle 0.2 « Planning ».
+
+### Ajouté — contrôles du planning (PLN-004)
+
+- Pendant la préparation, une carte **« À vérifier »** apparaît sous le planning, en deux parties :
+  - **à corriger avant de soumettre** : les contrôles bloquants (RG-015) ;
+  - **signalé à votre superviseur** : les signalements (RG-016).
+  Toucher un point ouvre la visite concernée.
+- **Bloquants** (RG-015) :
+  - visite incomplète ;
+  - fiche du prospect ou du lieu devenue inactive ;
+  - prospect qui n'exerce pas dans ce lieu à cette date ;
+  - deux visites à la même heure (**CA1**) ; les visites d'un même passage partagent la leur sans conflit ;
+  - le même prospect deux fois le même jour.
+  La soumission (0.2.8) les refusera avec la liste ; la garde est prête côté serveur (`planning_bloque`).
+- **Signalements** (RG-016), qui n'empêchent pas la soumission (**CA2**) :
+  - jours sous le minimum ou au-dessus du maximum de visites du type de poste, au prorata des absences et sans les jours fériés (RG-022, PLN-009 CA1) ;
+  - prospect hors liste cible ;
+  - lieu hors des secteurs du poste (RG-024) ;
+  - prospects A sans visite dans le mois, sur la dernière semaine du mois.
+- Chaque jour montre son nombre de visites face à son seuil (« 1 sur 6–10 »), en ambre hors de la fourchette. Chaque visite concernée porte sa marque (« Même heure qu'une autre visite », « Hors liste cible »…).
+- prd.md §14.11 consigne les choix [H] : arrondis du prorata, fourchette la plus large pour plusieurs types de poste, prospects A signalés en fin de mois.
+
+### Architecture
+
+- `planning/controles.py` : contrôles calculés à la demande, sans état ; la semaine renvoie `controles` (bloquants, signalements, objectifs).
+- Énumérations du schéma nommées : `CodeControleEnum`, `GraviteControleEnum` ; le composant d'API prend le nom `ControlePlanning`, distinct des anomalies d'import.
+- Mobile : `src/Controles.tsx` (carte, objectif du jour, marques des visites).
+
+### Design
+
+Revue sur le rendu réel : mobile à 360 et 414 px, et à 390 px en thème sombre. Seconde et troisième revues après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| En-tête du jour | « 1 / 6–10 » cryptique, en orange à côté de « Aujourd'hui », lui aussi orange | « 1 sur 6–10 » en ambre ; libellé vocal complet (« 1 visite, objectif 6 à 10 ») |
+| En-tête du jour (360 px) | L'objectif passait sur deux lignes à côté de « Aujourd'hui » | Il ne se replie plus ; seul l'espace libre se réduit |
+| Passage en conflit d'heure | « Même heure qu'une autre visite » répété sur chaque visite du passage | Une seule marque, sur la ligne du passage, qui porte l'heure |
+
 ## [0.2.3] — Ordre de la journée, passages, absences
 
 Troisième jalon du cycle 0.2 « Planning ». L'heure et les notes, prévues ici, sont arrivées dès 0.2.2 avec PLN-002.

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.3
+  version: 0.2.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/absences/{id}/:
@@ -4131,6 +4131,30 @@ components:
           maxLength: 20
       required:
       - code
+    CodeControleEnum:
+      enum:
+      - incomplete
+      - fiche_inactive
+      - sans_exercice
+      - meme_heure
+      - meme_prospect
+      - seuil_bas
+      - seuil_haut
+      - hors_cible
+      - hors_secteur
+      - a_non_planifie
+      type: string
+      description: |-
+        * `incomplete` - incomplete
+        * `fiche_inactive` - fiche_inactive
+        * `sans_exercice` - sans_exercice
+        * `meme_heure` - meme_heure
+        * `meme_prospect` - meme_prospect
+        * `seuil_bas` - seuil_bas
+        * `seuil_haut` - seuil_haut
+        * `hors_cible` - hors_cible
+        * `hors_secteur` - hors_secteur
+        * `a_non_planifie` - a_non_planifie
     CodesSecours:
       type: object
       properties:
@@ -4244,6 +4268,76 @@ components:
       required:
       - code
       - jeton_etape
+    ControlePlanning:
+      type: object
+      description: 'Contrôle du planning (PLN-004) : `bloquant` (RG-015) ou `signalement`
+        (RG-016).'
+      properties:
+        code:
+          $ref: '#/components/schemas/CodeControleEnum'
+        gravite:
+          $ref: '#/components/schemas/GraviteControleEnum'
+        date:
+          type: string
+          format: date
+          nullable: true
+        visites:
+          type: array
+          items:
+            type: string
+            format: uuid
+        manquants:
+          type: array
+          items:
+            type: string
+          nullable: true
+        fiche:
+          type: string
+          nullable: true
+        heure:
+          type: string
+          nullable: true
+        nombre:
+          type: integer
+          nullable: true
+        min:
+          type: integer
+          nullable: true
+        max:
+          type: integer
+          nullable: true
+        mois:
+          type: string
+          nullable: true
+        prospects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProspectOublie'
+          nullable: true
+      required:
+      - code
+      - date
+      - gravite
+      - visites
+    Controles:
+      type: object
+      properties:
+        bloquants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ControlePlanning'
+        signalements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ControlePlanning'
+        objectifs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Objectif'
+      required:
+      - bloquants
+      - objectifs
+      - signalements
     CreationDivision:
       type: object
       properties:
@@ -4932,6 +5026,14 @@ components:
       - id
       - par
       - score
+    GraviteControleEnum:
+      enum:
+      - bloquant
+      - signalement
+      type: string
+      description: |-
+        * `bloquant` - bloquant
+        * `signalement` - signalement
     ImportBirdNotes:
       type: object
       properties:
@@ -5318,6 +5420,23 @@ components:
       - superviseur
       - type_libelle
       - type_poste
+    Objectif:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        visites:
+          type: integer
+        min:
+          type: integer
+        max:
+          type: integer
+      required:
+      - date
+      - max
+      - min
+      - visites
     Occupation:
       type: object
       properties:
@@ -6359,6 +6478,17 @@ components:
       - specialite
       - type
       - type_libelle
+    ProspectOublie:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+      required:
+      - id
+      - nom
     ProspectResume:
       type: object
       properties:
@@ -6954,12 +7084,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Absence'
+        controles:
+          allOf:
+          - $ref: '#/components/schemas/Controles'
+          nullable: true
         reseaux:
           type: array
           items:
             $ref: '#/components/schemas/Resume'
       required:
       - absences
+      - controles
       - courante
       - jours
       - modifiable

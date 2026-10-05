@@ -249,6 +249,8 @@ SPECTACULAR_SETTINGS = {
         "StatutLotEnum": "apps.imports.models.LotImport.Statut",
         "TypeAbsenceEnum": "apps.planning.models.TypeAbsence",
         "PeriodeAbsenceEnum": "apps.planning.models.Periode",
+        "CodeControleEnum": "apps.planning.controles.CODES",
+        "GraviteControleEnum": "apps.planning.controles.GRAVITES",
     },
 }
 

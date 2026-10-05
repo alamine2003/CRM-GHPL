@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.organisation.serializers import ResumeSerializer
 
+from .controles import CODES, GRAVITES
 from .models import Absence, JourFerie, Passage, Periode, Planning, TypeAbsence, Visite
 
 
@@ -134,6 +135,44 @@ class ModificationAbsenceSerializer(serializers.Serializer):
     commentaire = serializers.CharField(max_length=200, required=False, allow_blank=True)
 
 
+class ProspectOublieSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    nom = serializers.CharField()
+
+
+class ControlePlanningSerializer(serializers.Serializer):
+    """Contrôle du planning (PLN-004) : `bloquant` (RG-015) ou `signalement` (RG-016)."""
+
+    code = serializers.ChoiceField(choices=CODES)
+    gravite = serializers.ChoiceField(choices=GRAVITES)
+    date = serializers.DateField(allow_null=True)
+    #: Visites concernées, à ouvrir pour corriger.
+    visites = serializers.ListField(child=serializers.UUIDField())
+    manquants = serializers.ListField(child=serializers.CharField(), required=False,
+                                      allow_null=True)  # fmt: skip
+    fiche = serializers.CharField(required=False, allow_null=True)
+    heure = serializers.CharField(required=False, allow_null=True)
+    nombre = serializers.IntegerField(required=False, allow_null=True)
+    min = serializers.IntegerField(required=False, allow_null=True)
+    max = serializers.IntegerField(required=False, allow_null=True)
+    mois = serializers.CharField(required=False, allow_null=True)
+    prospects = ProspectOublieSerializer(many=True, required=False, allow_null=True)
+
+
+class ObjectifSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    visites = serializers.IntegerField()
+    min = serializers.IntegerField()
+    max = serializers.IntegerField()
+
+
+class ControlesSerializer(serializers.Serializer):
+    bloquants = ControlePlanningSerializer(many=True)
+    signalements = ControlePlanningSerializer(many=True)
+    #: Visites de chaque jour planifiable face à son seuil.
+    objectifs = ObjectifSerializer(many=True)
+
+
 class JourSemaineSerializer(serializers.Serializer):
     date = serializers.DateField()
     #: Libellé du jour férié, ou nul.
@@ -157,5 +196,7 @@ class SemaineSerializer(serializers.Serializer):
     visites = VisiteSerializer(many=True)
     passages = PassageSerializer(many=True)
     absences = AbsenceSerializer(many=True)
+    #: Contrôles du planning (PLN-004) ; nul sans planning.
+    controles = ControlesSerializer(allow_null=True)
     #: Réseaux des postes occupés cette semaine, proposés pour chaque visite.
     reseaux = ResumeSerializer(many=True)

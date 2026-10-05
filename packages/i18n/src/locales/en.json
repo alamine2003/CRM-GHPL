@@ -1390,5 +1390,41 @@
     "modifiee": "Absence saved.",
     "retiree": "Absence removed.",
     "declarerCourt": "Absence"
+  },
+  "controles": {
+    "titre": "To check",
+    "aCorriger_one": "Fix before submitting",
+    "aCorriger_other": "Fix before submitting ({{count}})",
+    "signales": "Flagged to your supervisor",
+    "incomplete": "{{jour}}: visit to complete ({{champs}})",
+    "fiche_inactive": "{{jour}}: {{fiche}} is no longer active",
+    "fiches": {
+      "prospect": "the prospect's record",
+      "etablissement": "the place's record"
+    },
+    "sans_exercice": "{{jour}}: the prospect does not practise at this place",
+    "meme_heure": "{{jour}}: {{count}} visits at {{heure}}",
+    "meme_prospect": "{{jour}}: the same prospect twice",
+    "seuil_bas_one": "Below the minimum of visits: {{jours}}",
+    "seuil_bas_other": "Below the minimum of visits: {{jours}}",
+    "seuil_haut_one": "Above the maximum of visits: {{jours}}",
+    "seuil_haut_other": "Above the maximum of visits: {{jours}}",
+    "hors_cible": "{{jour}}: prospect outside your target list",
+    "hors_secteur": "{{jour}}: place outside your sectors",
+    "a_non_planifie_one": "A prospect with no visit in {{mois}}: {{noms}}",
+    "a_non_planifie_other": "{{count}} A prospects with no visit in {{mois}}: {{noms}}{{suite}}",
+    "etAutres_one": " and {{count}} other",
+    "etAutres_other": " and {{count}} others",
+    "visite": {
+      "meme_heure": "Same time as another visit",
+      "meme_prospect": "Same prospect twice this day",
+      "sans_exercice": "Does not practise at this place",
+      "fiche_inactive": "Record no longer active",
+      "hors_cible": "Outside target list",
+      "hors_secteur": "Outside your sectors"
+    },
+    "objectif_one": "{{count}} visit, target {{min}} to {{max}}",
+    "objectif_other": "{{count}} visits, target {{min}} to {{max}}",
+    "objectifCourt": "{{nombre}} of {{min}}–{{max}}"
   }
 }

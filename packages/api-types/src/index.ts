@@ -92,6 +92,11 @@ export type TypeAbsence = Schemas['TypeAbsenceEnum'];
 export type PeriodeAbsence = Schemas['PeriodeAbsenceEnum'];
 export type SaisieAbsence = Schemas['SaisieAbsence'];
 export type ModificationAbsence = Schemas['PatchedModificationAbsence'];
+// Contrôles du planning (PLN-004).
+export type ControlePlanning = Schemas['ControlePlanning'];
+export type CodeControle = Schemas['CodeControleEnum'];
+export type Controles = Schemas['Controles'];
+export type ObjectifJour = Schemas['Objectif'];
 export type DecisionDoublon = Schemas['DecisionDoublon']['decision'];
 export type Fusion = Schemas['Fusion'];
 export type ChangementFiche = Schemas['ChangementFiche'];

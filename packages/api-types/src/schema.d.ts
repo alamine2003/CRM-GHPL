@@ -2220,6 +2220,30 @@ export interface components {
     Code: {
       code: string;
     };
+    /**
+     * @description * `incomplete` - incomplete
+     *     * `fiche_inactive` - fiche_inactive
+     *     * `sans_exercice` - sans_exercice
+     *     * `meme_heure` - meme_heure
+     *     * `meme_prospect` - meme_prospect
+     *     * `seuil_bas` - seuil_bas
+     *     * `seuil_haut` - seuil_haut
+     *     * `hors_cible` - hors_cible
+     *     * `hors_secteur` - hors_secteur
+     *     * `a_non_planifie` - a_non_planifie
+     * @enum {string}
+     */
+    CodeControleEnum:
+      | 'incomplete'
+      | 'fiche_inactive'
+      | 'sans_exercice'
+      | 'meme_heure'
+      | 'meme_prospect'
+      | 'seuil_bas'
+      | 'seuil_haut'
+      | 'hors_cible'
+      | 'hors_secteur'
+      | 'a_non_planifie';
     CodesSecours: {
       codes_secours: string[];
     };
@@ -2257,6 +2281,27 @@ export interface components {
       jeton_etape: string;
       /** @description Code de l'application ou de secours. */
       code: string;
+    };
+    /** @description Contrôle du planning (PLN-004) : `bloquant` (RG-015) ou `signalement` (RG-016). */
+    ControlePlanning: {
+      code: components['schemas']['CodeControleEnum'];
+      gravite: components['schemas']['GraviteControleEnum'];
+      /** Format: date */
+      date: string | null;
+      visites: string[];
+      manquants?: string[] | null;
+      fiche?: string | null;
+      heure?: string | null;
+      nombre?: number | null;
+      min?: number | null;
+      max?: number | null;
+      mois?: string | null;
+      prospects?: components['schemas']['ProspectOublie'][] | null;
+    };
+    Controles: {
+      bloquants: components['schemas']['ControlePlanning'][];
+      signalements: components['schemas']['ControlePlanning'][];
+      objectifs: components['schemas']['Objectif'][];
     };
     CreationDivision: {
       libelle: string;
@@ -2527,6 +2572,12 @@ export interface components {
       defaite_le: string | null;
       defaite_par: components['schemas']['PersonneResume'] | null;
     };
+    /**
+     * @description * `bloquant` - bloquant
+     *     * `signalement` - signalement
+     * @enum {string}
+     */
+    GraviteControleEnum: 'bloquant' | 'signalement';
     ImportBirdNotes: {
       /** Format: uri */
       fichier: string;
@@ -2686,6 +2737,13 @@ export interface components {
       reseaux: components['schemas']['Resume'][];
       secteurs: components['schemas']['Resume'][];
       superviseur: components['schemas']['Personne'] | null;
+    };
+    Objectif: {
+      /** Format: date */
+      date: string;
+      visites: number;
+      min: number;
+      max: number;
     };
     Occupation: {
       /** Format: uuid */
@@ -3093,6 +3151,11 @@ export interface components {
       readonly lieu_principal: components['schemas']['Lieu'] | null;
       readonly doublon: components['schemas']['DoublonEnum'];
     };
+    ProspectOublie: {
+      /** Format: uuid */
+      id: string;
+      nom: string;
+    };
     ProspectResume: {
       /** Format: uuid */
       readonly id: string;
@@ -3352,6 +3415,7 @@ export interface components {
       visites: components['schemas']['Visite'][];
       passages: components['schemas']['Passage'][];
       absences: components['schemas']['Absence'][];
+      controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
     };
     Session: {

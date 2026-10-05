@@ -37,6 +37,7 @@ const SEMAINE: Semaine = {
   visites: [],
   passages: [],
   absences: [],
+  controles: null,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
 };
 
@@ -337,4 +338,97 @@ test('l’ordre : seules les visites sans heure se déplacent', async () => {
   expect(screen.getAllByLabelText('Monter')).toHaveLength(1);
   await fireEvent.press(screen.getByLabelText('Monter'));
   expect(ordonner).toHaveBeenCalledWith('pl1', '2026-10-27', ['v1', 'v2']);
+});
+
+test('PLN-004 CA1 : deux visites à la même heure sont à corriger avant de soumettre', async () => {
+  const semaine = {
+    ...EN_PREPARATION,
+    visites: [{ ...VISITE, heure: '10:00', manquants: [] }, CONFRERE],
+    controles: {
+      bloquants: [
+        {
+          code: 'meme_heure' as const,
+          gravite: 'bloquant' as const,
+          date: '2026-10-27',
+          visites: ['v1', 'v2'],
+          heure: '10:00',
+        },
+      ],
+      signalements: [],
+      objectifs: [{ date: '2026-10-27', visites: 2, min: 6, max: 10 }],
+    },
+  };
+  await rendre(
+    { semaine: jest.fn(async () => semaine) },
+    { exercices: { duProspect: jest.fn(async () => []) } },
+  );
+  expect(await screen.findByText('À corriger avant de soumettre')).toBeTruthy();
+  expect(screen.getByText('mar. 27 : 2 visites à 10:00')).toBeTruthy();
+  // Chaque visite concernée porte la marque ; le jour montre son objectif.
+  expect(screen.getAllByText("Même heure qu'une autre visite")).toHaveLength(2);
+  expect(screen.getByLabelText('2 visites, objectif 6 à 10')).toBeTruthy();
+  // Toucher le point ouvre la visite à corriger.
+  await fireEvent.press(screen.getByText('mar. 27 : 2 visites à 10:00'));
+  expect(await screen.findByText('Modifier la visite')).toBeTruthy();
+});
+
+test('PLN-004 CA2 : les signalements sont dits, sans rien bloquer', async () => {
+  const semaine = {
+    ...EN_PREPARATION,
+    visites: [{ ...VISITE, heure: '10:00', manquants: [] }],
+    controles: {
+      bloquants: [],
+      signalements: [
+        {
+          code: 'seuil_bas' as const,
+          gravite: 'signalement' as const,
+          date: '2026-10-26',
+          visites: [],
+          nombre: 0,
+          min: 6,
+          max: 10,
+        },
+        {
+          code: 'seuil_bas' as const,
+          gravite: 'signalement' as const,
+          date: '2026-10-27',
+          visites: [],
+          nombre: 1,
+          min: 6,
+          max: 10,
+        },
+        {
+          code: 'hors_cible' as const,
+          gravite: 'signalement' as const,
+          date: '2026-10-27',
+          visites: ['v1'],
+        },
+        {
+          code: 'a_non_planifie' as const,
+          gravite: 'signalement' as const,
+          date: '2026-10-30',
+          visites: [],
+          mois: '2026-10',
+          prospects: [
+            { id: 'p8', nom: 'Awa UN' },
+            { id: 'p9', nom: 'Binta DEUX' },
+            { id: 'p10', nom: 'Coumba TROIS' },
+            { id: 'p11', nom: 'Dior QUATRE' },
+          ],
+        },
+      ],
+      objectifs: [],
+    },
+  };
+  await rendre({ semaine: jest.fn(async () => semaine) });
+  expect(await screen.findByText('Signalé à votre superviseur')).toBeTruthy();
+  expect(screen.queryByText(/À corriger/)).toBeNull();
+  expect(screen.getByText('Sous le minimum de visites : lun. 26, mar. 27')).toBeTruthy();
+  expect(screen.getByText('mar. 27 : prospect hors de votre liste cible')).toBeTruthy();
+  expect(screen.getByText('Hors liste cible')).toBeTruthy();
+  expect(
+    screen.getByText(
+      '4 prospects A sans visite en octobre : Awa UN, Binta DEUX, Coumba TROIS et 1 autre',
+    ),
+  ).toBeTruthy();
 });

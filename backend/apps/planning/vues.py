@@ -19,8 +19,8 @@ from apps.perimetre.vues import VuePerimetre
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.services import aujourdhui
 
+from . import controles, services
 from . import serializers as s
-from . import services
 from .calendrier import jours_de_la_semaine, lundi
 from .etats import MODIFIABLES
 from .models import Absence, JourFerie, Passage, Planning, Visite
@@ -135,6 +135,7 @@ class SemaineVue(VuePlannings):
             "visites": _visites(planning) if planning else [],
             "passages": _passages(planning) if planning else [],
             "absences": list(planning.absences.filter(archive_le__isnull=True)) if planning else [],
+            "controles": controles.bilan(planning) if planning else None,
             "reseaux": _reseaux(planning) if planning else [],
         }
         return Response(s.SemaineSerializer(donnees).data)

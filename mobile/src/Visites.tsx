@@ -72,10 +72,13 @@ export function LigneVisite({
   visite,
   onPress,
   dansPassage,
+  alertes = [],
 }: {
   visite: Visite;
   onPress?: () => void;
   dansPassage?: boolean;
+  /** Contrôles qui concernent cette visite (PLN-004). */
+  alertes?: { texte: string; ton: 'erreur' | 'attention' }[];
 }) {
   const { t } = useTranslation();
   const p = usePalette();
@@ -120,6 +123,14 @@ export function LigneVisite({
             {visite.objectif}
           </Texte>
         ) : null}
+        {alertes.map((a) => (
+          <Text
+            key={a.texte}
+            style={[styles.manquants, { color: a.ton === 'erreur' ? p.erreur : p.attention }]}
+          >
+            {a.texte}
+          </Text>
+        ))}
       </View>
       {onPress && <MaterialIcons name="chevron-right" size={22} color={p.texteDiscret} />}
     </Pressable>

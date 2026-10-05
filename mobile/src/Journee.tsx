@@ -6,10 +6,11 @@
  * en mode « Réordonner », seules celles sans heure se déplacent.
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { Absence, JourSemaine, Passage, Visite } from '@innov/api-client';
+import type { Absence, Controles, JourSemaine, Passage, Visite } from '@innov/api-client';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LigneAbsence } from './Absences';
+import { alertesDeVisite } from './Controles';
 import { Texte, useLien, usePalette } from './composants';
 import { police } from './polices';
 import { LienAction, LigneVisite } from './Visites';
@@ -61,6 +62,7 @@ export function Journee({
   absences,
   modifiable,
   reordonner,
+  controles,
   libelleJour,
   surVisite,
   surAjouterVisite,
@@ -77,6 +79,7 @@ export function Journee({
   absences: Absence[];
   modifiable: boolean;
   reordonner: boolean;
+  controles: Controles | null;
   /** « mardi 6 octobre », pour les libellés vocalisés. */
   libelleJour: string;
   surVisite: (v: Visite) => void;
@@ -128,7 +131,11 @@ export function Journee({
           return (
             <View key={v.id} style={styles.unite}>
               <View style={{ flex: 1 }}>
-                <LigneVisite visite={v} onPress={ouvrir(v)} />
+                <LigneVisite
+                  visite={v}
+                  onPress={ouvrir(v)}
+                  alertes={alertesDeVisite(controles, v.id, t)}
+                />
               </View>
               {fleches}
             </View>
@@ -139,14 +146,29 @@ export function Journee({
           <View key={passage.id}>
             <View style={styles.unite}>
               <View style={{ flex: 1 }}>
-                <EnTetePassage passage={passage} nombre={u.visites.length} />
+                <EnTetePassage
+                  passage={passage}
+                  nombre={u.visites.length}
+                  conflit={
+                    !!controles?.bloquants.some(
+                      (c) =>
+                        c.code === 'meme_heure' && u.visites.some((v) => c.visites.includes(v.id)),
+                    )
+                  }
+                />
               </View>
               {fleches}
             </View>
             {/* Un filet relie les visites du passage à sa ligne. */}
             <View style={[styles.membres, { borderLeftColor: lien }]}>
               {u.visites.map((v) => (
-                <LigneVisite key={v.id} visite={v} onPress={ouvrir(v)} dansPassage />
+                <LigneVisite
+                  key={v.id}
+                  visite={v}
+                  onPress={ouvrir(v)}
+                  dansPassage
+                  alertes={alertesDeVisite(controles, v.id, t, true)}
+                />
               ))}
               {preparation && (
                 <LienAction
@@ -218,7 +240,16 @@ export function Journee({
 }
 
 /** Ligne d'un passage, à son heure : le lieu, puis « Passage · 3 prescripteurs » (PLN-003 CA1). */
-function EnTetePassage({ passage, nombre }: { passage: Passage; nombre: number }) {
+function EnTetePassage({
+  passage,
+  nombre,
+  conflit,
+}: {
+  passage: Passage;
+  nombre: number;
+  /** Une autre visite du jour tombe à la même heure (PLN-004 CA1). */
+  conflit?: boolean;
+}) {
   const { t } = useTranslation();
   const p = usePalette();
   return (
@@ -237,6 +268,11 @@ function EnTetePassage({ passage, nombre }: { passage: Passage; nombre: number }
         <Text style={[styles.sousTitrePassage, { color: p.texteSecondaire }]}>
           {t('passages.nombre', { count: nombre })}
         </Text>
+        {conflit && (
+          <Text style={[styles.conflit, { color: p.erreur }]}>
+            {t('controles.visite.meme_heure')}
+          </Text>
+        )}
       </View>
     </View>
   );
@@ -286,6 +322,7 @@ const styles = StyleSheet.create({
   heure: { fontFamily: police.texteFort, fontSize: 14, width: 48, fontVariant: ['tabular-nums'] },
   titrePassage: { fontFamily: police.texteFort, fontSize: 15 },
   sousTitrePassage: { fontFamily: police.texte, fontSize: 13 },
+  conflit: { fontFamily: police.texteFort, fontSize: 12 },
   membres: { marginLeft: 22, paddingLeft: 8, borderLeftWidth: 2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 24 },
   reordonner: { gap: 4, paddingTop: 4 },

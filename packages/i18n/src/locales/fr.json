@@ -1390,5 +1390,41 @@
     "modifiee": "Absence enregistrée.",
     "retiree": "Absence retirée.",
     "declarerCourt": "Absence"
+  },
+  "controles": {
+    "titre": "À vérifier",
+    "aCorriger_one": "À corriger avant de soumettre",
+    "aCorriger_other": "À corriger avant de soumettre ({{count}})",
+    "signales": "Signalé à votre superviseur",
+    "incomplete": "{{jour}} : visite à compléter ({{champs}})",
+    "fiche_inactive": "{{jour}} : {{fiche}} n'est plus active",
+    "fiches": {
+      "prospect": "la fiche du prospect",
+      "etablissement": "la fiche du lieu"
+    },
+    "sans_exercice": "{{jour}} : le prospect n'exerce pas dans ce lieu",
+    "meme_heure": "{{jour}} : {{count}} visites à {{heure}}",
+    "meme_prospect": "{{jour}} : le même prospect deux fois",
+    "seuil_bas_one": "Sous le minimum de visites : {{jours}}",
+    "seuil_bas_other": "Sous le minimum de visites : {{jours}}",
+    "seuil_haut_one": "Au-dessus du maximum de visites : {{jours}}",
+    "seuil_haut_other": "Au-dessus du maximum de visites : {{jours}}",
+    "hors_cible": "{{jour}} : prospect hors de votre liste cible",
+    "hors_secteur": "{{jour}} : lieu hors de vos secteurs",
+    "a_non_planifie_one": "Prospect A sans visite en {{mois}} : {{noms}}",
+    "a_non_planifie_other": "{{count}} prospects A sans visite en {{mois}} : {{noms}}{{suite}}",
+    "etAutres_one": " et {{count}} autre",
+    "etAutres_other": " et {{count}} autres",
+    "visite": {
+      "meme_heure": "Même heure qu'une autre visite",
+      "meme_prospect": "Même prospect deux fois ce jour",
+      "sans_exercice": "N'exerce pas dans ce lieu",
+      "fiche_inactive": "Fiche devenue inactive",
+      "hors_cible": "Hors liste cible",
+      "hors_secteur": "Hors de vos secteurs"
+    },
+    "objectif_one": "{{count}} visite, objectif {{min}} à {{max}}",
+    "objectif_other": "{{count}} visites, objectif {{min}} à {{max}}",
+    "objectifCourt": "{{nombre}} sur {{min}}–{{max}}"
   }
 }

@@ -9,6 +9,7 @@ import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 import { FormulaireAbsence } from '../src/Absences';
+import { CarteControles, ObjectifDuJour } from '../src/Controles';
 import { Journee } from '../src/Journee';
 import { FormulaireVisite } from '../src/Visites';
 
@@ -107,6 +108,7 @@ export default function EcranSemaine() {
   const aCompleter = visites.filter((v) => v.manquants.length > 0).length;
   const modifiable = !!semaine?.planning && semaine.modifiable;
   const planningId = semaine?.planning?.id ?? '';
+  const objectifs = new Map((semaine?.controles?.objectifs ?? []).map((o) => [o.date, o]));
   const terminer = (texte: string) => {
     setEdition(null);
     setMessage(texte);
@@ -206,6 +208,18 @@ export default function EcranSemaine() {
             )}
           </Carte>
 
+          {semaine.controles && modifiable && (
+            <CarteControles
+              controles={semaine.controles}
+              jourCourt={(iso) => date(iso, { weekday: 'short', day: 'numeric' })}
+              surVisite={(id) => {
+                const v = visites.find((x) => x.id === id);
+                if (!v) return;
+                setMessage(null);
+                setEdition({ objet: 'visite', jour: v.date, visite: v });
+              }}
+            />
+          )}
           <Carte style={{ paddingVertical: 4 }}>
             {semaine.jours.map((j, i) => {
               const estAujourdhui = j.date === aujourdhui;
@@ -237,6 +251,7 @@ export default function EcranSemaine() {
                         </Texte>
                       ) : null}
                     </View>
+                    {objectifs.get(j.date) && <ObjectifDuJour objectif={objectifs.get(j.date)!} />}
                     {estAujourdhui && (
                       <Text style={[styles.aujourdhui, { color: marque.orange }]}>
                         {t('semaine.aujourdhui')}
@@ -250,6 +265,7 @@ export default function EcranSemaine() {
                     absences={semaine.absences.filter((a) => a.date === j.date)}
                     modifiable={modifiable}
                     reordonner={reordonner === j.date}
+                    controles={semaine.controles}
                     libelleJour={date(j.date, { weekday: 'long', day: 'numeric', month: 'long' })}
                     surVisite={(v) => {
                       setMessage(null);
