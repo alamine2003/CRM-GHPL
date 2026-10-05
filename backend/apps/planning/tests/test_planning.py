@@ -18,6 +18,13 @@ SEMAINE = "/api/v1/plannings/semaine/"
 URL = "/api/v1/plannings/"
 
 
+@pytest.fixture(autouse=True)
+def _mercredi_7_octobre():
+    """Le monde aussi est créé à cette heure : ses droits ne commencent pas après elle."""
+    with freeze_time("2026-10-07 09:00"):
+        yield
+
+
 def occuper(monde, alias="deleg.sn"):
     sn = monde["sn"]
     secteur = org.creer_secteur(sn, org.creer_zone(sn, f"Zone {alias}"), f"Secteur {alias}")
@@ -26,7 +33,6 @@ def occuper(monde, alias="deleg.sn"):
     return poste
 
 
-@freeze_time("2026-10-07 09:00")
 def test_la_semaine_montre_les_jours_ouvres_et_les_jours_feries(monde):
     """CA2 : un jour férié est affiché et non planifiable."""
     occuper(monde)
@@ -42,7 +48,6 @@ def test_la_semaine_montre_les_jours_ouvres_et_les_jours_feries(monde):
     assert r["planning"] is None and r["peut_creer"] is True
 
 
-@freeze_time("2026-10-07 09:00")
 def test_les_jours_ouvres_suivent_le_pays(monde):
     """RG-014 : un pays qui travaille du lundi au samedi a six jours dans sa semaine."""
     definir_parametre(monde["sn"], "jours_ouvres", [1, 2, 3, 4, 5, 6])
@@ -51,7 +56,6 @@ def test_les_jours_ouvres_suivent_le_pays(monde):
     assert r["jours"][-1]["date"] == "2026-10-24"
 
 
-@freeze_time("2026-10-07 09:00")
 def test_un_seul_planning_par_delegue_et_par_semaine(monde):
     """CA1 (RG-012)."""
     occuper(monde)
@@ -67,7 +71,6 @@ def test_un_seul_planning_par_delegue_et_par_semaine(monde):
     assert EvenementAudit.objects.filter(action="planning.creation").count() == 1
 
 
-@freeze_time("2026-10-07 09:00")
 def test_une_semaine_se_designe_par_son_lundi_et_ne_se_planifie_pas_dans_le_passe(monde):
     occuper(monde)
     deleg = client_de(monde["deleg.sn"])
@@ -82,7 +85,6 @@ def test_une_semaine_se_designe_par_son_lundi_et_ne_se_planifie_pas_dans_le_pass
     assert deleg.get(SEMAINE, {"semaine": "2026-09-30"}).json()["peut_creer"] is False
 
 
-@freeze_time("2026-10-07 09:00")
 def test_sans_poste_occupe_pas_de_planning(monde):
     """prd.md §6.3 : le superviseur ne planifie que s'il occupe un poste."""
     sup = client_de(monde["sup.sn"])
@@ -93,7 +95,6 @@ def test_sans_poste_occupe_pas_de_planning(monde):
     assert sup.post(URL, {"semaine": "2026-10-12"}, format="json").status_code == 201
 
 
-@freeze_time("2026-10-07 09:00")
 def test_chacun_ne_voit_que_son_planning(monde):
     occuper(monde)
     client_de(monde["deleg.sn"]).post(URL, {"semaine": "2026-10-12"}, format="json")

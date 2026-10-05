@@ -1507,6 +1507,38 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/plannings/{id}/poser/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['planning_poser'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/{id}/reprendre/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['planning_reprendre'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/{id}/visites/': {
     parameters: {
       query?: never;
@@ -2068,6 +2100,22 @@ export interface paths {
     patch: operations['visite_modifier'];
     trace?: never;
   };
+  '/api/v1/visites/{id}/copier/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['visite_copier'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/retirer/': {
     parameters: {
       query?: never;
@@ -2302,6 +2350,10 @@ export interface components {
       bloquants: components['schemas']['ControlePlanning'][];
       signalements: components['schemas']['ControlePlanning'][];
       objectifs: components['schemas']['Objectif'][];
+    };
+    Copie: {
+      /** Format: date */
+      date: string;
     };
     CreationDivision: {
       libelle: string;
@@ -2987,6 +3039,12 @@ export interface components {
       division: string;
       produits: components['schemas']['ProduitResume'][];
     };
+    /** @description Prospects de la liste cible posés sur un jour (PLN-005 CA1). */
+    Pose: {
+      /** Format: date */
+      date: string;
+      prospects: string[];
+    };
     /** @description Un poste avec son occupant et son superviseur du jour ; « vacant » sans occupant. */
     Poste: {
       /** Format: uuid */
@@ -3195,6 +3253,13 @@ export interface components {
       /** @description Application mobile uniquement ; le portail utilise le cookie. */
       rafraichissement?: string;
     };
+    /**
+     * @description * `jour_hors_semaine` - jour_hors_semaine
+     *     * `jour_ferie` - jour_ferie
+     *     * `jour_absent` - jour_absent
+     * @enum {string}
+     */
+    RaisonRepriseEnum: 'jour_hors_semaine' | 'jour_ferie' | 'jour_absent';
     Rattachement: {
       /** Format: uuid */
       readonly id: string;
@@ -3217,6 +3282,10 @@ export interface components {
     Reinitialisation: {
       jeton: string;
       mot_de_passe: string;
+    };
+    Reprise: {
+      copiees: number;
+      ignorees: components['schemas']['VisiteIgnoree'][];
     };
     Reseau: {
       /** Format: uuid */
@@ -3415,6 +3484,7 @@ export interface components {
       visites: components['schemas']['Visite'][];
       passages: components['schemas']['Passage'][];
       absences: components['schemas']['Absence'][];
+      reprenables: number;
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
     };
@@ -3587,6 +3657,13 @@ export interface components {
       /** Format: uuid */
       passage?: string | null;
       ordre?: number;
+    };
+    VisiteIgnoree: {
+      /** Format: uuid */
+      visite: string;
+      /** Format: date */
+      date: string;
+      raison: components['schemas']['RaisonRepriseEnum'];
     };
     /**
      * @description * `prevue` - Prévue
@@ -6066,6 +6143,54 @@ export interface operations {
       };
     };
   };
+  planning_poser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Pose'];
+        'application/x-www-form-urlencoded': components['schemas']['Pose'];
+        'multipart/form-data': components['schemas']['Pose'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'][];
+        };
+      };
+    };
+  };
+  planning_reprendre: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Reprise'];
+        };
+      };
+    };
+  };
   visite_planifier: {
     parameters: {
       query?: never;
@@ -7077,6 +7202,33 @@ export interface operations {
     };
     responses: {
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  visite_copier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Copie'];
+        'application/x-www-form-urlencoded': components['schemas']['Copie'];
+        'multipart/form-data': components['schemas']['Copie'];
+      };
+    };
+    responses: {
+      201: {
         headers: {
           [name: string]: unknown;
         };

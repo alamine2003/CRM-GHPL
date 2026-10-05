@@ -4,6 +4,7 @@ from apps.organisation.serializers import ResumeSerializer
 
 from .controles import CODES, GRAVITES
 from .models import Absence, JourFerie, Passage, Periode, Planning, TypeAbsence, Visite
+from .services import RAISONS_REPRISE
 
 
 class JourFerieSerializer(serializers.ModelSerializer):
@@ -93,6 +94,29 @@ class OrdreSerializer(serializers.Serializer):
     date = serializers.DateField()
     #: Toutes les visites du jour, dans l'ordre voulu.
     visites = serializers.ListField(child=serializers.UUIDField())
+
+
+class PoseSerializer(serializers.Serializer):
+    """Prospects de la liste cible posés sur un jour (PLN-005 CA1)."""
+
+    date = serializers.DateField()
+    prospects = serializers.ListField(child=serializers.UUIDField(), min_length=1, max_length=30)
+
+
+class CopieSerializer(serializers.Serializer):
+    date = serializers.DateField()
+
+
+class VisiteIgnoreeSerializer(serializers.Serializer):
+    visite = serializers.UUIDField()
+    date = serializers.DateField()
+    raison = serializers.ChoiceField(choices=RAISONS_REPRISE)
+
+
+class RepriseSerializer(serializers.Serializer):
+    copiees = serializers.IntegerField()
+    #: Visites de la semaine précédente qui n'ont pas trouvé de jour.
+    ignorees = VisiteIgnoreeSerializer(many=True)
 
 
 class PassageSerializer(serializers.ModelSerializer):
@@ -196,6 +220,8 @@ class SemaineSerializer(serializers.Serializer):
     visites = VisiteSerializer(many=True)
     passages = PassageSerializer(many=True)
     absences = AbsenceSerializer(many=True)
+    #: Visites de la semaine précédente que la reprise recopierait (PLN-005 CA2) ; 0 sinon.
+    reprenables = serializers.IntegerField()
     #: Contrôles du planning (PLN-004) ; nul sans planning.
     controles = ControlesSerializer(allow_null=True)
     #: Réseaux des postes occupés cette semaine, proposés pour chaque visite.

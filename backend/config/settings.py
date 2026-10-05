@@ -251,6 +251,7 @@ SPECTACULAR_SETTINGS = {
         "PeriodeAbsenceEnum": "apps.planning.models.Periode",
         "CodeControleEnum": "apps.planning.controles.CODES",
         "GraviteControleEnum": "apps.planning.controles.GRAVITES",
+        "RaisonRepriseEnum": "apps.planning.services.RAISONS_REPRISE",
     },
 }
 

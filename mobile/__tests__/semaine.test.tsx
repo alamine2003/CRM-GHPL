@@ -38,6 +38,7 @@ const SEMAINE: Semaine = {
   passages: [],
   absences: [],
   controles: null,
+  reprenables: 0,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
 };
 
@@ -431,4 +432,79 @@ test('PLN-004 CA2 : les signalements sont dits, sans rien bloquer', async () => 
       '4 prospects A sans visite en octobre : Awa UN, Binta DEUX, Coumba TROIS et 1 autre',
     ),
   ).toBeTruthy();
+});
+
+const MES_LISTES = [
+  {
+    poste: { id: 'po1', libelle: 'Poste fictif' },
+    cibles: [
+      {
+        id: 'c1',
+        prospect: {
+          ...VISITE.prospect!,
+          lieu_principal: { id: 'e1', libelle: 'Clinique Fictive' },
+        },
+      },
+      {
+        id: 'c2',
+        prospect: { ...CONFRERE.prospect!, lieu_principal: null },
+      },
+    ],
+  },
+];
+
+test('PLN-005 CA1 : des prospects de la liste cible se posent sur un jour', async () => {
+  const poser = jest.fn(async () => []);
+  await rendre(
+    {
+      semaine: jest.fn(async () => ({ ...EN_PREPARATION, visites: [VISITE] })),
+      poser,
+    } as unknown as Partial<ClientApi['plannings']>,
+    { ciblage: { mesListes: jest.fn(async () => MES_LISTES) } },
+  );
+  await fireEvent.press(await screen.findByText('Ajouter depuis ma liste cible'));
+  // Awa est déjà prévue mardi : masquée tant que « Pas encore prévus » est actif.
+  expect(await screen.findByText('Dr Moussa EXEMPLE')).toBeTruthy();
+  expect(screen.queryByText('Dr Awa FICTIF')).toBeNull();
+  await fireEvent.press(screen.getByText('Pas encore prévus'));
+  expect(screen.getByText('Déjà prévu : mar. 27')).toBeTruthy();
+  await fireEvent.press(screen.getByText('jeu. 29'));
+  await fireEvent.press(screen.getByText('Dr Moussa EXEMPLE'));
+  await fireEvent.press(screen.getByText('Dr Awa FICTIF'));
+  await fireEvent.press(screen.getByText('Poser 2 visites le jeudi 29'));
+  expect(poser).toHaveBeenCalledWith('pl1', '2026-10-29', ['p2', 'p1']);
+  expect(await screen.findByText(/2 visites posées le jeudi 29/)).toBeTruthy();
+});
+
+test('PLN-005 CA2 : une semaine vide reprend la précédente', async () => {
+  const reprendre = jest.fn(async () => ({
+    copiees: 5,
+    ignorees: [{ visite: 'x', date: '2026-10-30', raison: 'jour_ferie' as const }],
+  }));
+  await rendre({
+    semaine: jest.fn(async () => ({ ...EN_PREPARATION, visites: [], reprenables: 6 })),
+    reprendre,
+  } as unknown as Partial<ClientApi['plannings']>);
+  await fireEvent.press(await screen.findByText('Reprendre ces 6 visites'));
+  expect(screen.getByText(/La semaine précédente comptait 6 visites/)).toBeTruthy();
+  expect(reprendre).toHaveBeenCalledWith('pl1');
+  expect(
+    await screen.findByText(
+      "5 visites reprises de la semaine précédente. 1 visite non reprise (ven. 30 : jour férié ou d'absence).",
+    ),
+  ).toBeTruthy();
+});
+
+test('PLN-005 : une visite se copie sur un autre jour', async () => {
+  const copier = jest.fn(async () => VISITE);
+  await rendre(
+    { semaine: jest.fn(async () => EN_PREPARATION) },
+    { visites: { copier }, exercices: { duProspect: jest.fn(async () => []) } },
+  );
+  await fireEvent.press(await screen.findByText('Dr Awa FICTIF'));
+  expect(await screen.findByText('Copier vers')).toBeTruthy();
+  // La première pilule « jeu. 29 » choisit le jour de la visite ; la seconde copie.
+  await fireEvent.press(screen.getAllByText('jeu. 29')[1]!);
+  expect(copier).toHaveBeenCalledWith('v1', '2026-10-29');
+  expect(await screen.findByText('Visite copiée le jeu. 29.')).toBeTruthy();
 });

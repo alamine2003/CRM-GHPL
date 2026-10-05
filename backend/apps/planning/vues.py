@@ -136,6 +136,7 @@ class SemaineVue(VuePlannings):
             "passages": _passages(planning) if planning else [],
             "absences": list(planning.absences.filter(archive_le__isnull=True)) if planning else [],
             "controles": controles.bilan(planning) if planning else None,
+            "reprenables": _reprenables(planning),
             "reseaux": _reseaux(planning) if planning else [],
         }
         return Response(s.SemaineSerializer(donnees).data)
@@ -161,6 +162,16 @@ def _visites(planning: Planning) -> list:
             "prospect__type", "prospect__specialite", "etablissement", "reseau"
         )
     )
+
+
+def _reprenables(planning: Planning | None) -> int:
+    """Une semaine en préparation encore vide peut reprendre la précédente (PLN-005 CA2)."""
+    if planning is None or planning.statut not in MODIFIABLES:
+        return 0
+    if planning.visites.filter(archive_le__isnull=True).exists():
+        return 0
+    source = services.precedente(planning)
+    return source.visites.filter(archive_le__isnull=True).count() if source else 0
 
 
 def _passages(planning: Planning) -> list:
@@ -344,3 +355,44 @@ class AbsenceRetraitVue(VueAbsences):
     def post(self, request, id):
         absence = get_object_or_404(self.get_queryset(), pk=id)
         return Response(s.AbsenceSerializer(services.retirer_absence(absence)).data)
+
+
+# --- Copier, reprendre, poser depuis la liste cible (PLN-005) ---------------------------------
+
+
+class PoseVue(VuePlannings):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.PoseSerializer, responses={201: s.VisiteSerializer(many=True)},
+                   operation_id="planning_poser")  # fmt: skip
+    def post(self, request, id):
+        from apps.prospects.models import Prospect
+
+        planning = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.PoseSerializer, request)
+        prospects = [_fiche(Prospect, self.perimetre, p, "prospect_invalide")
+                     for p in dict.fromkeys(v["prospects"])]  # fmt: skip
+        visites = services.poser_depuis_cible(planning, v["date"], prospects)
+        return Response(s.VisiteSerializer(visites, many=True).data,
+                        status=status.HTTP_201_CREATED)  # fmt: skip
+
+
+class RepriseVue(VuePlannings):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=None, responses=s.RepriseSerializer, operation_id="planning_reprendre")
+    def post(self, request, id):
+        planning = get_object_or_404(self.get_queryset(), pk=id)
+        return Response(s.RepriseSerializer(services.reprendre_semaine_precedente(planning)).data)
+
+
+class VisiteCopieVue(VueVisites):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.CopieSerializer, responses={201: s.VisiteSerializer},
+                   operation_id="visite_copier")  # fmt: skip
+    def post(self, request, id):
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.CopieSerializer, request)
+        copie = services.copier_visite(visite, v["date"])
+        return Response(s.VisiteSerializer(copie).data, status=status.HTTP_201_CREATED)

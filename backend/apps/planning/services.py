@@ -1,7 +1,7 @@
 """Jours fériés (ORG-012), planning de la semaine (PLN-001), visites planifiées (PLN-002), ordre
 de la journée, passages (PLN-003) et absences (PLN-009)."""
 
-from datetime import date
+from datetime import date, timedelta
 
 from django.db import IntegrityError, transaction
 from django.utils.translation import gettext as _
@@ -368,6 +368,110 @@ def ordonner(planning: Planning, jour: date, visites: list) -> None:
             champ="visites",
         )
     ranger(planning, jour, [str(v) for v in visites])
+
+
+# --- Copier, reprendre, poser depuis la liste cible (PLN-005) ---------------------------------
+
+
+def lieu_principal(prospect, jour: date):
+    """Établissement principal du prospect ce jour-là, sinon son plus ancien lieu actif."""
+    from apps.prospects.models import Exercice
+
+    exercice = (
+        Exercice.objects.filter(actif_le(jour), prospect=prospect)
+        .select_related("etablissement")
+        .order_by("-principal", "debut")
+        .first()
+    )
+    return exercice.etablissement if exercice else None
+
+
+@transaction.atomic
+def poser_depuis_cible(planning: Planning, jour: date, prospects: list) -> list[Visite]:
+    """CA1 : des prospects de la liste cible posés sur un jour deviennent des visites
+    pré-remplies — prospect et établissement principal ; le reste se complète ensuite."""
+    return [
+        ajouter_visite(planning, date=jour, prospect=p, etablissement=lieu_principal(p, jour))
+        for p in prospects
+    ]
+
+
+@transaction.atomic
+def copier_visite(visite: Visite, jour: date) -> Visite:
+    """Copie d'une visite sur un autre jour de la même semaine (même prospect, lieu, heure,
+    réseau, objectif et note)."""
+    copie = ajouter_visite(
+        visite.planning, date=jour, heure=visite.heure, prospect=visite.prospect,
+        etablissement=visite.etablissement, reseau=visite.reseau, objectif=visite.objectif,
+        note=visite.note,
+    )  # fmt: skip
+    return copie
+
+
+#: Pourquoi une visite de la semaine précédente n'a pas trouvé de jour à la reprise.
+RAISONS_REPRISE = ("jour_hors_semaine", "jour_ferie", "jour_absent")
+
+
+def precedente(planning: Planning) -> Planning | None:
+    return Planning.objects.filter(
+        delegue=planning.delegue, semaine=planning.semaine - timedelta(days=7)
+    ).first()
+
+
+@transaction.atomic
+def reprendre_semaine_precedente(planning: Planning) -> dict:
+    """CA2 : les visites de la semaine précédente sont recopiées, jour pour jour, sur une
+    semaine encore vide. Un jour devenu férié, ou d'absence toute la journée, est sauté et dit ;
+    un réseau qui n'est plus celui d'un poste occupé reste à choisir. Les passages suivent ;
+    les absences, non [H]."""
+    _exiger_modifiable(planning)
+    if planning.visites.filter(archive_le__isnull=True).exists():
+        raise ErreurMetier(
+            "semaine_non_vide",
+            _("Cette semaine a déjà des visites : la reprise ne vaut que pour une semaine vide."),
+            status.HTTP_409_CONFLICT,
+        )
+    source = precedente(planning)
+    if source is None:
+        raise ErreurMetier(
+            "sans_semaine_precedente",
+            _("Aucun planning la semaine précédente."),
+            status.HTTP_404_NOT_FOUND,
+        )
+    jours = {j.date: j for j in jours_de_la_semaine(planning.pays, planning.semaine)}
+    absents = set(planning.absences.filter(archive_le__isnull=True, periode=Periode.JOURNEE)
+                  .values_list("date", flat=True))  # fmt: skip
+    copies: list[Visite] = []
+    ignorees: list[dict] = []
+    par_passage: dict = {}
+    for v in source.visites.filter(archive_le__isnull=True).order_by("date", "ordre"):
+        cible = v.date + timedelta(days=7)
+        raison = (
+            "jour_hors_semaine" if cible not in jours
+            else "jour_ferie" if not jours[cible].planifiable
+            else "jour_absent" if cible in absents
+            else None
+        )  # fmt: skip
+        if raison:
+            ignorees.append({"visite": str(v.pk), "date": str(cible), "raison": raison})
+            continue
+        champs = {
+            "date": cible, "heure": v.heure, "prospect": v.prospect,
+            "etablissement": v.etablissement, "objectif": v.objectif, "note": v.note,
+        }  # fmt: skip
+        if v.reseau_id and any(r.pk == v.reseau_id for p in postes_de_la_semaine(planning)
+                               for r in p.reseaux.all()):  # fmt: skip
+            champs["reseau"] = v.reseau
+        copie = ajouter_visite(planning, **champs)
+        copies.append(copie)
+        if v.passage_id:
+            par_passage.setdefault(v.passage_id, []).append(copie)
+    for groupe in par_passage.values():
+        if len(groupe) > 1 and groupe[0].passage_id is None:
+            regrouper(planning, groupe)
+    _auditer("planning.reprise", planning, source=str(source.pk), copiees=len(copies),
+             ignorees=len(ignorees))  # fmt: skip
+    return {"copiees": len(copies), "ignorees": ignorees}
 
 
 # --- Passages (PLN-003) -----------------------------------------------------------------------

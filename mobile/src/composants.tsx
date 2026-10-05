@@ -172,6 +172,7 @@ export function Bouton({
             color: secondaire ? p.texte : '#FFFFFF',
             fontFamily: police.texteFort,
             fontSize: 15,
+            textAlign: 'center',
           }}
         >
           {libelle}

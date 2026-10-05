@@ -1342,7 +1342,10 @@
     "ordreTermine": "Done",
     "aideOrdre": "Visits with a set time sort themselves; move the ones without a time.",
     "reordonnerCourt": "Reorder",
-    "reordonnerLe": "Reorder the visits of {{jour}}"
+    "reordonnerLe": "Reorder the visits of {{jour}}",
+    "copierVers": "Copy to",
+    "copiee": "Visit copied to {{jour}}.",
+    "copierAide": "The visit as saved, on the day you tap."
   },
   "passages": {
     "ligne_one": "{{lieu}} · {{count}} prescriber",
@@ -1396,7 +1399,6 @@
     "aCorriger_one": "Fix before submitting",
     "aCorriger_other": "Fix before submitting ({{count}})",
     "signales": "Flagged to your supervisor",
-    "incomplete": "{{jour}}: visit to complete ({{champs}})",
     "fiche_inactive": "{{jour}}: {{fiche}} is no longer active",
     "fiches": {
       "prospect": "the prospect's record",
@@ -1425,6 +1427,30 @@
     },
     "objectif_one": "{{count}} visit, target {{min}} to {{max}}",
     "objectif_other": "{{count}} visits, target {{min}} to {{max}}",
-    "objectifCourt": "{{nombre}} of {{min}}–{{max}}"
+    "objectifCourt": "{{nombre}} of {{min}}–{{max}}",
+    "incomplete_one": "{{jour}}: visit to complete ({{champs}})",
+    "incomplete_other": "{{jour}}: {{count}} visits to complete ({{champs}})"
+  },
+  "pose": {
+    "titre": "From my target list",
+    "aide": "Tick prospects then place them on a day: each visit takes the prospect and their main place; time and objective are completed afterwards.",
+    "jour": "Day",
+    "choisir": "Tick some prospects",
+    "poser_one": "Place {{count}} visit on {{jour}}",
+    "poser_other": "Place {{count}} visits on {{jour}}",
+    "posees_one": "{{count}} visit placed on {{jour}}: to complete (time, objective).",
+    "posees_other": "{{count}} visits placed on {{jour}}: to complete (time, objective).",
+    "nonPrevus": "Not yet planned",
+    "aucun": "No one matches.",
+    "dejaPrevu": "Already planned: {{jours}}",
+    "depuisListe": "Add from my target list",
+    "reprendre_one": "Take over this visit",
+    "reprendre_other": "Take over these {{count}} visits",
+    "reprises_one": "{{count}} visit taken over from last week.",
+    "reprises_other": "{{count}} visits taken over from last week.",
+    "ignorees_one": "{{count}} visit not taken over ({{jours}}: holiday or absence).",
+    "ignorees_other": "{{count}} visits not taken over ({{jours}}: holiday or absence).",
+    "reprenables_one": "Last week had {{count}} visit: take it over day for day.",
+    "reprenables_other": "Last week had {{count}} visits: take them over day for day."
   }
 }

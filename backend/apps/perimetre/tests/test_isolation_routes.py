@@ -110,6 +110,8 @@ def senegal(monde):
         "jour-ferie": ferie.pk, "jour-ferie-retirer": ferie.pk,
         "planning-visites": planning.pk, "visite": visite.pk, "visite-retirer": visite.pk,
         "planning-ordre": planning.pk, "planning-passages": planning.pk,
+        "planning-poser": planning.pk, "planning-reprendre": planning.pk,
+        "visite-copier": visite.pk,
         "passage-dissocier": passage.pk, "planning-absences": planning.pk,
         "absence": absence.pk, "absence-retirer": absence.pk,
         "ciblage-liste": poste.pk, "ciblage-candidats": poste.pk,

@@ -460,7 +460,7 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 - Le réseau se choisit parmi ceux des postes que le délégué occupe cette semaine-là ; s'il n'y en a qu'un, il est retenu d'office [H].
 - Pendant la préparation, une visite peut rester incomplète [H] : elle s'enregistre et montre « À compléter » avec les champs manquants. Le refus avec la liste des champs manquants (PLN-002 CA1) s'appliquera à la soumission (PLN-008, 0.2.8) ; le serveur le prépare déjà.
 - Le prospect et le lieu doivent être actifs dans le pays (RG-025) ; une fiche « à valider » n'est acceptée que pour le délégué qui l'a créée. Le contrôle que le prospect exerce bien dans ce lieu viendra avec les contrôles de 0.2.4 [H].
-- Une visite se modifie ou se retire tant que le planning est « en préparation » ou « à réviser » ; le retrait est un archivage audité, jamais une suppression. Déplacer, copier et le glisser-déposer restent en 0.2.5 (PLN-005).
+- Une visite se modifie ou se retire tant que le planning est « en préparation » ou « à réviser » ; le retrait est un archivage audité, jamais une suppression. Déplacer, copier et la pose depuis la liste cible arrivent en 0.2.5 (PLN-005, §14.12).
 - La démonstration prépare la semaine en cours du premier délégué de chaque pays : trois visites complètes et une à compléter.
 
 ### 14.10 Ordre, passages et absences (mise en œuvre 0.2.3)
@@ -485,6 +485,13 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
   - prospect hors de la liste cible des postes occupés ; lieu (ou, sans lieu, prospect) hors des secteurs de ces postes (RG-024) ;
   - prospects A de la liste cible sans aucune visite planifiée dans le mois, signalés sur la semaine qui contient le dernier jour ouvré du mois [H] ;
   - la soumission en retard s'ajoutera avec la soumission (0.2.8).
+
+### 14.12 Déplacer, copier, supprimer, poser depuis la liste cible (mise en œuvre 0.2.5)
+
+- **Déplacer** une visite, c'est changer son jour dans sa fiche ; **supprimer**, c'est la retirer (archivage audité) ; les deux existent depuis 0.2.2 et restent permis tant que le planning est en préparation ou à réviser.
+- **Copier** une visite la reproduit, telle qu'enregistrée (prospect, lieu, heure, réseau, objectif, note), sur un autre jour de la semaine ; les règles d'un ajout s'appliquent (jour planifiable, passage du lieu).
+- **Depuis la liste cible** (CA1) : le délégué coche des prospects de sa liste, choisit un jour, et chacun devient une visite pré-remplie — prospect et établissement principal (sinon son plus ancien lieu actif), réseau d'office s'il n'y en a qu'un. Sur téléphone, cocher puis poser remplace le glisser-déposer, malcommode sur une liste longue et une semaine qui défile [H] ; le glisser-déposer viendra sur la vue semaine du portail (PLN-006, 0.2.6). La liste propose d'abord les prospects pas encore prévus dans la semaine, et dit le jour de ceux qui le sont.
+- **Reprendre la semaine précédente** (CA2) : sur une semaine encore vide, les visites de la semaine d'avant sont recopiées jour pour jour, passages compris. Un jour devenu férié ou d'absence toute la journée est sauté, et le délégué en est informé ; un réseau qui n'est plus celui d'un poste occupé reste à choisir. Les absences ne sont pas reprises [H]. Une semaine qui a déjà des visites ne se reprend pas, pour éviter les doublons [H].
 
 ## 15. Exigences fonctionnelles
 

@@ -25,7 +25,7 @@ import { police } from './polices';
 import { messageErreur, useSession } from './session';
 
 /** Prospect proposé au choix : de la liste cible, ou trouvé dans toutes les fiches. */
-type Choix = {
+export type Choix = {
   id: string;
   civilite?: string;
   prenom?: string;
@@ -36,7 +36,7 @@ type Choix = {
 
 type Lieu = { id: string; nom: string };
 
-function normaliser(texte: string) {
+export function normaliser(texte: string) {
   return texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
@@ -50,7 +50,7 @@ export function lireHeure(saisie: string): string | null {
   return `${String(heures).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
-const depuisCible = (c: ListeCible['cibles'][number]): Choix => ({
+export const depuisCible = (c: ListeCible['cibles'][number]): Choix => ({
   id: c.prospect.id,
   civilite: c.prospect.civilite,
   prenom: c.prospect.prenom,
@@ -215,7 +215,7 @@ export function FormulaireVisite({
   const [reseau, setReseau] = useState<string | null>(visite?.reseau?.id ?? unSeulReseau);
   const [objectif, setObjectif] = useState(visite?.objectif ?? '');
   const [note, setNote] = useState(visite?.note ?? '');
-  const [envoi, setEnvoi] = useState<'enregistrer' | 'retirer' | null>(null);
+  const [envoi, setEnvoi] = useState<'enregistrer' | 'retirer' | 'copier' | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
   const heureLue = heure.trim() ? lireHeure(heure) : null;
@@ -241,6 +241,20 @@ export function FormulaireVisite({
       if (visite) await client.visites.modifier(visite.id, saisie);
       else if (semaine.planning) await client.plannings.ajouterVisite(semaine.planning.id, saisie);
       surTermine(visite ? t('visites.modifiee') : t('visites.ajoutee'));
+    } catch (e) {
+      setErreur(messageErreur(e, t('erreurs.reseau')));
+      setEnvoi(null);
+    }
+  }
+
+  /** Copie de la visite, telle qu'enregistrée, sur un autre jour (PLN-005). */
+  async function copier(j: JourSemaine) {
+    if (!visite) return;
+    setEnvoi('copier');
+    setErreur(null);
+    try {
+      await client.visites.copier(visite.id, j.date);
+      surTermine(t('visites.copiee', { jour: libelleJour(j) }));
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));
       setEnvoi(null);
@@ -378,6 +392,23 @@ export function FormulaireVisite({
         onPress={() => void enregistrer()}
       />
       <Bouton secondaire libelle={t('commun.annuler')} onPress={surAnnuler} />
+      {visite && jours.length > 1 && (
+        <Section titre={t('visites.copierVers')}>
+          <Texte variante="discret">{t('visites.copierAide')}</Texte>
+          <View style={styles.pilules}>
+            {jours
+              .filter((j) => j.date !== visite.date)
+              .map((j) => (
+                <Pilule
+                  key={j.date}
+                  libelle={libelleJour(j)}
+                  actif={false}
+                  onPress={() => void copier(j)}
+                />
+              ))}
+          </View>
+        </Section>
+      )}
       {visite && (
         <Pressable
           accessibilityRole="button"
@@ -497,18 +528,43 @@ function ChoixProspect({ client, surChoix }: { client: ClientApi; surChoix: (c: 
   );
 }
 
-function LigneChoix({ choix, onPress }: { choix: Choix; onPress: () => void }) {
+export function LigneChoix({
+  choix,
+  onPress,
+  choisi,
+  note,
+}: {
+  choix: Choix;
+  onPress: () => void;
+  /** Case cochée (sélection multiple) ; absent : choix simple. */
+  choisi?: boolean;
+  /** Mention discrète sous le détail (« Déjà prévu mardi »). */
+  note?: string;
+}) {
   const { t } = useTranslation();
   const p = usePalette();
+  const lien = useLien();
+  const multiple = choisi !== undefined;
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={multiple ? 'checkbox' : 'button'}
+      accessibilityState={multiple ? { checked: choisi } : undefined}
       onPress={onPress}
       style={({ pressed }) => [
         styles.choix,
-        { borderColor: p.ligne, backgroundColor: pressed ? p.fond : p.surface },
+        {
+          borderColor: choisi ? lien : p.ligne,
+          backgroundColor: pressed ? p.fond : p.surface,
+        },
       ]}
     >
+      {multiple && (
+        <MaterialIcons
+          name={choisi ? 'check-box' : 'check-box-outline-blank'}
+          size={24}
+          color={choisi ? lien : p.texteDiscret}
+        />
+      )}
       <MarquePotentiel valeur={choix.potentiel} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text numberOfLines={1} style={[styles.nom, { color: p.texte }]}>
@@ -518,6 +574,11 @@ function LigneChoix({ choix, onPress }: { choix: Choix; onPress: () => void }) {
           <Texte variante="discret" numberOfLines={1}>
             {choix.detail}
           </Texte>
+        ) : null}
+        {note ? (
+          <Text numberOfLines={1} style={[styles.manquants, { color: p.texteSecondaire }]}>
+            {note}
+          </Text>
         ) : null}
       </View>
     </Pressable>

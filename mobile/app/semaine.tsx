@@ -9,6 +9,7 @@ import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 import { FormulaireAbsence } from '../src/Absences';
+import { PoserDepuisCible } from '../src/Pose';
 import { CarteControles, ObjectifDuJour } from '../src/Controles';
 import { Journee } from '../src/Journee';
 import { FormulaireVisite } from '../src/Visites';
@@ -37,9 +38,11 @@ export default function EcranSemaine() {
   const [edition, setEdition] = useState<
     | { objet: 'visite'; jour: string; visite?: Visite }
     | { objet: 'absence'; jour: string; absence?: Absence }
+    | { objet: 'cible'; jour: string }
     | null
   >(null);
   /** Jour dont le délégué règle l'ordre à la main. */
+  const [reprise, setReprise] = useState(false);
   const [reordonner, setReordonner] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const aujourdhui = jourIso(new Date());
@@ -82,6 +85,32 @@ export default function EcranSemaine() {
     await charger(semaine.semaine);
   }
 
+  /** Reprend la semaine précédente sur cette semaine vide (PLN-005 CA2). */
+  async function reprendre() {
+    if (!semaine?.planning) return;
+    setReprise(true);
+    setMessage(null);
+    try {
+      const r = await client.plannings.reprendre(semaine.planning.id);
+      const jours = [...new Set(r.ignorees.map((x) => x.date))]
+        .map((d) => date(d, { weekday: 'short', day: 'numeric' }))
+        .join(', ');
+      setMessage(
+        [
+          t('pose.reprises', { count: r.copiees }),
+          r.ignorees.length ? t('pose.ignorees', { count: r.ignorees.length, jours }) : '',
+        ]
+          .filter(Boolean)
+          .join(' '),
+      );
+      await charger(semaine.semaine);
+    } catch (e) {
+      setErreur(messageErreur(e, t('erreurs.reseau')));
+    } finally {
+      setReprise(false);
+    }
+  }
+
   async function preparer() {
     if (!semaine) return;
     setCreation(true);
@@ -108,6 +137,11 @@ export default function EcranSemaine() {
   const aCompleter = visites.filter((v) => v.manquants.length > 0).length;
   const modifiable = !!semaine?.planning && semaine.modifiable;
   const planningId = semaine?.planning?.id ?? '';
+  // Jour proposé pour poser depuis la liste cible : aujourd'hui s'il est dans la semaine.
+  const premierJour =
+    semaine?.jours.find((j) => j.planifiable && j.date >= aujourdhui)?.date ??
+    semaine?.jours.find((j) => j.planifiable)?.date ??
+    '';
   const objectifs = new Map((semaine?.controles?.objectifs ?? []).map((o) => [o.date, o]));
   const terminer = (texte: string) => {
     setEdition(null);
@@ -124,6 +158,13 @@ export default function EcranSemaine() {
             semaine={semaine}
             jour={edition.jour}
             visite={edition.visite}
+            surAnnuler={() => setEdition(null)}
+            surTermine={terminer}
+          />
+        ) : edition.objet === 'cible' ? (
+          <PoserDepuisCible
+            semaine={semaine}
+            jour={edition.jour}
             surAnnuler={() => setEdition(null)}
             surTermine={terminer}
           />
@@ -191,6 +232,29 @@ export default function EcranSemaine() {
                       ? t('visites.bilanACompleter', { count: visites.length, aCompleter })
                       : t('visites.bilan', { count: visites.length })}
                 </Texte>
+                {modifiable && semaine.reprenables > 0 && (
+                  <Texte variante="discret">
+                    {t('pose.reprenables', { count: semaine.reprenables })}
+                  </Texte>
+                )}
+                {modifiable && semaine.reprenables > 0 && (
+                  <Bouton
+                    secondaire
+                    libelle={t('pose.reprendre', { count: semaine.reprenables })}
+                    chargement={reprise}
+                    onPress={() => void reprendre()}
+                  />
+                )}
+                {modifiable && (
+                  <Bouton
+                    secondaire
+                    libelle={t('pose.depuisListe')}
+                    onPress={() => {
+                      setMessage(null);
+                      setEdition({ objet: 'cible', jour: premierJour });
+                    }}
+                  />
+                )}
               </>
             ) : semaine.peut_creer ? (
               <>

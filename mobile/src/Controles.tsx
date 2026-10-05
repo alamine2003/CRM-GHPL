@@ -110,11 +110,11 @@ export function CarteControles({
       <Texte variante="sousTitre">{t('controles.titre')}</Texte>
       {bloquants.length > 0 && (
         <Section titre={t('controles.aCorriger', { count: bloquants.length })} ton="erreur">
-          {bloquants.map((c, i) => (
+          {regrouper(bloquants).map(({ controle: c, nombre }, i) => (
             <Ligne
               key={`${c.code}-${i}`}
               ton="erreur"
-              texte={texteControle(c, t, i18n.language, jourCourt)}
+              texte={texteControle(c, t, i18n.language, jourCourt, nombre)}
               onPress={c.visites[0] ? () => surVisite(c.visites[0]!) : undefined}
             />
           ))}
@@ -136,11 +136,34 @@ export function CarteControles({
   );
 }
 
+/** Les visites d'un même jour à qui manquent les mêmes champs tiennent sur une ligne. */
+function regrouper(controles: ControlePlanning[]) {
+  const lignes: { controle: ControlePlanning; nombre: number }[] = [];
+  const parCle = new Map<string, { controle: ControlePlanning; nombre: number }>();
+  for (const c of controles) {
+    if (c.code !== 'incomplete') {
+      lignes.push({ controle: c, nombre: 1 });
+      continue;
+    }
+    const cle = `${c.date}|${(c.manquants ?? []).join(',')}`;
+    const existante = parCle.get(cle);
+    if (existante) existante.nombre += 1;
+    else {
+      const ligne = { controle: c, nombre: 1 };
+      parCle.set(cle, ligne);
+      lignes.push(ligne);
+    }
+  }
+  return lignes;
+}
+
 export function texteControle(
   c: ControlePlanning,
   t: Traduire,
   langue: string,
   jourCourt: (iso: string) => string,
+  /** Nombre de visites regroupées sur la ligne (visites à compléter). */
+  nombre = 1,
 ) {
   const jour = c.date ? jourCourt(c.date) : '';
   if (c.code === 'a_non_planifie') {
@@ -160,7 +183,7 @@ export function texteControle(
     heure: c.heure,
     champs: (c.manquants ?? []).map((m) => t(`visites.champs.${m}`)).join(', '),
     fiche: c.fiche ? t(`controles.fiches.${c.fiche}`) : '',
-    count: c.visites.length,
+    count: c.code === 'incomplete' ? nombre : c.visites.length,
   });
 }
 

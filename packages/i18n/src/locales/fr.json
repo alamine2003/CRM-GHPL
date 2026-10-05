@@ -1342,7 +1342,10 @@
     "ordreTermine": "Terminer",
     "aideOrdre": "Les visites à heure fixe se rangent d'elles-mêmes ; déplacez celles sans heure.",
     "reordonnerCourt": "Réordonner",
-    "reordonnerLe": "Réordonner les visites du {{jour}}"
+    "reordonnerLe": "Réordonner les visites du {{jour}}",
+    "copierVers": "Copier vers",
+    "copiee": "Visite copiée le {{jour}}.",
+    "copierAide": "La visite telle qu'enregistrée, sur le jour touché."
   },
   "passages": {
     "ligne_one": "{{lieu}} · {{count}} prescripteur",
@@ -1396,7 +1399,6 @@
     "aCorriger_one": "À corriger avant de soumettre",
     "aCorriger_other": "À corriger avant de soumettre ({{count}})",
     "signales": "Signalé à votre superviseur",
-    "incomplete": "{{jour}} : visite à compléter ({{champs}})",
     "fiche_inactive": "{{jour}} : {{fiche}} n'est plus active",
     "fiches": {
       "prospect": "la fiche du prospect",
@@ -1425,6 +1427,30 @@
     },
     "objectif_one": "{{count}} visite, objectif {{min}} à {{max}}",
     "objectif_other": "{{count}} visites, objectif {{min}} à {{max}}",
-    "objectifCourt": "{{nombre}} sur {{min}}–{{max}}"
+    "objectifCourt": "{{nombre}} sur {{min}}–{{max}}",
+    "incomplete_one": "{{jour}} : visite à compléter ({{champs}})",
+    "incomplete_other": "{{jour}} : {{count}} visites à compléter ({{champs}})"
+  },
+  "pose": {
+    "titre": "Depuis ma liste cible",
+    "aide": "Cochez les prospects puis posez-les sur un jour : chaque visite reprend le prospect et son lieu principal ; l'heure et l'objectif se complètent ensuite.",
+    "jour": "Jour",
+    "choisir": "Cochez des prospects",
+    "poser_one": "Poser {{count}} visite le {{jour}}",
+    "poser_other": "Poser {{count}} visites le {{jour}}",
+    "posees_one": "{{count}} visite posée le {{jour}} : à compléter (heure, objectif).",
+    "posees_other": "{{count}} visites posées le {{jour}} : à compléter (heure, objectif).",
+    "nonPrevus": "Pas encore prévus",
+    "aucun": "Personne ne correspond.",
+    "dejaPrevu": "Déjà prévu : {{jours}}",
+    "depuisListe": "Ajouter depuis ma liste cible",
+    "reprendre_one": "Reprendre cette visite",
+    "reprendre_other": "Reprendre ces {{count}} visites",
+    "reprises_one": "{{count}} visite reprise de la semaine précédente.",
+    "reprises_other": "{{count}} visites reprises de la semaine précédente.",
+    "ignorees_one": "{{count}} visite non reprise ({{jours}} : jour férié ou d'absence).",
+    "ignorees_other": "{{count}} visites non reprises ({{jours}} : jour férié ou d'absence).",
+    "reprenables_one": "La semaine précédente comptait {{count}} visite : reprenez-la jour pour jour.",
+    "reprenables_other": "La semaine précédente comptait {{count}} visites : reprenez-les jour pour jour."
   }
 }

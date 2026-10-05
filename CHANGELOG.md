@@ -2,6 +2,42 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.5] — Copier, reprendre la semaine, poser depuis la liste cible
+
+Cinquième jalon du cycle 0.2 « Planning ».
+
+### Ajouté — PLN-005
+
+- **Depuis ma liste cible** (**CA1**) : dans la carte Planning, « Ajouter depuis ma liste cible » ouvre la liste.
+  - On coche les prospects, on choisit le jour, puis « Poser 3 visites le jeudi 8 ».
+  - Chaque visite reprend le prospect et son établissement principal ; l'heure et l'objectif se complètent ensuite.
+  - La liste montre d'abord les prospects pas encore prévus dans la semaine (filtre « Pas encore prévus »), avec recherche et filtre A/B/C ; pour ceux qui sont déjà prévus, elle dit le jour.
+- **Reprendre la semaine précédente** (**CA2**) : sur une semaine vide, « Reprendre ces 8 visites » recopie la semaine d'avant jour pour jour, passages compris.
+  - Un jour devenu férié ou d'absence est sauté, et le message le dit.
+  - Les absences ne sont pas reprises ; une semaine qui a déjà des visites ne se reprend pas.
+- **Copier une visite** : dans sa fiche, « Copier vers » pose la même visite (prospect, lieu, heure, objectif, note) sur un autre jour.
+- Déplacer (changer le jour) et supprimer (retirer) existaient déjà depuis 0.2.2.
+- prd.md §14.12 consigne les choix [H], dont « cocher puis poser » à la place du glisser-déposer sur téléphone (il viendra sur le portail en 0.2.6).
+
+### Corrigé
+
+- Les tests des jours fériés et du planning figeaient l'heure dans le seul corps du test ; le jeu de données était créé à l'heure réelle, avec des droits qui commençaient « après » l'heure figée. Ils échouaient dès 9 h UTC passées, puis l'auraient fait le 7 octobre. L'heure est désormais figée avant la création des données.
+
+### Architecture
+
+- Copie, reprise et pose passent par `ajouter_visite` : mêmes règles qu'un ajout (jour, réseau, passage, ordre). Trois routes couvertes par la matrice des droits et les tests d'isolation ; énumération `RaisonRepriseEnum`.
+- Mobile : `src/Pose.tsx` ; `LigneChoix` sait cocher.
+
+### Design
+
+Revue sur le rendu réel : mobile à 360 et 414 px, et à 390 px en thème sombre. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| À vérifier | Une ligne « lun. 5 : visite à compléter » par visite posée : la carte s'allongeait à chaque pose | Une ligne par jour et par champs manquants (« lun. 12 : 2 visites à compléter ») |
+| Planning (360 px) | « Reprendre la semaine précédente (8 visites) » sur deux lignes, texte mal centré | L'explication passe au-dessus ; le bouton dit « Reprendre ces 8 visites » ; les boutons centrent leur texte |
+| Fiche de visite | « Copier vers » sans dire ce qui est copié | « La visite telle qu'enregistrée, sur le jour touché » |
+
 ## [0.2.4] — Contrôles bloquants et signalements
 
 Quatrième jalon du cycle 0.2 « Planning ».

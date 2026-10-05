@@ -13,6 +13,7 @@ import type {
   Planning,
   Qualite,
   Semaine,
+  Reprise,
   Absence,
   ModificationAbsence,
   Passage,
@@ -86,6 +87,7 @@ export type {
   ChangementFiche,
   JourFerie,
   JourSemaine,
+  Reprise,
   CodeControle,
   ControlePlanning,
   Controles,
@@ -654,6 +656,15 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { date, visites },
         }),
+      /** Prospects de la liste cible posés sur un jour, visites pré-remplies (PLN-005 CA1). */
+      poser: (planning: string, date: string, prospects: string[]) =>
+        requete<Visite[]>(`/api/v1/plannings/${planning}/poser/`, {
+          methode: 'POST',
+          corps: { date, prospects },
+        }),
+      /** Reprend la semaine précédente sur une semaine vide (PLN-005 CA2). */
+      reprendre: (planning: string) =>
+        requete<Reprise>(`/api/v1/plannings/${planning}/reprendre/`, { methode: 'POST' }),
       regrouper: (planning: string, visites: string[]) =>
         requete<Passage>(`/api/v1/plannings/${planning}/passages/`, {
           methode: 'POST',
@@ -683,6 +694,8 @@ export function creerClient(options: OptionsClient) {
         requete<Visite>(`/api/v1/visites/${id}/`, { methode: 'PATCH', corps: champs }),
       retirer: (id: string) =>
         requete<Visite>(`/api/v1/visites/${id}/retirer/`, { methode: 'POST' }),
+      copier: (id: string, date: string) =>
+        requete<Visite>(`/api/v1/visites/${id}/copier/`, { methode: 'POST', corps: { date } }),
     },
     /** Qualité des données du pays actif (0.1.9). */
     qualite: () => requete<Qualite>('/api/v1/qualite/'),

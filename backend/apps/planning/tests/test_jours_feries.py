@@ -15,7 +15,14 @@ pytestmark = pytest.mark.django_db
 URL = "/api/v1/jours-feries/"
 
 
-@freeze_time("2026-10-05 09:00")
+@pytest.fixture(autouse=True)
+def _lundi_5_octobre():
+    """Le monde aussi est créé à cette heure : figée dans le seul corps du test, elle laissait
+    les droits de l'administrateur commencer après elle dès 9 h UTC passées."""
+    with freeze_time("2026-10-05 09:00"):
+        yield
+
+
 def test_l_administrateur_pays_tient_le_calendrier(monde):
     admin = client_de(monde["admin.sn"])
     r = admin.post(URL, {"date": "2026-11-01", "libelle": "Toussaint"}, format="json")
@@ -31,7 +38,6 @@ def test_l_administrateur_pays_tient_le_calendrier(monde):
     assert EvenementAudit.objects.filter(action="jour_ferie.creation").count() == 1
 
 
-@freeze_time("2026-10-05 09:00")
 def test_une_date_variable_se_modifie_jusqu_a_la_veille(monde):
     """CA2 : la Tabaski se déplace tant qu'elle n'est pas arrivée ; le jour même, c'est acquis."""
     admin = client_de(monde["admin.sn"])
@@ -51,7 +57,6 @@ def test_une_date_variable_se_modifie_jusqu_a_la_veille(monde):
     assert modification.details["avant"] == {"date": "2026-10-06"}
 
 
-@freeze_time("2026-10-05 09:00")
 def test_un_jour_ferie_retire_redevient_ouvre(monde):
     admin = client_de(monde["admin.sn"])
     jour = creer_jour_ferie(monde["sn"], date=date(2026, 12, 25), libelle="Noël")

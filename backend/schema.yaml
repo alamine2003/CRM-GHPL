@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.4
+  version: 0.2.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/absences/{id}/:
@@ -2605,6 +2605,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/Passage'
           description: ''
+  /api/v1/plannings/{id}/poser/:
+    post:
+      operationId: planning_poser
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pose'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Pose'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Pose'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visite'
+          description: ''
+  /api/v1/plannings/{id}/reprendre/:
+    post:
+      operationId: planning_reprendre
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reprise'
+          description: ''
   /api/v1/plannings/{id}/visites/:
     post:
       operationId: visite_planifier
@@ -3794,6 +3850,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/{id}/copier/:
+    post:
+      operationId: visite_copier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Copie'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Copie'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Copie'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
   /api/v1/visites/{id}/retirer/:
     post:
       operationId: visite_retirer
@@ -4338,6 +4427,14 @@ components:
       - bloquants
       - objectifs
       - signalements
+    Copie:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+      required:
+      - date
     CreationDivision:
       type: object
       properties:
@@ -5992,6 +6089,23 @@ components:
       - division
       - produits
       - reseau
+    Pose:
+      type: object
+      description: Prospects de la liste cible posés sur un jour (PLN-005 CA1).
+      properties:
+        date:
+          type: string
+          format: date
+        prospects:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 30
+          minItems: 1
+      required:
+      - date
+      - prospects
     Poste:
       type: object
       description: Un poste avec son occupant et son superviseur du jour ; « vacant
@@ -6589,6 +6703,16 @@ components:
         rafraichissement:
           type: string
           description: Application mobile uniquement ; le portail utilise le cookie.
+    RaisonRepriseEnum:
+      enum:
+      - jour_hors_semaine
+      - jour_ferie
+      - jour_absent
+      type: string
+      description: |-
+        * `jour_hors_semaine` - jour_hors_semaine
+        * `jour_ferie` - jour_ferie
+        * `jour_absent` - jour_absent
     Rattachement:
       type: object
       properties:
@@ -6647,6 +6771,18 @@ components:
       required:
       - jeton
       - mot_de_passe
+    Reprise:
+      type: object
+      properties:
+        copiees:
+          type: integer
+        ignorees:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisiteIgnoree'
+      required:
+      - copiees
+      - ignorees
     Reseau:
       type: object
       properties:
@@ -7084,6 +7220,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Absence'
+        reprenables:
+          type: integer
         controles:
           allOf:
           - $ref: '#/components/schemas/Controles'
@@ -7102,6 +7240,7 @@ components:
       - peut_creer
       - planning
       - precedente
+      - reprenables
       - reseaux
       - semaine
       - suivante
@@ -7497,6 +7636,21 @@ components:
       - manquants
       - prospect
       - reseau
+    VisiteIgnoree:
+      type: object
+      properties:
+        visite:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        raison:
+          $ref: '#/components/schemas/RaisonRepriseEnum'
+      required:
+      - date
+      - raison
+      - visite
     VisiteStatutEnum:
       enum:
       - prevue
