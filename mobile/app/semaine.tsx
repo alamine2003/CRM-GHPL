@@ -1,7 +1,8 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { Absence, Semaine, Visite } from '@innov/api-client';
 import { marque } from '@innov/design';
-import { useCallback, useEffect, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Alerte, Bouton, Carte, Texte, useLien, usePalette } from '../src/composants';
@@ -9,6 +10,7 @@ import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 import { FormulaireAbsence } from '../src/Absences';
+import { kilometres } from '../src/Itineraire';
 import { PoserDepuisCible } from '../src/Pose';
 import { CarteControles, ObjectifDuJour } from '../src/Controles';
 import { Journee } from '../src/Journee';
@@ -31,7 +33,11 @@ export default function EcranSemaine() {
   const p = usePalette();
   const lien = useLien();
   const { client } = useSession();
-  const [jour, setJour] = useState<string | undefined>(undefined);
+  const routeur = useRouter();
+  // Arrivée depuis la vue jour ou le détail : la semaine de ce jour, et la visite à modifier.
+  const parametres = useLocalSearchParams<{ jour?: string; modifier?: string }>();
+  const [jour, setJour] = useState<string | undefined>(parametres.jour);
+  const aModifier = useRef<string | undefined>(parametres.modifier);
   const [semaine, setSemaine] = useState<Semaine | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [creation, setCreation] = useState(false);
@@ -54,10 +60,29 @@ export default function EcranSemaine() {
         .then((s) => {
           setSemaine(s);
           setErreur(null);
+          // Visite demandée depuis son détail : son formulaire s'ouvre, une seule fois.
+          const visite = s.visites.find((v) => v.id === aModifier.current);
+          aModifier.current = undefined;
+          if (visite && s.modifiable) {
+            setEdition({ objet: 'visite', jour: visite.date, visite });
+          }
         })
         .catch((e: unknown) => setErreur(messageErreur(e, t('erreurs.reseau')))),
     [client, t],
   );
+
+  // L'onglet reste monté : un nouvel aller vers /semaine?jour=… change ses paramètres.
+  useEffect(() => {
+    let actif = true;
+    void Promise.resolve().then(() => {
+      if (!actif || !parametres.jour) return;
+      aModifier.current = parametres.modifier;
+      setJour(parametres.jour);
+    });
+    return () => {
+      actif = false;
+    };
+  }, [parametres.jour, parametres.modifier]);
 
   useEffect(() => {
     let actif = true;
@@ -232,6 +257,16 @@ export default function EcranSemaine() {
                       ? t('visites.bilanACompleter', { count: visites.length, aCompleter })
                       : t('visites.bilan', { count: visites.length })}
                 </Texte>
+                {semaine.kilometrage && semaine.kilometrage.total_km > 0 && (
+                  <Texte variante="discret">
+                    {t('km.semaine', {
+                      km: kilometres(semaine.kilometrage.total_km, i18n.language),
+                    })}
+                    {semaine.kilometrage.sans_coordonnees > 0
+                      ? ` ${t('km.partiel', { count: semaine.kilometrage.sans_coordonnees })}`
+                      : ''}
+                  </Texte>
+                )}
                 {modifiable && semaine.reprenables > 0 && (
                   <Texte variante="discret">
                     {t('pose.reprenables', { count: semaine.reprenables })}
@@ -299,7 +334,13 @@ export default function EcranSemaine() {
                     },
                   ]}
                 >
-                  <View style={styles.jour}>
+                  <Pressable
+                    accessibilityRole={semaine.planning ? 'button' : undefined}
+                    accessibilityHint={semaine.planning ? t('jour.ouvrir') : undefined}
+                    disabled={!semaine.planning}
+                    onPress={() => routeur.push(`/jour/${j.date}`)}
+                    style={({ pressed }) => [styles.jour, pressed && { opacity: 0.7 }]}
+                  >
                     <Text
                       style={[styles.date, { color: j.planifiable ? p.texte : p.texteSecondaire }]}
                     >
@@ -315,13 +356,25 @@ export default function EcranSemaine() {
                         </Texte>
                       ) : null}
                     </View>
-                    {objectifs.get(j.date) && <ObjectifDuJour objectif={objectifs.get(j.date)!} />}
+                    {objectifs.get(j.date) ? (
+                      <ObjectifDuJour objectif={objectifs.get(j.date)!} />
+                    ) : semaine.planning && j.planifiable ? (
+                      // Sans seuil connu, le nombre de visites du jour seul (PLN-006 CA1).
+                      <Text style={[styles.aujourdhui, { color: p.texteSecondaire }]}>
+                        {t('jour.nombre', {
+                          count: visites.filter((v) => v.date === j.date).length,
+                        })}
+                      </Text>
+                    ) : null}
                     {estAujourdhui && (
                       <Text style={[styles.aujourdhui, { color: marque.orange }]}>
                         {t('semaine.aujourdhui')}
                       </Text>
                     )}
-                  </View>
+                    {semaine.planning && (
+                      <MaterialIcons name="chevron-right" size={20} color={p.texteDiscret} />
+                    )}
+                  </Pressable>
                   <Journee
                     jour={j}
                     visites={duJour}
@@ -333,7 +386,13 @@ export default function EcranSemaine() {
                     libelleJour={date(j.date, { weekday: 'long', day: 'numeric', month: 'long' })}
                     surVisite={(v) => {
                       setMessage(null);
-                      setEdition({ objet: 'visite', jour: j.date, visite: v });
+                      // Un planning soumis se consulte : la visite s'ouvre en détail (PLN-006).
+                      if (modifiable) setEdition({ objet: 'visite', jour: j.date, visite: v });
+                      else
+                        routeur.push({
+                          pathname: '/visite/[id]',
+                          params: { id: v.id, jour: j.date },
+                        });
                     }}
                     surAjouterVisite={() => {
                       setMessage(null);

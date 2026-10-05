@@ -31,10 +31,12 @@ export function BarreOnglets() {
       ]}
     >
       {ONGLETS.map((onglet) => {
-        // Les fiches prospect et établissement appartiennent à l'onglet Prospects.
+        // Les fiches prospect et établissement appartiennent à l'onglet Prospects ; la journée
+        // et le détail d'une visite, à l'onglet Semaine.
         const actif =
           chemin === onglet.chemin ||
-          (onglet.cle === 'prospects' && /^\/(fiche|lieu)\//.test(chemin));
+          (onglet.cle === 'prospects' && /^\/(fiche|lieu)\//.test(chemin)) ||
+          (onglet.cle === 'semaine' && /^\/(jour|visite)\//.test(chemin));
         const couleur = actif ? p.texte : p.texteDiscret;
         const futur = 'version' in onglet;
         return (
@@ -43,7 +45,7 @@ export function BarreOnglets() {
             accessibilityRole="tab"
             accessibilityLabel={t(`mobile.onglets.${onglet.cle}`)}
             accessibilityState={{ selected: actif }}
-            onPress={() => !actif && routeur.replace(onglet.chemin as Href)}
+            onPress={() => chemin !== onglet.chemin && routeur.replace(onglet.chemin as Href)}
             style={styles.onglet}
           >
             <View style={[styles.repere, actif && { backgroundColor: marque.orange }]} />

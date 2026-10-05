@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.5
+  version: 0.2.6
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/absences/{id}/:
@@ -4933,6 +4933,19 @@ components:
       required:
       - id
       - nom
+    Etape:
+      type: object
+      properties:
+        visite:
+          type: string
+          format: uuid
+        km:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - km
+      - visite
     EtapeDoubleAuth:
       type: object
       properties:
@@ -5228,6 +5241,26 @@ components:
       - id
       - libelle
       - modifiable
+    JourKm:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        km:
+          type: number
+          format: double
+        sans_coordonnees:
+          type: integer
+        etapes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Etape'
+      required:
+      - date
+      - etapes
+      - km
+      - sans_coordonnees
     JourSemaine:
       type: object
       properties:
@@ -5243,6 +5276,23 @@ components:
       - date
       - ferie
       - planifiable
+    Kilometrage:
+      type: object
+      description: Kilométrage estimé à vol d'oiseau, sans montant (PLN-010).
+      properties:
+        total_km:
+          type: number
+          format: double
+        sans_coordonnees:
+          type: integer
+        jours:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourKm'
+      required:
+      - jours
+      - sans_coordonnees
+      - total_km
     Langue:
       type: object
       properties:
@@ -7222,6 +7272,10 @@ components:
             $ref: '#/components/schemas/Absence'
         reprenables:
           type: integer
+        kilometrage:
+          allOf:
+          - $ref: '#/components/schemas/Kilometrage'
+          nullable: true
         controles:
           allOf:
           - $ref: '#/components/schemas/Controles'
@@ -7235,6 +7289,7 @@ components:
       - controles
       - courante
       - jours
+      - kilometrage
       - modifiable
       - passages
       - peut_creer

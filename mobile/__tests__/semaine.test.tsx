@@ -4,7 +4,15 @@ import type { ReactNode } from 'react';
 import EcranSemaine from '../app/semaine';
 import i18n from '../src/i18n';
 import { ContexteSession, type Session } from '../src/session';
+import { VueDetail, VueJour } from '../src/Itineraire';
 import { lireHeure } from '../src/Visites';
+
+const mockPousser = jest.fn();
+const mockParametres: { jour?: string; modifier?: string } = {};
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPousser, navigate: mockPousser }),
+  useLocalSearchParams: () => mockParametres,
+}));
 
 // Le gabarit (en-tête, onglets) est testé ailleurs : ici, le contenu de la semaine.
 jest.mock('../src/Ecran', () => ({
@@ -38,6 +46,7 @@ const SEMAINE: Semaine = {
   passages: [],
   absences: [],
   controles: null,
+  kilometrage: null,
   reprenables: 0,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
 };
@@ -507,4 +516,94 @@ test('PLN-005 : une visite se copie sur un autre jour', async () => {
   await fireEvent.press(screen.getAllByText('jeu. 29')[1]!);
   expect(copier).toHaveBeenCalledWith('v1', '2026-10-29');
   expect(await screen.findByText('Visite copiée le jeu. 29.')).toBeTruthy();
+});
+
+test('PLN-006 : un planning soumis s’ouvre en détail, pas en saisie', async () => {
+  mockPousser.mockClear();
+  await rendre({
+    semaine: jest.fn(async () => ({
+      ...EN_PREPARATION,
+      modifiable: false,
+      planning: { ...PLANNING, statut: 'soumis' as const },
+    })),
+  });
+  await fireEvent.press(await screen.findByText('Dr Awa FICTIF'));
+  expect(mockPousser).toHaveBeenCalledWith({
+    pathname: '/visite/[id]',
+    params: { id: 'v1', jour: '2026-10-27' },
+  });
+  // Le jour s'ouvre en vue jour.
+  await fireEvent.press(screen.getByText('Mardi'));
+  expect(mockPousser).toHaveBeenLastCalledWith('/jour/2026-10-27');
+});
+
+const KM = {
+  total_km: 63.4,
+  sans_coordonnees: 1,
+  jours: [
+    {
+      date: '2026-10-27',
+      km: 63.4,
+      sans_coordonnees: 1,
+      etapes: [
+        { visite: 'v2', km: null },
+        { visite: 'v1', km: 63.4 },
+        { visite: 'v3', km: null },
+      ],
+    },
+  ],
+};
+
+async function rendreVue(element: React.ReactElement, semaine: Semaine) {
+  const session = {
+    etat: { statut: 'chargement' },
+    client: { plannings: { semaine: jest.fn(async () => semaine) } } as unknown as ClientApi,
+  } as Session;
+  return render(<ContexteSession.Provider value={session}>{element}</ContexteSession.Provider>);
+}
+
+test('PLN-010 : la semaine donne ses kilomètres estimés, sans montant', async () => {
+  await rendre({ semaine: jest.fn(async () => ({ ...EN_PREPARATION, kilometrage: KM })) });
+  expect(
+    await screen.findByText(
+      "≈ 63,4 km estimés cette semaine, à vol d'oiseau. 1 lieu sans coordonnées n'est pas compté.",
+    ),
+  ).toBeTruthy();
+  expect(screen.queryByText(/FCFA|€|\$/)).toBeNull();
+});
+
+test('PLN-006 : la vue jour suit l’itinéraire, arrêt par arrêt', async () => {
+  const sansLieu = { ...VISITE, id: 'v3', heure: '16:00', etablissement: null, ordre: 3 };
+  await rendreVue(<VueJour jour="2026-10-27" />, {
+    ...EN_PREPARATION,
+    visites: [CONFRERE, { ...VISITE, heure: '11:00', ordre: 2 }, sansLieu],
+    kilometrage: KM,
+  });
+  expect(await screen.findByText('3 visites')).toBeTruthy();
+  expect(screen.getByText("≈ 63,4 km estimés, à vol d'oiseau")).toBeTruthy();
+  expect(screen.getByText('1')).toBeTruthy();
+  expect(screen.getByText('↓ 63,4 km')).toBeTruthy();
+  expect(screen.getByText('↓ distance inconnue')).toBeTruthy();
+  mockPousser.mockClear();
+  await fireEvent.press(screen.getByText('Dr Moussa EXEMPLE'));
+  expect(mockPousser).toHaveBeenCalledWith({
+    pathname: '/visite/[id]',
+    params: { id: 'v2', jour: '2026-10-27' },
+  });
+});
+
+test('PLN-006 : le détail d’une visite mène à ses fiches et à sa modification', async () => {
+  await rendreVue(<VueDetail id="v1" jour="2026-10-27" />, EN_PREPARATION);
+  expect(await screen.findByText('Dr Awa FICTIF')).toBeTruthy();
+  expect(screen.getByText('Cardiologie')).toBeTruthy();
+  expect(screen.getByText('Prévue')).toBeTruthy();
+  expect(screen.getByText('À compléter : Heure, Objectif')).toBeTruthy();
+  mockPousser.mockClear();
+  await fireEvent.press(screen.getByText('Fiche du lieu'));
+  expect(mockPousser).toHaveBeenCalledWith('/lieu/e1');
+  await fireEvent.press(screen.getByText('Modifier la visite'));
+  expect(mockPousser).toHaveBeenLastCalledWith({
+    pathname: '/semaine',
+    params: { jour: '2026-10-27', modifier: 'v1' },
+  });
 });

@@ -87,6 +87,8 @@ export type {
   ChangementFiche,
   JourFerie,
   JourSemaine,
+  JourKm,
+  Kilometrage,
   Reprise,
   CodeControle,
   ControlePlanning,

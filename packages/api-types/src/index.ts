@@ -99,6 +99,9 @@ export type Controles = Schemas['Controles'];
 export type ObjectifJour = Schemas['Objectif'];
 // Copier, reprendre, poser depuis la liste cible (PLN-005).
 export type Reprise = Schemas['Reprise'];
+// Kilométrage estimé (PLN-010).
+export type Kilometrage = Schemas['Kilometrage'];
+export type JourKm = Schemas['JourKm'];
 export type DecisionDoublon = Schemas['DecisionDoublon']['decision'];
 export type Fusion = Schemas['Fusion'];
 export type ChangementFiche = Schemas['ChangementFiche'];

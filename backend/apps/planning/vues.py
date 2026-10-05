@@ -19,7 +19,7 @@ from apps.perimetre.vues import VuePerimetre
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.services import aujourdhui
 
-from . import controles, services
+from . import controles, kilometrage, services
 from . import serializers as s
 from .calendrier import jours_de_la_semaine, lundi
 from .etats import MODIFIABLES
@@ -136,6 +136,7 @@ class SemaineVue(VuePlannings):
             "passages": _passages(planning) if planning else [],
             "absences": list(planning.absences.filter(archive_le__isnull=True)) if planning else [],
             "controles": controles.bilan(planning) if planning else None,
+            "kilometrage": kilometrage.estimer(planning) if planning else None,
             "reprenables": _reprenables(planning),
             "reseaux": _reseaux(planning) if planning else [],
         }

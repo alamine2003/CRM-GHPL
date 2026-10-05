@@ -197,6 +197,27 @@ class ControlesSerializer(serializers.Serializer):
     objectifs = ObjectifSerializer(many=True)
 
 
+class EtapeSerializer(serializers.Serializer):
+    visite = serializers.UUIDField()
+    #: Distance depuis l'arrêt précédent ; nulle pour le premier lieu ou un lieu sans coordonnées.
+    km = serializers.FloatField(allow_null=True)
+
+
+class JourKmSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    km = serializers.FloatField()
+    sans_coordonnees = serializers.IntegerField()
+    etapes = EtapeSerializer(many=True)
+
+
+class KilometrageSerializer(serializers.Serializer):
+    """Kilométrage estimé à vol d'oiseau, sans montant (PLN-010)."""
+
+    total_km = serializers.FloatField()
+    sans_coordonnees = serializers.IntegerField()
+    jours = JourKmSerializer(many=True)
+
+
 class JourSemaineSerializer(serializers.Serializer):
     date = serializers.DateField()
     #: Libellé du jour férié, ou nul.
@@ -222,6 +243,8 @@ class SemaineSerializer(serializers.Serializer):
     absences = AbsenceSerializer(many=True)
     #: Visites de la semaine précédente que la reprise recopierait (PLN-005 CA2) ; 0 sinon.
     reprenables = serializers.IntegerField()
+    #: Kilométrage estimé (PLN-010) ; nul sans planning.
+    kilometrage = KilometrageSerializer(allow_null=True)
     #: Contrôles du planning (PLN-004) ; nul sans planning.
     controles = ControlesSerializer(allow_null=True)
     #: Réseaux des postes occupés cette semaine, proposés pour chaque visite.

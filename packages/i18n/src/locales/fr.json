@@ -1345,7 +1345,16 @@
     "reordonnerLe": "Réordonner les visites du {{jour}}",
     "copierVers": "Copier vers",
     "copiee": "Visite copiée le {{jour}}.",
-    "copierAide": "La visite telle qu'enregistrée, sur le jour touché."
+    "copierAide": "La visite telle qu'enregistrée, sur le jour touché.",
+    "statuts": {
+      "prevue": "Prévue",
+      "en_cours": "En cours",
+      "effectuee": "Effectuée",
+      "annulee": "Annulée",
+      "reportee": "Reportée",
+      "prospect_absent": "Prospect absent",
+      "non_realisee": "Non réalisée"
+    }
   },
   "passages": {
     "ligne_one": "{{lieu}} · {{count}} prescripteur",
@@ -1452,5 +1461,47 @@
     "ignorees_other": "{{count}} visites non reprises ({{jours}} : jour férié ou d'absence).",
     "reprenables_one": "La semaine précédente comptait {{count}} visite : reprenez-la jour pour jour.",
     "reprenables_other": "La semaine précédente comptait {{count}} visites : reprenez-les jour pour jour."
+  },
+  "jour": {
+    "titre": "Journée",
+    "ouvrir": "Ouvrir la journée",
+    "nombre_one": "{{count}} visite",
+    "nombre_other": "{{count}} visites",
+    "visites_one": "{{count}} visite",
+    "visites_other": "{{count}} visites",
+    "objectif": "objectif {{min}} à {{max}}",
+    "vide": "Aucune visite ce jour-là.",
+    "modifier": "Modifier dans la semaine"
+  },
+  "detail": {
+    "titre": "Visite",
+    "quand": "Quand",
+    "statut": "Statut",
+    "ficheProspect": "Fiche du prospect",
+    "ficheLieu": "Fiche du lieu",
+    "introuvable": "Cette visite n'est plus dans le planning."
+  },
+  "km": {
+    "semaine": "≈ {{km}} km estimés cette semaine, à vol d'oiseau.",
+    "jour": "≈ {{km}} km estimés, à vol d'oiseau",
+    "partiel_one": "{{count}} lieu sans coordonnées n'est pas compté.",
+    "partiel_other": "{{count}} lieux sans coordonnées ne sont pas comptés.",
+    "depuisPrecedent": "↓ {{km}} km",
+    "inconnu": "↓ distance inconnue"
+  },
+  "planification": {
+    "deplacee": "Visite déplacée au {{jour}}.",
+    "visites": "Visites",
+    "kilometrage": "Kilométrage",
+    "rienAVerifier": "Rien à vérifier pour l'instant.",
+    "deposer": "Déposer ici",
+    "glisser": "Glissez un prospect sur un jour pour y poser une visite pré-remplie, ou utilisez « Poser ».",
+    "poser": "Poser",
+    "poserProspect": "Poser {{nom}} sur un jour",
+    "aideDetail": "Pour la déplacer, glissez la carte sur un autre jour ; heure et objectif se complètent sur le téléphone.",
+    "resume": "Résumé de la semaine",
+    "km": "{{km}} km estimés",
+    "plus_one": "Afficher {{count}} autre",
+    "plus_other": "Afficher les {{count}} autres"
   }
 }

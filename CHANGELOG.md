@@ -2,6 +2,45 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.6] — Vues semaine, jour et détail ; kilométrage estimé
+
+Sixième jalon du cycle 0.2 « Planning ».
+
+### Ajouté — vues du planning (PLN-006)
+
+- **Téléphone** :
+  - la **semaine** montre le statut du planning et, pour chaque jour, le nombre de visites face à son seuil (**CA1**) ; sans seuil connu, le nombre seul ;
+  - toucher un jour ouvre la **journée** : itinéraire numéroté dans l'ordre, heure, passages, absences, distance d'un arrêt à l'autre ;
+  - toucher une visite ouvre son **détail** : quand, lieu, objectif, réseau, statut, ce qui reste à compléter ou à corriger, et les fiches prospect et lieu. « Modifier la visite » ramène à sa saisie tant que le planning se prépare ; un planning soumis s'ouvre directement en détail.
+  - La journée et le détail appartiennent à l'onglet Semaine, qui reste allumé et y ramène.
+- **Portail** : la rubrique **Planning** (délégué, superviseur sur un poste) n'est plus « à venir ».
+  - Une colonne par jour, avec le résumé de la semaine, les contrôles et les kilomètres.
+  - En préparation, on **glisse un prospect** de la liste cible sur un jour pour y poser une visite pré-remplie (PLN-005 CA1), ou **une visite** d'un jour à l'autre pour la déplacer ; « Poser » fait la même chose au clavier. Une carte de visite ouvre son détail, d'où l'on peut la retirer.
+
+### Ajouté — kilométrage estimé (PLN-010)
+
+- Calculé à vol d'oiseau entre les établissements, dans l'ordre de la journée (**CA1**) ; un passage compte pour un arrêt ; un lieu sans coordonnées est sauté et signalé.
+- Affiché pour la semaine (« ≈ 15,6 km estimés cette semaine, à vol d'oiseau »), par jour et entre deux arrêts. **CA2** : aucun montant.
+- prd.md §14.13 consigne les choix [H] : vol d'oiseau, départ au premier lieu, saisie fine sur le téléphone.
+
+### Architecture
+
+- `planning/kilometrage.py`, sans service externe ; la semaine renvoie `kilometrage`.
+- Mobile : `src/Itineraire.tsx`, routes `jour/[date]` et `visite/[id]`. Portail : `pages/Planning.tsx`.
+
+### Design
+
+Revue sur le rendu réel : mobile à 360 px et 390 px en thème sombre ; portail à 1440, 834 et 414 px et en thème sombre. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Journée et détail (mobile) | Plus aucun onglet allumé : on ne savait plus où l'on était | L'onglet Semaine reste allumé et y ramène |
+| Planning (portail) | Carte « Planning » sous le titre « Planning » | « Résumé de la semaine » |
+| Planning (portail) | Cinq lignes « Sous le minimum de visites », une par jour | Une ligne : « Sous le minimum de visites : lun. 5, mar. 6… » |
+| Colonnes (portail) | « 1 visite, objectif 6 à 10 · 15,6 km » sur trois lignes dans une colonne étroite | « 1 sur 6–10 », les kilomètres dessous ; libellé vocal complet |
+| Colonnes (portail) | « Déposez ici un prospect ou une visite » en gros sous chaque jour | « Déposer ici », discret |
+| Liste cible (tablette, téléphone) | Soixante prospects déroulés sous la semaine | Douze, puis « Afficher les 38 autres » |
+
 ## [0.2.5] — Copier, reprendre la semaine, poser depuis la liste cible
 
 Cinquième jalon du cycle 0.2 « Planning ».

@@ -29,6 +29,7 @@ const Imports = lazy(() => import('./pages/Imports'));
 const Ciblage = lazy(() => import('./pages/Ciblage'));
 const Doublons = lazy(() => import('./pages/Doublons'));
 const Propositions = lazy(() => import('./pages/Propositions'));
+const Planning = lazy(() => import('./pages/Planning'));
 
 type Rendu = (utilisateur: Moi, perimetre: Perimetre) => ReactNode;
 
@@ -50,6 +51,7 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
     titre: 'navigation.referentiels',
     rendu: (_, p) => <Referentiels perimetre={p} />,
   },
+  '/planning': { titre: 'navigation.planning', rendu: () => <Planning /> },
   '/ciblage': { titre: 'navigation.ciblage', rendu: (_, p) => <Ciblage perimetre={p} /> },
   '/doublons': { titre: 'navigation.doublons', rendu: (_, p) => <Doublons perimetre={p} /> },
   '/propositions': {

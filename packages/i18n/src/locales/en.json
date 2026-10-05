@@ -1345,7 +1345,16 @@
     "reordonnerLe": "Reorder the visits of {{jour}}",
     "copierVers": "Copy to",
     "copiee": "Visit copied to {{jour}}.",
-    "copierAide": "The visit as saved, on the day you tap."
+    "copierAide": "The visit as saved, on the day you tap.",
+    "statuts": {
+      "prevue": "Planned",
+      "en_cours": "In progress",
+      "effectuee": "Done",
+      "annulee": "Cancelled",
+      "reportee": "Postponed",
+      "prospect_absent": "Prospect absent",
+      "non_realisee": "Not done"
+    }
   },
   "passages": {
     "ligne_one": "{{lieu}} · {{count}} prescriber",
@@ -1452,5 +1461,47 @@
     "ignorees_other": "{{count}} visits not taken over ({{jours}}: holiday or absence).",
     "reprenables_one": "Last week had {{count}} visit: take it over day for day.",
     "reprenables_other": "Last week had {{count}} visits: take them over day for day."
+  },
+  "jour": {
+    "titre": "Day",
+    "ouvrir": "Open the day",
+    "nombre_one": "{{count}} visit",
+    "nombre_other": "{{count}} visits",
+    "visites_one": "{{count}} visit",
+    "visites_other": "{{count}} visits",
+    "objectif": "target {{min}} to {{max}}",
+    "vide": "No visits that day.",
+    "modifier": "Edit in the week"
+  },
+  "detail": {
+    "titre": "Visit",
+    "quand": "When",
+    "statut": "Status",
+    "ficheProspect": "Prospect record",
+    "ficheLieu": "Place record",
+    "introuvable": "This visit is no longer in the plan."
+  },
+  "km": {
+    "semaine": "≈ {{km}} km estimated this week, as the crow flies.",
+    "jour": "≈ {{km}} km estimated, as the crow flies",
+    "partiel_one": "{{count}} place without coordinates is not counted.",
+    "partiel_other": "{{count}} places without coordinates are not counted.",
+    "depuisPrecedent": "↓ {{km}} km",
+    "inconnu": "↓ distance unknown"
+  },
+  "planification": {
+    "deplacee": "Visit moved to {{jour}}.",
+    "visites": "Visits",
+    "kilometrage": "Mileage",
+    "rienAVerifier": "Nothing to check for now.",
+    "deposer": "Drop here",
+    "glisser": "Drag a prospect onto a day to place a pre-filled visit, or use “Place”.",
+    "poser": "Place",
+    "poserProspect": "Place {{nom}} on a day",
+    "aideDetail": "To move it, drag the card to another day; time and objective are completed on the phone.",
+    "resume": "Week summary",
+    "km": "{{km}} km estimated",
+    "plus_one": "Show {{count}} more",
+    "plus_other": "Show {{count}} more"
   }
 }

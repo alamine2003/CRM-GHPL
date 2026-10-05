@@ -125,7 +125,7 @@ export function Journee({
               bas={i < unites.length - 1 ? () => deplacer(i, 1) : undefined}
             />
           ) : null;
-        const ouvrir = (v: Visite) => (modifiable && !reordonner ? () => surVisite(v) : undefined);
+        const ouvrir = (v: Visite) => (!reordonner ? () => surVisite(v) : undefined);
         if (!u.passage) {
           const v = u.visites[0]!;
           return (

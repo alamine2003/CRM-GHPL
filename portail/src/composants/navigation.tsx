@@ -37,7 +37,14 @@ export const estSiege = (p: Perimetre) =>
 export const ENTREES: Entree[] = [
   { cle: 'accueil', icone: <HomeRounded />, section: 'activite', chemin: '/' },
   { cle: 'visites', icone: <FactCheckRounded />, section: 'activite' },
-  { cle: 'planning', icone: <CalendarMonthRounded />, section: 'activite' },
+  {
+    // PLN-006 : vue semaine du délégué (et du superviseur qui occupe un poste).
+    cle: 'planning',
+    icone: <CalendarMonthRounded />,
+    section: 'activite',
+    chemin: '/planning',
+    visible: peut('plannings.preparer'),
+  },
   {
     cle: 'prospects',
     icone: <PeopleAltRounded />,

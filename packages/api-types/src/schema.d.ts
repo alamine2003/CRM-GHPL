@@ -2546,6 +2546,12 @@ export interface components {
       id: string;
       nom: string;
     };
+    Etape: {
+      /** Format: uuid */
+      visite: string;
+      /** Format: double */
+      km: number | null;
+    };
     EtapeDoubleAuth: {
       /** @description « code_requis » : envoyer le code à connexion/code/. */
       etape: string;
@@ -2671,11 +2677,26 @@ export interface components {
       variable?: boolean;
       readonly modifiable: boolean;
     };
+    JourKm: {
+      /** Format: date */
+      date: string;
+      /** Format: double */
+      km: number;
+      sans_coordonnees: number;
+      etapes: components['schemas']['Etape'][];
+    };
     JourSemaine: {
       /** Format: date */
       date: string;
       ferie: string | null;
       planifiable: boolean;
+    };
+    /** @description Kilométrage estimé à vol d'oiseau, sans montant (PLN-010). */
+    Kilometrage: {
+      /** Format: double */
+      total_km: number;
+      sans_coordonnees: number;
+      jours: components['schemas']['JourKm'][];
     };
     Langue: {
       code: string;
@@ -3485,6 +3506,7 @@ export interface components {
       passages: components['schemas']['Passage'][];
       absences: components['schemas']['Absence'][];
       reprenables: number;
+      kilometrage: components['schemas']['Kilometrage'] | null;
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
     };
