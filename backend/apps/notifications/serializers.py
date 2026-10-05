@@ -9,6 +9,8 @@ class DonneesNotificationSerializer(serializers.Serializer):
     planning = serializers.UUIDField(required=False)
     semaine = serializers.DateField(required=False)
     numero_semaine = serializers.IntegerField(required=False)
+    #: Planning soumis : numéro de la version à décider.
+    version = serializers.IntegerField(required=False)
     #: Remplacement attribué (ORG-013) : période et superviseur remplacé.
     debut = serializers.DateField(required=False)
     fin = serializers.DateField(required=False)

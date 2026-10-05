@@ -114,6 +114,9 @@ function CartePlanning({ ligne, maintenant }: { ligne: PlanningEnAttente; mainte
                   fin: fin.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' }),
                 }),
                 t('validation.visites', { count: ligne.visites }),
+                (planning.numero_version ?? 1) > 1
+                  ? t('resoumission.version', { numero: planning.numero_version })
+                  : '',
               ]
                 .filter(Boolean)
                 .join(' · ')}

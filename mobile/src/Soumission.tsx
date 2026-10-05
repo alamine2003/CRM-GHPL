@@ -49,7 +49,7 @@ export function EtatSoumission({
         </Texte>
         {planning.en_retard && <Etiquette>{t('soumission.enRetard')}</Etiquette>}
         {/* PLN-012 : qui a décidé, et quand. */}
-        {planning.decision && (
+        {planning.decision && planning.decision.numero === planning.numero_version && (
           <Texte variante="discret" style={{ width: '100%' }}>
             {t(`approbation.decisionsCourt.${planning.decision.decision}`, {
               par: planning.decision.par,
@@ -61,6 +61,10 @@ export function EtatSoumission({
     );
   }
   if (!modifiable) return null;
+  // Une nouvelle soumission après révision n'est jamais en retard (PLN-008 CA2).
+  if (planning.statut === 'a_reviser') {
+    return <Texte variante="discret">{t('soumission.sansRetard')}</Texte>;
+  }
   const passee = new Date(planning.echeance) < new Date();
   return (
     <Texte variante="discret">
@@ -95,7 +99,8 @@ export function CarteSoumission({
   if (!planning) return null;
   const bloquants = semaine.controles?.bloquants.length ?? 0;
   const aCorriger = semaine.controles?.bloquants.find((c) => c.visites[0])?.visites[0];
-  const passee = new Date(planning.echeance) < new Date();
+  const revision = planning.statut === 'a_reviser';
+  const passee = !revision && new Date(planning.echeance) < new Date();
 
   async function soumettre() {
     if (!planning) return;
@@ -147,7 +152,11 @@ export function CarteSoumission({
         <>
           <Texte variante="discret">{t('soumission.aide')}</Texte>
           <Bouton
-            libelle={t('soumission.soumettre')}
+            libelle={
+              revision
+                ? t('soumission.soumettreVersion', { numero: (planning.numero_version ?? 0) + 1 })
+                : t('soumission.soumettre')
+            }
             onPress={() => {
               setErreur(null);
               setConfirmer(true);

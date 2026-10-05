@@ -1,4 +1,5 @@
 import type { Notification } from '@innov/api-client';
+import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import SwapHorizRounded from '@mui/icons-material/SwapHorizRounded';
@@ -13,6 +14,7 @@ import { EnTeteCarte } from './Elements';
 type Traduire = ReturnType<typeof useTranslation>['t'];
 
 const ICONES: Record<Notification['type'], ReactNode> = {
+  planning_soumis: <AssignmentTurnedInRounded color="primary" fontSize="small" />,
   planning_approuve: <CheckCircleRounded color="success" fontSize="small" />,
   revision_demandee: <RateReviewOutlined color="warning" fontSize="small" />,
   remplacement_attribue: <SwapHorizRounded color="primary" fontSize="small" />,
@@ -31,11 +33,17 @@ function texteNotification(n: Notification, t: Traduire, langue: string) {
     nom: n.donnees.nom,
     debut: jour(n.donnees.debut),
     fin: jour(n.donnees.fin),
+    suite:
+      n.donnees.version && n.donnees.version > 1
+        ? t('notifications.version', { version: n.donnees.version })
+        : '',
   });
 }
 
-/** Où mène une notification : la semaine du délégué, ou la file du remplaçant. */
+/** Où mène une notification : la semaine du délégué, le planning à décider, ou la file. */
 function destination(n: Notification) {
+  if (n.type === 'planning_soumis' && n.donnees.planning)
+    return `/validation/${n.donnees.planning}`;
   return n.type === 'remplacement_attribue' ? '/validation' : '/planning';
 }
 

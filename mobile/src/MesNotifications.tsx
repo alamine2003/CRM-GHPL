@@ -48,7 +48,8 @@ export function MesNotifications() {
   function ouvrir(n: Notification) {
     setNonLues((liste) => liste.filter((x) => x.id !== n.id));
     void client.notifications.lue(n.id).catch(() => undefined);
-    if (n.donnees.semaine) {
+    // Un planning à décider se décide au portail ; ici, la notification se marque lue.
+    if (n.donnees.semaine && n.type !== 'planning_soumis') {
       routeur.push({ pathname: '/semaine', params: { jour: n.donnees.semaine } });
     }
   }
@@ -116,6 +117,10 @@ export function MesNotifications() {
               nom: n.donnees.nom,
               debut: jour(n.donnees.debut),
               fin: jour(n.donnees.fin),
+              suite:
+                n.donnees.version && n.donnees.version > 1
+                  ? t('notifications.version', { version: n.donnees.version })
+                  : '',
             })}
           </Text>
           <MaterialIcons name="chevron-right" size={22} color={p.texteDiscret} />

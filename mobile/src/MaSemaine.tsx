@@ -79,14 +79,16 @@ function LigneSemaine({
   const routeur = useRouter();
   const planning = semaine.planning;
   const echeance =
-    planning && semaine.modifiable
-      ? t(
-          new Date(planning.echeance) < new Date()
-            ? 'soumission.echeancePassee'
-            : 'soumission.echeance',
-          { date: dateHeure(planning.echeance, i18n.language, semaine.fuseau) },
-        )
-      : null;
+    planning?.statut === 'a_reviser'
+      ? t('soumission.sansRetard')
+      : planning && semaine.modifiable
+        ? t(
+            new Date(planning.echeance) < new Date()
+              ? 'soumission.echeancePassee'
+              : 'soumission.echeance',
+            { date: dateHeure(planning.echeance, i18n.language, semaine.fuseau) },
+          )
+        : null;
   return (
     <Pressable
       accessibilityRole="button"

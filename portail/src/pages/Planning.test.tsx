@@ -53,6 +53,7 @@ const SEMAINE: Semaine = {
     en_retard: false,
     echeance: '2026-10-22T18:00:00Z',
     decision: null,
+    numero_version: null,
   },
   peut_creer: false,
   modifiable: true,

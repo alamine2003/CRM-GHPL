@@ -73,6 +73,7 @@ const PLANNING = {
   en_retard: false,
   echeance: '2026-10-22T18:00:00Z',
   decision: null,
+  numero_version: null,
 };
 
 const VISITE: Visite = {
@@ -1012,4 +1013,35 @@ test('PLN-013 CA2 : le délégué lit la révision et la remarque sur la visite 
   expect(await screen.findByText(/Révision demandée par Kossi GUEYE/)).toBeTruthy();
   expect(screen.getByText(/Trop peu de visites mardi\./)).toBeTruthy();
   expect(screen.getByText('Remarque : Prévoir 10 h plutôt.')).toBeTruthy();
+});
+
+test('PLN-008 CA2 : après révision, la nouvelle soumission ne compte pas de retard', async () => {
+  const revise: Semaine = {
+    ...EN_PREPARATION,
+    planning: {
+      ...EN_PREPARATION.planning!,
+      statut: 'a_reviser',
+      // Échéance passée : elle ne compte plus pendant la révision.
+      echeance: '2020-01-02T18:00:00Z',
+      soumis_le: '2019-12-30T16:00:00Z',
+      numero_version: 1,
+      decision: {
+        numero: 1,
+        decision: 'a_reviser',
+        decide_le: '2020-01-03T10:30:00Z',
+        par: 'Kossi GUEYE',
+        mode: 'direct',
+        commentaire: 'Ajoutez des visites.',
+        remarques: [],
+      },
+    },
+    visites: [{ ...VISITE, heure: '09:00', objectif: 'Vasculor', manquants: [] }],
+    controles: { bloquants: [], signalements: [], objectifs: [] },
+  };
+  await rendre({ semaine: jest.fn(async () => revise) });
+  expect(
+    (await screen.findAllByText('À renvoyer après correction : pas de retard compté.')).length,
+  ).toBeGreaterThan(0);
+  expect(screen.queryByText(/Échéance passée/)).toBeNull();
+  expect(screen.getByText('Soumettre la version 2')).toBeTruthy();
 });

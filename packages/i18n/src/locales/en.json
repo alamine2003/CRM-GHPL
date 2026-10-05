@@ -1578,7 +1578,9 @@
     "bloquantsPortail_one": "The blocking issue listed under “To check” prevents submission.",
     "bloquantsPortail_other": "The {{count}} blocking issues listed under “To check” prevent submission.",
     "corriger_one": "Open the visit to fix",
-    "corriger_other": "Open the first visit to fix"
+    "corriger_other": "Open the first visit to fix",
+    "sansRetard": "To resubmit after correction: no lateness counted.",
+    "soumettreVersion": "Submit version {{numero}}"
   },
   "validation": {
     "enAttente_one": "{{count}} plan waiting, oldest first",
@@ -1642,7 +1644,9 @@
     "voir": "Open the week",
     "toutVu": "Mark all as read",
     "revision_demandee": "Revision requested on your planning for week {{numero}}",
-    "remplacement_attribue": "You replace {{nom}} from {{debut}} to {{fin}}"
+    "remplacement_attribue": "You replace {{nom}} from {{debut}} to {{fin}}",
+    "planning_soumis": "{{nom}}'s planning to decide: week {{numero}}{{suite}}",
+    "version": " (version {{version}})"
   },
   "revision": {
     "demander": "Request a revision",
@@ -1689,5 +1693,11 @@
       "en_cours": "Current",
       "termine": "Ended"
     }
+  },
+  "resoumission": {
+    "version": "Version {{numero}} · after revision",
+    "precedente": "Revision requested on version {{numero}}, on {{date}} by {{par}}",
+    "visiteRetiree": "visit since removed",
+    "verifier": "Check that each point was addressed before deciding."
   }
 }

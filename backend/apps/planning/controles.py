@@ -254,12 +254,14 @@ def signalements(
     # Soumission en retard (RG-016, PLN-008) : annoncée avant, constatée après.
     from django.utils import timezone
 
-    from .etats import MODIFIABLES
+    from .etats import StatutPlanning
     from .services import echeance
 
     if planning.en_retard:
         anomalies.append(Anomalie("soumis_en_retard", SIGNALEMENT))
-    elif planning.statut in MODIFIABLES and timezone.now() > echeance(planning):
+    # Pendant une révision, l'échéance ne compte plus : la nouvelle soumission n'est jamais en
+    # retard (décision du 5 octobre 2026).
+    elif planning.statut == StatutPlanning.BROUILLON and timezone.now() > echeance(planning):
         anomalies.append(Anomalie("echeance_depassee", SIGNALEMENT))
     return sorted(anomalies, key=lambda a: (a.date or date.min, a.code))
 

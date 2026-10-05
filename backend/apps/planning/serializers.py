@@ -72,17 +72,23 @@ class PlanningSerializer(serializers.ModelSerializer):
     #: Échéance de soumission du pays (RG-013).
     echeance = serializers.SerializerMethodField()
     decision = serializers.SerializerMethodField()
+    #: Numéro de la dernière version soumise (RG-037), ou rien avant la première soumission.
+    numero_version = serializers.SerializerMethodField()
 
     class Meta:
         model = Planning
         fields = ["id", "semaine", "statut", "cree_le", "soumis_le", "en_retard", "echeance",
-                  "decision"]  # fmt: skip
+                  "decision", "numero_version"]  # fmt: skip
         read_only_fields = ["statut", "soumis_le", "en_retard"]
 
     def get_echeance(self, planning) -> str:
         from .services import echeance
 
         return echeance(planning).isoformat()
+
+    def get_numero_version(self, planning) -> int | None:
+        derniere = planning.versions.first()
+        return derniere.numero if derniere else None
 
     @extend_schema_field(DecisionSerializer(allow_null=True))
     def get_decision(self, planning):

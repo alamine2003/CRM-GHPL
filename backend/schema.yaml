@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.3.4
+  version: 0.3.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5189,6 +5189,8 @@ components:
           format: date
         numero_semaine:
           type: integer
+        version:
+          type: integer
         debut:
           type: string
           format: date
@@ -6056,11 +6058,13 @@ components:
       - type
     NotificationTypeEnum:
       enum:
+      - planning_soumis
       - planning_approuve
       - revision_demandee
       - remplacement_attribue
       type: string
       description: |-
+        * `planning_soumis` - Planning soumis
         * `planning_approuve` - Planning approuvé
         * `revision_demandee` - Révision demandée
         * `remplacement_attribue` - Remplacement attribué
@@ -6608,12 +6612,17 @@ components:
           - $ref: '#/components/schemas/Decision'
           nullable: true
           readOnly: true
+        numero_version:
+          type: integer
+          nullable: true
+          readOnly: true
       required:
       - cree_le
       - decision
       - echeance
       - en_retard
       - id
+      - numero_version
       - semaine
       - soumis_le
       - statut

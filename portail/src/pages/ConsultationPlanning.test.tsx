@@ -57,6 +57,7 @@ const CONSULTATION: Consultation = {
     en_retard: true,
     echeance: '2026-10-08T18:00:00Z',
     decision: null,
+    numero_version: null,
   },
   peut_creer: false,
   modifiable: false,
@@ -258,5 +259,41 @@ describe('PLN-013 : révision motivée', () => {
     await waitFor(() =>
       expect(mockNotifier).toHaveBeenCalledWith('Révision demandée à Aminata FICTIVE.'),
     );
+  });
+});
+
+describe('PLN-014 : version suivante après révision', () => {
+  it('le responsable retrouve ce qu’il avait demandé, visite par visite', async () => {
+    const version2: Consultation = {
+      ...CONSULTATION,
+      planning: {
+        ...CONSULTATION.planning!,
+        numero_version: 2,
+        decision: {
+          numero: 1,
+          decision: 'a_reviser',
+          decide_le: '2026-10-08T10:30:00Z',
+          par: 'Kossi GUEYE',
+          mode: 'direct',
+          commentaire: 'Ajoutez des visites.',
+          remarques: [
+            { visite: 'v1', commentaire: 'Prévoir 10 h plutôt.' },
+            { visite: 'vx', commentaire: 'Hors secteur.' },
+          ],
+        },
+      },
+    };
+    rendre(vi.fn(async () => version2));
+    expect(
+      await screen.findByText(
+        'Révision demandée sur la version 1, le jeudi 8 octobre par Kossi GUEYE',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Ajoutez des visites.')).toBeTruthy();
+    expect(screen.getByText('Awa FICTIF · mar. 13 09:00')).toBeTruthy();
+    expect(screen.getByText('visite retirée depuis')).toBeTruthy();
+    expect(screen.getByText(/Version 2 · après révision/)).toBeTruthy();
+    // La décision reste à prendre sur la version 2.
+    expect(screen.getByRole('button', { name: 'Approuver' })).toBeTruthy();
   });
 });

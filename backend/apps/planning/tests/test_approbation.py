@@ -91,7 +91,9 @@ def test_pln012_ca2_le_delegue_est_notifie(monde, terrain, soumis):
     assert notification["donnees"] == {"planning": str(soumis.pk), "semaine": "2026-10-12",
                                        "numero_semaine": 42}  # fmt: skip
     # Personne d'autre ne la voit ; « lue » la retire du compte.
-    assert client_de(monde["sup.sn"]).get("/api/v1/notifications/").json()["non_lues"] == 0
+    # Le superviseur, lui, n'a reçu que la soumission.
+    centre_sup = client_de(monde["sup.sn"]).get("/api/v1/notifications/").json()
+    assert [n["type"] for n in centre_sup["notifications"]] == ["planning_soumis"]
     r = deleg.post(f"/api/v1/notifications/{notification['id']}/lue/")
     assert r.status_code == 200 and r.json()["lue_le"] is not None
     assert deleg.get("/api/v1/notifications/").json()["non_lues"] == 0

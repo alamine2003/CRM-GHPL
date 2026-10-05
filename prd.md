@@ -644,13 +644,13 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | PLN-005 | Déplacer, copier, supprimer une visite avant soumission ; glisser-déposer depuis la liste cible. | 0.2.5 | CA1 : un glisser-déposer crée une visite pré-remplie (prospect, établissement principal). CA2 : copier la semaine précédente est possible. |
 | PLN-006 | Vues mobile semaine, jour, détail ; vue portail semaine. | 0.2.6 | CA1 : la vue semaine affiche le nombre de visites par jour et le statut du planning. |
 | PLN-007 | Sauvegarde automatique du brouillon et reprise. | 0.2.7 | CA1 : fermer l'application en cours de saisie ne perd aucune visite. |
-| PLN-008 | Soumission avec contrôle final ; marquage `en_retard` après l'échéance. | 0.2.8 | CA1 : une soumission après jeudi 18 h (heure du pays) est acceptée et marquée « en retard ». |
+| PLN-008 | Soumission avec contrôle final ; marquage `en_retard` après l'échéance. | 0.2.8, 0.3.5 | CA1 : une soumission après jeudi 18 h (heure du pays) est acceptée et marquée « en retard ». CA2 (0.3.5, décision du 5 octobre 2026) : une nouvelle soumission après révision n'est jamais en retard ; seul compte le retard de la première soumission. |
 | PLN-009 | Absences déclarées (`conge`, `formation`, `reunion`, `maladie`, `autre`) par jour ou demi-journée. | 0.2.3 | CA1 : une demi-journée d'absence réduit de moitié les seuils du jour. CA2 : l'absence est validée avec le planning. |
 | PLN-010 | Kilométrage estimé de la semaine (sans montant). | 0.2.6 | CA1 : le kilométrage est calculé à partir des coordonnées des établissements, à vol d'oiseau ou par itinéraire [H]. CA2 : aucun montant de frais n'est affiché. |
 | PLN-011 | Le superviseur dispose d'une file des plannings en attente et consulte chacun en détail. | 0.3.1, 0.3.2 | CA1 : la file est triée par ancienneté de soumission et affiche les alertes. CA2 (0.3.2) : il ouvre un planning de la file et voit la semaine, ses activités, ses contrôles, le kilométrage et le détail de chaque visite avec ses alertes, sans rien pouvoir modifier ; un planning en préparation ou d'un délégué qu'il ne supervise pas lui est introuvable. |
 | PLN-012 | Le superviseur approuve un planning complet. | 0.3.3 | CA1 : l'approbation fige la version. CA2 : le délégué reçoit une notification. |
 | PLN-013 | Le superviseur demande une révision, sur le planning ou une visite précise, avec commentaire obligatoire. | 0.3.4 | CA1 : une demande sans commentaire est refusée. CA2 : le délégué voit le commentaire sur la visite concernée. |
-| PLN-014 | Nouvelle version après révision ; historique et comparaison des versions. | 0.3.5 | CA1 : la comparaison montre les visites ajoutées, retirées, déplacées. CA2 : toutes les versions restent consultables. |
+| PLN-014 | Nouvelle version après révision ; historique et comparaison des versions. | 0.3.5, 0.3.6 | CA1 : la comparaison montre les visites ajoutées, retirées, déplacées. CA2 : toutes les versions restent consultables. |
 | PLN-015 | Modifications après approbation : mineure libre et tracée, majeure soumise à nouvelle approbation (`RG-018`). | 0.3.7 | CA1 : changer l'heure d'une visite dans la même journée ne change pas le statut. CA2 : ajouter une visite crée une version soumise ; les autres visites restent exécutables. |
 | PLN-016 | Escalade vers le DM sans décision 24 h ouvrées après soumission ; alerte au DM si rien n'est approuvé le lundi matin. | 0.3.8 | CA1 : l'escalade notifie le DM du périmètre. CA2 : la décision du DM porte le mode `escalade`. |
 | PLN-017 | Le planning d'un superviseur qui occupe un poste de délégué est approuvé par son DM. | 0.3.3 | CA1 : il n'apparaît pas dans sa propre file. |
@@ -1050,7 +1050,7 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 | 0.3.2 | Consultation semaine et détail avec alertes (PLN-011 CA2) ; le modèle `Absence` devient `Activite` |
 | 0.3.3 | Approbation (PLN-012) ; approbation par le DM du planning d'un superviseur-visiteur (PLN-017) ; versions figées (RG-037) ; première notification au délégué |
 | 0.3.4 | Révision motivée (planning ou visite, PLN-013) ; remplaçant daté (ORG-013) |
-| 0.3.5 | Nouvelle version et resoumission |
+| 0.3.5 | Nouvelle version et resoumission (PLN-014) ; resoumission jamais en retard (PLN-008 CA2) ; notification « Planning soumis » |
 | 0.3.6 | Historique et comparaison des versions |
 | 0.3.7 | Verrouillage, modifications mineures et majeures après approbation |
 | 0.3.8 | Centre de notifications, rappels, escalade vers le DM |

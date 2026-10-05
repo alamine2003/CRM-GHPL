@@ -12,6 +12,7 @@ from apps.socle.models import ModeleDePays
 
 
 class TypeNotification(models.TextChoices):
+    PLANNING_SOUMIS = "planning_soumis", "Planning soumis"
     PLANNING_APPROUVE = "planning_approuve", "Planning approuvé"
     REVISION_DEMANDEE = "revision_demandee", "Révision demandée"
     REMPLACEMENT_ATTRIBUE = "remplacement_attribue", "Remplacement attribué"

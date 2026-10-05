@@ -2,6 +2,32 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.5] — Nouvelle version et resoumission
+
+Cinquième jalon du cycle 0.3 « Validation des plannings ».
+
+### Décision du 5 octobre 2026 (PLN-008 CA2)
+
+- Une nouvelle soumission après révision n'est jamais considérée comme un retard : seul compte le retard de la première soumission. Pendant la révision, l'échéance passée n'est plus signalée ; le délégué lit « À renvoyer après correction : pas de retard compté », au téléphone comme au portail.
+
+### Ajouté — nouvelle version (PLN-014)
+
+- Le délégué corrige et soumet « la version 2 » (bouton « Soumettre la version n ») ; la version figée suivante revient dans la file du superviseur.
+- File et consultation : « Version 2 · après révision ». La consultation rappelle la révision précédente — commentaire et chaque remarque avec sa visite (ou « visite retirée depuis ») — pour vérifier que chaque point a été repris avant de décider.
+- La décision montrée au délégué est celle de la version en cours : une fois la version 2 soumise, l'ancienne révision ne s'affiche plus comme décision.
+
+### Ajouté — notification « Planning soumis » (prd.md §18)
+
+- Chaque soumission notifie le superviseur du poste — ou le DM d'un superviseur-visiteur — et son remplaçant actif : « Planning de … à décider : semaine n (version 2) », qui ouvre le planning à décider.
+
+### Design
+
+Revue sur le rendu réel : portail bureau, téléphone et sombre (accueil du superviseur, file, version 2 avec la révision précédente), planning du délégué au portail avant et après resoumission, accueil et semaine du téléphone à 360 px et en sombre. Seconde revue après correction :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Planning du délégué (portail, téléphone) | Après la resoumission, la ligne « Décision » disait encore « Révision demandée… » (décision sur la version 1). | Seule la décision sur la version en cours s'affiche. |
+
 ## [0.3.4] — Révision motivée et remplaçant daté
 
 Quatrième jalon du cycle 0.3 « Validation des plannings ».
@@ -34,10 +60,6 @@ Revue sur le rendu réel : portail téléphone, bureau et sombre (remplaçants, 
 | Consultation | La remarque s'affichait en entier, en gras bleu, sur la carte de la visite : la colonne s'allongeait. | Texte normal, limité à trois lignes ; le détail la montre en entier. |
 | Planning du délégué (portail) | La révision se disait deux fois : bandeau en tête et ligne « Décision ». | La ligne « Décision » se tait pendant la révision. |
 | Consultation (téléphone) | « Approuver » passé à la ligne restait décalé sous « Demander une révision ». | Espacement en grille, boutons alignés. |
-
-### Point ouvert
-
-- Un planning resoumis après une révision demandée après l'échéance est marqué « en retard » (règle PLN-008 inchangée) ; à confirmer.
 
 ## [0.3.3] — Approbation des plannings
 

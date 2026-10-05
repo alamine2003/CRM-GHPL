@@ -89,6 +89,9 @@ export default function ConsultationPlanning({ id }: { id: string }) {
                   ? t('remplacements.pour', { nom: `${c.remplace.prenom} ${c.remplace.nom}` })
                   : '',
                 c.postes.join(', '),
+                (c.planning?.numero_version ?? 1) > 1
+                  ? t('resoumission.version', { numero: c.planning?.numero_version })
+                  : '',
                 t('semaine.periode', {
                   debut: date(c.semaine, { day: 'numeric', month: 'short' }),
                   fin: date(c.jours.at(-1)!.date, { day: 'numeric', month: 'short' }),
@@ -128,6 +131,9 @@ export default function ConsultationPlanning({ id }: { id: string }) {
             remarques={brouillon}
             suivant={suivant ? `/validation/${suivant.planning.id}` : '/validation'}
           />
+          {aDecider && decision?.decision === 'a_reviser' && (
+            <RevisionPrecedente consultation={c} jourCourt={jourCourt} />
+          )}
           <Box
             sx={{
               display: 'grid',
@@ -479,6 +485,70 @@ function BandeauDecision({
           </DialogActions>
         </Dialog>
       )}
+    </Card>
+  );
+}
+
+/**
+ * PLN-014 : la version suivante d'un planning révisé. Le responsable retrouve ce qu'il avait
+ * demandé — commentaire et remarques par visite — pour vérifier que chaque point a été repris.
+ */
+function RevisionPrecedente({
+  consultation: c,
+  jourCourt,
+}: {
+  consultation: Consultation;
+  jourCourt: (iso: string) => string;
+}) {
+  const { t, i18n } = useTranslation();
+  const decision = c.planning!.decision!;
+  const visite = (id: string) => {
+    const v = c.visites.find((x) => x.id === id);
+    if (!v) return t('resoumission.visiteRetiree');
+    const qui = v.prospect
+      ? [v.prospect.prenom, v.prospect.nom].filter(Boolean).join(' ')
+      : t('visites.sansProspect');
+    return `${qui} · ${jourCourt(v.date)}${v.heure ? ` ${v.heure}` : ''}`;
+  };
+  return (
+    <Card sx={{ p: 2, borderLeft: 3, borderLeftColor: 'warning.main' }}>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
+        <RateReviewOutlined color="warning" sx={{ mt: 0.25 }} />
+        <Stack spacing={0.75} sx={{ minWidth: 0 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {t('resoumission.precedente', {
+              numero: decision.numero,
+              par: decision.par,
+              date: new Intl.DateTimeFormat(i18n.language, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                timeZone: c.fuseau,
+              }).format(new Date(decision.decide_le)),
+            })}
+          </Typography>
+          {decision.commentaire && (
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+              {decision.commentaire}
+            </Typography>
+          )}
+          {decision.remarques.length > 0 && (
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+              {decision.remarques.map((r) => (
+                <Typography component="li" variant="body2" key={r.visite}>
+                  <Box component="span" sx={{ fontWeight: 600 }}>
+                    {visite(r.visite)}
+                  </Box>{' '}
+                  : {r.commentaire}
+                </Typography>
+              ))}
+            </Box>
+          )}
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {t('resoumission.verifier')}
+          </Typography>
+        </Stack>
+      </Stack>
     </Card>
   );
 }

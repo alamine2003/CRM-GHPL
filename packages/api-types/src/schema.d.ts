@@ -2744,6 +2744,7 @@ export interface components {
       /** Format: date */
       semaine?: string;
       numero_semaine?: number;
+      version?: number;
       /** Format: date */
       debut?: string;
       /** Format: date */
@@ -3104,12 +3105,14 @@ export interface components {
       lue_le: string | null;
     };
     /**
-     * @description * `planning_approuve` - Planning approuvé
+     * @description * `planning_soumis` - Planning soumis
+     *     * `planning_approuve` - Planning approuvé
      *     * `revision_demandee` - Révision demandée
      *     * `remplacement_attribue` - Remplacement attribué
      * @enum {string}
      */
-    NotificationTypeEnum: 'planning_approuve' | 'revision_demandee' | 'remplacement_attribue';
+    NotificationTypeEnum:
+      'planning_soumis' | 'planning_approuve' | 'revision_demandee' | 'remplacement_attribue';
     Objectif: {
       /** Format: date */
       date: string;
@@ -3339,6 +3342,7 @@ export interface components {
       readonly en_retard: boolean;
       readonly echeance: string;
       readonly decision: components['schemas']['Decision'] | null;
+      readonly numero_version: number | null;
     };
     /**
      * @description Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et

@@ -28,6 +28,7 @@ const PLANNING = {
   en_retard: false,
   echeance: '2099-10-08T18:00:00Z',
   decision: null,
+  numero_version: null,
 };
 
 const COURANTE: Semaine = {

@@ -616,23 +616,25 @@ function MaSemaine() {
           count: s.visites.length,
         })}`;
   const echeance = (s: Semaine) =>
-    s.planning && s.modifiable
-      ? t(
-          new Date(s.planning.echeance) < new Date()
-            ? 'soumission.echeancePassee'
-            : 'soumission.echeance',
-          {
-            date: new Intl.DateTimeFormat(i18n.language, {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone: s.fuseau,
-            }).format(new Date(s.planning.echeance)),
-          },
-        )
-      : null;
+    s.planning?.statut === 'a_reviser'
+      ? t('soumission.sansRetard')
+      : s.planning && s.modifiable
+        ? t(
+            new Date(s.planning.echeance) < new Date()
+              ? 'soumission.echeancePassee'
+              : 'soumission.echeance',
+            {
+              date: new Intl.DateTimeFormat(i18n.language, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: s.fuseau,
+              }).format(new Date(s.planning.echeance)),
+            },
+          )
+        : null;
   return (
     <Card>
       <EnTeteCarte titre={t('accueil.semaine')} />

@@ -1578,7 +1578,9 @@
     "bloquantsPortail_one": "Le point bloquant listé dans « À vérifier » empêche la soumission.",
     "bloquantsPortail_other": "Les {{count}} points bloquants listés dans « À vérifier » empêchent la soumission.",
     "corriger_one": "Ouvrir la visite à corriger",
-    "corriger_other": "Ouvrir la première visite à corriger"
+    "corriger_other": "Ouvrir la première visite à corriger",
+    "sansRetard": "À renvoyer après correction : pas de retard compté.",
+    "soumettreVersion": "Soumettre la version {{numero}}"
   },
   "validation": {
     "enAttente_one": "{{count}} planning en attente, du plus ancien au plus récent",
@@ -1642,7 +1644,9 @@
     "voir": "Voir la semaine",
     "toutVu": "Tout marquer comme lu",
     "revision_demandee": "Révision demandée sur votre planning de la semaine {{numero}}",
-    "remplacement_attribue": "Vous remplacez {{nom}} du {{debut}} au {{fin}}"
+    "remplacement_attribue": "Vous remplacez {{nom}} du {{debut}} au {{fin}}",
+    "planning_soumis": "Planning de {{nom}} à décider : semaine {{numero}}{{suite}}",
+    "version": " (version {{version}})"
   },
   "revision": {
     "demander": "Demander une révision",
@@ -1689,5 +1693,11 @@
       "en_cours": "En cours",
       "termine": "Terminé"
     }
+  },
+  "resoumission": {
+    "version": "Version {{numero}} · après révision",
+    "precedente": "Révision demandée sur la version {{numero}}, le {{date}} par {{par}}",
+    "visiteRetiree": "visite retirée depuis",
+    "verifier": "Vérifiez que chaque point a été repris avant de décider."
   }
 }

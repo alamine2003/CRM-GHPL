@@ -242,7 +242,9 @@ function Resume({
       minute: '2-digit',
       timeZone: s.fuseau,
     }).format(new Date(iso));
-  const enRetard = !!s.planning && new Date(s.planning.echeance) < new Date();
+  // Une nouvelle soumission après révision n'est jamais en retard (PLN-008 CA2).
+  const revision = s.planning?.statut === 'a_reviser';
+  const enRetard = !!s.planning && !revision && new Date(s.planning.echeance) < new Date();
   return (
     <>
       <Box
@@ -301,6 +303,8 @@ function Resume({
                           </Typography>
                         )}
                       </Stack>
+                    ) : revision ? (
+                      t('soumission.sansRetard')
                     ) : s.modifiable ? (
                       t(
                         new Date(s.planning.echeance) < new Date()
@@ -314,15 +318,18 @@ function Resume({
                   }
                 />
                 {/* Pendant une révision, le bandeau du haut dit déjà la décision. */}
-                {s.planning.decision && s.planning.statut !== 'a_reviser' && (
-                  <Ligne
-                    libelle={t('approbation.decision')}
-                    valeur={t(`approbation.decisionsCourt.${s.planning.decision.decision}`, {
-                      par: s.planning.decision.par,
-                      date: dateHeure(s.planning.decision.decide_le),
-                    })}
-                  />
-                )}
+                {/* Seule la décision sur la version en cours se dit ici (PLN-014). */}
+                {s.planning.decision &&
+                  s.planning.decision.numero === s.planning.numero_version &&
+                  s.planning.statut !== 'a_reviser' && (
+                    <Ligne
+                      libelle={t('approbation.decision')}
+                      valeur={t(`approbation.decisionsCourt.${s.planning.decision.decision}`, {
+                        par: s.planning.decision.par,
+                        date: dateHeure(s.planning.decision.decide_le),
+                      })}
+                    />
+                  )}
                 {s.modifiable && (
                   <Box>
                     <Button
@@ -330,7 +337,11 @@ function Resume({
                       disabled={!!controles?.bloquants.length}
                       onClick={() => setConfirmer(true)}
                     >
-                      {t('soumission.soumettre')}
+                      {revision
+                        ? t('soumission.soumettreVersion', {
+                            numero: (s.planning.numero_version ?? 0) + 1,
+                          })
+                        : t('soumission.soumettre')}
                     </Button>
                     {!!controles?.bloquants.length && (
                       <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>

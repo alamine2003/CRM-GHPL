@@ -483,7 +483,12 @@ def plannings_a_valider(superviseur, pays) -> list[Planning]:
 @transaction.atomic
 def soumettre(planning: Planning) -> Planning:
     """PLN-008 : contrôle final, puis « Soumis au superviseur ». Après l'échéance, la soumission
-    est acceptée et marquée en retard (CA1) ; le superviseur le voit (RG-016)."""
+    est acceptée et marquée en retard (CA1) ; le superviseur le voit (RG-016). Une nouvelle
+    soumission après révision n'est jamais en retard (décision du 5 octobre 2026) : seul compte
+    le retard de la première. Les responsables du poste, et leurs remplaçants, sont notifiés."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+
     from . import controles
     from .etats import exiger_transition
 
@@ -491,6 +496,7 @@ def soumettre(planning: Planning) -> Planning:
     # approuvé (approuvé → soumis) relève du cycle 0.3.
     _exiger_modifiable(planning)
     exiger_transition(planning.statut, StatutPlanning.SOUMIS)
+    apres_revision = planning.statut == StatutPlanning.A_REVISER
     if sans := postes_sans_superviseur(planning):
         raise ErreurMetier(
             "sans_superviseur",
@@ -511,12 +517,30 @@ def soumettre(planning: Planning) -> Planning:
     maintenant = timezone.now()
     planning.statut = StatutPlanning.SOUMIS
     planning.soumis_le = maintenant
-    planning.en_retard = maintenant > echeance(planning)
+    if not apres_revision:
+        planning.en_retard = maintenant > echeance(planning)
     planning.save(update_fields=["statut", "soumis_le", "en_retard", "modifie_le"])
     version = figer(planning)
     _auditer("planning.soumission", planning, semaine=str(planning.semaine),
              en_retard=planning.en_retard, numero=version.numero)  # fmt: skip
+    delegue = planning.delegue
+    for destinataire in destinataires_decision(planning):
+        notifier(destinataire, TypeNotification.PLANNING_SOUMIS, planning.pays,
+                 **_semaine_notifiee(planning), version=version.numero,
+                 nom=f"{delegue.first_name} {delegue.last_name}".strip())  # fmt: skip
     return planning
+
+
+def destinataires_decision(planning: Planning) -> list:
+    """Qui peut décider aujourd'hui : les responsables du poste et leurs remplaçants actifs
+    (prd.md §18 : « Superviseur (ou remplaçant) »)."""
+    from apps.identite.models import Utilisateur
+    from apps.organisation.services import remplacements_actifs
+
+    titulaires = responsables(planning) - {planning.delegue_id}
+    remplacants = remplacements_actifs(planning.pays).filter(superviseur__in=titulaires)
+    ids = titulaires | set(remplacants.values_list("remplacant_id", flat=True))
+    return list(Utilisateur.objects.filter(pk__in=ids - {planning.delegue_id}))
 
 
 # --- Versions et décision (RG-037, PLN-012, PLN-017) ------------------------------------------
