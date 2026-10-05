@@ -551,7 +551,7 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
 | Prospects visités | prospects distincts visités, planifiés ou non |
 | Planifiés visités | prospects planifiés effectivement visités |
 | Visites non planifiées | prospects visités hors planning (visites imprévues) |
-| Visites géolocalisées | visites avec position GPS (définition exacte : à préciser) |
+| Visites géolocalisées | visites dont la position GPS prise au démarrage est à **100 m au plus** de la position de référence de l'établissement (paramètre du pays, 100 m par défaut) [D, 5 octobre 2026] |
 | Taux de géolocalisation | visites géolocalisées / prospects visités [D, 5 octobre 2026] |
 | Taux de couverture | prospects de la liste cible visités / liste cible |
 | Taux de réalisation du plan | planifiés visités / prospects planifiés |
@@ -559,7 +559,7 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
 | Volume relatif | prospects visités / plus grand nombre de prospects visités de l'équipe |
 
 - **Score / 100** = somme pondérée des cinq taux ; pondérations par défaut : géolocalisation 40 %, couverture 23 %, réalisation du plan 19 %, respect du plan 9 %, volume relatif 9 % ; modifiables par pays, total 100 %.
-- **Appréciation** : Excellent, Bon, À consolider, Insuffisant, Aucune activité (aucune visite). Seuils déduits de l'exemple [H, à confirmer] : Bon dès 40, À consolider dès 15, Insuffisant en dessous ; le seuil d'Excellent est entre 44,4 et 69,3.
+- **Appréciation** : Excellent, Bon, À consolider, Insuffisant, Aucune activité (aucune visite). Elle sépare la performance de la sous-performance [D]. Seuils par défaut, paramètres du pays [H] : Excellent dès 60, Bon dès 40, À consolider dès 15, Insuffisant en dessous (Bon et À consolider déduits de l'exemple ; Excellent proposé, l'exemple le place entre 44,4 et 69,3).
 - Une ligne « Moyenne de l'équipe » résume chaque colonne.
 - Points proposés à la discussion [H] : rapporter le volume à l'objectif du poste plutôt qu'au meilleur de l'équipe ; tenir compte des jours non travaillés (fériés, congés, commandos) ; signaler une visite faite sans planning.
 - **Version mensuelle antérieure** (classement d'août, 30 derniers jours, source BI BirdNotes « Vue Insight V2 ») [D, fournie le 5 octobre 2026] :
@@ -569,6 +569,9 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
   - classement **par ordre de priorité** et non pondéré : géolocalisation, puis réalisation du planning, puis nombre de prospects planifiés ;
   - une fiche de performance par délégué, l'onglet « Meilleur délégué du mois » et le total de l'agence.
 - Dans l'application, chaque taux sera **recalculé à partir des visites** (jamais repris d'un outil externe).
+- **Pourquoi pointer** [D, 5 octobre 2026] : prouver que le délégué visite vraiment ses prospects et ce qu'il a planifié ; construire une base fiable des positions des établissements, qui guide un nouveau délégué ; permettre au superviseur de savoir où ses délégués font leurs visites.
+  - Proposition [H] : un établissement sans position de référence reçoit celle de sa première visite pointée, proposée à l'administrateur pays qui la valide ; ensuite, la distance se contrôle sur cette référence (VIS-010).
+  - Le superviseur voit sur une carte les visites pointées de la journée de chaque délégué ; il n'y a **pas de suivi en continu** : la position n'est prise qu'au démarrage et à la fin d'une visite (RG-028).
 - **Périodes** [D, 5 octobre 2026] : toutes, de 24 heures à 1 an (24 h, 7 jours, 30 jours, 90 jours, 6 mois, 1 an, ou dates choisies), avec la comparaison à la période précédente (variation en % ou en points).
 - **Méthode** : score pondéré (version hebdomadaire, la plus récente) [H] ; le classement par priorité de la version mensuelle n'est pas repris sauf demande.
 - **Profil du délégué** (modèle : tableau de bord BirdNotes « Profil délégué — Vue Insight V2 ») : filtres supérieur, délégué et période ; visites réalisées, prospects planifiés, taux de réalisation du planning (planifiés visités / planifiés) ; planifiés vs visités (visités planifiés, visités non planifiés, planifiés non visités) ; visites géolocalisées et non géolocalisées ; taux de couverture du portefeuille ; chaque indicateur avec la période précédente et sa variation ; courbe des visites planifiées et réalisées par jour ; fréquence des prospects visités (potentiel, nombre de visites, adresse, secteur, localité, spécialité, activité H/P) ; prospects non visités avec leur date de dernière visite. Les échantillons remis viennent des rapports (RG-038, cycle 0.5).
