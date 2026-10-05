@@ -1211,7 +1211,12 @@
     },
     "decisionsTitre_one": "{{count}} décision sur vos propositions",
     "decisionsTitre_other": "{{count}} décisions sur vos propositions",
-    "vu": "Vu"
+    "vu": "Vu",
+    "mobile": {
+      "corriger": "Proposer une correction",
+      "envoyee": "Proposition envoyée : la fiche changera après l'accord de votre superviseur ou de l'administrateur pays. La décision s'affichera sur votre accueil.",
+      "aucunChangement": "Modifiez au moins un champ pour envoyer la proposition."
+    }
   },
   "qualite": {
     "titre": "Qualité des données",

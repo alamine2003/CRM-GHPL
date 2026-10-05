@@ -70,8 +70,11 @@ const LISTE = {
   ],
 } as unknown as ListeCible;
 
-function rendre(client: Partial<ClientApi>, element: React.ReactElement) {
-  const session = { etat: { statut: 'chargement' }, client: client as ClientApi } as Session;
+function rendre(client: Partial<ClientApi>, element: React.ReactElement, actions: string[] = []) {
+  const etat = actions.length
+    ? { statut: 'connecte', perimetre: { actions } }
+    : { statut: 'chargement' };
+  const session = { etat, client: client as ClientApi } as unknown as Session;
   return render(<ContexteSession.Provider value={session}>{element}</ContexteSession.Provider>);
 }
 
@@ -148,4 +151,41 @@ test("la fiche d'un établissement donne l'itinéraire et qui y exerce (PRP-003)
   expect(Linking.openURL).toHaveBeenCalledWith(expect.stringContaining('14.67%2C-17.43'));
   await fireEvent.press(screen.getByText('Dr Aïssatou NDIAYE'));
   expect(mockPousser).toHaveBeenCalledWith('/fiche/p1');
+});
+
+test('PRP-014 : le délégué propose une correction ; seuls les champs changés partent', async () => {
+  const creer = jest.fn(async () => ({}));
+  await rendre(
+    {
+      prospects: { detail: jest.fn(async () => PROSPECT) },
+      exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
+      propositions: { creer },
+    } as unknown as Partial<ClientApi>,
+    <FicheProspect id="p1" />,
+    ['propositions.creer'],
+  );
+  await fireEvent.press(await screen.findByText('Proposer une correction'));
+  // Rien de changé : l'envoi reste impossible.
+  expect(screen.getByText(/Modifiez au moins un champ/)).toBeTruthy();
+  await fireEvent.changeText(screen.getByLabelText('Téléphone mobile'), '+221 77 999 99 99');
+  await fireEvent.changeText(screen.getByLabelText('Commentaire (facultatif)'), 'Nouveau numéro');
+  await fireEvent.press(screen.getByText('Envoyer la proposition'));
+  expect(creer).toHaveBeenCalledWith({
+    prospect: 'p1',
+    changements: { telephone_mobile: '+221 77 999 99 99' },
+    commentaire: 'Nouveau numéro',
+  });
+  expect(await screen.findByText(/Proposition envoyée/)).toBeTruthy();
+});
+
+test('sans le droit de proposer, la fiche ne montre pas le bouton', async () => {
+  await rendre(
+    {
+      prospects: { detail: jest.fn(async () => PROSPECT) },
+      exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
+    } as unknown as Partial<ClientApi>,
+    <FicheProspect id="p1" />,
+  );
+  expect(await screen.findByText('Dr Aïssatou NDIAYE')).toBeTruthy();
+  expect(screen.queryByText('Proposer une correction')).toBeNull();
 });

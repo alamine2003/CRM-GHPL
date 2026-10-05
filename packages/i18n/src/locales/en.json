@@ -1211,7 +1211,12 @@
     },
     "decisionsTitre_one": "{{count}} decision on your proposals",
     "decisionsTitre_other": "{{count}} decisions on your proposals",
-    "vu": "Seen"
+    "vu": "Seen",
+    "mobile": {
+      "corriger": "Suggest a correction",
+      "envoyee": "Proposal sent: the record will change once your supervisor or the country administrator agrees. The decision will appear on your home screen.",
+      "aucunChangement": "Change at least one field to send the proposal."
+    }
   },
   "qualite": {
     "titre": "Data quality",

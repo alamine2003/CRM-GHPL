@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { lire } from './baseLocale';
 import { Alerte, Carte, Etiquette, Ligne, MarquePotentiel, Texte, usePalette } from './composants';
+import { ProposerCorrection } from './Proposition';
 import { useSession } from './session';
 
 type Traduire = (cle: string, options?: Record<string, unknown>) => string;
@@ -226,6 +227,19 @@ export function FicheProspect({ id }: { id: string }) {
         )}
       </Carte>
 
+      {fiche?.statut === 'actif' && (
+        <ProposerCorrection
+          objet="prospect"
+          id={fiche.id}
+          actuels={{
+            telephone_mobile: fiche.telephone_mobile,
+            telephone_pro: fiche.telephone_pro,
+            courriel: fiche.courriel,
+            numero_ordre: fiche.numero_ordre,
+          }}
+        />
+      )}
+
       <Carte style={styles.bloc}>
         <Texte variante="libelle">{t('fiche.lieux')}</Texte>
         {lieux === null ? (
@@ -339,6 +353,14 @@ export function FicheEtablissement({ id }: { id: string }) {
           derniere
         />
       </Carte>
+
+      {fiche.statut === 'actif' && (
+        <ProposerCorrection
+          objet="etablissement"
+          id={fiche.id}
+          actuels={{ adresse: fiche.adresse, telephone: fiche.telephone }}
+        />
+      )}
 
       <Carte style={styles.bloc}>
         <Texte variante="libelle">{t('fiche.quiExerceIci')}</Texte>

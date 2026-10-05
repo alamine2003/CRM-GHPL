@@ -133,19 +133,22 @@ export function Bouton({
   onPress,
   chargement,
   secondaire,
+  desactive,
 }: {
   libelle: string;
   onPress: () => void;
   chargement?: boolean;
   secondaire?: boolean;
+  /** Action impossible pour l'instant (rien à envoyer) : visible mais inactive. */
+  desactive?: boolean;
 }) {
   const p = usePalette();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={libelle}
-      accessibilityState={{ busy: chargement, disabled: chargement }}
-      disabled={chargement}
+      accessibilityState={{ busy: chargement, disabled: chargement || desactive }}
+      disabled={chargement || desactive}
       onPress={onPress}
       style={({ pressed }) => [
         styles.bouton,
@@ -153,6 +156,7 @@ export function Bouton({
           ? { borderWidth: 1, borderColor: p.ligne, backgroundColor: p.surface }
           : { backgroundColor: marque.bleuMarine },
         (pressed || chargement) && { opacity: 0.8 },
+        desactive && { opacity: 0.4 },
       ]}
     >
       {chargement ? (

@@ -43,6 +43,10 @@ Neuvième et dernier jalon du cycle 0.1 « Référentiel ».
   - filtres A, B, C avec leurs effectifs ;
   - chaque ligne ouvre la fiche ;
   - quand la personne n'est pas dans la liste, « Chercher … dans toutes les fiches » relance la recherche dans le pays.
+- **Proposer une correction** (PRP-014), sur la fiche d'un prospect ou d'un établissement commun, juste sous les contacts.
+  - Prospect : téléphones, courriel, n° d'ordre. Établissement : adresse, téléphone. Un commentaire facultatif.
+  - Seuls les champs changés sont envoyés ; l'envoi reste impossible tant que rien ne change.
+  - La fiche ne change qu'après l'accord du superviseur ou de l'administrateur pays (CA1), et la décision revient sur l'accueil (CA2).
 - **Sans réseau** (PRP-011 CA2) : la liste enregistrée sur le téléphone garde aussi les téléphones. Le délégué ouvre la fiche, appelle et retrouve le lieu principal.
 - Les lignes des onglets Prospects et Établissements ouvrent aussi leur fiche ; le champ de recherche indique ce qu'il accepte.
 - Revue sur le rendu réel à 360 et 414 px, puis seconde revue après corrections :
@@ -54,6 +58,7 @@ Neuvième et dernier jalon du cycle 0.1 « Référentiel ».
 | Ma liste filtrée | Résumé du poste répété au-dessus des résultats | Masqué pendant une recherche ou un filtre |
 | Fiches | Double filet sous la dernière ligne de chaque bloc | Dernière ligne sans filet |
 | Fiche établissement | Personnes qui y exercent sans leur potentiel | Repère A, B ou C devant chaque nom |
+| Proposer une correction | Formulaire ouvert en bas de la fiche, hors de l'écran | Placé sous les contacts : il s'ouvre là où le délégué regarde |
 
 ### Démonstration (DEM-001)
 
