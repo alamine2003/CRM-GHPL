@@ -2,6 +2,42 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.3] — Approbation des plannings
+
+Troisième jalon du cycle 0.3 « Validation des plannings ».
+
+### Ajouté — approbation (PLN-012)
+
+- Dans la consultation d'un planning soumis, un bandeau « En attente de votre décision » et le bouton **Approuver**. La confirmation rappelle que le planning devient la référence des visites de la semaine, que le délégué est notifié, et combien de points signalés restent à « À vérifier ». Après l'approbation, la page passe au planning suivant de la file, ou revient à la file vide.
+- **CA1** : l'approbation fige la version. Chaque soumission crée désormais une version numérotée et figée (RG-037) : visites, passages et activités tels que soumis ; la décision s'y inscrit avec son auteur, sa date et son mode. Le planning approuvé ne se modifie plus (les modifications après approbation arrivent en 0.3.7). La consultation affiche « Approuvé le … par … · version n ».
+- Un point bloquant apparu depuis la soumission (un jour devenu férié, par exemple) empêche l'approbation, avec le détail.
+- **CA2** : le délégué est notifié. Sur l'accueil du téléphone : « Votre planning de la semaine n est approuvé » ; la toucher ouvre la semaine et la marque lue. Sa semaine dit « Approuvé par … le … », au téléphone comme sur le portail.
+
+### Ajouté — superviseur-visiteur (PLN-017)
+
+- Le planning d'un superviseur qui occupe un poste de délégué va au DM auquel ce poste est rattaché (RG-023) : il apparaît dans les « Plannings à valider » du DM, jamais dans la file du superviseur lui-même (**CA1**), et le DM l'approuve.
+- Matrice (prd.md §6.3) : « Approuver ou faire réviser un planning » ouvert au DM ; nouvelle ligne « Recevoir et lire ses notifications », chacun les siennes.
+
+### Ajouté — centre de notifications (première brique)
+
+- Module `notifications` : une notification par événement et par destinataire, écrite dans la même transaction, isolée par pays, sans texte stocké (composé dans la langue de l'utilisateur, sans donnée de santé). Le push, les préférences et les autres événements (prd.md §18) arrivent en 0.3.8.
+
+### Démonstration
+
+- La semaine soumise du premier délégué a sa version figée ; son superviseur peut l'approuver, et le délégué trouve la notification sur l'accueil du téléphone.
+
+### Design
+
+Revue sur le rendu réel : portail téléphone, bureau et sombre (décision à prendre, confirmation, après approbation, planning décidé), vue du délégué au portail, accueil et semaine du téléphone à 360 px et en sombre. Seconde et troisième revues après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| File vide | « 0 planning en attente, du plus ancien au plus récent » en sous-titre, au-dessus du message de file vide. | Sous-titre masqué quand la file est vide. |
+| Confirmation | Rien ne rappelait les points signalés au moment de décider, surtout au téléphone où « À vérifier » est sous le pli. | Ligne « n points signalés restent à « À vérifier » ». |
+| Confirmation | Le nombre comptait chaque jour sous le minimum (« 7 points ») alors que « À vérifier » en montre 3 lignes. | Compté comme les lignes affichées. |
+| Confirmation | « « À vérifier » » se coupait entre le guillemet et le mot. | Espaces insécables dans les guillemets. |
+| Accueil (téléphone) | Le titre de la carte touchait le trait de la première notification. | Marge sous le titre. |
+
 ## [0.3.2] — Consultation d'un planning soumis
 
 Deuxième jalon du cycle 0.3 « Validation des plannings ».

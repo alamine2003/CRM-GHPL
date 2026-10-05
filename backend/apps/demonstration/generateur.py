@@ -412,6 +412,9 @@ class Generateur:
             statut=StatutPlanning.SOUMIS, en_retard=False,
             soumis_le=pln.echeance(planning) - timedelta(days=1, hours=1),
         )  # fmt: skip
+        # Sa version figée, comme à toute soumission (RG-037) : le superviseur la décidera.
+        planning.refresh_from_db()
+        pln.figer(planning)
         return nombre
 
     def semaine_en_preparation(self, pays, delegue, semaine) -> int:

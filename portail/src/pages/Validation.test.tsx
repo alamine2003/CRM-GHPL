@@ -17,6 +17,7 @@ const LIGNE: PlanningEnAttente = {
     soumis_le: '2026-10-06T16:00:00Z',
     en_retard: true,
     echeance: '2026-10-08T18:00:00Z',
+    decision: null,
   },
   fuseau: 'Africa/Dakar',
   delegue: { id: 'u1', prenom: 'Awa', nom: 'FICTIVE' },

@@ -72,6 +72,7 @@ const PLANNING = {
   soumis_le: null as string | null,
   en_retard: false,
   echeance: '2026-10-22T18:00:00Z',
+  decision: null,
 };
 
 const VISITE: Visite = {

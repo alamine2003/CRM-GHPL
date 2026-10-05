@@ -404,30 +404,53 @@ class FileValidationVue(VuePerimetre):
         return Response(s.PlanningEnAttenteSerializer(lignes, many=True).data)
 
 
-class ConsultationVue(VuePerimetre):
-    """0.3.2 : le superviseur consulte un planning soumis d'un délégué qu'il supervise : la
-    semaine, ses visites, activités, contrôles et kilomètres, sans rien y modifier. Un planning
-    en préparation, ou d'un délégué qu'il ne supervise pas, n'existe pas pour lui (404)."""
+class VueSupervision(VuePerimetre):
+    """Plannings soumis (ou décidés) d'un délégué que l'utilisateur supervise cette semaine-là :
+    superviseur du poste, ou DM du poste d'un superviseur-visiteur (RG-023). Un planning en
+    préparation, ou hors supervision, n'existe pas pour lui (404)."""
 
-    actions = {"GET": Action.PLANNINGS_VALIDER}
-    serializer_class = s.ConsultationSerializer
+    serializer_class = s.PlanningSerializer
 
     def selection(self, perimetre):
         return perimetre.filtrer_par_pays(
             Planning.objects.exclude(statut=StatutPlanning.BROUILLON).select_related("delegue")
         )
 
-    @extend_schema(responses=s.ConsultationSerializer, operation_id="planning_consulter")
-    def get(self, request, id):
+    def planning_supervise(self, id) -> Planning:
         pays = pays_requis(self.perimetre)
         planning = get_object_or_404(self.get_queryset().filter(pays=pays), pk=id)
-        if not services.supervise(request.user, planning):
+        if not services.supervise(self.request.user, planning):
             raise Http404
-        donnees = _semaine(pays, planning.semaine, planning) | {
+        return planning
+
+
+class ConsultationVue(VueSupervision):
+    """0.3.2 : le responsable consulte un planning soumis : la semaine, ses visites, activités,
+    contrôles et kilomètres, et la dernière décision, sans rien y modifier."""
+
+    actions = {"GET": Action.PLANNINGS_VALIDER}
+    serializer_class = s.ConsultationSerializer
+
+    @extend_schema(responses=s.ConsultationSerializer, operation_id="planning_consulter")
+    def get(self, request, id):
+        planning = self.planning_supervise(id)
+        donnees = _semaine(planning.pays, planning.semaine, planning) | {
             "delegue": planning.delegue,
             "postes": [p.libelle for p in services.postes_de_la_semaine(planning)],
         }
         return Response(s.ConsultationSerializer(donnees).data)
+
+
+class ApprobationVue(VueSupervision):
+    """PLN-012 : le responsable du poste approuve un planning soumis ; PLN-017 : le DM pour un
+    superviseur-visiteur."""
+
+    actions = {"POST": Action.PLANNINGS_VALIDER}
+
+    @extend_schema(request=None, responses=s.PlanningSerializer, operation_id="planning_approuver")
+    def post(self, request, id):
+        planning = self.planning_supervise(id)
+        return Response(s.PlanningSerializer(services.approuver(planning, request.user)).data)
 
 
 class SoumissionVue(VuePlannings):

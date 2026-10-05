@@ -9,6 +9,8 @@
  */
 import type {
   ChangementFiche,
+  Notification,
+  ResumeNotifications,
   ConsultationPlanning,
   JourFerie,
   Planning,
@@ -107,6 +109,9 @@ export type {
   StatutVisite,
   Visite,
   ConsultationPlanning,
+  DecisionPlanning,
+  Notification,
+  ResumeNotifications,
   Planning,
   PlanningEnAttente,
   Qualite,
@@ -652,6 +657,9 @@ export function creerClient(options: OptionsClient) {
       /** Un planning soumis consulté par son superviseur, sans rien y modifier (0.3.2). */
       consulter: (id: string) =>
         requete<ConsultationPlanning>(`/api/v1/plannings/${id}/consultation/`),
+      /** Le responsable du poste approuve le planning soumis (PLN-012, PLN-017). */
+      approuver: (id: string) =>
+        requete<Planning>(`/api/v1/plannings/${id}/approuver/`, { methode: 'POST' }),
       semaine: (jour?: string) =>
         requete<Semaine>(`/api/v1/plannings/semaine/${jour ? `?semaine=${jour}` : ''}`),
       creer: (semaine: string) =>
@@ -730,6 +738,14 @@ export function creerClient(options: OptionsClient) {
         requete<Fusion>(`/api/v1/fusions/${id}/defaire/`, { methode: 'POST' }),
     },
     /** Propositions de modification des fiches communes (PRP-014). */
+    /** Centre de notifications : les siennes, dans le pays actif (prd.md §18). */
+    notifications: {
+      liste: () => requete<ResumeNotifications>('/api/v1/notifications/'),
+      lue: (id: string) =>
+        requete<Notification>(`/api/v1/notifications/${id}/lue/`, { methode: 'POST' }),
+      toutesLues: () =>
+        requete<ResumeNotifications>('/api/v1/notifications/lues/', { methode: 'POST' }),
+    },
     propositions: {
       liste: (statut?: string) =>
         requete<Proposition[]>(`/api/v1/propositions/${statut ? `?statut=${statut}` : ''}`),

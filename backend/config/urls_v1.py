@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularAPIView
 
 from apps.identite import vues_comptes as comptes
 from apps.imports import vues as imp
+from apps.notifications import vues as ntf
 from apps.organisation import vues as org
 from apps.planning import vues as pln
 from apps.prospects import vues as prs
@@ -200,6 +201,10 @@ urlpatterns = [
         pln.ConsultationVue.as_view(),
         name="planning-consultation",
     ),
+    path("plannings/<uuid:id>/approuver/", pln.ApprobationVue.as_view(), name="planning-approuver"),
+    path("notifications/", ntf.NotificationsVue.as_view(), name="notifications"),
+    path("notifications/lues/", ntf.ToutesLuesVue.as_view(), name="notifications-lues"),
+    path("notifications/<uuid:id>/lue/", ntf.LueVue.as_view(), name="notification-lue"),
     path("plannings/<uuid:id>/reprendre/", pln.RepriseVue.as_view(), name="planning-reprendre"),
     path("visites/<uuid:id>/copier/", pln.VisiteCopieVue.as_view(), name="visite-copier"),
     path(

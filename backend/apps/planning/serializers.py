@@ -4,7 +4,17 @@ from rest_framework import serializers
 from apps.organisation.serializers import ResumeSerializer
 
 from .controles import CODES, GRAVITES
-from .models import Activite, JourFerie, Passage, Periode, Planning, TypeActivite, Visite
+from .models import (
+    Activite,
+    Decision,
+    JourFerie,
+    ModeDecision,
+    Passage,
+    Periode,
+    Planning,
+    TypeActivite,
+    Visite,
+)
 from .services import RAISONS_REPRISE
 
 
@@ -33,19 +43,44 @@ class ModificationJourFerieSerializer(serializers.Serializer):
     variable = serializers.BooleanField(required=False)
 
 
+class DecisionSerializer(serializers.Serializer):
+    """Dernière décision sur le planning (PLN-012) : version, sens, auteur, date et mode."""
+
+    numero = serializers.IntegerField()
+    decision = serializers.ChoiceField(choices=Decision.choices)
+    decide_le = serializers.DateTimeField()
+    par = serializers.SerializerMethodField()
+    mode = serializers.ChoiceField(choices=ModeDecision.choices)
+    commentaire = serializers.CharField()
+
+    def get_par(self, version) -> str:
+        return " ".join(
+            x for x in (version.decide_par.first_name, version.decide_par.last_name) if x
+        )
+
+
 class PlanningSerializer(serializers.ModelSerializer):
     #: Échéance de soumission du pays (RG-013).
     echeance = serializers.SerializerMethodField()
+    decision = serializers.SerializerMethodField()
 
     class Meta:
         model = Planning
-        fields = ["id", "semaine", "statut", "cree_le", "soumis_le", "en_retard", "echeance"]
+        fields = ["id", "semaine", "statut", "cree_le", "soumis_le", "en_retard", "echeance",
+                  "decision"]  # fmt: skip
         read_only_fields = ["statut", "soumis_le", "en_retard"]
 
     def get_echeance(self, planning) -> str:
         from .services import echeance
 
         return echeance(planning).isoformat()
+
+    @extend_schema_field(DecisionSerializer(allow_null=True))
+    def get_decision(self, planning):
+        from .services import derniere_decision
+
+        version = derniere_decision(planning)
+        return DecisionSerializer(version).data if version else None
 
 
 class CreationPlanningSerializer(serializers.Serializer):

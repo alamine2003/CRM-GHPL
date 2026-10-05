@@ -6,6 +6,7 @@
   lundi. Ses versions, passages, absences et visites arrivent de 0.2.2 à 0.2.8.
 - `Visite` (PLN-002), rangée dans sa journée par `ordre` (0.2.3).
 - `Passage` (PLN-003) : plusieurs visites d'un même établissement le même jour, à une même heure.
+- `VersionPlanning` (RG-037, PLN-012) : état figé à chaque soumission, porteur de la décision.
 - `Activite` (PLN-009, PLN-018) : activité connexe sur une journée ou une demi-journée, sans
   visite (congé, formation, réunion, maladie…) ou avec visites (commando, déplacement…).
 """
@@ -183,3 +184,44 @@ class Visite(ModeleDePays):
 
     def __str__(self):
         return f"{self.date} {self.heure or ''} {self.prospect or ''}"
+
+
+class Decision(models.TextChoices):
+    APPROUVE = "approuve", "Approuvé"
+    A_REVISER = "a_reviser", "À réviser"
+
+
+class ModeDecision(models.TextChoices):
+    """Qui a décidé (prd.md §11) : le superviseur du poste (ou le DM d'un superviseur-visiteur,
+    RG-023) ; l'escalade et le remplacement arrivent en 0.3.4 et 0.3.8."""
+
+    DIRECT = "direct", "Décision du responsable du poste"
+
+
+class VersionPlanning(ModeleDePays):
+    """État figé d'un planning à une soumission (RG-037, PLN-012 CA1) : son contenu ne change
+    plus ; la décision s'y inscrit une fois, avec son auteur et son mode."""
+
+    planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="versions")
+    numero = models.PositiveSmallIntegerField()
+    #: Visites, passages et activités tels que soumis.
+    contenu = models.JSONField()
+    soumis_le = models.DateTimeField()
+    en_retard = models.BooleanField(default=False)
+    decision = models.CharField(max_length=12, choices=Decision.choices, blank=True)
+    decide_le = models.DateTimeField(null=True, blank=True)
+    decide_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="+",
+    )  # fmt: skip
+    mode = models.CharField(max_length=16, choices=ModeDecision.choices, blank=True)
+    commentaire = models.CharField(max_length=1000, blank=True)
+
+    class Meta:
+        ordering = ["planning", "-numero"]
+        constraints = [
+            models.UniqueConstraint(fields=["planning", "numero"], name="version_planning_unique")
+        ]
+
+    def __str__(self):
+        return f"{self.planning} v{self.numero}"

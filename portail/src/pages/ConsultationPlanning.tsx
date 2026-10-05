@@ -1,11 +1,23 @@
 import type { ConsultationPlanning as Consultation, Visite } from '@innov/api-client';
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
-import { Box, Button, Card, Skeleton, Stack, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
+import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
+import {
+  Box,
+  Button,
+  Card,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Skeleton,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as LienRouteur } from 'react-router';
+import { Link as LienRouteur, useNavigate } from 'react-router';
 import { EnTeteCarte, EnTetePage, Ligne } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import {
@@ -14,13 +26,15 @@ import {
   DetailVisite,
   ListeActivites,
 } from '../composants/SemainePlanning';
-import { useSession } from '../contexteSession';
+import { useNotifier } from '../contexteNotifications';
+import { messageErreur, useSession } from '../contexteSession';
 
 /**
  * Consultation d'un planning soumis par son superviseur (0.3.2) : la semaine telle que le
  * délégué l'a préparée, ses contrôles (PLN-004 CA2 : les seuils dépassés lui apparaissent), ses
  * activités connexes expliquées (PLN-018), le kilométrage (PLN-010) et le détail de chaque
- * visite avec ses alertes. Rien ne s'y modifie ; la décision arrive en 0.3.3 et 0.3.4.
+ * visite avec ses alertes. Rien ne s'y modifie. Le responsable du poste l'approuve (PLN-012 ;
+ * le DM pour un superviseur-visiteur, PLN-017) ; la demande de révision arrive en 0.3.4.
  */
 export default function ConsultationPlanning({ id }: { id: string }) {
   const { t, i18n } = useTranslation();
@@ -93,6 +107,10 @@ export default function ConsultationPlanning({ id }: { id: string }) {
         <Skeleton variant="rounded" height={320} />
       ) : (
         <>
+          <BandeauDecision
+            consultation={c}
+            suivant={suivant ? `/validation/${suivant.planning.id}` : '/validation'}
+          />
           <Box
             sx={{
               display: 'grid',
@@ -219,6 +237,132 @@ function Resume({ consultation: c }: { consultation: Consultation }) {
           {t('consultation.lectureSeule')}
         </Typography>
       </Stack>
+    </Card>
+  );
+}
+
+/**
+ * La décision du responsable : « Approuver » tant que le planning attend (PLN-012), puis qui a
+ * décidé, quand, et sur quelle version (CA1).
+ */
+function BandeauDecision({
+  consultation: c,
+  suivant,
+}: {
+  consultation: Consultation;
+  suivant: string;
+}) {
+  const { t, i18n } = useTranslation();
+  const { client } = useSession();
+  const notifier = useNotifier();
+  const requetes = useQueryClient();
+  const naviguer = useNavigate();
+  const [confirmer, setConfirmer] = useState(false);
+  const [envoi, setEnvoi] = useState(false);
+  const planning = c.planning!;
+  const nom = `${c.delegue.prenom} ${c.delegue.nom}`;
+  // Comptés comme les lignes de « À vérifier » : les seuils du jour tiennent sur une ligne.
+  const signalements = c.controles?.signalements ?? [];
+  const points =
+    signalements.filter((x) => !x.code.startsWith('seuil_')).length +
+    new Set(signalements.filter((x) => x.code.startsWith('seuil_')).map((x) => x.code)).size;
+  const jour = (iso: string) =>
+    new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' }).format(
+      new Date(`${iso}T12:00:00`),
+    );
+
+  async function approuver() {
+    setEnvoi(true);
+    try {
+      await client.plannings.approuver(planning.id);
+      notifier(t('approbation.succes', { nom }));
+      await requetes.invalidateQueries({ queryKey: ['plannings-a-valider'] });
+      await requetes.invalidateQueries({ queryKey: ['planning-consultation'] });
+      setConfirmer(false);
+      void naviguer(suivant);
+    } catch (e) {
+      notifier(messageErreur(e, t('erreurs.reseau')), 'error');
+      setConfirmer(false);
+    }
+    setEnvoi(false);
+  }
+
+  const decision = planning.decision;
+  if (planning.statut !== 'soumis') {
+    if (!decision) return null;
+    return (
+      <Card sx={{ p: 2 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+          <CheckCircleRounded color="success" />
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {t(`approbation.decisions.${decision.decision}`, {
+              date: new Intl.DateTimeFormat(i18n.language, {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: c.fuseau,
+              }).format(new Date(decision.decide_le)),
+              par: decision.par,
+              numero: decision.numero,
+            })}
+          </Typography>
+        </Stack>
+      </Card>
+    );
+  }
+  return (
+    <Card sx={{ p: 2 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
+      >
+        <Box>
+          <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
+            {t('approbation.aDecider')}
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            {t('approbation.aide')}
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          onClick={() => setConfirmer(true)}
+          sx={{ flex: 'none', alignSelf: { xs: 'flex-start', sm: 'center' } }}
+        >
+          {t('approbation.approuver')}
+        </Button>
+      </Stack>
+      {confirmer && (
+        <Dialog open onClose={() => !envoi && setConfirmer(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>{t('approbation.titre')}</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2">
+              {t('approbation.confirmation', {
+                nom,
+                debut: jour(c.semaine),
+                fin: jour(c.jours.at(-1)?.date ?? c.semaine),
+              })}
+            </Typography>
+            {/* Les points signalés restent visibles au moment de décider (PLN-004 CA2). */}
+            {points > 0 && (
+              <Typography variant="body2" sx={{ mt: 1.5, color: 'warning.main', fontWeight: 600 }}>
+                {t('approbation.signalements', { count: points })}
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button disabled={envoi} onClick={() => setConfirmer(false)}>
+              {t('commun.annuler')}
+            </Button>
+            <Button variant="contained" disabled={envoi} onClick={() => void approuver()}>
+              {t('approbation.confirmer')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Card>
   );
 }

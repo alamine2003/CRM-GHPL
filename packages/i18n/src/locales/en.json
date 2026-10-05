@@ -1613,5 +1613,32 @@
     "passage": "Stop",
     "consulter": "Open {{nom}}'s planning",
     "ouvrir": "Open the week"
+  },
+  "approbation": {
+    "aDecider": "Awaiting your decision",
+    "aide": "Once approved, the planning becomes the reference for the week's visits and the rep is notified.",
+    "approuver": "Approve",
+    "titre": "Approve this planning?",
+    "confirmation": "{{nom}}'s planning from {{debut}} to {{fin}} becomes the reference for their visits. A notification is sent to them.",
+    "confirmer": "Approve the planning",
+    "succes": "{{nom}}'s planning approved.",
+    "decisions": {
+      "approuve": "Approved on {{date}} by {{par}} · version {{numero}}",
+      "a_reviser": "Revision requested on {{date}} by {{par}} · version {{numero}}"
+    },
+    "decisionsCourt": {
+      "approuve": "Approved by {{par}} on {{date}}",
+      "a_reviser": "Revision requested by {{par}} on {{date}}"
+    },
+    "decision": "Decision",
+    "signalements_one": "{{count}} flagged point remains under “To check”.",
+    "signalements_other": "{{count}} flagged points remain under “To check”."
+  },
+  "notifications": {
+    "titre_one": "New notification",
+    "titre_other": "{{count}} new notifications",
+    "planning_approuve": "Your planning for week {{numero}} is approved",
+    "voir": "Open the week",
+    "toutVu": "Mark all as read"
   }
 }

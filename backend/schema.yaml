@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.3.2
+  version: 0.3.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -1417,6 +1417,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/JourFerie'
           description: ''
+  /api/v1/notifications/:
+    get:
+      operationId: notifications_liste
+      tags:
+      - notifications
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeNotifications'
+          description: ''
+  /api/v1/notifications/{id}/lue/:
+    post:
+      operationId: notification_lue
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+          description: ''
+  /api/v1/notifications/lues/:
+    post:
+      operationId: notifications_toutes_lues
+      tags:
+      - notifications
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeNotifications'
+          description: ''
   /api/v1/organisation/divisions/:
     get:
       operationId: divisions_liste
@@ -2537,13 +2586,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/Activite'
           description: ''
+  /api/v1/plannings/{id}/approuver/:
+    post:
+      operationId: planning_approuver
+      description: |-
+        PLN-012 : le responsable du poste approuve un planning soumis ; PLN-017 : le DM pour un
+        superviseur-visiteur.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planning'
+          description: ''
   /api/v1/plannings/{id}/consultation/:
     get:
       operationId: planning_consulter
       description: |-
-        0.3.2 : le superviseur consulte un planning soumis d'un délégué qu'il supervise : la
-        semaine, ses visites, activités, contrôles et kilomètres, sans rien y modifier. Un planning
-        en préparation, ou d'un délégué qu'il ne supervise pas, n'existe pas pour lui (404).
+        0.3.2 : le responsable consulte un planning soumis : la semaine, ses visites, activités,
+        contrôles et kilomètres, et la dernière décision, sans rien y modifier.
       parameters:
       - in: path
         name: id
@@ -4748,6 +4820,40 @@ components:
       required:
       - libelle
       - liste
+    Decision:
+      type: object
+      description: 'Dernière décision sur le planning (PLN-012) : version, sens, auteur,
+        date et mode.'
+      properties:
+        numero:
+          type: integer
+        decision:
+          $ref: '#/components/schemas/DecisionDecisionEnum'
+        decide_le:
+          type: string
+          format: date-time
+        par:
+          type: string
+          readOnly: true
+        mode:
+          $ref: '#/components/schemas/ModeEnum'
+        commentaire:
+          type: string
+      required:
+      - commentaire
+      - decide_le
+      - decision
+      - mode
+      - numero
+      - par
+    DecisionDecisionEnum:
+      enum:
+      - approuve
+      - a_reviser
+      type: string
+      description: |-
+        * `approuve` - Approuvé
+        * `a_reviser` - À réviser
     DecisionDoublon:
       type: object
       properties:
@@ -4913,6 +5019,19 @@ components:
       - id
       - libelle
       - pays
+    DonneesNotification:
+      type: object
+      description: Ce qu'il faut pour composer le texte et ouvrir l'objet ; selon
+        le type.
+      properties:
+        planning:
+          type: string
+          format: uuid
+        semaine:
+          type: string
+          format: date
+        numero_semaine:
+          type: integer
     Doublon:
       type: object
       properties:
@@ -5645,6 +5764,11 @@ components:
       - simulation
       - source
       - statut
+    ModeEnum:
+      enum:
+      - direct
+      type: string
+      description: '* `direct` - Décision du responsable du poste'
     ModificationParametre:
       type: object
       properties:
@@ -5739,6 +5863,34 @@ components:
       - superviseur
       - type_libelle
       - type_poste
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/NotificationTypeEnum'
+        donnees:
+          $ref: '#/components/schemas/DonneesNotification'
+        cree_le:
+          type: string
+          format: date-time
+        lue_le:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - cree_le
+      - donnees
+      - id
+      - lue_le
+      - type
+    NotificationTypeEnum:
+      enum:
+      - planning_approuve
+      type: string
+      description: '* `planning_approuve` - Planning approuvé'
     Objectif:
       type: object
       properties:
@@ -6278,8 +6430,14 @@ components:
         echeance:
           type: string
           readOnly: true
+        decision:
+          allOf:
+          - $ref: '#/components/schemas/Decision'
+          nullable: true
+          readOnly: true
       required:
       - cree_le
+      - decision
       - echeance
       - en_retard
       - id
@@ -7144,6 +7302,18 @@ components:
       required:
       - id
       - libelle
+    ResumeNotifications:
+      type: object
+      properties:
+        non_lues:
+          type: integer
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+      required:
+      - non_lues
+      - notifications
     RetraitCible:
       type: object
       properties:

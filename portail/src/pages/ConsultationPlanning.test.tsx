@@ -5,10 +5,11 @@ import type {
   Visite,
 } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import axe from 'axe-core';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ContexteNotifications } from '../contexteNotifications';
 import { ContexteSession, type Session } from '../contexteSession';
 import i18n from '../i18n';
 import ConsultationPlanning from './ConsultationPlanning';
@@ -55,6 +56,7 @@ const CONSULTATION: Consultation = {
     soumis_le: '2026-10-06T16:00:00Z',
     en_retard: true,
     echeance: '2026-10-08T18:00:00Z',
+    decision: null,
   },
   peut_creer: false,
   modifiable: false,
@@ -98,12 +100,16 @@ function ligne(id: string, prenom: string): PlanningEnAttente {
   };
 }
 
-function rendre(consulter = vi.fn(async () => CONSULTATION)) {
+function rendre(
+  consulter = vi.fn(async () => CONSULTATION),
+  approuver = vi.fn(async () => ({ ...CONSULTATION.planning!, statut: 'approuve' as const })),
+) {
   const session = {
     etat: { statut: 'chargement' },
     client: {
       plannings: {
         consulter,
+        approuver,
         aValider: vi.fn(async () => [ligne('pl1', 'Aminata'), ligne('pl2', 'Moussa')]),
       },
     } as unknown as ClientApi,
@@ -113,16 +119,21 @@ function rendre(consulter = vi.fn(async () => CONSULTATION)) {
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
       <ContexteSession.Provider value={session}>
-        <MemoryRouter>
-          <ConsultationPlanning id="pl1" />
-        </MemoryRouter>
+        <ContexteNotifications.Provider value={mockNotifier}>
+          <MemoryRouter>
+            <ConsultationPlanning id="pl1" />
+          </MemoryRouter>
+        </ContexteNotifications.Provider>
       </ContexteSession.Provider>
     </QueryClientProvider>,
   );
 }
 
+const mockNotifier = vi.fn();
+
 beforeEach(async () => {
   await i18n.changeLanguage('fr');
+  mockNotifier.mockClear();
 });
 
 describe('0.3.2 : consultation d’un planning soumis', () => {
@@ -159,5 +170,48 @@ describe('0.3.2 : consultation d’un planning soumis', () => {
     expect(within(detail).getByText('Cardiologie · potentiel A')).toBeTruthy();
     expect(within(detail).getByText('mar. 13 : prospect hors liste cible')).toBeTruthy();
     expect(within(detail).queryByRole('button', { name: /retirer/i })).toBeNull();
+  });
+});
+
+describe('PLN-012 : approbation par le responsable du poste', () => {
+  it('« Approuver » demande confirmation, approuve, puis dit le succès', async () => {
+    const approuver = vi.fn(async () => ({
+      ...CONSULTATION.planning!,
+      statut: 'approuve' as const,
+    }));
+    rendre(undefined, approuver);
+    expect(await screen.findByText('En attente de votre décision')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Approuver' }));
+    const dialogue = await screen.findByRole('dialog');
+    expect(within(dialogue).getByText(/devient la référence de ses visites/)).toBeTruthy();
+    expect(within(dialogue).getByText('2 points signalés restent à « À vérifier ».')).toBeTruthy();
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Approuver le planning' }));
+    await waitFor(() => expect(approuver).toHaveBeenCalledWith('pl1'));
+    await waitFor(() =>
+      expect(mockNotifier).toHaveBeenCalledWith('Planning de Aminata FICTIVE approuvé.'),
+    );
+  });
+
+  it('CA1 : un planning décidé dit qui l’a approuvé, quand et quelle version', async () => {
+    const approuve: Consultation = {
+      ...CONSULTATION,
+      planning: {
+        ...CONSULTATION.planning!,
+        statut: 'approuve',
+        decision: {
+          numero: 1,
+          decision: 'approuve',
+          decide_le: '2026-10-07T10:30:00Z',
+          par: 'Kossi GUEYE',
+          mode: 'direct',
+          commentaire: '',
+        },
+      },
+    };
+    rendre(vi.fn(async () => approuve));
+    expect(
+      await screen.findByText('Approuvé le mercredi 7 octobre à 10:30 par Kossi GUEYE · version 1'),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Approuver' })).toBeNull();
   });
 });

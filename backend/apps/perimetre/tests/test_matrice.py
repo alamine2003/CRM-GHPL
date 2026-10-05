@@ -16,7 +16,17 @@ ATTENDU = {
     Action.PROPOSITIONS_TRANCHER: {"admin_pays", "superviseur"},
     Action.JOURS_FERIES_GERER: {"admin_pays"},
     Action.PLANNINGS_PREPARER: {"superviseur", "delegue"},
-    Action.PLANNINGS_VALIDER: {"superviseur"},
+    Action.PLANNINGS_VALIDER: {"dm", "superviseur"},
+    Action.NOTIFICATIONS_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+        "delegue",
+    },  # fmt: skip
     Action.PAYS_CHANGER_STATUT: {"admin_siege"},
     Action.DESIGNER_RESPONSABLES_PAYS: {"admin_siege"},
     Action.UTILISATEURS_GERER: {"admin_siege", "admin_pays"},
@@ -171,6 +181,7 @@ REQUETES = {
     Action.JOURS_FERIES_GERER: ("get", "/api/v1/jours-feries/", None, 200),
     Action.PLANNINGS_PREPARER: ("get", "/api/v1/plannings/semaine/", None, 200),
     Action.PLANNINGS_VALIDER: ("get", "/api/v1/plannings/a-valider/", None, 200),
+    Action.NOTIFICATIONS_LIRE: ("get", "/api/v1/notifications/", None, 200),
 }  # fmt: skip
 
 

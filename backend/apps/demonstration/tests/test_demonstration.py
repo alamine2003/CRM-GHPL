@@ -55,6 +55,7 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
 
     soumis, prepare = Planning.objects.filter(pays__code="SN").order_by("semaine")
     assert (soumis.statut, soumis.en_retard, prepare.statut) == ("soumis", False, "brouillon")
+    assert soumis.versions.get().numero == 1 and not prepare.versions.exists()
     assert soumis.soumis_le is not None and prepare.semaine == soumis.semaine + timedelta(days=7)
     assert soumis.visites.count() == 7 and not soumis.visites.filter(heure__isnull=True).exists()
     assert prepare.visites.count() == 6 and prepare.visites.filter(heure__isnull=True).count() == 1

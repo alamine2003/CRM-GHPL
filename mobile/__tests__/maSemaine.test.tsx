@@ -27,6 +27,7 @@ const PLANNING = {
   soumis_le: null,
   en_retard: false,
   echeance: '2099-10-08T18:00:00Z',
+  decision: null,
 };
 
 const COURANTE: Semaine = {

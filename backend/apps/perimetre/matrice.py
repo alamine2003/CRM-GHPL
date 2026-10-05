@@ -42,6 +42,7 @@ class Action(StrEnum):
     JOURS_FERIES_GERER = "jours_feries.gerer"
     PLANNINGS_PREPARER = "plannings.preparer"
     PLANNINGS_VALIDER = "plannings.valider"
+    NOTIFICATIONS_LIRE = "notifications.lire"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -118,8 +119,13 @@ MATRICE: dict[Action, frozenset[str]] = {
     # (vérifié par le service, PLN-001).
     Action.PLANNINGS_PREPARER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
     # « Approuver ou faire réviser un planning » : le superviseur, sur les postes qui lui sont
-    # rattachés (PLN-011). Le DM (escalade, remplacement, superviseur-visiteur) en 0.3.3 et 0.3.8.
-    Action.PLANNINGS_VALIDER: frozenset({Role.SUPERVISEUR}),
+    # rattachés (PLN-011) ; le DM sur le poste d'un superviseur-visiteur, qui lui est rattaché
+    # (PLN-017, RG-023). Escalade et remplacement en 0.3.4 et 0.3.8.
+    Action.PLANNINGS_VALIDER: frozenset({Role.DM, Role.SUPERVISEUR}),
+    # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
+    Action.NOTIFICATIONS_LIRE: frozenset(
+        SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
+    ),
 }
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.

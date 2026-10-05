@@ -48,6 +48,15 @@ export function EtatSoumission({
           {t('soumission.soumisLe', { date: dateHeure(planning.soumis_le, i18n.language, fuseau) })}
         </Texte>
         {planning.en_retard && <Etiquette>{t('soumission.enRetard')}</Etiquette>}
+        {/* PLN-012 : qui a décidé, et quand. */}
+        {planning.decision && (
+          <Texte variante="discret" style={{ width: '100%' }}>
+            {t(`approbation.decisionsCourt.${planning.decision.decision}`, {
+              par: planning.decision.par,
+              date: dateHeure(planning.decision.decide_le, i18n.language, fuseau),
+            })}
+          </Texte>
+        )}
       </View>
     );
   }

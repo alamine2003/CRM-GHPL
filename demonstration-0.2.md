@@ -6,7 +6,7 @@ Scénario d'environ 25 minutes pour le référent métier (prd.md §22, RSK-12).
 
 1. Réinitialiser la base : `INNOV_DEMO_MOT_DE_PASSE='…' python manage.py reinitialiser_demo --oui` (instance `ENVIRONNEMENT=demonstration`). Noter les comptes affichés, dont le délégué et l'administrateur pays du Sénégal.
 2. La base contient, pour ce délégué, **deux semaines** :
-   - la semaine en cours, déjà **soumise à temps** (visites complètes, un passage, une matinée d'accompagnement du superviseur et, depuis 0.3.2, une visite hors liste cible que le superviseur retrouve en consultant la semaine) ;
+   - la semaine en cours, déjà **soumise à temps** (visites complètes, un passage, une matinée d'accompagnement du superviseur et, depuis 0.3.2, une visite hors liste cible que le superviseur retrouve en consultant la semaine ; depuis 0.3.3, il l'approuve et le délégué trouve « Votre planning de la semaine n est approuvé » sur l'accueil du téléphone) ;
    - la semaine suivante, **en préparation** : six visites, dont une à compléter, un passage de deux confrères et une demi-journée de formation le dernier jour.
 3. Activer à l'avance la double authentification des comptes marqués `*`.
 4. Ouvrir le portail sur un ordinateur. Sur l'iPhone : `make telephone` sur l'ordinateur, même Wi-Fi, puis scanner le QR code avec l'appareil photo (README, « Sur un iPhone »). Pour une application installée, voir README, « Builds de test ».

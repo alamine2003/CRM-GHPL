@@ -1613,5 +1613,32 @@
     "passage": "Passage",
     "consulter": "Consulter le planning de {{nom}}",
     "ouvrir": "Consulter la semaine"
+  },
+  "approbation": {
+    "aDecider": "En attente de votre décision",
+    "aide": "Approuvé, le planning devient la référence des visites de la semaine et le délégué est notifié.",
+    "approuver": "Approuver",
+    "titre": "Approuver ce planning ?",
+    "confirmation": "Le planning de {{nom}} du {{debut}} au {{fin}} devient la référence de ses visites. Une notification lui est envoyée.",
+    "confirmer": "Approuver le planning",
+    "succes": "Planning de {{nom}} approuvé.",
+    "decisions": {
+      "approuve": "Approuvé le {{date}} par {{par}} · version {{numero}}",
+      "a_reviser": "Révision demandée le {{date}} par {{par}} · version {{numero}}"
+    },
+    "decisionsCourt": {
+      "approuve": "Approuvé par {{par}} le {{date}}",
+      "a_reviser": "Révision demandée par {{par}} le {{date}}"
+    },
+    "decision": "Décision",
+    "signalements_one": "{{count}} point signalé reste à « À vérifier ».",
+    "signalements_other": "{{count}} points signalés restent à « À vérifier »."
+  },
+  "notifications": {
+    "titre_one": "Nouvelle notification",
+    "titre_other": "{{count}} nouvelles notifications",
+    "planning_approuve": "Votre planning de la semaine {{numero}} est approuvé",
+    "voir": "Voir la semaine",
+    "toutVu": "Tout marquer comme lu"
   }
 }

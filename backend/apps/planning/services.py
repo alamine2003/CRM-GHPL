@@ -24,6 +24,7 @@ from .models import (
     Periode,
     Planning,
     TypeActivite,
+    VersionPlanning,
     Visite,
 )
 
@@ -429,9 +430,9 @@ def postes_sans_superviseur(planning: Planning) -> list:
 
 
 def supervise(superviseur, planning: Planning) -> bool:
-    """Un poste occupé par le délégué la semaine du planning est rattaché à ce superviseur. Son
-    propre planning n'en fait pas partie : celui d'un superviseur-visiteur va à son DM (PLN-017,
-    0.3.3)."""
+    """Un poste occupé par le délégué la semaine du planning est rattaché à ce responsable : le
+    superviseur, ou le DM pour le poste d'un superviseur-visiteur (RG-023). Son propre planning
+    n'en fait jamais partie (PLN-017 CA1)."""
     from apps.organisation.services import superviseur_du_poste
 
     return planning.delegue_id != superviseur.pk and any(
@@ -486,8 +487,115 @@ def soumettre(planning: Planning) -> Planning:
     planning.soumis_le = maintenant
     planning.en_retard = maintenant > echeance(planning)
     planning.save(update_fields=["statut", "soumis_le", "en_retard", "modifie_le"])
+    version = figer(planning)
     _auditer("planning.soumission", planning, semaine=str(planning.semaine),
-             en_retard=planning.en_retard)  # fmt: skip
+             en_retard=planning.en_retard, numero=version.numero)  # fmt: skip
+    return planning
+
+
+# --- Versions et décision (RG-037, PLN-012, PLN-017) ------------------------------------------
+
+
+def _contenu(planning: Planning) -> dict:
+    """Ce que le délégué a soumis, lisible sans les fiches d'aujourd'hui (RG-037)."""
+
+    def nom(p):
+        return " ".join(x for x in (p.prenom, p.nom) if x) if p else None
+
+    visites = planning.visites.filter(archive_le__isnull=True).select_related(
+        "prospect", "etablissement", "reseau"
+    )
+    return {
+        "visites": [
+            {"id": str(v.pk), "date": v.date.isoformat(),
+             "heure": v.heure.strftime("%H:%M") if v.heure else None, "ordre": v.ordre,
+             "prospect": {"id": str(v.prospect_id), "nom": nom(v.prospect)} if v.prospect else None,
+             "etablissement": {"id": str(v.etablissement_id), "nom": v.etablissement.nom}
+             if v.etablissement else None,
+             "reseau": str(v.reseau_id) if v.reseau_id else None,
+             "objectif": v.objectif, "note": v.note,
+             "passage": str(v.passage_id) if v.passage_id else None}
+            for v in visites
+        ],
+        "passages": [
+            {"id": str(p.pk), "date": p.date.isoformat(),
+             "heure": p.heure.strftime("%H:%M") if p.heure else None,
+             "etablissement": str(p.etablissement_id)}
+            for p in planning.passages.filter(archive_le__isnull=True)
+        ],
+        "activites": [
+            {"id": str(a.pk), "date": a.date.isoformat(), "periode": a.periode, "type": a.type,
+             "commentaire": a.commentaire, "demande_superviseur": a.demande_superviseur}
+            for a in planning.activites.filter(archive_le__isnull=True)
+        ],
+    }  # fmt: skip
+
+
+def figer(planning: Planning) -> VersionPlanning:
+    """RG-037 : chaque soumission crée une version figée et consultable, numérotée."""
+    from django.db.models import Max
+
+    numero = (planning.versions.aggregate(n=Max("numero"))["n"] or 0) + 1
+    return VersionPlanning.objects.create(
+        pays=planning.pays, planning=planning, numero=numero, contenu=_contenu(planning),
+        soumis_le=planning.soumis_le or timezone.now(), en_retard=planning.en_retard,
+    )  # fmt: skip
+
+
+def version_a_decider(planning: Planning) -> VersionPlanning:
+    """La dernière version soumise, sans décision. Un planning soumis avant 0.3.3 n'a pas de
+    version : elle est figée à la décision, sur le contenu inchangé depuis la soumission."""
+    derniere = planning.versions.first()
+    if derniere is None or derniere.decision:
+        return figer(planning)
+    return derniere
+
+
+def derniere_decision(planning: Planning) -> VersionPlanning | None:
+    return planning.versions.exclude(decision="").select_related("decide_par").first()
+
+
+@transaction.atomic
+def approuver(planning: Planning, par) -> Planning:
+    """PLN-012 : le superviseur du poste — ou le DM d'un superviseur-visiteur (PLN-017, RG-023)
+    — approuve un planning soumis et complet. La version est figée avec la décision (CA1) et
+    le délégué en est notifié (CA2)."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+
+    from .etats import exiger_transition
+    from .models import Decision, ModeDecision
+
+    _verrouiller(planning)
+    exiger_transition(planning.statut, StatutPlanning.APPROUVE)
+    if not supervise(par, planning):
+        raise ErreurMetier(
+            "non_decideur",
+            _("Seul le responsable de ce poste cette semaine-là décide de ce planning."),
+            status.HTTP_403_FORBIDDEN,
+        )
+    from . import controles
+
+    if anomalies := controles.bloquants(planning):
+        raise ErreurMetier(
+            "planning_bloque",
+            _("Ce planning a des points bloquants : il ne peut pas être approuvé en l'état."),
+            status.HTTP_409_CONFLICT,
+            anomalies=[controles._detail(a) for a in anomalies],
+        )
+    version = version_a_decider(planning)
+    version.decision = Decision.APPROUVE
+    version.decide_le = timezone.now()
+    version.decide_par = par
+    version.mode = ModeDecision.DIRECT
+    version.save(update_fields=["decision", "decide_le", "decide_par", "mode"])
+    planning.statut = StatutPlanning.APPROUVE
+    planning.save(update_fields=["statut"])
+    _auditer("planning.approbation", planning, semaine=str(planning.semaine),
+             numero=version.numero, mode=version.mode)  # fmt: skip
+    notifier(planning.delegue, TypeNotification.PLANNING_APPROUVE, planning.pays,
+             planning=str(planning.pk), semaine=planning.semaine.isoformat(),
+             numero_semaine=planning.semaine.isocalendar().week)  # fmt: skip
     return planning
 
 

@@ -918,6 +918,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/notifications/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['notifications_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/notifications/{id}/lue/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['notification_lue'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/notifications/lues/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['notifications_toutes_lues'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/organisation/divisions/': {
     parameters: {
       query?: never;
@@ -1475,6 +1523,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/plannings/{id}/approuver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description PLN-012 : le responsable du poste approuve un planning soumis ; PLN-017 : le DM pour un
+     *     superviseur-visiteur.
+     */
+    post: operations['planning_approuver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/{id}/consultation/': {
     parameters: {
       query?: never;
@@ -1483,9 +1551,8 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * @description 0.3.2 : le superviseur consulte un planning soumis d'un délégué qu'il supervise : la
-     *     semaine, ses visites, activités, contrôles et kilomètres, sans rien y modifier. Un planning
-     *     en préparation, ou d'un délégué qu'il ne supervise pas, n'existe pas pour lui (404).
+     * @description 0.3.2 : le responsable consulte un planning soumis : la semaine, ses visites, activités,
+     *     contrôles et kilomètres, et la dernière décision, sans rien y modifier.
      */
     get: operations['planning_consulter'];
     put?: never;
@@ -2500,6 +2567,22 @@ export interface components {
       /** Format: uuid */
       parent?: string | null;
     };
+    /** @description Dernière décision sur le planning (PLN-012) : version, sens, auteur, date et mode. */
+    Decision: {
+      numero: number;
+      decision: components['schemas']['DecisionDecisionEnum'];
+      /** Format: date-time */
+      decide_le: string;
+      readonly par: string;
+      mode: components['schemas']['ModeEnum'];
+      commentaire: string;
+    };
+    /**
+     * @description * `approuve` - Approuvé
+     *     * `a_reviser` - À réviser
+     * @enum {string}
+     */
+    DecisionDecisionEnum: 'approuve' | 'a_reviser';
     DecisionDoublon: {
       decision: components['schemas']['DecisionDoublonDecisionEnum'];
       /** Format: uuid */
@@ -2568,6 +2651,14 @@ export interface components {
       code: string;
       libelle: string;
       readonly archive: boolean;
+    };
+    /** @description Ce qu'il faut pour composer le texte et ouvrir l'objet ; selon le type. */
+    DonneesNotification: {
+      /** Format: uuid */
+      planning?: string;
+      /** Format: date */
+      semaine?: string;
+      numero_semaine?: number;
     };
     Doublon: {
       /** Format: uuid */
@@ -2875,6 +2966,11 @@ export interface components {
       readonly nb_anomalies: number;
       readonly rejets: number;
     };
+    /**
+     * @description * `direct` - Décision du responsable du poste
+     * @enum {string}
+     */
+    ModeEnum: 'direct';
     ModificationParametre: {
       valeur: unknown;
     };
@@ -2906,6 +3002,21 @@ export interface components {
       secteurs: components['schemas']['Resume'][];
       superviseur: components['schemas']['Personne'] | null;
     };
+    Notification: {
+      /** Format: uuid */
+      id: string;
+      type: components['schemas']['NotificationTypeEnum'];
+      donnees: components['schemas']['DonneesNotification'];
+      /** Format: date-time */
+      cree_le: string;
+      /** Format: date-time */
+      lue_le: string | null;
+    };
+    /**
+     * @description * `planning_approuve` - Planning approuvé
+     * @enum {string}
+     */
+    NotificationTypeEnum: 'planning_approuve';
     Objectif: {
       /** Format: date */
       date: string;
@@ -3134,6 +3245,7 @@ export interface components {
       readonly soumis_le: string | null;
       readonly en_retard: boolean;
       readonly echeance: string;
+      readonly decision: components['schemas']['Decision'] | null;
     };
     /**
      * @description Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et
@@ -3452,6 +3564,10 @@ export interface components {
       /** Format: uuid */
       id: string;
       libelle: string;
+    };
+    ResumeNotifications: {
+      non_lues: number;
+      notifications: components['schemas']['Notification'][];
     };
     RetraitCible: {
       motif?: string;
@@ -5200,6 +5316,65 @@ export interface operations {
       };
     };
   };
+  notifications_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ResumeNotifications'];
+        };
+      };
+    };
+  };
+  notification_lue: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Notification'];
+        };
+      };
+    };
+  };
+  notifications_toutes_lues: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ResumeNotifications'];
+        };
+      };
+    };
+  };
   divisions_liste: {
     parameters: {
       query?: never;
@@ -6242,6 +6417,27 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Activite'];
+        };
+      };
+    };
+  };
+  planning_approuver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Planning'];
         };
       };
     };

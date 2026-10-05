@@ -101,6 +101,9 @@ def senegal(monde):
     visite = Visite.objects.create(pays=sn, planning=planning, date=date(2099, 4, 7))
     passage = Passage.objects.create(pays=sn, planning=planning, date=date(2099, 4, 7),
                                      etablissement=etab)  # fmt: skip
+    from apps.notifications.services import notifier
+
+    notification = notifier(monde["deleg.sn"], "planning_approuve", sn, semaine="2099-04-06")
     activite = Activite.objects.create(pays=sn, planning=planning, date=date(2099, 4, 8),
                                      type="formation")  # fmt: skip
     return {
@@ -112,6 +115,7 @@ def senegal(monde):
         "planning-ordre": planning.pk, "planning-passages": planning.pk,
         "planning-poser": planning.pk, "planning-reprendre": planning.pk,
         "planning-soumettre": planning.pk, "planning-consultation": planning.pk,
+        "planning-approuver": planning.pk, "notification-lue": notification.pk,
         "visite-copier": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,
         "activite": activite.pk, "activite-retirer": activite.pk,

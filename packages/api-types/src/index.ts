@@ -81,6 +81,10 @@ export type Planning = Schemas['Planning'];
 /** Ligne de la file du superviseur (PLN-011). */
 export type PlanningEnAttente = Schemas['PlanningEnAttente'];
 export type ConsultationPlanning = Schemas['Consultation'];
+export type DecisionPlanning = Schemas['Decision'];
+// Centre de notifications (prd.md §18, 0.3.3).
+export type Notification = Schemas['Notification'];
+export type ResumeNotifications = Schemas['ResumeNotifications'];
 export type Semaine = Schemas['Semaine'];
 export type JourSemaine = Schemas['JourSemaine'];
 // Visites planifiées (PLN-002).

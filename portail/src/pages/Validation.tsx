@@ -29,7 +29,9 @@ export default function Validation() {
     <Stack spacing={2.5}>
       <EnTetePage
         titre={t('navigation.validation')}
-        sousTitre={file.data ? t('validation.enAttente', { count: file.data.length }) : undefined}
+        sousTitre={
+          file.data?.length ? t('validation.enAttente', { count: file.data.length }) : undefined
+        }
       />
       {file.isError ? (
         <ErreurChargement erreur={file.error} reessayer={() => void file.refetch()} />

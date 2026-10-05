@@ -278,6 +278,15 @@ function Resume({
                     )
                   }
                 />
+                {s.planning.decision && (
+                  <Ligne
+                    libelle={t('approbation.decision')}
+                    valeur={t(`approbation.decisionsCourt.${s.planning.decision.decision}`, {
+                      par: s.planning.decision.par,
+                      date: dateHeure(s.planning.decision.decide_le),
+                    })}
+                  />
+                )}
                 {s.modifiable && (
                   <Box>
                     <Button
