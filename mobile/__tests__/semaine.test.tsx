@@ -875,3 +875,59 @@ test('PLN-004 : prospect et lieu inactifs ensemble se disent chacun', async () =
   expect(await screen.findByText('Fiche du prospect devenue inactive')).toBeTruthy();
   expect(screen.getByText('Fiche du lieu devenue inactive')).toBeTruthy();
 });
+
+test('PLN-007 : sans réseau, la journée et le détail restent lisibles', async () => {
+  // La semaine a été lue une fois avec du réseau : elle est gardée sous son lundi.
+  mockMemoire.set('semaine.2026-10-26', {
+    valeur: { ...EN_PREPARATION, visites: [CONFRERE] },
+    maj: '2026-10-26T08:00:00.000Z',
+  });
+  const horsReseau = {
+    etat: { statut: 'chargement' },
+    client: {
+      plannings: {
+        semaine: jest.fn(async () => {
+          throw new TypeError('Network request failed');
+        }),
+      },
+    } as unknown as ClientApi,
+  } as Session;
+  const vue = await render(
+    <ContexteSession.Provider value={horsReseau}>
+      <VueJour jour="2026-10-27" />
+    </ContexteSession.Provider>,
+  );
+  expect(await screen.findByText(/^Hors ligne : semaine telle qu'au /)).toBeTruthy();
+  expect(screen.getByText('Dr Moussa EXEMPLE')).toBeTruthy();
+  await vue.rerender(
+    <ContexteSession.Provider value={horsReseau}>
+      <VueDetail id="v2" jour="2026-10-27" />
+    </ContexteSession.Provider>,
+  );
+  expect(await screen.findByText('Échantillons')).toBeTruthy();
+  expect(screen.getByText(/^Hors ligne : semaine telle qu'au /)).toBeTruthy();
+});
+
+test('un refus du serveur dans la vue jour n’affiche pas une semaine gardée', async () => {
+  mockMemoire.set('semaine.2026-10-26', {
+    valeur: EN_PREPARATION,
+    maj: '2026-10-26T08:00:00.000Z',
+  });
+  const session = {
+    etat: { statut: 'chargement' },
+    client: {
+      plannings: {
+        semaine: jest.fn(async () => {
+          throw new ErreurApi(403, 'sans_poste', 'Vous n’occupez aucun poste cette semaine.');
+        }),
+      },
+    } as unknown as ClientApi,
+  } as Session;
+  await render(
+    <ContexteSession.Provider value={session}>
+      <VueJour jour="2026-10-27" />
+    </ContexteSession.Provider>,
+  );
+  expect(await screen.findByText('Vous n’occupez aucun poste cette semaine.')).toBeTruthy();
+  expect(screen.queryByText(/^Hors ligne/)).toBeNull();
+});

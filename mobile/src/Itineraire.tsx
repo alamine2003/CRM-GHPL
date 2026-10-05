@@ -18,6 +18,9 @@ import { alertesDeVisite } from './Controles';
 import { nomProspect } from './Fiches';
 import { unitesDuJour } from './Journee';
 import { police } from './polices';
+import { BandeauHorsLigne } from './Attente';
+import { estTransitoire } from './Brouillons';
+import { garderSemaine, semaineGardee } from './semaineLocale';
 import { messageErreur, useSession } from './session';
 
 /** « 12,4 km » dans la langue de l'interface. */
@@ -25,11 +28,15 @@ export function kilometres(km: number, langue: string) {
   return new Intl.NumberFormat(langue, { maximumFractionDigits: 1 }).format(km);
 }
 
-/** Semaine qui contient ce jour, relue à l'ouverture de l'écran. */
+/**
+ * Semaine qui contient ce jour, relue à l'ouverture de l'écran. Sans réseau, la dernière
+ * semaine gardée sur le téléphone la remplace (PLN-007), avec l'heure de sa mise à jour.
+ */
 function useSemaineDu(jour: string) {
   const { t } = useTranslation();
   const { client } = useSession();
   const [semaine, setSemaine] = useState<Semaine | null>(null);
+  const [horsLigne, setHorsLigne] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const charger = useCallback(
     () =>
@@ -37,9 +44,20 @@ function useSemaineDu(jour: string) {
         .semaine(jour)
         .then((s) => {
           setSemaine(s);
+          setHorsLigne(null);
           setErreur(null);
+          garderSemaine(s, jour);
         })
-        .catch((e: unknown) => setErreur(messageErreur(e, t('erreurs.reseau')))),
+        .catch(async (e: unknown) => {
+          const memoire = estTransitoire(e) ? await semaineGardee(jour) : null;
+          if (memoire) {
+            setSemaine(memoire.valeur);
+            setHorsLigne(memoire.maj);
+            setErreur(null);
+          } else {
+            setErreur(messageErreur(e, t('erreurs.reseau')));
+          }
+        }),
     [client, jour, t],
   );
   useEffect(() => {
@@ -49,7 +67,7 @@ function useSemaineDu(jour: string) {
       actif = false;
     };
   }, [charger]);
-  return { semaine, erreur };
+  return { semaine, erreur, horsLigne };
 }
 
 const dateLongue = (iso: string, langue: string) =>
@@ -68,7 +86,7 @@ export function VueJour({ jour }: { jour: string }) {
   const { t, i18n } = useTranslation();
   const p = usePalette();
   const routeur = useRouter();
-  const { semaine, erreur } = useSemaineDu(jour);
+  const { semaine, erreur, horsLigne } = useSemaineDu(jour);
 
   if (erreur) return <Alerte type="erreur">{erreur}</Alerte>;
   if (!semaine) return <Texte variante="discret">{t('session.chargement')}</Texte>;
@@ -86,6 +104,7 @@ export function VueJour({ jour }: { jour: string }) {
 
   return (
     <>
+      {horsLigne && <BandeauHorsLigne maj={horsLigne} />}
       <Carte style={{ gap: 6 }}>
         <Texte variante="sousTitre">
           {t('jour.visites', { count: visites.length })}
@@ -216,7 +235,7 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
   const { t, i18n } = useTranslation();
   const p = usePalette();
   const routeur = useRouter();
-  const { semaine, erreur } = useSemaineDu(jour);
+  const { semaine, erreur, horsLigne } = useSemaineDu(jour);
 
   if (erreur) return <Alerte type="erreur">{erreur}</Alerte>;
   if (!semaine) return <Texte variante="discret">{t('session.chargement')}</Texte>;
@@ -235,6 +254,7 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
 
   return (
     <>
+      {horsLigne && <BandeauHorsLigne maj={horsLigne} />}
       <Carte style={{ gap: 12 }}>
         <View style={styles.entete}>
           {visite.prospect && <MarquePotentiel valeur={visite.prospect.potentiel} />}

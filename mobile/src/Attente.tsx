@@ -6,8 +6,25 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Brouillon, Envoi } from './Brouillons';
-import { Bouton, Carte, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Texte, usePalette } from './composants';
 import { police } from './polices';
+
+/** Sans réseau : la semaine affichée est celle gardée sur le téléphone, à telle heure. */
+export function BandeauHorsLigne({ maj }: { maj: string }) {
+  const { t, i18n } = useTranslation();
+  return (
+    <Alerte type="attention">
+      {t('attente.horsLigne', {
+        date: new Intl.DateTimeFormat(i18n.language, {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(maj)),
+      })}
+    </Alerte>
+  );
+}
 
 /** « Une saisie n'a pas été enregistrée » : la reprendre ou l'abandonner. */
 export function BandeauBrouillon({

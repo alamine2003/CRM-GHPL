@@ -10,8 +10,7 @@ import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 import { FormulaireAbsence } from '../src/Absences';
-import { BandeauBrouillon, CarteAttente } from '../src/Attente';
-import { ecrire, lire } from '../src/baseLocale';
+import { BandeauBrouillon, BandeauHorsLigne, CarteAttente } from '../src/Attente';
 import {
   abandonnerEnvoi,
   type Brouillon,
@@ -28,18 +27,11 @@ import { kilometres } from '../src/Itineraire';
 import { PoserDepuisCible } from '../src/Pose';
 import { CarteControles, ObjectifDuJour } from '../src/Controles';
 import { Journee } from '../src/Journee';
+import { garderSemaine, jourIso, semaineGardee } from '../src/semaineLocale';
 import { CarteSoumission, EtatSoumission } from '../src/Soumission';
 import { FormulaireVisite } from '../src/Visites';
 
 const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
-
-/** Clé de la semaine gardée sur le téléphone : son lundi, ou « courante ». */
-const cleSemaine = (jour?: string) => {
-  if (!jour) return 'semaine.courante';
-  const d = new Date(`${jour}T12:00:00`);
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return `semaine.${jourIso(d)}`;
-};
 
 /**
  * Une saisie interrompue ne se reprend que sur un planning modifiable, et seulement si ce
@@ -58,9 +50,6 @@ function empechementBrouillon(
       : !!b.absence && !semaine.absences.some((a) => a.id === b.absence);
   return disparu ? t('brouillon.disparu') : undefined;
 }
-
-const jourIso = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /**
  * Semaine du délégué (PLN-001) : ses jours ouvrés, les jours fériés du pays (affichés, non
@@ -120,8 +109,7 @@ export default function EcranSemaine() {
           setErreur(null);
           setHorsLigne(null);
           // La semaine reste lisible sans réseau (PLN-007, base locale chiffrée).
-          void ecrire(cleSemaine(cible), s).catch(() => undefined);
-          void ecrire(cleSemaine(s.semaine), s).catch(() => undefined);
+          garderSemaine(s, cible);
           // Visite demandée depuis son détail : son formulaire s'ouvre, une seule fois.
           const visite = s.visites.find((v) => v.id === aModifier.current);
           aModifier.current = undefined;
@@ -130,9 +118,7 @@ export default function EcranSemaine() {
           }
         })
         .catch(async (e: unknown) => {
-          const memoire = estTransitoire(e)
-            ? await lire<Semaine>(cleSemaine(cible)).catch(() => null)
-            : null;
+          const memoire = estTransitoire(e) ? await semaineGardee(cible) : null;
           if (memoire) {
             setSemaine(memoire.valeur);
             setHorsLigne(memoire.maj);
@@ -348,18 +334,7 @@ export default function EcranSemaine() {
       </View>
 
       {erreur && <Alerte type="erreur">{erreur}</Alerte>}
-      {horsLigne && (
-        <Alerte type="attention">
-          {t('attente.horsLigne', {
-            date: new Intl.DateTimeFormat(i18n.language, {
-              day: 'numeric',
-              month: 'short',
-              hour: '2-digit',
-              minute: '2-digit',
-            }).format(new Date(horsLigne)),
-          })}
-        </Alerte>
-      )}
+      {horsLigne && <BandeauHorsLigne maj={horsLigne} />}
       {brouillon && semaine && (
         <BandeauBrouillon
           brouillon={brouillon}

@@ -22,6 +22,7 @@ Neuvième et dernier jalon du cycle 0.2 « Planning ».
 - **File d'attente du téléphone** (PLN-007) : un seul rejeu à la fois ; un envoi mis en attente pendant un rejeu n'est plus écrasé, et deux rejeux simultanés n'envoient plus la même visite deux fois.
 - **Saisie interrompue** : elle ne se reprend plus si la visite qu'elle modifiait a été retirée entre-temps (elle en recréait une), ou si le planning n'est plus modifiable.
 - **Heure du pays** : l'échéance et la date de soumission s'affichent dans le fuseau du pays, quel que soit le réglage de l'appareil.
+- **Journée et détail hors ligne** (PLN-007) : sans réseau, la vue d'une journée et le détail d'une visite affichent la semaine gardée sur le téléphone, avec le bandeau « Hors ligne : semaine telle qu'au … » ; un refus du serveur, lui, reste affiché tel quel. Vérifié sur le rendu réel, réseau coupé, à 360 px et à 390 px en thème sombre.
 - **Portail** :
   - la reprise annonce les visites vraiment reprises et les jours sautés (elle comptait aussi les visites ignorées) ;
   - le message de soumission suit la réponse du serveur, pas l'horloge du navigateur.
