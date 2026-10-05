@@ -362,6 +362,36 @@ class AbsenceRetraitVue(VueAbsences):
 # --- Soumission (PLN-008) ---------------------------------------------------------------------
 
 
+class FileValidationVue(VuePerimetre):
+    """PLN-011 : file des plannings en attente du superviseur, triée par ancienneté (CA1)."""
+
+    actions = {"GET": Action.PLANNINGS_VALIDER}
+    serializer_class = s.PlanningEnAttenteSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Planning.objects.none())
+
+    @extend_schema(responses=s.PlanningEnAttenteSerializer(many=True),
+                   operation_id="plannings_a_valider")  # fmt: skip
+    def get(self, request):
+        from collections import Counter
+
+        pays = pays_requis(self.perimetre)
+        lignes = []
+        for planning in services.plannings_a_valider(request.user, pays):
+            compte = Counter(a.code for a in controles.signalements(planning))
+            lignes.append({
+                "planning": planning,
+                "fuseau": pays.fuseau,
+                "delegue": planning.delegue,
+                "postes": [p.libelle for p in services.postes_de_la_semaine(planning)],
+                "visites": planning.visites.filter(archive_le__isnull=True).count(),
+                "signalements": [{"code": c, "nombre": n} for c, n in compte.items()],
+                "activites": list(planning.absences.filter(archive_le__isnull=True)),
+            })  # fmt: skip
+        return Response(s.PlanningEnAttenteSerializer(lignes, many=True).data)
+
+
 class SoumissionVue(VuePlannings):
     actions = {"POST": PREPARER}
 

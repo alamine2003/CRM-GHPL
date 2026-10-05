@@ -94,22 +94,44 @@ class Periode(models.TextChoices):
 
 
 class TypeAbsence(models.TextChoices):
+    """Type d'une activité connexe (PLN-009, PLN-018) : sans visite (absence) ou avec visites."""
+
     CONGE = "conge", "Congé"
     FORMATION = "formation", "Formation"
     REUNION = "reunion", "Réunion"
     MALADIE = "maladie", "Maladie"
     AUTRE = "autre", "Autre"
+    COMMANDO = "commando", "Commando"
+    DEPLACEMENT = "deplacement", "Déplacement"
+    ACCOMPAGNEMENT = "accompagnement", "Accompagnement du superviseur"
+
+
+#: Activités connexes pendant lesquelles le délégué visite (0.3.1, PLN-018) : elles ne
+#: réduisent pas l'objectif du jour, exigent une explication, et couvrent les visites hors
+#: secteur ou hors liste cible de leur journée.
+AVEC_VISITES = frozenset({TypeAbsence.COMMANDO, TypeAbsence.DEPLACEMENT,
+                          TypeAbsence.ACCOMPAGNEMENT})  # fmt: skip
 
 
 class Absence(ModeleDePays):
-    """Absence déclarée dans le planning (PLN-009) ; elle réduit les seuils du jour au prorata
-    (CA1, RG-022, contrôles en 0.2.4) et se valide avec le planning (CA2, cycle 0.3)."""
+    """Activité connexe déclarée dans le planning (PLN-009, PLN-018). Sans visite (congé,
+    maladie, formation, réunion, autre), elle réduit les seuils du jour au prorata (CA1,
+    RG-022) ; avec visites (commando, déplacement, accompagnement du superviseur), elle
+    s'explique et justifie les visites hors secteur de sa journée. Elle se valide avec le
+    planning (cycle 0.3)."""
 
     planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="absences")
     date = models.DateField()
     periode = models.CharField(max_length=12, choices=Periode.choices, default=Periode.JOURNEE)
-    type = models.CharField(max_length=12, choices=TypeAbsence.choices)
-    commentaire = models.CharField(max_length=200, blank=True)
+    type = models.CharField(max_length=16, choices=TypeAbsence.choices)
+    #: Motif d'une absence « autre », ou explication d'une activité avec visites.
+    commentaire = models.CharField(max_length=500, blank=True)
+    #: Déplacement demandé par le superviseur (sinon justifié par le délégué).
+    demande_superviseur = models.BooleanField(default=False)
+
+    @property
+    def avec_visites(self) -> bool:
+        return self.type in AVEC_VISITES
 
     class Meta:
         ordering = ["date", "periode"]

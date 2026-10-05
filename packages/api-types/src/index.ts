@@ -78,6 +78,8 @@ export type DoublonProbable = Schemas['Doublon'];
 export type Qualite = Schemas['Qualite'];
 export type JourFerie = Schemas['JourFerie'];
 export type Planning = Schemas['Planning'];
+/** Ligne de la file du superviseur (PLN-011). */
+export type PlanningEnAttente = Schemas['PlanningEnAttente'];
 export type Semaine = Schemas['Semaine'];
 export type JourSemaine = Schemas['JourSemaine'];
 // Visites planifiées (PLN-002).

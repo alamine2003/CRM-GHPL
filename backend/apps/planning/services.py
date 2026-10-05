@@ -16,7 +16,16 @@ from apps.socle.services import aujourdhui
 
 from .calendrier import jours_de_la_semaine, jours_planifiables, lundi
 from .etats import MODIFIABLES, StatutPlanning
-from .models import Absence, JourFerie, Passage, Periode, Planning, TypeAbsence, Visite
+from .models import (
+    AVEC_VISITES,
+    Absence,
+    JourFerie,
+    Passage,
+    Periode,
+    Planning,
+    TypeAbsence,
+    Visite,
+)
 
 
 def _auditer(action: str, objet, **details) -> None:
@@ -419,6 +428,27 @@ def postes_sans_superviseur(planning: Planning) -> list:
             if superviseur_du_poste(p, planning.semaine) is None]  # fmt: skip
 
 
+def plannings_a_valider(superviseur, pays) -> list[Planning]:
+    """PLN-011 : plannings soumis des délégués dont un poste occupé cette semaine-là est rattaché
+    au superviseur, du plus ancien au plus récent (CA1). Son propre planning n'y est pas : celui
+    d'un superviseur-visiteur va à son DM (PLN-017, 0.3.3)."""
+    from apps.organisation.services import superviseur_du_poste
+
+    candidats = (
+        Planning.objects.filter(pays=pays, statut=StatutPlanning.SOUMIS,
+                                delegue__occupations__poste__rattachements__superviseur=superviseur)
+        .exclude(delegue=superviseur)
+        .select_related("delegue")
+        .distinct()
+    )  # fmt: skip
+    return sorted(
+        (p for p in candidats
+         if any(superviseur_du_poste(poste, p.semaine) == superviseur
+                for poste in postes_de_la_semaine(p))),
+        key=lambda p: p.soumis_le,
+    )  # fmt: skip
+
+
 @transaction.atomic
 def soumettre(planning: Planning) -> Planning:
     """PLN-008 : contrôle final, puis « Soumis au superviseur ». Après l'échéance, la soumission
@@ -626,9 +656,23 @@ def dissocier(passage: Passage) -> Passage:
 PART_ABSENTE = {Periode.JOURNEE: 1.0, Periode.MATIN: 0.5, Periode.APRES_MIDI: 0.5}
 
 
+def _part_absente(absences) -> float:
+    """Part du jour prise par des absences ; une activité avec visites n'en prend pas."""
+    return sum(PART_ABSENTE[a.periode] for a in absences if a.type not in AVEC_VISITES)
+
+
 def part_travaillee(planning: Planning, jour: date) -> float:
     absences = planning.absences.filter(archive_le__isnull=True, date=jour)
-    return max(0.0, 1.0 - sum(PART_ABSENTE[a.periode] for a in absences))
+    return max(0.0, 1.0 - _part_absente(absences))
+
+
+def jours_d_activite_avec_visites(planning: Planning) -> set[date]:
+    """Jours couverts par un commando, un déplacement ou un accompagnement (PLN-018)."""
+    return set(
+        planning.absences.filter(archive_le__isnull=True, type__in=AVEC_VISITES).values_list(
+            "date", flat=True
+        )
+    )
 
 
 def jour_absent(planning: Planning, jour: date) -> bool:
@@ -654,6 +698,15 @@ def _verifier_absence(absence: Absence) -> None:
             _("Précisez le motif d'une absence « autre »."),
             champ="commentaire",
         )
+    if absence.avec_visites and not absence.commentaire:
+        # PLN-018 CA1 : un commando ou un déplacement se renseigne en détail.
+        raise ErreurMetier(
+            "explication_requise",
+            _("Expliquez cette activité : où, avec qui, et pourquoi."),
+            champ="commentaire",
+        )
+    if absence.type != TypeAbsence.DEPLACEMENT:
+        absence.demande_superviseur = False
     autres = absence.planning.absences.filter(archive_le__isnull=True, date=absence.date).exclude(
         pk=absence.pk
     )
@@ -669,7 +722,7 @@ def _verifier_absence(absence: Absence) -> None:
         )
     # Une absence qui couvre la journée entière (seule, ou avec l'autre demi-journée) ne
     # laisse pas de visite ce jour-là.
-    if PART_ABSENTE[absence.periode] + sum(PART_ABSENTE[a.periode] for a in autres) >= 1:
+    if not absence.avec_visites and PART_ABSENTE[absence.periode] + _part_absente(autres) >= 1:
         nombre = _visites_du_jour(absence.planning, absence.date).count()
         if nombre:
             raise ErreurMetier(
@@ -683,13 +736,15 @@ def _verifier_absence(absence: Absence) -> None:
 
 @transaction.atomic
 def declarer_absence(planning: Planning, *, date: date, type: str, periode: str = Periode.JOURNEE,
-                     commentaire: str = "", id=None) -> Absence:  # fmt: skip
+                     commentaire: str = "", demande_superviseur: bool = False,
+                     id=None) -> Absence:  # fmt: skip
     _verrouiller(planning)
     if existante := _deja_envoye(Absence, planning, id):
         return existante
     _exiger_modifiable(planning)
     absence = Absence(pays=planning.pays, planning=planning, date=date, type=type,
-                      periode=periode, commentaire=(commentaire or "").strip())  # fmt: skip
+                      periode=periode, commentaire=(commentaire or "").strip(),
+                      demande_superviseur=demande_superviseur)  # fmt: skip
     if id is not None:
         absence.pk = id
     _verifier_absence(absence)

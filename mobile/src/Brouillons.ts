@@ -40,6 +40,8 @@ export type ChampsAbsence = {
   type: SaisieAbsence['type'] | null;
   periode: NonNullable<SaisieAbsence['periode']>;
   commentaire: string;
+  /** Déplacement demandé par le superviseur (0.3.1) ; absent des brouillons plus anciens. */
+  demande_superviseur?: boolean;
 };
 
 export type Brouillon =

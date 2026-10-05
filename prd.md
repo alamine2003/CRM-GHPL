@@ -534,7 +534,7 @@ Décisions du 5 octobre 2026 [D] :
 - Une visite faite en binôme ou pour aider un collègue **compte à celui qui la fait**.
 - Un commando est renseigné et expliqué par le délégué qui y participe, qu'il vienne de lui ou de sa hiérarchie.
 
-Proposition de mise en œuvre [H, à valider] :
+Mise en œuvre [D, 5 octobre 2026, livrée en 0.3.1, PLN-018] :
 - Les absences (PLN-009) deviennent des **activités connexes**, sur la journée, le matin ou l'après-midi :
   - **sans visite** : congé, maladie, formation, réunion, autre — elles réduisent l'objectif du jour ; une journée entière ne reçoit pas de visite (comportement actuel) ;
   - **avec visites** : commando, déplacement (aide ou accompagnement d'un collègue), accompagnement du superviseur — explication obligatoire (où, avec qui, pourquoi) ; pour un déplacement, « demandé par le superviseur » ou non.
@@ -559,7 +559,7 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
 | Volume relatif | prospects visités / plus grand nombre de prospects visités de l'équipe |
 
 - **Score / 100** = somme pondérée des cinq taux ; pondérations par défaut : géolocalisation 40 %, couverture 23 %, réalisation du plan 19 %, respect du plan 9 %, volume relatif 9 % ; modifiables par pays, total 100 %.
-- **Appréciation** : Excellent, Bon, À consolider, Insuffisant, Aucune activité (aucune visite). Elle sépare la performance de la sous-performance [D]. Seuils par défaut, paramètres du pays [H] : Excellent dès 60, Bon dès 40, À consolider dès 15, Insuffisant en dessous (Bon et À consolider déduits de l'exemple ; Excellent proposé, l'exemple le place entre 44,4 et 69,3).
+- **Appréciation** : Excellent, Bon, À consolider, Insuffisant, Aucune activité (aucune visite). Elle sépare la performance de la sous-performance [D]. Seuils par défaut, paramètres du pays [D, 5 octobre 2026] : Excellent dès 60, Bon dès 40, À consolider dès 15, Insuffisant en dessous.
 - Une ligne « Moyenne de l'équipe » résume chaque colonne.
 - Points proposés à la discussion [H] : rapporter le volume à l'objectif du poste plutôt qu'au meilleur de l'équipe ; tenir compte des jours non travaillés (fériés, congés, commandos) ; signaler une visite faite sans planning.
 - **Version mensuelle antérieure** (classement d'août, 30 derniers jours, source BI BirdNotes « Vue Insight V2 ») [D, fournie le 5 octobre 2026] :
@@ -570,8 +570,8 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
   - une fiche de performance par délégué, l'onglet « Meilleur délégué du mois » et le total de l'agence.
 - Dans l'application, chaque taux sera **recalculé à partir des visites** (jamais repris d'un outil externe).
 - **Pourquoi pointer** [D, 5 octobre 2026] : prouver que le délégué visite vraiment ses prospects et ce qu'il a planifié ; construire une base fiable des positions des établissements, qui guide un nouveau délégué ; permettre au superviseur de savoir où ses délégués font leurs visites.
-  - Proposition [H] : un établissement sans position de référence reçoit celle de sa première visite pointée, proposée à l'administrateur pays qui la valide ; ensuite, la distance se contrôle sur cette référence (VIS-010).
-  - Le superviseur voit sur une carte les visites pointées de la journée de chaque délégué ; il n'y a **pas de suivi en continu** : la position n'est prise qu'au démarrage et à la fin d'une visite (RG-028).
+  - [D, 5 octobre 2026] Un établissement sans position de référence en reçoit une proposée à partir de ses visites pointées, que l'administrateur pays valide ; ensuite, chaque visite se contrôle à 100 m de cette référence (VIS-010). Le point proposé est le médian des trois premières visites pointées, pour écarter une mesure GPS fausse [H, proposé le 5 octobre 2026].
+  - [D, 5 octobre 2026] Le superviseur voit sur une carte les visites pointées de la journée de chaque délégué, avec la distance de chacune à son établissement ; il n'y a **pas de suivi en continu** : la position n'est prise qu'au démarrage et à la fin d'une visite (RG-028).
 - **Périodes** [D, 5 octobre 2026] : toutes, de 24 heures à 1 an (24 h, 7 jours, 30 jours, 90 jours, 6 mois, 1 an, ou dates choisies), avec la comparaison à la période précédente (variation en % ou en points).
 - **Méthode** : score pondéré (version hebdomadaire, la plus récente) [H] ; le classement par priorité de la version mensuelle n'est pas repris sauf demande.
 - **Profil du délégué** (modèle : tableau de bord BirdNotes « Profil délégué — Vue Insight V2 ») : filtres supérieur, délégué et période ; visites réalisées, prospects planifiés, taux de réalisation du planning (planifiés visités / planifiés) ; planifiés vs visités (visités planifiés, visités non planifiés, planifiés non visités) ; visites géolocalisées et non géolocalisées ; taux de couverture du portefeuille ; chaque indicateur avec la période précédente et sa variation ; courbe des visites planifiées et réalisées par jour ; fréquence des prospects visités (potentiel, nombre de visites, adresse, secteur, localité, spécialité, activité H/P) ; prospects non visités avec leur date de dernière visite. Les échantillons remis viennent des rapports (RG-038, cycle 0.5).
@@ -653,6 +653,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | PLN-015 | Modifications après approbation : mineure libre et tracée, majeure soumise à nouvelle approbation (`RG-018`). | 0.3.7 | CA1 : changer l'heure d'une visite dans la même journée ne change pas le statut. CA2 : ajouter une visite crée une version soumise ; les autres visites restent exécutables. |
 | PLN-016 | Escalade vers le DM sans décision 24 h ouvrées après soumission ; alerte au DM si rien n'est approuvé le lundi matin. | 0.3.8 | CA1 : l'escalade notifie le DM du périmètre. CA2 : la décision du DM porte le mode `escalade`. |
 | PLN-017 | Le planning d'un superviseur qui occupe un poste de délégué est approuvé par son DM. | 0.3.3 | CA1 : il n'apparaît pas dans sa propre file. |
+| PLN-018 | Activités connexes déclarées dans le planning : absences (PLN-009), commando, déplacement (justifié ou demandé par le superviseur), accompagnement du superviseur (§14.17). | 0.3.1 | CA1 : une activité avec visites exige une explication ; ses visites hors secteur ou hors liste cible ne sont pas signalées comme anomalies. CA2 : une activité avec visites ne réduit pas l'objectif du jour ; une absence le réduit. |
 
 ### 15.5 Visites — VIS
 
@@ -1044,7 +1045,7 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 
 | Version | Livraison principale |
 |---|---|
-| 0.3.1 | File des plannings en attente |
+| 0.3.1 | File des plannings en attente ; activités connexes (commandos, déplacements, accompagnements) |
 | 0.3.2 | Consultation semaine et détail avec alertes |
 | 0.3.3 | Approbation ; approbation par le DM du planning d'un superviseur-visiteur |
 | 0.3.4 | Révision motivée (planning ou visite) ; remplaçant daté |

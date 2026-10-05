@@ -2,6 +2,47 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.1] — Activités connexes et file des plannings en attente
+
+Premier jalon du cycle 0.3 « Validation des plannings ». Décisions du 5 octobre 2026 (prd.md §14.17).
+
+### Ajouté — activités connexes (PLN-018)
+
+- L'activité principale et obligatoire du délégué reste la visite ; les cas spéciaux se déclarent dans le planning, sur la journée ou une demi-journée, sous le nom d'**activités** :
+  - **absences, sans visite** : congé, maladie, formation, réunion, autre (comme avant : elles réduisent l'objectif du jour ; une journée entière ne reçoit pas de visite) ;
+  - **avec visites** : **commando**, **déplacement** (« justifié par moi » ou « demandé par mon superviseur »), **accompagnement du superviseur**.
+- **CA1** : une activité avec visites exige une explication (« où, avec qui, pourquoi ») ; les visites de sa journée hors secteur ou hors liste cible ne sont plus signalées comme anomalies : le superviseur lit l'activité et son explication.
+- **CA2** : une activité avec visites ne réduit pas l'objectif du jour et laisse ajouter des visites ; matin et après-midi d'absence valent toujours une journée.
+- Téléphone : le formulaire sépare « Absence, sans visite » et « Activité avec visites » ; la journée affiche l'activité comme une ligne de travail, avec son icône, son explication et « Demandé par le superviseur ». Portail : la colonne du jour montre l'explication.
+
+### Ajouté — file des plannings en attente (PLN-011)
+
+- **Plannings à valider** (portail, superviseur) : les plannings soumis de son équipe — postes qui lui sont rattachés cette semaine-là — du plus ancien au plus récent (**CA1**), avec, pour chacun :
+  - le délégué, son poste, la semaine, le nombre de visites ;
+  - « En attente depuis n jours », la date de soumission, « En retard » le cas échéant ;
+  - les alertes résumées (sous le minimum, au-dessus du maximum, hors liste cible, hors secteur, prospects A oubliés) ;
+  - les activités et leur explication.
+- Droit `plannings.valider` (superviseur). Son propre planning n'entre pas dans sa file (il ira à son DM, PLN-017, 0.3.3). Consultation détaillée et décision : 0.3.2 et 0.3.3.
+
+### Décisions consignées
+
+- Géolocalisation (cycle 0.4) : position de référence d'un établissement proposée par le médian de ses trois premières visites pointées, validée par l'administrateur pays ; carte des visites pointées de la journée pour le superviseur, avec la distance de chacune ; pas de suivi en continu.
+- Évaluation des délégués (cycle 0.7, DSH-012) : seuils Excellent 60, Bon 40, À consolider 15.
+
+### Démonstration
+
+- La semaine soumise du premier délégué porte une matinée d'accompagnement du superviseur ; son superviseur la trouve dans « Plannings à valider ».
+
+### Design
+
+Revue sur le rendu réel : mobile à 360 px et à 390 px en thème sombre (formulaire, déplacement demandé par le superviseur, journée), portail bureau, tablette, téléphone et sombre (file du superviseur). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Formulaire d'activité (téléphone) | Quatre lignes d'aide avant le premier choix | Deux phrases ; le détail est porté par les groupes |
+| Formulaire d'activité | Groupe « Avec visites » ambigu | « Activité avec visites », à côté de « Absence, sans visite » |
+| Plannings à valider | Rien ne disait depuis quand un planning attend | « En attente depuis n jours », au-dessus de la date de soumission |
+
 ## [0.2.9] — Stabilisation et démonstration du cycle 0.2
 
 Neuvième et dernier jalon du cycle 0.2 « Planning ».

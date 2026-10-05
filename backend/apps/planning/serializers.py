@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.organisation.serializers import ResumeSerializer
@@ -153,7 +154,12 @@ class RegroupementSerializer(serializers.Serializer):
 class AbsenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Absence
-        fields = ["id", "date", "periode", "type", "commentaire"]
+        fields = ["id", "date", "periode", "type", "commentaire", "demande_superviseur",
+                  "avec_visites"]  # fmt: skip
+        read_only_fields = ["avec_visites"]
+
+    #: Commando, déplacement ou accompagnement : le délégué y visite (PLN-018).
+    avec_visites = serializers.BooleanField(read_only=True)
 
 
 class SaisieAbsenceSerializer(serializers.Serializer):
@@ -162,14 +168,16 @@ class SaisieAbsenceSerializer(serializers.Serializer):
     periode = serializers.ChoiceField(choices=Periode.choices, required=False,
                                       default=Periode.JOURNEE)  # fmt: skip
     type = serializers.ChoiceField(choices=TypeAbsence.choices)
-    commentaire = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    commentaire = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    demande_superviseur = serializers.BooleanField(required=False, default=False)
 
 
 class ModificationAbsenceSerializer(serializers.Serializer):
     date = serializers.DateField(required=False)
     periode = serializers.ChoiceField(choices=Periode.choices, required=False)
     type = serializers.ChoiceField(choices=TypeAbsence.choices, required=False)
-    commentaire = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    commentaire = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    demande_superviseur = serializers.BooleanField(required=False)
 
 
 class ProspectOublieSerializer(serializers.Serializer):
@@ -264,3 +272,32 @@ class SemaineSerializer(serializers.Serializer):
     controles = ControlesSerializer(allow_null=True)
     #: Réseaux des postes occupés cette semaine, proposés pour chaque visite.
     reseaux = ResumeSerializer(many=True)
+
+
+class DelegueSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    prenom = serializers.CharField(source="first_name")
+    nom = serializers.CharField(source="last_name")
+
+
+class SignalementResumeSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    nombre = serializers.IntegerField()
+
+
+class PlanningEnAttenteSerializer(serializers.Serializer):
+    """Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et
+    ses activités connexes, avec leur explication (PLN-018)."""
+
+    planning = PlanningSerializer()
+    #: Fuseau du pays : les dates de soumission s'affichent à l'heure du pays.
+    fuseau = serializers.CharField()
+    delegue = DelegueSerializer()
+    postes = serializers.ListField(child=serializers.CharField())
+    visites = serializers.IntegerField()
+    signalements = SignalementResumeSerializer(many=True)
+    activites = serializers.SerializerMethodField()
+
+    @extend_schema_field(AbsenceSerializer(many=True))
+    def get_activites(self, ligne) -> list[dict]:
+        return AbsenceSerializer(ligne["activites"], many=True).data

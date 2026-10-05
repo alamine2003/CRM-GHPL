@@ -134,7 +134,8 @@
     "imports": "Imports",
     "ciblage": "Listes cibles",
     "doublons": "Doublons",
-    "propositions": "Propositions"
+    "propositions": "Propositions",
+    "validation": "Plannings à valider"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -1377,11 +1378,11 @@
     "nombre_other": "Passage · {{count}} prescripteurs"
   },
   "absences": {
-    "declarer": "Déclarer une absence",
-    "declarerLe": "Déclarer une absence le {{jour}}",
-    "nouvelle": "Nouvelle absence",
-    "modifier": "Modifier l'absence",
-    "aide": "Une demi-journée d'absence réduit de moitié les objectifs du jour ; une journée entière ne reçoit pas de visite.",
+    "declarer": "Déclarer une activité",
+    "declarerLe": "Déclarer une activité le {{jour}}",
+    "nouvelle": "Nouvelle activité",
+    "modifier": "Modifier l'activité",
+    "aide": "Une absence réduit les objectifs du jour. Un commando, un déplacement ou un accompagnement garde ses visites.",
     "champs": {
       "date": "Jour",
       "type": "Type",
@@ -1392,7 +1393,10 @@
       "formation": "Formation",
       "reunion": "Réunion",
       "maladie": "Maladie",
-      "autre": "Autre"
+      "autre": "Autre",
+      "commando": "Commando",
+      "deplacement": "Déplacement",
+      "accompagnement": "Accompagnement du superviseur"
     },
     "periodes": {
       "journee": "Journée",
@@ -1403,11 +1407,19 @@
     "commentaire": "Commentaire (facultatif)",
     "motif": "Précisez le motif",
     "motifRequis": "Une absence « Autre » demande un motif.",
-    "retirer": "Retirer cette absence",
-    "declaree": "Absence déclarée.",
-    "modifiee": "Absence enregistrée.",
-    "retiree": "Absence retirée.",
-    "declarerCourt": "Absence"
+    "retirer": "Retirer cette activité",
+    "declaree": "Activité déclarée.",
+    "modifiee": "Activité enregistrée.",
+    "retiree": "Activité retirée.",
+    "declarerCourt": "Activité",
+    "sansVisite": "Absence, sans visite",
+    "avecVisites": "Activité avec visites",
+    "explication": "Explication : où, avec qui, pourquoi",
+    "explicationRequise": "Expliquez cette activité : où, avec qui, et pourquoi.",
+    "demande": "Qui l'a décidé ?",
+    "demandeMoi": "Justifié par moi",
+    "demandeSuperviseur": "Demandé par mon superviseur",
+    "parSuperviseur": "Demandé par le superviseur"
   },
   "controles": {
     "titre": "À vérifier",
@@ -1566,5 +1578,27 @@
     "bloquantsPortail_other": "Les {{count}} points bloquants listés dans « À vérifier » empêchent la soumission.",
     "corriger_one": "Ouvrir la visite à corriger",
     "corriger_other": "Ouvrir la première visite à corriger"
+  },
+  "validation": {
+    "enAttente_one": "{{count}} planning en attente, du plus ancien au plus récent",
+    "enAttente_other": "{{count}} plannings en attente, du plus ancien au plus récent",
+    "aucun": "Aucun planning en attente : tous les plannings soumis de votre équipe ont été traités.",
+    "visites_one": "{{count}} visite",
+    "visites_other": "{{count}} visites",
+    "alertes": {
+      "seuil_bas_one": "Sous le minimum : {{count}} jour",
+      "seuil_bas_other": "Sous le minimum : {{count}} jours",
+      "seuil_haut_one": "Au-dessus du maximum : {{count}} jour",
+      "seuil_haut_other": "Au-dessus du maximum : {{count}} jours",
+      "hors_cible_one": "{{count}} visite hors liste cible",
+      "hors_cible_other": "{{count}} visites hors liste cible",
+      "hors_secteur_one": "{{count}} visite hors secteur",
+      "hors_secteur_other": "{{count}} visites hors secteur",
+      "a_non_planifie_one": "Prospects A oubliés dans le mois",
+      "a_non_planifie_other": "Prospects A oubliés dans le mois"
+    },
+    "depuis_one": "En attente depuis {{count}} jour",
+    "depuis_other": "En attente depuis {{count}} jours",
+    "depuisAujourdhui": "Soumis aujourd'hui"
   }
 }

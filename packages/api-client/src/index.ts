@@ -11,6 +11,7 @@ import type {
   ChangementFiche,
   JourFerie,
   Planning,
+  PlanningEnAttente,
   Qualite,
   Semaine,
   Reprise,
@@ -105,6 +106,7 @@ export type {
   StatutVisite,
   Visite,
   Planning,
+  PlanningEnAttente,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -643,6 +645,8 @@ export function creerClient(options: OptionsClient) {
     },
     /** Semaine du délégué et son planning (PLN-001). */
     plannings: {
+      /** File du superviseur : plannings soumis de son équipe, du plus ancien (PLN-011). */
+      aValider: () => requete<PlanningEnAttente[]>('/api/v1/plannings/a-valider/'),
       semaine: (jour?: string) =>
         requete<Semaine>(`/api/v1/plannings/semaine/${jour ? `?semaine=${jour}` : ''}`),
       creer: (semaine: string) =>

@@ -61,6 +61,8 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     # Chaque semaine a son passage de deux confrères ; la formation est à préparer (PLN-003,
     # PLN-009).
     assert [p.visites.count() for p in Passage.objects.filter(pays__code="SN")] == [2, 2]
+    # La semaine soumise montre une matinée d'accompagnement du superviseur (PLN-018).
+    assert soumis.absences.get().type == "accompagnement"
     assert Absence.objects.filter(pays__code="SN", periode="apres_midi").count() == 1
 
 

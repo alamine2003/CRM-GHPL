@@ -52,6 +52,17 @@ function nom(
     .join(' ');
 }
 
+/**
+ * Absent toute la journée : une absence « journée », ou matin et après-midi. Un commando, un
+ * déplacement ou un accompagnement garde ses visites (PLN-018).
+ */
+function jourAbsent(s: Semaine, date: string) {
+  const parts = s.absences
+    .filter((a) => a.date === date && !a.avec_visites)
+    .reduce((n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1), 0);
+  return parts >= 2;
+}
+
 /** Texte d'un contrôle (PLN-004), le même que sur le téléphone. */
 function texteControle(c: ControlePlanning, t: Traduire, jourCourt: (iso: string) => string) {
   const jour = c.date ? jourCourt(c.date) : '';
@@ -490,7 +501,7 @@ function Colonne({
   const { t, i18n } = useTranslation();
   const [survol, setSurvol] = useState(false);
   const jour = s.jours.find((j) => j.date === date)!;
-  const absent = s.absences.some((a) => a.date === date && a.periode === 'journee');
+  const absent = jourAbsent(s, date);
   const accepte = modifiable && jour.planifiable && !absent;
   const visites = s.visites.filter((v) => v.date === date);
   const objectif = s.controles?.objectifs.find((o) => o.date === date);
@@ -579,15 +590,26 @@ function Colonne({
               key={a.id}
               direction="row"
               spacing={0.75}
-              sx={{ alignItems: 'center', color: 'text.secondary', px: 0.5 }}
+              sx={{
+                alignItems: 'flex-start',
+                color: a.avec_visites ? 'text.primary' : 'text.secondary',
+                px: 0.5,
+              }}
             >
-              <EventBusyRounded fontSize="small" />
-              <Typography variant="body2">
-                {t('absences.ligne', {
-                  type: t(`absences.types.${a.type}`),
-                  periode: t(`absences.periodes.${a.periode ?? 'journee'}`),
-                })}
-              </Typography>
+              <EventBusyRounded fontSize="small" sx={{ mt: 0.25 }} />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: a.avec_visites ? 600 : 400 }}>
+                  {t('absences.ligne', {
+                    type: t(`absences.types.${a.type}`),
+                    periode: t(`absences.periodes.${a.periode ?? 'journee'}`),
+                  })}
+                </Typography>
+                {a.avec_visites && a.commentaire && (
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {a.commentaire}
+                  </Typography>
+                )}
+              </Box>
             </Stack>
           ))}
         {unites.map((u) =>
@@ -751,9 +773,7 @@ function ListeAGlisser({
       ).includes(filtre),
     )
     .sort((a, b) => Number(prevus.has(a.prospect.id)) - Number(prevus.has(b.prospect.id)));
-  const jours = s.jours.filter(
-    (j) => j.planifiable && !s.absences.some((a) => a.date === j.date && a.periode === 'journee'),
-  );
+  const jours = s.jours.filter((j) => j.planifiable && !jourAbsent(s, j.date));
 
   return (
     <Card sx={{ position: { lg: 'sticky' }, top: { lg: 80 } }}>

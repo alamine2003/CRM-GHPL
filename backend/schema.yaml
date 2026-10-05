@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.9
+  version: 0.3.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/absences/{id}/:
@@ -2715,6 +2715,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/plannings/a-valider/:
+    get:
+      operationId: plannings_a_valider
+      description: 'PLN-011 : file des plannings en attente du superviseur, triée
+        par ancienneté (CA1).'
+      tags:
+      - plannings
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlanningEnAttente'
+          description: ''
   /api/v1/plannings/semaine/:
     get:
       operationId: planning_semaine
@@ -3943,8 +3961,14 @@ components:
           $ref: '#/components/schemas/TypeAbsenceEnum'
         commentaire:
           type: string
-          maxLength: 200
+          maxLength: 500
+        demande_superviseur:
+          type: boolean
+        avec_visites:
+          type: boolean
+          readOnly: true
       required:
+      - avec_visites
       - date
       - id
       - type
@@ -4665,6 +4689,20 @@ components:
             format: uuid
       required:
       - produits
+    Delegue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        prenom:
+          type: string
+        nom:
+          type: string
+      required:
+      - id
+      - nom
+      - prenom
     DescriptionAppareil:
       type: object
       properties:
@@ -5754,7 +5792,9 @@ components:
           $ref: '#/components/schemas/TypeAbsenceEnum'
         commentaire:
           type: string
-          maxLength: 200
+          maxLength: 500
+        demande_superviseur:
+          type: boolean
     PatchedModificationExercice:
       type: object
       properties:
@@ -6139,6 +6179,41 @@ components:
       - semaine
       - soumis_le
       - statut
+    PlanningEnAttente:
+      type: object
+      description: |-
+        Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et
+        ses activités connexes, avec leur explication (PLN-018).
+      properties:
+        planning:
+          $ref: '#/components/schemas/Planning'
+        fuseau:
+          type: string
+        delegue:
+          $ref: '#/components/schemas/Delegue'
+        postes:
+          type: array
+          items:
+            type: string
+        visites:
+          type: integer
+        signalements:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignalementResume'
+        activites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Absence'
+          readOnly: true
+      required:
+      - activites
+      - delegue
+      - fuseau
+      - planning
+      - postes
+      - signalements
+      - visites
     PlanningStatutEnum:
       enum:
       - brouillon
@@ -7040,7 +7115,10 @@ components:
           $ref: '#/components/schemas/TypeAbsenceEnum'
         commentaire:
           type: string
-          maxLength: 200
+          maxLength: 500
+        demande_superviseur:
+          type: boolean
+          default: false
       required:
       - date
       - type
@@ -7393,6 +7471,16 @@ components:
       - courante
       - expire_le
       - id
+    SignalementResume:
+      type: object
+      properties:
+        code:
+          type: string
+        nombre:
+          type: integer
+      required:
+      - code
+      - nombre
     SourceEnum:
       enum:
       - birdnotes
@@ -7584,6 +7672,9 @@ components:
       - reunion
       - maladie
       - autre
+      - commando
+      - deplacement
+      - accompagnement
       type: string
       description: |-
         * `conge` - Congé
@@ -7591,6 +7682,9 @@ components:
         * `reunion` - Réunion
         * `maladie` - Maladie
         * `autre` - Autre
+        * `commando` - Commando
+        * `deplacement` - Déplacement
+        * `accompagnement` - Accompagnement du superviseur
     TypePosteEnum:
       enum:
       - vm

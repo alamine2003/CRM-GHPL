@@ -41,6 +41,7 @@ class Action(StrEnum):
     PROPOSITIONS_TRANCHER = "propositions.trancher"
     JOURS_FERIES_GERER = "jours_feries.gerer"
     PLANNINGS_PREPARER = "plannings.preparer"
+    PLANNINGS_VALIDER = "plannings.valider"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -116,6 +117,9 @@ MATRICE: dict[Action, frozenset[str]] = {
     # « Créer et soumettre un planning » : le délégué, le superviseur s'il occupe un poste
     # (vérifié par le service, PLN-001).
     Action.PLANNINGS_PREPARER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
+    # « Approuver ou faire réviser un planning » : le superviseur, sur les postes qui lui sont
+    # rattachés (PLN-011). Le DM (escalade, remplacement, superviseur-visiteur) en 0.3.3 et 0.3.8.
+    Action.PLANNINGS_VALIDER: frozenset({Role.SUPERVISEUR}),
 }
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.

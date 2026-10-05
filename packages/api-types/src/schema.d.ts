@@ -1571,6 +1571,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/plannings/a-valider/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description PLN-011 : file des plannings en attente du superviseur, triée par ancienneté (CA1). */
+    get: operations['plannings_a_valider'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/semaine/': {
     parameters: {
       query?: never;
@@ -2160,6 +2177,8 @@ export interface components {
       periode?: components['schemas']['PeriodeAbsenceEnum'];
       type: components['schemas']['TypeAbsenceEnum'];
       commentaire?: string;
+      demande_superviseur?: boolean;
+      readonly avec_visites: boolean;
     };
     /** @description Événement d'audit de l'utilisateur lui-même (connexions, sécurité du compte). */
     Activite: {
@@ -2457,6 +2476,12 @@ export interface components {
     DecisionPropositionDecisionEnum: 'accepter' | 'refuser';
     DefinitionPortefeuille: {
       produits: string[];
+    };
+    Delegue: {
+      /** Format: uuid */
+      id: string;
+      prenom: string;
+      nom: string;
     };
     DescriptionAppareil: {
       /** @description Tiré au hasard à l'installation de l'application. */
@@ -2903,6 +2928,7 @@ export interface components {
       periode?: components['schemas']['PeriodeAbsenceEnum'];
       type?: components['schemas']['TypeAbsenceEnum'];
       commentaire?: string;
+      demande_superviseur?: boolean;
     };
     PatchedModificationExercice: {
       principal?: boolean;
@@ -3060,6 +3086,19 @@ export interface components {
       readonly soumis_le: string | null;
       readonly en_retard: boolean;
       readonly echeance: string;
+    };
+    /**
+     * @description Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et
+     *     ses activités connexes, avec leur explication (PLN-018).
+     */
+    PlanningEnAttente: {
+      planning: components['schemas']['Planning'];
+      fuseau: string;
+      delegue: components['schemas']['Delegue'];
+      postes: string[];
+      visites: number;
+      signalements: components['schemas']['SignalementResume'][];
+      readonly activites: components['schemas']['Absence'][];
     };
     /**
      * @description * `brouillon` - En préparation
@@ -3414,6 +3453,8 @@ export interface components {
       periode: components['schemas']['PeriodeAbsenceEnum'];
       type: components['schemas']['TypeAbsenceEnum'];
       commentaire?: string;
+      /** @default false */
+      demande_superviseur: boolean;
     };
     SaisieEtablissement: {
       nom?: string;
@@ -3557,6 +3598,10 @@ export interface components {
       double_auth_validee?: boolean;
       readonly courante: boolean;
     };
+    SignalementResume: {
+      code: string;
+      nombre: number;
+    };
     /**
      * @description * `birdnotes` - BirdNotes
      *     * `organisation` - Fichier d'organisation
@@ -3650,9 +3695,20 @@ export interface components {
      *     * `reunion` - Réunion
      *     * `maladie` - Maladie
      *     * `autre` - Autre
+     *     * `commando` - Commando
+     *     * `deplacement` - Déplacement
+     *     * `accompagnement` - Accompagnement du superviseur
      * @enum {string}
      */
-    TypeAbsenceEnum: 'conge' | 'formation' | 'reunion' | 'maladie' | 'autre';
+    TypeAbsenceEnum:
+      | 'conge'
+      | 'formation'
+      | 'reunion'
+      | 'maladie'
+      | 'autre'
+      | 'commando'
+      | 'deplacement'
+      | 'accompagnement';
     /**
      * @description * `vm` - Visiteur médical
      *     * `vm_otc` - Visiteur médical OTC
@@ -6288,6 +6344,25 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  plannings_a_valider: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PlanningEnAttente'][];
         };
       };
     };

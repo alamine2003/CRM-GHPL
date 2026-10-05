@@ -162,7 +162,8 @@ def test_pln009_ca1_une_demi_journee_reduit_de_moitie_les_seuils(monde, terrain)
                                        "type": "formation"}, format="json")  # fmt: skip
     assert r.status_code == 201, r.content
     assert r.json() == {"id": r.json()["id"], "date": "2026-10-15", "periode": "matin",
-                        "type": "formation", "commentaire": ""}  # fmt: skip
+                        "type": "formation", "commentaire": "", "demande_superviseur": False,
+                        "avec_visites": False}  # fmt: skip
     planning = terrain["planning"]
     jour = Absence.objects.get().date
     assert services.part_travaillee(planning, jour) == 0.5

@@ -213,7 +213,14 @@ def signalements(
     cibles = Cible.objects.filter(actif_le(planning.semaine), poste__in=postes)
     cibles_ids = set(cibles.values_list("prospect_id", flat=True))
     secteurs = {s.pk for p in postes for s in p.secteurs.all()}
+    # Un commando, un déplacement ou un accompagnement explique les visites de sa journée hors
+    # secteur ou hors liste cible (PLN-018 CA1) : le superviseur lit l'activité, pas une anomalie.
+    from .services import jours_d_activite_avec_visites
+
+    couverts = jours_d_activite_avec_visites(planning)
     for v in visites:
+        if v.date in couverts:
+            continue
         if v.prospect_id and v.prospect_id not in cibles_ids:
             anomalies.append(Anomalie("hors_cible", SIGNALEMENT, v.date, [str(v.pk)]))
         lieu = v.etablissement or v.prospect

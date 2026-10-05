@@ -96,8 +96,17 @@ export function Journee({
   const p = usePalette();
   const lien = useLien();
   const unites = unitesDuJour(visites, passages);
-  const absentToutLeJour = absences.some((a) => a.periode === 'journee');
-  const demiJournees = absences.filter((a) => a.periode !== 'journee').length;
+  // Absent toute la journée : une absence « journée », ou matin et après-midi (un commando ou un
+  // déplacement, lui, garde ses visites).
+  const parts = absences
+    .filter((a) => !a.avec_visites)
+    .reduce((n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1), 0);
+  const absentToutLeJour = parts >= 2;
+  // Une activité de plus ne se déclare que sur une période encore libre.
+  const occupees = absences.reduce(
+    (n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1),
+    0,
+  );
   const preparation = modifiable && jour.planifiable && !reordonner;
 
   function deplacer(index: number, sens: -1 | 1) {
@@ -215,7 +224,7 @@ export function Journee({
               onPress={surAjouterVisite}
             />
           )}
-          {!absentToutLeJour && demiJournees < 2 && (
+          {occupees < 2 && (
             <LienAction
               icone="event-busy"
               libelle={t('absences.declarerCourt')}

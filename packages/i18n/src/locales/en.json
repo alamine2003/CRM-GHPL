@@ -134,7 +134,8 @@
     "imports": "Imports",
     "ciblage": "Target lists",
     "doublons": "Duplicates",
-    "propositions": "Proposals"
+    "propositions": "Proposals",
+    "validation": "Plans to approve"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -1377,11 +1378,11 @@
     "nombre_other": "Stop · {{count}} prescribers"
   },
   "absences": {
-    "declarer": "Declare an absence",
-    "declarerLe": "Declare an absence on {{jour}}",
-    "nouvelle": "New absence",
-    "modifier": "Edit absence",
-    "aide": "A half-day absence halves the day's targets; a full day receives no visits.",
+    "declarer": "Declare an activity",
+    "declarerLe": "Declare an activity on {{jour}}",
+    "nouvelle": "New activity",
+    "modifier": "Edit activity",
+    "aide": "An absence lowers the day's targets. A commando, a trip or a joint visit keeps its visits.",
     "champs": {
       "date": "Day",
       "type": "Type",
@@ -1392,7 +1393,10 @@
       "formation": "Training",
       "reunion": "Meeting",
       "maladie": "Sick",
-      "autre": "Other"
+      "autre": "Other",
+      "commando": "Commando",
+      "deplacement": "Trip",
+      "accompagnement": "Joint visit with supervisor"
     },
     "periodes": {
       "journee": "Full day",
@@ -1403,11 +1407,19 @@
     "commentaire": "Comment (optional)",
     "motif": "Give the reason",
     "motifRequis": "An “Other” absence needs a reason.",
-    "retirer": "Remove this absence",
-    "declaree": "Absence declared.",
-    "modifiee": "Absence saved.",
-    "retiree": "Absence removed.",
-    "declarerCourt": "Absence"
+    "retirer": "Remove this activity",
+    "declaree": "Activity declared.",
+    "modifiee": "Activity saved.",
+    "retiree": "Activity removed.",
+    "declarerCourt": "Activity",
+    "sansVisite": "Absence, no visits",
+    "avecVisites": "Activity with visits",
+    "explication": "Explanation: where, with whom, why",
+    "explicationRequise": "Explain this activity: where, with whom, and why.",
+    "demande": "Who decided it?",
+    "demandeMoi": "My own decision",
+    "demandeSuperviseur": "Requested by my supervisor",
+    "parSuperviseur": "Requested by the supervisor"
   },
   "controles": {
     "titre": "To check",
@@ -1566,5 +1578,27 @@
     "bloquantsPortail_other": "The {{count}} blocking issues listed under “To check” prevent submission.",
     "corriger_one": "Open the visit to fix",
     "corriger_other": "Open the first visit to fix"
+  },
+  "validation": {
+    "enAttente_one": "{{count}} plan waiting, oldest first",
+    "enAttente_other": "{{count}} plans waiting, oldest first",
+    "aucun": "No plan waiting: every submitted plan from your team has been handled.",
+    "visites_one": "{{count}} visit",
+    "visites_other": "{{count}} visits",
+    "alertes": {
+      "seuil_bas_one": "Below minimum: {{count}} day",
+      "seuil_bas_other": "Below minimum: {{count}} days",
+      "seuil_haut_one": "Above maximum: {{count}} day",
+      "seuil_haut_other": "Above maximum: {{count}} days",
+      "hors_cible_one": "{{count}} visit outside the target list",
+      "hors_cible_other": "{{count}} visits outside the target list",
+      "hors_secteur_one": "{{count}} visit outside the sectors",
+      "hors_secteur_other": "{{count}} visits outside the sectors",
+      "a_non_planifie_one": "A prospects missed this month",
+      "a_non_planifie_other": "A prospects missed this month"
+    },
+    "depuis_one": "Waiting for {{count}} day",
+    "depuis_other": "Waiting for {{count}} days",
+    "depuisAujourdhui": "Submitted today"
   }
 }

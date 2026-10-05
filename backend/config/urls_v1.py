@@ -188,6 +188,7 @@ urlpatterns = [
     ),
     path("plannings/", pln.PlanningsVue.as_view(), name="plannings"),
     path("plannings/semaine/", pln.SemaineVue.as_view(), name="planning-semaine"),
+    path("plannings/a-valider/", pln.FileValidationVue.as_view(), name="plannings-a-valider"),
     path("plannings/<uuid:id>/visites/", pln.VisitesPlanningVue.as_view(), name="planning-visites"),
     path("visites/<uuid:id>/", pln.VisiteVue.as_view(), name="visite"),
     path("visites/<uuid:id>/retirer/", pln.VisiteRetraitVue.as_view(), name="visite-retirer"),

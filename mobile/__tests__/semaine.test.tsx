@@ -325,7 +325,7 @@ test('PLN-009 : le délégué déclare une demi-journée de formation', async ()
     semaine: jest.fn(async () => EN_PREPARATION),
     declarerAbsence,
   } as unknown as Partial<ClientApi['plannings']>);
-  await fireEvent.press(await screen.findByLabelText('Déclarer une absence le jeudi 29 octobre'));
+  await fireEvent.press(await screen.findByLabelText('Déclarer une activité le jeudi 29 octobre'));
   // « Autre » exige un motif ; la formation, non.
   await fireEvent.press(screen.getByText('Autre'));
   expect(screen.getByText('Une absence « Autre » demande un motif.')).toBeTruthy();
@@ -338,8 +338,9 @@ test('PLN-009 : le délégué déclare une demi-journée de formation', async ()
     type: 'formation',
     periode: 'matin',
     commentaire: '',
+    demande_superviseur: false,
   });
-  expect(await screen.findByText('Absence déclarée.')).toBeTruthy();
+  expect(await screen.findByText('Activité déclarée.')).toBeTruthy();
 });
 
 test('PLN-009 : une journée entière d’absence ne propose plus d’ajouter une visite', async () => {
@@ -348,7 +349,13 @@ test('PLN-009 : une journée entière d’absence ne propose plus d’ajouter un
       ...EN_PREPARATION,
       visites: [],
       absences: [
-        { id: 'a1', date: '2026-10-28', periode: 'journee' as const, type: 'conge' as const },
+        {
+          id: 'a1',
+          date: '2026-10-28',
+          periode: 'journee' as const,
+          type: 'conge' as const,
+          avec_visites: false,
+        },
       ],
     })),
   });
@@ -930,4 +937,53 @@ test('un refus du serveur dans la vue jour n’affiche pas une semaine gardée',
   );
   expect(await screen.findByText('Vous n’occupez aucun poste cette semaine.')).toBeTruthy();
   expect(screen.queryByText(/^Hors ligne/)).toBeNull();
+});
+
+test('PLN-018 CA1 : un déplacement s’explique et dit qui l’a demandé', async () => {
+  const declarerAbsence = jest.fn(async () => ({}));
+  await rendre({
+    semaine: jest.fn(async () => EN_PREPARATION),
+    declarerAbsence,
+  } as unknown as Partial<ClientApi['plannings']>);
+  await fireEvent.press(await screen.findByLabelText('Déclarer une activité le jeudi 29 octobre'));
+  await fireEvent.press(screen.getByText('Déplacement'));
+  // Sans explication, rien ne part.
+  expect(screen.getByText('Expliquez cette activité : où, avec qui, et pourquoi.')).toBeTruthy();
+  await fireEvent.changeText(
+    screen.getByLabelText('Explication : où, avec qui, pourquoi'),
+    'Aide à un collègue à Mbour',
+  );
+  await fireEvent.press(screen.getByText('Demandé par mon superviseur'));
+  await fireEvent.press(screen.getByText('Enregistrer'));
+  expect(declarerAbsence).toHaveBeenCalledWith('pl1', {
+    id: 'uuid-du-telephone',
+    date: '2026-10-29',
+    type: 'deplacement',
+    periode: 'journee',
+    commentaire: 'Aide à un collègue à Mbour',
+    demande_superviseur: true,
+  });
+});
+
+test('PLN-018 CA2 : un jour de commando garde ses visites et se lit comme du travail', async () => {
+  await rendre({
+    semaine: jest.fn(async () => ({
+      ...EN_PREPARATION,
+      visites: [],
+      absences: [
+        {
+          id: 'a1',
+          date: '2026-10-28',
+          periode: 'journee' as const,
+          type: 'commando' as const,
+          commentaire: 'Commando à Thiès, lancement produit',
+          avec_visites: true,
+        },
+      ],
+    })),
+  });
+  expect(await screen.findByText('Commando · Journée')).toBeTruthy();
+  expect(screen.getByText('Commando à Thiès, lancement produit')).toBeTruthy();
+  // Les quatre jours planifiables restent ouverts aux visites, mercredi compris.
+  expect(screen.getAllByText('Ajouter une visite')).toHaveLength(4);
 });

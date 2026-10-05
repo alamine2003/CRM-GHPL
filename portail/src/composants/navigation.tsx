@@ -7,6 +7,7 @@ import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import CompareArrowsRounded from '@mui/icons-material/CompareArrowsRounded';
 import EditNoteRounded from '@mui/icons-material/EditNoteRounded';
 import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
+import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import HomeRounded from '@mui/icons-material/HomeRounded';
 import MedicationRounded from '@mui/icons-material/MedicationRounded';
@@ -44,6 +45,14 @@ export const ENTREES: Entree[] = [
     section: 'activite',
     chemin: '/planning',
     visible: peut('plannings.preparer'),
+  },
+  {
+    // PLN-011 : file des plannings en attente du superviseur.
+    cle: 'validation',
+    icone: <AssignmentTurnedInRounded />,
+    section: 'activite',
+    chemin: '/validation',
+    visible: peut('plannings.valider'),
   },
   {
     cle: 'prospects',
