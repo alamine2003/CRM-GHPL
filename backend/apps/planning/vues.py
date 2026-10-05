@@ -151,6 +151,7 @@ def _semaine(pays, debut: date, planning: Planning | None) -> dict:
         "controles": controles.bilan(planning) if planning else None,
         "kilometrage": kilometrage.estimer(planning) if planning else None,
         "reseaux": _reseaux(planning) if planning else [],
+        "approbation": services.suivi_apres_approbation(planning) if planning else None,
     }
 
 

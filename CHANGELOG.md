@@ -2,6 +2,30 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.7] — Verrouillage et modifications après approbation
+
+Septième jalon du cycle 0.3 « Validation des plannings ».
+
+### Ajouté — planning approuvé verrouillé (PLN-015, RG-018)
+
+- **CA1 — modification mineure** : changer l'heure d'une visite dans sa journée reste libre ; le planning reste approuvé. Le changement est tracé (journal d'audit, version approuvée) et le superviseur le lit : « Heure changée depuis l'approbation : Awa NDIAYE · mar. 13 : 09:00 → 10:30 ».
+- **CA2 — modification majeure** : changer le jour, le prospect, le lieu, l'objectif ou la note, ajouter ou retirer une visite, déclarer une activité, crée aussitôt une version soumise, « Version n · modification après approbation », jamais en retard ; le superviseur est notifié (« … (modification, version n) »). Il voit ce qui attend sa décision (« À décider : jeu. 8 15:00 · Malick BA », retraits) et les visites concernées portent « En attente » ; les autres restent prévues selon la version approuvée.
+- Un changement majeur qui ne passerait pas le contrôle final est refusé et rien ne change ; tant qu'une modification attend la décision, le planning ne change plus.
+- **Verrouillage** : une journée passée ne se modifie plus, ni ne reçoit une visite déplacée.
+- Au téléphone, le formulaire d'une visite dit la règle et ce que fera l'enregistrement (« Seule l'heure change : le planning reste approuvé » ou « Ce changement sera soumis à votre superviseur »), avec « Soumettre la modification » et « Retirer et soumettre » ; les journées à venir proposent encore « Ajouter une visite ». Au portail, le délégué lit son planning approuvé et apprend qu'il se modifie depuis le téléphone.
+- L'historique des versions dit le motif de chacune (« Après révision », « Modification après approbation »).
+- Hypothèses à confirmer (prd.md §14.19) : objectif et note comptent comme majeurs ; pas de pose depuis la liste cible ni de copie sur un planning approuvé ; modification au portail plus tard.
+
+### Design
+
+Revue sur le rendu réel : téléphone à 360 px et en sombre (semaine approuvée, formulaire après approbation, changement mineur puis majeur, semaine en attente de décision), portail bureau, téléphone et sombre (consultation approuvée avec heure changée, file et consultation d'une modification, colonnes de la semaine), planning du délégué au portail. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Consultation d'une modification (portail) | Ce qui attendait la décision n'apparaissait qu'en bas de page, sans dire quelles visites. | « À décider : jeu. 8 15:00 · Malick BA » et la référence, juste sous le bandeau de décision. |
+| Colonnes de la semaine (portail) | « En attente d'approbation » sur deux lignes, l'icône décalée, dans une carte étroite. | « En attente », le détail en infobulle. |
+| Planning du délégué (portail) | La phrase « utilisez l'application mobile » flottait entre deux cartes. | Alerte d'information en tête de page. |
+
 ## [0.3.6] — Historique et comparaison des versions
 
 Sixième jalon du cycle 0.3 « Validation des plannings ».

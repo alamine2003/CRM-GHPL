@@ -84,3 +84,15 @@ export function lignesControles(
     );
   return lignes;
 }
+
+/** « Version 2 · après révision » ou « Version 3 · modification après approbation » (PLN-015). */
+export function libelleVersion(
+  planning: { numero_version: number | null; motif_version: string | null } | null | undefined,
+  t: Traduire,
+) {
+  const numero = planning?.numero_version ?? 1;
+  if (numero <= 1) return '';
+  return planning?.motif_version === 'modification'
+    ? t('apresApprobation.version', { numero })
+    : t('resoumission.version', { numero });
+}

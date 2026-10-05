@@ -20,7 +20,7 @@ import { unitesDuJour } from './Journee';
 import { police } from './polices';
 import { BandeauHorsLigne } from './Attente';
 import { estTransitoire } from './Brouillons';
-import { garderSemaine, semaineGardee } from './semaineLocale';
+import { garderSemaine, jourIso, semaineGardee } from './semaineLocale';
 import { messageErreur, useSession } from './session';
 
 /** « 12,4 km » dans la langue de l'interface. */
@@ -172,13 +172,14 @@ export function VueJour({ jour }: { jour: string }) {
           })}
         </Carte>
       )}
-      {semaine.modifiable && semaine.planning && (
-        <Bouton
-          secondaire
-          libelle={t('jour.modifier')}
-          onPress={() => routeur.navigate({ pathname: '/semaine', params: { jour } })}
-        />
-      )}
+      {(semaine.modifiable || (semaine.approbation?.modifiable && jour >= jourIso(new Date()))) &&
+        semaine.planning && (
+          <Bouton
+            secondaire
+            libelle={t('jour.modifier')}
+            onPress={() => routeur.navigate({ pathname: '/semaine', params: { jour } })}
+          />
+        )}
     </>
   );
 }
@@ -325,7 +326,9 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
           onPress={() => routeur.push(`/lieu/${visite.etablissement!.id}`)}
         />
       )}
-      {semaine.modifiable && (
+      {/* Approuvé, une visite à venir se modifie encore (PLN-015). */}
+      {(semaine.modifiable ||
+        (semaine.approbation?.modifiable && visite.date >= jourIso(new Date()))) && (
         <Bouton
           libelle={t('visites.modifier')}
           onPress={() =>

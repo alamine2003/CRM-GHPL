@@ -64,7 +64,14 @@ export function VueVersions({ planning, fuseau }: { planning: string; fuseau?: s
               <Texte variante="discret">
                 {t('versions.soumise', { date: dateHeure(v.soumis_le, i18n.language, fuseau) })}
               </Texte>
-              <Texte variante="discret">{resumeChangements(v.changements, t)}</Texte>
+              <Texte variante="discret">
+                {[
+                  v.motif !== 'soumission' ? t(`versions.motifs.${v.motif}`) : '',
+                  resumeChangements(v.changements, t),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Texte>
             </View>
             <MaterialIcons
               name={ouverte === v.numero ? 'expand-less' : 'expand-more'}

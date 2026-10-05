@@ -2618,6 +2618,7 @@ export interface components {
       kilometrage: components['schemas']['Kilometrage'] | null;
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
+      approbation: components['schemas']['SuiviApprobation'] | null;
       delegue: components['schemas']['Delegue'];
       remplace: components['schemas']['Delegue'] | null;
       postes: string[];
@@ -2814,9 +2815,12 @@ export interface components {
       remarques: components['schemas']['Remarque'][];
       visites: number;
       changements: components['schemas']['ResumeComparaison'] | null;
+      motif: components['schemas']['MotifVersionEnum'];
+      mineures: number;
       contenu_visites: components['schemas']['VisiteFigee'][];
       contenu_activites: components['schemas']['ActiviteFigee'][];
       comparaison: components['schemas']['ComparaisonVersions'] | null;
+      modifications: components['schemas']['ModificationMineure'][];
     };
     Division: {
       /** Format: uuid */
@@ -2834,12 +2838,20 @@ export interface components {
       semaine?: string;
       numero_semaine?: number;
       version?: number;
+      motif?: components['schemas']['DonneesNotificationMotifEnum'];
       /** Format: date */
       debut?: string;
       /** Format: date */
       fin?: string;
       nom?: string;
     };
+    /**
+     * @description * `soumission` - soumission
+     *     * `revision` - revision
+     *     * `modification` - modification
+     * @enum {string}
+     */
+    DonneesNotificationMotifEnum: 'soumission' | 'revision' | 'modification';
     Doublon: {
       /** Format: uuid */
       id: string;
@@ -3156,6 +3168,18 @@ export interface components {
       visite: components['schemas']['VisiteFigee'];
       champs: components['schemas']['ChampsEnum'][];
     };
+    /** @description PLN-015 CA1 : l'heure d'une visite changée dans sa journée après l'approbation. */
+    ModificationMineure: {
+      /** Format: uuid */
+      visite: string;
+      prospect: string | null;
+      /** Format: date */
+      date: string;
+      avant: string | null;
+      apres: string | null;
+      /** Format: date-time */
+      le: string;
+    };
     ModificationParametre: {
       valeur: unknown;
     };
@@ -3192,6 +3216,13 @@ export interface components {
       secteurs: components['schemas']['Resume'][];
       superviseur: components['schemas']['Personne'] | null;
     };
+    /**
+     * @description * `soumission` - Soumission
+     *     * `revision` - Après révision
+     *     * `modification` - Modification après approbation
+     * @enum {string}
+     */
+    MotifVersionEnum: 'soumission' | 'revision' | 'modification';
     Notification: {
       /** Format: uuid */
       id: string;
@@ -3443,6 +3474,8 @@ export interface components {
       readonly echeance: string;
       readonly decision: components['schemas']['Decision'] | null;
       readonly numero_version: number | null;
+      readonly motif_version:
+        (components['schemas']['MotifVersionEnum'] | components['schemas']['NullEnum']) | null;
     };
     /**
      * @description Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et
@@ -3979,6 +4012,7 @@ export interface components {
       kilometrage: components['schemas']['Kilometrage'] | null;
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
+      approbation: components['schemas']['SuiviApprobation'] | null;
     };
     Session: {
       /** Format: uuid */
@@ -4030,6 +4064,17 @@ export interface components {
     StatutLotEnum: 'simule' | 'termine' | 'echec';
     StatutPays: {
       statut: components['schemas']['StatutEnum'];
+    };
+    /**
+     * @description Un planning déjà approuvé (PLN-015, RG-018) : sa référence d'exécution, ses changements
+     *     mineurs et, pendant une modification majeure, les visites en attente de décision.
+     */
+    SuiviApprobation: {
+      reference: number;
+      modifiable: boolean;
+      en_attente: string[];
+      retraits: components['schemas']['VisiteFigee'][];
+      mineures: components['schemas']['ModificationMineure'][];
     };
     Synthese: {
       divisions: number;
@@ -4163,6 +4208,8 @@ export interface components {
       remarques: components['schemas']['Remarque'][];
       visites: number;
       changements: components['schemas']['ResumeComparaison'] | null;
+      motif: components['schemas']['MotifVersionEnum'];
+      mineures: number;
     };
     Visite: {
       /** Format: uuid */

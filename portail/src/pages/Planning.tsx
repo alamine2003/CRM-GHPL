@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { EnTeteCarte, EnTetePage, Ligne, Potentiel } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { HistoriqueVersions } from '../composants/HistoriqueVersions';
+import { AttenteApprobation, HeuresChangees } from '../composants/SuiviApprobation';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 import { CarteControles, Colonne, DetailVisite } from '../composants/SemainePlanning';
@@ -159,7 +160,9 @@ export default function Planning() {
               <Typography variant="body2">{t('revision.aCorrigerAide')}</Typography>
             </Alert>
           )}
+          <AttenteApprobation semaine={s} jourCourt={jourCourt} delegue />
           <Resume semaine={s} agir={agir} jourCourt={jourCourt} />
+          <HeuresChangees semaine={s} jourCourt={jourCourt} />
           {s.planning && <HistoriqueVersions planning={s.planning.id} fuseau={s.fuseau} />}
           <Box
             sx={{

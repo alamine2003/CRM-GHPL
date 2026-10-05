@@ -14,6 +14,8 @@ const BASE = {
   commentaire: '',
   remarques: [],
   visites: 2,
+  motif: 'soumission' as const,
+  mineures: 0,
 };
 const VERSIONS: VersionPlanning[] = [
   {
@@ -53,6 +55,7 @@ const DETAIL: DetailVersion = {
     visite('c', '2026-10-16', '15:00', 'Binta FICTIVE'),
   ],
   contenu_activites: [],
+  modifications: [],
   comparaison: {
     ajoutees: [visite('c', '2026-10-16', '15:00', 'Binta FICTIVE')],
     retirees: [visite('b', '2026-10-14', '11:00', 'Moussa FICTIF')],

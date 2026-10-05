@@ -11,6 +11,10 @@ class DonneesNotificationSerializer(serializers.Serializer):
     numero_semaine = serializers.IntegerField(required=False)
     #: Planning soumis : numéro de la version à décider.
     version = serializers.IntegerField(required=False)
+    #: Planning soumis : première soumission, après révision ou modification (PLN-015).
+    motif = serializers.ChoiceField(
+        choices=["soumission", "revision", "modification"], required=False
+    )
     #: Remplacement attribué (ORG-013) : période et superviseur remplacé.
     debut = serializers.DateField(required=False)
     fin = serializers.DateField(required=False)

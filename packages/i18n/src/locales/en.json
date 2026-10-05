@@ -1646,7 +1646,8 @@
     "revision_demandee": "Revision requested on your planning for week {{numero}}",
     "remplacement_attribue": "You replace {{nom}} from {{debut}} to {{fin}}",
     "planning_soumis": "{{nom}}'s planning to decide: week {{numero}}{{suite}}",
-    "version": " (version {{version}})"
+    "version": " (version {{version}})",
+    "versionModification": " (change, version {{version}})"
   },
   "revision": {
     "demander": "Request a revision",
@@ -1750,6 +1751,33 @@
     },
     "enRemplacement": "as a replacement",
     "remarques_one": "{{count}} remark on a visit",
-    "remarques_other": "{{count}} remarks on visits"
+    "remarques_other": "{{count}} remarks on visits",
+    "motifs": {
+      "revision": "After revision",
+      "modification": "Change after approval"
+    }
+  },
+  "apresApprobation": {
+    "regle": "Planning approved. Changing a visit's time within its day remains free; any other change (day, prospect, place, objective, addition, removal) is submitted to your supervisor.",
+    "regleCourte": "Changing the time remains free; any other change is submitted to your supervisor.",
+    "attente": "Change submitted: it awaits your supervisor's decision. The other visits remain planned.",
+    "enAttente": "Awaiting approval",
+    "retraits_one": "Removal pending: {{liste}}",
+    "retraits_other": "Removals pending: {{liste}}",
+    "majeure": "This change will be submitted to your supervisor: the visit will await the decision, the others remain planned.",
+    "mineure": "Only the time changes: the planning stays approved.",
+    "soumettre": "Submit the change",
+    "retirerSoumettre": "Remove and submit",
+    "soumise": "Change submitted to your supervisor.",
+    "heureChangee": "Time changed: the planning stays approved.",
+    "titreMineures_one": "Time changed since approval",
+    "titreMineures_other": "Times changed since approval",
+    "ligneMineure": "{{prospect}} · {{jour}}: {{avant}} → {{apres}}",
+    "sansHeure": "no time",
+    "version": "Version {{numero}} · change after approval",
+    "reference": "Visits not affected remain planned as in approved version {{numero}}.",
+    "surTelephone": "To change it, use the mobile app: a visit's time changes freely, the rest is submitted to your supervisor.",
+    "aDecider": "To decide: {{liste}}",
+    "enAttenteCourt": "Pending"
   }
 }

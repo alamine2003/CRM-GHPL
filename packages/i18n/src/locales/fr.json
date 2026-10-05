@@ -1646,7 +1646,8 @@
     "revision_demandee": "Révision demandée sur votre planning de la semaine {{numero}}",
     "remplacement_attribue": "Vous remplacez {{nom}} du {{debut}} au {{fin}}",
     "planning_soumis": "Planning de {{nom}} à décider : semaine {{numero}}{{suite}}",
-    "version": " (version {{version}})"
+    "version": " (version {{version}})",
+    "versionModification": " (modification, version {{version}})"
   },
   "revision": {
     "demander": "Demander une révision",
@@ -1750,6 +1751,33 @@
     },
     "enRemplacement": "en remplacement",
     "remarques_one": "{{count}} remarque sur une visite",
-    "remarques_other": "{{count}} remarques sur des visites"
+    "remarques_other": "{{count}} remarques sur des visites",
+    "motifs": {
+      "revision": "Après révision",
+      "modification": "Modification après approbation"
+    }
+  },
+  "apresApprobation": {
+    "regle": "Planning approuvé. Changer l'heure d'une visite dans sa journée reste libre ; tout autre changement (jour, prospect, lieu, objectif, ajout, retrait) est soumis à votre superviseur.",
+    "regleCourte": "Changer l'heure reste libre ; tout autre changement est soumis à votre superviseur.",
+    "attente": "Modification soumise : elle attend la décision de votre superviseur. Les autres visites restent prévues.",
+    "enAttente": "En attente d'approbation",
+    "retraits_one": "Retrait en attente : {{liste}}",
+    "retraits_other": "Retraits en attente : {{liste}}",
+    "majeure": "Ce changement sera soumis à votre superviseur : la visite attendra sa décision, les autres restent prévues.",
+    "mineure": "Seule l'heure change : le planning reste approuvé.",
+    "soumettre": "Soumettre la modification",
+    "retirerSoumettre": "Retirer et soumettre",
+    "soumise": "Modification soumise à votre superviseur.",
+    "heureChangee": "Heure changée : le planning reste approuvé.",
+    "titreMineures_one": "Heure changée depuis l'approbation",
+    "titreMineures_other": "Heures changées depuis l'approbation",
+    "ligneMineure": "{{prospect}} · {{jour}} : {{avant}} → {{apres}}",
+    "sansHeure": "sans heure",
+    "version": "Version {{numero}} · modification après approbation",
+    "reference": "Les visites non concernées restent prévues selon la version {{numero}} approuvée.",
+    "surTelephone": "Pour le modifier, utilisez l'application mobile : l'heure d'une visite change librement, le reste est soumis à votre superviseur.",
+    "aDecider": "À décider : {{liste}}",
+    "enAttenteCourt": "En attente"
   }
 }

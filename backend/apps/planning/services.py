@@ -15,11 +15,13 @@ from apps.socle.models import Pays
 from apps.socle.services import aujourdhui
 
 from .calendrier import jours_de_la_semaine, jours_planifiables, lundi
-from .etats import MODIFIABLES, StatutPlanning
+from .etats import APRES_APPROBATION, MODIFIABLES, StatutPlanning
 from .models import (
     AVEC_VISITES,
     Activite,
+    Decision,
     JourFerie,
+    MotifVersion,
     Passage,
     Periode,
     Planning,
@@ -170,14 +172,84 @@ def _verrouiller(planning: Planning) -> None:
     )
 
 
-def _exiger_modifiable(planning: Planning) -> None:
+def _exiger_modifiable(planning: Planning, *, apres_approbation: bool = False) -> bool:
+    """Le planning se prépare ou se révise ; ou bien, pour une commande qui le permet, il est
+    approuvé : la commande rend alors vrai, et le changement sera mineur et tracé, ou majeur et
+    soumis de nouveau (PLN-015, RG-018). Une modification déjà soumise attend sa décision."""
     _verrouiller(planning)
-    if planning.statut not in MODIFIABLES:
+    if planning.statut in MODIFIABLES:
+        return False
+    if apres_approbation and planning.statut in APRES_APPROBATION:
+        return True
+    if planning.statut == StatutPlanning.SOUMIS and reference(planning) is not None:
         raise ErreurMetier(
-            "planning_non_modifiable",
-            _("Ce planning n'est plus modifiable dans son état actuel."),
+            "modification_en_attente",
+            _("Une modification de ce planning attend la décision de votre superviseur : la "
+              "suite attendra sa réponse."),
             status.HTTP_409_CONFLICT,
+        )  # fmt: skip
+    raise ErreurMetier(
+        "planning_non_modifiable",
+        _("Ce planning n'est plus modifiable dans son état actuel."),
+        status.HTTP_409_CONFLICT,
+    )
+
+
+def _exiger_jour_ouvert(planning: Planning, jour: date) -> None:
+    """Verrouillage (PLN-015) : une fois le planning approuvé, une journée passée ne change
+    plus — ni ses visites, ni ses activités, ni ce qu'on voudrait y déplacer."""
+    if jour < aujourdhui(planning.pays) and reference(planning) is not None:
+        raise ErreurMetier(
+            "jour_passe",
+            _("Cette journée est passée : son planning ne se modifie plus."),
+            status.HTTP_409_CONFLICT,
+            champ="date",
         )
+
+
+def _modification_majeure(planning: Planning) -> None:
+    """PLN-015 CA2 : un changement majeur d'un planning approuvé (jour, prospect, ajout,
+    retrait) en fait une nouvelle version soumise ; les autres visites restent exécutables
+    selon la version approuvée. Un changement qui ne passerait pas le contrôle final est refusé
+    et rien ne change."""
+    _soumettre(planning, MotifVersion.MODIFICATION)
+
+
+def _heure(h) -> str | None:
+    return h.strftime("%H:%M") if h else None
+
+
+def _changements(visite: Visite, champs: dict) -> set[str]:
+    """Ce que la saisie change vraiment : le téléphone renvoie souvent tout le formulaire."""
+    actuels = {"date": visite.date, "heure": visite.heure, "prospect": visite.prospect_id,
+               "etablissement": visite.etablissement_id, "reseau": visite.reseau_id,
+               "objectif": visite.objectif, "note": visite.note}  # fmt: skip
+    differents = set()
+    for cle, valeur in champs.items():
+        if cle in ("prospect", "etablissement", "reseau"):
+            valeur = getattr(valeur, "pk", valeur)
+        elif cle in ("objectif", "note"):
+            valeur = (valeur or "").strip()
+        if cle in actuels and valeur != actuels[cle]:
+            differents.add(cle)
+    return differents
+
+
+def _tracer_mineures(planning: Planning, jour: date, avant: dict) -> None:
+    """PLN-015 CA1 : l'heure changée dans la journée est libre, mais tracée — au journal
+    d'audit et sur la version approuvée, où le superviseur la lit."""
+    ref = reference(planning)
+    le = timezone.now().isoformat()
+    for v in _visites_du_jour(planning, jour):
+        if v.pk in avant and avant[v.pk] != v.heure:
+            if ref is not None:
+                ref.modifications.append({"visite": str(v.pk), "date": jour.isoformat(),
+                                          "avant": _heure(avant[v.pk]), "apres": _heure(v.heure),
+                                          "le": le})  # fmt: skip
+            _auditer("visite.modification_mineure", v, planning=str(planning.pk),
+                     avant=_heure(avant[v.pk]), apres=_heure(v.heure))  # fmt: skip
+    if ref is not None:
+        ref.save(update_fields=["modifications", "modifie_le"])
 
 
 def _exiger_jour_planifiable(planning: Planning, jour: date) -> None:
@@ -345,7 +417,8 @@ def ajouter_visite(planning: Planning, id=None, **champs) -> Visite:
     _verrouiller(planning)
     if existante := _deja_envoye(Visite, planning, id):
         return existante
-    _exiger_modifiable(planning)
+    approuve = _exiger_modifiable(planning, apres_approbation=True)
+    _exiger_jour_ouvert(planning, champs["date"])
     visite = Visite(pays=planning.pays, planning=planning, date=champs["date"])
     if id is not None:
         visite.pk = id
@@ -357,12 +430,25 @@ def ajouter_visite(planning: Planning, id=None, **champs) -> Visite:
     visite.save()
     ranger(planning, visite.date)
     _auditer("visite.planification", visite, planning=str(planning.pk), date=str(visite.date))
+    if approuve:
+        _modification_majeure(planning)
     return visite
 
 
 @transaction.atomic
 def modifier_visite(visite: Visite, **champs) -> Visite:
-    _exiger_modifiable(visite.planning)
+    """Après approbation (PLN-015, RG-018), changer l'heure dans la journée est mineur : libre
+    et tracé, le planning reste approuvé (CA1) ; tout autre changement est majeur."""
+    planning = visite.planning
+    approuve = _exiger_modifiable(planning, apres_approbation=True)
+    _exiger_jour_ouvert(planning, visite.date)
+    if "date" in champs:
+        _exiger_jour_ouvert(planning, champs["date"])
+    changes = _changements(visite, champs)
+    if approuve and not changes:
+        return visite
+    mineure = approuve and changes <= {"heure"}
+    heures = {v.pk: v.heure for v in _visites_du_jour(planning, visite.date)} if mineure else {}
     avant = visite.date
     _appliquer(visite, champs)
     quitte = _accorder_passage(visite)
@@ -375,13 +461,18 @@ def modifier_visite(visite: Visite, **champs) -> Visite:
     ranger(visite.planning, visite.date)
     if visite.date != avant:
         ranger(visite.planning, avant)
+    if mineure:
+        _tracer_mineures(planning, visite.date, heures)
+    elif approuve:
+        _modification_majeure(planning)
     visite.refresh_from_db()
     return visite
 
 
 @transaction.atomic
 def retirer_visite(visite: Visite) -> Visite:
-    _exiger_modifiable(visite.planning)
+    approuve = _exiger_modifiable(visite.planning, apres_approbation=True)
+    _exiger_jour_ouvert(visite.planning, visite.date)
     passage = visite.passage
     visite.passage = None
     visite.save(update_fields=["passage", "modifie_le"])
@@ -389,13 +480,17 @@ def retirer_visite(visite: Visite) -> Visite:
     _dissoudre_si_seul(passage)
     ranger(visite.planning, visite.date)
     _auditer("visite.retrait", visite, planning=str(visite.planning_id), date=str(visite.date))
+    if approuve:
+        _modification_majeure(visite.planning)
     return visite
 
 
 @transaction.atomic
 def ordonner(planning: Planning, jour: date, visites: list) -> None:
-    """Le délégué place ses visites dans la journée ; l'heure garde le dernier mot."""
-    _exiger_modifiable(planning)
+    """Le délégué place ses visites dans la journée ; l'heure garde le dernier mot. Après
+    approbation, l'ordre d'une journée à venir reste libre : il ne change aucune heure."""
+    approuve = _exiger_modifiable(planning, apres_approbation=True)
+    _exiger_jour_ouvert(planning, jour)
     du_jour = {str(v.pk) for v in _visites_du_jour(planning, jour)}
     if {str(v) for v in visites} != du_jour or len(visites) != len(du_jour):
         raise ErreurMetier(
@@ -404,6 +499,8 @@ def ordonner(planning: Planning, jour: date, visites: list) -> None:
             champ="visites",
         )
     ranger(planning, jour, [str(v) for v in visites])
+    if approuve:
+        _auditer("planning.ordre_apres_approbation", planning, date=str(jour))
 
 
 # --- Soumission (PLN-008) ---------------------------------------------------------------------
@@ -486,17 +583,25 @@ def soumettre(planning: Planning) -> Planning:
     est acceptée et marquée en retard (CA1) ; le superviseur le voit (RG-016). Une nouvelle
     soumission après révision n'est jamais en retard (décision du 5 octobre 2026) : seul compte
     le retard de la première. Les responsables du poste, et leurs remplaçants, sont notifiés."""
+    # Seul un planning en préparation ou à réviser se soumet ici ; un planning approuvé se
+    # soumet de nouveau par sa modification majeure (PLN-015).
+    _exiger_modifiable(planning)
+    motif = (MotifVersion.REVISION if planning.statut == StatutPlanning.A_REVISER
+             else MotifVersion.SOUMISSION)  # fmt: skip
+    return _soumettre(planning, motif)
+
+
+def _soumettre(planning: Planning, motif: str) -> Planning:
+    """Contrôle final, version figée, notification des décideurs. Ni une correction après
+    révision, ni une modification après approbation ne sont en retard : seul compte le retard
+    de la première soumission."""
     from apps.notifications.models import TypeNotification
     from apps.notifications.services import notifier
 
     from . import controles
     from .etats import exiger_transition
 
-    # Seul un planning en préparation ou à réviser se soumet ici ; la modification d'un planning
-    # approuvé (approuvé → soumis) relève du cycle 0.3.
-    _exiger_modifiable(planning)
     exiger_transition(planning.statut, StatutPlanning.SOUMIS)
-    apres_revision = planning.statut == StatutPlanning.A_REVISER
     if sans := postes_sans_superviseur(planning):
         raise ErreurMetier(
             "sans_superviseur",
@@ -517,16 +622,16 @@ def soumettre(planning: Planning) -> Planning:
     maintenant = timezone.now()
     planning.statut = StatutPlanning.SOUMIS
     planning.soumis_le = maintenant
-    if not apres_revision:
+    if motif == MotifVersion.SOUMISSION:
         planning.en_retard = maintenant > echeance(planning)
     planning.save(update_fields=["statut", "soumis_le", "en_retard", "modifie_le"])
-    version = figer(planning)
+    version = figer(planning, motif)
     _auditer("planning.soumission", planning, semaine=str(planning.semaine),
-             en_retard=planning.en_retard, numero=version.numero)  # fmt: skip
+             en_retard=planning.en_retard, numero=version.numero, motif=motif)  # fmt: skip
     delegue = planning.delegue
     for destinataire in destinataires_decision(planning):
         notifier(destinataire, TypeNotification.PLANNING_SOUMIS, planning.pays,
-                 **_semaine_notifiee(planning), version=version.numero,
+                 **_semaine_notifiee(planning), version=version.numero, motif=motif,
                  nom=f"{delegue.first_name} {delegue.last_name}".strip())  # fmt: skip
     return planning
 
@@ -581,7 +686,7 @@ def _contenu(planning: Planning) -> dict:
     }  # fmt: skip
 
 
-def figer(planning: Planning) -> VersionPlanning:
+def figer(planning: Planning, motif: str = MotifVersion.SOUMISSION) -> VersionPlanning:
     """RG-037 : chaque soumission crée une version figée et consultable, numérotée."""
     from django.db.models import Max
 
@@ -589,6 +694,7 @@ def figer(planning: Planning) -> VersionPlanning:
     return VersionPlanning.objects.create(
         pays=planning.pays, planning=planning, numero=numero, contenu=_contenu(planning),
         soumis_le=planning.soumis_le or timezone.now(), en_retard=planning.en_retard,
+        motif=motif,
     )  # fmt: skip
 
 
@@ -603,6 +709,47 @@ def version_a_decider(planning: Planning) -> VersionPlanning:
 
 def derniere_decision(planning: Planning) -> VersionPlanning | None:
     return planning.versions.exclude(decision="").select_related("decide_par").first()
+
+
+def reference(planning: Planning) -> VersionPlanning | None:
+    """La dernière version approuvée : la référence d'exécution (RG-018)."""
+    return planning.versions.filter(decision=Decision.APPROUVE).first()
+
+
+def contenu_effectif(version: VersionPlanning) -> dict:
+    """Le contenu d'une version, avec les heures changées depuis son approbation (PLN-015)."""
+    heures = {m["visite"]: m["apres"] for m in version.modifications}
+    if not heures:
+        return version.contenu
+    return version.contenu | {
+        "visites": [v | {"heure": heures[v["id"]]} if v["id"] in heures else v
+                    for v in version.contenu.get("visites", [])]
+    }  # fmt: skip
+
+
+def suivi_apres_approbation(planning: Planning) -> dict | None:
+    """Où en est un planning déjà approuvé (PLN-015) : sa référence, ses changements mineurs,
+    et, pendant une modification majeure, les visites qui attendent la décision — les autres
+    restent exécutables selon la référence (CA2)."""
+    ref = reference(planning)
+    if ref is None:
+        return None
+    en_attente, retraits = [], []
+    if planning.statut in (StatutPlanning.SOUMIS, StatutPlanning.A_REVISER):
+        c = comparer(contenu_effectif(ref), _contenu(planning))
+        en_attente = sorted(
+            {v["id"] for v in c["ajoutees"]} | {d["visite"]["id"] for d in c["deplacees"]}
+            | {m["visite"]["id"] for m in c["modifiees"]}
+        )  # fmt: skip
+        retraits = c["retirees"]
+    noms = {v["id"]: (v.get("prospect") or {}).get("nom") for v in ref.contenu.get("visites", [])}
+    return {
+        "reference": ref.numero,
+        "modifiable": planning.statut in APRES_APPROBATION,
+        "en_attente": en_attente,
+        "retraits": retraits,
+        "mineures": [m | {"prospect": noms.get(m["visite"])} for m in ref.modifications],
+    }
 
 
 def _exiger_decideur(planning: Planning, par) -> str:
@@ -645,7 +792,6 @@ def approuver(planning: Planning, par) -> Planning:
 
     from . import controles
     from .etats import exiger_transition
-    from .models import Decision
 
     _verrouiller(planning)
     exiger_transition(planning.statut, StatutPlanning.APPROUVE)
@@ -674,7 +820,6 @@ def demander_revision(planning: Planning, par, commentaire: str = "", remarques=
     from apps.notifications.services import notifier
 
     from .etats import exiger_transition
-    from .models import Decision
 
     _verrouiller(planning)
     exiger_transition(planning.statut, StatutPlanning.A_REVISER)
@@ -746,7 +891,16 @@ def lieu_principal(prospect, jour: date, delegue=None):
 @transaction.atomic
 def poser_depuis_cible(planning: Planning, jour: date, prospects: list) -> list[Visite]:
     """CA1 : des prospects de la liste cible posés sur un jour deviennent des visites
-    pré-remplies — prospect et établissement principal ; le reste se complète ensuite."""
+    pré-remplies — prospect et établissement principal ; le reste se complète ensuite.
+    Sur un planning approuvé, chaque ajout est soumis aussitôt (PLN-015) : il se fait complet,
+    une visite à la fois."""
+    if _exiger_modifiable(planning, apres_approbation=True):
+        raise ErreurMetier(
+            "ajout_incomplet",
+            _("Ce planning est approuvé : chaque visite ajoutée est soumise aussitôt à votre "
+              "superviseur. Ajoutez-la complète, une à une."),
+            status.HTTP_409_CONFLICT,
+        )  # fmt: skip
     return [
         ajouter_visite(
             planning, date=jour, prospect=p, etablissement=lieu_principal(p, jour, planning.delegue)
@@ -972,7 +1126,8 @@ def declarer_activite(planning: Planning, *, date: date, type: str, periode: str
     _verrouiller(planning)
     if existante := _deja_envoye(Activite, planning, id):
         return existante
-    _exiger_modifiable(planning)
+    approuve = _exiger_modifiable(planning, apres_approbation=True)
+    _exiger_jour_ouvert(planning, date)
     activite = Activite(pays=planning.pays, planning=planning, date=date, type=type,
                       periode=periode, commentaire=(commentaire or "").strip(),
                       demande_superviseur=demande_superviseur)  # fmt: skip
@@ -982,12 +1137,17 @@ def declarer_activite(planning: Planning, *, date: date, type: str, periode: str
     activite.save()
     _auditer("activite.declaration", activite, planning=str(planning.pk), date=str(date),
              periode=periode, type=type)  # fmt: skip
+    if approuve:
+        _modification_majeure(planning)
     return activite
 
 
 @transaction.atomic
 def modifier_activite(activite: Activite, **champs) -> Activite:
-    _exiger_modifiable(activite.planning)
+    approuve = _exiger_modifiable(activite.planning, apres_approbation=True)
+    _exiger_jour_ouvert(activite.planning, activite.date)
+    if "date" in champs:
+        _exiger_jour_ouvert(activite.planning, champs["date"])
     if "commentaire" in champs:
         champs["commentaire"] = (champs["commentaire"] or "").strip()
     for cle, valeur in champs.items():
@@ -996,15 +1156,20 @@ def modifier_activite(activite: Activite, **champs) -> Activite:
     activite.save()
     _auditer("activite.modification", activite, planning=str(activite.planning_id),
              champs=sorted(champs))  # fmt: skip
+    if approuve:
+        _modification_majeure(activite.planning)
     return activite
 
 
 @transaction.atomic
 def retirer_activite(activite: Activite) -> Activite:
-    _exiger_modifiable(activite.planning)
+    approuve = _exiger_modifiable(activite.planning, apres_approbation=True)
+    _exiger_jour_ouvert(activite.planning, activite.date)
     activite.archiver()
     _auditer("activite.retrait", activite, planning=str(activite.planning_id),
              date=str(activite.date))  # fmt: skip
+    if approuve:
+        _modification_majeure(activite.planning)
     return activite
 
 
@@ -1050,6 +1215,10 @@ def versions_avec_comparaison(planning: Planning) -> list[tuple[VersionPlanning,
     versions = list(planning.versions.select_related("decide_par").order_by("numero"))
     resultat, precedente = [], None
     for v in versions:
-        resultat.append((v, comparer(precedente.contenu, v.contenu) if precedente else None))
+        # Les heures changées après approbation sont tracées à part (PLN-015) : la version
+        # suivante se compare à la référence telle qu'elle était exécutée.
+        resultat.append(
+            (v, comparer(contenu_effectif(precedente), v.contenu) if precedente else None)
+        )
         precedente = v
     return list(reversed(resultat))

@@ -113,7 +113,7 @@ export default function EcranSemaine() {
           // Visite demandée depuis son détail : son formulaire s'ouvre, une seule fois.
           const visite = s.visites.find((v) => v.id === aModifier.current);
           aModifier.current = undefined;
-          if (visite && s.modifiable) {
+          if (visite && (s.modifiable || s.approbation?.modifiable)) {
             setEdition({ objet: 'visite', jour: visite.date, visite });
           }
         })
@@ -249,6 +249,11 @@ export default function EcranSemaine() {
   const visites = semaine?.visites ?? [];
   const aCompleter = visites.filter((v) => v.manquants.length > 0).length;
   const modifiable = !!semaine?.planning && semaine.modifiable;
+  // PLN-015 : approuvé, le planning se modifie encore — l'heure librement, le reste soumis.
+  const suivi = semaine?.approbation ?? null;
+  const apresApprobation = !!suivi?.modifiable;
+  const enAttente = new Set(suivi?.en_attente ?? []);
+  const enDecision = !!suivi && !suivi.modifiable && semaine?.planning?.statut === 'soumis';
   // PLN-013 : pendant la révision, le commentaire et les remarques par visite.
   const remarques = remarquesDeRevision(semaine?.planning ?? null);
   const revision =
@@ -394,6 +399,25 @@ export default function EcranSemaine() {
                   modifiable={modifiable}
                   fuseau={semaine.fuseau}
                 />
+                {apresApprobation && (
+                  <Texte variante="discret">{t('apresApprobation.regleCourte')}</Texte>
+                )}
+                {enDecision && <Alerte type="info">{t('apresApprobation.attente')}</Alerte>}
+                {enDecision && suivi && suivi.retraits.length > 0 && (
+                  <Texte variante="discret">
+                    {t('apresApprobation.retraits', {
+                      count: suivi.retraits.length,
+                      liste: suivi.retraits
+                        .map(
+                          (v) =>
+                            `${date(v.date, { weekday: 'short', day: 'numeric' })}${
+                              v.heure ? ` ${v.heure}` : ''
+                            } · ${v.prospect?.nom ?? t('visites.sansProspect')}`,
+                        )
+                        .join(', '),
+                    })}
+                  </Texte>
+                )}
                 {(semaine.planning.numero_version ?? 0) > 1 && (
                   <LienAction
                     icone="history"
@@ -544,11 +568,15 @@ export default function EcranSemaine() {
                     reordonner={reordonner === j.date}
                     controles={semaine.controles}
                     remarques={remarques}
+                    apresApprobation={apresApprobation && j.date >= aujourdhui}
+                    enAttente={enAttente}
                     libelleJour={date(j.date, { weekday: 'long', day: 'numeric', month: 'long' })}
                     surVisite={(v) => {
                       setMessage(null);
                       // Un planning soumis se consulte : la visite s'ouvre en détail (PLN-006).
-                      if (modifiable) setEdition({ objet: 'visite', jour: j.date, visite: v });
+                      // Approuvé, une visite à venir se modifie encore (PLN-015).
+                      if (modifiable || (apresApprobation && j.date >= aujourdhui))
+                        setEdition({ objet: 'visite', jour: j.date, visite: v });
                       else
                         routeur.push({
                           pathname: '/visite/[id]',

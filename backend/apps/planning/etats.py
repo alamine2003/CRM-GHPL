@@ -60,9 +60,12 @@ TRANSITIONS_VISITE: dict[str, tuple[str, ...]] = {
     V.NON_REALISEE: (),
 }
 
-#: Un planning ne se modifie librement qu'avant soumission ou pendant une révision ; les
-#: modifications d'un planning approuvé arrivent en 0.3.7.
+#: Un planning ne se modifie librement qu'avant soumission ou pendant une révision.
 MODIFIABLES = (S.BROUILLON, S.A_REVISER)
+
+#: Approuvé, il est verrouillé (PLN-015, RG-018) : l'heure d'une visite dans sa journée change
+#: librement et se trace ; tout autre changement devient une nouvelle version soumise.
+APRES_APPROBATION = (S.APPROUVE, S.EN_COURS)
 
 
 def peut_passer(de: str, vers: str) -> bool:
@@ -86,6 +89,7 @@ def exporter() -> dict:
             "statuts": list(S.values),
             "transitions": {de: list(vers) for de, vers in TRANSITIONS_PLANNING.items()},
             "modifiables": list(MODIFIABLES),
+            "apres_approbation": list(APRES_APPROBATION),
         },
         "visite": {
             "statuts": list(V.values),

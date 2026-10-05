@@ -118,9 +118,11 @@ export function MesNotifications() {
               debut: jour(n.donnees.debut),
               fin: jour(n.donnees.fin),
               suite:
-                n.donnees.version && n.donnees.version > 1
-                  ? t('notifications.version', { version: n.donnees.version })
-                  : '',
+                n.donnees.motif === 'modification'
+                  ? t('notifications.versionModification', { version: n.donnees.version })
+                  : n.donnees.version && n.donnees.version > 1
+                    ? t('notifications.version', { version: n.donnees.version })
+                    : '',
             })}
           </Text>
           <MaterialIcons name="chevron-right" size={22} color={p.texteDiscret} />

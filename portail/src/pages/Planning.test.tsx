@@ -54,6 +54,7 @@ const SEMAINE: Semaine = {
     echeance: '2026-10-22T18:00:00Z',
     decision: null,
     numero_version: null,
+    motif_version: null,
   },
   peut_creer: false,
   modifiable: true,
@@ -76,6 +77,7 @@ const SEMAINE: Semaine = {
   kilometrage: { total_km: 12.5, sans_coordonnees: 0, jours: [] },
   reprenables: 0,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
+  approbation: null,
 };
 
 const LISTES = [

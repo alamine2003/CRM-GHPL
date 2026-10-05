@@ -19,6 +19,7 @@ const BASE = {
   kilometrage: null,
   reprenables: 0,
   reseaux: [],
+  approbation: null,
 } satisfies Partial<Semaine>;
 
 const PLANNING = {
@@ -29,6 +30,7 @@ const PLANNING = {
   echeance: '2099-10-08T18:00:00Z',
   decision: null,
   numero_version: null,
+  motif_version: null,
 };
 
 const COURANTE: Semaine = {

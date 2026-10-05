@@ -32,6 +32,7 @@ import { Pilule } from './Etablissements';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
 import { messageErreur, useSession } from './session';
+import { jourIso } from './semaineLocale';
 
 /** Prospect proposé au choix : de la liste cible, ou trouvé dans toutes les fiches. */
 export type Choix = {
@@ -208,8 +209,15 @@ export function FormulaireVisite({
   const absents = new Set(
     semaine.activites.filter((a) => a.periode === 'journee').map((a) => a.date),
   );
+  // Planning approuvé (PLN-015, RG-018) : l'heure change librement, le reste est soumis ; une
+  // journée passée est verrouillée.
+  const apresApprobation = !!semaine.approbation?.modifiable;
+  const aujourdhui = jourIso(new Date());
   const jours = semaine.jours.filter(
-    (j) => j.planifiable && (!absents.has(j.date) || j.date === visite?.date),
+    (j) =>
+      j.planifiable &&
+      (!absents.has(j.date) || j.date === visite?.date) &&
+      (!apresApprobation || j.date >= aujourdhui),
   );
   const passage = visite?.passage
     ? semaine.passages.find((x) => x.id === visite.passage)
@@ -255,6 +263,16 @@ export function FormulaireVisite({
 
   const heureLue = heure.trim() ? lireHeure(heure) : null;
   const heureIllisible = heure.trim() !== '' && heureLue === null;
+  // Tout ce qui n'est pas l'heure fait une modification majeure, soumise au superviseur.
+  const majeure =
+    apresApprobation &&
+    (!visite ||
+      date !== visite.date ||
+      (prospect?.id ?? null) !== (visite.prospect?.id ?? null) ||
+      (lieu?.id ?? null) !== (visite.etablissement?.id ?? null) ||
+      reseau !== (visite.reseau?.id ?? null) ||
+      objectif.trim() !== visite.objectif ||
+      note.trim() !== visite.note);
   const libelleJour = (j: JourSemaine) =>
     new Intl.DateTimeFormat(i18n.language, { weekday: 'short', day: 'numeric' }).format(
       new Date(`${j.date}T12:00:00`),
@@ -278,7 +296,15 @@ export function FormulaireVisite({
       if (visite) await client.visites.modifier(visite.id, saisie);
       else if (semaine.planning) await client.plannings.ajouterVisite(semaine.planning.id, ajout);
       await oublierBrouillon();
-      surTermine(visite ? t('visites.modifiee') : t('visites.ajoutee'));
+      surTermine(
+        majeure
+          ? t('apresApprobation.soumise')
+          : apresApprobation
+            ? t('apresApprobation.heureChangee')
+            : visite
+              ? t('visites.modifiee')
+              : t('visites.ajoutee'),
+      );
     } catch (e) {
       if (estTransitoire(e) && semaine.planning) {
         // Sans réseau : la visite attend sur le téléphone et partira au retour du réseau.
@@ -335,7 +361,7 @@ export function FormulaireVisite({
     try {
       await client.visites.retirer(visite.id);
       await oublierBrouillon();
-      surTermine(t('visites.retiree'));
+      surTermine(apresApprobation ? t('apresApprobation.soumise') : t('visites.retiree'));
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));
       setEnvoi(null);
@@ -345,7 +371,9 @@ export function FormulaireVisite({
   return (
     <View style={{ gap: 16 }}>
       <Texte variante="sousTitre">{visite ? t('visites.modifier') : t('visites.nouvelle')}</Texte>
-      <Texte variante="discret">{t('visites.aide')}</Texte>
+      <Texte variante="discret">
+        {apresApprobation ? t('apresApprobation.regle') : t('visites.aide')}
+      </Texte>
       {erreur && <Alerte type="erreur">{erreur}</Alerte>}
 
       <Section titre={t('visites.champs.date')}>
@@ -453,14 +481,23 @@ export function FormulaireVisite({
         multiline
       />
 
+      {apresApprobation && visite && (
+        <Alerte type={majeure ? 'attention' : 'info'}>
+          {majeure ? t('apresApprobation.majeure') : t('apresApprobation.mineure')}
+        </Alerte>
+      )}
+      {apresApprobation && !visite && (
+        <Alerte type="attention">{t('apresApprobation.majeure')}</Alerte>
+      )}
       <Bouton
-        libelle={t('commun.enregistrer')}
+        libelle={majeure ? t('apresApprobation.soumettre') : t('commun.enregistrer')}
         chargement={envoi === 'enregistrer'}
         desactive={heureIllisible || envoi === 'retirer'}
         onPress={() => void enregistrer()}
       />
       <Bouton secondaire libelle={t('commun.annuler')} onPress={annuler} />
-      {visite && jours.length > 1 && (
+      {/* Après approbation, une copie serait un ajout soumis sans qu'on le voie venir. */}
+      {visite && !apresApprobation && jours.length > 1 && (
         <Section titre={t('visites.copierVers')}>
           <Texte variante="discret">{t('visites.copierAide')}</Texte>
           <View style={styles.pilules}>
@@ -485,7 +522,11 @@ export function FormulaireVisite({
           style={({ pressed }) => [styles.retirer, pressed && { opacity: 0.6 }]}
         >
           <Text style={[styles.ajouterTexte, { color: p.erreur }]}>
-            {envoi === 'retirer' ? t('session.chargement') : t('visites.retirer')}
+            {envoi === 'retirer'
+              ? t('session.chargement')
+              : apresApprobation
+                ? t('apresApprobation.retirerSoumettre')
+                : t('visites.retirer')}
           </Text>
         </Pressable>
       )}

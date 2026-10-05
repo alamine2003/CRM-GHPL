@@ -62,6 +62,7 @@ const SEMAINE: Semaine = {
   kilometrage: null,
   reprenables: 0,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
+  approbation: null,
 };
 
 const PLANNING = {
@@ -74,6 +75,7 @@ const PLANNING = {
   echeance: '2026-10-22T18:00:00Z',
   decision: null,
   numero_version: null,
+  motif_version: null,
 };
 
 const VISITE: Visite = {

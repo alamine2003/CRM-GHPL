@@ -29,6 +29,8 @@ import {
   ListeActivites,
 } from '../composants/SemainePlanning';
 import { HistoriqueVersions } from '../composants/HistoriqueVersions';
+import { AttenteApprobation, HeuresChangees } from '../composants/SuiviApprobation';
+import { libelleVersion } from '../composants/planningTextes';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 
@@ -90,9 +92,7 @@ export default function ConsultationPlanning({ id }: { id: string }) {
                   ? t('remplacements.pour', { nom: `${c.remplace.prenom} ${c.remplace.nom}` })
                   : '',
                 c.postes.join(', '),
-                (c.planning?.numero_version ?? 1) > 1
-                  ? t('resoumission.version', { numero: c.planning?.numero_version })
-                  : '',
+                libelleVersion(c.planning, t),
                 t('semaine.periode', {
                   debut: date(c.semaine, { day: 'numeric', month: 'short' }),
                   fin: date(c.jours.at(-1)!.date, { day: 'numeric', month: 'short' }),
@@ -132,6 +132,7 @@ export default function ConsultationPlanning({ id }: { id: string }) {
             remarques={brouillon}
             suivant={suivant ? `/validation/${suivant.planning.id}` : '/validation'}
           />
+          <AttenteApprobation semaine={c} jourCourt={jourCourt} />
           {aDecider && decision?.decision === 'a_reviser' && (
             <RevisionPrecedente consultation={c} jourCourt={jourCourt} />
           )}
@@ -146,6 +147,7 @@ export default function ConsultationPlanning({ id }: { id: string }) {
             <Resume consultation={c} />
             {c.controles && <CarteControles controles={c.controles} jourCourt={jourCourt} />}
           </Box>
+          <HeuresChangees semaine={c} jourCourt={jourCourt} />
           <HistoriqueVersions planning={c.planning!.id} fuseau={c.fuseau} />
           {c.activites.length > 0 && (
             <Card>

@@ -35,6 +35,10 @@
     "modifiables": [
       "brouillon",
       "a_reviser"
+    ],
+    "apres_approbation": [
+      "approuve",
+      "en_cours"
     ]
   },
   "visite": {

@@ -64,6 +64,8 @@ export function Journee({
   reordonner,
   controles,
   remarques = {},
+  apresApprobation = false,
+  enAttente,
   libelleJour,
   surVisite,
   surAjouterVisite,
@@ -83,6 +85,10 @@ export function Journee({
   controles: Controles | null;
   /** Remarques de révision par visite (PLN-013). */
   remarques?: Record<string, string>;
+  /** Planning approuvé et journée à venir : on peut encore y ajouter une visite (PLN-015). */
+  apresApprobation?: boolean;
+  /** Visites d'une modification qui attend la décision du superviseur (PLN-015 CA2). */
+  enAttente?: ReadonlySet<string>;
   /** « mardi 6 octobre », pour les libellés vocalisés. */
   libelleJour: string;
   surVisite: (v: Visite) => void;
@@ -111,6 +117,12 @@ export function Journee({
     0,
   );
   const preparation = modifiable && jour.planifiable && !reordonner;
+  const marques = (v: Visite, dansPassage: boolean) => [
+    ...alertesDeVisite(controles, v.id, t, dansPassage, remarques[v.id]),
+    ...(enAttente?.has(v.id)
+      ? [{ cle: 'attente', texte: t('apresApprobation.enAttente'), ton: 'info' as const }]
+      : []),
+  ];
 
   function deplacer(index: number, sens: -1 | 1) {
     const cible = index + sens;
@@ -143,11 +155,7 @@ export function Journee({
           return (
             <View key={v.id} style={styles.unite}>
               <View style={{ flex: 1 }}>
-                <LigneVisite
-                  visite={v}
-                  onPress={ouvrir(v)}
-                  alertes={alertesDeVisite(controles, v.id, t, false, remarques[v.id])}
-                />
+                <LigneVisite visite={v} onPress={ouvrir(v)} alertes={marques(v, false)} />
               </View>
               {fleches}
             </View>
@@ -179,7 +187,7 @@ export function Journee({
                   visite={v}
                   onPress={ouvrir(v)}
                   dansPassage
-                  alertes={alertesDeVisite(controles, v.id, t, true, remarques[v.id])}
+                  alertes={marques(v, true)}
                 />
               ))}
               {preparation && (
@@ -214,6 +222,16 @@ export function Journee({
             icone="check"
             libelle={t('visites.ordreTermine')}
             onPress={() => surReordonner(false)}
+          />
+        </View>
+      )}
+      {apresApprobation && jour.planifiable && !absentToutLeJour && (
+        <View style={styles.actions}>
+          <LienAction
+            icone="add"
+            libelle={t('visites.ajouter')}
+            description={t('visites.ajouterLe', { jour: libelleJour })}
+            onPress={surAjouterVisite}
           />
         </View>
       )}

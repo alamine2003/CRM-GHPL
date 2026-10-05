@@ -8,6 +8,7 @@ import { Link as LienRouteur } from 'react-router';
 import { EnTetePage } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { ListeActivites } from '../composants/SemainePlanning';
+import { libelleVersion } from '../composants/planningTextes';
 import { useSession } from '../contexteSession';
 
 type Traduire = ReturnType<typeof useTranslation>['t'];
@@ -114,9 +115,7 @@ function CartePlanning({ ligne, maintenant }: { ligne: PlanningEnAttente; mainte
                   fin: fin.toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' }),
                 }),
                 t('validation.visites', { count: ligne.visites }),
-                (planning.numero_version ?? 1) > 1
-                  ? t('resoumission.version', { numero: planning.numero_version })
-                  : '',
+                libelleVersion(planning, t),
               ]
                 .filter(Boolean)
                 .join(' · ')}

@@ -58,6 +58,7 @@ const CONSULTATION: Consultation = {
     echeance: '2026-10-08T18:00:00Z',
     decision: null,
     numero_version: null,
+    motif_version: null,
   },
   peut_creer: false,
   modifiable: false,
@@ -85,6 +86,7 @@ const CONSULTATION: Consultation = {
   kilometrage: { total_km: 12.5, sans_coordonnees: 0, jours: [] },
   reprenables: 0,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
+  approbation: null,
   delegue: { id: 'u1', prenom: 'Aminata', nom: 'FICTIVE' },
   remplace: null,
   postes: ['VM Plateau'],
@@ -295,5 +297,60 @@ describe('PLN-014 : version suivante après révision', () => {
     expect(screen.getByText(/Version 2 · après révision/)).toBeTruthy();
     // La décision reste à prendre sur la version 2.
     expect(screen.getByRole('button', { name: 'Approuver' })).toBeTruthy();
+  });
+});
+
+describe('PLN-015 : modification après approbation', () => {
+  it('CA1 : les heures changées depuis l’approbation se lisent, le planning reste approuvé', async () => {
+    const approuve: Consultation = {
+      ...CONSULTATION,
+      planning: {
+        ...CONSULTATION.planning!,
+        statut: 'approuve',
+        numero_version: 1,
+        motif_version: 'soumission',
+      },
+      approbation: {
+        reference: 1,
+        modifiable: true,
+        en_attente: [],
+        retraits: [],
+        mineures: [
+          {
+            visite: 'v1',
+            prospect: 'Awa FICTIF',
+            date: '2026-10-13',
+            avant: '09:00',
+            apres: '10:30',
+            le: '2026-10-12T08:00:00Z',
+          },
+        ],
+      },
+    };
+    rendre(vi.fn(async () => approuve));
+    expect(await screen.findByText("Heure changée depuis l'approbation")).toBeTruthy();
+    expect(screen.getByText('Awa FICTIF · mar. 13 : 09:00 → 10:30')).toBeTruthy();
+  });
+
+  it('CA2 : la modification soumise dit ce qui attend, le reste reste prévu', async () => {
+    const modifie: Consultation = {
+      ...CONSULTATION,
+      planning: { ...CONSULTATION.planning!, numero_version: 2, motif_version: 'modification' },
+      approbation: {
+        reference: 1,
+        modifiable: false,
+        en_attente: ['v1'],
+        retraits: [],
+        mineures: [],
+      },
+    };
+    rendre(vi.fn(async () => modifie));
+    expect(await screen.findByText(/Version 2 · modification après approbation/)).toBeTruthy();
+    expect(
+      screen.getByText('Les visites non concernées restent prévues selon la version 1 approuvée.'),
+    ).toBeTruthy();
+    expect(screen.getByText('À décider : mar. 13 09:00 · Dr Awa FICTIF')).toBeTruthy();
+    const mardi = screen.getByLabelText('mardi 13');
+    expect(within(mardi).getByText('En attente')).toBeTruthy();
   });
 });

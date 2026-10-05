@@ -66,12 +66,13 @@ def test_pln012_ca1_l_approbation_fige_la_version(monde, terrain, soumis):
     assert decision["par"] == f"{monde['sup.sn'].first_name} {monde['sup.sn'].last_name}"
     version = soumis.versions.get()
     assert (version.decide_par, version.decision) == (monde["sup.sn"], "approuve")
-    # Le planning ne bouge plus : ni le délégué, ni une seconde décision (0.3.7 pour la suite).
+    # Ni une seconde décision, ni un ajout incomplet : après approbation, un ajout est soumis
+    # aussitôt et passe le contrôle final (PLN-015).
     r = client_de(monde["deleg.sn"]).post(
         f"/api/v1/plannings/{soumis.pk}/visites/",
         {"date": "2026-10-14", "heure": "10:00"}, format="json",
     )  # fmt: skip
-    assert r.status_code == 409 and r.json()["code"] == "planning_non_modifiable"
+    assert r.status_code == 400 and r.json()["code"] == "planning_bloque"
     r = approuver(client_de(monde["sup.sn"]), soumis)
     assert r.status_code == 409 and r.json()["code"] == "transition_interdite"
     # Il quitte la file ; la consultation reste ouverte, avec la décision.

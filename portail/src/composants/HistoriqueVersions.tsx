@@ -91,7 +91,13 @@ export function HistoriqueVersions({ planning, fuseau }: { planning: string; fus
                 />
               </Stack>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {t('versions.soumise', { date: quand(v.soumis_le) })} · {resume(v.changements, t)}
+                {[
+                  v.motif !== 'soumission' ? t(`versions.motifs.${v.motif}`) : '',
+                  t('versions.soumise', { date: quand(v.soumis_le) }),
+                  resume(v.changements, t),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </Typography>
             </Box>
             <Button

@@ -9,6 +9,7 @@ from .models import (
     Decision,
     JourFerie,
     ModeDecision,
+    MotifVersion,
     Passage,
     Periode,
     Planning,
@@ -74,11 +75,13 @@ class PlanningSerializer(serializers.ModelSerializer):
     decision = serializers.SerializerMethodField()
     #: Numéro de la dernière version soumise (RG-037), ou rien avant la première soumission.
     numero_version = serializers.SerializerMethodField()
+    #: Pourquoi cette dernière version : soumission, après révision, modification (PLN-015).
+    motif_version = serializers.SerializerMethodField()
 
     class Meta:
         model = Planning
         fields = ["id", "semaine", "statut", "cree_le", "soumis_le", "en_retard", "echeance",
-                  "decision", "numero_version"]  # fmt: skip
+                  "decision", "numero_version", "motif_version"]  # fmt: skip
         read_only_fields = ["statut", "soumis_le", "en_retard"]
 
     def get_echeance(self, planning) -> str:
@@ -89,6 +92,11 @@ class PlanningSerializer(serializers.ModelSerializer):
     def get_numero_version(self, planning) -> int | None:
         derniere = planning.versions.first()
         return derniere.numero if derniere else None
+
+    @extend_schema_field(serializers.ChoiceField(choices=MotifVersion.choices, allow_null=True))
+    def get_motif_version(self, planning):
+        derniere = planning.versions.first()
+        return derniere.motif if derniere else None
 
     @extend_schema_field(DecisionSerializer(allow_null=True))
     def get_decision(self, planning):
@@ -296,6 +304,52 @@ class JourSemaineSerializer(serializers.Serializer):
     planifiable = serializers.BooleanField()
 
 
+class ReferenceFigeeSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    nom = serializers.CharField(allow_null=True)
+
+
+class VisiteFigeeSerializer(serializers.Serializer):
+    """Une visite telle que soumise dans une version (RG-037)."""
+
+    id = serializers.UUIDField()
+    date = serializers.DateField()
+    heure = serializers.CharField(allow_null=True)
+    ordre = serializers.IntegerField()
+    prospect = ReferenceFigeeSerializer(allow_null=True)
+    etablissement = ReferenceFigeeSerializer(allow_null=True)
+    objectif = serializers.CharField(allow_blank=True)
+    note = serializers.CharField(allow_blank=True)
+    passage = serializers.UUIDField(allow_null=True)
+
+
+class ModificationMineureSerializer(serializers.Serializer):
+    """PLN-015 CA1 : l'heure d'une visite changée dans sa journée après l'approbation."""
+
+    visite = serializers.UUIDField()
+    prospect = serializers.CharField(allow_null=True)
+    date = serializers.DateField()
+    avant = serializers.CharField(allow_null=True)
+    apres = serializers.CharField(allow_null=True)
+    le = serializers.DateTimeField()
+
+
+class SuiviApprobationSerializer(serializers.Serializer):
+    """Un planning déjà approuvé (PLN-015, RG-018) : sa référence d'exécution, ses changements
+    mineurs et, pendant une modification majeure, les visites en attente de décision."""
+
+    #: Numéro de la version approuvée qui sert de référence.
+    reference = serializers.IntegerField()
+    #: Vrai tant que le délégué peut le modifier (approuvé ou en cours).
+    modifiable = serializers.BooleanField()
+    #: Visites ajoutées, déplacées ou modifiées en attente de décision ; les autres restent
+    #: exécutables selon la référence (CA2).
+    en_attente = serializers.ListField(child=serializers.UUIDField())
+    #: Visites de la référence retirées par la modification en attente.
+    retraits = VisiteFigeeSerializer(many=True)
+    mineures = ModificationMineureSerializer(many=True)
+
+
 class SemaineSerializer(serializers.Serializer):
     """Semaine du délégué : ses jours ouvrés, ses jours fériés et son planning (PLN-001)."""
 
@@ -322,6 +376,8 @@ class SemaineSerializer(serializers.Serializer):
     controles = ControlesSerializer(allow_null=True)
     #: Réseaux des postes occupés cette semaine, proposés pour chaque visite.
     reseaux = ResumeSerializer(many=True)
+    #: Planning déjà approuvé : référence, changements mineurs, modification en attente.
+    approbation = SuiviApprobationSerializer(allow_null=True)
 
 
 class DelegueSerializer(serializers.Serializer):
@@ -373,25 +429,6 @@ class ConsultationSerializer(SemaineSerializer):
 
 
 # --- Historique et comparaison des versions (PLN-014) -----------------------------------------
-
-
-class ReferenceFigeeSerializer(serializers.Serializer):
-    id = serializers.UUIDField()
-    nom = serializers.CharField(allow_null=True)
-
-
-class VisiteFigeeSerializer(serializers.Serializer):
-    """Une visite telle que soumise dans une version (RG-037)."""
-
-    id = serializers.UUIDField()
-    date = serializers.DateField()
-    heure = serializers.CharField(allow_null=True)
-    ordre = serializers.IntegerField()
-    prospect = ReferenceFigeeSerializer(allow_null=True)
-    etablissement = ReferenceFigeeSerializer(allow_null=True)
-    objectif = serializers.CharField(allow_blank=True)
-    note = serializers.CharField(allow_blank=True)
-    passage = serializers.UUIDField(allow_null=True)
 
 
 class ActiviteFigeeSerializer(serializers.Serializer):
@@ -454,6 +491,9 @@ class VersionSerializer(serializers.Serializer):
     remarques = RemarqueSerializer(many=True)
     visites = serializers.IntegerField()
     changements = ResumeComparaisonSerializer(allow_null=True)
+    motif = serializers.ChoiceField(choices=MotifVersion.choices)
+    #: Heures changées après l'approbation de cette version (PLN-015 CA1).
+    mineures = serializers.IntegerField()
 
     @staticmethod
     def donnees(version, comparaison) -> dict:
@@ -470,6 +510,8 @@ class VersionSerializer(serializers.Serializer):
             "remarques": version.remarques,
             "visites": len(version.contenu.get("visites", [])),
             "changements": _resume(comparaison),
+            "motif": version.motif,
+            "mineures": len(version.modifications),
         }
 
 
@@ -479,10 +521,16 @@ class DetailVersionSerializer(VersionSerializer):
     contenu_visites = VisiteFigeeSerializer(many=True)
     contenu_activites = ActiviteFigeeSerializer(many=True)
     comparaison = ComparaisonVersionsSerializer(allow_null=True)
+    modifications = ModificationMineureSerializer(many=True)
 
     @staticmethod
     def donnees(version, comparaison) -> dict:
+        noms = {v["id"]: (v.get("prospect") or {}).get("nom")
+                for v in version.contenu.get("visites", [])}  # fmt: skip
         return VersionSerializer.donnees(version, comparaison) | {
+            "modifications": [
+                m | {"prospect": noms.get(m["visite"])} for m in version.modifications
+            ],  # fmt: skip
             "contenu_visites": version.contenu.get("visites", []),
             "contenu_activites": version.contenu.get("activites", []),
             "comparaison": comparaison,

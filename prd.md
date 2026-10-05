@@ -541,6 +541,18 @@ Mise en œuvre [D, 5 octobre 2026, livrée en 0.3.1, PLN-018] :
   - **avec visites** : commando, déplacement (aide ou accompagnement d'un collègue), accompagnement du superviseur — explication obligatoire (où, avec qui, pourquoi) ; pour un déplacement, « demandé par le superviseur » ou non.
 - Les visites de ces journées, hors secteur ou hors liste cible, ne sont plus des signalements d'anomalie : le superviseur voit l'activité et son explication. Hors de ces journées, une visite hors secteur reste signalée (RG-024).
 
+### 14.19 Planning approuvé : verrouillage et modifications (mise en œuvre 0.3.7)
+
+- **Verrouillage** (PLN-015, RG-018) : approuvé, le planning ne se modifie plus librement ; une journée passée ne change plus du tout (`jour_passe`), ni ce qu'on voudrait y déplacer. Aujourd'hui reste modifiable.
+- **Mineure** (CA1) : seule l'heure d'une visite change, dans sa journée (avec les autres visites du même passage). Le planning reste approuvé ; le changement est tracé au journal d'audit et sur la version approuvée, où le superviseur le lit (« Heure changée depuis l'approbation »). Changer l'ordre d'une journée à venir reste libre aussi.
+- **Majeure** (CA2) : tout autre changement — jour, prospect, lieu, réseau, objectif, note, ajout, retrait, activité connexe — refait le contrôle final et devient aussitôt une nouvelle version soumise (« Version n · modification après approbation ») ; s'il ne passe pas le contrôle final, il est refusé et rien ne change. Le superviseur voit ce qui attend (« À décider : … », retraits) ; les autres visites restent prévues selon la version approuvée. Une modification après approbation n'est jamais en retard.
+- Hypothèses [H] à confirmer :
+  - l'objectif et la note d'une visite comptent comme un changement majeur (RG-018 ne cite que l'heure comme mineure) ;
+  - tant qu'une modification attend la décision, le planning ne change plus (`modification_en_attente`) ;
+  - poser des prospects de la liste cible n'est pas possible sur un planning approuvé (`ajout_incomplet`) : chaque ajout se fait complet, une visite à la fois ; la copie d'une visite non plus, depuis le téléphone ;
+  - au portail, le délégué lit son planning approuvé mais le modifie depuis le téléphone ;
+  - le passage automatique « approuvé → en cours » le premier jour, et « en cours → terminé », attendent le cycle 0.4 (programme du jour).
+
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :
@@ -1052,7 +1064,7 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 | 0.3.4 | Révision motivée (planning ou visite, PLN-013) ; remplaçant daté (ORG-013) |
 | 0.3.5 | Nouvelle version et resoumission (PLN-014) ; resoumission jamais en retard (PLN-008 CA2) ; notification « Planning soumis » |
 | 0.3.6 | Historique et comparaison des versions (PLN-014 CA1, CA2 ; AUD-003 pour les plannings) |
-| 0.3.7 | Verrouillage, modifications mineures et majeures après approbation |
+| 0.3.7 | Verrouillage, modifications mineures et majeures après approbation (PLN-015, RG-018) |
 | 0.3.8 | Centre de notifications, rappels, escalade vers le DM |
 | 0.3.9 | Recette complète du workflow de planning, démonstration |
 

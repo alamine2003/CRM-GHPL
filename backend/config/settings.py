@@ -255,6 +255,7 @@ SPECTACULAR_SETTINGS = {
         "RaisonRepriseEnum": "apps.planning.services.RAISONS_REPRISE",
         "DecisionPlanningEnum": "apps.planning.models.Decision",
         "ModeDecisionEnum": "apps.planning.models.ModeDecision",
+        "MotifVersionEnum": "apps.planning.models.MotifVersion",
     },
 }
 

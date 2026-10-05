@@ -9,6 +9,7 @@ import DirectionsCarRounded from '@mui/icons-material/DirectionsCarRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
+import HourglassEmptyRounded from '@mui/icons-material/HourglassEmptyRounded';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import SupervisorAccountRounded from '@mui/icons-material/SupervisorAccountRounded';
@@ -255,6 +256,8 @@ function CarteVisite({
   // Les signalements qui nomment cette visite (hors liste cible, hors secteur…) : le superviseur
   // les repère sans ouvrir chaque visite (0.3.2).
   const alertes = alertesDeLaVisite(s, v).filter((c) => c.gravite !== 'bloquant').length;
+  // Modification majeure en attente de décision (PLN-015 CA2) : les autres restent prévues.
+  const enAttente = !!s.approbation?.en_attente.includes(v.id);
   return (
     <Box
       component="button"
@@ -316,6 +319,19 @@ function CarteVisite({
             }}
           >
             {remarque}
+          </Typography>
+        </Stack>
+      )}
+      {enAttente && (
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{ alignItems: 'center', color: 'info.main' }}
+          title={t('apresApprobation.enAttente')}
+        >
+          <HourglassEmptyRounded sx={{ fontSize: 16 }} />
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            {t('apresApprobation.enAttenteCourt')}
           </Typography>
         </Stack>
       )}

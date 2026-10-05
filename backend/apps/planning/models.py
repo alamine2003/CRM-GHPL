@@ -199,6 +199,15 @@ class ModeDecision(models.TextChoices):
     REMPLACEMENT = "remplacement", "Décision du remplaçant"
 
 
+class MotifVersion(models.TextChoices):
+    """Pourquoi une version a été soumise : première soumission, correction après une révision
+    (PLN-014), ou modification majeure d'un planning approuvé (PLN-015, RG-018)."""
+
+    SOUMISSION = "soumission", "Soumission"
+    REVISION = "revision", "Après révision"
+    MODIFICATION = "modification", "Modification après approbation"
+
+
 class VersionPlanning(ModeleDePays):
     """État figé d'un planning à une soumission (RG-037, PLN-012 CA1) : son contenu ne change
     plus ; la décision s'y inscrit une fois, avec son auteur et son mode."""
@@ -219,6 +228,13 @@ class VersionPlanning(ModeleDePays):
     commentaire = models.CharField(max_length=1000, blank=True)
     #: Révision (PLN-013) : remarques sur des visites précises, `{"visite", "commentaire"}`.
     remarques = models.JSONField(default=list, blank=True)
+    motif = models.CharField(
+        max_length=12, choices=MotifVersion.choices, default=MotifVersion.SOUMISSION
+    )
+    #: Modifications mineures faites après l'approbation de cette version (PLN-015 CA1, RG-018) :
+    #: l'heure d'une visite dans sa journée, `{"visite", "date", "avant", "apres", "le"}`. Le
+    #: contenu soumis ne change pas ; la référence d'exécution les applique.
+    modifications = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["planning", "-numero"]

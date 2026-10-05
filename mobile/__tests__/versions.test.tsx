@@ -15,6 +15,8 @@ const V2: VersionPlanning = {
   commentaire: '',
   remarques: [],
   visites: 2,
+  motif: 'soumission',
+  mineures: 0,
   changements: { ajoutees: 1, retirees: 0, deplacees: 0, modifiees: 0 },
 };
 
@@ -24,6 +26,7 @@ test('PLN-014 : le délégué relit ses versions et ce qui a changé', async () 
     ...V2,
     contenu_visites: [],
     contenu_activites: [],
+    modifications: [],
     comparaison: {
       ajoutees: [
         {
@@ -82,6 +85,7 @@ test('PLN-014 CA2 : une version décidée dit qui, quand et pourquoi', async () 
           ...v1,
           contenu_visites: [],
           contenu_activites: [],
+          modifications: [],
           comparaison: null,
         })),
       },
