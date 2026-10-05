@@ -9,6 +9,8 @@
  */
 import type {
   ChangementFiche,
+  DetailVersion,
+  VersionPlanning,
   CandidatsRemplacement,
   CreationRemplacement,
   Remplacement,
@@ -114,6 +116,10 @@ export type {
   Visite,
   ConsultationPlanning,
   DecisionPlanning,
+  ComparaisonVersions,
+  DetailVersion,
+  VersionPlanning,
+  VisiteFigee,
   CandidatsRemplacement,
   CreationRemplacement,
   Remarque,
@@ -669,6 +675,11 @@ export function creerClient(options: OptionsClient) {
       /** Le responsable du poste approuve le planning soumis (PLN-012, PLN-017). */
       approuver: (id: string) =>
         requete<Planning>(`/api/v1/plannings/${id}/approuver/`, { methode: 'POST' }),
+      /** Versions figées, de la plus récente à la plus ancienne (PLN-014 CA2). */
+      versions: (id: string) => requete<VersionPlanning[]>(`/api/v1/plannings/${id}/versions/`),
+      /** Une version et sa comparaison à la précédente (PLN-014 CA1). */
+      version: (id: string, numero: number) =>
+        requete<DetailVersion>(`/api/v1/plannings/${id}/versions/${numero}/`),
       /** Révision commentée, sur le planning ou des visites précises (PLN-013, RG-017). */
       reviser: (id: string, revision: Revision) =>
         requete<Planning>(`/api/v1/plannings/${id}/reviser/`, { methode: 'POST', corps: revision }),

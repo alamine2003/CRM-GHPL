@@ -253,6 +253,8 @@ SPECTACULAR_SETTINGS = {
         "CodeControleEnum": "apps.planning.controles.CODES",
         "GraviteControleEnum": "apps.planning.controles.GRAVITES",
         "RaisonRepriseEnum": "apps.planning.services.RAISONS_REPRISE",
+        "DecisionPlanningEnum": "apps.planning.models.Decision",
+        "ModeDecisionEnum": "apps.planning.models.ModeDecision",
     },
 }
 

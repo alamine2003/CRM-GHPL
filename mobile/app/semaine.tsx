@@ -29,7 +29,7 @@ import { CarteControles, ObjectifDuJour, remarquesDeRevision } from '../src/Cont
 import { Journee } from '../src/Journee';
 import { garderSemaine, jourIso, semaineGardee } from '../src/semaineLocale';
 import { CarteSoumission, dateHeure, EtatSoumission } from '../src/Soumission';
-import { FormulaireVisite } from '../src/Visites';
+import { FormulaireVisite, LienAction } from '../src/Visites';
 
 const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
 
@@ -394,6 +394,20 @@ export default function EcranSemaine() {
                   modifiable={modifiable}
                   fuseau={semaine.fuseau}
                 />
+                {(semaine.planning.numero_version ?? 0) > 1 && (
+                  <LienAction
+                    icone="history"
+                    libelle={t('versions.voirHistorique', {
+                      count: semaine.planning.numero_version ?? 0,
+                    })}
+                    onPress={() =>
+                      routeur.push({
+                        pathname: '/versions/[id]',
+                        params: { id: semaine.planning!.id, fuseau: semaine.fuseau },
+                      })
+                    }
+                  />
+                )}
                 <Texte variante="discret">
                   {visites.length === 0
                     ? modifiable

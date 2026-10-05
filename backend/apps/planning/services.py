@@ -1006,3 +1006,50 @@ def retirer_activite(activite: Activite) -> Activite:
     _auditer("activite.retrait", activite, planning=str(activite.planning_id),
              date=str(activite.date))  # fmt: skip
     return activite
+
+
+# --- Historique et comparaison des versions (PLN-014, RG-037) ---------------------------------
+
+#: Ce qui fait d'une visite une visite « modifiée » d'une version à l'autre ; le jour et l'heure
+#: font, eux, une visite « déplacée ».
+CHAMPS_MODIFIES = ("prospect", "etablissement", "objectif", "note")
+
+
+def comparer(avant: dict | None, apres: dict) -> dict:
+    """PLN-014 CA1 : visites ajoutées, retirées, déplacées (jour ou heure) et modifiées entre
+    deux contenus figés. Une visite garde son identifiant d'une version à l'autre."""
+    anciennes = {v["id"]: v for v in (avant or {}).get("visites", [])}
+    nouvelles = {v["id"]: v for v in apres.get("visites", [])}
+
+    def cle(v):
+        return (v["date"], v["heure"] or "99:99", v.get("ordre") or 0)
+
+    deplacees, modifiees = [], []
+    for i in sorted(set(anciennes) & set(nouvelles), key=lambda i: cle(nouvelles[i])):
+        a, n = anciennes[i], nouvelles[i]
+        if (a["date"], a["heure"]) != (n["date"], n["heure"]):
+            deplacees.append({"visite": n, "avant": {"date": a["date"], "heure": a["heure"]}})
+        champs = [
+            c for c in CHAMPS_MODIFIES
+            if ((a.get(c) or {}).get("id") if isinstance(a.get(c), dict) else a.get(c))
+            != ((n.get(c) or {}).get("id") if isinstance(n.get(c), dict) else n.get(c))
+        ]  # fmt: skip
+        if champs:
+            modifiees.append({"visite": n, "champs": champs})
+    return {
+        "ajoutees": sorted((nouvelles[i] for i in set(nouvelles) - set(anciennes)), key=cle),
+        "retirees": sorted((anciennes[i] for i in set(anciennes) - set(nouvelles)), key=cle),
+        "deplacees": deplacees,
+        "modifiees": modifiees,
+    }
+
+
+def versions_avec_comparaison(planning: Planning) -> list[tuple[VersionPlanning, dict | None]]:
+    """Les versions, de la plus récente à la plus ancienne, chacune comparée à la précédente
+    (rien pour la première) — PLN-014 CA2 : toutes restent consultables."""
+    versions = list(planning.versions.select_related("decide_par").order_by("numero"))
+    resultat, precedente = [], None
+    for v in versions:
+        resultat.append((v, comparer(precedente.contenu, v.contenu) if precedente else None))
+        precedente = v
+    return list(reversed(resultat))

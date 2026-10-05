@@ -2,6 +2,32 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.6] — Historique et comparaison des versions
+
+Sixième jalon du cycle 0.3 « Validation des plannings ».
+
+### Ajouté — historique des versions (PLN-014 CA2, AUD-003)
+
+- Dès qu'un planning a deux versions, une carte « n versions » les liste, de la plus récente : soumission, décision (« En attente », « Révision demandée », « Approuvée ») et résumé de ce qui a changé (« 1 ajoutée · 1 retirée · 1 déplacée »). Au portail, dans la consultation du superviseur et le planning du délégué ; au téléphone, par « Historique : n versions » sur la semaine.
+- Chaque version s'ouvre dans son état exact au moment de sa soumission, avec qui l'a décidée, quand, en remplacement ou non, son commentaire et le nombre de remarques.
+- Accès : le délégué du planning et ceux qui le décident (responsable du poste, remplaçant actif) ; les autres reçoivent « introuvable ».
+
+### Ajouté — comparaison (PLN-014 CA1)
+
+- Depuis la version précédente : visites ajoutées, retirées, déplacées (« lun. 5 09:00 → ven. 9 09:30 ») et modifiées (prospect, lieu, objectif, note).
+
+### Design
+
+Revue sur le rendu réel : consultation du superviseur au portail en bureau, téléphone et sombre (carte des versions, version 2 comparée, version 1 décidée), planning du délégué au portail, écran des versions du téléphone à 360 px et en sombre. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Carte des versions (portail) | « Soumise le lun. 5 octobre » quand le résumé dit « Soumis le lundi 5 octobre ». | Jour en toutes lettres partout. |
+| Carte des versions (portail, téléphone) | « Voir la version n » décalé à droite du texte qu'il suit. | Bouton aligné sur le texte. |
+| Version ouverte (portail, téléphone) | La décision n'y figurait pas : on ne savait ni qui avait demandé la révision, ni pourquoi. | Soumission, décision (qui, quand, en remplacement), commentaire et remarques en tête. |
+| Version 1 ouverte | « Première version » répété deux fois. | La comparaison ne s'affiche que s'il y a une version précédente. |
+| Comparaison (téléphone) | « ven. 9 / 09:30 » coupé en fin de ligne. | Moments insécables. |
+
 ## [0.3.5] — Nouvelle version et resoumission
 
 Cinquième jalon du cycle 0.3 « Validation des plannings ».

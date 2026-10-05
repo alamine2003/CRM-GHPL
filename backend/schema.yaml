@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.3.5
+  version: 0.3.6
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2813,6 +2813,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/Planning'
           description: ''
+  /api/v1/plannings/{id}/versions/:
+    get:
+      operationId: planning_versions
+      description: |-
+        PLN-014 CA2, RG-037 : les versions figées se consultent par le délégué (les siennes) et
+        par ceux qui décident du planning (responsable du poste, remplaçant).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Version'
+          description: ''
+  /api/v1/plannings/{id}/versions/{numero}/:
+    get:
+      operationId: planning_version
+      description: |-
+        PLN-014 CA2, RG-037 : les versions figées se consultent par le délégué (les siennes) et
+        par ceux qui décident du planning (responsable du poste, remplaçant).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: numero
+        schema:
+          type: integer
+        required: true
+      tags:
+      - plannings
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailVersion'
+          description: ''
   /api/v1/plannings/{id}/visites/:
     post:
       operationId: visite_planifier
@@ -4211,6 +4266,30 @@ components:
       description: |-
         * `hospitalier` - Hospitalier
         * `prive` - Privé
+    ActiviteFigee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        periode:
+          $ref: '#/components/schemas/PeriodeActiviteEnum'
+        type:
+          $ref: '#/components/schemas/TypeActiviteEnum'
+        commentaire:
+          type: string
+        demande_superviseur:
+          type: boolean
+      required:
+      - commentaire
+      - date
+      - demande_superviseur
+      - id
+      - periode
+      - type
     Affectation:
       type: object
       properties:
@@ -4382,6 +4461,18 @@ components:
       required:
       - remplacants
       - superviseurs
+    ChampsEnum:
+      enum:
+      - prospect
+      - etablissement
+      - objectif
+      - note
+      type: string
+      description: |-
+        * `prospect` - prospect
+        * `etablissement` - etablissement
+        * `objectif` - objectif
+        * `note` - note
     Changement:
       type: object
       properties:
@@ -4599,6 +4690,31 @@ components:
       - nom
       - potentiel
       - type_libelle
+    ComparaisonVersions:
+      type: object
+      description: 'PLN-014 CA1 : ce qui a changé depuis la version précédente.'
+      properties:
+        ajoutees:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisiteFigee'
+        retirees:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisiteFigee'
+        deplacees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deplacement'
+        modifiees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Modification'
+      required:
+      - ajoutees
+      - deplacees
+      - modifiees
+      - retirees
     Connexion:
       type: object
       properties:
@@ -4980,7 +5096,7 @@ components:
         numero:
           type: integer
         decision:
-          $ref: '#/components/schemas/DecisionDecisionEnum'
+          $ref: '#/components/schemas/DecisionPlanningEnum'
         decide_le:
           type: string
           format: date-time
@@ -4988,7 +5104,7 @@ components:
           type: string
           readOnly: true
         mode:
-          $ref: '#/components/schemas/ModeEnum'
+          $ref: '#/components/schemas/ModeDecisionEnum'
         commentaire:
           type: string
         remarques:
@@ -5003,14 +5119,6 @@ components:
       - numero
       - par
       - remarques
-    DecisionDecisionEnum:
-      enum:
-      - approuve
-      - a_reviser
-      type: string
-      description: |-
-        * `approuve` - Approuvé
-        * `a_reviser` - À réviser
     DecisionDoublon:
       type: object
       properties:
@@ -5031,6 +5139,14 @@ components:
         * `fusionner` - fusionner
         * `separer` - separer
         * `refuser` - refuser
+    DecisionPlanningEnum:
+      enum:
+      - approuve
+      - a_reviser
+      type: string
+      description: |-
+        * `approuve` - Approuvé
+        * `a_reviser` - À réviser
     DecisionProposition:
       type: object
       properties:
@@ -5073,6 +5189,16 @@ components:
       - id
       - nom
       - prenom
+    Deplacement:
+      type: object
+      properties:
+        visite:
+          $ref: '#/components/schemas/VisiteFigee'
+        avant:
+          $ref: '#/components/schemas/Moment'
+      required:
+      - avant
+      - visite
     DescriptionAppareil:
       type: object
       properties:
@@ -5151,6 +5277,74 @@ components:
       - simulation
       - source
       - statut
+    DetailVersion:
+      type: object
+      description: 'PLN-014 CA2 : le contenu d''une version, et sa comparaison détaillée
+        à la précédente.'
+      properties:
+        numero:
+          type: integer
+        soumis_le:
+          type: string
+          format: date-time
+        en_retard:
+          type: boolean
+        decision:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/DecisionPlanningEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        decide_le:
+          type: string
+          format: date-time
+          nullable: true
+        par:
+          type: string
+          nullable: true
+        mode:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ModeDecisionEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        commentaire:
+          type: string
+        remarques:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remarque'
+        visites:
+          type: integer
+        changements:
+          allOf:
+          - $ref: '#/components/schemas/ResumeComparaison'
+          nullable: true
+        contenu_visites:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisiteFigee'
+        contenu_activites:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiviteFigee'
+        comparaison:
+          allOf:
+          - $ref: '#/components/schemas/ComparaisonVersions'
+          nullable: true
+      required:
+      - changements
+      - commentaire
+      - comparaison
+      - contenu_activites
+      - contenu_visites
+      - decide_le
+      - decision
+      - en_retard
+      - mode
+      - numero
+      - par
+      - remarques
+      - soumis_le
+      - visites
     Division:
       type: object
       properties:
@@ -5931,7 +6125,7 @@ components:
       - simulation
       - source
       - statut
-    ModeEnum:
+    ModeDecisionEnum:
       enum:
       - direct
       - remplacement
@@ -5939,6 +6133,18 @@ components:
       description: |-
         * `direct` - Décision du responsable du poste
         * `remplacement` - Décision du remplaçant
+    Modification:
+      type: object
+      properties:
+        visite:
+          $ref: '#/components/schemas/VisiteFigee'
+        champs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChampsEnum'
+      required:
+      - champs
+      - visite
     ModificationParametre:
       type: object
       properties:
@@ -5985,6 +6191,18 @@ components:
       - nom
       - pays_principal
       - prenom
+    Moment:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          nullable: true
+      required:
+      - date
+      - heure
     MonOrganisation:
       type: object
       properties:
@@ -6068,6 +6286,9 @@ components:
         * `planning_approuve` - Planning approuvé
         * `revision_demandee` - Révision demandée
         * `remplacement_attribue` - Remplacement attribué
+    NullEnum:
+      enum:
+      - null
     Objectif:
       type: object
       properties:
@@ -7369,6 +7590,18 @@ components:
           format: date
       required:
       - superviseur
+    ReferenceFigee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+          nullable: true
+      required:
+      - id
+      - nom
     Regroupement:
       type: object
       properties:
@@ -7538,6 +7771,22 @@ components:
       required:
       - id
       - libelle
+    ResumeComparaison:
+      type: object
+      properties:
+        ajoutees:
+          type: integer
+        retirees:
+          type: integer
+        deplacees:
+          type: integer
+        modifiees:
+          type: integer
+      required:
+      - ajoutees
+      - deplacees
+      - modifiees
+      - retirees
     ResumeNotifications:
       type: object
       properties:
@@ -8308,6 +8557,59 @@ components:
       - parent
       - pays
       - utilisations
+    Version:
+      type: object
+      description: Une version figée et sa décision, avec le résumé de ce qui a changé
+        (PLN-014).
+      properties:
+        numero:
+          type: integer
+        soumis_le:
+          type: string
+          format: date-time
+        en_retard:
+          type: boolean
+        decision:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/DecisionPlanningEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        decide_le:
+          type: string
+          format: date-time
+          nullable: true
+        par:
+          type: string
+          nullable: true
+        mode:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/ModeDecisionEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        commentaire:
+          type: string
+        remarques:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remarque'
+        visites:
+          type: integer
+        changements:
+          allOf:
+          - $ref: '#/components/schemas/ResumeComparaison'
+          nullable: true
+      required:
+      - changements
+      - commentaire
+      - decide_le
+      - decision
+      - en_retard
+      - mode
+      - numero
+      - par
+      - remarques
+      - soumis_le
+      - visites
     Visite:
       type: object
       properties:
@@ -8363,6 +8665,47 @@ components:
       - manquants
       - prospect
       - reseau
+    VisiteFigee:
+      type: object
+      description: Une visite telle que soumise dans une version (RG-037).
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          nullable: true
+        ordre:
+          type: integer
+        prospect:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceFigee'
+          nullable: true
+        etablissement:
+          allOf:
+          - $ref: '#/components/schemas/ReferenceFigee'
+          nullable: true
+        objectif:
+          type: string
+        note:
+          type: string
+        passage:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - date
+      - etablissement
+      - heure
+      - id
+      - note
+      - objectif
+      - ordre
+      - passage
+      - prospect
     VisiteIgnoree:
       type: object
       properties:

@@ -482,6 +482,50 @@ class RevisionVue(VueSupervision):
         return Response(s.PlanningSerializer(planning).data)
 
 
+class VueVersions(VuePerimetre):
+    """PLN-014 CA2, RG-037 : les versions figées se consultent par le délégué (les siennes) et
+    par ceux qui décident du planning (responsable du poste, remplaçant)."""
+
+    serializer_class = s.VersionSerializer
+
+    @property
+    def actions(self):
+        lecture = (Action.PLANNINGS_VALIDER if self.perimetre.peut(Action.PLANNINGS_VALIDER)
+                   else Action.PLANNINGS_PREPARER)  # fmt: skip
+        return {"GET": lecture}
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Planning.objects.select_related("delegue"))
+
+    def planning_visible(self, id) -> Planning:
+        planning = get_object_or_404(self.get_queryset(), pk=id)
+        if planning.delegue_id != self.request.user.pk and not services.supervise(
+            self.request.user, planning
+        ):
+            raise Http404
+        return planning
+
+
+class VersionsVue(VueVersions):
+    @extend_schema(responses=s.VersionSerializer(many=True), operation_id="planning_versions")
+    def get(self, request, id):
+        planning = self.planning_visible(id)
+        lignes = [s.VersionSerializer.donnees(v, c)
+                  for v, c in services.versions_avec_comparaison(planning)]  # fmt: skip
+        return Response(s.VersionSerializer(lignes, many=True).data)
+
+
+class VersionVue(VueVersions):
+    @extend_schema(responses=s.DetailVersionSerializer, operation_id="planning_version")
+    def get(self, request, id, numero):
+        planning = self.planning_visible(id)
+        for version, comparaison in services.versions_avec_comparaison(planning):
+            if version.numero == numero:
+                donnees = s.DetailVersionSerializer.donnees(version, comparaison)
+                return Response(s.DetailVersionSerializer(donnees).data)
+        raise Http404
+
+
 class SoumissionVue(VuePlannings):
     actions = {"POST": PREPARER}
 

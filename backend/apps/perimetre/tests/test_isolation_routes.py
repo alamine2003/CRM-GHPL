@@ -122,7 +122,9 @@ def senegal(monde):
         "planning-poser": planning.pk, "planning-reprendre": planning.pk,
         "planning-soumettre": planning.pk, "planning-consultation": planning.pk,
         "planning-approuver": planning.pk, "notification-lue": notification.pk,
-        "planning-reviser": planning.pk, "remplacement-terminer": remplacement.pk,
+        "planning-reviser": planning.pk, "planning-versions": planning.pk,
+        "planning-version": planning.pk,
+        "remplacement-terminer": remplacement.pk,
         "visite-copier": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,
         "activite": activite.pk, "activite-retirer": activite.pk,
@@ -165,7 +167,8 @@ ROUTES_PAR_CODE = {"pays-detail", "pays-statut", "parametres", "parametre", "des
 
 def _url(chemin: str, identifiant) -> str:
     url = "/" + chemin.replace("<uuid:id>", str(identifiant)).replace("<str:code>", "SN")
-    return url.replace("<str:cle>", "distance_pointage_m").replace("<str:operation>", "suspendre")
+    url = url.replace("<str:cle>", "distance_pointage_m").replace("<str:operation>", "suspendre")
+    return url.replace("<int:numero>", "1")
 
 
 def test_aucune_route_n_ouvre_un_objet_d_un_autre_pays(monde, senegal):

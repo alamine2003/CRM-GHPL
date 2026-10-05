@@ -215,6 +215,12 @@ urlpatterns = [
         name="remplacement-terminer",
     ),
     path("plannings/<uuid:id>/reviser/", pln.RevisionVue.as_view(), name="planning-reviser"),
+    path("plannings/<uuid:id>/versions/", pln.VersionsVue.as_view(), name="planning-versions"),
+    path(
+        "plannings/<uuid:id>/versions/<int:numero>/",
+        pln.VersionVue.as_view(),
+        name="planning-version",
+    ),
     path("notifications/lues/", ntf.ToutesLuesVue.as_view(), name="notifications-lues"),
     path("notifications/<uuid:id>/lue/", ntf.LueVue.as_view(), name="notification-lue"),
     path("plannings/<uuid:id>/reprendre/", pln.RepriseVue.as_view(), name="planning-reprendre"),

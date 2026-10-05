@@ -1051,7 +1051,7 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 | 0.3.3 | Approbation (PLN-012) ; approbation par le DM du planning d'un superviseur-visiteur (PLN-017) ; versions figées (RG-037) ; première notification au délégué |
 | 0.3.4 | Révision motivée (planning ou visite, PLN-013) ; remplaçant daté (ORG-013) |
 | 0.3.5 | Nouvelle version et resoumission (PLN-014) ; resoumission jamais en retard (PLN-008 CA2) ; notification « Planning soumis » |
-| 0.3.6 | Historique et comparaison des versions |
+| 0.3.6 | Historique et comparaison des versions (PLN-014 CA1, CA2 ; AUD-003 pour les plannings) |
 | 0.3.7 | Verrouillage, modifications mineures et majeures après approbation |
 | 0.3.8 | Centre de notifications, rappels, escalade vers le DM |
 | 0.3.9 | Recette complète du workflow de planning, démonstration |

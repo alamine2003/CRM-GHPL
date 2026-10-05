@@ -1699,5 +1699,57 @@
     "precedente": "Revision requested on version {{numero}}, on {{date}} by {{par}}",
     "visiteRetiree": "visit since removed",
     "verifier": "Check that each point was addressed before deciding."
+  },
+  "versions": {
+    "titre_one": "Version",
+    "titre_other": "{{count}} versions",
+    "ligne": "Version {{numero}}",
+    "soumise": "Submitted on {{date}}",
+    "voir": "Open version {{numero}}",
+    "decisions": {
+      "aucune": "Pending",
+      "approuve": "Approved",
+      "a_reviser": "Revision requested"
+    },
+    "premiere": "First version",
+    "aucunChangement": "No visit changed",
+    "compte": {
+      "ajoutees_one": "{{count}} added",
+      "ajoutees_other": "{{count}} added",
+      "retirees_one": "{{count}} removed",
+      "retirees_other": "{{count}} removed",
+      "deplacees_one": "{{count}} moved",
+      "deplacees_other": "{{count}} moved",
+      "modifiees_one": "{{count}} changed",
+      "modifiees_other": "{{count}} changed"
+    },
+    "depuis": "Since version {{numero}}",
+    "sections": {
+      "ajoutees_one": "{{count}} visit added",
+      "ajoutees_other": "{{count}} visits added",
+      "retirees_one": "{{count}} visit removed",
+      "retirees_other": "{{count}} visits removed",
+      "deplacees_one": "{{count}} visit moved",
+      "deplacees_other": "{{count}} visits moved",
+      "modifiees_one": "{{count}} visit changed",
+      "modifiees_other": "{{count}} visits changed"
+    },
+    "champs": {
+      "prospect": "prospect",
+      "etablissement": "place",
+      "objectif": "objective",
+      "note": "note"
+    },
+    "contenu_one": "{{count}} visit in this version",
+    "contenu_other": "{{count}} visits in this version",
+    "voirHistorique_one": "History: {{count}} version",
+    "voirHistorique_other": "History: {{count}} versions",
+    "decidee": {
+      "approuve": "Approved on {{date}} by {{par}}",
+      "a_reviser": "Revision requested on {{date}} by {{par}}"
+    },
+    "enRemplacement": "as a replacement",
+    "remarques_one": "{{count}} remark on a visit",
+    "remarques_other": "{{count}} remarks on visits"
   }
 }

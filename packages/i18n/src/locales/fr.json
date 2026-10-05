@@ -1699,5 +1699,57 @@
     "precedente": "Révision demandée sur la version {{numero}}, le {{date}} par {{par}}",
     "visiteRetiree": "visite retirée depuis",
     "verifier": "Vérifiez que chaque point a été repris avant de décider."
+  },
+  "versions": {
+    "titre_one": "Version",
+    "titre_other": "{{count}} versions",
+    "ligne": "Version {{numero}}",
+    "soumise": "Soumise le {{date}}",
+    "voir": "Voir la version {{numero}}",
+    "decisions": {
+      "aucune": "En attente",
+      "approuve": "Approuvée",
+      "a_reviser": "Révision demandée"
+    },
+    "premiere": "Première version",
+    "aucunChangement": "Aucune visite changée",
+    "compte": {
+      "ajoutees_one": "{{count}} ajoutée",
+      "ajoutees_other": "{{count}} ajoutées",
+      "retirees_one": "{{count}} retirée",
+      "retirees_other": "{{count}} retirées",
+      "deplacees_one": "{{count}} déplacée",
+      "deplacees_other": "{{count}} déplacées",
+      "modifiees_one": "{{count}} modifiée",
+      "modifiees_other": "{{count}} modifiées"
+    },
+    "depuis": "Depuis la version {{numero}}",
+    "sections": {
+      "ajoutees_one": "{{count}} visite ajoutée",
+      "ajoutees_other": "{{count}} visites ajoutées",
+      "retirees_one": "{{count}} visite retirée",
+      "retirees_other": "{{count}} visites retirées",
+      "deplacees_one": "{{count}} visite déplacée",
+      "deplacees_other": "{{count}} visites déplacées",
+      "modifiees_one": "{{count}} visite modifiée",
+      "modifiees_other": "{{count}} visites modifiées"
+    },
+    "champs": {
+      "prospect": "prospect",
+      "etablissement": "lieu",
+      "objectif": "objectif",
+      "note": "note"
+    },
+    "contenu_one": "{{count}} visite dans cette version",
+    "contenu_other": "{{count}} visites dans cette version",
+    "voirHistorique_one": "Historique : {{count}} version",
+    "voirHistorique_other": "Historique : {{count}} versions",
+    "decidee": {
+      "approuve": "Approuvée le {{date}} par {{par}}",
+      "a_reviser": "Révision demandée le {{date}} par {{par}}"
+    },
+    "enRemplacement": "en remplacement",
+    "remarques_one": "{{count}} remarque sur une visite",
+    "remarques_other": "{{count}} remarques sur des visites"
   }
 }

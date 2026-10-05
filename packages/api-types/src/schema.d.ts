@@ -1660,6 +1660,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/plannings/{id}/versions/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description PLN-014 CA2, RG-037 : les versions figées se consultent par le délégué (les siennes) et
+     *     par ceux qui décident du planning (responsable du poste, remplaçant).
+     */
+    get: operations['planning_versions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/{id}/versions/{numero}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description PLN-014 CA2, RG-037 : les versions figées se consultent par le délégué (les siennes) et
+     *     par ceux qui décident du planning (responsable du poste, remplaçant).
+     */
+    get: operations['planning_version'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/{id}/visites/': {
     parameters: {
       query?: never;
@@ -2348,6 +2388,16 @@ export interface components {
      * @enum {string}
      */
     ActiviteEnum: 'hospitalier' | 'prive';
+    ActiviteFigee: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      date: string;
+      periode: components['schemas']['PeriodeActiviteEnum'];
+      type: components['schemas']['TypeActiviteEnum'];
+      commentaire: string;
+      demande_superviseur: boolean;
+    };
     Affectation: {
       /** Format: uuid */
       readonly id: string;
@@ -2415,6 +2465,14 @@ export interface components {
       superviseurs: components['schemas']['Personne'][];
       remplacants: components['schemas']['Personne'][];
     };
+    /**
+     * @description * `prospect` - prospect
+     *     * `etablissement` - etablissement
+     *     * `objectif` - objectif
+     *     * `note` - note
+     * @enum {string}
+     */
+    ChampsEnum: 'prospect' | 'etablissement' | 'objectif' | 'note';
     Changement: {
       actuel: string;
       nouveau: string;
@@ -2516,6 +2574,13 @@ export interface components {
       readonly cree_le: string;
       readonly lieux: string[];
       readonly cibles: number;
+    };
+    /** @description PLN-014 CA1 : ce qui a changé depuis la version précédente. */
+    ComparaisonVersions: {
+      ajoutees: components['schemas']['VisiteFigee'][];
+      retirees: components['schemas']['VisiteFigee'][];
+      deplacees: components['schemas']['Deplacement'][];
+      modifiees: components['schemas']['Modification'][];
     };
     Connexion: {
       identifiant: string;
@@ -2654,20 +2719,14 @@ export interface components {
      */
     Decision: {
       numero: number;
-      decision: components['schemas']['DecisionDecisionEnum'];
+      decision: components['schemas']['DecisionPlanningEnum'];
       /** Format: date-time */
       decide_le: string;
       readonly par: string;
-      mode: components['schemas']['ModeEnum'];
+      mode: components['schemas']['ModeDecisionEnum'];
       commentaire: string;
       remarques: components['schemas']['Remarque'][];
     };
-    /**
-     * @description * `approuve` - Approuvé
-     *     * `a_reviser` - À réviser
-     * @enum {string}
-     */
-    DecisionDecisionEnum: 'approuve' | 'a_reviser';
     DecisionDoublon: {
       decision: components['schemas']['DecisionDoublonDecisionEnum'];
       /** Format: uuid */
@@ -2680,6 +2739,12 @@ export interface components {
      * @enum {string}
      */
     DecisionDoublonDecisionEnum: 'fusionner' | 'separer' | 'refuser';
+    /**
+     * @description * `approuve` - Approuvé
+     *     * `a_reviser` - À réviser
+     * @enum {string}
+     */
+    DecisionPlanningEnum: 'approuve' | 'a_reviser';
     DecisionProposition: {
       decision: components['schemas']['DecisionPropositionDecisionEnum'];
       motif?: string;
@@ -2698,6 +2763,10 @@ export interface components {
       id: string;
       prenom: string;
       nom: string;
+    };
+    Deplacement: {
+      visite: components['schemas']['VisiteFigee'];
+      avant: components['schemas']['Moment'];
     };
     DescriptionAppareil: {
       /** @description Tiré au hasard à l'installation de l'application. */
@@ -2728,6 +2797,26 @@ export interface components {
       readonly nb_anomalies: number;
       readonly rejets: number;
       anomalies: components['schemas']['Anomalie'][];
+    };
+    /** @description PLN-014 CA2 : le contenu d'une version, et sa comparaison détaillée à la précédente. */
+    DetailVersion: {
+      numero: number;
+      /** Format: date-time */
+      soumis_le: string;
+      en_retard: boolean;
+      decision:
+        (components['schemas']['DecisionPlanningEnum'] | components['schemas']['NullEnum']) | null;
+      /** Format: date-time */
+      decide_le: string | null;
+      par: string | null;
+      mode: (components['schemas']['ModeDecisionEnum'] | components['schemas']['NullEnum']) | null;
+      commentaire: string;
+      remarques: components['schemas']['Remarque'][];
+      visites: number;
+      changements: components['schemas']['ResumeComparaison'] | null;
+      contenu_visites: components['schemas']['VisiteFigee'][];
+      contenu_activites: components['schemas']['ActiviteFigee'][];
+      comparaison: components['schemas']['ComparaisonVersions'] | null;
     };
     Division: {
       /** Format: uuid */
@@ -3062,7 +3151,11 @@ export interface components {
      *     * `remplacement` - Décision du remplaçant
      * @enum {string}
      */
-    ModeEnum: 'direct' | 'remplacement';
+    ModeDecisionEnum: 'direct' | 'remplacement';
+    Modification: {
+      visite: components['schemas']['VisiteFigee'];
+      champs: components['schemas']['ChampsEnum'][];
+    };
     ModificationParametre: {
       valeur: unknown;
     };
@@ -3079,6 +3172,11 @@ export interface components {
       readonly double_auth_active: boolean;
       /** @description Rôle sensible (SEC-003) : la double authentification est obligatoire. */
       readonly double_auth_requise: boolean;
+    };
+    Moment: {
+      /** Format: date */
+      date: string;
+      heure: string | null;
     };
     MonOrganisation: {
       postes: components['schemas']['MonPoste'][];
@@ -3113,6 +3211,8 @@ export interface components {
      */
     NotificationTypeEnum:
       'planning_soumis' | 'planning_approuve' | 'revision_demandee' | 'remplacement_attribue';
+    /** @enum {unknown} */
+    NullEnum: null;
     Objectif: {
       /** Format: date */
       date: string;
@@ -3620,6 +3720,11 @@ export interface components {
       /** Format: date */
       debut?: string;
     };
+    ReferenceFigee: {
+      /** Format: uuid */
+      id: string;
+      nom: string | null;
+    };
     Regroupement: {
       visites: string[];
     };
@@ -3682,6 +3787,12 @@ export interface components {
       /** Format: uuid */
       id: string;
       libelle: string;
+    };
+    ResumeComparaison: {
+      ajoutees: number;
+      retirees: number;
+      deplacees: number;
+      modifiees: number;
     };
     ResumeNotifications: {
       non_lues: number;
@@ -4036,6 +4147,23 @@ export interface components {
       /** @default 0 */
       readonly utilisations: number;
     };
+    /** @description Une version figée et sa décision, avec le résumé de ce qui a changé (PLN-014). */
+    Version: {
+      numero: number;
+      /** Format: date-time */
+      soumis_le: string;
+      en_retard: boolean;
+      decision:
+        (components['schemas']['DecisionPlanningEnum'] | components['schemas']['NullEnum']) | null;
+      /** Format: date-time */
+      decide_le: string | null;
+      par: string | null;
+      mode: (components['schemas']['ModeDecisionEnum'] | components['schemas']['NullEnum']) | null;
+      commentaire: string;
+      remarques: components['schemas']['Remarque'][];
+      visites: number;
+      changements: components['schemas']['ResumeComparaison'] | null;
+    };
     Visite: {
       /** Format: uuid */
       readonly id: string;
@@ -4053,6 +4181,21 @@ export interface components {
       /** Format: uuid */
       passage?: string | null;
       ordre?: number;
+    };
+    /** @description Une visite telle que soumise dans une version (RG-037). */
+    VisiteFigee: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      date: string;
+      heure: string | null;
+      ordre: number;
+      prospect: components['schemas']['ReferenceFigee'] | null;
+      etablissement: components['schemas']['ReferenceFigee'] | null;
+      objectif: string;
+      note: string;
+      /** Format: uuid */
+      passage: string | null;
     };
     VisiteIgnoree: {
       /** Format: uuid */
@@ -6732,6 +6875,49 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Planning'];
+        };
+      };
+    };
+  };
+  planning_versions: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Version'][];
+        };
+      };
+    };
+  };
+  planning_version: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        numero: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DetailVersion'];
         };
       };
     };

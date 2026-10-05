@@ -83,6 +83,11 @@ export type PlanningEnAttente = Schemas['PlanningEnAttente'];
 export type ConsultationPlanning = Schemas['Consultation'];
 export type DecisionPlanning = Schemas['Decision'];
 export type Revision = Schemas['Revision'];
+// Historique et comparaison des versions (PLN-014, 0.3.6).
+export type VersionPlanning = Schemas['Version'];
+export type DetailVersion = Schemas['DetailVersion'];
+export type VisiteFigee = Schemas['VisiteFigee'];
+export type ComparaisonVersions = Schemas['ComparaisonVersions'];
 export type Remarque = Schemas['Remarque'];
 // Remplaçant daté d'un superviseur (ORG-013, 0.3.4).
 export type Remplacement = Schemas['Remplacement'];

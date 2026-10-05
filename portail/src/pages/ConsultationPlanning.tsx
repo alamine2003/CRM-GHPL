@@ -28,6 +28,7 @@ import {
   DetailVisite,
   ListeActivites,
 } from '../composants/SemainePlanning';
+import { HistoriqueVersions } from '../composants/HistoriqueVersions';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 
@@ -145,6 +146,7 @@ export default function ConsultationPlanning({ id }: { id: string }) {
             <Resume consultation={c} />
             {c.controles && <CarteControles controles={c.controles} jourCourt={jourCourt} />}
           </Box>
+          <HistoriqueVersions planning={c.planning!.id} fuseau={c.fuseau} />
           {c.activites.length > 0 && (
             <Card>
               <EnTeteCarte titre={t('consultation.activites')} />

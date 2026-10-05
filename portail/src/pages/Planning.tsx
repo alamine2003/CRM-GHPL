@@ -28,6 +28,7 @@ import { type DragEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EnTeteCarte, EnTetePage, Ligne, Potentiel } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
+import { HistoriqueVersions } from '../composants/HistoriqueVersions';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 import { CarteControles, Colonne, DetailVisite } from '../composants/SemainePlanning';
@@ -159,6 +160,7 @@ export default function Planning() {
             </Alert>
           )}
           <Resume semaine={s} agir={agir} jourCourt={jourCourt} />
+          {s.planning && <HistoriqueVersions planning={s.planning.id} fuseau={s.fuseau} />}
           <Box
             sx={{
               display: 'grid',

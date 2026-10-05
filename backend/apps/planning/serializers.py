@@ -370,3 +370,120 @@ class ConsultationSerializer(SemaineSerializer):
     #: Superviseur remplacé quand l'utilisateur décide en remplacement (ORG-013).
     remplace = DelegueSerializer(allow_null=True)
     postes = serializers.ListField(child=serializers.CharField())
+
+
+# --- Historique et comparaison des versions (PLN-014) -----------------------------------------
+
+
+class ReferenceFigeeSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    nom = serializers.CharField(allow_null=True)
+
+
+class VisiteFigeeSerializer(serializers.Serializer):
+    """Une visite telle que soumise dans une version (RG-037)."""
+
+    id = serializers.UUIDField()
+    date = serializers.DateField()
+    heure = serializers.CharField(allow_null=True)
+    ordre = serializers.IntegerField()
+    prospect = ReferenceFigeeSerializer(allow_null=True)
+    etablissement = ReferenceFigeeSerializer(allow_null=True)
+    objectif = serializers.CharField(allow_blank=True)
+    note = serializers.CharField(allow_blank=True)
+    passage = serializers.UUIDField(allow_null=True)
+
+
+class ActiviteFigeeSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    date = serializers.DateField()
+    periode = serializers.ChoiceField(choices=Periode.choices)
+    type = serializers.ChoiceField(choices=TypeActivite.choices)
+    commentaire = serializers.CharField(allow_blank=True)
+    demande_superviseur = serializers.BooleanField()
+
+
+class MomentSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    heure = serializers.CharField(allow_null=True)
+
+
+class DeplacementSerializer(serializers.Serializer):
+    visite = VisiteFigeeSerializer()
+    avant = MomentSerializer()
+
+
+class ModificationSerializer(serializers.Serializer):
+    visite = VisiteFigeeSerializer()
+    champs = serializers.ListField(
+        child=serializers.ChoiceField(choices=["prospect", "etablissement", "objectif", "note"])
+    )
+
+
+class ComparaisonVersionsSerializer(serializers.Serializer):
+    """PLN-014 CA1 : ce qui a changé depuis la version précédente."""
+
+    ajoutees = VisiteFigeeSerializer(many=True)
+    retirees = VisiteFigeeSerializer(many=True)
+    deplacees = DeplacementSerializer(many=True)
+    modifiees = ModificationSerializer(many=True)
+
+
+class ResumeComparaisonSerializer(serializers.Serializer):
+    ajoutees = serializers.IntegerField()
+    retirees = serializers.IntegerField()
+    deplacees = serializers.IntegerField()
+    modifiees = serializers.IntegerField()
+
+
+def _resume(comparaison):
+    return {cle: len(valeur) for cle, valeur in comparaison.items()} if comparaison else None
+
+
+class VersionSerializer(serializers.Serializer):
+    """Une version figée et sa décision, avec le résumé de ce qui a changé (PLN-014)."""
+
+    numero = serializers.IntegerField()
+    soumis_le = serializers.DateTimeField()
+    en_retard = serializers.BooleanField()
+    decision = serializers.ChoiceField(choices=Decision.choices, allow_null=True)
+    decide_le = serializers.DateTimeField(allow_null=True)
+    par = serializers.CharField(allow_null=True)
+    mode = serializers.ChoiceField(choices=ModeDecision.choices, allow_null=True)
+    commentaire = serializers.CharField(allow_blank=True)
+    remarques = RemarqueSerializer(many=True)
+    visites = serializers.IntegerField()
+    changements = ResumeComparaisonSerializer(allow_null=True)
+
+    @staticmethod
+    def donnees(version, comparaison) -> dict:
+        par = version.decide_par
+        return {
+            "numero": version.numero,
+            "soumis_le": version.soumis_le,
+            "en_retard": version.en_retard,
+            "decision": version.decision or None,
+            "decide_le": version.decide_le,
+            "par": " ".join(x for x in (par.first_name, par.last_name) if x) if par else None,
+            "mode": version.mode or None,
+            "commentaire": version.commentaire,
+            "remarques": version.remarques,
+            "visites": len(version.contenu.get("visites", [])),
+            "changements": _resume(comparaison),
+        }
+
+
+class DetailVersionSerializer(VersionSerializer):
+    """PLN-014 CA2 : le contenu d'une version, et sa comparaison détaillée à la précédente."""
+
+    contenu_visites = VisiteFigeeSerializer(many=True)
+    contenu_activites = ActiviteFigeeSerializer(many=True)
+    comparaison = ComparaisonVersionsSerializer(allow_null=True)
+
+    @staticmethod
+    def donnees(version, comparaison) -> dict:
+        return VersionSerializer.donnees(version, comparaison) | {
+            "contenu_visites": version.contenu.get("visites", []),
+            "contenu_activites": version.contenu.get("activites", []),
+            "comparaison": comparaison,
+        }
