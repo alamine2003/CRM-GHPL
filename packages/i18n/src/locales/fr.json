@@ -795,7 +795,8 @@
       "nouveau": "Nouveau",
       "creer": "Créer la fiche",
       "creee": "Fiche créée : à valider par l'administrateur pays.",
-      "retour": "Retour"
+      "retour": "Retour",
+      "indice": "Nom, n° d'ordre, téléphone ou lieu"
     }
   },
   "etablissement": {
@@ -1070,7 +1071,13 @@
       "sansPoste": "Vous n'occupez aucun poste : pas de liste cible.",
       "horsLigne": "Hors connexion : liste enregistrée sur ce téléphone le {{date}}.",
       "resume_one": "{{count}} prospect · {{visites}} visites par cycle de {{semaines}} semaines",
-      "resume_other": "{{count}} prospects · {{visites}} visites par cycle de {{semaines}} semaines"
+      "resume_other": "{{count}} prospects · {{visites}} visites par cycle de {{semaines}} semaines",
+      "indice": "Nom, spécialité, lieu ou téléphone",
+      "tous": "Tous · {{count}}",
+      "resultats_one": "{{count}} fiche",
+      "resultats_other": "{{count}} fiches",
+      "resultats_zero": "Aucune fiche dans ma liste",
+      "chercherPartout": "Chercher « {{texte}} » dans toutes les fiches"
     },
     "poste": "Poste"
   },
@@ -1223,5 +1230,28 @@
     "sansCoordonnees": "Établissements sans position",
     "sur": "sur {{total}}",
     "complet": "Toutes les fiches actives sont complètes."
+  },
+  "fiche": {
+    "titreProspect": "Prospect",
+    "titreEtablissement": "Établissement",
+    "appelerMobile": "Appeler le mobile",
+    "appelerPro": "Appeler le professionnel",
+    "appeler": "Appeler",
+    "ecrire": "Écrire un courriel",
+    "itineraire": "Itinéraire",
+    "positionGps": "Vers la position GPS de référence",
+    "aucunContact": "Aucun numéro ni courriel enregistré.",
+    "aucunLieu": "Aucun lieu d'exercice en cours.",
+    "informations": "Informations",
+    "principal": "principal",
+    "dansMaListe_one": "Dans ma liste · {{count}} visite par cycle",
+    "dansMaListe_other": "Dans ma liste · {{count}} visites par cycle",
+    "horsMaListe": "Hors de ma liste",
+    "horsLigne": "Hors connexion : informations de ma liste enregistrée sur ce téléphone.",
+    "introuvable": "Fiche introuvable, ou indisponible sans réseau.",
+    "lieuHorsLigne": "Cette fiche n'est pas disponible sans réseau.",
+    "quiExerceIci": "Qui exerce ici",
+    "personne": "Aucun prospect n'y exerce actuellement.",
+    "lieux": "Lieux d'exercice"
   }
 }

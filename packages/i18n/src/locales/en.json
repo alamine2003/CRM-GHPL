@@ -795,7 +795,8 @@
       "nouveau": "New",
       "creer": "Create record",
       "creee": "Record created: awaiting validation by the country administrator.",
-      "retour": "Back"
+      "retour": "Back",
+      "indice": "Name, licence no., phone or place"
     }
   },
   "etablissement": {
@@ -1070,7 +1071,13 @@
       "sansPoste": "You hold no position: no target list.",
       "horsLigne": "Offline: list saved on this phone on {{date}}.",
       "resume_one": "{{count}} prospect · {{visites}} visits per {{semaines}}-week cycle",
-      "resume_other": "{{count}} prospects · {{visites}} visits per {{semaines}}-week cycle"
+      "resume_other": "{{count}} prospects · {{visites}} visits per {{semaines}}-week cycle",
+      "indice": "Name, speciality, place or phone",
+      "tous": "All · {{count}}",
+      "resultats_one": "{{count}} record",
+      "resultats_other": "{{count}} records",
+      "resultats_zero": "No record on my list",
+      "chercherPartout": "Search “{{texte}}” in all records"
     },
     "poste": "Position"
   },
@@ -1223,5 +1230,28 @@
     "sansCoordonnees": "Facilities without a location",
     "sur": "of {{total}}",
     "complet": "All active records are complete."
+  },
+  "fiche": {
+    "titreProspect": "Prospect",
+    "titreEtablissement": "Facility",
+    "appelerMobile": "Call mobile",
+    "appelerPro": "Call work phone",
+    "appeler": "Call",
+    "ecrire": "Send an email",
+    "itineraire": "Directions",
+    "positionGps": "To the reference GPS location",
+    "aucunContact": "No phone number or email on file.",
+    "aucunLieu": "No current place of practice.",
+    "informations": "Details",
+    "principal": "main",
+    "dansMaListe_one": "On my list · {{count}} visit per cycle",
+    "dansMaListe_other": "On my list · {{count}} visits per cycle",
+    "horsMaListe": "Not on my list",
+    "horsLigne": "Offline: details from the list saved on this phone.",
+    "introuvable": "Record not found, or unavailable offline.",
+    "lieuHorsLigne": "This record is not available offline.",
+    "quiExerceIci": "Who practises here",
+    "personne": "No prospect currently practises here.",
+    "lieux": "Places of practice"
   }
 }

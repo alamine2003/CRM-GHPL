@@ -5608,6 +5608,12 @@ components:
         secteur:
           type: string
           nullable: true
+        telephone_mobile:
+          type: string
+          maxLength: 20
+        telephone_pro:
+          type: string
+          maxLength: 20
       required:
       - id
       - lieu_principal

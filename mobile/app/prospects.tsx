@@ -7,9 +7,10 @@ import type {
   SaisieProspect,
   ValeurReferentiel,
 } from '@innov/api-client';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import {
   Alerte,
   Bouton,
@@ -32,6 +33,7 @@ const POTENTIELS: Potentiel[] = ['A', 'B', 'C'];
 function LigneProspect({ prospect }: { prospect: Prospect }) {
   const { t } = useTranslation();
   const p = usePalette();
+  const routeur = useRouter();
   const nom = [
     prospect.civilite ? t(`prospect.civilites.${prospect.civilite}`) : '',
     prospect.prenom,
@@ -40,7 +42,14 @@ function LigneProspect({ prospect }: { prospect: Prospect }) {
     .filter(Boolean)
     .join(' ');
   return (
-    <View style={[styles.ligne, { borderColor: p.ligne }]}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => routeur.push(`/fiche/${prospect.id}`)}
+      style={({ pressed }) => [
+        styles.ligne,
+        { borderColor: p.ligne, backgroundColor: pressed ? p.fond : 'transparent' },
+      ]}
+    >
       <MarquePotentiel
         valeur={prospect.potentiel}
         libelle={t(`prospect.potentiels.${prospect.potentiel}`)}
@@ -54,7 +63,7 @@ function LigneProspect({ prospect }: { prospect: Prospect }) {
         </Texte>
       </View>
       {prospect.statut === 'a_valider' && <Etiquette>{t('prospect.statuts.a_valider')}</Etiquette>}
-    </View>
+    </Pressable>
   );
 }
 
@@ -241,6 +250,7 @@ type Segment = 'cible' | 'prospects' | 'etablissements';
  * (PRP-002, PRP-003, PRP-006). */
 export default function EcranProspects() {
   const { t } = useTranslation();
+  const routeur = useRouter();
   const { client, etat } = useSession();
   const [segment, setSegment] = useState<Segment>('cible');
   const [saisie, setSaisie] = useState('');
@@ -320,7 +330,12 @@ export default function EcranProspects() {
       </View>
       {message && <Alerte type="succes">{message}</Alerte>}
       {segment === 'cible' ? (
-        <MaListeCible />
+        <MaListeCible
+          chercherPartout={(texte) => {
+            changerSegment('prospects');
+            setSaisie(texte);
+          }}
+        />
       ) : creation ? (
         <>
           {segment === 'prospects' ? (
@@ -359,12 +374,17 @@ export default function EcranProspects() {
                 ? t('prospect.mobile.rechercher')
                 : t('etablissement.rechercher')
             }
+            placeholder={
+              segment === 'prospects' ? t('prospect.mobile.indice') : t('etablissement.rechercher')
+            }
             value={saisie}
             onChangeText={(texte) => {
               setSaisie(texte);
               setPage(1);
             }}
             autoCorrect={false}
+            clearButtonMode="while-editing"
+            returnKeyType="search"
           />
           {peutCreer && (
             <Bouton
@@ -385,7 +405,15 @@ export default function EcranProspects() {
             )}
             {segment === 'prospects'
               ? fiches?.map((prospect) => <LigneProspect key={prospect.id} prospect={prospect} />)
-              : lieux?.map((e) => <LigneEtablissement key={e.id} etablissement={e} />)}
+              : lieux?.map((e) => (
+                  <Pressable
+                    key={e.id}
+                    accessibilityRole="button"
+                    onPress={() => routeur.push(`/lieu/${e.id}`)}
+                  >
+                    <LigneEtablissement etablissement={e} />
+                  </Pressable>
+                ))}
           </Carte>
           {liste && liste.length < total && (
             <Bouton

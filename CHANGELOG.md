@@ -29,6 +29,32 @@ Neuvième et dernier jalon du cycle 0.1 « Référentiel ».
 - La page Établissements s'ouvre avec les filtres de l'adresse (`statut`, `sans_coordonnees`).
 - API `GET /api/v1/qualite/` (administrateur pays, pays actif seulement).
 
+### Mobile : trouver l'information en un toucher (délégué)
+
+- **Fiche prospect** : métier, potentiel, place dans ma liste (fréquence par cycle), lieux d'exercice avec jours de présence, n° d'ordre, secteur et localité.
+  - « Appeler » et « Écrire un courriel » en un toucher.
+  - Chaque lieu ouvre sa fiche (PRP-002, PRP-004).
+- **Fiche établissement** :
+  - « Itinéraire » ouvre Plans ou Google Maps vers la position GPS de référence, ou vers l'adresse ;
+  - « Appeler » en un toucher ;
+  - « Qui exerce ici », avec le potentiel de chacun (PRP-003).
+- **Ma liste** :
+  - recherche instantanée, même hors ligne, sur le nom (dans les deux ordres), la spécialité, le lieu, le secteur et les chiffres du téléphone ;
+  - filtres A, B, C avec leurs effectifs ;
+  - chaque ligne ouvre la fiche ;
+  - quand la personne n'est pas dans la liste, « Chercher … dans toutes les fiches » relance la recherche dans le pays.
+- **Sans réseau** (PRP-011 CA2) : la liste enregistrée sur le téléphone garde aussi les téléphones. Le délégué ouvre la fiche, appelle et retrouve le lieu principal.
+- Les lignes des onglets Prospects et Établissements ouvrent aussi leur fiche ; le champ de recherche indique ce qu'il accepte.
+- Revue sur le rendu réel à 360 et 414 px, puis seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Fiche prospect | Titre « Lieux d'exercice » remplacé par une erreur de traduction | Libellé dédié, vérifié par un test |
+| Ma liste | Environ 200 px avant la première fiche : libellé au-dessus d'un champ qui le répète | Libellé vocalisé mais masqué, recherche et filtres groupés |
+| Ma liste filtrée | Résumé du poste répété au-dessus des résultats | Masqué pendant une recherche ou un filtre |
+| Fiches | Double filet sous la dernière ligne de chaque bloc | Dernière ligne sans filet |
+| Fiche établissement | Personnes qui y exercent sans leur potentiel | Repère A, B ou C devant chaque nom |
+
 ### Démonstration (DEM-001)
 
 - La base de démonstration contient des paires de doublons probables, saisies par un délégué avec une faute de frappe, et une proposition de modification en attente : la 0.1.8 se montre sans rien préparer.

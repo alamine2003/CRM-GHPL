@@ -31,7 +31,10 @@ export function BarreOnglets() {
       ]}
     >
       {ONGLETS.map((onglet) => {
-        const actif = chemin === onglet.chemin;
+        // Les fiches prospect et établissement appartiennent à l'onglet Prospects.
+        const actif =
+          chemin === onglet.chemin ||
+          (onglet.cle === 'prospects' && /^\/(fiche|lieu)\//.test(chemin));
         const couleur = actif ? p.texte : p.texteDiscret;
         const futur = 'version' in onglet;
         return (

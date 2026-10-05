@@ -102,11 +102,19 @@ export function Ligne({
   );
 }
 
-export function Champ({ libelle, ...props }: TextInputProps & { libelle: string }) {
+export function Champ({
+  libelle,
+  libelleMasque,
+  ...props
+}: TextInputProps & {
+  libelle: string;
+  /** Champ de recherche : le texte indicatif suffit à l'écran ; le libellé reste vocalisé. */
+  libelleMasque?: boolean;
+}) {
   const p = usePalette();
   return (
     <View style={{ gap: 6 }}>
-      <Texte variante="libelle">{libelle}</Texte>
+      {!libelleMasque && <Texte variante="libelle">{libelle}</Texte>}
       <TextInput
         accessibilityLabel={libelle}
         placeholderTextColor={p.texteDiscret}

@@ -235,7 +235,9 @@ class ProspectCibleSerializer(ProspectResumeSerializer):
     secteur = serializers.CharField(source="secteur.libelle", allow_null=True, default=None)
 
     class Meta(ProspectResumeSerializer.Meta):
-        fields = [*ProspectResumeSerializer.Meta.fields, "lieu_principal", "secteur"]
+        # Téléphones gardés avec la liste du délégué : il appelle sans réseau (PRP-011 CA2).
+        fields = [*ProspectResumeSerializer.Meta.fields, "lieu_principal", "secteur",
+                  "telephone_mobile", "telephone_pro"]  # fmt: skip
 
     @extend_schema_field(LieuSerializer(allow_null=True))
     def get_lieu_principal(self, prospect):

@@ -2724,6 +2724,8 @@ export interface components {
       statut?: components['schemas']['StatutFicheEnum'];
       readonly lieu_principal: components['schemas']['Lieu'] | null;
       secteur?: string | null;
+      telephone_mobile?: string;
+      telephone_pro?: string;
     };
     /**
      * @description Fiche créée et décision du détecteur (PRP-008) : `certain` (fusionnée dans la fiche

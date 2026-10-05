@@ -1,8 +1,9 @@
 import { marque } from '@innov/design';
-import { Redirect } from 'expo-router';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Redirect, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarreOnglets } from './BarreOnglets';
 import { FiletDemonstration, MentionDemonstration } from './Demonstration';
@@ -18,9 +19,12 @@ export function Ecran({
   titre,
   surTitre,
   action,
+  retour,
   children,
 }: {
   titre: string;
+  /** Écran de détail : flèche de retour à gauche du titre (fiches prospect et établissement). */
+  retour?: boolean;
   /** Contexte discret sous le titre (date, pays, personne). */
   surTitre?: string;
   action?: ReactNode;
@@ -30,6 +34,7 @@ export function Ecran({
   const p = usePalette();
   const marges = useSafeAreaInsets();
   const { etat } = useSession();
+  const routeur = useRouter();
   if (etat.statut === 'chargement') {
     return (
       <View style={[styles.centre, { backgroundColor: p.fond }]}>
@@ -47,6 +52,17 @@ export function Ecran({
         ]}
       >
         <View style={styles.barre}>
+          {retour && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('commun.retour')}
+              hitSlop={8}
+              onPress={() => (routeur.canGoBack() ? routeur.back() : routeur.replace('/prospects'))}
+              style={styles.retour}
+            >
+              <MaterialIcons name="arrow-back" size={24} color={p.texte} />
+            </Pressable>
+          )}
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text
               accessibilityRole="header"
@@ -83,6 +99,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  retour: { width: 40, height: 40, marginLeft: -8, alignItems: 'center', justifyContent: 'center' },
   titre: { fontFamily: police.titre, fontSize: 18, lineHeight: 24 },
   surTitre: { fontFamily: police.texte, fontSize: 13, lineHeight: 18 },
   contenu: { padding: 16, gap: 16, paddingBottom: 24 },

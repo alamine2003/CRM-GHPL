@@ -1,9 +1,12 @@
-import type { ListeCible } from '@innov/api-client';
+import type { ListeCible, Potentiel } from '@innov/api-client';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ecrire, lire } from './baseLocale';
-import { Alerte, Carte, Champ, MarquePotentiel, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Champ, MarquePotentiel, Texte, usePalette } from './composants';
+import { Pilule } from './Etablissements';
+import { nomProspect } from './Fiches';
 import { police } from './polices';
 import { useSession } from './session';
 
@@ -16,11 +19,22 @@ function normaliser(texte: string) {
 /**
  * Liste cible du délégué (PRP-011) : lue sur le serveur et gardée dans la base locale
  * chiffrée, pour rester disponible sans réseau (CA2).
+ *
+ * Recherche instantanée, même hors ligne, sur le nom, la spécialité, le lieu, le secteur et le
+ * téléphone ; filtre rapide par potentiel ; chaque ligne ouvre la fiche. Quand la liste ne
+ * contient pas la personne cherchée, un toucher relance la recherche dans toutes les fiches.
  */
-export function MaListeCible() {
+export function MaListeCible({
+  chercherPartout,
+}: {
+  /** Relance la saisie dans toutes les fiches du pays (segment Prospects). */
+  chercherPartout?: (texte: string) => void;
+} = {}) {
   const { t, i18n } = useTranslation();
   const p = usePalette();
+  const routeur = useRouter();
   const { client } = useSession();
+  const [potentiel, setPotentiel] = useState<Potentiel | null>(null);
   const [listes, setListes] = useState<ListeCible[] | null>(null);
   const [horsLigneDepuis, setHorsLigneDepuis] = useState<string | null>(null);
   const [indisponible, setIndisponible] = useState(false);
@@ -60,7 +74,30 @@ export function MaListeCible() {
       </Carte>
     );
   }
-  const filtre = normaliser(saisie);
+  const filtre = normaliser(saisie.trim());
+  const toutes = listes.flatMap((l) => l.cibles);
+  const compte = (v: Potentiel) => toutes.filter((c) => c.prospect.potentiel === v).length;
+  const chiffres = filtre.replace(/\D/g, '');
+  // Le prénom figure avant et après le nom : « ndiaye aissatou » trouve « Aïssatou NDIAYE ».
+  const correspond = ({ prospect: f }: ListeCible['cibles'][number]) =>
+    normaliser(
+      [
+        f.prenom,
+        f.nom,
+        f.prenom,
+        f.specialite_libelle,
+        f.type_libelle,
+        f.lieu_principal?.libelle,
+        f.secteur,
+      ].join(' '),
+    ).includes(filtre) ||
+    (chiffres.length >= 3 &&
+      [f.telephone_mobile, f.telephone_pro].some((n) =>
+        (n ?? '').replace(/\D/g, '').includes(chiffres),
+      ));
+  const retenues = (cibles: ListeCible['cibles']) =>
+    cibles.filter((c) => (!potentiel || c.prospect.potentiel === potentiel) && correspond(c));
+  const nombre = listes.reduce((n, l) => n + retenues(l.cibles).length, 0);
   return (
     <>
       {horsLigneDepuis && (
@@ -75,63 +112,92 @@ export function MaListeCible() {
           })}
         </Alerte>
       )}
-      <Champ
-        libelle={t('ciblage.mobile.rechercher')}
-        value={saisie}
-        onChangeText={setSaisie}
-        autoCorrect={false}
-      />
-      {listes.map(({ poste, cibles }) => (
-        <Carte key={poste.id} style={{ paddingVertical: 8 }}>
-          <Texte variante="sousTitre">{poste.libelle}</Texte>
-          <Texte variante="discret">
-            {t('ciblage.mobile.resume', {
-              count: poste.synthese.total,
-              visites: poste.synthese.visites_par_cycle,
-              semaines: poste.synthese.cycle_semaines,
-            })}
-          </Texte>
-          {cibles.length === 0 && <Texte variante="discret">{t('ciblage.videLecture')}</Texte>}
-          {cibles
-            .filter((c) =>
-              normaliser(
-                `${c.prospect.prenom} ${c.prospect.nom} ${c.prospect.specialite_libelle ?? ''} ${c.prospect.lieu_principal?.libelle ?? ''}`,
-              ).includes(filtre),
-            )
-            .map((c) => {
-              return (
-                <View key={c.id} style={[styles.ligne, { borderColor: p.ligne }]}>
-                  <MarquePotentiel
-                    valeur={c.prospect.potentiel}
-                    libelle={t(`prospect.potentiels.${c.prospect.potentiel}`)}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Texte variante="fort">
-                      {[
-                        c.prospect.civilite ? t(`prospect.civilites.${c.prospect.civilite}`) : '',
-                        c.prospect.prenom,
-                        c.prospect.nom,
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                    </Texte>
-                    <Texte variante="discret">
-                      {[
-                        c.prospect.specialite_libelle ?? c.prospect.type_libelle,
-                        c.prospect.lieu_principal?.libelle ?? c.prospect.secteur,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                    </Texte>
-                  </View>
-                  <Text style={[styles.frequence, { color: p.texteSecondaire }]}>
-                    {t('ciblage.parCycle', { count: c.frequence })}
-                  </Text>
+      <View style={{ gap: 8 }}>
+        <Champ
+          libelle={t('ciblage.mobile.rechercher')}
+          libelleMasque
+          placeholder={t('ciblage.mobile.indice')}
+          value={saisie}
+          onChangeText={setSaisie}
+          autoCorrect={false}
+          clearButtonMode="while-editing"
+          returnKeyType="search"
+        />
+        <View style={styles.filtres} accessibilityLabel={t('prospect.champs.potentiel')}>
+          <Pilule
+            libelle={t('ciblage.mobile.tous', { count: toutes.length })}
+            actif={potentiel === null}
+            onPress={() => setPotentiel(null)}
+          />
+          {(['A', 'B', 'C'] as const).map((v) => (
+            <Pilule
+              key={v}
+              libelle={`${v} · ${compte(v)}`}
+              actif={potentiel === v}
+              onPress={() => setPotentiel(potentiel === v ? null : v)}
+            />
+          ))}
+        </View>
+      </View>
+      {(filtre || potentiel) && (
+        <Texte variante="discret">{t('ciblage.mobile.resultats', { count: nombre })}</Texte>
+      )}
+      {nombre === 0 && filtre.length >= 2 && chercherPartout && (
+        <Bouton
+          secondaire
+          libelle={t('ciblage.mobile.chercherPartout', { texte: saisie.trim() })}
+          onPress={() => chercherPartout(saisie.trim())}
+        />
+      )}
+      {listes.map(({ poste, cibles }) => {
+        const lignes = retenues(cibles);
+        if ((filtre || potentiel) && lignes.length === 0) return null;
+        return (
+          <Carte key={poste.id} style={{ paddingVertical: 8 }}>
+            <Texte variante="sousTitre">{poste.libelle}</Texte>
+            {!(filtre || potentiel) && (
+              <Texte variante="discret">
+                {t('ciblage.mobile.resume', {
+                  count: poste.synthese.total,
+                  visites: poste.synthese.visites_par_cycle,
+                  semaines: poste.synthese.cycle_semaines,
+                })}
+              </Texte>
+            )}
+            {cibles.length === 0 && <Texte variante="discret">{t('ciblage.videLecture')}</Texte>}
+            {lignes.map((c) => (
+              <Pressable
+                key={c.id}
+                accessibilityRole="button"
+                onPress={() => routeur.push(`/fiche/${c.prospect.id}`)}
+                style={({ pressed }) => [
+                  styles.ligne,
+                  { borderColor: p.ligne, backgroundColor: pressed ? p.fond : 'transparent' },
+                ]}
+              >
+                <MarquePotentiel
+                  valeur={c.prospect.potentiel}
+                  libelle={t(`prospect.potentiels.${c.prospect.potentiel}`)}
+                />
+                <View style={{ flex: 1 }}>
+                  <Texte variante="fort">{nomProspect(c.prospect, t)}</Texte>
+                  <Texte variante="discret">
+                    {[
+                      c.prospect.specialite_libelle ?? c.prospect.type_libelle,
+                      c.prospect.lieu_principal?.libelle ?? c.prospect.secteur,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </Texte>
                 </View>
-              );
-            })}
-        </Carte>
-      ))}
+                <Text style={[styles.frequence, { color: p.texteSecondaire }]}>
+                  {t('ciblage.parCycle', { count: c.frequence })}
+                </Text>
+              </Pressable>
+            ))}
+          </Carte>
+        );
+      })}
     </>
   );
 }
@@ -146,4 +212,5 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   frequence: { fontFamily: police.texteFort, fontSize: 12 },
+  filtres: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

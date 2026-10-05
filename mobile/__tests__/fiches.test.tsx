@@ -1,0 +1,151 @@
+import type { ClientApi, Etablissement, Exercice, ListeCible, Prospect } from '@innov/api-client';
+import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Linking } from 'react-native';
+import { lire } from '../src/baseLocale';
+import { FicheEtablissement, FicheProspect } from '../src/Fiches';
+import i18n from '../src/i18n';
+import { ContexteSession, type Session } from '../src/session';
+
+const mockPousser = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPousser }) }));
+jest.mock('../src/baseLocale', () => ({
+  lire: jest.fn(async () => null),
+  ecrire: jest.fn(async () => undefined),
+  effacer: jest.fn(async () => undefined),
+}));
+
+const PROSPECT = {
+  id: 'p1',
+  civilite: 'dr',
+  prenom: 'Aïssatou',
+  nom: 'NDIAYE',
+  type_libelle: 'Médecin',
+  specialite_libelle: 'Cardiologie',
+  grade_libelle: 'Docteur',
+  numero_ordre: 'DEMO-SN-00001',
+  telephone_mobile: '+221 77 000 00 01',
+  telephone_pro: '',
+  courriel: 'cabinet@demo.invalid',
+  potentiel: 'A',
+  activite: 'prive',
+  statut: 'actif',
+  secteur: { id: 's1', libelle: 'Plateau' },
+  localite: null,
+  lieu_principal: { id: 'e1', libelle: 'Clinique du Cap' },
+} as unknown as Prospect;
+
+const EXERCICE = {
+  id: 'x1',
+  prospect: { id: 'p1', civilite: 'dr', prenom: 'Aïssatou', nom: 'NDIAYE', type_libelle: 'Médecin',
+    specialite_libelle: 'Cardiologie', potentiel: 'A' }, // prettier-ignore
+  etablissement: { id: 'e1', nom: 'Clinique du Cap', type_code: 'clinique',
+    type_libelle: 'Clinique', secteur: 'Plateau', localite: null, a_coordonnees: true }, // prettier-ignore
+  debut: '2026-01-01',
+  fin: null,
+  actif: true,
+  principal: true,
+  presence: 'Lundi et jeudi matin',
+} as unknown as Exercice;
+
+const LISTE = {
+  poste: { id: 'po1' },
+  cibles: [
+    {
+      id: 'c1',
+      frequence: 2,
+      prospect: {
+        id: 'p1',
+        civilite: 'dr',
+        prenom: 'Aïssatou',
+        nom: 'NDIAYE',
+        type_libelle: 'Médecin',
+        specialite_libelle: 'Cardiologie',
+        potentiel: 'A',
+        lieu_principal: { id: 'e1', libelle: 'Clinique du Cap' },
+        secteur: 'Plateau',
+        telephone_mobile: '+221 77 000 00 01',
+        telephone_pro: '',
+      },
+    },
+  ],
+} as unknown as ListeCible;
+
+function rendre(client: Partial<ClientApi>, element: React.ReactElement) {
+  const session = { etat: { statut: 'chargement' }, client: client as ClientApi } as Session;
+  return render(<ContexteSession.Provider value={session}>{element}</ContexteSession.Provider>);
+}
+
+beforeEach(async () => {
+  await i18n.changeLanguage('fr');
+  jest
+    .mocked(lire)
+    .mockReset()
+    .mockResolvedValue({ valeur: [LISTE], maj: '2026-10-04T08:00:00Z' });
+  mockPousser.mockClear();
+  jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+});
+
+test("la fiche réunit métier, appel, courriel et lieux d'exercice (PRP-002, PRP-004)", async () => {
+  await rendre(
+    {
+      prospects: { detail: jest.fn(async () => PROSPECT) },
+      exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
+    } as unknown as Partial<ClientApi>,
+    <FicheProspect id="p1" />,
+  );
+  expect(await screen.findByText('Dr Aïssatou NDIAYE')).toBeTruthy();
+  expect(screen.getByText('Cardiologie · Docteur')).toBeTruthy();
+  expect(await screen.findByText('Dans ma liste · 2 visites par cycle')).toBeTruthy();
+  expect(screen.getByText('Clinique · Plateau · principal · Lundi et jeudi matin')).toBeTruthy();
+  expect(screen.getByText('DEMO-SN-00001')).toBeTruthy();
+  expect(screen.getByText("Lieux d'exercice")).toBeTruthy();
+  await fireEvent.press(screen.getByText('Appeler le mobile'));
+  expect(Linking.openURL).toHaveBeenCalledWith('tel:+221770000001');
+  await fireEvent.press(screen.getByText('Clinique du Cap'));
+  expect(mockPousser).toHaveBeenCalledWith('/lieu/e1');
+});
+
+test("PRP-011 CA2 : sans réseau, la fiche de ma liste permet encore d'appeler", async () => {
+  const echec = jest.fn(async () => {
+    throw new Error('réseau');
+  });
+  await rendre(
+    {
+      prospects: { detail: echec },
+      exercices: { duProspect: echec },
+    } as unknown as Partial<ClientApi>,
+    <FicheProspect id="p1" />,
+  );
+  expect(await screen.findByText(/Hors connexion : informations de ma liste/)).toBeTruthy();
+  expect(screen.getByText('Dr Aïssatou NDIAYE')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Appeler le mobile'));
+  expect(Linking.openURL).toHaveBeenCalledWith('tel:+221770000001');
+  expect(screen.getByText('Clinique du Cap')).toBeTruthy();
+});
+
+test("la fiche d'un établissement donne l'itinéraire et qui y exerce (PRP-003)", async () => {
+  const etablissement = {
+    id: 'e1',
+    nom: 'Clinique du Cap',
+    type_libelle: 'Clinique',
+    adresse: 'Rue 10',
+    secteur: { id: 's1', libelle: 'Plateau' },
+    localite: null,
+    telephone: '33 800 00 00',
+    latitude: 14.67,
+    longitude: -17.43,
+    statut: 'actif',
+  } as unknown as Etablissement;
+  await rendre(
+    {
+      etablissements: { detail: jest.fn(async () => etablissement) },
+      exercices: { deLEtablissement: jest.fn(async () => [EXERCICE]) },
+    } as unknown as Partial<ClientApi>,
+    <FicheEtablissement id="e1" />,
+  );
+  expect(await screen.findByText('Clinique · Rue 10, Plateau')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Itinéraire'));
+  expect(Linking.openURL).toHaveBeenCalledWith(expect.stringContaining('14.67%2C-17.43'));
+  await fireEvent.press(screen.getByText('Dr Aïssatou NDIAYE'));
+  expect(mockPousser).toHaveBeenCalledWith('/fiche/p1');
+});
