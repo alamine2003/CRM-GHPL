@@ -1,8 +1,8 @@
 """API du calendrier et du planning (cycle 0.2).
 
 - Jours fériés (ORG-012) : `jours_feries.gerer` (administrateur pays), pays actif requis.
-- Semaine et planning (PLN-001) : `plannings.preparer` (délégué, superviseur qui occupe un
-  poste), sur ses propres plannings uniquement.
+- Semaine, planning (PLN-001) et visites planifiées (PLN-002) : `plannings.preparer`
+  (délégué, superviseur qui occupe un poste), sur ses propres plannings uniquement.
 """
 
 from datetime import date, timedelta
@@ -22,7 +22,8 @@ from apps.socle.services import aujourdhui
 from . import serializers as s
 from . import services
 from .calendrier import jours_de_la_semaine, lundi
-from .models import JourFerie, Planning
+from .etats import MODIFIABLES
+from .models import JourFerie, Planning, Visite
 
 GERER = Action.JOURS_FERIES_GERER
 PREPARER = Action.PLANNINGS_PREPARER
@@ -130,6 +131,9 @@ class SemaineVue(VuePlannings):
             "peut_creer": planning is None
             and debut >= courante
             and services.occupe_un_poste(request.user, pays, debut),
+            "modifiable": bool(planning) and planning.statut in MODIFIABLES,
+            "visites": _visites(planning) if planning else [],
+            "reseaux": _reseaux(planning) if planning else [],
         }
         return Response(s.SemaineSerializer(donnees).data)
 
@@ -143,3 +147,102 @@ class PlanningsVue(VuePlannings):
         v = _lire(s.CreationPlanningSerializer, request)
         planning = services.creer_planning(pays_requis(self.perimetre), request.user, v["semaine"])
         return Response(s.PlanningSerializer(planning).data, status=status.HTTP_201_CREATED)
+
+
+# --- Visites planifiées (PLN-002) ------------------------------------------------------------
+
+
+def _visites(planning: Planning) -> list:
+    return list(
+        planning.visites.filter(archive_le__isnull=True).select_related(
+            "prospect__type", "prospect__specialite", "etablissement", "reseau"
+        )
+    )
+
+
+def _reseaux(planning: Planning) -> list:
+    reseaux = {r.pk: r for p in services.postes_de_la_semaine(planning) for r in p.reseaux.all()}
+    return [{"id": r.pk, "libelle": r.libelle} for r in sorted(reseaux.values(),
+                                                              key=lambda r: r.libelle)]  # fmt: skip
+
+
+def _fiche(modele, perimetre, identifiant, code: str):
+    """RG-025 : une fiche active du pays, ou une fiche que le délégué a créée et qui attend sa
+    validation (PRP-006 : utilisable aussitôt par lui seul)."""
+    from django.db.models import Q
+
+    from apps.prospects.models import StatutFiche
+    from apps.prospects.services import fiches_visibles
+
+    if identifiant is None:
+        return None
+    fiche = (
+        fiches_visibles(modele, perimetre)
+        .filter(archive_le__isnull=True)
+        .filter(Q(statut=StatutFiche.ACTIF)
+                | Q(statut=StatutFiche.A_VALIDER, cree_par=perimetre.utilisateur))
+        .filter(pk=identifiant)
+        .first()
+    )  # fmt: skip
+    if fiche is None:
+        raise ErreurMetier(code, _("Fiche inconnue ou inactive dans ce pays."), champ=code[:-9])
+    return fiche
+
+
+def _references(perimetre, v: dict) -> dict:
+    from apps.organisation.models import Reseau
+    from apps.prospects.models import Etablissement, Prospect
+
+    if "prospect" in v:
+        v["prospect"] = _fiche(Prospect, perimetre, v["prospect"], "prospect_invalide")
+    if "etablissement" in v:
+        v["etablissement"] = _fiche(
+            Etablissement, perimetre, v["etablissement"], "etablissement_invalide"
+        )
+    if v.get("reseau") is not None:
+        reseau = perimetre.filtrer_par_pays(Reseau.objects.all()).filter(pk=v["reseau"]).first()
+        if reseau is None:
+            raise ErreurMetier("reseau_invalide", _("Réseau inconnu."), champ="reseau")
+        v["reseau"] = reseau
+    return v
+
+
+class VueVisites(VuePerimetre):
+    serializer_class = s.VisiteSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(
+            Visite.objects.filter(planning__delegue=self.request.user, archive_le__isnull=True)
+        ).select_related("planning")
+
+
+class VisitesPlanningVue(VuePlannings):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.SaisieVisiteSerializer, responses={201: s.VisiteSerializer},
+                   operation_id="visite_planifier")  # fmt: skip
+    def post(self, request, id):
+        planning = get_object_or_404(self.get_queryset(), pk=id)
+        v = _references(self.perimetre, _lire(s.SaisieVisiteSerializer, request))
+        visite = services.ajouter_visite(planning, **v)
+        return Response(s.VisiteSerializer(visite).data, status=status.HTTP_201_CREATED)
+
+
+class VisiteVue(VueVisites):
+    actions = {"PATCH": PREPARER}
+
+    @extend_schema(request=s.ModificationVisiteSerializer, responses=s.VisiteSerializer,
+                   operation_id="visite_modifier")  # fmt: skip
+    def patch(self, request, id):
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _references(self.perimetre, _lire(s.ModificationVisiteSerializer, request))
+        return Response(s.VisiteSerializer(services.modifier_visite(visite, **v)).data)
+
+
+class VisiteRetraitVue(VueVisites):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=None, responses=s.VisiteSerializer, operation_id="visite_retirer")
+    def post(self, request, id):
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        return Response(s.VisiteSerializer(services.retirer_visite(visite)).data)

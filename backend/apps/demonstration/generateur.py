@@ -10,7 +10,7 @@ aucun téléphone, aucun courriel joignable (CA2).
 import random
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 from django.apps import apps
 from django.db import connection, transaction
@@ -326,6 +326,7 @@ class Generateur:
         self.bilan.pays[code]["cibles"] = self.cibles(pays)
         self.bilan.pays[code].update(self.a_trancher(pays, delegues[0]))
         self.bilan.pays[code]["jours_feries"] = self.jours_feries(pays)
+        self.bilan.pays[code]["visites"] = self.semaine_en_preparation(pays, delegues[0])
 
     def exercices(self, pays) -> int:
         """Lieux d'exercice fictifs (PRP-004) : chaque prospect exerce dans un établissement de
@@ -374,6 +375,43 @@ class Generateur:
                 if cible.prospect.potentiel == "A" and a.random() < 0.3:
                     ciblage.modifier_frequence(cible, cible.frequence + 1)
                 nombre += 1
+        return nombre
+
+    def semaine_en_preparation(self, pays, delegue) -> int:
+        """Planning de la semaine en cours du premier délégué (PLN-001, PLN-002) : quelques
+        visites de sa liste cible, dont une encore à compléter (heure et objectif)."""
+        from apps.planning import services as pln
+        from apps.planning.calendrier import jours_planifiables, lundi
+        from apps.prospects.models import Cible
+
+        semaine = lundi(aujourdhui(pays))
+        if not pln.occupe_un_poste(delegue, pays, semaine):
+            return 0
+        planning = pln.creer_planning(pays, delegue, semaine)
+        jours = jours_planifiables(pays, semaine)
+        reseau = next((r for p in pln.postes_de_la_semaine(planning) for r in p.reseaux.all()),
+                      None)  # fmt: skip
+        cibles = (
+            Cible.objects.filter(fin__isnull=True, poste__occupations__utilisateur=delegue)
+            .select_related("prospect")
+            .order_by("-prospect__potentiel", "prospect__nom")[:20]
+        )
+        heures = ["09:00", "10:30", "15:00"]
+        nombre = 0
+        for cible in cibles:
+            lieu = cible.prospect.exercices.filter(fin__isnull=True).order_by("-principal").first()
+            if lieu is None or not jours:
+                continue
+            if nombre == 4:
+                break
+            complete = nombre < 3
+            pln.ajouter_visite(
+                planning, date=jours[nombre % len(jours)], prospect=cible.prospect,
+                etablissement=lieu.etablissement, reseau=reseau,
+                heure=time.fromisoformat(heures[nombre]) if complete else None,
+                objectif="Présenter le produit du mois" if complete else "",
+            )  # fmt: skip
+            nombre += 1
         return nombre
 
     def jours_feries(self, pays) -> int:

@@ -80,6 +80,11 @@ export type JourFerie = Schemas['JourFerie'];
 export type Planning = Schemas['Planning'];
 export type Semaine = Schemas['Semaine'];
 export type JourSemaine = Schemas['JourSemaine'];
+// Visites planifiées (PLN-002).
+export type Visite = Schemas['Visite'];
+export type StatutVisite = Schemas['VisiteStatutEnum'];
+export type SaisieVisite = Schemas['SaisieVisite'];
+export type ModificationVisite = Schemas['PatchedModificationVisite'];
 export type DecisionDoublon = Schemas['DecisionDoublon']['decision'];
 export type Fusion = Schemas['Fusion'];
 export type ChangementFiche = Schemas['ChangementFiche'];

@@ -21,6 +21,11 @@ export function usePalette() {
   return useColorScheme() === 'dark' ? paletteSombre : paletteClaire;
 }
 
+/** Couleur des liens et actions en texte : le bleu marine devient illisible sur fond sombre. */
+export function useLien() {
+  return useColorScheme() === 'dark' ? marque.bleuClair : marque.bleuMarine;
+}
+
 type Variante = 'titre' | 'sousTitre' | 'texte' | 'fort' | 'discret' | 'libelle';
 
 /** Texte typographié selon docs/design.md (Plus Jakarta Sans pour les titres, DM Sans sinon). */
@@ -231,8 +236,8 @@ const styles = StyleSheet.create({
 /** Potentiel A/B/C : la seule « couleur métier » des listes (A orange, B marine, C gris). */
 export function MarquePotentiel({ valeur, libelle }: { valeur: string; libelle?: string }) {
   const p = usePalette();
-  const couleur =
-    valeur === 'A' ? marque.orange : valeur === 'B' ? marque.bleuMarine : p.texteSecondaire;
+  const lien = useLien();
+  const couleur = valeur === 'A' ? marque.orange : valeur === 'B' ? lien : p.texteSecondaire;
   return (
     <View
       accessibilityLabel={libelle}

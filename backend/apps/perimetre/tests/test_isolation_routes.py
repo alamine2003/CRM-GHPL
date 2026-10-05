@@ -95,11 +95,16 @@ def senegal(monde):
     from apps.planning.services import creer_jour_ferie
 
     ferie = creer_jour_ferie(sn, date=date(2099, 4, 4), libelle="Fête nationale")
+    from apps.planning.models import Planning, Visite
+
+    planning = Planning.objects.create(pays=sn, delegue=monde["deleg.sn"], semaine=date(2099, 4, 6))
+    visite = Visite.objects.create(pays=sn, planning=planning, date=date(2099, 4, 7))
     return {
         "prospect-historique": prospect.pk, "etablissement-historique": etab.pk,
         "doublon-trancher": doublon.pk, "fusion-defaire": fusion.pk,
         "proposition-trancher": proposition.pk,
         "jour-ferie": ferie.pk, "jour-ferie-retirer": ferie.pk,
+        "planning-visites": planning.pk, "visite": visite.pk, "visite-retirer": visite.pk,
         "ciblage-liste": poste.pk, "ciblage-candidats": poste.pk,
         "cible": cible.pk, "cible-retirer": cible.pk,
         "prospect-exercices": prospect.pk, "etablissement-exercices": etab.pk,

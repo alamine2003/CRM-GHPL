@@ -26,7 +26,7 @@ import { useSession } from './session';
 type Traduire = (cle: string, options?: Record<string, unknown>) => string;
 
 export function nomProspect(
-  p: Pick<ProspectCible, 'civilite' | 'prenom' | 'nom'>,
+  p: { civilite?: string; prenom?: string; nom: string },
   t: Traduire,
 ): string {
   return [p.civilite ? t(`prospect.civilites.${p.civilite}`) : '', p.prenom, p.nom]

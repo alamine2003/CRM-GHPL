@@ -1,13 +1,14 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { Semaine } from '@innov/api-client';
+import type { Semaine, Visite } from '@innov/api-client';
 import { marque } from '@innov/design';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Alerte, Bouton, Carte, Texte, usePalette } from '../src/composants';
+import { Alerte, Bouton, Carte, Texte, useLien, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
+import { AjouterVisite, FormulaireVisite, LigneVisite } from '../src/Visites';
 
 const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
 
@@ -16,17 +17,21 @@ const jourIso = (d: Date) =>
 
 /**
  * Semaine du délégué (PLN-001) : ses jours ouvrés, les jours fériés du pays (affichés, non
- * planifiables, CA2) et son planning, un seul par semaine (CA1). Les visites s'y ajoutent à
- * partir de 0.2.2.
+ * planifiables, CA2) et son planning, un seul par semaine (CA1). Tant que le planning est en
+ * préparation, chaque jour planifiable reçoit ses visites (PLN-002) ; une visite incomplète
+ * reste permise et montre ce qui manque (CA1).
  */
 export default function EcranSemaine() {
   const { t, i18n } = useTranslation();
   const p = usePalette();
+  const lien = useLien();
   const { client } = useSession();
   const [jour, setJour] = useState<string | undefined>(undefined);
   const [semaine, setSemaine] = useState<Semaine | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [creation, setCreation] = useState(false);
+  const [edition, setEdition] = useState<{ jour: string; visite?: Visite } | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const aujourdhui = jourIso(new Date());
 
   const charger = useCallback(
@@ -76,14 +81,39 @@ export default function EcranSemaine() {
         })
       : undefined;
   const feries = semaine?.jours.filter((j) => j.ferie).length ?? 0;
+  const visites = semaine?.visites ?? [];
+  const aCompleter = visites.filter((v) => v.manquants.length > 0).length;
+  const modifiable = !!semaine?.planning && semaine.modifiable;
+
+  if (semaine && edition) {
+    return (
+      // Une clé propre : le formulaire s'ouvre en haut de page, pas au défilement de la semaine.
+      <Ecran key="visite" titre={t('mobile.onglets.semaine')} surTitre={periode}>
+        <FormulaireVisite
+          semaine={semaine}
+          jour={edition.jour}
+          visite={edition.visite}
+          surAnnuler={() => setEdition(null)}
+          surTermine={(texte) => {
+            setEdition(null);
+            setMessage(texte);
+            void charger(semaine.semaine);
+          }}
+        />
+      </Ecran>
+    );
+  }
 
   return (
-    <Ecran titre={t('mobile.onglets.semaine')} surTitre={periode}>
+    <Ecran key="semaine" titre={t('mobile.onglets.semaine')} surTitre={periode}>
       <View style={styles.navigation}>
         <Fleche
           sens="precedente"
           libelle={t('semaine.precedente')}
-          onPress={() => semaine && setJour(semaine.precedente)}
+          onPress={() => {
+            setMessage(null);
+            if (semaine) setJour(semaine.precedente);
+          }}
         />
         <Pressable
           accessibilityRole="button"
@@ -91,19 +121,17 @@ export default function EcranSemaine() {
           onPress={() => setJour(undefined)}
           style={styles.centre}
         >
-          <Text
-            style={[
-              styles.reperes,
-              { color: semaine?.courante ? p.texteSecondaire : marque.bleuMarine },
-            ]}
-          >
+          <Text style={[styles.reperes, { color: semaine?.courante ? p.texteSecondaire : lien }]}>
             {semaine?.courante ? t('semaine.cetteSemaine') : t('semaine.revenir')}
           </Text>
         </Pressable>
         <Fleche
           sens="suivante"
           libelle={t('semaine.suivante')}
-          onPress={() => semaine && setJour(semaine.suivante)}
+          onPress={() => {
+            setMessage(null);
+            if (semaine) setJour(semaine.suivante);
+          }}
         />
       </View>
 
@@ -112,54 +140,21 @@ export default function EcranSemaine() {
         !erreur && <Texte variante="discret">{t('session.chargement')}</Texte>
       ) : (
         <>
-          <Carte style={{ paddingVertical: 4 }}>
-            {semaine.jours.map((j, i) => {
-              const estAujourdhui = j.date === aujourdhui;
-              return (
-                <View
-                  key={j.date}
-                  style={[
-                    styles.jour,
-                    i < semaine.jours.length - 1 && {
-                      borderBottomWidth: StyleSheet.hairlineWidth,
-                      borderBottomColor: p.ligne,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[styles.date, { color: j.planifiable ? p.texte : p.texteSecondaire }]}
-                  >
-                    <Text style={styles.nomJour}>
-                      {majuscule(date(j.date, { weekday: 'long' }))}
-                    </Text>{' '}
-                    {date(j.date, { day: 'numeric', month: 'short' })}
-                  </Text>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    {j.ferie ? (
-                      <Texte variante="discret" numberOfLines={1}>
-                        {t('semaine.ferie', { libelle: j.ferie })}
-                      </Texte>
-                    ) : null}
-                  </View>
-                  {estAujourdhui && (
-                    <Text style={[styles.aujourdhui, { color: marque.orange }]}>
-                      {t('semaine.aujourdhui')}
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
-          </Carte>
-          {feries > 0 && (
-            <Texte variante="discret">{t('semaine.feriesExclus', { count: feries })}</Texte>
-          )}
-
+          {message && <Alerte type="succes">{message}</Alerte>}
           <Carte style={{ gap: 8 }}>
             <Texte variante="sousTitre">{t('semaine.planning')}</Texte>
             {semaine.planning ? (
               <>
                 <Texte>{t(`semaine.statuts.${semaine.planning.statut}`)}</Texte>
-                <Texte variante="discret">{t('semaine.visitesBientot')}</Texte>
+                <Texte variante="discret">
+                  {visites.length === 0
+                    ? modifiable
+                      ? t('visites.aucuneEncore')
+                      : t('visites.aucune')
+                    : aCompleter > 0
+                      ? t('visites.bilanACompleter', { count: visites.length, aCompleter })
+                      : t('visites.bilan', { count: visites.length })}
+                </Texte>
               </>
             ) : semaine.peut_creer ? (
               <>
@@ -176,6 +171,74 @@ export default function EcranSemaine() {
               </Texte>
             )}
           </Carte>
+
+          <Carte style={{ paddingVertical: 4 }}>
+            {semaine.jours.map((j, i) => {
+              const estAujourdhui = j.date === aujourdhui;
+              const duJour = visites.filter((v) => v.date === j.date);
+              return (
+                <View
+                  key={j.date}
+                  style={[
+                    styles.bloc,
+                    i < semaine.jours.length - 1 && {
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                      borderBottomColor: p.ligne,
+                    },
+                  ]}
+                >
+                  <View style={styles.jour}>
+                    <Text
+                      style={[styles.date, { color: j.planifiable ? p.texte : p.texteSecondaire }]}
+                    >
+                      <Text style={styles.nomJour}>
+                        {majuscule(date(j.date, { weekday: 'long' }))}
+                      </Text>{' '}
+                      {date(j.date, { day: 'numeric', month: 'short' })}
+                    </Text>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      {j.ferie ? (
+                        <Texte variante="discret" numberOfLines={1}>
+                          {t('semaine.ferie', { libelle: j.ferie })}
+                        </Texte>
+                      ) : null}
+                    </View>
+                    {estAujourdhui && (
+                      <Text style={[styles.aujourdhui, { color: marque.orange }]}>
+                        {t('semaine.aujourdhui')}
+                      </Text>
+                    )}
+                  </View>
+                  {duJour.map((v) => (
+                    <LigneVisite
+                      key={v.id}
+                      visite={v}
+                      onPress={
+                        modifiable
+                          ? () => {
+                              setMessage(null);
+                              setEdition({ jour: j.date, visite: v });
+                            }
+                          : undefined
+                      }
+                    />
+                  ))}
+                  {modifiable && j.planifiable && (
+                    <AjouterVisite
+                      jour={date(j.date, { weekday: 'long', day: 'numeric', month: 'long' })}
+                      onPress={() => {
+                        setMessage(null);
+                        setEdition({ jour: j.date });
+                      }}
+                    />
+                  )}
+                </View>
+              );
+            })}
+          </Carte>
+          {feries > 0 && (
+            <Texte variante="discret">{t('semaine.feriesExclus', { count: feries })}</Texte>
+          )}
         </>
       )}
     </Ecran>
@@ -224,7 +287,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  jour: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingVertical: 8 },
+  bloc: { paddingVertical: 4 },
+  jour: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44, paddingVertical: 4 },
   date: { fontFamily: police.texte, fontSize: 15, width: 132 },
   nomJour: { fontFamily: police.texteFort },
   aujourdhui: { fontFamily: police.texteFort, fontSize: 12 },

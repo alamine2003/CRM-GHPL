@@ -13,6 +13,9 @@ import type {
   Planning,
   Qualite,
   Semaine,
+  ModificationVisite,
+  SaisieVisite,
+  Visite,
   DecisionDoublon,
   DoublonProbable,
   Fusion,
@@ -79,6 +82,10 @@ export type {
   ChangementFiche,
   JourFerie,
   JourSemaine,
+  ModificationVisite,
+  SaisieVisite,
+  StatutVisite,
+  Visite,
   Planning,
   Qualite,
   Semaine,
@@ -622,6 +629,18 @@ export function creerClient(options: OptionsClient) {
         requete<Semaine>(`/api/v1/plannings/semaine/${jour ? `?semaine=${jour}` : ''}`),
       creer: (semaine: string) =>
         requete<Planning>('/api/v1/plannings/', { methode: 'POST', corps: { semaine } }),
+      ajouterVisite: (planning: string, saisie: SaisieVisite) =>
+        requete<Visite>(`/api/v1/plannings/${planning}/visites/`, {
+          methode: 'POST',
+          corps: saisie,
+        }),
+    },
+    /** Visites d'un planning en préparation (PLN-002). */
+    visites: {
+      modifier: (id: string, champs: ModificationVisite) =>
+        requete<Visite>(`/api/v1/visites/${id}/`, { methode: 'PATCH', corps: champs }),
+      retirer: (id: string) =>
+        requete<Visite>(`/api/v1/visites/${id}/retirer/`, { methode: 'POST' }),
     },
     /** Qualité des données du pays actif (0.1.9). */
     qualite: () => requete<Qualite>('/api/v1/qualite/'),

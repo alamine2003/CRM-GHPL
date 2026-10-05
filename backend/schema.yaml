@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.1
+  version: 0.2.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -2430,6 +2430,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/Planning'
           description: ''
+  /api/v1/plannings/{id}/visites/:
+    post:
+      operationId: visite_planifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieVisite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieVisite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieVisite'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
   /api/v1/plannings/semaine/:
     get:
       operationId: planning_semaine
@@ -3554,6 +3587,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/Transfert'
           description: ''
+  /api/v1/visites/{id}/:
+    patch:
+      operationId: visite_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVisite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVisite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVisite'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
+  /api/v1/visites/{id}/retirer/:
+    post:
+      operationId: visite_retirer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
 components:
   schemas:
     Activite:
@@ -4449,6 +4535,17 @@ components:
       - secteur
       - type_code
       - type_libelle
+    EtablissementVisite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+      required:
+      - id
+      - nom
     EtapeDoubleAuth:
       type: object
       properties:
@@ -5189,6 +5286,34 @@ components:
           type: string
           format: uuid
           nullable: true
+    PatchedModificationVisite:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        prospect:
+          type: string
+          format: uuid
+          nullable: true
+        etablissement:
+          type: string
+          format: uuid
+          nullable: true
+        reseau:
+          type: string
+          format: uuid
+          nullable: true
+        objectif:
+          type: string
+          maxLength: 200
+        note:
+          type: string
+          maxLength: 500
     PatchedSaisieEtablissement:
       type: object
       properties:
@@ -6004,6 +6129,31 @@ components:
       - nom
       - potentiel
       - type_libelle
+    ProspectVisite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        civilite:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+        specialite_libelle:
+          type: string
+        type_libelle:
+          type: string
+        potentiel:
+          type: string
+      required:
+      - civilite
+      - id
+      - nom
+      - potentiel
+      - prenom
+      - type_libelle
     Qualite:
       type: object
       description: Bilan de qualité des données du pays actif (0.1.9).
@@ -6382,6 +6532,36 @@ components:
           type: string
           format: uuid
           nullable: true
+    SaisieVisite:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        prospect:
+          type: string
+          format: uuid
+          nullable: true
+        etablissement:
+          type: string
+          format: uuid
+          nullable: true
+        reseau:
+          type: string
+          format: uuid
+          nullable: true
+        objectif:
+          type: string
+          maxLength: 200
+        note:
+          type: string
+          maxLength: 500
+      required:
+      - date
     Secteur:
       type: object
       properties:
@@ -6470,14 +6650,27 @@ components:
           nullable: true
         peut_creer:
           type: boolean
+        modifiable:
+          type: boolean
+        visites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Visite'
+        reseaux:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
       required:
       - courante
       - jours
+      - modifiable
       - peut_creer
       - planning
       - precedente
+      - reseaux
       - semaine
       - suivante
+      - visites
     Session:
       type: object
       properties:
@@ -6800,6 +6993,71 @@ components:
       - parent
       - pays
       - utilisations
+    Visite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        prospect:
+          allOf:
+          - $ref: '#/components/schemas/ProspectVisite'
+          nullable: true
+        etablissement:
+          allOf:
+          - $ref: '#/components/schemas/EtablissementVisite'
+          nullable: true
+        reseau:
+          allOf:
+          - $ref: '#/components/schemas/Resume'
+          nullable: true
+        objectif:
+          type: string
+          maxLength: 200
+        note:
+          type: string
+          maxLength: 500
+        statut:
+          $ref: '#/components/schemas/VisiteStatutEnum'
+        manquants:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - date
+      - etablissement
+      - heure
+      - id
+      - manquants
+      - prospect
+      - reseau
+    VisiteStatutEnum:
+      enum:
+      - prevue
+      - en_cours
+      - effectuee
+      - annulee
+      - reportee
+      - prospect_absent
+      - non_realisee
+      type: string
+      description: |-
+        * `prevue` - Prévue
+        * `en_cours` - En cours
+        * `effectuee` - Effectuée
+        * `annulee` - Annulée
+        * `reportee` - Reportée
+        * `prospect_absent` - Prospect absent
+        * `non_realisee` - Non réalisée
     Zone:
       type: object
       properties:

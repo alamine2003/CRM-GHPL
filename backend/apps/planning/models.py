@@ -12,7 +12,7 @@ from django.db.models import Q
 
 from apps.socle.modeles_base import ModeleDePays
 
-from .etats import StatutPlanning
+from .etats import StatutPlanning, StatutVisite
 
 
 class JourFerie(ModeleDePays):
@@ -53,3 +53,41 @@ class Planning(ModeleDePays):
 
     def __str__(self):
         return f"{self.delegue} {self.semaine}"
+
+
+class Visite(ModeleDePays):
+    """Visite planifiée (PLN-002) : date, heure, prospect, établissement, objectif, réseau ;
+    note facultative. Une visite en préparation peut rester incomplète ; la soumission du
+    planning la refuse alors avec la liste des champs manquants (CA1)."""
+
+    planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="visites")
+    #: Poste occupé au titre duquel la visite est faite ; déduit du réseau choisi.
+    poste = models.ForeignKey(
+        "organisation.Poste", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    reseau = models.ForeignKey(
+        "organisation.Reseau", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    prospect = models.ForeignKey(
+        "prospects.Prospect", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="visites",
+    )  # fmt: skip
+    etablissement = models.ForeignKey(
+        "prospects.Etablissement", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="visites",
+    )  # fmt: skip
+    date = models.DateField()
+    heure = models.TimeField(null=True, blank=True)
+    objectif = models.CharField(max_length=200, blank=True)
+    note = models.CharField(max_length=500, blank=True)
+    statut = models.CharField(
+        max_length=16, choices=StatutVisite.choices, default=StatutVisite.PREVUE
+    )
+    est_imprevue = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["date", "heure"]
+        indexes = [models.Index(fields=["planning", "date"])]
+
+    def __str__(self):
+        return f"{self.date} {self.heure or ''} {self.prospect or ''}"

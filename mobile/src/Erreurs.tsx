@@ -1,9 +1,8 @@
-import { marque } from '@innov/design';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { creerClientMobile } from './client';
-import { Bouton, Texte, usePalette } from './composants';
+import { Bouton, Texte, useLien, usePalette } from './composants';
 import { VERSION_APP } from './version';
 
 /** Signalement des plantages au serveur (architecture §19), sans donnée saisie. */
@@ -26,6 +25,7 @@ export function signalerErreur(erreur: unknown, reference?: string, ecran?: stri
 function EcranErreur({ reference, reessayer }: { reference: string; reessayer: () => void }) {
   const { t } = useTranslation();
   const p = usePalette();
+  const lien = useLien();
   return (
     <View style={[styles.ecran, { backgroundColor: p.fond }]}>
       <Texte variante="sousTitre" style={{ textAlign: 'center' }}>
@@ -34,7 +34,7 @@ function EcranErreur({ reference, reessayer }: { reference: string; reessayer: (
       <Texte variante="discret" style={{ textAlign: 'center' }}>
         {t('erreurs.texte')}
       </Texte>
-      <Texte variante="discret" style={{ fontFamily: 'monospace', color: marque.bleuMarine }}>
+      <Texte variante="discret" style={{ fontFamily: 'monospace', color: lien }}>
         {t('erreurs.reference', { reference })}
       </Texte>
       <View style={{ alignSelf: 'stretch' }}>

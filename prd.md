@@ -453,6 +453,16 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 - Le planning se crée pour la semaine en cours ou une semaine à venir, jamais une semaine passée [H], par qui occupe un poste cette semaine-là (§6.3).
 - La démonstration ne contient que les jours fériés à date certaine (fixes ou calculés depuis Pâques) ; les fêtes à date variable restent à saisir par l'administrateur pays.
 
+### 14.9 Visites planifiées (mise en œuvre 0.2.2)
+
+- Une visite planifiée porte le jour, l'heure, le prospect, le lieu (établissement), le réseau et l'objectif ; la note est facultative (PLN-002). L'heure et la note, prévues en 0.2.3, arrivent dès 0.2.2 puisque PLN-002 les exige.
+- L'objectif est un texte libre de 200 caractères au plus [H] ; une liste d'objectifs types pourra le remplacer si les pays la demandent.
+- Le réseau se choisit parmi ceux des postes que le délégué occupe cette semaine-là ; s'il n'y en a qu'un, il est retenu d'office [H].
+- Pendant la préparation, une visite peut rester incomplète [H] : elle s'enregistre et montre « À compléter » avec les champs manquants. Le refus avec la liste des champs manquants (PLN-002 CA1) s'appliquera à la soumission (PLN-008, 0.2.8) ; le serveur le prépare déjà.
+- Le prospect et le lieu doivent être actifs dans le pays (RG-025) ; une fiche « à valider » n'est acceptée que pour le délégué qui l'a créée. Le contrôle que le prospect exerce bien dans ce lieu viendra avec les contrôles de 0.2.4 [H].
+- Une visite se modifie ou se retire tant que le planning est « en préparation » ou « à réviser » ; le retrait est un archivage audité, jamais une suppression. Déplacer, copier et le glisser-déposer restent en 0.2.5 (PLN-005).
+- La démonstration prépare la semaine en cours du premier délégué de chaque pays : trois visites complètes et une à compléter.
+
 ## 15. Exigences fonctionnelles
 
 Chaque exigence porte : un identifiant stable, la version de première livraison prévue, et des critères d'acceptation vérifiables (« CA »).

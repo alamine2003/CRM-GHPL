@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Alerte, Bouton, Champ, Logo, Texte, usePalette } from '../src/composants';
+import { Alerte, Bouton, Champ, Logo, Texte, useLien, usePalette } from '../src/composants';
 import { FiletDemonstration, MentionDemonstration } from '../src/Demonstration';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
@@ -21,6 +21,7 @@ import { messageErreur, useSession } from '../src/session';
 export default function Connexion() {
   const { t } = useTranslation();
   const p = usePalette();
+  const lien = useLien();
   const marges = useSafeAreaInsets();
   const { etat, connexion, validerCode, client } = useSession();
   const [identifiant, setIdentifiant] = useState('');
@@ -157,7 +158,7 @@ export default function Connexion() {
                   }}
                   style={{ padding: 10 }}
                 >
-                  <Text style={[styles.lien, { color: marque.bleuMarine }]}>
+                  <Text style={[styles.lien, { color: lien }]}>
                     {secours ? t('code.application') : t('code.secours')}
                   </Text>
                 </Pressable>
@@ -203,7 +204,7 @@ export default function Connexion() {
                     onPress={() => setVisible((v) => !v)}
                     style={{ alignSelf: 'flex-end', paddingVertical: 4 }}
                   >
-                    <Text style={[styles.lien, { color: marque.bleuMarine }]}>
+                    <Text style={[styles.lien, { color: lien }]}>
                       {visible ? t('connexion.masquer') : t('connexion.afficher')}
                     </Text>
                   </Pressable>
@@ -228,7 +229,7 @@ export default function Connexion() {
                 }}
                 style={{ alignSelf: 'center', padding: 10 }}
               >
-                <Text style={[styles.lien, { color: marque.bleuMarine }]}>
+                <Text style={[styles.lien, { color: lien }]}>
                   {modeOubli ? t('oubli.retour') : t('connexion.oublie')}
                 </Text>
               </Pressable>

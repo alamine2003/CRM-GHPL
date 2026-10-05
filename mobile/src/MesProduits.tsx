@@ -1,9 +1,8 @@
 import type { Portefeuille } from '@innov/api-client';
-import { marque } from '@innov/design';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Carte, Texte } from './composants';
+import { Carte, Texte, useLien } from './composants';
 import { police } from './polices';
 import { useSession } from './session';
 
@@ -15,6 +14,7 @@ const APERCU = 8;
  */
 export function MesProduits() {
   const { t } = useTranslation();
+  const lien = useLien();
   const { client } = useSession();
   const [portefeuilles, setPortefeuilles] = useState<Portefeuille[] | null>(null);
   const [ouverts, setOuverts] = useState<Set<string>>(new Set());
@@ -67,7 +67,7 @@ export function MesProduits() {
                   }
                   style={styles.plus}
                 >
-                  <Text style={[styles.plusTexte, { color: marque.bleuMarine }]}>
+                  <Text style={[styles.plusTexte, { color: lien }]}>
                     {ouvert
                       ? t('commun.fermer')
                       : t('referentiel.portefeuille.plus', { count: produits.length - APERCU })}

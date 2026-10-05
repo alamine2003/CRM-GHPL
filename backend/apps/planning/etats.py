@@ -1,4 +1,4 @@
-"""Machine à états du planning (prd.md §17.1, ADR-011).
+"""Machines à états du planning et de la visite (prd.md §17.1 et §17.2, ADR-011).
 
 Une seule source de vérité : ce module. Les clients lisent la même table dans
 `packages/domaine/src/etats.json`, régénéré par `make schema` ; un test vérifie que
@@ -37,6 +37,34 @@ TRANSITIONS_PLANNING: dict[str, tuple[str, ...]] = {
 }
 
 
+class StatutVisite(models.TextChoices):
+    PREVUE = "prevue", "Prévue"
+    EN_COURS = "en_cours", "En cours"
+    EFFECTUEE = "effectuee", "Effectuée"
+    ANNULEE = "annulee", "Annulée"
+    REPORTEE = "reportee", "Reportée"
+    PROSPECT_ABSENT = "prospect_absent", "Prospect absent"
+    NON_REALISEE = "non_realisee", "Non réalisée"
+
+
+V = StatutVisite
+
+#: Transitions d'une visite (prd.md §17.2) ; elles s'exécutent au cycle 0.4.
+TRANSITIONS_VISITE: dict[str, tuple[str, ...]] = {
+    V.PREVUE: (V.EN_COURS, V.ANNULEE, V.REPORTEE, V.PROSPECT_ABSENT, V.NON_REALISEE),
+    V.EN_COURS: (V.EFFECTUEE, V.PROSPECT_ABSENT, V.ANNULEE),
+    V.EFFECTUEE: (),
+    V.ANNULEE: (),
+    V.REPORTEE: (),
+    V.PROSPECT_ABSENT: (),
+    V.NON_REALISEE: (),
+}
+
+#: Un planning ne se modifie librement qu'avant soumission ou pendant une révision ; les
+#: modifications d'un planning approuvé arrivent en 0.3.7.
+MODIFIABLES = (S.BROUILLON, S.A_REVISER)
+
+
 def peut_passer(de: str, vers: str) -> bool:
     return vers in TRANSITIONS_PLANNING.get(de, ())
 
@@ -57,5 +85,10 @@ def exporter() -> dict:
         "planning": {
             "statuts": list(S.values),
             "transitions": {de: list(vers) for de, vers in TRANSITIONS_PLANNING.items()},
-        }
+            "modifiables": list(MODIFIABLES),
+        },
+        "visite": {
+            "statuts": list(V.values),
+            "transitions": {de: list(vers) for de, vers in TRANSITIONS_VISITE.items()},
+        },
     }

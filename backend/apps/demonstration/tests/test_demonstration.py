@@ -47,6 +47,11 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     from apps.planning.models import JourFerie
 
     assert JourFerie.objects.filter(pays__code="SN", libelle="Toussaint").count() == 2
+    # Une semaine en préparation avec ses visites, dont une à compléter (PLN-001, PLN-002).
+    from apps.planning.models import Visite
+
+    visites = Visite.objects.filter(pays__code="SN")
+    assert visites.count() == 4 and visites.filter(heure__isnull=True).count() == 1
 
 
 def test_aucune_donnee_reelle(monkeypatch):

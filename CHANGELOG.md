@@ -2,6 +2,45 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.2] — Visites planifiées
+
+Deuxième jalon du cycle 0.2 « Planning ».
+
+### Ajouté — visites dans la semaine (PLN-002)
+
+- Dans l'onglet **Semaine** du téléphone, chaque jour planifiable d'un planning en préparation reçoit ses visites : heure, prospect, lieu, objectif. « Ajouter une visite » ouvre la saisie :
+  - le **jour**, à choisir parmi les jours planifiables de la semaine ;
+  - le **prospect**, pris d'abord dans la liste cible (disponible même hors ligne), sinon cherché dans toutes les fiches du pays ;
+  - le **lieu**, parmi les lieux d'exercice actifs du prospect, le principal d'abord ; s'il n'y en a qu'un, il est retenu d'office ;
+  - l'**heure**, saisie comme on la dit (« 9h30 », « 14:00 », « 8h ») ;
+  - le **réseau**, proposé seulement si le délégué en a plusieurs cette semaine ;
+  - l'**objectif** et une **note** facultative.
+- **CA1** : une visite peut rester incomplète pendant la préparation. Elle s'affiche « À compléter : Heure, Objectif », et le bilan du planning compte celles qui restent à compléter. Le refus à la soumission, avec la liste des champs manquants, est prêt côté serveur (`planning_incomplet`) et s'appliquera en 0.2.8.
+- Toucher une visite la modifie ou la retire tant que le planning est en préparation ou à réviser. Un planning soumis ne propose plus ni ajout ni modification.
+- **RG-025** : le prospect et le lieu doivent être actifs dans le pays ; une fiche « à valider » n'est acceptée que pour son auteur. Un jour férié, un jour hors de la semaine ou un réseau d'un autre poste sont refusés avec un message explicite.
+- Ajout et retrait audités ; un retrait archive la visite, il ne la supprime pas.
+- Démonstration : la semaine en cours du premier délégué de chaque pays est en préparation, avec trois visites complètes et une à compléter.
+- prd.md §14.9 consigne les choix [H] : objectif en texte libre, réseau parmi ceux du poste, visite incomplète permise en préparation, lien prospect–lieu contrôlé en 0.2.4.
+
+### Architecture
+
+- Table `Visite` sous sécurité au niveau des lignes ; routes couvertes par la matrice des droits et les tests d'isolation.
+- Les statuts et transitions de la visite (prd.md §17.2) rejoignent la machine à états exportée vers `packages/domaine` (ADR-011).
+- Client API : `plannings.ajouterVisite`, `visites.modifier`, `visites.retirer` ; types `Visite`, `SaisieVisite`, `ModificationVisite`, `StatutVisite`.
+
+### Design
+
+Revue sur le rendu réel : mobile à 360 et 414 px, et à 390 px en thème sombre. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Saisie d'une visite | Le formulaire s'ouvrait au défilement de la semaine : titre et choix du jour hors de vue | Il s'ouvre en haut de page |
+| Semaine, après enregistrement | Le message « Visite ajoutée » restait hors de vue, en haut | La semaine se réaffiche en haut, message visible |
+| Choix du prospect | Huit propositions avant toute recherche repoussaient l'heure et l'objectif loin en bas | Cinq propositions ; la recherche affine |
+| Choix du prospect | « Depuis ma liste cible » affiché au-dessus de « Personne de ce nom… » | Mention seulement quand la liste propose quelqu'un |
+| Objectif (360 px) | Texte indicatif tronqué | « Ex. : présenter le produit du mois » |
+| Thème sombre | « Ajouter une visite », « Changer », « Revenir à cette semaine », les liens de connexion et le potentiel B en bleu marine sur fond marine, presque invisibles | Couleur de lien adaptée au thème (`useLien`), bleu clair en sombre |
+
 ## [0.2.1] — Semaine, jours ouvrés, jours fériés
 
 Premier jalon du cycle 0.2 « Planning ».

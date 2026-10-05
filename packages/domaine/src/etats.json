@@ -31,6 +31,40 @@
       ],
       "termine": [],
       "annule": []
+    },
+    "modifiables": [
+      "brouillon",
+      "a_reviser"
+    ]
+  },
+  "visite": {
+    "statuts": [
+      "prevue",
+      "en_cours",
+      "effectuee",
+      "annulee",
+      "reportee",
+      "prospect_absent",
+      "non_realisee"
+    ],
+    "transitions": {
+      "prevue": [
+        "en_cours",
+        "annulee",
+        "reportee",
+        "prospect_absent",
+        "non_realisee"
+      ],
+      "en_cours": [
+        "effectuee",
+        "prospect_absent",
+        "annulee"
+      ],
+      "effectuee": [],
+      "annulee": [],
+      "reportee": [],
+      "prospect_absent": [],
+      "non_realisee": []
     }
   }
 }
