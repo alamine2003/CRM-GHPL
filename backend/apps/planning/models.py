@@ -47,6 +47,9 @@ class Planning(ModeleDePays):
     statut = models.CharField(
         max_length=12, choices=StatutPlanning.choices, default=StatutPlanning.BROUILLON
     )
+    #: Dernière soumission (PLN-008) ; « en retard » si elle a suivi l'échéance du pays (RG-013).
+    soumis_le = models.DateTimeField(null=True, blank=True)
+    en_retard = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-semaine"]

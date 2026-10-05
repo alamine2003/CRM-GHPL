@@ -35,6 +35,7 @@ CODES = (
     "incomplete", "fiche_inactive", "sans_exercice", "meme_heure", "meme_prospect",
     # Signalements (RG-016)
     "seuil_bas", "seuil_haut", "hors_cible", "hors_secteur", "a_non_planifie",
+    "echeance_depassee", "soumis_en_retard",
 )  # fmt: skip
 
 
@@ -233,6 +234,16 @@ def signalements(
             anomalies.append(Anomalie("a_non_planifie", SIGNALEMENT, fin_de_mois,
                                       mois=fin_de_mois.strftime("%Y-%m"),
                                       prospects=prospects))  # fmt: skip
+    # Soumission en retard (RG-016, PLN-008) : annoncée avant, constatée après.
+    from django.utils import timezone
+
+    from .etats import MODIFIABLES
+    from .services import echeance
+
+    if planning.en_retard:
+        anomalies.append(Anomalie("soumis_en_retard", SIGNALEMENT))
+    elif planning.statut in MODIFIABLES and timezone.now() > echeance(planning):
+        anomalies.append(Anomalie("echeance_depassee", SIGNALEMENT))
     return sorted(anomalies, key=lambda a: (a.date or date.min, a.code))
 
 

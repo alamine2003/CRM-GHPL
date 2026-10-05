@@ -1,7 +1,7 @@
 import { marque } from '@innov/design';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Redirect, useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +20,7 @@ export function Ecran({
   surTitre,
   action,
   retour,
+  defilement,
   children,
 }: {
   titre: string;
@@ -28,6 +29,8 @@ export function Ecran({
   /** Contexte discret sous le titre (date, pays, personne). */
   surTitre?: string;
   action?: ReactNode;
+  /** Pour remonter en haut de page après une action (soumission du planning). */
+  defilement?: Ref<ScrollView>;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -81,7 +84,9 @@ export function Ecran({
           {action}
         </View>
       </View>
-      <ScrollView contentContainerStyle={styles.contenu}>{children}</ScrollView>
+      <ScrollView ref={defilement} contentContainerStyle={styles.contenu}>
+        {children}
+      </ScrollView>
       <BarreOnglets />
       <FiletDemonstration />
     </View>

@@ -46,7 +46,11 @@ const config: ExpoConfig = {
   ],
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000',
+    // Projet EAS des builds de test (0.2.8) : son identifiant vient de l'environnement, pas du
+    // dépôt, pour que chaque compte Expo puisse construire l'application.
+    ...(process.env.EAS_PROJECT_ID ? { eas: { projectId: process.env.EAS_PROJECT_ID } } : {}),
   },
+  ...(process.env.EXPO_OWNER ? { owner: process.env.EXPO_OWNER } : {}),
 };
 
 export default config;

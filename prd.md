@@ -458,7 +458,7 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 - Une visite planifiée porte le jour, l'heure, le prospect, le lieu (établissement), le réseau et l'objectif ; la note est facultative (PLN-002). L'heure et la note, prévues en 0.2.3, arrivent dès 0.2.2 puisque PLN-002 les exige.
 - L'objectif est un texte libre de 200 caractères au plus [H] ; une liste d'objectifs types pourra le remplacer si les pays la demandent.
 - Le réseau se choisit parmi ceux des postes que le délégué occupe cette semaine-là ; s'il n'y en a qu'un, il est retenu d'office [H].
-- Pendant la préparation, une visite peut rester incomplète [H] : elle s'enregistre et montre « À compléter » avec les champs manquants. Le refus avec la liste des champs manquants (PLN-002 CA1) s'appliquera à la soumission (PLN-008, 0.2.8) ; le serveur le prépare déjà.
+- Pendant la préparation, une visite peut rester incomplète [H] : elle s'enregistre et montre « À compléter » avec les champs manquants. Le refus avec la liste des champs manquants (PLN-002 CA1) s'applique à la soumission (PLN-008, 0.2.8), parmi les contrôles bloquants (`planning_bloque`).
 - Le prospect et le lieu doivent être actifs dans le pays (RG-025) ; une fiche « à valider » n'est acceptée que pour le délégué qui l'a créée. Le contrôle que le prospect exerce bien dans ce lieu viendra avec les contrôles de 0.2.4 [H].
 - Une visite se modifie ou se retire tant que le planning est « en préparation » ou « à réviser » ; le retrait est un archivage audité, jamais une suppression. Déplacer, copier et la pose depuis la liste cible arrivent en 0.2.5 (PLN-005, §14.12).
 - La démonstration prépare la semaine en cours du premier délégué de chaque pays : trois visites complètes et une à compléter.
@@ -479,12 +479,12 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 ### 14.11 Contrôles du planning (mise en œuvre 0.2.4)
 
 - Le délégué voit les contrôles **pendant la préparation**, pas seulement à la soumission : une carte « À vérifier » sépare ce qu'il faut corriger avant de soumettre (RG-015) de ce qui sera signalé au superviseur (RG-016) ; chaque visite concernée porte sa marque et chaque jour montre son nombre de visites face au seuil.
-- **Bloquants** (RG-015) : visite incomplète ; fiche du prospect ou du lieu devenue inactive (une fiche « à valider » reste permise à son auteur, PRP-006) ; prospect sans exercice actif dans ce lieu à la date de la visite ; deux visites à la même heure (PLN-004 CA1) — les visites d'un même passage partagent la leur et ne se gênent pas ; le même prospect deux fois le même jour. La soumission (0.2.8) les refusera avec la liste (`planning_bloque`).
+- **Bloquants** (RG-015) : visite incomplète ; fiche du prospect ou du lieu devenue inactive (une fiche « à valider » reste permise à son auteur, PRP-006) ; prospect sans exercice actif dans ce lieu à la date de la visite ; deux visites à la même heure (PLN-004 CA1) — les visites d'un même passage partagent la leur et ne se gênent pas ; le même prospect deux fois le même jour. La soumission (0.2.8) les refuse avec la liste (`planning_bloque`).
 - **Signalements** (RG-016), qui n'empêchent pas la soumission (CA2) :
   - seuil de visites par jour selon le type de poste (`seuils_visites_jour`), au prorata de la part travaillée : minimum arrondi à l'entier inférieur, maximum à l'entier supérieur [H] ; jours fériés et journées d'absence exclus (RG-022) ; pour qui occupe des postes de types différents, la fourchette la plus large [H] ;
   - prospect hors de la liste cible des postes occupés ; lieu (ou, sans lieu, prospect) hors des secteurs de ces postes (RG-024) ;
   - prospects A de la liste cible sans aucune visite planifiée dans le mois, signalés sur la semaine qui contient le dernier jour ouvré du mois [H] ;
-  - la soumission en retard s'ajoutera avec la soumission (0.2.8).
+  - l'échéance de soumission dépassée, tant que le planning se prépare, puis la soumission en retard (0.2.8).
 
 ### 14.12 Déplacer, copier, supprimer, poser depuis la liste cible (mise en œuvre 0.2.5)
 
@@ -505,6 +505,17 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 - **Envoi en attente** : sans réseau, une visite ou une absence enregistrée reste sur le téléphone, dans une file visible (« 1 envoi en attente »), et part d'elle-même à la relecture suivante de la semaine, ou à la demande. L'identifiant de chaque nouvel objet est tiré sur le téléphone (anticipe OFF-002 CA1) : un envoi rejoué après une coupure ne crée pas de doublon (anticipe OFF-003 CA2). Un refus du serveur (jour férié, fiche inactive…) n'est pas mis en attente : il s'affiche, et un envoi refusé au rejeu garde son message jusqu'à ce que le délégué l'abandonne.
 - **Semaine hors ligne** : la dernière semaine lue est gardée sur le téléphone et s'affiche sans réseau, avec l'heure de sa dernière mise à jour.
 - La synchronisation complète (7 jours hors ligne, conflits, pièces jointes) reste au cycle 0.8 (OFF-001 à OFF-007).
+
+### 14.15 Soumission du planning et builds de test (mise en œuvre 0.2.8)
+
+- **Échéance** (RG-013) : le paramètre pays `echeance_soumission_planning` (jour et heure, jeudi 18 h par défaut) s'applique à la semaine qui précède celle du planning, à l'heure du pays. Elle s'affiche sur le planning tant qu'il se prépare (« À soumettre avant le jeudi 8 octobre à 18:00 », puis « Échéance passée : … »).
+- **Soumettre** (PLN-008) : depuis la fin de la semaine sur le téléphone, ou le résumé de la semaine sur le portail, avec une confirmation sur place (« Vous ne pourrez plus le modifier »). Le serveur refait le contrôle final :
+  - ORG-007 CA1 : un poste occupé sans superviseur rattaché cette semaine-là empêche la soumission, avec un message qui dit de prévenir l'administrateur pays (`sans_superviseur`) ;
+  - un planning sans aucune visite est refusé (`planning_vide`), sauf une semaine entièrement couverte par les jours fériés et les absences [H] ;
+  - les contrôles bloquants (RG-015) le refusent avec leur liste (`planning_bloque`). Tant qu'il en reste, le téléphone remplace le bouton par ce qu'il faut corriger et ouvre la première visite concernée ; le portail grise le bouton et renvoie à « À vérifier ».
+- **En retard** (CA1, RG-016) : après l'échéance, la soumission est acceptée et marquée « en retard » ; le planning le garde (`en_retard`, `soumis_le`) et le signalement « Soumis après l'échéance » remplace « Échéance de soumission dépassée ». La soumission est auditée.
+- La soumission demande le réseau : elle ne part pas dans la file d'attente du téléphone [H], pour que le délégué sache tout de suite si elle est acceptée.
+- **Builds de test** : profils EAS `apercu` (installation directe : `.apk`, iPhone déclarés), `simulateur` (simulateur iOS, sans compte Apple payant) et `recette` (TestFlight, piste de test interne de Google Play). Ils demandent les comptes Expo, Apple Developer et Google Play du titulaire ; aucun identifiant de compte n'est versionné (README, « Builds de test »).
 
 ## 15. Exigences fonctionnelles
 

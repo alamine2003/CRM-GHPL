@@ -33,9 +33,18 @@ class ModificationJourFerieSerializer(serializers.Serializer):
 
 
 class PlanningSerializer(serializers.ModelSerializer):
+    #: Échéance de soumission du pays (RG-013).
+    echeance = serializers.SerializerMethodField()
+
     class Meta:
         model = Planning
-        fields = ["id", "semaine", "statut", "cree_le"]
+        fields = ["id", "semaine", "statut", "cree_le", "soumis_le", "en_retard", "echeance"]
+        read_only_fields = ["statut", "soumis_le", "en_retard"]
+
+    def get_echeance(self, planning) -> str:
+        from .services import echeance
+
+        return echeance(planning).isoformat()
 
 
 class CreationPlanningSerializer(serializers.Serializer):

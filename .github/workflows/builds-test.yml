@@ -1,0 +1,53 @@
+# Builds de test de l'application mobile (0.2.8), lancés à la main depuis l'onglet Actions.
+# Ils tournent sur les serveurs d'Expo (EAS) : il faut le secret EXPO_TOKEN (jeton d'accès Expo)
+# et la variable EAS_PROJECT_ID (identifiant du projet EAS) dans les réglages du dépôt.
+# L'adresse de l'API (EXPO_PUBLIC_API_URL) se règle dans l'environnement « preview » d'EAS.
+name: Builds de test mobiles
+
+on:
+  workflow_dispatch:
+    inputs:
+      profil:
+        description: 'Profil EAS'
+        type: choice
+        options: [apercu, simulateur, recette]
+        default: apercu
+      plateforme:
+        description: 'Plateforme'
+        type: choice
+        options: [all, android, ios]
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: EAS Build (${{ inputs.profil }}, ${{ inputs.plateforme }})
+    runs-on: ubuntu-latest
+    env:
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      EXPO_OWNER: ${{ vars.EXPO_OWNER }}
+    steps:
+      - name: Jeton Expo présent
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ] || [ -z "$EAS_PROJECT_ID" ]; then
+            echo "::error::Renseigner le secret EXPO_TOKEN et la variable EAS_PROJECT_ID (README, « Builds de test »)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Lancer le build
+        working-directory: mobile
+        # --no-wait : le build continue chez Expo ; son lien s'affiche ici et dans expo.dev.
+        run: eas build --profile "${{ inputs.profil }}" --platform "${{ inputs.plateforme }}" --non-interactive --no-wait

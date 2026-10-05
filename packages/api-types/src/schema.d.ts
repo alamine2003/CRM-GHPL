@@ -1539,6 +1539,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/plannings/{id}/soumettre/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['planning_soumettre'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/{id}/visites/': {
     parameters: {
       query?: never;
@@ -2279,6 +2295,8 @@ export interface components {
      *     * `hors_cible` - hors_cible
      *     * `hors_secteur` - hors_secteur
      *     * `a_non_planifie` - a_non_planifie
+     *     * `echeance_depassee` - echeance_depassee
+     *     * `soumis_en_retard` - soumis_en_retard
      * @enum {string}
      */
     CodeControleEnum:
@@ -2291,7 +2309,9 @@ export interface components {
       | 'seuil_haut'
       | 'hors_cible'
       | 'hors_secteur'
-      | 'a_non_planifie';
+      | 'a_non_planifie'
+      | 'echeance_depassee'
+      | 'soumis_en_retard';
     CodesSecours: {
       codes_secours: string[];
     };
@@ -3031,9 +3051,13 @@ export interface components {
       readonly id: string;
       /** Format: date */
       semaine: string;
-      statut?: components['schemas']['PlanningStatutEnum'];
+      readonly statut: components['schemas']['PlanningStatutEnum'];
       /** Format: date-time */
       readonly cree_le: string;
+      /** Format: date-time */
+      readonly soumis_le: string | null;
+      readonly en_retard: boolean;
+      readonly echeance: string;
     };
     /**
      * @description * `brouillon` - En préparation
@@ -6213,6 +6237,27 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Reprise'];
+        };
+      };
+    };
+  };
+  planning_soumettre: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Planning'];
         };
       };
     };

@@ -2,6 +2,42 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.8] — Soumission du planning, marquage en retard, builds de test
+
+Huitième jalon du cycle 0.2 « Planning ».
+
+### Ajouté — soumission (PLN-008, ORG-007, RG-013, RG-016)
+
+- **Échéance** affichée sur le planning en préparation : « À soumettre avant le jeudi 8 octobre à 18:00 », puis « Échéance passée : … ». Elle vient du paramètre pays (jeudi 18 h par défaut), à l'heure du pays.
+- **Soumettre le planning** : en fin de semaine sur le téléphone, dans le résumé de la semaine sur le portail, toujours après une confirmation (« Vous ne pourrez plus le modifier »). Le serveur refait le contrôle final :
+  - poste sans superviseur rattaché cette semaine : refus, avec un message qui dit de prévenir l'administrateur pays (**ORG-007 CA1**) ;
+  - planning sans visite : refus, sauf une semaine entièrement fériée ou d'absence ;
+  - points bloquants (RG-015) : refus avec leur liste. Tant qu'il en reste, le téléphone remplace le bouton par « Ouvrir la visite à corriger » ; le portail grise le bouton et renvoie à « À vérifier ».
+- **En retard** (**CA1**) : après l'échéance, la soumission est acceptée et marquée « En retard ». Le planning affiche « Soumis le lundi 5 octobre à 12:24 · En retard ». Le signalement « Échéance de soumission dépassée » devient « Soumis après l'échéance » pour le superviseur.
+- La soumission est auditée ; elle demande le réseau (rien ne part en file d'attente).
+
+### Ajouté — builds de test Android et iOS
+
+- `mobile/eas.json` : profils `apercu` (`.apk`, iPhone déclarés), `simulateur` (simulateur iOS) et `recette` (TestFlight, piste de test interne de Google Play).
+- Workflow manuel « Builds de test mobiles » (onglet Actions), avec le secret `EXPO_TOKEN` et la variable `EAS_PROJECT_ID`.
+- README, « Builds de test » : les comptes à ouvrir et les commandes. **Aucun build n'a encore été produit** : il faut les comptes Expo, Apple Developer et Google Play du titulaire. La configuration est validée par `@expo/eas-json` et `expo config`.
+
+### Architecture
+
+- `Planning.soumis_le`, `Planning.en_retard` (migration 0007) ; `services.echeance`, `services.soumettre` ; route `POST plannings/{id}/soumettre/` ; `echeance` dans le planning ; codes `sans_superviseur`, `planning_vide` ; signalements `echeance_depassee`, `soumis_en_retard`.
+- Seuls les plannings en préparation ou à réviser se soumettent ; la modification d'un planning approuvé reste au cycle 0.3.
+- Mobile : `src/Soumission.tsx` ; `Ecran` accepte une référence de défilement.
+
+### Design
+
+Revue sur le rendu réel avec la démonstration (semaine bloquée, puis complétée et soumise après l'échéance) : mobile à 360 px et à 390 px en thème sombre, portail bureau, tablette, téléphone et sombre. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Semaine (téléphone), point bloquant | La carte de soumission renvoyait « plus haut », plusieurs écrans au-dessus | « Ouvrir la visite à corriger » ouvre la première visite concernée |
+| Semaine (téléphone), après soumission | La carte disparaissait ; le message et « Soumis le … » restaient hors de vue, en haut | La page remonte en haut après la soumission |
+| Planning, échéance passée | La même conséquence dite deux fois (carte Planning et « À vérifier ») | La carte Planning donne la date ; « À vérifier » dit la conséquence |
+
 ## [0.2.7] — Brouillons sauvegardés et hors connexion de base
 
 Septième jalon du cycle 0.2 « Planning ».

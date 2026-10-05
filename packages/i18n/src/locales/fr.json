@@ -1438,7 +1438,9 @@
     "objectif_other": "{{count}} visites, objectif {{min}} à {{max}}",
     "objectifCourt": "{{nombre}} sur {{min}}–{{max}}",
     "incomplete_one": "{{jour}} : visite à compléter ({{champs}})",
-    "incomplete_other": "{{jour}} : {{count}} visites à compléter ({{champs}})"
+    "incomplete_other": "{{jour}} : {{count}} visites à compléter ({{champs}})",
+    "echeance_depassee": "Échéance de soumission dépassée : le planning sera marqué en retard",
+    "soumis_en_retard": "Soumis après l'échéance"
   },
   "pose": {
     "titre": "Depuis ma liste cible",
@@ -1529,5 +1531,28 @@
     "aide": "La saisie a été gardée sur ce téléphone quand l'application s'est fermée.",
     "reprendre": "Reprendre la saisie",
     "abandonner": "Abandonner cette saisie"
+  },
+  "soumission": {
+    "titre": "Soumettre au superviseur",
+    "aide": "Une fois soumis, le planning part chez votre superviseur et ne se modifie plus, sauf s'il vous le renvoie.",
+    "soumettre": "Soumettre le planning",
+    "confirmation": "Soumettre ce planning à votre superviseur ? Vous ne pourrez plus le modifier.",
+    "confirmationRetard": "L'échéance est passée : il sera marqué en retard.",
+    "confirmer": "Oui, soumettre",
+    "annuler": "Pas maintenant",
+    "bloquants_one": "Corrigez d'abord le point bloquant signalé plus haut : il empêche la soumission.",
+    "bloquants_other": "Corrigez d'abord les {{count}} points bloquants signalés plus haut : ils empêchent la soumission.",
+    "echeance": "À soumettre avant le {{date}}",
+    "echeancePassee": "Échéance passée : {{date}}",
+    "soumisLe": "Soumis le {{date}}",
+    "enRetard": "En retard",
+    "succes": "Planning soumis à votre superviseur.",
+    "succesRetard": "Planning soumis à votre superviseur, marqué en retard.",
+    "reseau": "La soumission demande le réseau : réessayez une fois connecté.",
+    "libelle": "Soumission",
+    "bloquantsPortail_one": "Le point bloquant listé dans « À vérifier » empêche la soumission.",
+    "bloquantsPortail_other": "Les {{count}} points bloquants listés dans « À vérifier » empêchent la soumission.",
+    "corriger_one": "Ouvrir la visite à corriger",
+    "corriger_other": "Ouvrir la première visite à corriger"
   }
 }

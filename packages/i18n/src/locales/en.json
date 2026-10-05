@@ -1438,7 +1438,9 @@
     "objectif_other": "{{count}} visits, target {{min}} to {{max}}",
     "objectifCourt": "{{nombre}} of {{min}}–{{max}}",
     "incomplete_one": "{{jour}}: visit to complete ({{champs}})",
-    "incomplete_other": "{{jour}}: {{count}} visits to complete ({{champs}})"
+    "incomplete_other": "{{jour}}: {{count}} visits to complete ({{champs}})",
+    "echeance_depassee": "Submission deadline passed: the plan will be marked late",
+    "soumis_en_retard": "Submitted after the deadline"
   },
   "pose": {
     "titre": "From my target list",
@@ -1529,5 +1531,28 @@
     "aide": "What you were typing was kept on this phone when the app closed.",
     "reprendre": "Resume",
     "abandonner": "Discard this entry"
+  },
+  "soumission": {
+    "titre": "Submit to your supervisor",
+    "aide": "Once submitted, the plan goes to your supervisor and can no longer be changed, unless they send it back.",
+    "soumettre": "Submit the plan",
+    "confirmation": "Submit this plan to your supervisor? You will no longer be able to change it.",
+    "confirmationRetard": "The deadline has passed: it will be marked late.",
+    "confirmer": "Yes, submit",
+    "annuler": "Not now",
+    "bloquants_one": "First fix the blocking issue shown above: it prevents submission.",
+    "bloquants_other": "First fix the {{count}} blocking issues shown above: they prevent submission.",
+    "echeance": "To submit before {{date}}",
+    "echeancePassee": "Deadline passed: {{date}}",
+    "soumisLe": "Submitted on {{date}}",
+    "enRetard": "Late",
+    "succes": "Plan submitted to your supervisor.",
+    "succesRetard": "Plan submitted to your supervisor, marked late.",
+    "reseau": "Submitting needs the network: try again once connected.",
+    "libelle": "Submission",
+    "bloquantsPortail_one": "The blocking issue listed under “To check” prevents submission.",
+    "bloquantsPortail_other": "The {{count}} blocking issues listed under “To check” prevent submission.",
+    "corriger_one": "Open the visit to fix",
+    "corriger_other": "Open the first visit to fix"
   }
 }

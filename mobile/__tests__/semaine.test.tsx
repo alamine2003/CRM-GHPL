@@ -63,7 +63,15 @@ const SEMAINE: Semaine = {
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
 };
 
-const PLANNING = { id: 'pl1', semaine: '2026-10-26', statut: 'brouillon' as const, cree_le: '' };
+const PLANNING = {
+  id: 'pl1',
+  semaine: '2026-10-26',
+  statut: 'brouillon' as const,
+  cree_le: '',
+  soumis_le: null as string | null,
+  en_retard: false,
+  echeance: '2026-10-22T18:00:00Z',
+};
 
 const VISITE: Visite = {
   id: 'v1',
@@ -716,4 +724,103 @@ test('un refus du serveur reste à l’écran, sans mise en attente', async () =
   await fireEvent.press(screen.getByText('Enregistrer'));
   expect(await screen.findByText('Ce jour est férié : il ne se planifie pas.')).toBeTruthy();
   expect(mockMemoire.has('planning.attente')).toBe(false);
+});
+
+// L'échéance se compare à l'heure du téléphone : une date sûrement à venir, une passée.
+const A_VENIR = new Date(Date.now() + 7 * 86_400_000).toISOString();
+const PASSEE = '2026-01-01T18:00:00Z';
+
+test('PLN-008 CA1 : soumettre avant l’échéance, après confirmation', async () => {
+  const soumis = { ...PLANNING, statut: 'soumis' as const, soumis_le: '2026-10-21T09:30:00Z' };
+  const semaine = jest
+    .fn()
+    .mockResolvedValueOnce({ ...EN_PREPARATION, planning: { ...PLANNING, echeance: A_VENIR } })
+    .mockResolvedValue({ ...EN_PREPARATION, modifiable: false, planning: soumis });
+  const soumettre = jest.fn(async () => soumis);
+  await rendre({ semaine, soumettre });
+  expect(await screen.findByText(/^À soumettre avant le /)).toBeTruthy();
+  await fireEvent.press(screen.getByText('Soumettre le planning'));
+  // Rien ne part sans la confirmation.
+  expect(soumettre).not.toHaveBeenCalled();
+  expect(screen.getByText(/Vous ne pourrez plus le modifier/)).toBeTruthy();
+  await fireEvent.press(screen.getByText('Oui, soumettre'));
+  expect(soumettre).toHaveBeenCalledWith('pl1');
+  expect(await screen.findByText('Planning soumis à votre superviseur.')).toBeTruthy();
+  expect(screen.getByText(/^Soumis le /)).toBeTruthy();
+  expect(screen.queryByText('Soumettre le planning')).toBeNull();
+  expect(screen.queryByText('En retard')).toBeNull();
+});
+
+test('RG-016 : après l’échéance, la soumission reste possible et se dit en retard', async () => {
+  const soumis = {
+    ...PLANNING,
+    statut: 'soumis' as const,
+    soumis_le: '2026-10-23T09:30:00Z',
+    en_retard: true,
+    echeance: PASSEE,
+  };
+  const semaine = jest
+    .fn()
+    .mockResolvedValueOnce({ ...EN_PREPARATION, planning: { ...PLANNING, echeance: PASSEE } })
+    .mockResolvedValue({ ...EN_PREPARATION, modifiable: false, planning: soumis });
+  await rendre({ semaine, soumettre: jest.fn(async () => soumis) });
+  expect(await screen.findByText(/^Échéance passée : /)).toBeTruthy();
+  await fireEvent.press(screen.getByText('Soumettre le planning'));
+  expect(screen.getByText("L'échéance est passée : il sera marqué en retard.")).toBeTruthy();
+  await fireEvent.press(screen.getByText('Oui, soumettre'));
+  expect(
+    await screen.findByText('Planning soumis à votre superviseur, marqué en retard.'),
+  ).toBeTruthy();
+  expect(screen.getByText('En retard')).toBeTruthy();
+});
+
+test('PLN-004 CA1 : un point bloquant remplace le bouton de soumission', async () => {
+  await rendre(
+    {
+      semaine: jest.fn(async () => ({
+        ...EN_PREPARATION,
+        planning: { ...PLANNING, echeance: A_VENIR },
+        controles: {
+          bloquants: [
+            {
+              code: 'incomplete' as const,
+              gravite: 'bloquant' as const,
+              date: '2026-10-27',
+              visites: ['v1'],
+              manquants: ['heure'],
+            },
+          ],
+          signalements: [],
+          objectifs: [],
+        },
+      })),
+    },
+    { exercices: { duProspect: jest.fn(async () => []) } },
+  );
+  expect(
+    await screen.findByText(
+      "Corrigez d'abord le point bloquant signalé plus haut : il empêche la soumission.",
+    ),
+  ).toBeTruthy();
+  expect(screen.queryByText('Soumettre le planning')).toBeNull();
+  // La visite à corriger s'ouvre d'ici, sans remonter la semaine.
+  await fireEvent.press(screen.getByText('Ouvrir la visite à corriger'));
+  expect(await screen.findByText('Enregistrer')).toBeTruthy();
+});
+
+test('ORG-007 CA1 : le refus du serveur se lit sur la carte de soumission', async () => {
+  const soumettre = jest.fn(async () => {
+    throw new ErreurApi(409, 'sans_superviseur', 'Votre poste n’est rattaché à aucun superviseur.');
+  });
+  await rendre({
+    semaine: jest.fn(async () => ({
+      ...EN_PREPARATION,
+      planning: { ...PLANNING, echeance: A_VENIR },
+    })),
+    soumettre,
+  });
+  await fireEvent.press(await screen.findByText('Soumettre le planning'));
+  await fireEvent.press(screen.getByText('Oui, soumettre'));
+  expect(await screen.findByText('Votre poste n’est rattaché à aucun superviseur.')).toBeTruthy();
+  expect(screen.getByText('Oui, soumettre')).toBeTruthy();
 });

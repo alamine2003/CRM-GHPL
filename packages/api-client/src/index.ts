@@ -667,6 +667,9 @@ export function creerClient(options: OptionsClient) {
       /** Reprend la semaine précédente sur une semaine vide (PLN-005 CA2). */
       reprendre: (planning: string) =>
         requete<Reprise>(`/api/v1/plannings/${planning}/reprendre/`, { methode: 'POST' }),
+      /** Soumet le planning au superviseur, après le contrôle final (PLN-008). */
+      soumettre: (planning: string) =>
+        requete<Planning>(`/api/v1/plannings/${planning}/soumettre/`, { methode: 'POST' }),
       regrouper: (planning: string, visites: string[]) =>
         requete<Passage>(`/api/v1/plannings/${planning}/passages/`, {
           methode: 'POST',

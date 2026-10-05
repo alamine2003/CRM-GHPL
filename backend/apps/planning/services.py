@@ -1,9 +1,10 @@
 """Jours fériés (ORG-012), planning de la semaine (PLN-001), visites planifiées (PLN-002), ordre
 de la journée, passages (PLN-003) et absences (PLN-009)."""
 
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import status
 
@@ -13,8 +14,8 @@ from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
 from apps.socle.services import aujourdhui
 
-from .calendrier import jours_de_la_semaine, lundi
-from .etats import MODIFIABLES
+from .calendrier import jours_de_la_semaine, jours_planifiables, lundi
+from .etats import MODIFIABLES, StatutPlanning
 from .models import Absence, JourFerie, Passage, Periode, Planning, TypeAbsence, Visite
 
 
@@ -387,6 +388,67 @@ def ordonner(planning: Planning, jour: date, visites: list) -> None:
             champ="visites",
         )
     ranger(planning, jour, [str(v) for v in visites])
+
+
+# --- Soumission (PLN-008) ---------------------------------------------------------------------
+
+
+def echeance(planning: Planning) -> datetime:
+    """Échéance de soumission (RG-013) : par défaut jeudi 18 h de la semaine précédente, à
+    l'heure du pays ; jour et heure sont des paramètres du pays."""
+    from zoneinfo import ZoneInfo
+
+    from apps.socle.services import valeur_parametre
+
+    regle = valeur_parametre(planning.pays, "echeance_soumission_planning")
+    jour = planning.semaine - timedelta(days=7) + timedelta(days=regle["jour"] - 1)
+    heure, minute = (int(x) for x in regle["heure"].split(":"))
+    return datetime.combine(jour, time(heure, minute), tzinfo=ZoneInfo(planning.pays.fuseau))
+
+
+def postes_sans_superviseur(planning: Planning) -> list:
+    from apps.organisation.services import superviseur_du_poste
+
+    return [p for p in postes_de_la_semaine(planning)
+            if superviseur_du_poste(p, planning.semaine) is None]  # fmt: skip
+
+
+@transaction.atomic
+def soumettre(planning: Planning) -> Planning:
+    """PLN-008 : contrôle final, puis « Soumis au superviseur ». Après l'échéance, la soumission
+    est acceptée et marquée en retard (CA1) ; le superviseur le voit (RG-016)."""
+    from . import controles
+    from .etats import exiger_transition
+
+    # Seul un planning en préparation ou à réviser se soumet ici ; la modification d'un planning
+    # approuvé (approuvé → soumis) relève du cycle 0.3.
+    _exiger_modifiable(planning)
+    exiger_transition(planning.statut, StatutPlanning.SOUMIS)
+    if sans := postes_sans_superviseur(planning):
+        raise ErreurMetier(
+            "sans_superviseur",
+            _("Votre poste n'est rattaché à aucun superviseur cette semaine : personne ne peut "
+              "recevoir ce planning. Prévenez l'administrateur pays."),
+            status.HTTP_409_CONFLICT,
+            postes=[p.libelle for p in sans],
+        )  # fmt: skip
+    if not planning.visites.filter(archive_le__isnull=True).exists() and any(
+        part_travaillee(planning, j) > 0
+        for j in jours_planifiables(planning.pays, planning.semaine)
+    ):
+        raise ErreurMetier(
+            "planning_vide",
+            _("Le planning ne contient aucune visite : ajoutez-en, ou déclarez vos absences."),
+        )
+    controles.exiger_sans_bloquant(planning)
+    maintenant = timezone.now()
+    planning.statut = StatutPlanning.SOUMIS
+    planning.soumis_le = maintenant
+    planning.en_retard = maintenant > echeance(planning)
+    planning.save(update_fields=["statut", "soumis_le", "en_retard", "modifie_le"])
+    _auditer("planning.soumission", planning, semaine=str(planning.semaine),
+             en_retard=planning.en_retard)  # fmt: skip
+    return planning
 
 
 # --- Copier, reprendre, poser depuis la liste cible (PLN-005) ---------------------------------

@@ -4,7 +4,7 @@ import { marque } from '@innov/design';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, type ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Alerte, Bouton, Carte, Texte, useLien, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
@@ -28,6 +28,7 @@ import { kilometres } from '../src/Itineraire';
 import { PoserDepuisCible } from '../src/Pose';
 import { CarteControles, ObjectifDuJour } from '../src/Controles';
 import { Journee } from '../src/Journee';
+import { CarteSoumission, EtatSoumission } from '../src/Soumission';
 import { FormulaireVisite } from '../src/Visites';
 
 const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
@@ -79,6 +80,7 @@ export default function EcranSemaine() {
   const [message, setMessage] = useState<string | null>(null);
   // Une saisie gardée faute de réseau se dit en information, pas en succès.
   const [tonMessage, setTonMessage] = useState<'succes' | 'info'>('succes');
+  const defilement = useRef<ScrollView>(null);
   const aujourdhui = jourIso(new Date());
 
   const charger = useCallback(
@@ -292,7 +294,12 @@ export default function EcranSemaine() {
   }
 
   return (
-    <Ecran key="semaine" titre={t('mobile.onglets.semaine')} surTitre={periode}>
+    <Ecran
+      key="semaine"
+      titre={t('mobile.onglets.semaine')}
+      surTitre={periode}
+      defilement={defilement}
+    >
       <View style={styles.navigation}>
         <Fleche
           sens="precedente"
@@ -368,6 +375,7 @@ export default function EcranSemaine() {
             {semaine.planning ? (
               <>
                 <Texte>{t(`semaine.statuts.${semaine.planning.statut}`)}</Texte>
+                <EtatSoumission planning={semaine.planning} modifiable={modifiable} />
                 <Texte variante="discret">
                   {visites.length === 0
                     ? modifiable
@@ -556,6 +564,24 @@ export default function EcranSemaine() {
           </Carte>
           {feries > 0 && (
             <Texte variante="discret">{t('semaine.feriesExclus', { count: feries })}</Texte>
+          )}
+          {modifiable && (
+            <CarteSoumission
+              semaine={semaine}
+              surSoumis={(texte) => {
+                setTonMessage('succes');
+                setMessage(texte);
+                // Le message et « Soumis le … » sont en haut : la page y remonte.
+                defilement.current?.scrollTo({ y: 0, animated: true });
+                void charger(semaine.semaine);
+              }}
+              surCorriger={(id) => {
+                const v = visites.find((x) => x.id === id);
+                if (!v) return;
+                setMessage(null);
+                setEdition({ objet: 'visite', jour: v.date, visite: v });
+              }}
+            />
           )}
         </>
       )}

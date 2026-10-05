@@ -127,7 +127,7 @@ class SemaineVue(VuePlannings):
                 }
                 for j in jours_de_la_semaine(pays, debut)
             ],  # fmt: skip
-            "planning": s.PlanningSerializer(planning).data if planning else None,
+            "planning": planning,
             "peut_creer": planning is None
             and debut >= courante
             and services.occupe_un_poste(request.user, pays, debut),
@@ -356,6 +356,18 @@ class AbsenceRetraitVue(VueAbsences):
     def post(self, request, id):
         absence = get_object_or_404(self.get_queryset(), pk=id)
         return Response(s.AbsenceSerializer(services.retirer_absence(absence)).data)
+
+
+# --- Soumission (PLN-008) ---------------------------------------------------------------------
+
+
+class SoumissionVue(VuePlannings):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=None, responses=s.PlanningSerializer, operation_id="planning_soumettre")
+    def post(self, request, id):
+        planning = get_object_or_404(self.get_queryset(), pk=id)
+        return Response(s.PlanningSerializer(services.soumettre(planning)).data)
 
 
 # --- Copier, reprendre, poser depuis la liste cible (PLN-005) ---------------------------------

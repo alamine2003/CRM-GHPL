@@ -54,9 +54,30 @@ L'administrateur pays construit ensuite l'organisation (zones, secteurs, divisio
 4. Scanner le QR code avec l'**appareil photo** de l'iPhone, puis accepter l'accès au réseau local demandé par Expo Go.
 5. Se connecter avec un compte de démonstration (délégué pour l'application de terrain).
 
-Si l'adresse n'est pas trouvée : `INNOV_IP=192.168.1.20 make telephone` (adresse Wi-Fi de l'ordinateur). Dans Expo Go, la base locale du téléphone n'est pas chiffrée (SQLCipher n'existe que dans une vraie compilation) : n'y utiliser que la démonstration. Les versions de test installables (TestFlight) arrivent en 0.2.8.
+Si l'adresse n'est pas trouvée : `INNOV_IP=192.168.1.20 make telephone` (adresse Wi-Fi de l'ordinateur). Dans Expo Go, la base locale du téléphone n'est pas chiffrée (SQLCipher n'existe que dans une vraie compilation) : n'y utiliser que la démonstration. Pour une application installée, chiffrée comme en production : les builds de test ci-dessous.
 
 Variables utiles : `backend/.env.example` (serveur), `VITE_API_URL` (portail), `EXPO_PUBLIC_API_URL` (mobile).
+
+### Builds de test Android et iOS (EAS)
+
+Les builds se font sur les serveurs d'Expo (EAS Build), décrits dans [`mobile/eas.json`](mobile/eas.json) :
+
+| Profil | Pour | Résultat |
+|---|---|---|
+| `apercu` | Testeurs, installation directe | Android : un `.apk` à télécharger. iOS : une installation *ad hoc* sur les iPhone déclarés (identifiant UDID). |
+| `simulateur` | Essai iOS sans iPhone ni compte Apple payant | Une application pour le simulateur de Xcode ; Android comme `apercu`. |
+| `recette` | TestFlight et piste de test interne Google Play | iOS : `.ipa` signé pour l'App Store Connect. Android : `.aab`. Numéro de build incrémenté par EAS. |
+
+Une seule fois, par le titulaire des comptes :
+
+1. Créer un compte Expo, puis le projet : `cd mobile && npx eas-cli init` affiche l'identifiant du projet. Le garder en variable d'environnement `EAS_PROJECT_ID` (avec `EXPO_OWNER` si le projet appartient à une organisation Expo) : il ne s'écrit pas dans le dépôt.
+2. Dans *expo.dev → Projet → Environment variables*, environnement **preview** : `EXPO_PUBLIC_API_URL` = adresse HTTPS du serveur de test.
+3. iOS : un compte Apple Developer (payant) est nécessaire pour `apercu` et `recette` ; EAS crée les certificats et profils à la première commande. Pour `apercu`, déclarer les iPhone avec `npx eas-cli device:create`. La réponse à la question de chiffrement d'App Store Connect (l'application chiffre sa base locale) revient au titulaire du compte.
+4. Android : EAS génère et garde la clé de signature à la première commande. Pour `recette`, l'application doit exister dans la Google Play Console.
+
+Lancer un build, depuis `mobile/` : `npx eas-cli build --profile apercu --platform all` (ou `android`, `ios`). Le lien d'installation s'affiche à la fin et sur expo.dev. `npx eas-cli submit --profile recette --platform ios` envoie le dernier build `recette` vers TestFlight.
+
+Depuis GitHub : *Actions → Builds de test mobiles → Run workflow*, après avoir ajouté le secret `EXPO_TOKEN` (*expo.dev → Account settings → Access tokens*) et la variable `EAS_PROJECT_ID` (*Settings → Secrets and variables → Actions*). Le build continue chez Expo ; le journal du workflow donne son lien.
 
 ## Démonstration
 

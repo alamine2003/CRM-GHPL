@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.7
+  version: 0.2.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/absences/{id}/:
@@ -2661,6 +2661,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/Reprise'
           description: ''
+  /api/v1/plannings/{id}/soumettre/:
+    post:
+      operationId: planning_soumettre
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planning'
+          description: ''
   /api/v1/plannings/{id}/visites/:
     post:
       operationId: visite_planifier
@@ -4232,6 +4253,8 @@ components:
       - hors_cible
       - hors_secteur
       - a_non_planifie
+      - echeance_depassee
+      - soumis_en_retard
       type: string
       description: |-
         * `incomplete` - incomplete
@@ -4244,6 +4267,8 @@ components:
         * `hors_cible` - hors_cible
         * `hors_secteur` - hors_secteur
         * `a_non_planifie` - a_non_planifie
+        * `echeance_depassee` - echeance_depassee
+        * `soumis_en_retard` - soumis_en_retard
     CodesSecours:
       type: object
       properties:
@@ -6086,15 +6111,32 @@ components:
           type: string
           format: date
         statut:
-          $ref: '#/components/schemas/PlanningStatutEnum'
+          allOf:
+          - $ref: '#/components/schemas/PlanningStatutEnum'
+          readOnly: true
         cree_le:
           type: string
           format: date-time
           readOnly: true
+        soumis_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        en_retard:
+          type: boolean
+          readOnly: true
+        echeance:
+          type: string
+          readOnly: true
       required:
       - cree_le
+      - echeance
+      - en_retard
       - id
       - semaine
+      - soumis_le
+      - statut
     PlanningStatutEnum:
       enum:
       - brouillon

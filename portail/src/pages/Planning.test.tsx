@@ -41,7 +41,15 @@ const SEMAINE: Semaine = {
     { date: '2026-10-29', ferie: null, planifiable: true },
     { date: '2026-10-30', ferie: 'Fête fictive', planifiable: false },
   ],
-  planning: { id: 'pl1', semaine: '2026-10-26', statut: 'brouillon', cree_le: '' },
+  planning: {
+    id: 'pl1',
+    semaine: '2026-10-26',
+    statut: 'brouillon',
+    cree_le: '',
+    soumis_le: null,
+    en_retard: false,
+    echeance: '2026-10-22T18:00:00Z',
+  },
   peut_creer: false,
   modifiable: true,
   visites: [VISITE],
@@ -175,5 +183,64 @@ describe('PLN-006 : vue semaine du portail', () => {
     expect(within(menu).queryByText('ven. 30')).toBeNull();
     fireEvent.click(within(menu).getByText('lun. 26'));
     await waitFor(() => expect(poser).toHaveBeenCalledWith('pl1', '2026-10-26', ['p2']));
+  });
+
+  it('PLN-008 : la soumission attend la correction des points bloquants', async () => {
+    rendre({
+      plannings: { semaine: vi.fn(async () => SEMAINE) },
+      ciblage: { mesListes: vi.fn(async () => LISTES) },
+    });
+    const bouton = await screen.findByRole('button', { name: 'Soumettre le planning' });
+    expect((bouton as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      screen.getByText('Le point bloquant listé dans « À vérifier » empêche la soumission.'),
+    ).toBeTruthy();
+  });
+
+  it('PLN-008 CA1, RG-016 : après confirmation, le planning part, en retard si l’échéance est passée', async () => {
+    const pret = {
+      ...SEMAINE,
+      planning: { ...SEMAINE.planning!, echeance: '2026-01-01T18:00:00Z' },
+      controles: { ...SEMAINE.controles!, bloquants: [] },
+    };
+    const soumettre = vi.fn(async () => ({
+      ...SEMAINE.planning!,
+      statut: 'soumis' as const,
+      en_retard: true,
+    }));
+    rendre({
+      plannings: { semaine: vi.fn(async () => pret), soumettre },
+      ciblage: { mesListes: vi.fn(async () => LISTES) },
+    });
+    expect(await screen.findByText(/^Échéance passée : /)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Soumettre le planning' }));
+    const dialogue = await screen.findByRole('dialog');
+    expect(
+      within(dialogue).getByText("L'échéance est passée : il sera marqué en retard."),
+    ).toBeTruthy();
+    expect(soumettre).not.toHaveBeenCalled();
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Oui, soumettre' }));
+    await waitFor(() => expect(soumettre).toHaveBeenCalledWith('pl1'));
+  });
+
+  it('un planning soumis dit sa date de soumission et son retard', async () => {
+    rendre({
+      plannings: {
+        semaine: vi.fn(async () => ({
+          ...SEMAINE,
+          modifiable: false,
+          controles: null,
+          planning: {
+            ...SEMAINE.planning!,
+            statut: 'soumis' as const,
+            soumis_le: '2026-10-23T09:30:00Z',
+            en_retard: true,
+          },
+        })),
+      },
+    });
+    expect(await screen.findByText(/^Soumis le /)).toBeTruthy();
+    expect(screen.getByText('En retard')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Soumettre le planning' })).toBeNull();
   });
 });

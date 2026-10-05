@@ -262,105 +262,191 @@ function Resume({
   const km = s.kilometrage;
   const aCompleter = s.visites.filter((v) => v.manquants.length > 0).length;
   const controles = s.controles;
+  const [confirmer, setConfirmer] = useState(false);
+  const dateHeure = (iso: string) =>
+    new Intl.DateTimeFormat(i18n.language, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(iso));
+  const enRetard = !!s.planning && new Date(s.planning.echeance) < new Date();
   return (
-    <Box
-      sx={{
-        display: 'grid',
-        gap: 2,
-        gridTemplateColumns: { xs: '1fr', md: controles ? '1fr 1fr' : '1fr' },
-      }}
-    >
-      <Card>
-        <EnTeteCarte titre={t('planification.resume')} />
-        <Stack spacing={1} sx={{ p: 2 }}>
-          {s.planning ? (
-            <>
-              <Ligne
-                libelle={t('detail.statut')}
-                valeur={t(`semaine.statuts.${s.planning.statut}`)}
-              />
-              <Ligne
-                libelle={t('planification.visites')}
-                valeur={
-                  aCompleter
-                    ? t('visites.bilanACompleter', { count: s.visites.length, aCompleter })
-                    : t('visites.bilan', { count: s.visites.length })
-                }
-              />
-              {km && (
+    <>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', md: controles ? '1fr 1fr' : '1fr' },
+        }}
+      >
+        <Card>
+          <EnTeteCarte titre={t('planification.resume')} />
+          <Stack spacing={1} sx={{ p: 2 }}>
+            {s.planning ? (
+              <>
                 <Ligne
-                  libelle={t('planification.kilometrage')}
+                  libelle={t('detail.statut')}
+                  valeur={t(`semaine.statuts.${s.planning.statut}`)}
+                />
+                <Ligne
+                  libelle={t('planification.visites')}
                   valeur={
-                    km.total_km > 0
-                      ? `${t('km.jour', {
-                          km: new Intl.NumberFormat(i18n.language, {
-                            maximumFractionDigits: 1,
-                          }).format(km.total_km),
-                        })}${km.sans_coordonnees ? ` · ${t('km.partiel', { count: km.sans_coordonnees })}` : ''}`
-                      : '—'
+                    aCompleter
+                      ? t('visites.bilanACompleter', { count: s.visites.length, aCompleter })
+                      : t('visites.bilan', { count: s.visites.length })
                   }
                 />
-              )}
-              {s.modifiable && s.reprenables > 0 && (
+                {km && (
+                  <Ligne
+                    libelle={t('planification.kilometrage')}
+                    valeur={
+                      km.total_km > 0
+                        ? `${t('km.jour', {
+                            km: new Intl.NumberFormat(i18n.language, {
+                              maximumFractionDigits: 1,
+                            }).format(km.total_km),
+                          })}${km.sans_coordonnees ? ` · ${t('km.partiel', { count: km.sans_coordonnees })}` : ''}`
+                        : '—'
+                    }
+                  />
+                )}
+                <Ligne
+                  libelle={t('soumission.libelle')}
+                  valeur={
+                    s.planning.soumis_le && !s.modifiable ? (
+                      <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline' }}>
+                        <span>
+                          {t('soumission.soumisLe', { date: dateHeure(s.planning.soumis_le) })}
+                        </span>
+                        {s.planning.en_retard && (
+                          <Typography
+                            component="span"
+                            variant="body2"
+                            sx={{ color: 'warning.main', fontWeight: 600 }}
+                          >
+                            {t('soumission.enRetard')}
+                          </Typography>
+                        )}
+                      </Stack>
+                    ) : s.modifiable ? (
+                      t(
+                        new Date(s.planning.echeance) < new Date()
+                          ? 'soumission.echeancePassee'
+                          : 'soumission.echeance',
+                        { date: dateHeure(s.planning.echeance) },
+                      )
+                    ) : (
+                      '—'
+                    )
+                  }
+                />
+                {s.modifiable && (
+                  <Box>
+                    <Button
+                      variant="contained"
+                      disabled={!!controles?.bloquants.length}
+                      onClick={() => setConfirmer(true)}
+                    >
+                      {t('soumission.soumettre')}
+                    </Button>
+                    {!!controles?.bloquants.length && (
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                        {t('soumission.bloquantsPortail', { count: controles.bloquants.length })}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+                {s.modifiable && s.reprenables > 0 && (
+                  <Box>
+                    <Button
+                      variant="outlined"
+                      onClick={() =>
+                        void agir(
+                          () => client.plannings.reprendre(s.planning!.id),
+                          t('pose.reprises', { count: s.reprenables }),
+                        )
+                      }
+                    >
+                      {t('pose.reprendre', { count: s.reprenables })}
+                    </Button>
+                  </Box>
+                )}
+              </>
+            ) : s.peut_creer ? (
+              <>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {t('semaine.aPreparer')}
+                </Typography>
                 <Box>
                   <Button
-                    variant="outlined"
-                    onClick={() =>
-                      void agir(
-                        () => client.plannings.reprendre(s.planning!.id),
-                        t('pose.reprises', { count: s.reprenables }),
-                      )
-                    }
+                    variant="contained"
+                    onClick={() => void agir(() => client.plannings.creer(s.semaine))}
                   >
-                    {t('pose.reprendre', { count: s.reprenables })}
+                    {t('semaine.preparer')}
                   </Button>
                 </Box>
-              )}
-            </>
-          ) : s.peut_creer ? (
-            <>
+              </>
+            ) : (
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {t('semaine.aPreparer')}
-              </Typography>
-              <Box>
-                <Button
-                  variant="contained"
-                  onClick={() => void agir(() => client.plannings.creer(s.semaine))}
-                >
-                  {t('semaine.preparer')}
-                </Button>
-              </Box>
-            </>
-          ) : (
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {t('semaine.sansPoste')}
-            </Typography>
-          )}
-        </Stack>
-      </Card>
-      {controles && (
-        <Card>
-          <EnTeteCarte titre={t('controles.titre')} />
-          <Stack spacing={0.5} sx={{ p: 2 }}>
-            {controles.bloquants.length === 0 && controles.signalements.length === 0 && (
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {t('planification.rienAVerifier')}
+                {t('semaine.sansPoste')}
               </Typography>
             )}
-            {lignesControles(controles, t, jourCourt).map(({ cle, gravite, texte }) => (
-              <Stack key={cle} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
-                {gravite === 'bloquant' ? (
-                  <ErrorOutlineRounded fontSize="small" color="error" sx={{ mt: 0.25 }} />
-                ) : (
-                  <InfoOutlined fontSize="small" color="warning" sx={{ mt: 0.25 }} />
-                )}
-                <Typography variant="body2">{texte}</Typography>
-              </Stack>
-            ))}
           </Stack>
         </Card>
+        {controles && (
+          <Card>
+            <EnTeteCarte titre={t('controles.titre')} />
+            <Stack spacing={0.5} sx={{ p: 2 }}>
+              {controles.bloquants.length === 0 && controles.signalements.length === 0 && (
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {t('planification.rienAVerifier')}
+                </Typography>
+              )}
+              {lignesControles(controles, t, jourCourt).map(({ cle, gravite, texte }) => (
+                <Stack key={cle} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
+                  {gravite === 'bloquant' ? (
+                    <ErrorOutlineRounded fontSize="small" color="error" sx={{ mt: 0.25 }} />
+                  ) : (
+                    <InfoOutlined fontSize="small" color="warning" sx={{ mt: 0.25 }} />
+                  )}
+                  <Typography variant="body2">{texte}</Typography>
+                </Stack>
+              ))}
+            </Stack>
+          </Card>
+        )}
+      </Box>
+      {confirmer && s.planning && (
+        <Dialog open onClose={() => setConfirmer(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>{t('soumission.titre')}</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2">{t('soumission.confirmation')}</Typography>
+            {enRetard && (
+              <Typography variant="body2" sx={{ mt: 1, color: 'warning.main' }}>
+                {t('soumission.confirmationRetard')}
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmer(false)}>{t('soumission.annuler')}</Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setConfirmer(false);
+                void agir(
+                  () => client.plannings.soumettre(s.planning!.id),
+                  t(enRetard ? 'soumission.succesRetard' : 'soumission.succes'),
+                );
+              }}
+            >
+              {t('soumission.confirmer')}
+            </Button>
+          </DialogActions>
+        </Dialog>
       )}
-    </Box>
+    </>
   );
 }
 
