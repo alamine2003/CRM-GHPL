@@ -23,6 +23,7 @@ from .models import (
     PerimetreReseau,
     Poste,
     Rattachement,
+    Remplacement,
     Reseau,
     Secteur,
     TypePoste,
@@ -364,3 +365,116 @@ def superviseur_du_poste(poste: Poste, jour: date | None = None) -> Utilisateur 
     jour = jour or aujourdhui(poste.pays)
     rattachement = poste.rattachements.select_related("superviseur").filter(actif_le(jour)).first()
     return rattachement.superviseur if rattachement else None
+
+
+# --- Remplaçant daté d'un superviseur (ORG-013, RG-020) ---------------------------------------
+
+
+def superviseurs_du_pays(pays: Pays) -> list[Utilisateur]:
+    """Superviseurs dont le rôle est actif aujourd'hui dans ce pays."""
+    from django.utils import timezone
+
+    maintenant = timezone.now()
+    return list(
+        Utilisateur.objects.filter(
+            roles__pays=pays, roles__role=Role.SUPERVISEUR, roles__debut__lte=maintenant,
+            is_active=True,
+        )
+        .filter(Q(roles__fin__isnull=True) | Q(roles__fin__gt=maintenant))
+        .distinct()
+        .order_by("last_name", "first_name")
+    )  # fmt: skip
+
+
+def superviseurs_du_dm(dm: Utilisateur, pays: Pays, jour: date | None = None) -> set:
+    """Superviseurs des postes dont un réseau est dans le périmètre daté du DM (ORG-008)."""
+    jour = jour or aujourdhui(pays)
+    reseaux = PerimetreReseau.objects.filter(actif_le(jour), utilisateur=dm, pays=pays).values(
+        "reseau"
+    )
+    return set(
+        Rattachement.objects.filter(actif_le(jour), pays=pays, poste__reseaux__in=reseaux)
+        .values_list("superviseur_id", flat=True)
+        .distinct()
+    )
+
+
+def remplacements_actifs(pays: Pays, jour: date | None = None):
+    jour = jour or aujourdhui(pays)
+    return Remplacement.objects.filter(
+        pays=pays, archive_le__isnull=True, debut__lte=jour, fin__gte=jour
+    )
+
+
+def remplaces_par(remplacant: Utilisateur, pays: Pays, jour: date | None = None) -> list:
+    """Superviseurs que cette personne remplace ce jour-là (ORG-013 CA1, CA3)."""
+    return [
+        r.superviseur
+        for r in remplacements_actifs(pays, jour)
+        .filter(remplacant=remplacant)
+        .select_related("superviseur")
+    ]
+
+
+@transaction.atomic
+def designer_remplacant(
+    pays: Pays, superviseur: Utilisateur, remplacant: Utilisateur, debut: date, fin: date, par
+) -> Remplacement:
+    """ORG-013 : un autre superviseur du pays remplace celui-ci du `debut` au `fin` inclus."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+
+    if remplacant.pk == superviseur.pk:
+        raise ErreurMetier(
+            "remplacant_invalide", _("Un superviseur ne se remplace pas lui-même."),
+            champ="remplacant",
+        )  # fmt: skip
+    for personne, champ in ((superviseur, "superviseur"), (remplacant, "remplacant")):
+        if not a_un_role_dans(personne, pays, {Role.SUPERVISEUR}):
+            raise ErreurMetier(
+                "superviseur_invalide",
+                _("Le remplacé et le remplaçant sont des superviseurs de ce pays."),
+                champ=champ,
+            )
+    if fin < debut:
+        raise ErreurMetier("periode_invalide", _("La fin précède le début."), champ="fin")
+    if debut < aujourdhui(pays):
+        raise ErreurMetier(
+            "periode_passee", _("Un remplacement commence aujourd'hui ou plus tard."),
+            champ="debut",
+        )  # fmt: skip
+    chevauchement = Remplacement.objects.filter(
+        superviseur=superviseur, archive_le__isnull=True, debut__lte=fin, fin__gte=debut
+    )
+    if chevauchement.exists():
+        raise ErreurMetier(
+            "remplacement_chevauchement",
+            _("Un remplaçant est déjà désigné pour ce superviseur sur une partie de la période."),
+            409,
+            champ="debut",
+        )
+    remplacement = _enregistrer(
+        Remplacement(pays=pays, superviseur=superviseur, remplacant=remplacant, debut=debut,
+                     fin=fin, designe_par=par)
+    )  # fmt: skip
+    notifier(remplacant, TypeNotification.REMPLACEMENT_ATTRIBUE, pays,
+             debut=debut.isoformat(), fin=fin.isoformat(),
+             nom=f"{superviseur.first_name} {superviseur.last_name}".strip())  # fmt: skip
+    return remplacement
+
+
+@transaction.atomic
+def terminer_remplacement(remplacement: Remplacement) -> Remplacement:
+    """Fin anticipée (ORG-013 CA3) : l'accès cesse aussitôt. Un remplacement qui n'a pas encore
+    servi (il commence aujourd'hui ou plus tard) est retiré ; sinon il finit hier."""
+    from datetime import timedelta
+
+    jour = aujourdhui(remplacement.pays)
+    if remplacement.debut >= jour:
+        remplacement.archiver()
+        _auditer("remplacement.retrait", remplacement)
+    elif remplacement.fin >= jour:
+        remplacement.fin = jour - timedelta(days=1)
+        remplacement.save(update_fields=["fin"])
+        _auditer("remplacement.fin", remplacement, fin=str(remplacement.fin))
+    return remplacement

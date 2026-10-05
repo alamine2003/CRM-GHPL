@@ -240,3 +240,44 @@ class MonOrganisationSerializer(serializers.Serializer):
     reseaux = PerimetreReseauSerializer(many=True)
     #: ORG-007 CA1 / RG-010 : sans superviseur actif sur le poste principal, pas de planning.
     superviseur_manquant = serializers.BooleanField()
+
+
+class RemplacementSerializer(serializers.Serializer):
+    """Remplaçant daté d'un superviseur (ORG-013)."""
+
+    id = serializers.UUIDField()
+    superviseur = PersonneSerializer()
+    remplacant = PersonneSerializer()
+    debut = serializers.DateField()
+    fin = serializers.DateField()
+    designe_par = PersonneSerializer(allow_null=True)
+    #: `a_venir`, `en_cours` ou `termine`, à la date du pays.
+    etat = serializers.SerializerMethodField()
+    #: L'utilisateur peut y mettre fin (il a désigné pour ce superviseur, prd.md §6.3).
+    terminable = serializers.SerializerMethodField()
+
+    def get_terminable(self, remplacement) -> bool:
+        if "portee" not in self.context or self.get_etat(remplacement) == "termine":
+            return False
+        portee = self.context["portee"]
+        return portee is None or remplacement.superviseur_id in portee
+
+    def get_etat(self, remplacement) -> str:
+        jour = aujourdhui(remplacement.pays)
+        if remplacement.debut > jour:
+            return "a_venir"
+        return "en_cours" if remplacement.fin >= jour else "termine"
+
+
+class CreationRemplacementSerializer(serializers.Serializer):
+    superviseur = serializers.UUIDField()
+    remplacant = serializers.UUIDField()
+    debut = serializers.DateField()
+    fin = serializers.DateField()
+
+
+class CandidatsRemplacementSerializer(serializers.Serializer):
+    """Qui l'utilisateur peut faire remplacer, et par qui (superviseurs du pays)."""
+
+    superviseurs = PersonneSerializer(many=True)
+    remplacants = PersonneSerializer(many=True)

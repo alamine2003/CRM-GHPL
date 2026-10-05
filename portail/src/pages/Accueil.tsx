@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
 import { BarreChiffres, Chiffre, EnTeteCarte, EnTetePage, Ligne } from '../composants/Elements';
 import { drapeau } from '../composants/formats';
+import { MesNotifications } from '../composants/MesNotifications';
 import { useSession } from '../contexteSession';
 
 const VERSION_CLIENT = __INNOV_VERSION__;
@@ -690,6 +691,9 @@ export default function Accueil({
         <Alert severity="warning" role="alert">
           {t('roles.aucun')}
         </Alert>
+      )}
+      {perimetre.actions.includes('notifications.lire') && perimetre.pays_actif && (
+        <MesNotifications />
       )}
       {siege && perimetre.vue_consolidee && <LesPays />}
       {perimetre.actions.includes('organisation.lire') && !a('superviseur') && (

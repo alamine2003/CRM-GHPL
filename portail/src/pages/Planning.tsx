@@ -2,9 +2,11 @@ import type { ListeCible, Semaine, Visite } from '@innov/api-client';
 import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import DragIndicatorRounded from '@mui/icons-material/DragIndicatorRounded';
+import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import SearchRounded from '@mui/icons-material/SearchRounded';
 import {
   Alert,
+  AlertTitle,
   Box,
   Button,
   Card,
@@ -54,6 +56,14 @@ export default function Planning() {
   });
   const s = semaine.data;
   const modifiable = !!s?.planning && s.modifiable;
+  // PLN-013 CA2 : pendant la révision, chaque remarque se lit sur la visite concernée.
+  const revision =
+    s?.planning?.statut === 'a_reviser' && s.planning.decision?.decision === 'a_reviser'
+      ? s.planning.decision
+      : null;
+  const remarques: Record<string, string> = Object.fromEntries(
+    (revision?.remarques ?? []).map((r) => [r.visite, r.commentaire]),
+  );
   const rafraichir = () => void requetes.invalidateQueries({ queryKey: ['planning-semaine'] });
 
   const date = (iso: string, options: Intl.DateTimeFormatOptions) =>
@@ -125,6 +135,29 @@ export default function Planning() {
         <Skeleton variant="rounded" height={320} />
       ) : (
         <>
+          {revision && (
+            <Alert severity="warning" icon={<RateReviewOutlined />}>
+              <AlertTitle>
+                {t('approbation.decisionsCourt.a_reviser', {
+                  par: revision.par,
+                  date: new Intl.DateTimeFormat(i18n.language, {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: s.fuseau,
+                  }).format(new Date(revision.decide_le)),
+                })}
+              </AlertTitle>
+              {revision.commentaire && (
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-line', mb: 0.5 }}>
+                  {revision.commentaire}
+                </Typography>
+              )}
+              <Typography variant="body2">{t('revision.aCorrigerAide')}</Typography>
+            </Alert>
+          )}
           <Resume semaine={s} agir={agir} jourCourt={jourCourt} />
           <Box
             sx={{
@@ -151,6 +184,7 @@ export default function Planning() {
                   date={j.date}
                   titre={date(j.date, { weekday: 'long', day: 'numeric' })}
                   modifiable={modifiable}
+                  remarques={remarques}
                   surDeposer={(g) => void deposer(g, j.date)}
                   surOuvrir={setOuverte}
                 />
@@ -174,6 +208,7 @@ export default function Planning() {
           jourCourt={jourCourt}
           surFermer={() => setOuverte(null)}
           agir={agir}
+          remarque={remarques[ouverte.id]}
         />
       )}
     </Stack>
@@ -278,7 +313,8 @@ function Resume({
                     )
                   }
                 />
-                {s.planning.decision && (
+                {/* Pendant une révision, le bandeau du haut dit déjà la décision. */}
+                {s.planning.decision && s.planning.statut !== 'a_reviser' && (
                   <Ligne
                     libelle={t('approbation.decision')}
                     valeur={t(`approbation.decisionsCourt.${s.planning.decision.decision}`, {

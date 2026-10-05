@@ -135,7 +135,8 @@
     "ciblage": "Target lists",
     "doublons": "Duplicates",
     "propositions": "Proposals",
-    "validation": "Plans to approve"
+    "validation": "Plans to approve",
+    "remplacements": "Replacements"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -1639,6 +1640,54 @@
     "titre_other": "{{count}} new notifications",
     "planning_approuve": "Your planning for week {{numero}} is approved",
     "voir": "Open the week",
-    "toutVu": "Mark all as read"
+    "toutVu": "Mark all as read",
+    "revision_demandee": "Revision requested on your planning for week {{numero}}",
+    "remplacement_attribue": "You replace {{nom}} from {{debut}} to {{fin}}"
+  },
+  "revision": {
+    "demander": "Request a revision",
+    "titre": "Request a revision",
+    "aide": "{{nom}} will read your comment, correct the planning and submit the next version. To target a specific visit, open it and write a remark.",
+    "commentaire": "Comment to the rep",
+    "obligatoire": "Required, unless you wrote remarks on visits.",
+    "avecRemarques_one": "{{count}} remark on a visit will be attached.",
+    "avecRemarques_other": "{{count}} remarks on visits will be attached.",
+    "envoyer": "Send the request",
+    "succes": "Revision requested from {{nom}}.",
+    "remarque": "Remark for the revision",
+    "aideRemarque": "Attached to the revision request; the rep reads it on this visit.",
+    "remarquesPretes_one": "{{count}} remark written on a visit: it will be sent with the revision request.",
+    "remarquesPretes_other": "{{count}} remarks written on visits: they will be sent with the revision request.",
+    "remarquesIgnorees_one": "The remark written on a visit will not be sent.",
+    "remarquesIgnorees_other": "The {{count}} remarks written on visits will not be sent.",
+    "remarquesEnvoyees_one": "{{count}} remark on a visit.",
+    "remarquesEnvoyees_other": "{{count}} remarks on visits.",
+    "aCorriger": "Revision requested",
+    "aCorrigerAide": "Correct the flagged visits, then submit the planning again.",
+    "remarqueLue": "Remark: {{texte}}"
+  },
+  "remplacements": {
+    "titre": "Replacements",
+    "sousTitre": "During the period, the replacement sees and decides the plannings of the replaced supervisor.",
+    "enRemplacement": "as a replacement",
+    "pour": "For {{nom}}",
+    "designer": "Designate a replacement",
+    "superviseur": "Replaced supervisor",
+    "remplacant": "Replacement",
+    "debut": "From",
+    "fin": "To (included)",
+    "periode": "From {{debut}} to {{fin}}",
+    "aucun": "No current or upcoming replacement.",
+    "designe": "{{remplacant}} will replace {{superviseur}} from {{debut}} to {{fin}}.",
+    "terminer": "End",
+    "retirer": "Remove",
+    "termine": "Replacement ended.",
+    "retire": "Replacement removed.",
+    "designePar": "Designated by {{nom}}",
+    "etats": {
+      "a_venir": "Upcoming",
+      "en_cours": "Current",
+      "termine": "Ended"
+    }
   }
 }

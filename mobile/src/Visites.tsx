@@ -135,7 +135,10 @@ export function LigneVisite({
         {alertes.map((a) => (
           <Text
             key={a.cle}
-            style={[styles.manquants, { color: a.ton === 'erreur' ? p.erreur : p.attention }]}
+            style={[
+              styles.manquants,
+              { color: a.ton === 'erreur' ? p.erreur : a.ton === 'info' ? p.info : p.attention },
+            ]}
           >
             {a.texte}
           </Text>

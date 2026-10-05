@@ -2,6 +2,43 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.4] — Révision motivée et remplaçant daté
+
+Quatrième jalon du cycle 0.3 « Validation des plannings ».
+
+### Ajouté — révision motivée (PLN-013, RG-017)
+
+- Dans la consultation d'un planning soumis, **Demander une révision** à côté d'« Approuver ». Le responsable peut viser une visite précise : il l'ouvre et écrit une « Remarque pour la révision », qui s'affiche aussitôt sur la carte de la visite et sera jointe à la demande.
+- **CA1** : une demande sans commentaire est refusée ; le commentaire général est facultatif seulement si des remarques visent des visites, et chaque remarque a un texte.
+- **CA2** : le délégué est notifié (« Révision demandée sur votre planning de la semaine n »), lit le commentaire en tête de sa semaine (téléphone et portail) et chaque remarque sur la visite concernée (« Remarque : … ») ; le planning redevient modifiable et sa nouvelle soumission fige la version 2, qui revient dans la file.
+- Le planning décidé affiche « Révision demandée le … par … · version n » avec le commentaire.
+
+### Ajouté — remplaçant daté (ORG-013, RG-020)
+
+- Page **Remplaçants** (portail) : désigner un remplaçant du … au … inclus, voir les remplacements en cours et à venir, y mettre fin (ou le retirer s'il n'a pas commencé). Le superviseur désigne pour lui-même, le DM pour les superviseurs de ses réseaux, l'administrateur pays pour tous (prd.md §6.3) ; le remplaçant est un autre superviseur du pays ; deux remplacements d'un même superviseur ne se chevauchent pas.
+- **CA1** : pendant la période, le remplaçant trouve les plannings du superviseur remplacé dans sa file (« Pour … »), les consulte et décide.
+- **CA2** : toute décision porte le mode `remplacement` et l'identité du remplaçant (« … · en remplacement »).
+- **CA3** : à la fin de la période — ou dès qu'on y met fin — l'accès cesse.
+- Le remplaçant est notifié : « Vous remplacez … du … au … ».
+
+### Ajouté — notifications au portail
+
+- Les notifications non lues s'affichent sur l'accueil du portail (délégué : approbation, révision ; superviseur : remplacement attribué) ; les toucher mène à la semaine ou à la file et les marque lues.
+
+### Design
+
+Revue sur le rendu réel : portail téléphone, bureau et sombre (remplaçants, remarque sur une visite, consultation, dialogue de révision, après envoi, désignation), vue du délégué au portail, accueil et semaine du téléphone à 360 px et en sombre. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Consultation | La remarque s'affichait en entier, en gras bleu, sur la carte de la visite : la colonne s'allongeait. | Texte normal, limité à trois lignes ; le détail la montre en entier. |
+| Planning du délégué (portail) | La révision se disait deux fois : bandeau en tête et ligne « Décision ». | La ligne « Décision » se tait pendant la révision. |
+| Consultation (téléphone) | « Approuver » passé à la ligne restait décalé sous « Demander une révision ». | Espacement en grille, boutons alignés. |
+
+### Point ouvert
+
+- Un planning resoumis après une révision demandée après l'échéance est marqué « en retard » (règle PLN-008 inchangée) ; à confirmer.
+
 ## [0.3.3] — Approbation des plannings
 
 Troisième jalon du cycle 0.3 « Validation des plannings ».

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.3.3
+  version: 0.3.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2758,6 +2758,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/Reprise'
           description: ''
+  /api/v1/plannings/{id}/reviser/:
+    post:
+      operationId: planning_reviser
+      description: 'PLN-013 : le responsable du poste demande une révision, commentée
+        (RG-017).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Revision'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Revision'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Revision'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planning'
+          description: ''
   /api/v1/plannings/{id}/soumettre/:
     post:
       operationId: planning_soumettre
@@ -3667,6 +3701,82 @@ paths:
               schema:
                 $ref: '#/components/schemas/Valeur'
           description: ''
+  /api/v1/remplacements/:
+    get:
+      operationId: remplacements_liste
+      tags:
+      - remplacements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Remplacement'
+          description: ''
+    post:
+      operationId: remplacement_designer
+      tags:
+      - remplacements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationRemplacement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationRemplacement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationRemplacement'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Remplacement'
+          description: ''
+  /api/v1/remplacements/{id}/terminer/:
+    post:
+      operationId: remplacement_terminer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - remplacements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Remplacement'
+          description: ''
+  /api/v1/remplacements/candidats/:
+    get:
+      operationId: remplacements_candidats
+      tags:
+      - remplacements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidatsRemplacement'
+          description: ''
   /api/v1/roles/{id}/retirer/:
     post:
       operationId: role_retirer
@@ -4256,6 +4366,22 @@ components:
     BlankEnum:
       enum:
       - ''
+    CandidatsRemplacement:
+      type: object
+      description: Qui l'utilisateur peut faire remplacer, et par qui (superviseurs
+        du pays).
+      properties:
+        superviseurs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Personne'
+        remplacants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Personne'
+      required:
+      - remplacants
+      - superviseurs
     Changement:
       type: object
       properties:
@@ -4564,6 +4690,10 @@ components:
             $ref: '#/components/schemas/Resume'
         delegue:
           $ref: '#/components/schemas/Delegue'
+        remplace:
+          allOf:
+          - $ref: '#/components/schemas/Delegue'
+          nullable: true
         postes:
           type: array
           items:
@@ -4582,6 +4712,7 @@ components:
       - planning
       - postes
       - precedente
+      - remplace
       - reprenables
       - reseaux
       - semaine
@@ -4747,6 +4878,26 @@ components:
             format: uuid
       required:
       - libelle
+    CreationRemplacement:
+      type: object
+      properties:
+        superviseur:
+          type: string
+          format: uuid
+        remplacant:
+          type: string
+          format: uuid
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+      required:
+      - debut
+      - fin
+      - remplacant
+      - superviseur
     CreationReseau:
       type: object
       properties:
@@ -4822,8 +4973,9 @@ components:
       - liste
     Decision:
       type: object
-      description: 'Dernière décision sur le planning (PLN-012) : version, sens, auteur,
-        date et mode.'
+      description: |-
+        Dernière décision sur le planning (PLN-012, PLN-013) : version, sens, auteur, date,
+        mode, commentaire et remarques par visite.
       properties:
         numero:
           type: integer
@@ -4839,6 +4991,10 @@ components:
           $ref: '#/components/schemas/ModeEnum'
         commentaire:
           type: string
+        remarques:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remarque'
       required:
       - commentaire
       - decide_le
@@ -4846,6 +5002,7 @@ components:
       - mode
       - numero
       - par
+      - remarques
     DecisionDecisionEnum:
       enum:
       - approuve
@@ -5032,6 +5189,14 @@ components:
           format: date
         numero_semaine:
           type: integer
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        nom:
+          type: string
     Doublon:
       type: object
       properties:
@@ -5767,8 +5932,11 @@ components:
     ModeEnum:
       enum:
       - direct
+      - remplacement
       type: string
-      description: '* `direct` - Décision du responsable du poste'
+      description: |-
+        * `direct` - Décision du responsable du poste
+        * `remplacement` - Décision du remplaçant
     ModificationParametre:
       type: object
       properties:
@@ -5889,8 +6057,13 @@ components:
     NotificationTypeEnum:
       enum:
       - planning_approuve
+      - revision_demandee
+      - remplacement_attribue
       type: string
-      description: '* `planning_approuve` - Planning approuvé'
+      description: |-
+        * `planning_approuve` - Planning approuvé
+        * `revision_demandee` - Révision demandée
+        * `remplacement_attribue` - Remplacement attribué
     Objectif:
       type: object
       properties:
@@ -6456,6 +6629,10 @@ components:
           type: string
         delegue:
           $ref: '#/components/schemas/Delegue'
+        remplace:
+          allOf:
+          - $ref: '#/components/schemas/Delegue'
+          nullable: true
         postes:
           type: array
           items:
@@ -6477,6 +6654,7 @@ components:
       - fuseau
       - planning
       - postes
+      - remplace
       - signalements
       - visites
     PlanningStatutEnum:
@@ -7205,6 +7383,55 @@ components:
       required:
       - jeton
       - mot_de_passe
+    Remarque:
+      type: object
+      description: Remarque de révision sur une visite précise (PLN-013 CA2).
+      properties:
+        visite:
+          type: string
+          format: uuid
+        commentaire:
+          type: string
+          maxLength: 500
+      required:
+      - commentaire
+      - visite
+    Remplacement:
+      type: object
+      description: Remplaçant daté d'un superviseur (ORG-013).
+      properties:
+        id:
+          type: string
+          format: uuid
+        superviseur:
+          $ref: '#/components/schemas/Personne'
+        remplacant:
+          $ref: '#/components/schemas/Personne'
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        designe_par:
+          allOf:
+          - $ref: '#/components/schemas/Personne'
+          nullable: true
+        etat:
+          type: string
+          readOnly: true
+        terminable:
+          type: boolean
+          readOnly: true
+      required:
+      - debut
+      - designe_par
+      - etat
+      - fin
+      - id
+      - remplacant
+      - superviseur
+      - terminable
     Reprise:
       type: object
       properties:
@@ -7320,6 +7547,18 @@ components:
         motif:
           type: string
           maxLength: 200
+    Revision:
+      type: object
+      description: 'PLN-013 : commentaire général et/ou remarques sur des visites
+        (RG-017).'
+      properties:
+        commentaire:
+          type: string
+          maxLength: 1000
+        remarques:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remarque'
     Role:
       type: object
       properties:

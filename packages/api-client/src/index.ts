@@ -9,6 +9,10 @@
  */
 import type {
   ChangementFiche,
+  CandidatsRemplacement,
+  CreationRemplacement,
+  Remplacement,
+  Revision,
   Notification,
   ResumeNotifications,
   ConsultationPlanning,
@@ -110,6 +114,11 @@ export type {
   Visite,
   ConsultationPlanning,
   DecisionPlanning,
+  CandidatsRemplacement,
+  CreationRemplacement,
+  Remarque,
+  Remplacement,
+  Revision,
   Notification,
   ResumeNotifications,
   Planning,
@@ -660,6 +669,9 @@ export function creerClient(options: OptionsClient) {
       /** Le responsable du poste approuve le planning soumis (PLN-012, PLN-017). */
       approuver: (id: string) =>
         requete<Planning>(`/api/v1/plannings/${id}/approuver/`, { methode: 'POST' }),
+      /** Révision commentée, sur le planning ou des visites précises (PLN-013, RG-017). */
+      reviser: (id: string, revision: Revision) =>
+        requete<Planning>(`/api/v1/plannings/${id}/reviser/`, { methode: 'POST', corps: revision }),
       semaine: (jour?: string) =>
         requete<Semaine>(`/api/v1/plannings/semaine/${jour ? `?semaine=${jour}` : ''}`),
       creer: (semaine: string) =>
@@ -738,6 +750,15 @@ export function creerClient(options: OptionsClient) {
         requete<Fusion>(`/api/v1/fusions/${id}/defaire/`, { methode: 'POST' }),
     },
     /** Propositions de modification des fiches communes (PRP-014). */
+    /** Remplaçants datés des superviseurs (ORG-013). */
+    remplacements: {
+      liste: () => requete<Remplacement[]>('/api/v1/remplacements/'),
+      candidats: () => requete<CandidatsRemplacement>('/api/v1/remplacements/candidats/'),
+      designer: (saisie: CreationRemplacement) =>
+        requete<Remplacement>('/api/v1/remplacements/', { methode: 'POST', corps: saisie }),
+      terminer: (id: string) =>
+        requete<Remplacement>(`/api/v1/remplacements/${id}/terminer/`, { methode: 'POST' }),
+    },
     /** Centre de notifications : les siennes, dans le pays actif (prd.md §18). */
     notifications: {
       liste: () => requete<ResumeNotifications>('/api/v1/notifications/'),

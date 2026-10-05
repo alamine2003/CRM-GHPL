@@ -10,6 +10,7 @@ import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import SupervisorAccountRounded from '@mui/icons-material/SupervisorAccountRounded';
 import {
   Alert,
@@ -21,6 +22,7 @@ import {
   DialogContent,
   DialogTitle,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import { type DragEvent, type ReactNode, useState } from 'react';
@@ -42,6 +44,7 @@ export function Colonne({
   titre,
   modifiable,
   explications = true,
+  remarques,
   surDeposer,
   surOuvrir,
 }: {
@@ -51,6 +54,8 @@ export function Colonne({
   modifiable: boolean;
   /** Les explications des activités ; la consultation les montre une fois, au-dessus. */
   explications?: boolean;
+  /** Remarques de révision par visite (PLN-013) : en cours de rédaction ou reçues. */
+  remarques?: Record<string, string>;
   surDeposer: (g: Glisse) => void;
   surOuvrir: (v: Visite) => void;
 }) {
@@ -190,6 +195,7 @@ export function Colonne({
                   semaine={s}
                   modifiable={modifiable}
                   dansPassage
+                  remarque={remarques?.[v.id]}
                   surOuvrir={surOuvrir}
                 />
               ))}
@@ -200,6 +206,7 @@ export function Colonne({
               visite={u.visites[0]!}
               semaine={s}
               modifiable={modifiable}
+              remarque={remarques?.[u.visites[0]!.id]}
               surOuvrir={surOuvrir}
             />
           ),
@@ -231,12 +238,14 @@ function CarteVisite({
   semaine: s,
   modifiable,
   dansPassage,
+  remarque,
   surOuvrir,
 }: {
   visite: Visite;
   semaine: Semaine;
   modifiable: boolean;
   dansPassage?: boolean;
+  remarque?: string;
   surOuvrir: (v: Visite) => void;
 }) {
   const { t } = useTranslation();
@@ -293,6 +302,23 @@ function CarteVisite({
           })}
         </Typography>
       )}
+      {remarque && (
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'flex-start', color: 'info.main' }}>
+          <RateReviewOutlined sx={{ fontSize: 16, mt: 0.25 }} />
+          <Typography
+            variant="caption"
+            sx={{
+              overflowWrap: 'anywhere',
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
+            {remarque}
+          </Typography>
+        </Stack>
+      )}
       {alertes > 0 && (
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', color: 'warning.main' }}>
           <InfoOutlined sx={{ fontSize: 16 }} />
@@ -321,6 +347,8 @@ export function DetailVisite({
   jourCourt,
   surFermer,
   agir,
+  remarque,
+  surRemarque,
 }: {
   semaine: Semaine;
   visite: Visite;
@@ -329,6 +357,9 @@ export function DetailVisite({
   surFermer: () => void;
   /** Absente en consultation : rien ne s'y modifie. */
   agir?: (action: () => Promise<unknown>, succes?: string) => Promise<void>;
+  /** Remarque de révision (PLN-013) : lue par le délégué, ou rédigée par le responsable. */
+  remarque?: string;
+  surRemarque?: (texte: string) => void;
 }) {
   const { t } = useTranslation();
   const { client } = useSession();
@@ -363,11 +394,27 @@ export function DetailVisite({
           <Ligne libelle={t('visites.champs.objectif')} valeur={v.objectif || '—'} />
           <Ligne libelle={t('visites.champs.reseau')} valeur={v.reseau?.libelle ?? '—'} />
           {v.note ? <Ligne libelle={t('visites.champs.note')} valeur={v.note} /> : null}
+          {remarque && !surRemarque && (
+            <Alert severity="info" icon={<RateReviewOutlined fontSize="inherit" />}>
+              {remarque}
+            </Alert>
+          )}
           {controles.map((c, i) => (
             <Alert key={i} severity={c.gravite === 'bloquant' ? 'error' : 'warning'}>
               {texteControle(c, t, jourCourt)}
             </Alert>
           ))}
+          {surRemarque && (
+            <TextField
+              label={t('revision.remarque')}
+              helperText={t('revision.aideRemarque')}
+              value={remarque ?? ''}
+              onChange={(e) => surRemarque(e.target.value)}
+              multiline
+              minRows={2}
+              slotProps={{ htmlInput: { maxLength: 500 } }}
+            />
+          )}
           {modifiable && (
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               {t('planification.aideDetail')}

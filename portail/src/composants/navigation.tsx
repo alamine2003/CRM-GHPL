@@ -8,6 +8,7 @@ import CompareArrowsRounded from '@mui/icons-material/CompareArrowsRounded';
 import EditNoteRounded from '@mui/icons-material/EditNoteRounded';
 import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
+import SwapHorizRounded from '@mui/icons-material/SwapHorizRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import HomeRounded from '@mui/icons-material/HomeRounded';
 import MedicationRounded from '@mui/icons-material/MedicationRounded';
@@ -53,6 +54,13 @@ export const ENTREES: Entree[] = [
     section: 'activite',
     chemin: '/validation',
     visible: peut('plannings.valider'),
+  },
+  {
+    cle: 'remplacements',
+    icone: <SwapHorizRounded />,
+    section: 'activite',
+    chemin: '/remplacements',
+    visible: peut('remplacements.gerer'),
   },
   {
     cle: 'prospects',

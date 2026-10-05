@@ -988,3 +988,28 @@ test('PLN-018 CA2 : un jour de commando garde ses visites et se lit comme du tra
   // Les quatre jours planifiables restent ouverts aux visites, mercredi compris.
   expect(screen.getAllByText('Ajouter une visite')).toHaveLength(4);
 });
+
+test('PLN-013 CA2 : le délégué lit la révision et la remarque sur la visite concernée', async () => {
+  const revise: Semaine = {
+    ...EN_PREPARATION,
+    planning: {
+      ...EN_PREPARATION.planning!,
+      statut: 'a_reviser',
+      soumis_le: '2026-10-21T16:00:00Z',
+      decision: {
+        numero: 1,
+        decision: 'a_reviser',
+        decide_le: '2026-10-22T10:30:00Z',
+        par: 'Kossi GUEYE',
+        mode: 'direct',
+        commentaire: 'Trop peu de visites mardi.',
+        remarques: [{ visite: VISITE.id, commentaire: 'Prévoir 10 h plutôt.' }],
+      },
+    },
+    visites: [VISITE],
+  };
+  await rendre({ semaine: jest.fn(async () => revise) });
+  expect(await screen.findByText(/Révision demandée par Kossi GUEYE/)).toBeTruthy();
+  expect(screen.getByText(/Trop peu de visites mardi\./)).toBeTruthy();
+  expect(screen.getByText('Remarque : Prévoir 10 h plutôt.')).toBeTruthy();
+});

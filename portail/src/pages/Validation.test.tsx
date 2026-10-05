@@ -21,6 +21,7 @@ const LIGNE: PlanningEnAttente = {
   },
   fuseau: 'Africa/Dakar',
   delegue: { id: 'u1', prenom: 'Awa', nom: 'FICTIVE' },
+  remplace: null,
   postes: ['VM Plateau'],
   visites: 12,
   signalements: [

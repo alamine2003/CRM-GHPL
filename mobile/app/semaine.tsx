@@ -25,10 +25,10 @@ import {
 } from '../src/Brouillons';
 import { kilometres } from '../src/Itineraire';
 import { PoserDepuisCible } from '../src/Pose';
-import { CarteControles, ObjectifDuJour } from '../src/Controles';
+import { CarteControles, ObjectifDuJour, remarquesDeRevision } from '../src/Controles';
 import { Journee } from '../src/Journee';
 import { garderSemaine, jourIso, semaineGardee } from '../src/semaineLocale';
-import { CarteSoumission, EtatSoumission } from '../src/Soumission';
+import { CarteSoumission, dateHeure, EtatSoumission } from '../src/Soumission';
 import { FormulaireVisite } from '../src/Visites';
 
 const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
@@ -249,6 +249,12 @@ export default function EcranSemaine() {
   const visites = semaine?.visites ?? [];
   const aCompleter = visites.filter((v) => v.manquants.length > 0).length;
   const modifiable = !!semaine?.planning && semaine.modifiable;
+  // PLN-013 : pendant la révision, le commentaire et les remarques par visite.
+  const remarques = remarquesDeRevision(semaine?.planning ?? null);
+  const revision =
+    semaine?.planning?.statut === 'a_reviser' && semaine.planning.decision?.decision === 'a_reviser'
+      ? semaine.planning.decision
+      : null;
   const planningId = semaine?.planning?.id ?? '';
   // Jour proposé pour poser depuis la liste cible : aujourd'hui s'il est dans la semaine.
   const premierJour =
@@ -364,6 +370,20 @@ export default function EcranSemaine() {
       ) : (
         <>
           {message && <Alerte type={tonMessage}>{message}</Alerte>}
+          {revision && (
+            <Alerte type="attention">
+              {[
+                t('approbation.decisionsCourt.a_reviser', {
+                  par: revision.par,
+                  date: dateHeure(revision.decide_le, i18n.language, semaine.fuseau),
+                }),
+                revision.commentaire,
+                t('revision.aCorrigerAide'),
+              ]
+                .filter(Boolean)
+                .join('\n')}
+            </Alerte>
+          )}
           <Carte style={{ gap: 8 }}>
             <Texte variante="sousTitre">{t('semaine.planning')}</Texte>
             {semaine.planning ? (
@@ -509,6 +529,7 @@ export default function EcranSemaine() {
                     modifiable={modifiable}
                     reordonner={reordonner === j.date}
                     controles={semaine.controles}
+                    remarques={remarques}
                     libelleJour={date(j.date, { weekday: 'long', day: 'numeric', month: 'long' })}
                     surVisite={(v) => {
                       setMessage(null);

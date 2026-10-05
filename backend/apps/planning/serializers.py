@@ -43,8 +43,16 @@ class ModificationJourFerieSerializer(serializers.Serializer):
     variable = serializers.BooleanField(required=False)
 
 
+class RemarqueSerializer(serializers.Serializer):
+    """Remarque de révision sur une visite précise (PLN-013 CA2)."""
+
+    visite = serializers.UUIDField()
+    commentaire = serializers.CharField(max_length=500)
+
+
 class DecisionSerializer(serializers.Serializer):
-    """Dernière décision sur le planning (PLN-012) : version, sens, auteur, date et mode."""
+    """Dernière décision sur le planning (PLN-012, PLN-013) : version, sens, auteur, date,
+    mode, commentaire et remarques par visite."""
 
     numero = serializers.IntegerField()
     decision = serializers.ChoiceField(choices=Decision.choices)
@@ -52,6 +60,7 @@ class DecisionSerializer(serializers.Serializer):
     par = serializers.SerializerMethodField()
     mode = serializers.ChoiceField(choices=ModeDecision.choices)
     commentaire = serializers.CharField()
+    remarques = RemarqueSerializer(many=True)
 
     def get_par(self, version) -> str:
         return " ".join(
@@ -320,6 +329,13 @@ class SignalementResumeSerializer(serializers.Serializer):
     nombre = serializers.IntegerField()
 
 
+class RevisionSerializer(serializers.Serializer):
+    """PLN-013 : commentaire général et/ou remarques sur des visites (RG-017)."""
+
+    commentaire = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+    remarques = RemarqueSerializer(many=True, required=False)
+
+
 class PlanningEnAttenteSerializer(serializers.Serializer):
     """Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et
     ses activités connexes, avec leur explication (PLN-018)."""
@@ -328,6 +344,8 @@ class PlanningEnAttenteSerializer(serializers.Serializer):
     #: Fuseau du pays : les dates de soumission s'affichent à l'heure du pays.
     fuseau = serializers.CharField()
     delegue = DelegueSerializer()
+    #: Superviseur remplacé quand l'utilisateur décide en remplacement (ORG-013).
+    remplace = DelegueSerializer(allow_null=True)
     postes = serializers.ListField(child=serializers.CharField())
     visites = serializers.IntegerField()
     signalements = SignalementResumeSerializer(many=True)
@@ -343,4 +361,6 @@ class ConsultationSerializer(SemaineSerializer):
     délégué l'a préparée, avec le délégué et ses postes de la semaine."""
 
     delegue = DelegueSerializer()
+    #: Superviseur remplacé quand l'utilisateur décide en remplacement (ORG-013).
+    remplace = DelegueSerializer(allow_null=True)
     postes = serializers.ListField(child=serializers.CharField())

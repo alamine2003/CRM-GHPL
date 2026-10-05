@@ -85,6 +85,7 @@ const CONSULTATION: Consultation = {
   reprenables: 0,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   delegue: { id: 'u1', prenom: 'Aminata', nom: 'FICTIVE' },
+  remplace: null,
   postes: ['VM Plateau'],
 };
 
@@ -93,6 +94,7 @@ function ligne(id: string, prenom: string): PlanningEnAttente {
     planning: { ...CONSULTATION.planning!, id },
     fuseau: 'Africa/Dakar',
     delegue: { id: `u-${id}`, prenom, nom: 'FICTIF' },
+    remplace: null,
     postes: [],
     visites: 0,
     signalements: [],
@@ -100,17 +102,16 @@ function ligne(id: string, prenom: string): PlanningEnAttente {
   };
 }
 
-function rendre(
-  consulter = vi.fn(async () => CONSULTATION),
-  approuver = vi.fn(async () => ({ ...CONSULTATION.planning!, statut: 'approuve' as const })),
-) {
+function rendreAvec(plannings: Record<string, unknown> = {}) {
   const session = {
     etat: { statut: 'chargement' },
     client: {
       plannings: {
-        consulter,
-        approuver,
+        consulter: vi.fn(async () => CONSULTATION),
+        approuver: vi.fn(),
+        reviser: vi.fn(),
         aValider: vi.fn(async () => [ligne('pl1', 'Aminata'), ligne('pl2', 'Moussa')]),
+        ...plannings,
       },
     } as unknown as ClientApi,
   } as unknown as Session;
@@ -127,6 +128,13 @@ function rendre(
       </ContexteSession.Provider>
     </QueryClientProvider>,
   );
+}
+
+function rendre(
+  consulter = vi.fn(async () => CONSULTATION),
+  approuver = vi.fn(async () => ({ ...CONSULTATION.planning!, statut: 'approuve' as const })),
+) {
+  return rendreAvec({ consulter, approuver });
 }
 
 const mockNotifier = vi.fn();
@@ -205,6 +213,7 @@ describe('PLN-012 : approbation par le responsable du poste', () => {
           par: 'Kossi GUEYE',
           mode: 'direct',
           commentaire: '',
+          remarques: [],
         },
       },
     };
@@ -213,5 +222,41 @@ describe('PLN-012 : approbation par le responsable du poste', () => {
       await screen.findByText('Approuvé le mercredi 7 octobre à 10:30 par Kossi GUEYE · version 1'),
     ).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Approuver' })).toBeNull();
+  });
+});
+
+describe('PLN-013 : révision motivée', () => {
+  it('CA1 : la demande exige un commentaire ; une remarque sur une visite suffit', async () => {
+    const reviser = vi.fn(async () => ({
+      ...CONSULTATION.planning!,
+      statut: 'a_reviser' as const,
+    }));
+    rendreAvec({ reviser });
+    fireEvent.click(await screen.findByRole('button', { name: 'Demander une révision' }));
+    let dialogue = await screen.findByRole('dialog');
+    const envoyer = within(dialogue).getByRole('button', { name: 'Envoyer la demande' });
+    expect((envoyer as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Annuler' }));
+    // Une remarque écrite sur la visite, puis la demande.
+    fireEvent.click(await screen.findByRole('button', { name: /Dr Awa FICTIF/ }));
+    const detail = await screen.findByRole('dialog');
+    fireEvent.change(within(detail).getByLabelText('Remarque pour la révision'), {
+      target: { value: 'Prévoir 10 h plutôt.' },
+    });
+    fireEvent.click(within(detail).getByRole('button', { name: 'Fermer' }));
+    expect(await screen.findByText('Prévoir 10 h plutôt.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Demander une révision' }));
+    dialogue = await screen.findByRole('dialog');
+    expect(within(dialogue).getByText('1 remarque sur une visite sera jointe.')).toBeTruthy();
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Envoyer la demande' }));
+    await waitFor(() =>
+      expect(reviser).toHaveBeenCalledWith('pl1', {
+        commentaire: '',
+        remarques: [{ visite: 'v1', commentaire: 'Prévoir 10 h plutôt.' }],
+      }),
+    );
+    await waitFor(() =>
+      expect(mockNotifier).toHaveBeenCalledWith('Révision demandée à Aminata FICTIVE.'),
+    );
   });
 });

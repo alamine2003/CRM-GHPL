@@ -103,6 +103,11 @@ function CartePlanning({ ligne, maintenant }: { ligne: PlanningEnAttente; mainte
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {[
+                ligne.remplace
+                  ? t('remplacements.pour', {
+                      nom: `${ligne.remplace.prenom} ${ligne.remplace.nom}`,
+                    })
+                  : '',
                 ligne.postes.join(', '),
                 t('semaine.periode', {
                   debut: jour(planning.semaine, { day: 'numeric', month: 'short' }),

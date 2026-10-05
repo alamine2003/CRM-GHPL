@@ -429,24 +429,50 @@ def postes_sans_superviseur(planning: Planning) -> list:
             if superviseur_du_poste(p, planning.semaine) is None]  # fmt: skip
 
 
-def supervise(superviseur, planning: Planning) -> bool:
-    """Un poste occupé par le délégué la semaine du planning est rattaché à ce responsable : le
-    superviseur, ou le DM pour le poste d'un superviseur-visiteur (RG-023). Son propre planning
-    n'en fait jamais partie (PLN-017 CA1)."""
+def responsables(planning: Planning) -> set:
+    """Responsables du planning cette semaine-là : le superviseur rattaché à chaque poste
+    occupé, ou le DM pour le poste d'un superviseur-visiteur (RG-023)."""
     from apps.organisation.services import superviseur_du_poste
 
-    return planning.delegue_id != superviseur.pk and any(
-        superviseur_du_poste(poste, planning.semaine) == superviseur
-        for poste in postes_de_la_semaine(planning)
-    )
+    return {
+        r.pk
+        for p in postes_de_la_semaine(planning)
+        if (r := superviseur_du_poste(p, planning.semaine)) is not None
+    }
+
+
+def mode_de_decision(utilisateur, planning: Planning) -> str | None:
+    """`direct` pour un responsable du poste, `remplacement` pour son remplaçant daté
+    aujourd'hui (ORG-013, RG-020), sinon rien. Jamais sur son propre planning (PLN-017 CA1)."""
+    from apps.organisation.services import remplaces_par
+
+    from .models import ModeDecision
+
+    if planning.delegue_id == utilisateur.pk:
+        return None
+    titulaires = responsables(planning)
+    if utilisateur.pk in titulaires:
+        return ModeDecision.DIRECT
+    if any(r.pk in titulaires for r in remplaces_par(utilisateur, planning.pays)):
+        return ModeDecision.REMPLACEMENT
+    return None
+
+
+def supervise(utilisateur, planning: Planning) -> bool:
+    """Le planning est à la portée de cet utilisateur : responsable du poste, ou remplaçant."""
+    return mode_de_decision(utilisateur, planning) is not None
 
 
 def plannings_a_valider(superviseur, pays) -> list[Planning]:
-    """PLN-011 : plannings soumis des délégués qu'il supervise cette semaine-là, du plus ancien
-    au plus récent (CA1)."""
+    """PLN-011 : plannings soumis des délégués qu'il supervise cette semaine-là — et, pendant
+    un remplacement, de ceux du superviseur remplacé (ORG-013 CA1) — du plus ancien au plus
+    récent (CA1)."""
+    from apps.organisation.services import remplaces_par
+
+    titulaires = [superviseur.pk, *(r.pk for r in remplaces_par(superviseur, pays))]
     candidats = (
         Planning.objects.filter(pays=pays, statut=StatutPlanning.SOUMIS,
-                                delegue__occupations__poste__rattachements__superviseur=superviseur)
+                                delegue__occupations__poste__rattachements__superviseur__in=titulaires)
         .exclude(delegue=superviseur)
         .select_related("delegue")
         .distinct()
@@ -555,27 +581,51 @@ def derniere_decision(planning: Planning) -> VersionPlanning | None:
     return planning.versions.exclude(decision="").select_related("decide_par").first()
 
 
-@transaction.atomic
-def approuver(planning: Planning, par) -> Planning:
-    """PLN-012 : le superviseur du poste — ou le DM d'un superviseur-visiteur (PLN-017, RG-023)
-    — approuve un planning soumis et complet. La version est figée avec la décision (CA1) et
-    le délégué en est notifié (CA2)."""
-    from apps.notifications.models import TypeNotification
-    from apps.notifications.services import notifier
-
-    from .etats import exiger_transition
-    from .models import Decision, ModeDecision
-
-    _verrouiller(planning)
-    exiger_transition(planning.statut, StatutPlanning.APPROUVE)
-    if not supervise(par, planning):
+def _exiger_decideur(planning: Planning, par) -> str:
+    mode = mode_de_decision(par, planning)
+    if mode is None:
         raise ErreurMetier(
             "non_decideur",
             _("Seul le responsable de ce poste cette semaine-là décide de ce planning."),
             status.HTTP_403_FORBIDDEN,
         )
-    from . import controles
+    return mode
 
+
+def _decider(planning: Planning, par, mode: str, decision: str, **champs) -> VersionPlanning:
+    version = version_a_decider(planning)
+    version.decision = decision
+    version.decide_le = timezone.now()
+    version.decide_par = par
+    version.mode = mode
+    for cle, valeur in champs.items():
+        setattr(version, cle, valeur)
+    version.save(update_fields=["decision", "decide_le", "decide_par", "mode", *champs])
+    planning.statut = decision
+    planning.save(update_fields=["statut"])
+    return version
+
+
+def _semaine_notifiee(planning: Planning) -> dict:
+    return {"planning": str(planning.pk), "semaine": planning.semaine.isoformat(),
+            "numero_semaine": planning.semaine.isocalendar().week}  # fmt: skip
+
+
+@transaction.atomic
+def approuver(planning: Planning, par) -> Planning:
+    """PLN-012 : le responsable du poste — superviseur, DM d'un superviseur-visiteur (PLN-017,
+    RG-023), ou leur remplaçant daté (ORG-013) — approuve un planning soumis et complet. La
+    version est figée avec la décision (CA1) et le délégué en est notifié (CA2)."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+
+    from . import controles
+    from .etats import exiger_transition
+    from .models import Decision
+
+    _verrouiller(planning)
+    exiger_transition(planning.statut, StatutPlanning.APPROUVE)
+    mode = _exiger_decideur(planning, par)
     if anomalies := controles.bloquants(planning):
         raise ErreurMetier(
             "planning_bloque",
@@ -583,19 +633,64 @@ def approuver(planning: Planning, par) -> Planning:
             status.HTTP_409_CONFLICT,
             anomalies=[controles._detail(a) for a in anomalies],
         )
-    version = version_a_decider(planning)
-    version.decision = Decision.APPROUVE
-    version.decide_le = timezone.now()
-    version.decide_par = par
-    version.mode = ModeDecision.DIRECT
-    version.save(update_fields=["decision", "decide_le", "decide_par", "mode"])
-    planning.statut = StatutPlanning.APPROUVE
-    planning.save(update_fields=["statut"])
+    version = _decider(planning, par, mode, Decision.APPROUVE)
     _auditer("planning.approbation", planning, semaine=str(planning.semaine),
-             numero=version.numero, mode=version.mode)  # fmt: skip
+             numero=version.numero, mode=mode)  # fmt: skip
     notifier(planning.delegue, TypeNotification.PLANNING_APPROUVE, planning.pays,
-             planning=str(planning.pk), semaine=planning.semaine.isoformat(),
-             numero_semaine=planning.semaine.isocalendar().week)  # fmt: skip
+             **_semaine_notifiee(planning))  # fmt: skip
+    return planning
+
+
+@transaction.atomic
+def demander_revision(planning: Planning, par, commentaire: str = "", remarques=()) -> Planning:
+    """PLN-013 : révision demandée sur le planning ou sur des visites précises. Un commentaire
+    est obligatoire (RG-017, CA1) : général, ou sur chaque visite visée ; le délégué le lit sur
+    la visite concernée (CA2), puis corrige et soumet la version suivante."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+
+    from .etats import exiger_transition
+    from .models import Decision
+
+    _verrouiller(planning)
+    exiger_transition(planning.statut, StatutPlanning.A_REVISER)
+    mode = _exiger_decideur(planning, par)
+    commentaire = (commentaire or "").strip()
+    par_visite: dict[str, str] = {}
+    for remarque in remarques:
+        texte = (remarque.get("commentaire") or "").strip()
+        if not texte:
+            raise ErreurMetier(
+                "remarque_vide",
+                _("Chaque visite visée par la révision demande un commentaire."),
+                champ="remarques",
+            )
+        par_visite[str(remarque["visite"])] = texte
+    if not commentaire and not par_visite:
+        raise ErreurMetier(
+            "commentaire_requis",
+            _("Expliquez ce qui est à revoir : le commentaire est obligatoire."),
+            champ="commentaire",
+        )
+    connues = {
+        str(i)
+        for i in planning.visites.filter(archive_le__isnull=True).values_list("pk", flat=True)
+    }
+    if inconnues := set(par_visite) - connues:
+        raise ErreurMetier(
+            "visite_inconnue",
+            _("Une visite visée n'appartient pas à ce planning."),
+            champ="remarques",
+            visites=sorted(inconnues),
+        )
+    version = _decider(
+        planning, par, mode, Decision.A_REVISER, commentaire=commentaire,
+        remarques=[{"visite": v, "commentaire": t} for v, t in par_visite.items()],
+    )  # fmt: skip
+    _auditer("planning.revision", planning, semaine=str(planning.semaine),
+             numero=version.numero, mode=mode, remarques=len(par_visite))  # fmt: skip
+    notifier(planning.delegue, TypeNotification.REVISION_DEMANDEE, planning.pays,
+             **_semaine_notifiee(planning))  # fmt: skip
     return planning
 
 

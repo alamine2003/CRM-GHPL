@@ -82,6 +82,12 @@ export type Planning = Schemas['Planning'];
 export type PlanningEnAttente = Schemas['PlanningEnAttente'];
 export type ConsultationPlanning = Schemas['Consultation'];
 export type DecisionPlanning = Schemas['Decision'];
+export type Revision = Schemas['Revision'];
+export type Remarque = Schemas['Remarque'];
+// Remplaçant daté d'un superviseur (ORG-013, 0.3.4).
+export type Remplacement = Schemas['Remplacement'];
+export type CreationRemplacement = Schemas['CreationRemplacement'];
+export type CandidatsRemplacement = Schemas['CandidatsRemplacement'];
 // Centre de notifications (prd.md §18, 0.3.3).
 export type Notification = Schemas['Notification'];
 export type ResumeNotifications = Schemas['ResumeNotifications'];

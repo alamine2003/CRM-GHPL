@@ -1627,6 +1627,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/plannings/{id}/reviser/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description PLN-013 : le responsable du poste demande une révision, commentée (RG-017). */
+    post: operations['planning_reviser'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/{id}/soumettre/': {
     parameters: {
       query?: never;
@@ -2083,6 +2100,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/remplacements/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['remplacements_liste'];
+    put?: never;
+    post: operations['remplacement_designer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/remplacements/{id}/terminer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['remplacement_terminer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/remplacements/candidats/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['remplacements_candidats'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/roles/{id}/retirer/': {
     parameters: {
       query?: never;
@@ -2345,6 +2410,11 @@ export interface components {
     };
     /** @enum {unknown} */
     BlankEnum: '';
+    /** @description Qui l'utilisateur peut faire remplacer, et par qui (superviseurs du pays). */
+    CandidatsRemplacement: {
+      superviseurs: components['schemas']['Personne'][];
+      remplacants: components['schemas']['Personne'][];
+    };
     Changement: {
       actuel: string;
       nouveau: string;
@@ -2484,6 +2554,7 @@ export interface components {
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
       delegue: components['schemas']['Delegue'];
+      remplace: components['schemas']['Delegue'] | null;
       postes: string[];
     };
     /** @description Contrôle du planning (PLN-004) : `bloquant` (RG-015) ou `signalement` (RG-016). */
@@ -2541,6 +2612,16 @@ export interface components {
       classe?: string | null;
       reseaux?: string[];
     };
+    CreationRemplacement: {
+      /** Format: uuid */
+      superviseur: string;
+      /** Format: uuid */
+      remplacant: string;
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+    };
     CreationReseau: {
       libelle: string;
       code: string;
@@ -2567,7 +2648,10 @@ export interface components {
       /** Format: uuid */
       parent?: string | null;
     };
-    /** @description Dernière décision sur le planning (PLN-012) : version, sens, auteur, date et mode. */
+    /**
+     * @description Dernière décision sur le planning (PLN-012, PLN-013) : version, sens, auteur, date,
+     *     mode, commentaire et remarques par visite.
+     */
     Decision: {
       numero: number;
       decision: components['schemas']['DecisionDecisionEnum'];
@@ -2576,6 +2660,7 @@ export interface components {
       readonly par: string;
       mode: components['schemas']['ModeEnum'];
       commentaire: string;
+      remarques: components['schemas']['Remarque'][];
     };
     /**
      * @description * `approuve` - Approuvé
@@ -2659,6 +2744,11 @@ export interface components {
       /** Format: date */
       semaine?: string;
       numero_semaine?: number;
+      /** Format: date */
+      debut?: string;
+      /** Format: date */
+      fin?: string;
+      nom?: string;
     };
     Doublon: {
       /** Format: uuid */
@@ -2968,9 +3058,10 @@ export interface components {
     };
     /**
      * @description * `direct` - Décision du responsable du poste
+     *     * `remplacement` - Décision du remplaçant
      * @enum {string}
      */
-    ModeEnum: 'direct';
+    ModeEnum: 'direct' | 'remplacement';
     ModificationParametre: {
       valeur: unknown;
     };
@@ -3014,9 +3105,11 @@ export interface components {
     };
     /**
      * @description * `planning_approuve` - Planning approuvé
+     *     * `revision_demandee` - Révision demandée
+     *     * `remplacement_attribue` - Remplacement attribué
      * @enum {string}
      */
-    NotificationTypeEnum: 'planning_approuve';
+    NotificationTypeEnum: 'planning_approuve' | 'revision_demandee' | 'remplacement_attribue';
     Objectif: {
       /** Format: date */
       date: string;
@@ -3255,6 +3348,7 @@ export interface components {
       planning: components['schemas']['Planning'];
       fuseau: string;
       delegue: components['schemas']['Delegue'];
+      remplace: components['schemas']['Delegue'] | null;
       postes: string[];
       visites: number;
       signalements: components['schemas']['SignalementResume'][];
@@ -3529,6 +3623,26 @@ export interface components {
       jeton: string;
       mot_de_passe: string;
     };
+    /** @description Remarque de révision sur une visite précise (PLN-013 CA2). */
+    Remarque: {
+      /** Format: uuid */
+      visite: string;
+      commentaire: string;
+    };
+    /** @description Remplaçant daté d'un superviseur (ORG-013). */
+    Remplacement: {
+      /** Format: uuid */
+      id: string;
+      superviseur: components['schemas']['Personne'];
+      remplacant: components['schemas']['Personne'];
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      designe_par: components['schemas']['Personne'] | null;
+      readonly etat: string;
+      readonly terminable: boolean;
+    };
     Reprise: {
       copiees: number;
       ignorees: components['schemas']['VisiteIgnoree'][];
@@ -3571,6 +3685,11 @@ export interface components {
     };
     RetraitCible: {
       motif?: string;
+    };
+    /** @description PLN-013 : commentaire général et/ou remarques sur des visites (RG-017). */
+    Revision: {
+      commentaire?: string;
+      remarques?: components['schemas']['Remarque'][];
     };
     Role: {
       /** Format: uuid */
@@ -6565,6 +6684,33 @@ export interface operations {
       };
     };
   };
+  planning_reviser: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['Revision'];
+        'application/x-www-form-urlencoded': components['schemas']['Revision'];
+        'multipart/form-data': components['schemas']['Revision'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Planning'];
+        };
+      };
+    };
+  };
   planning_soumettre: {
     parameters: {
       query?: never;
@@ -7342,6 +7488,90 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Valeur'];
+        };
+      };
+    };
+  };
+  remplacements_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Remplacement'][];
+        };
+      };
+    };
+  };
+  remplacement_designer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationRemplacement'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationRemplacement'];
+        'multipart/form-data': components['schemas']['CreationRemplacement'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Remplacement'];
+        };
+      };
+    };
+  };
+  remplacement_terminer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Remplacement'];
+        };
+      };
+    };
+  };
+  remplacements_candidats: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CandidatsRemplacement'];
         };
       };
     };

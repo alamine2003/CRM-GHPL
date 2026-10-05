@@ -4,7 +4,7 @@
  * - signalés au superviseur, sans empêcher la soumission (RG-016, CA2).
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { ControlePlanning, Controles, ObjectifJour } from '@innov/api-client';
+import type { ControlePlanning, Controles, ObjectifJour, Semaine } from '@innov/api-client';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -14,7 +14,17 @@ import { police } from './polices';
 type Traduire = ReturnType<typeof useTranslation>['t'];
 
 /** Marque portée par une ligne de visite. */
-export type Alerte = { cle: string; texte: string; ton: 'erreur' | 'attention' };
+export type Alerte = { cle: string; texte: string; ton: 'erreur' | 'attention' | 'info' };
+
+/**
+ * Remarques de révision par visite (PLN-013 CA2), tant que le planning est à réviser : le
+ * délégué les lit sur la visite concernée.
+ */
+export function remarquesDeRevision(planning: Semaine['planning']): Record<string, string> {
+  const d = planning?.decision;
+  if (planning?.statut !== 'a_reviser' || d?.decision !== 'a_reviser') return {};
+  return Object.fromEntries(d.remarques.map((r) => [r.visite, r.commentaire]));
+}
 
 /** Ce qui concerne une visite précise ; « À compléter » est déjà dit par la ligne elle-même. */
 export function alertesDeVisite(
@@ -23,9 +33,12 @@ export function alertesDeVisite(
   t: Traduire,
   /** Dans un passage, l'heure est celle du passage : son conflit se dit sur sa ligne. */
   dansPassage = false,
+  remarque?: string,
 ) {
-  if (!controles) return [];
-  const alertes: Alerte[] = [];
+  const alertes: Alerte[] = remarque
+    ? [{ cle: 'remarque', texte: t('revision.remarqueLue', { texte: remarque }), ton: 'info' }]
+    : [];
+  if (!controles) return alertes;
   for (const c of controles.bloquants) {
     if (c.code === 'incomplete' || (dansPassage && c.code === 'meme_heure')) continue;
     if (c.visites.includes(visite)) {

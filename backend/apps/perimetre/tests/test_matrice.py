@@ -17,6 +17,7 @@ ATTENDU = {
     Action.JOURS_FERIES_GERER: {"admin_pays"},
     Action.PLANNINGS_PREPARER: {"superviseur", "delegue"},
     Action.PLANNINGS_VALIDER: {"dm", "superviseur"},
+    Action.REMPLACEMENTS_GERER: {"admin_pays", "dm", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -182,6 +183,7 @@ REQUETES = {
     Action.PLANNINGS_PREPARER: ("get", "/api/v1/plannings/semaine/", None, 200),
     Action.PLANNINGS_VALIDER: ("get", "/api/v1/plannings/a-valider/", None, 200),
     Action.NOTIFICATIONS_LIRE: ("get", "/api/v1/notifications/", None, 200),
+    Action.REMPLACEMENTS_GERER: ("get", "/api/v1/remplacements/", None, 200),
 }  # fmt: skip
 
 

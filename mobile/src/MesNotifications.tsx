@@ -14,7 +14,7 @@ import { police } from './polices';
 import { useSession } from './session';
 
 export function MesNotifications() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const p = usePalette();
   const routeur = useRouter();
   const { client, etat } = useSession();
@@ -38,6 +38,12 @@ export function MesNotifications() {
   }, [lecteur, client]);
 
   if (non_lues.length === 0) return null;
+  const jour = (iso?: string) =>
+    iso
+      ? new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' }).format(
+          new Date(`${iso}T12:00:00`),
+        )
+      : '';
 
   function ouvrir(n: Notification) {
     setNonLues((liste) => liste.filter((x) => x.id !== n.id));
@@ -48,7 +54,14 @@ export function MesNotifications() {
   }
 
   return (
-    <Carte style={{ borderLeftWidth: 3, borderLeftColor: p.succes }}>
+    <Carte
+      style={{
+        borderLeftWidth: 3,
+        borderLeftColor: non_lues.some((n) => n.type === 'revision_demandee')
+          ? p.attention
+          : p.succes,
+      }}
+    >
       <View style={styles.titre}>
         <Texte variante="sousTitre" style={{ flex: 1 }}>
           {t('notifications.titre', { count: non_lues.length })}
@@ -80,9 +93,30 @@ export function MesNotifications() {
             pressed && { opacity: 0.7 },
           ]}
         >
-          <MaterialIcons name="check-circle" size={22} color={p.succes} />
+          <MaterialIcons
+            name={
+              n.type === 'revision_demandee'
+                ? 'rate-review'
+                : n.type === 'remplacement_attribue'
+                  ? 'swap-horiz'
+                  : 'check-circle'
+            }
+            size={22}
+            color={
+              n.type === 'revision_demandee'
+                ? p.attention
+                : n.type === 'remplacement_attribue'
+                  ? p.info
+                  : p.succes
+            }
+          />
           <Text style={[styles.texte, { color: p.texte }]}>
-            {t(`notifications.${n.type}`, { numero: n.donnees.numero_semaine })}
+            {t(`notifications.${n.type}`, {
+              numero: n.donnees.numero_semaine,
+              nom: n.donnees.nom,
+              debut: jour(n.donnees.debut),
+              fin: jour(n.donnees.fin),
+            })}
           </Text>
           <MaterialIcons name="chevron-right" size={22} color={p.texteDiscret} />
         </Pressable>

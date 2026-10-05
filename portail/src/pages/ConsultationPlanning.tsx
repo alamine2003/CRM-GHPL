@@ -2,6 +2,7 @@ import type { ConsultationPlanning as Consultation, Visite } from '@innov/api-cl
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
+import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import {
   Box,
   Button,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
   Skeleton,
   Stack,
+  TextField,
   Typography,
 } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -34,12 +36,15 @@ import { messageErreur, useSession } from '../contexteSession';
  * délégué l'a préparée, ses contrôles (PLN-004 CA2 : les seuils dépassés lui apparaissent), ses
  * activités connexes expliquées (PLN-018), le kilométrage (PLN-010) et le détail de chaque
  * visite avec ses alertes. Rien ne s'y modifie. Le responsable du poste l'approuve (PLN-012 ;
- * le DM pour un superviseur-visiteur, PLN-017) ; la demande de révision arrive en 0.3.4.
+ * le DM pour un superviseur-visiteur, PLN-017), ou demande une révision commentée, sur le
+ * planning ou des visites précises (PLN-013) ; son remplaçant daté décide à sa place (ORG-013).
  */
 export default function ConsultationPlanning({ id }: { id: string }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const [ouverte, setOuverte] = useState<Visite | null>(null);
+  // Remarques de révision en cours de rédaction, par visite (PLN-013).
+  const [brouillon, setBrouillon] = useState<Record<string, string>>({});
   const consultation = useQuery({
     queryKey: ['planning-consultation', id],
     queryFn: () => client.plannings.consulter(id),
@@ -49,6 +54,14 @@ export default function ConsultationPlanning({ id }: { id: string }) {
   const rang = file.data?.findIndex((l) => l.planning.id === id) ?? -1;
   const suivant = rang >= 0 ? file.data?.[rang + 1] : undefined;
   const c = consultation.data;
+  const aDecider = c?.planning?.statut === 'soumis';
+  const decision = c?.planning?.decision;
+  // En attente : les remarques que l'on rédige ; après une révision : celles envoyées.
+  const remarques: Record<string, string> = aDecider
+    ? brouillon
+    : decision?.decision === 'a_reviser' && c?.planning?.statut === 'a_reviser'
+      ? Object.fromEntries(decision.remarques.map((r) => [r.visite, r.commentaire]))
+      : {};
 
   const date = (iso: string, options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(i18n.language, options).format(new Date(`${iso}T12:00:00`));
@@ -72,6 +85,9 @@ export default function ConsultationPlanning({ id }: { id: string }) {
         sousTitre={
           c && c.jours.length
             ? [
+                c.remplace
+                  ? t('remplacements.pour', { nom: `${c.remplace.prenom} ${c.remplace.nom}` })
+                  : '',
                 c.postes.join(', '),
                 t('semaine.periode', {
                   debut: date(c.semaine, { day: 'numeric', month: 'short' }),
@@ -109,6 +125,7 @@ export default function ConsultationPlanning({ id }: { id: string }) {
         <>
           <BandeauDecision
             consultation={c}
+            remarques={brouillon}
             suivant={suivant ? `/validation/${suivant.planning.id}` : '/validation'}
           />
           <Box
@@ -147,6 +164,7 @@ export default function ConsultationPlanning({ id }: { id: string }) {
                 titre={date(j.date, { weekday: 'long', day: 'numeric' })}
                 modifiable={false}
                 explications={false}
+                remarques={remarques}
                 surDeposer={() => undefined}
                 surOuvrir={setOuverte}
               />
@@ -161,6 +179,17 @@ export default function ConsultationPlanning({ id }: { id: string }) {
           modifiable={false}
           jourCourt={jourCourt}
           surFermer={() => setOuverte(null)}
+          remarque={remarques[ouverte.id]}
+          surRemarque={
+            aDecider
+              ? (texte) =>
+                  setBrouillon((r) => {
+                    const suite = { ...r, [ouverte.id]: texte };
+                    if (!texte.trim()) delete suite[ouverte.id];
+                    return suite;
+                  })
+              : undefined
+          }
         />
       )}
     </Stack>
@@ -242,14 +271,17 @@ function Resume({ consultation: c }: { consultation: Consultation }) {
 }
 
 /**
- * La décision du responsable : « Approuver » tant que le planning attend (PLN-012), puis qui a
- * décidé, quand, et sur quelle version (CA1).
+ * La décision du responsable : « Approuver » (PLN-012) ou « Demander une révision » (PLN-013)
+ * tant que le planning attend, puis qui a décidé, quand, sur quelle version, et pourquoi.
  */
 function BandeauDecision({
   consultation: c,
+  remarques,
   suivant,
 }: {
   consultation: Consultation;
+  /** Remarques rédigées sur des visites, jointes à la révision. */
+  remarques: Record<string, string>;
   suivant: string;
 }) {
   const { t, i18n } = useTranslation();
@@ -257,7 +289,8 @@ function BandeauDecision({
   const notifier = useNotifier();
   const requetes = useQueryClient();
   const naviguer = useNavigate();
-  const [confirmer, setConfirmer] = useState(false);
+  const [dialogue, setDialogue] = useState<'approuver' | 'reviser' | null>(null);
+  const [commentaire, setCommentaire] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const planning = c.planning!;
   const nom = `${c.delegue.prenom} ${c.delegue.nom}`;
@@ -266,23 +299,23 @@ function BandeauDecision({
   const points =
     signalements.filter((x) => !x.code.startsWith('seuil_')).length +
     new Set(signalements.filter((x) => x.code.startsWith('seuil_')).map((x) => x.code)).size;
+  const nombreRemarques = Object.keys(remarques).length;
   const jour = (iso: string) =>
     new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' }).format(
       new Date(`${iso}T12:00:00`),
     );
 
-  async function approuver() {
+  async function decider(action: () => Promise<unknown>, succes: string) {
     setEnvoi(true);
     try {
-      await client.plannings.approuver(planning.id);
-      notifier(t('approbation.succes', { nom }));
+      await action();
+      notifier(succes);
       await requetes.invalidateQueries({ queryKey: ['plannings-a-valider'] });
       await requetes.invalidateQueries({ queryKey: ['planning-consultation'] });
-      setConfirmer(false);
+      setDialogue(null);
       void naviguer(suivant);
     } catch (e) {
       notifier(messageErreur(e, t('erreurs.reseau')), 'error');
-      setConfirmer(false);
     }
     setEnvoi(false);
   }
@@ -290,24 +323,42 @@ function BandeauDecision({
   const decision = planning.decision;
   if (planning.statut !== 'soumis') {
     if (!decision) return null;
+    const revision = decision.decision === 'a_reviser';
     return (
       <Card sx={{ p: 2 }}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-          <CheckCircleRounded color="success" />
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {t(`approbation.decisions.${decision.decision}`, {
-              date: new Intl.DateTimeFormat(i18n.language, {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: c.fuseau,
-              }).format(new Date(decision.decide_le)),
-              par: decision.par,
-              numero: decision.numero,
-            })}
-          </Typography>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
+          {revision ? (
+            <RateReviewOutlined color="warning" sx={{ mt: 0.25 }} />
+          ) : (
+            <CheckCircleRounded color="success" sx={{ mt: 0.25 }} />
+          )}
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {t(`approbation.decisions.${decision.decision}`, {
+                date: new Intl.DateTimeFormat(i18n.language, {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZone: c.fuseau,
+                }).format(new Date(decision.decide_le)),
+                par: decision.par,
+                numero: decision.numero,
+              })}
+              {decision.mode === 'remplacement' ? ` · ${t('remplacements.enRemplacement')}` : ''}
+            </Typography>
+            {decision.commentaire && (
+              <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'pre-line' }}>
+                {decision.commentaire}
+              </Typography>
+            )}
+            {revision && decision.remarques.length > 0 && (
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {t('revision.remarquesEnvoyees', { count: decision.remarques.length })}
+              </Typography>
+            )}
+          </Box>
         </Stack>
       </Card>
     );
@@ -324,19 +375,22 @@ function BandeauDecision({
             {t('approbation.aDecider')}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {t('approbation.aide')}
+            {nombreRemarques > 0
+              ? t('revision.remarquesPretes', { count: nombreRemarques })
+              : t('approbation.aide')}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          onClick={() => setConfirmer(true)}
-          sx={{ flex: 'none', alignSelf: { xs: 'flex-start', sm: 'center' } }}
-        >
-          {t('approbation.approuver')}
-        </Button>
+        <Stack direction="row" sx={{ flex: 'none', flexWrap: 'wrap', gap: 1 }}>
+          <Button variant="outlined" onClick={() => setDialogue('reviser')}>
+            {t('revision.demander')}
+          </Button>
+          <Button variant="contained" onClick={() => setDialogue('approuver')}>
+            {t('approbation.approuver')}
+          </Button>
+        </Stack>
       </Stack>
-      {confirmer && (
-        <Dialog open onClose={() => !envoi && setConfirmer(false)} maxWidth="xs" fullWidth>
+      {dialogue === 'approuver' && (
+        <Dialog open onClose={() => !envoi && setDialogue(null)} maxWidth="xs" fullWidth>
           <DialogTitle>{t('approbation.titre')}</DialogTitle>
           <DialogContent>
             <Typography variant="body2">
@@ -352,13 +406,75 @@ function BandeauDecision({
                 {t('approbation.signalements', { count: points })}
               </Typography>
             )}
+            {nombreRemarques > 0 && (
+              <Typography variant="body2" sx={{ mt: 1.5, color: 'text.secondary' }}>
+                {t('revision.remarquesIgnorees', { count: nombreRemarques })}
+              </Typography>
+            )}
           </DialogContent>
           <DialogActions>
-            <Button disabled={envoi} onClick={() => setConfirmer(false)}>
+            <Button disabled={envoi} onClick={() => setDialogue(null)}>
               {t('commun.annuler')}
             </Button>
-            <Button variant="contained" disabled={envoi} onClick={() => void approuver()}>
+            <Button
+              variant="contained"
+              disabled={envoi}
+              onClick={() =>
+                void decider(
+                  () => client.plannings.approuver(planning.id),
+                  t('approbation.succes', { nom }),
+                )
+              }
+            >
               {t('approbation.confirmer')}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+      {dialogue === 'reviser' && (
+        <Dialog open onClose={() => !envoi && setDialogue(null)} maxWidth="sm" fullWidth>
+          <DialogTitle>{t('revision.titre')}</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 0.5 }}>
+              <Typography variant="body2">{t('revision.aide', { nom })}</Typography>
+              <TextField
+                label={t('revision.commentaire')}
+                value={commentaire}
+                onChange={(e) => setCommentaire(e.target.value)}
+                multiline
+                minRows={3}
+                autoFocus
+                slotProps={{ htmlInput: { maxLength: 1000 } }}
+                helperText={
+                  nombreRemarques > 0
+                    ? t('revision.avecRemarques', { count: nombreRemarques })
+                    : t('revision.obligatoire')
+                }
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button disabled={envoi} onClick={() => setDialogue(null)}>
+              {t('commun.annuler')}
+            </Button>
+            <Button
+              variant="contained"
+              disabled={envoi || (!commentaire.trim() && nombreRemarques === 0)}
+              onClick={() =>
+                void decider(
+                  () =>
+                    client.plannings.reviser(planning.id, {
+                      commentaire: commentaire.trim(),
+                      remarques: Object.entries(remarques).map(([visite, texte]) => ({
+                        visite,
+                        commentaire: texte.trim(),
+                      })),
+                    }),
+                  t('revision.succes', { nom }),
+                )
+              }
+            >
+              {t('revision.envoyer')}
             </Button>
           </DialogActions>
         </Dialog>

@@ -203,6 +203,18 @@ urlpatterns = [
     ),
     path("plannings/<uuid:id>/approuver/", pln.ApprobationVue.as_view(), name="planning-approuver"),
     path("notifications/", ntf.NotificationsVue.as_view(), name="notifications"),
+    path("remplacements/", org.RemplacementsVue.as_view(), name="remplacements"),
+    path(
+        "remplacements/candidats/",
+        org.CandidatsRemplacementVue.as_view(),
+        name="remplacements-candidats",
+    ),
+    path(
+        "remplacements/<uuid:id>/terminer/",
+        org.RemplacementTerminerVue.as_view(),
+        name="remplacement-terminer",
+    ),
+    path("plannings/<uuid:id>/reviser/", pln.RevisionVue.as_view(), name="planning-reviser"),
     path("notifications/lues/", ntf.ToutesLuesVue.as_view(), name="notifications-lues"),
     path("notifications/<uuid:id>/lue/", ntf.LueVue.as_view(), name="notification-lue"),
     path("plannings/<uuid:id>/reprendre/", pln.RepriseVue.as_view(), name="planning-reprendre"),

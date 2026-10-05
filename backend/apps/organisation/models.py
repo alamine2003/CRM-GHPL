@@ -184,3 +184,32 @@ class PerimetreReseau(ModeleDePays):
         ordering = ["-debut"]
         constraints = [_fin_apres_debut("perimetre_reseau_fin_apres_debut")]
         indexes = [models.Index(fields=["utilisateur", "fin"])]
+
+
+class Remplacement(ModeleDePays):
+    """Remplaçant daté d'un superviseur (ORG-013, RG-020) : du `debut` au `fin` inclus, le
+    remplaçant voit et décide les plannings et rapports du superviseur remplacé ; ses décisions
+    portent le mode `remplacement`. Une fin anticipée raccourcit la période."""
+
+    superviseur = models.ForeignKey(
+        "identite.Utilisateur", on_delete=models.PROTECT, related_name="remplacements_recus"
+    )
+    remplacant = models.ForeignKey(
+        "identite.Utilisateur", on_delete=models.PROTECT, related_name="remplacements"
+    )
+    debut = models.DateField()
+    fin = models.DateField()
+    designe_par = models.ForeignKey(
+        "identite.Utilisateur", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+
+    class Meta:
+        ordering = ["-debut"]
+        constraints = [
+            models.CheckConstraint(condition=Q(fin__gte=F("debut")),
+                                   name="remplacement_fin_apres_debut"),
+        ]  # fmt: skip
+        indexes = [models.Index(fields=["remplacant", "fin"])]
+
+    def __str__(self):
+        return f"{self.remplacant} pour {self.superviseur} ({self.debut} → {self.fin})"

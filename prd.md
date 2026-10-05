@@ -1049,7 +1049,7 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 | 0.3.1 | File des plannings en attente ; activités connexes (commandos, déplacements, accompagnements) |
 | 0.3.2 | Consultation semaine et détail avec alertes (PLN-011 CA2) ; le modèle `Absence` devient `Activite` |
 | 0.3.3 | Approbation (PLN-012) ; approbation par le DM du planning d'un superviseur-visiteur (PLN-017) ; versions figées (RG-037) ; première notification au délégué |
-| 0.3.4 | Révision motivée (planning ou visite) ; remplaçant daté |
+| 0.3.4 | Révision motivée (planning ou visite, PLN-013) ; remplaçant daté (ORG-013) |
 | 0.3.5 | Nouvelle version et resoumission |
 | 0.3.6 | Historique et comparaison des versions |
 | 0.3.7 | Verrouillage, modifications mineures et majeures après approbation |

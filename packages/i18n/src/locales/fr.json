@@ -135,7 +135,8 @@
     "ciblage": "Listes cibles",
     "doublons": "Doublons",
     "propositions": "Propositions",
-    "validation": "Plannings à valider"
+    "validation": "Plannings à valider",
+    "remplacements": "Remplaçants"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -1639,6 +1640,54 @@
     "titre_other": "{{count}} nouvelles notifications",
     "planning_approuve": "Votre planning de la semaine {{numero}} est approuvé",
     "voir": "Voir la semaine",
-    "toutVu": "Tout marquer comme lu"
+    "toutVu": "Tout marquer comme lu",
+    "revision_demandee": "Révision demandée sur votre planning de la semaine {{numero}}",
+    "remplacement_attribue": "Vous remplacez {{nom}} du {{debut}} au {{fin}}"
+  },
+  "revision": {
+    "demander": "Demander une révision",
+    "titre": "Demander une révision",
+    "aide": "{{nom}} lira votre commentaire, corrigera le planning et soumettra la version suivante. Pour viser une visite précise, ouvrez-la et écrivez une remarque.",
+    "commentaire": "Commentaire au délégué",
+    "obligatoire": "Obligatoire, sauf si vous avez écrit des remarques sur des visites.",
+    "avecRemarques_one": "{{count}} remarque sur une visite sera jointe.",
+    "avecRemarques_other": "{{count}} remarques sur des visites seront jointes.",
+    "envoyer": "Envoyer la demande",
+    "succes": "Révision demandée à {{nom}}.",
+    "remarque": "Remarque pour la révision",
+    "aideRemarque": "Jointe à la demande de révision ; le délégué la lit sur cette visite.",
+    "remarquesPretes_one": "{{count}} remarque écrite sur une visite : elle partira avec la demande de révision.",
+    "remarquesPretes_other": "{{count}} remarques écrites sur des visites : elles partiront avec la demande de révision.",
+    "remarquesIgnorees_one": "La remarque écrite sur une visite ne sera pas envoyée.",
+    "remarquesIgnorees_other": "Les {{count}} remarques écrites sur des visites ne seront pas envoyées.",
+    "remarquesEnvoyees_one": "{{count}} remarque sur une visite.",
+    "remarquesEnvoyees_other": "{{count}} remarques sur des visites.",
+    "aCorriger": "Révision demandée",
+    "aCorrigerAide": "Corrigez les visites signalées, puis soumettez à nouveau le planning.",
+    "remarqueLue": "Remarque : {{texte}}"
+  },
+  "remplacements": {
+    "titre": "Remplaçants",
+    "sousTitre": "Pendant la période, le remplaçant voit et décide les plannings du superviseur remplacé.",
+    "enRemplacement": "en remplacement",
+    "pour": "Pour {{nom}}",
+    "designer": "Désigner un remplaçant",
+    "superviseur": "Superviseur remplacé",
+    "remplacant": "Remplaçant",
+    "debut": "Du",
+    "fin": "Au (inclus)",
+    "periode": "Du {{debut}} au {{fin}}",
+    "aucun": "Aucun remplacement en cours ou à venir.",
+    "designe": "{{remplacant}} remplacera {{superviseur}} du {{debut}} au {{fin}}.",
+    "terminer": "Terminer",
+    "retirer": "Retirer",
+    "termine": "Remplacement terminé.",
+    "retire": "Remplacement retiré.",
+    "designePar": "Désigné par {{nom}}",
+    "etats": {
+      "a_venir": "À venir",
+      "en_cours": "En cours",
+      "termine": "Terminé"
+    }
   }
 }

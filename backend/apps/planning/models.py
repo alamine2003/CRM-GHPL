@@ -193,9 +193,10 @@ class Decision(models.TextChoices):
 
 class ModeDecision(models.TextChoices):
     """Qui a décidé (prd.md §11) : le superviseur du poste (ou le DM d'un superviseur-visiteur,
-    RG-023) ; l'escalade et le remplacement arrivent en 0.3.4 et 0.3.8."""
+    RG-023), son remplaçant daté (RG-020) ; l'escalade arrive en 0.3.8."""
 
     DIRECT = "direct", "Décision du responsable du poste"
+    REMPLACEMENT = "remplacement", "Décision du remplaçant"
 
 
 class VersionPlanning(ModeleDePays):
@@ -216,6 +217,8 @@ class VersionPlanning(ModeleDePays):
     )  # fmt: skip
     mode = models.CharField(max_length=16, choices=ModeDecision.choices, blank=True)
     commentaire = models.CharField(max_length=1000, blank=True)
+    #: Révision (PLN-013) : remarques sur des visites précises, `{"visite", "commentaire"}`.
+    remarques = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["planning", "-numero"]

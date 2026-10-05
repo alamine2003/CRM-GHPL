@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LigneActivite } from './Activites';
 import { Alerte, Bouton, Carte, MarquePotentiel, Texte, useLien, usePalette } from './composants';
-import { alertesDeVisite } from './Controles';
+import { alertesDeVisite, remarquesDeRevision } from './Controles';
 import { nomProspect } from './Fiches';
 import { unitesDuJour } from './Journee';
 import { police } from './polices';
@@ -242,7 +242,13 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
   const visite = semaine.visites.find((v) => v.id === id);
   if (!visite) return <Alerte type="attention">{t('detail.introuvable')}</Alerte>;
 
-  const alertes = alertesDeVisite(semaine.controles, visite.id, t);
+  const alertes = alertesDeVisite(
+    semaine.controles,
+    visite.id,
+    t,
+    false,
+    remarquesDeRevision(semaine.planning)[visite.id],
+  );
   const passage = visite.passage ? semaine.passages.find((x) => x.id === visite.passage) : null;
   const ligne = (libelle: string, valeur?: string | null) =>
     valeur ? (
@@ -296,7 +302,10 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
         {alertes.map((a) => (
           <Text
             key={a.texte}
-            style={[styles.manque, { color: a.ton === 'erreur' ? p.erreur : p.attention }]}
+            style={[
+              styles.manque,
+              { color: a.ton === 'erreur' ? p.erreur : a.ton === 'info' ? p.info : p.attention },
+            ]}
           >
             {a.texte}
           </Text>

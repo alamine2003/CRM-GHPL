@@ -374,6 +374,17 @@ class ActiviteRetraitVue(VueActivites):
 # --- Soumission (PLN-008) ---------------------------------------------------------------------
 
 
+def _remplace(utilisateur, planning):
+    """Le superviseur titulaire quand l'utilisateur décide en remplacement (ORG-013)."""
+    from apps.identite.models import Utilisateur
+
+    from .models import ModeDecision
+
+    if services.mode_de_decision(utilisateur, planning) != ModeDecision.REMPLACEMENT:
+        return None
+    return Utilisateur.objects.filter(pk__in=services.responsables(planning)).first()
+
+
 class FileValidationVue(VuePerimetre):
     """PLN-011 : file des plannings en attente du superviseur, triée par ancienneté (CA1)."""
 
@@ -396,6 +407,7 @@ class FileValidationVue(VuePerimetre):
                 "planning": planning,
                 "fuseau": pays.fuseau,
                 "delegue": planning.delegue,
+                "remplace": _remplace(request.user, planning),
                 "postes": [p.libelle for p in services.postes_de_la_semaine(planning)],
                 "visites": planning.visites.filter(archive_le__isnull=True).count(),
                 "signalements": [{"code": c, "nombre": n} for c, n in compte.items()],
@@ -436,6 +448,7 @@ class ConsultationVue(VueSupervision):
         planning = self.planning_supervise(id)
         donnees = _semaine(planning.pays, planning.semaine, planning) | {
             "delegue": planning.delegue,
+            "remplace": _remplace(request.user, planning),
             "postes": [p.libelle for p in services.postes_de_la_semaine(planning)],
         }
         return Response(s.ConsultationSerializer(donnees).data)
@@ -451,6 +464,22 @@ class ApprobationVue(VueSupervision):
     def post(self, request, id):
         planning = self.planning_supervise(id)
         return Response(s.PlanningSerializer(services.approuver(planning, request.user)).data)
+
+
+class RevisionVue(VueSupervision):
+    """PLN-013 : le responsable du poste demande une révision, commentée (RG-017)."""
+
+    actions = {"POST": Action.PLANNINGS_VALIDER}
+
+    @extend_schema(request=s.RevisionSerializer, responses=s.PlanningSerializer,
+                   operation_id="planning_reviser")  # fmt: skip
+    def post(self, request, id):
+        planning = self.planning_supervise(id)
+        v = _lire(s.RevisionSerializer, request)
+        planning = services.demander_revision(
+            planning, request.user, v.get("commentaire", ""), v.get("remarques", [])
+        )
+        return Response(s.PlanningSerializer(planning).data)
 
 
 class SoumissionVue(VuePlannings):

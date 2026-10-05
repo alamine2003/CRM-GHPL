@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 16:42+0000\n"
+"POT-Creation-Date: 2026-10-05 17:23+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -442,11 +442,35 @@ msgstr "Only a DF or a DM of this country has a network scope."
 msgid "Ce réseau est déjà dans le périmètre."
 msgstr "This network is already in the scope."
 
+msgid "Un superviseur ne se remplace pas lui-même."
+msgstr "A supervisor cannot replace themselves."
+
+msgid "Le remplacé et le remplaçant sont des superviseurs de ce pays."
+msgstr ""
+"Both the replaced supervisor and the replacement must be supervisors in this"
+" country."
+
+msgid "La fin précède le début."
+msgstr "The end date is before the start date."
+
+msgid "Un remplacement commence aujourd'hui ou plus tard."
+msgstr "A replacement starts today or later."
+
+msgid ""
+"Un remplaçant est déjà désigné pour ce superviseur sur une partie de la "
+"période."
+msgstr ""
+"A replacement is already designated for this supervisor during part of this "
+"period."
+
 msgid "Choisissez d'abord un pays."
 msgstr "Choose a country first."
 
 msgid "Personne inconnue dans ce pays."
 msgstr "Unknown person in this country."
+
+msgid "Ce superviseur n'est pas dans votre périmètre."
+msgstr "This supervisor is not in your scope."
 
 msgid "Action non autorisée."
 msgstr "Action not allowed."
@@ -526,6 +550,15 @@ msgid ""
 "Ce planning a des points bloquants : il ne peut pas être approuvé en l'état."
 msgstr ""
 "This planning has blocking issues: it cannot be approved as it stands."
+
+msgid "Chaque visite visée par la révision demande un commentaire."
+msgstr "Each visit targeted by the revision needs a comment."
+
+msgid "Expliquez ce qui est à revoir : le commentaire est obligatoire."
+msgstr "Explain what needs revising: a comment is required."
+
+msgid "Une visite visée n'appartient pas à ce planning."
+msgstr "A targeted visit does not belong to this planning."
 
 msgid ""
 "Cette semaine a déjà des visites : la reprise ne vaut que pour une semaine "

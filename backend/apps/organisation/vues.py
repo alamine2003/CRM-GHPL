@@ -4,6 +4,8 @@ Lecture : `organisation.lire` ; écriture : `organisation.gerer` (siège, admini
 Une écriture exige un pays actif : le siège choisit d'abord un pays (en-tête X-Pays).
 """
 
+from datetime import timedelta
+
 from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
@@ -32,6 +34,7 @@ from .models import (
     PerimetreReseau,
     Poste,
     Rattachement,
+    Remplacement,
     Reseau,
     Secteur,
     Zone,
@@ -509,6 +512,112 @@ class MonOrganisationVue(APIView):
                     ).select_related("reseau", "pays"),
                     "superviseur_manquant": principal is not None
                     and principal["superviseur"] is None,
+                }
+            ).data
+        )
+
+
+# --- Remplaçant daté d'un superviseur (ORG-013) ----------------------------------------------
+
+
+def _remplacables(perimetre: Perimetre) -> set | None:
+    """Superviseurs que l'utilisateur peut faire remplacer (prd.md §6.3) : tous pour
+    l'administrateur pays (None), ceux de ses réseaux pour le DM, lui-même pour le
+    superviseur."""
+    from apps.identite.models import Role
+
+    if Role.ADMIN_PAYS in perimetre.roles:
+        return None
+    ids = set()
+    if Role.DM in perimetre.roles:
+        ids |= services.superviseurs_du_dm(perimetre.utilisateur, pays_requis(perimetre))
+    if Role.SUPERVISEUR in perimetre.roles:
+        ids.add(perimetre.utilisateur.pk)
+    return ids
+
+
+class VueRemplacements(VuePerimetre):
+    serializer_class = s.RemplacementSerializer
+
+    def selection(self, perimetre):
+        qs = perimetre.filtrer_par_pays(
+            Remplacement.objects.filter(archive_le__isnull=True).select_related(
+                "superviseur", "remplacant", "designe_par", "pays"
+            )
+        )
+        portee = _remplacables(perimetre)
+        if portee is None:
+            return qs
+        moi = perimetre.utilisateur.pk
+        return qs.filter(Q(superviseur__in=portee) | Q(remplacant=moi))
+
+    def exiger_portee(self, superviseur_id) -> None:
+        portee = _remplacables(self.perimetre)
+        if portee is not None and superviseur_id not in portee:
+            raise ErreurMetier(
+                "hors_perimetre", _("Ce superviseur n'est pas dans votre périmètre."),
+                status.HTTP_404_NOT_FOUND,
+            )  # fmt: skip
+
+
+class RemplacementsVue(VueRemplacements):
+    actions = {"GET": Action.REMPLACEMENTS_GERER, "POST": Action.REMPLACEMENTS_GERER}
+
+    @extend_schema(responses=s.RemplacementSerializer(many=True),
+                   operation_id="remplacements_liste")  # fmt: skip
+    def get(self, request):
+        jour = aujourdhui(pays_requis(self.perimetre))
+        # Les remplacements en cours et à venir, puis les trente derniers jours.
+        recents = self.get_queryset().filter(fin__gte=jour - timedelta(days=30))
+        contexte = {"portee": _remplacables(self.perimetre)}
+        return Response(
+            s.RemplacementSerializer(recents.order_by("debut"), many=True, context=contexte).data
+        )
+
+    @extend_schema(request=s.CreationRemplacementSerializer,
+                   responses={201: s.RemplacementSerializer},
+                   operation_id="remplacement_designer")  # fmt: skip
+    def post(self, request):
+        v = _lire(s.CreationRemplacementSerializer, request)
+        self.exiger_portee(v["superviseur"])
+        pays = pays_requis(self.perimetre)
+        remplacement = services.designer_remplacant(
+            pays, _personne(self.perimetre, v["superviseur"]),
+            _personne(self.perimetre, v["remplacant"]), v["debut"], v["fin"], request.user,
+        )  # fmt: skip
+        contexte = {"portee": _remplacables(self.perimetre)}
+        return Response(
+            s.RemplacementSerializer(remplacement, context=contexte).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class RemplacementTerminerVue(VueRemplacements):
+    actions = {"POST": Action.REMPLACEMENTS_GERER}
+
+    @extend_schema(request=None, responses=s.RemplacementSerializer,
+                   operation_id="remplacement_terminer")  # fmt: skip
+    def post(self, request, id):
+        remplacement = get_object_or_404(self.get_queryset(), pk=id)
+        self.exiger_portee(remplacement.superviseur_id)
+        remplacement = services.terminer_remplacement(remplacement)
+        contexte = {"portee": _remplacables(self.perimetre)}
+        return Response(s.RemplacementSerializer(remplacement, context=contexte).data)
+
+
+class CandidatsRemplacementVue(VueRemplacements):
+    actions = {"GET": Action.REMPLACEMENTS_GERER}
+
+    @extend_schema(responses=s.CandidatsRemplacementSerializer,
+                   operation_id="remplacements_candidats")  # fmt: skip
+    def get(self, request):
+        superviseurs = services.superviseurs_du_pays(pays_requis(self.perimetre))
+        portee = _remplacables(self.perimetre)
+        return Response(
+            s.CandidatsRemplacementSerializer(
+                {
+                    "superviseurs": [p for p in superviseurs if portee is None or p.pk in portee],
+                    "remplacants": superviseurs,
                 }
             ).data
         )

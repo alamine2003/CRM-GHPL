@@ -104,6 +104,12 @@ def senegal(monde):
     from apps.notifications.services import notifier
 
     notification = notifier(monde["deleg.sn"], "planning_approuve", sn, semaine="2099-04-06")
+    from apps.organisation.models import Remplacement
+
+    remplacement = Remplacement.objects.create(
+        pays=sn, superviseur=monde["sup.sn"], remplacant=monde["sup.sn"],
+        debut=date(2099, 4, 6), fin=date(2099, 4, 10),
+    )  # fmt: skip
     activite = Activite.objects.create(pays=sn, planning=planning, date=date(2099, 4, 8),
                                      type="formation")  # fmt: skip
     return {
@@ -116,6 +122,7 @@ def senegal(monde):
         "planning-poser": planning.pk, "planning-reprendre": planning.pk,
         "planning-soumettre": planning.pk, "planning-consultation": planning.pk,
         "planning-approuver": planning.pk, "notification-lue": notification.pk,
+        "planning-reviser": planning.pk, "remplacement-terminer": remplacement.pk,
         "visite-copier": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,
         "activite": activite.pk, "activite-retirer": activite.pk,

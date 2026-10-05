@@ -63,6 +63,7 @@ export function Journee({
   modifiable,
   reordonner,
   controles,
+  remarques = {},
   libelleJour,
   surVisite,
   surAjouterVisite,
@@ -80,6 +81,8 @@ export function Journee({
   modifiable: boolean;
   reordonner: boolean;
   controles: Controles | null;
+  /** Remarques de révision par visite (PLN-013). */
+  remarques?: Record<string, string>;
   /** « mardi 6 octobre », pour les libellés vocalisés. */
   libelleJour: string;
   surVisite: (v: Visite) => void;
@@ -143,7 +146,7 @@ export function Journee({
                 <LigneVisite
                   visite={v}
                   onPress={ouvrir(v)}
-                  alertes={alertesDeVisite(controles, v.id, t)}
+                  alertes={alertesDeVisite(controles, v.id, t, false, remarques[v.id])}
                 />
               </View>
               {fleches}
@@ -176,7 +179,7 @@ export function Journee({
                   visite={v}
                   onPress={ouvrir(v)}
                   dansPassage
-                  alertes={alertesDeVisite(controles, v.id, t, true)}
+                  alertes={alertesDeVisite(controles, v.id, t, true, remarques[v.id])}
                 />
               ))}
               {preparation && (
