@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+  '/api/v1/absences/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['absence_modifier'];
+    trace?: never;
+  };
+  '/api/v1/absences/{id}/retirer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['absence_retirer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/affectations/{id}/terminer/': {
     parameters: {
       query?: never;
@@ -1292,6 +1324,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/passages/{id}/dissocier/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['passage_dissocier'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/pays/': {
     parameters: {
       query?: never;
@@ -1405,6 +1453,54 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['planning_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/{id}/absences/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['absence_declarer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/{id}/ordre/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['planning_ordonner'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/{id}/passages/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['passage_regrouper'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1992,6 +2088,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    Absence: {
+      /** Format: uuid */
+      readonly id: string;
+      /** Format: date */
+      date: string;
+      periode?: components['schemas']['PeriodeAbsenceEnum'];
+      type: components['schemas']['TypeAbsenceEnum'];
+      commentaire?: string;
+    };
     /** @description Événement d'audit de l'utilisateur lui-même (connexions, sécurité du compte). */
     Activite: {
       /** Format: date-time */
@@ -2600,6 +2705,11 @@ export interface components {
       /** Format: date */
       debut?: string;
     };
+    Ordre: {
+      /** Format: date */
+      date: string;
+      visites: string[];
+    };
     Oubli: {
       /** @description Identifiant ou courriel. */
       identifiant: string;
@@ -2614,6 +2724,17 @@ export interface components {
       /** @description Valeur par défaut encore à confirmer. */
       hypothese: boolean;
     };
+    /** @description Ligne « Établissement · n prescripteurs » (PLN-003 CA1). */
+    Passage: {
+      /** Format: uuid */
+      readonly id: string;
+      /** Format: date */
+      date: string;
+      /** Format: time */
+      heure: string | null;
+      etablissement: components['schemas']['EtablissementVisite'];
+      readonly visites: string[];
+    };
     PatchedChangementLangue: {
       langue?: components['schemas']['LangueEnum'];
     };
@@ -2622,6 +2743,13 @@ export interface components {
     };
     PatchedLibelle: {
       libelle?: string;
+    };
+    PatchedModificationAbsence: {
+      /** Format: date */
+      date?: string;
+      periode?: components['schemas']['PeriodeAbsenceEnum'];
+      type?: components['schemas']['TypeAbsenceEnum'];
+      commentaire?: string;
     };
     PatchedModificationExercice: {
       principal?: boolean;
@@ -2746,6 +2874,13 @@ export interface components {
       /** Format: date */
       debut?: string;
     };
+    /**
+     * @description * `journee` - Journée
+     *     * `matin` - Matin
+     *     * `apres_midi` - Après-midi
+     * @enum {string}
+     */
+    PeriodeAbsenceEnum: 'journee' | 'matin' | 'apres_midi';
     Personne: {
       /** Format: uuid */
       id: string;
@@ -3013,6 +3148,9 @@ export interface components {
       /** Format: date */
       debut?: string;
     };
+    Regroupement: {
+      visites: string[];
+    };
     Reinitialisation: {
       jeton: string;
       mot_de_passe: string;
@@ -3088,6 +3226,14 @@ export interface components {
       | 'superviseur'
       | 'delegue'
       | 'admin_technique';
+    SaisieAbsence: {
+      /** Format: date */
+      date: string;
+      /** @default journee */
+      periode: components['schemas']['PeriodeAbsenceEnum'];
+      type: components['schemas']['TypeAbsenceEnum'];
+      commentaire?: string;
+    };
     SaisieEtablissement: {
       nom?: string;
       /** Format: uuid */
@@ -3204,6 +3350,8 @@ export interface components {
       peut_creer: boolean;
       modifiable: boolean;
       visites: components['schemas']['Visite'][];
+      passages: components['schemas']['Passage'][];
+      absences: components['schemas']['Absence'][];
       reseaux: components['schemas']['Resume'][];
     };
     Session: {
@@ -3310,6 +3458,15 @@ export interface components {
       role?: components['schemas']['RoleEnum'];
     };
     /**
+     * @description * `conge` - Congé
+     *     * `formation` - Formation
+     *     * `reunion` - Réunion
+     *     * `maladie` - Maladie
+     *     * `autre` - Autre
+     * @enum {string}
+     */
+    TypeAbsenceEnum: 'conge' | 'formation' | 'reunion' | 'maladie' | 'autre';
+    /**
      * @description * `vm` - Visiteur médical
      *     * `vm_otc` - Visiteur médical OTC
      *     * `kam` - Key Account Manager
@@ -3363,6 +3520,9 @@ export interface components {
       note?: string;
       statut?: components['schemas']['VisiteStatutEnum'];
       readonly manquants: string[];
+      /** Format: uuid */
+      passage?: string | null;
+      ordre?: number;
     };
     /**
      * @description * `prevue` - Prévue
@@ -3398,6 +3558,54 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  absence_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationAbsence'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationAbsence'];
+        'multipart/form-data': components['schemas']['PatchedModificationAbsence'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Absence'];
+        };
+      };
+    };
+  };
+  absence_retirer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Absence'];
+        };
+      };
+    };
+  };
   affectation_terminer: {
     parameters: {
       query?: never;
@@ -5505,6 +5713,27 @@ export interface operations {
       };
     };
   };
+  passage_dissocier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Passage'];
+        };
+      };
+    };
+  };
   pays_liste: {
     parameters: {
       query?: never;
@@ -5688,6 +5917,87 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Planning'];
+        };
+      };
+    };
+  };
+  absence_declarer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieAbsence'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieAbsence'];
+        'multipart/form-data': components['schemas']['SaisieAbsence'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Absence'];
+        };
+      };
+    };
+  };
+  planning_ordonner: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Ordre'];
+        'application/x-www-form-urlencoded': components['schemas']['Ordre'];
+        'multipart/form-data': components['schemas']['Ordre'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'][];
+        };
+      };
+    };
+  };
+  passage_regrouper: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Regroupement'];
+        'application/x-www-form-urlencoded': components['schemas']['Regroupement'];
+        'multipart/form-data': components['schemas']['Regroupement'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Passage'];
         };
       };
     };

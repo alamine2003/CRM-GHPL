@@ -13,6 +13,10 @@ import type {
   Planning,
   Qualite,
   Semaine,
+  Absence,
+  ModificationAbsence,
+  Passage,
+  SaisieAbsence,
   ModificationVisite,
   SaisieVisite,
   Visite,
@@ -82,6 +86,12 @@ export type {
   ChangementFiche,
   JourFerie,
   JourSemaine,
+  Absence,
+  ModificationAbsence,
+  Passage,
+  PeriodeAbsence,
+  SaisieAbsence,
+  TypeAbsence,
   ModificationVisite,
   SaisieVisite,
   StatutVisite,
@@ -634,6 +644,34 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: saisie,
         }),
+      /** Ordre de la journée : toutes les visites du jour, dans l'ordre voulu (0.2.3). */
+      ordonner: (planning: string, date: string, visites: string[]) =>
+        requete<Visite[]>(`/api/v1/plannings/${planning}/ordre/`, {
+          methode: 'POST',
+          corps: { date, visites },
+        }),
+      regrouper: (planning: string, visites: string[]) =>
+        requete<Passage>(`/api/v1/plannings/${planning}/passages/`, {
+          methode: 'POST',
+          corps: { visites },
+        }),
+      declarerAbsence: (planning: string, saisie: SaisieAbsence) =>
+        requete<Absence>(`/api/v1/plannings/${planning}/absences/`, {
+          methode: 'POST',
+          corps: saisie,
+        }),
+    },
+    /** Passages : visites d'un même établissement le même jour (PLN-003). */
+    passages: {
+      dissocier: (id: string) =>
+        requete<Passage>(`/api/v1/passages/${id}/dissocier/`, { methode: 'POST' }),
+    },
+    /** Absences déclarées dans le planning (PLN-009). */
+    absences: {
+      modifier: (id: string, champs: ModificationAbsence) =>
+        requete<Absence>(`/api/v1/absences/${id}/`, { methode: 'PATCH', corps: champs }),
+      retirer: (id: string) =>
+        requete<Absence>(`/api/v1/absences/${id}/retirer/`, { methode: 'POST' }),
     },
     /** Visites d'un planning en préparation (PLN-002). */
     visites: {

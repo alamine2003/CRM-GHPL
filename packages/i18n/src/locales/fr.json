@@ -1336,6 +1336,59 @@
     "bilan_one": "{{count}} visite planifiée.",
     "bilan_other": "{{count}} visites planifiées.",
     "bilanACompleter_one": "{{count}} visite planifiée, {{aCompleter}} à compléter.",
-    "bilanACompleter_other": "{{count}} visites planifiées, dont {{aCompleter}} à compléter."
+    "bilanACompleter_other": "{{count}} visites planifiées, dont {{aCompleter}} à compléter.",
+    "monter": "Monter",
+    "descendre": "Descendre",
+    "ordreTermine": "Terminer",
+    "aideOrdre": "Les visites à heure fixe se rangent d'elles-mêmes ; déplacez celles sans heure.",
+    "reordonnerCourt": "Réordonner",
+    "reordonnerLe": "Réordonner les visites du {{jour}}"
+  },
+  "passages": {
+    "ligne_one": "{{lieu}} · {{count}} prescripteur",
+    "ligne_other": "{{lieu}} · {{count}} prescripteurs",
+    "regrouper_one": "Regrouper {{count}} visite à {{lieu}}",
+    "regrouper_other": "Regrouper les {{count}} visites à {{lieu}} en un passage",
+    "regroupe": "Passage créé : ces visites partagent désormais une heure.",
+    "dissocier": "Dissocier",
+    "dissocierLieu": "Dissocier le passage à {{lieu}}",
+    "dissocie": "Passage dissocié : chaque visite garde son heure.",
+    "heureCommune_one": "Heure du passage : elle vaut pour sa visite.",
+    "heureCommune_other": "Heure du passage : la changer la change pour ses {{count}} visites.",
+    "nombre_one": "Passage · {{count}} prescripteur",
+    "nombre_other": "Passage · {{count}} prescripteurs"
+  },
+  "absences": {
+    "declarer": "Déclarer une absence",
+    "declarerLe": "Déclarer une absence le {{jour}}",
+    "nouvelle": "Nouvelle absence",
+    "modifier": "Modifier l'absence",
+    "aide": "Une demi-journée d'absence réduit de moitié les objectifs du jour ; une journée entière ne reçoit pas de visite.",
+    "champs": {
+      "date": "Jour",
+      "type": "Type",
+      "periode": "Période"
+    },
+    "types": {
+      "conge": "Congé",
+      "formation": "Formation",
+      "reunion": "Réunion",
+      "maladie": "Maladie",
+      "autre": "Autre"
+    },
+    "periodes": {
+      "journee": "Journée",
+      "matin": "Matin",
+      "apres_midi": "Après-midi"
+    },
+    "ligne": "{{type}} · {{periode}}",
+    "commentaire": "Commentaire (facultatif)",
+    "motif": "Précisez le motif",
+    "motifRequis": "Une absence « Autre » demande un motif.",
+    "retirer": "Retirer cette absence",
+    "declaree": "Absence déclarée.",
+    "modifiee": "Absence enregistrée.",
+    "retiree": "Absence retirée.",
+    "declarerCourt": "Absence"
   }
 }

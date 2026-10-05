@@ -4,6 +4,9 @@
   complète » et des seuils (CA1, RG-022) ; non planifiable (PLN-001 CA2).
 - `Planning` (PLN-001) : un seul par délégué et par semaine (RG-012), identifiée par son
   lundi. Ses versions, passages, absences et visites arrivent de 0.2.2 à 0.2.8.
+- `Visite` (PLN-002), rangée dans sa journée par `ordre` (0.2.3).
+- `Passage` (PLN-003) : plusieurs visites d'un même établissement le même jour, à une même heure.
+- `Absence` (PLN-009) : congé, formation, réunion, maladie… sur une journée ou une demi-journée.
 """
 
 from django.conf import settings
@@ -55,6 +58,63 @@ class Planning(ModeleDePays):
         return f"{self.delegue} {self.semaine}"
 
 
+class Passage(ModeleDePays):
+    """Regroupement de visites d'un même établissement le même jour (PLN-003) : une ligne
+    « Établissement · n prescripteurs » ; chaque visite garde son prospect et son rapport (CA2).
+    L'heure du passage est celle de toutes ses visites."""
+
+    planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="passages")
+    etablissement = models.ForeignKey(
+        "prospects.Etablissement", on_delete=models.PROTECT, related_name="+"
+    )
+    date = models.DateField()
+    heure = models.TimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["date", "heure"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["planning", "date", "etablissement"],
+                condition=Q(archive_le__isnull=True),
+                name="passage_unique",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.date} {self.etablissement}"
+
+
+class Periode(models.TextChoices):
+    JOURNEE = "journee", "Journée"
+    MATIN = "matin", "Matin"
+    APRES_MIDI = "apres_midi", "Après-midi"
+
+
+class TypeAbsence(models.TextChoices):
+    CONGE = "conge", "Congé"
+    FORMATION = "formation", "Formation"
+    REUNION = "reunion", "Réunion"
+    MALADIE = "maladie", "Maladie"
+    AUTRE = "autre", "Autre"
+
+
+class Absence(ModeleDePays):
+    """Absence déclarée dans le planning (PLN-009) ; elle réduit les seuils du jour au prorata
+    (CA1, RG-022, contrôles en 0.2.4) et se valide avec le planning (CA2, cycle 0.3)."""
+
+    planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="absences")
+    date = models.DateField()
+    periode = models.CharField(max_length=12, choices=Periode.choices, default=Periode.JOURNEE)
+    type = models.CharField(max_length=12, choices=TypeAbsence.choices)
+    commentaire = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ["date", "periode"]
+
+    def __str__(self):
+        return f"{self.date} {self.periode} {self.type}"
+
+
 class Visite(ModeleDePays):
     """Visite planifiée (PLN-002) : date, heure, prospect, établissement, objectif, réseau ;
     note facultative. Une visite en préparation peut rester incomplète ; la soumission du
@@ -84,9 +144,15 @@ class Visite(ModeleDePays):
         max_length=16, choices=StatutVisite.choices, default=StatutVisite.PREVUE
     )
     est_imprevue = models.BooleanField(default=False)
+    passage = models.ForeignKey(
+        Passage, null=True, blank=True, on_delete=models.SET_NULL, related_name="visites"
+    )
+    #: Rang dans la journée (0.2.3) : les visites à heure fixe suivent l'ordre chronologique,
+    #: celles sans heure restent où le délégué les a placées.
+    ordre = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
-        ordering = ["date", "heure"]
+        ordering = ["date", "ordre", "heure"]
         indexes = [models.Index(fields=["planning", "date"])]
 
     def __str__(self):

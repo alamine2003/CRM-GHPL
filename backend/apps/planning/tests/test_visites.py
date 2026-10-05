@@ -13,9 +13,10 @@ from apps.planning import services
 from apps.planning.etats import StatutPlanning
 from apps.planning.models import Planning, Visite
 from apps.planning.services import creer_jour_ferie
-from apps.prospects.services import creer_etablissement, creer_exercice, creer_prospect
-from apps.referentiel.models import Valeur
+from apps.prospects.services import creer_prospect
 from apps.socle.erreurs import ErreurMetier
+
+from .conftest import SEMAINE, valeur
 
 pytestmark = pytest.mark.django_db
 
@@ -24,38 +25,6 @@ pytestmark = pytest.mark.django_db
 def _mercredi_7_octobre():
     with freeze_time("2026-10-07 09:00"):
         yield
-
-
-SEMAINE = "/api/v1/plannings/semaine/"
-
-
-def valeur(monde, liste, code, pays="sn"):
-    return Valeur.objects.get(pays=monde[pays], liste=liste, code=code)
-
-
-@pytest.fixture
-def terrain(monde):
-    """Un délégué sur un poste du réseau Cardio, sa semaine du 12 octobre en préparation, un
-    médecin qui exerce dans une clinique."""
-    sn, admin = monde["sn"], monde["admin.sn"]
-    division = org.creer_division(sn, "CAR", "Cardiologie")
-    cardio = org.creer_reseau(sn, division, "CAR1", "Cardio")
-    secteur = org.creer_secteur(sn, org.creer_zone(sn, "Dakar"), "Plateau")
-    poste = org.creer_poste(sn, "vm", "VM Plateau", [cardio], [secteur])
-    org.occuper(poste, monde["deleg.sn"], date(2026, 1, 1))
-    planning = services.creer_planning(sn, monde["deleg.sn"], date(2026, 10, 12))
-    medecin = creer_prospect(
-        sn, admin, actif=True, nom="Ndiaye", prenom="Awa", potentiel="A",
-        type=valeur(monde, "type_prospect", "medecin"),
-        specialite=valeur(monde, "specialite", "cardiologie"),
-    )  # fmt: skip
-    clinique = creer_etablissement(
-        sn, admin, actif=True, nom="Clinique du Cap", secteur=secteur,
-        type=valeur(monde, "type_etablissement", "clinique"),
-    )  # fmt: skip
-    creer_exercice(medecin, clinique, admin)
-    return {"planning": planning, "poste": poste, "cardio": cardio, "division": division,
-            "medecin": medecin, "clinique": clinique, "secteur": secteur}  # fmt: skip
 
 
 def url(terrain):

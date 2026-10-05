@@ -2,6 +2,52 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.3] — Ordre de la journée, passages, absences
+
+Troisième jalon du cycle 0.2 « Planning ». L'heure et les notes, prévues ici, sont arrivées dès 0.2.2 avec PLN-002.
+
+### Ajouté — ordre de la journée
+
+- Les visites à heure fixe se rangent d'elles-mêmes dans l'ordre chronologique ; celles sans heure se placent à la main.
+- Le lien « Réordonner » d'un jour fait apparaître des flèches sur les visites sans heure, juste là où elles sont ; « Terminer » referme le mode.
+- L'heure garde le dernier mot : une visite qui reçoit une heure reprend sa place.
+
+### Ajouté — passages (PLN-003)
+
+- Deux visites ou plus du même jour dans le même établissement font apparaître « Regrouper les n visites à … en un passage ».
+- **CA1** : le passage s'affiche à son heure, avec le lieu puis « Passage · n prescripteurs ». Un filet relie ses visites.
+- **CA2** : chaque visite garde son prospect, son objectif et ce qui lui reste à compléter.
+- Le passage a une seule heure : la changer sur une visite la change pour toutes, et le formulaire le dit.
+- Une nouvelle visite dans ce lieu ce jour-là rejoint d'office le passage.
+- Une visite déplacée ailleurs le quitte ; un passage réduit à une visite se défait ; « Dissocier » le défait à la demande.
+
+### Ajouté — absences (PLN-009)
+
+- « Absence », sur chaque jour planifiable, déclare un congé, une formation, une réunion, une maladie ou une autre absence, pour la journée, le matin ou l'après-midi. Une absence « autre » demande un motif.
+- L'absence s'affiche dans la journée (« Formation · Après-midi ») ; toucher la ligne la modifie ou la retire.
+- Une journée entière d'absence ne propose plus d'ajouter une visite. Elle ne se déclare pas tant que des visites y sont prévues : le message invite à les déplacer ou les retirer d'abord.
+- **CA1** : une demi-journée compte pour moitié dans la part travaillée du jour (`part_travaillee`), que les contrôles de seuils de 0.2.4 utiliseront. **CA2** (validation avec le planning) viendra avec le cycle 0.3.
+- Démonstration : la semaine du premier délégué compte un passage de deux confrères et une demi-journée de formation.
+- prd.md §14.10 consigne les choix [H].
+
+### Architecture
+
+- `Visite.ordre`, tables `Passage` et `Absence` sous sécurité au niveau des lignes ; six routes couvertes par la matrice des droits et les tests d'isolation.
+- Les énumérations du schéma portent des noms explicites (`TypeAbsenceEnum`, `PeriodeAbsenceEnum`).
+- Mobile : la journée a son composant (`src/Journee.tsx`), les absences leur formulaire (`src/Absences.tsx`).
+
+### Design
+
+Revue sur le rendu réel : mobile à 360 et 414 px, et à 390 px en thème sombre. Seconde et troisième revues après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Passage (360 px) | « Poste de santé Touré · 2 … » tronqué : le nombre de prescripteurs (CA1) illisible, « Dissocier » serré à droite | Lieu sur sa ligne, « Passage · 2 prescripteurs » dessous ; « Dissocier » sous les visites du passage |
+| Passage | Rien ne distinguait ses visites des visites seules | Filet coloré qui relie les visites à la ligne du passage |
+| Journée | Deux lignes d'actions empilées sous chaque jour | Une seule rangée : « + Ajouter une visite », « Absence », « Réordonner » |
+| Réordonner | Bouton et aide dans la carte Planning, loin du jour ; les flèches apparaissaient hors de vue | Le mode s'ouvre dans le jour lui-même, aide et « Terminer » sous ses visites |
+| Absence | « Motif » (le type) puis « Précisez le motif » (le commentaire) | Le groupe de pilules s'appelle « Type » |
+
 ## [0.2.2] — Visites planifiées
 
 Deuxième jalon du cycle 0.2 « Planning ».

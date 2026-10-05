@@ -1,5 +1,5 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { Semaine, Visite } from '@innov/api-client';
+import type { Absence, Semaine, Visite } from '@innov/api-client';
 import { marque } from '@innov/design';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,9 @@ import { Alerte, Bouton, Carte, Texte, useLien, usePalette } from '../src/compos
 import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
-import { AjouterVisite, FormulaireVisite, LigneVisite } from '../src/Visites';
+import { FormulaireAbsence } from '../src/Absences';
+import { Journee } from '../src/Journee';
+import { FormulaireVisite } from '../src/Visites';
 
 const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
 
@@ -19,7 +21,8 @@ const jourIso = (d: Date) =>
  * Semaine du délégué (PLN-001) : ses jours ouvrés, les jours fériés du pays (affichés, non
  * planifiables, CA2) et son planning, un seul par semaine (CA1). Tant que le planning est en
  * préparation, chaque jour planifiable reçoit ses visites (PLN-002) ; une visite incomplète
- * reste permise et montre ce qui manque (CA1).
+ * reste permise et montre ce qui manque (CA1). Depuis 0.2.3 : ordre de la journée, passages
+ * (PLN-003) et absences (PLN-009).
  */
 export default function EcranSemaine() {
   const { t, i18n } = useTranslation();
@@ -30,7 +33,13 @@ export default function EcranSemaine() {
   const [semaine, setSemaine] = useState<Semaine | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [creation, setCreation] = useState(false);
-  const [edition, setEdition] = useState<{ jour: string; visite?: Visite } | null>(null);
+  const [edition, setEdition] = useState<
+    | { objet: 'visite'; jour: string; visite?: Visite }
+    | { objet: 'absence'; jour: string; absence?: Absence }
+    | null
+  >(null);
+  /** Jour dont le délégué règle l'ordre à la main. */
+  const [reordonner, setReordonner] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const aujourdhui = jourIso(new Date());
 
@@ -59,6 +68,19 @@ export default function EcranSemaine() {
   const date = (iso: string, options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(i18n.language, options).format(new Date(`${iso}T12:00:00`));
 
+  /** Action rapide sur la semaine (regrouper, dissocier, ordonner) puis relecture. */
+  async function executer(action: () => Promise<unknown>, succes?: string) {
+    if (!semaine) return;
+    setMessage(null);
+    try {
+      await action();
+      if (succes) setMessage(succes);
+    } catch (e) {
+      setErreur(messageErreur(e, t('erreurs.reseau')));
+    }
+    await charger(semaine.semaine);
+  }
+
   async function preparer() {
     if (!semaine) return;
     setCreation(true);
@@ -84,22 +106,34 @@ export default function EcranSemaine() {
   const visites = semaine?.visites ?? [];
   const aCompleter = visites.filter((v) => v.manquants.length > 0).length;
   const modifiable = !!semaine?.planning && semaine.modifiable;
+  const planningId = semaine?.planning?.id ?? '';
+  const terminer = (texte: string) => {
+    setEdition(null);
+    setMessage(texte);
+    if (semaine) void charger(semaine.semaine);
+  };
 
   if (semaine && edition) {
     return (
       // Une clé propre : le formulaire s'ouvre en haut de page, pas au défilement de la semaine.
-      <Ecran key="visite" titre={t('mobile.onglets.semaine')} surTitre={periode}>
-        <FormulaireVisite
-          semaine={semaine}
-          jour={edition.jour}
-          visite={edition.visite}
-          surAnnuler={() => setEdition(null)}
-          surTermine={(texte) => {
-            setEdition(null);
-            setMessage(texte);
-            void charger(semaine.semaine);
-          }}
-        />
+      <Ecran key="edition" titre={t('mobile.onglets.semaine')} surTitre={periode}>
+        {edition.objet === 'visite' ? (
+          <FormulaireVisite
+            semaine={semaine}
+            jour={edition.jour}
+            visite={edition.visite}
+            surAnnuler={() => setEdition(null)}
+            surTermine={terminer}
+          />
+        ) : (
+          <FormulaireAbsence
+            semaine={semaine}
+            jour={edition.jour}
+            absence={edition.absence}
+            surAnnuler={() => setEdition(null)}
+            surTermine={terminer}
+          />
+        )}
       </Ecran>
     );
   }
@@ -209,29 +243,54 @@ export default function EcranSemaine() {
                       </Text>
                     )}
                   </View>
-                  {duJour.map((v) => (
-                    <LigneVisite
-                      key={v.id}
-                      visite={v}
-                      onPress={
-                        modifiable
-                          ? () => {
-                              setMessage(null);
-                              setEdition({ jour: j.date, visite: v });
-                            }
-                          : undefined
-                      }
-                    />
-                  ))}
-                  {modifiable && j.planifiable && (
-                    <AjouterVisite
-                      jour={date(j.date, { weekday: 'long', day: 'numeric', month: 'long' })}
-                      onPress={() => {
-                        setMessage(null);
-                        setEdition({ jour: j.date });
-                      }}
-                    />
-                  )}
+                  <Journee
+                    jour={j}
+                    visites={duJour}
+                    passages={semaine.passages.filter((x) => x.date === j.date)}
+                    absences={semaine.absences.filter((a) => a.date === j.date)}
+                    modifiable={modifiable}
+                    reordonner={reordonner === j.date}
+                    libelleJour={date(j.date, { weekday: 'long', day: 'numeric', month: 'long' })}
+                    surVisite={(v) => {
+                      setMessage(null);
+                      setEdition({ objet: 'visite', jour: j.date, visite: v });
+                    }}
+                    surAjouterVisite={() => {
+                      setMessage(null);
+                      setEdition({ objet: 'visite', jour: j.date });
+                    }}
+                    surAbsence={(a) => {
+                      setMessage(null);
+                      setEdition({ objet: 'absence', jour: j.date, absence: a });
+                    }}
+                    surDeclarerAbsence={() => {
+                      setMessage(null);
+                      setEdition({ objet: 'absence', jour: j.date });
+                    }}
+                    surRegrouper={(liste) =>
+                      void executer(
+                        () =>
+                          client.plannings.regrouper(
+                            planningId,
+                            liste.map((v) => v.id),
+                          ),
+                        t('passages.regroupe'),
+                      )
+                    }
+                    surDissocier={(passage) =>
+                      void executer(
+                        () => client.passages.dissocier(passage.id),
+                        t('passages.dissocie'),
+                      )
+                    }
+                    surReordonner={(actif) => {
+                      setMessage(null);
+                      setReordonner(actif ? j.date : null);
+                    }}
+                    surOrdonner={(ids) =>
+                      void executer(() => client.plannings.ordonner(planningId, j.date, ids))
+                    }
+                  />
                 </View>
               );
             })}

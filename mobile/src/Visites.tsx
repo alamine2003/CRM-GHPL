@@ -5,7 +5,7 @@
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { ClientApi, JourSemaine, ListeCible, Semaine, Visite } from '@innov/api-client';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ComponentProps, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { lire } from './baseLocale';
@@ -64,8 +64,19 @@ const depuisCible = (c: ListeCible['cibles'][number]): Choix => ({
     .join(' · '),
 });
 
-/** Ligne d'une visite dans la semaine : heure, prospect, lieu, et ce qui reste à compléter. */
-export function LigneVisite({ visite, onPress }: { visite: Visite; onPress?: () => void }) {
+/**
+ * Ligne d'une visite dans la semaine : heure, prospect, lieu, et ce qui reste à compléter.
+ * Dans un passage, l'heure et le lieu sont portés par la ligne du passage (PLN-003).
+ */
+export function LigneVisite({
+  visite,
+  onPress,
+  dansPassage,
+}: {
+  visite: Visite;
+  onPress?: () => void;
+  dansPassage?: boolean;
+}) {
   const { t } = useTranslation();
   const p = usePalette();
   const nom = visite.prospect ? nomProspect(visite.prospect, t) : t('visites.sansProspect');
@@ -78,12 +89,16 @@ export function LigneVisite({ visite, onPress }: { visite: Visite; onPress?: () 
       onPress={onPress}
       style={({ pressed }) => [styles.visite, pressed && { backgroundColor: p.fond }]}
     >
-      <Text
-        style={[styles.heure, { color: visite.heure ? p.texte : p.texteDiscret }]}
-        accessibilityLabel={visite.heure ?? t('visites.sansHeure')}
-      >
-        {visite.heure ?? '--:--'}
-      </Text>
+      {dansPassage ? (
+        <View style={styles.retrait} />
+      ) : (
+        <Text
+          style={[styles.heure, { color: visite.heure ? p.texte : p.texteDiscret }]}
+          accessibilityLabel={visite.heure ?? t('visites.sansHeure')}
+        >
+          {visite.heure ?? '--:--'}
+        </Text>
+      )}
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text
           numberOfLines={1}
@@ -91,7 +106,7 @@ export function LigneVisite({ visite, onPress }: { visite: Visite; onPress?: () 
         >
           {nom}
         </Text>
-        {visite.etablissement && (
+        {visite.etablissement && !dansPassage && (
           <Texte variante="discret" numberOfLines={1}>
             {visite.etablissement.nom}
           </Texte>
@@ -111,20 +126,33 @@ export function LigneVisite({ visite, onPress }: { visite: Visite; onPress?: () 
   );
 }
 
-/** Bouton discret « + Ajouter une visite » sous un jour planifiable. */
-export function AjouterVisite({ jour, onPress }: { jour: string; onPress: () => void }) {
-  const { t } = useTranslation();
+/** Action discrète en texte (« + Ajouter une visite », « Déclarer une absence »…). */
+export function LienAction({
+  icone,
+  libelle,
+  description,
+  onPress,
+  couleur,
+}: {
+  icone: ComponentProps<typeof MaterialIcons>['name'];
+  libelle: string;
+  /** Libellé vocalisé, plus précis que le texte affiché. */
+  description?: string;
+  onPress: () => void;
+  couleur?: string;
+}) {
   const lien = useLien();
+  const teinte = couleur ?? lien;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={t('visites.ajouterLe', { jour })}
+      accessibilityLabel={description ?? libelle}
       onPress={onPress}
       hitSlop={4}
       style={({ pressed }) => [styles.ajouter, pressed && { opacity: 0.6 }]}
     >
-      <MaterialIcons name="add" size={18} color={lien} />
-      <Text style={[styles.ajouterTexte, { color: lien }]}>{t('visites.ajouter')}</Text>
+      <MaterialIcons name={icone} size={18} color={teinte} />
+      <Text style={[styles.ajouterTexte, { color: teinte }]}>{libelle}</Text>
     </Pressable>
   );
 }
@@ -150,7 +178,16 @@ export function FormulaireVisite({
   const p = usePalette();
   const lien = useLien();
   const { client } = useSession();
-  const jours = semaine.jours.filter((j) => j.planifiable);
+  // Une journée entière d'absence ne reçoit pas de visite (PLN-009).
+  const absents = new Set(
+    semaine.absences.filter((a) => a.periode === 'journee').map((a) => a.date),
+  );
+  const jours = semaine.jours.filter(
+    (j) => j.planifiable && (!absents.has(j.date) || j.date === visite?.date),
+  );
+  const passage = visite?.passage
+    ? semaine.passages.find((x) => x.id === visite.passage)
+    : undefined;
   const unSeulReseau = semaine.reseaux.length === 1 ? (semaine.reseaux[0]?.id ?? null) : null;
 
   const [date, setDate] = useState(visite?.date ?? jour);
@@ -287,6 +324,11 @@ export function FormulaireVisite({
         autoCorrect={false}
       />
       {heureIllisible && <Texte variante="discret">{t('visites.heureIllisible')}</Texte>}
+      {passage && !heureIllisible && (
+        <Texte variante="discret">
+          {t('passages.heureCommune', { count: passage.visites.length })}
+        </Texte>
+      )}
 
       {semaine.reseaux.length > 1 && (
         <Section titre={t('visites.champs.reseau')}>
@@ -530,6 +572,7 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
     borderRadius: 6,
   },
+  retrait: { width: 14 },
   heure: { fontFamily: police.texteFort, fontSize: 14, width: 48, fontVariant: ['tabular-nums'] },
   nom: { fontFamily: police.texteFort, fontSize: 15 },
   manquants: { fontFamily: police.texteFort, fontSize: 12 },

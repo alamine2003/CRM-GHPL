@@ -247,6 +247,8 @@ SPECTACULAR_SETTINGS = {
         "StatutEnum": "apps.socle.models.Pays.Statut",
         "StatutFicheEnum": "apps.prospects.models.StatutFiche",
         "StatutLotEnum": "apps.imports.models.LotImport.Statut",
+        "TypeAbsenceEnum": "apps.planning.models.TypeAbsence",
+        "PeriodeAbsenceEnum": "apps.planning.models.Periode",
     },
 }
 

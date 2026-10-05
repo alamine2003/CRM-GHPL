@@ -35,6 +35,8 @@ const SEMAINE: Semaine = {
   peut_creer: true,
   modifiable: false,
   visites: [],
+  passages: [],
+  absences: [],
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
 };
 
@@ -59,6 +61,19 @@ const VISITE: Visite = {
   note: '',
   statut: 'prevue',
   manquants: ['heure', 'objectif'],
+  passage: null,
+  ordre: 1,
+};
+
+/** Un confrère vu au même lieu le même jour, à heure fixe. */
+const CONFRERE: Visite = {
+  ...VISITE,
+  id: 'v2',
+  heure: '10:00',
+  prospect: { ...VISITE.prospect!, id: 'p2', prenom: 'Moussa', nom: 'EXEMPLE' },
+  objectif: 'Échantillons',
+  manquants: [],
+  ordre: 2,
 };
 
 const EN_PREPARATION: Semaine = {
@@ -223,4 +238,103 @@ test('l’heure se saisit comme on la dit', () => {
   expect(lireHeure('1430')).toBe('14:30');
   expect(lireHeure('25:00')).toBeNull();
   expect(lireHeure('midi')).toBeNull();
+});
+
+test('PLN-003 : deux visites au même lieu proposent un passage, qui se crée', async () => {
+  const regrouper = jest.fn(async () => ({}));
+  await rendre({
+    semaine: jest.fn(async () => ({ ...EN_PREPARATION, visites: [VISITE, CONFRERE] })),
+    regrouper,
+  } as unknown as Partial<ClientApi['plannings']>);
+  await fireEvent.press(
+    await screen.findByText('Regrouper les 2 visites à Clinique Fictive en un passage'),
+  );
+  expect(regrouper).toHaveBeenCalledWith('pl1', ['v1', 'v2']);
+  expect(await screen.findByText(/Passage créé/)).toBeTruthy();
+});
+
+test('PLN-003 CA1 : un passage s’affiche « Établissement · n prescripteurs »', async () => {
+  const dissocier = jest.fn(async () => ({}));
+  const passage = {
+    id: 'pa1',
+    date: '2026-10-27',
+    heure: '10:00',
+    etablissement: { id: 'e1', nom: 'Clinique Fictive' },
+    visites: ['v1', 'v2'],
+  };
+  await rendre(
+    {
+      semaine: jest.fn(async () => ({
+        ...EN_PREPARATION,
+        passages: [passage],
+        visites: [
+          { ...VISITE, passage: 'pa1', heure: '10:00' },
+          { ...CONFRERE, passage: 'pa1' },
+        ],
+      })),
+    },
+    { passages: { dissocier } },
+  );
+  expect(await screen.findByLabelText('Clinique Fictive · 2 prescripteurs')).toBeTruthy();
+  expect(screen.getByText('Passage · 2 prescripteurs')).toBeTruthy();
+  // CA2 : chaque visite garde son prospect.
+  expect(screen.getByText('Dr Awa FICTIF')).toBeTruthy();
+  expect(screen.getByText('Dr Moussa EXEMPLE')).toBeTruthy();
+  expect(screen.queryByText(/Regrouper/)).toBeNull();
+  await fireEvent.press(screen.getByLabelText('Dissocier le passage à Clinique Fictive'));
+  expect(dissocier).toHaveBeenCalledWith('pa1');
+});
+
+test('PLN-009 : le délégué déclare une demi-journée de formation', async () => {
+  const declarerAbsence = jest.fn(async () => ({}));
+  await rendre({
+    semaine: jest.fn(async () => EN_PREPARATION),
+    declarerAbsence,
+  } as unknown as Partial<ClientApi['plannings']>);
+  await fireEvent.press(await screen.findByLabelText('Déclarer une absence le jeudi 29 octobre'));
+  // « Autre » exige un motif ; la formation, non.
+  await fireEvent.press(screen.getByText('Autre'));
+  expect(screen.getByText('Une absence « Autre » demande un motif.')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Formation'));
+  await fireEvent.press(screen.getByText('Matin'));
+  await fireEvent.press(screen.getByText('Enregistrer'));
+  expect(declarerAbsence).toHaveBeenCalledWith('pl1', {
+    date: '2026-10-29',
+    type: 'formation',
+    periode: 'matin',
+    commentaire: '',
+  });
+  expect(await screen.findByText('Absence déclarée.')).toBeTruthy();
+});
+
+test('PLN-009 : une journée entière d’absence ne propose plus d’ajouter une visite', async () => {
+  await rendre({
+    semaine: jest.fn(async () => ({
+      ...EN_PREPARATION,
+      visites: [],
+      absences: [
+        { id: 'a1', date: '2026-10-28', periode: 'journee' as const, type: 'conge' as const },
+      ],
+    })),
+  });
+  expect(await screen.findByText('Congé · Journée')).toBeTruthy();
+  // Trois jours planifiables restent ouverts aux visites (lundi, mardi, jeudi).
+  expect(screen.getAllByText('Ajouter une visite')).toHaveLength(3);
+});
+
+test('l’ordre : seules les visites sans heure se déplacent', async () => {
+  const ordonner = jest.fn(async () => []);
+  await rendre({
+    semaine: jest.fn(async () => ({
+      ...EN_PREPARATION,
+      visites: [CONFRERE, { ...VISITE, ordre: 2 }],
+    })),
+    ordonner,
+  } as unknown as Partial<ClientApi['plannings']>);
+  await fireEvent.press(await screen.findByLabelText('Réordonner les visites du mardi 27 octobre'));
+  expect(screen.getByText(/Les visites à heure fixe se rangent/)).toBeTruthy();
+  // Une seule paire de flèches : la visite à 10 h n'en a pas.
+  expect(screen.getAllByLabelText('Monter')).toHaveLength(1);
+  await fireEvent.press(screen.getByLabelText('Monter'));
+  expect(ordonner).toHaveBeenCalledWith('pl1', '2026-10-27', ['v1', 'v2']);
 });

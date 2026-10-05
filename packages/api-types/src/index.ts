@@ -85,6 +85,13 @@ export type Visite = Schemas['Visite'];
 export type StatutVisite = Schemas['VisiteStatutEnum'];
 export type SaisieVisite = Schemas['SaisieVisite'];
 export type ModificationVisite = Schemas['PatchedModificationVisite'];
+// Passages et absences (PLN-003, PLN-009).
+export type Passage = Schemas['Passage'];
+export type Absence = Schemas['Absence'];
+export type TypeAbsence = Schemas['TypeAbsenceEnum'];
+export type PeriodeAbsence = Schemas['PeriodeAbsenceEnum'];
+export type SaisieAbsence = Schemas['SaisieAbsence'];
+export type ModificationAbsence = Schemas['PatchedModificationAbsence'];
 export type DecisionDoublon = Schemas['DecisionDoublon']['decision'];
 export type Fusion = Schemas['Fusion'];
 export type ChangementFiche = Schemas['ChangementFiche'];

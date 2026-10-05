@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.organisation.serializers import ResumeSerializer
 
-from .models import JourFerie, Planning, Visite
+from .models import Absence, JourFerie, Passage, Periode, Planning, TypeAbsence, Visite
 
 
 class JourFerieSerializer(serializers.ModelSerializer):
@@ -66,7 +66,7 @@ class VisiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Visite
         fields = ["id", "date", "heure", "prospect", "etablissement", "reseau", "objectif",
-                  "note", "statut", "manquants"]  # fmt: skip
+                  "note", "statut", "manquants", "passage", "ordre"]  # fmt: skip
 
     def get_manquants(self, visite) -> list[str]:
         from .services import champs_manquants
@@ -86,6 +86,52 @@ class SaisieVisiteSerializer(serializers.Serializer):
 
 class ModificationVisiteSerializer(SaisieVisiteSerializer):
     date = serializers.DateField(required=False)
+
+
+class OrdreSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    #: Toutes les visites du jour, dans l'ordre voulu.
+    visites = serializers.ListField(child=serializers.UUIDField())
+
+
+class PassageSerializer(serializers.ModelSerializer):
+    """Ligne « Établissement · n prescripteurs » (PLN-003 CA1)."""
+
+    etablissement = EtablissementVisiteSerializer()
+    heure = serializers.TimeField(format="%H:%M", allow_null=True)
+    visites = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Passage
+        fields = ["id", "date", "heure", "etablissement", "visites"]
+
+    def get_visites(self, passage) -> list[str]:
+        return [str(v.pk) for v in passage.visites.all() if v.archive_le is None]
+
+
+class RegroupementSerializer(serializers.Serializer):
+    visites = serializers.ListField(child=serializers.UUIDField(), min_length=2)
+
+
+class AbsenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Absence
+        fields = ["id", "date", "periode", "type", "commentaire"]
+
+
+class SaisieAbsenceSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    periode = serializers.ChoiceField(choices=Periode.choices, required=False,
+                                      default=Periode.JOURNEE)  # fmt: skip
+    type = serializers.ChoiceField(choices=TypeAbsence.choices)
+    commentaire = serializers.CharField(max_length=200, required=False, allow_blank=True)
+
+
+class ModificationAbsenceSerializer(serializers.Serializer):
+    date = serializers.DateField(required=False)
+    periode = serializers.ChoiceField(choices=Periode.choices, required=False)
+    type = serializers.ChoiceField(choices=TypeAbsence.choices, required=False)
+    commentaire = serializers.CharField(max_length=200, required=False, allow_blank=True)
 
 
 class JourSemaineSerializer(serializers.Serializer):
@@ -109,5 +155,7 @@ class SemaineSerializer(serializers.Serializer):
     #: Vrai tant que le planning se prépare ou se révise (visites modifiables).
     modifiable = serializers.BooleanField()
     visites = VisiteSerializer(many=True)
+    passages = PassageSerializer(many=True)
+    absences = AbsenceSerializer(many=True)
     #: Réseaux des postes occupés cette semaine, proposés pour chaque visite.
     reseaux = ResumeSerializer(many=True)

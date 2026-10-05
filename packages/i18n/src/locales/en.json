@@ -1336,6 +1336,59 @@
     "bilan_one": "{{count}} planned visit.",
     "bilan_other": "{{count}} planned visits.",
     "bilanACompleter_one": "{{count}} planned visit, {{aCompleter}} to complete.",
-    "bilanACompleter_other": "{{count}} planned visits, {{aCompleter}} to complete."
+    "bilanACompleter_other": "{{count}} planned visits, {{aCompleter}} to complete.",
+    "monter": "Move up",
+    "descendre": "Move down",
+    "ordreTermine": "Done",
+    "aideOrdre": "Visits with a set time sort themselves; move the ones without a time.",
+    "reordonnerCourt": "Reorder",
+    "reordonnerLe": "Reorder the visits of {{jour}}"
+  },
+  "passages": {
+    "ligne_one": "{{lieu}} · {{count}} prescriber",
+    "ligne_other": "{{lieu}} · {{count}} prescribers",
+    "regrouper_one": "Group {{count}} visit at {{lieu}}",
+    "regrouper_other": "Group the {{count}} visits at {{lieu}} into one stop",
+    "regroupe": "Stop created: these visits now share one time.",
+    "dissocier": "Ungroup",
+    "dissocierLieu": "Ungroup the stop at {{lieu}}",
+    "dissocie": "Stop ungrouped: each visit keeps its time.",
+    "heureCommune_one": "Time of the stop: it applies to its visit.",
+    "heureCommune_other": "Time of the stop: changing it changes all {{count}} visits.",
+    "nombre_one": "Stop · {{count}} prescriber",
+    "nombre_other": "Stop · {{count}} prescribers"
+  },
+  "absences": {
+    "declarer": "Declare an absence",
+    "declarerLe": "Declare an absence on {{jour}}",
+    "nouvelle": "New absence",
+    "modifier": "Edit absence",
+    "aide": "A half-day absence halves the day's targets; a full day receives no visits.",
+    "champs": {
+      "date": "Day",
+      "type": "Type",
+      "periode": "Period"
+    },
+    "types": {
+      "conge": "Leave",
+      "formation": "Training",
+      "reunion": "Meeting",
+      "maladie": "Sick",
+      "autre": "Other"
+    },
+    "periodes": {
+      "journee": "Full day",
+      "matin": "Morning",
+      "apres_midi": "Afternoon"
+    },
+    "ligne": "{{type}} · {{periode}}",
+    "commentaire": "Comment (optional)",
+    "motif": "Give the reason",
+    "motifRequis": "An “Other” absence needs a reason.",
+    "retirer": "Remove this absence",
+    "declaree": "Absence declared.",
+    "modifiee": "Absence saved.",
+    "retiree": "Absence removed.",
+    "declarerCourt": "Absence"
   }
 }

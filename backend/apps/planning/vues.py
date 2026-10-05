@@ -23,7 +23,7 @@ from . import serializers as s
 from . import services
 from .calendrier import jours_de_la_semaine, lundi
 from .etats import MODIFIABLES
-from .models import JourFerie, Planning, Visite
+from .models import Absence, JourFerie, Passage, Planning, Visite
 
 GERER = Action.JOURS_FERIES_GERER
 PREPARER = Action.PLANNINGS_PREPARER
@@ -133,6 +133,8 @@ class SemaineVue(VuePlannings):
             and services.occupe_un_poste(request.user, pays, debut),
             "modifiable": bool(planning) and planning.statut in MODIFIABLES,
             "visites": _visites(planning) if planning else [],
+            "passages": _passages(planning) if planning else [],
+            "absences": list(planning.absences.filter(archive_le__isnull=True)) if planning else [],
             "reseaux": _reseaux(planning) if planning else [],
         }
         return Response(s.SemaineSerializer(donnees).data)
@@ -158,6 +160,11 @@ def _visites(planning: Planning) -> list:
             "prospect__type", "prospect__specialite", "etablissement", "reseau"
         )
     )
+
+
+def _passages(planning: Planning) -> list:
+    return list(planning.passages.filter(archive_le__isnull=True)
+                .select_related("etablissement").prefetch_related("visites"))  # fmt: skip
 
 
 def _reseaux(planning: Planning) -> list:
@@ -246,3 +253,93 @@ class VisiteRetraitVue(VueVisites):
     def post(self, request, id):
         visite = get_object_or_404(self.get_queryset(), pk=id)
         return Response(s.VisiteSerializer(services.retirer_visite(visite)).data)
+
+
+class OrdreVue(VuePlannings):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.OrdreSerializer, responses=s.VisiteSerializer(many=True),
+                   operation_id="planning_ordonner")  # fmt: skip
+    def post(self, request, id):
+        planning = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.OrdreSerializer, request)
+        services.ordonner(planning, v["date"], v["visites"])
+        visites = [x for x in _visites(planning) if x.date == v["date"]]
+        return Response(s.VisiteSerializer(visites, many=True).data)
+
+
+# --- Passages (PLN-003) -----------------------------------------------------------------------
+
+
+class PassagesPlanningVue(VuePlannings):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.RegroupementSerializer, responses={201: s.PassageSerializer},
+                   operation_id="passage_regrouper")  # fmt: skip
+    def post(self, request, id):
+        planning = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.RegroupementSerializer, request)
+        visites = list(planning.visites.filter(archive_le__isnull=True, pk__in=v["visites"]))
+        if len(visites) != len(set(v["visites"])):
+            raise ErreurMetier("visite_inconnue", _("Visite inconnue dans ce planning."),
+                               champ="visites")  # fmt: skip
+        passage = services.regrouper(planning, visites)
+        return Response(s.PassageSerializer(passage).data, status=status.HTTP_201_CREATED)
+
+
+class PassageDissociationVue(VuePerimetre):
+    serializer_class = s.PassageSerializer
+    actions = {"POST": PREPARER}
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(
+            Passage.objects.filter(planning__delegue=self.request.user, archive_le__isnull=True)
+        ).select_related("planning")
+
+    @extend_schema(request=None, responses=s.PassageSerializer, operation_id="passage_dissocier")
+    def post(self, request, id):
+        passage = get_object_or_404(self.get_queryset(), pk=id)
+        return Response(s.PassageSerializer(services.dissocier(passage)).data)
+
+
+# --- Absences (PLN-009) -----------------------------------------------------------------------
+
+
+class AbsencesPlanningVue(VuePlannings):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.SaisieAbsenceSerializer, responses={201: s.AbsenceSerializer},
+                   operation_id="absence_declarer")  # fmt: skip
+    def post(self, request, id):
+        planning = get_object_or_404(self.get_queryset(), pk=id)
+        absence = services.declarer_absence(planning, **_lire(s.SaisieAbsenceSerializer, request))
+        return Response(s.AbsenceSerializer(absence).data, status=status.HTTP_201_CREATED)
+
+
+class VueAbsences(VuePerimetre):
+    serializer_class = s.AbsenceSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(
+            Absence.objects.filter(planning__delegue=self.request.user, archive_le__isnull=True)
+        ).select_related("planning")
+
+
+class AbsenceVue(VueAbsences):
+    actions = {"PATCH": PREPARER}
+
+    @extend_schema(request=s.ModificationAbsenceSerializer, responses=s.AbsenceSerializer,
+                   operation_id="absence_modifier")  # fmt: skip
+    def patch(self, request, id):
+        absence = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.ModificationAbsenceSerializer, request)
+        return Response(s.AbsenceSerializer(services.modifier_absence(absence, **v)).data)
+
+
+class AbsenceRetraitVue(VueAbsences):
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=None, responses=s.AbsenceSerializer, operation_id="absence_retirer")
+    def post(self, request, id):
+        absence = get_object_or_404(self.get_queryset(), pk=id)
+        return Response(s.AbsenceSerializer(services.retirer_absence(absence)).data)

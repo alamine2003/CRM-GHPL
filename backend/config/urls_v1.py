@@ -191,6 +191,20 @@ urlpatterns = [
     path("plannings/<uuid:id>/visites/", pln.VisitesPlanningVue.as_view(), name="planning-visites"),
     path("visites/<uuid:id>/", pln.VisiteVue.as_view(), name="visite"),
     path("visites/<uuid:id>/retirer/", pln.VisiteRetraitVue.as_view(), name="visite-retirer"),
+    path("plannings/<uuid:id>/ordre/", pln.OrdreVue.as_view(), name="planning-ordre"),
+    path(
+        "plannings/<uuid:id>/passages/", pln.PassagesPlanningVue.as_view(), name="planning-passages"
+    ),
+    path(
+        "passages/<uuid:id>/dissocier/",
+        pln.PassageDissociationVue.as_view(),
+        name="passage-dissocier",
+    ),
+    path(
+        "plannings/<uuid:id>/absences/", pln.AbsencesPlanningVue.as_view(), name="planning-absences"
+    ),
+    path("absences/<uuid:id>/", pln.AbsenceVue.as_view(), name="absence"),
+    path("absences/<uuid:id>/retirer/", pln.AbsenceRetraitVue.as_view(), name="absence-retirer"),
     path("doublons/<uuid:id>/trancher/", dbl.DoublonDecisionVue.as_view(), name="doublon-trancher"),
     path("fusions/", dbl.FusionsVue.as_view(), name="fusions"),
     path("fusions/<uuid:id>/defaire/", dbl.DefusionVue.as_view(), name="fusion-defaire"),

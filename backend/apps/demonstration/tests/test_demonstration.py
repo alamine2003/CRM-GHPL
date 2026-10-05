@@ -51,7 +51,12 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     from apps.planning.models import Visite
 
     visites = Visite.objects.filter(pays__code="SN")
-    assert visites.count() == 4 and visites.filter(heure__isnull=True).count() == 1
+    assert visites.count() == 6 and visites.filter(heure__isnull=True).count() == 1
+    # Un passage de deux confrères et une demi-journée de formation (PLN-003, PLN-009).
+    from apps.planning.models import Absence, Passage
+
+    assert Passage.objects.filter(pays__code="SN").get().visites.count() == 2
+    assert Absence.objects.filter(pays__code="SN", periode="apres_midi").count() == 1
 
 
 def test_aucune_donnee_reelle(monkeypatch):

@@ -463,6 +463,19 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 - Une visite se modifie ou se retire tant que le planning est « en préparation » ou « à réviser » ; le retrait est un archivage audité, jamais une suppression. Déplacer, copier et le glisser-déposer restent en 0.2.5 (PLN-005).
 - La démonstration prépare la semaine en cours du premier délégué de chaque pays : trois visites complètes et une à compléter.
 
+### 14.10 Ordre, passages et absences (mise en œuvre 0.2.3)
+
+- **Ordre de la journée** [H] : les visites à heure fixe se rangent d'elles-mêmes dans l'ordre chronologique ; le délégué place à la main celles qui n'ont pas encore d'heure. L'heure garde le dernier mot : une visite qui reçoit une heure reprend sa place chronologique.
+- **Passage** (PLN-003) : le délégué regroupe en un passage des visites du même jour dans le même établissement ; le passage s'affiche « Établissement · n prescripteurs » (CA1) et chaque visite garde son prospect, son objectif et, plus tard, son rapport (CA2).
+  - Le passage a une seule heure, celle de toutes ses visites [H] ; à sa création, c'est la plus matinale. La changer sur une visite la change pour toutes.
+  - Une visite ajoutée dans ce lieu ce jour-là rejoint d'office le passage ; une visite déplacée à un autre jour ou un autre lieu le quitte ; un passage réduit à une visite se défait [H].
+  - « Dissocier » rend les visites indépendantes ; elles gardent l'heure du passage.
+- **Absence** (PLN-009) : congé, formation, réunion, maladie ou autre, sur la journée, le matin ou l'après-midi.
+  - Une absence « autre » exige un motif [H] (comme les écarts de visite, RG-031).
+  - Une journée entière d'absence ne reçoit pas de visite, et ne se déclare pas tant que des visites y sont prévues [H] ; une demi-journée laisse planifier le reste du jour.
+  - Une demi-journée compte pour moitié dans la part travaillée du jour (CA1, RG-022) ; les seuils qui l'utilisent arrivent avec les contrôles de 0.2.4. La validation avec le planning (CA2) vient avec le cycle 0.3.
+- La démonstration ajoute à la semaine du premier délégué un passage de deux confrères et une demi-journée de formation.
+
 ## 15. Exigences fonctionnelles
 
 Chaque exigence porte : un identifiant stable, la version de première livraison prévue, et des critères d'acceptation vérifiables (« CA »).

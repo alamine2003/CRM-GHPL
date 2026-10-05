@@ -1,9 +1,62 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.2
+  version: 0.2.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
+  /api/v1/absences/{id}/:
+    patch:
+      operationId: absence_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - absences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationAbsence'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationAbsence'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationAbsence'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Absence'
+          description: ''
+  /api/v1/absences/{id}/retirer/:
+    post:
+      operationId: absence_retirer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - absences
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Absence'
+          description: ''
   /api/v1/affectations/{id}/terminer/:
     post:
       operationId: affectation_terminer
@@ -2216,6 +2269,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/Zone'
           description: ''
+  /api/v1/passages/{id}/dissocier/:
+    post:
+      operationId: passage_dissocier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - passages
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Passage'
+          description: ''
   /api/v1/pays/:
     get:
       operationId: pays_liste
@@ -2429,6 +2503,107 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Planning'
+          description: ''
+  /api/v1/plannings/{id}/absences/:
+    post:
+      operationId: absence_declarer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieAbsence'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieAbsence'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieAbsence'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Absence'
+          description: ''
+  /api/v1/plannings/{id}/ordre/:
+    post:
+      operationId: planning_ordonner
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ordre'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ordre'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ordre'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visite'
+          description: ''
+  /api/v1/plannings/{id}/passages/:
+    post:
+      operationId: passage_regrouper
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Regroupement'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Regroupement'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Regroupement'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Passage'
           description: ''
   /api/v1/plannings/{id}/visites/:
     post:
@@ -3642,6 +3817,27 @@ paths:
           description: ''
 components:
   schemas:
+    Absence:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        date:
+          type: string
+          format: date
+        periode:
+          $ref: '#/components/schemas/PeriodeAbsenceEnum'
+        type:
+          $ref: '#/components/schemas/TypeAbsenceEnum'
+        commentaire:
+          type: string
+          maxLength: 200
+      required:
+      - date
+      - id
+      - type
     Activite:
       type: object
       description: Événement d'audit de l'utilisateur lui-même (connexions, sécurité
@@ -5162,6 +5358,20 @@ components:
           format: date
       required:
       - utilisateur
+    Ordre:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        visites:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - date
+      - visites
     Oubli:
       type: object
       properties:
@@ -5193,6 +5403,34 @@ components:
       - hypothese
       - personnalise
       - valeur
+    Passage:
+      type: object
+      description: Ligne « Établissement · n prescripteurs » (PLN-003 CA1).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        etablissement:
+          $ref: '#/components/schemas/EtablissementVisite'
+        visites:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - date
+      - etablissement
+      - heure
+      - id
+      - visites
     PatchedChangementLangue:
       type: object
       properties:
@@ -5211,6 +5449,19 @@ components:
         libelle:
           type: string
           maxLength: 120
+    PatchedModificationAbsence:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        periode:
+          $ref: '#/components/schemas/PeriodeAbsenceEnum'
+        type:
+          $ref: '#/components/schemas/TypeAbsenceEnum'
+        commentaire:
+          type: string
+          maxLength: 200
     PatchedModificationExercice:
       type: object
       properties:
@@ -5514,6 +5765,16 @@ components:
           format: date
       required:
       - reseau
+    PeriodeAbsenceEnum:
+      enum:
+      - journee
+      - matin
+      - apres_midi
+      type: string
+      description: |-
+        * `journee` - Journée
+        * `matin` - Matin
+        * `apres_midi` - Après-midi
     Personne:
       type: object
       properties:
@@ -6233,6 +6494,17 @@ components:
           format: date
       required:
       - superviseur
+    Regroupement:
+      type: object
+      properties:
+        visites:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+      required:
+      - visites
     Reinitialisation:
       type: object
       properties:
@@ -6391,6 +6663,24 @@ components:
         * `superviseur` - Superviseur
         * `delegue` - Délégué
         * `admin_technique` - Administrateur technique
+    SaisieAbsence:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        periode:
+          allOf:
+          - $ref: '#/components/schemas/PeriodeAbsenceEnum'
+          default: journee
+        type:
+          $ref: '#/components/schemas/TypeAbsenceEnum'
+        commentaire:
+          type: string
+          maxLength: 200
+      required:
+      - date
+      - type
     SaisieEtablissement:
       type: object
       properties:
@@ -6656,14 +6946,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Visite'
+        passages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Passage'
+        absences:
+          type: array
+          items:
+            $ref: '#/components/schemas/Absence'
         reseaux:
           type: array
           items:
             $ref: '#/components/schemas/Resume'
       required:
+      - absences
       - courante
       - jours
       - modifiable
+      - passages
       - peut_creer
       - planning
       - precedente
@@ -6895,6 +7195,20 @@ components:
       required:
       - motif
       - pays
+    TypeAbsenceEnum:
+      enum:
+      - conge
+      - formation
+      - reunion
+      - maladie
+      - autre
+      type: string
+      description: |-
+        * `conge` - Congé
+        * `formation` - Formation
+        * `reunion` - Réunion
+        * `maladie` - Maladie
+        * `autre` - Autre
     TypePosteEnum:
       enum:
       - vm
@@ -7032,6 +7346,14 @@ components:
           items:
             type: string
           readOnly: true
+        passage:
+          type: string
+          format: uuid
+          nullable: true
+        ordre:
+          type: integer
+          maximum: 32767
+          minimum: 0
       required:
       - date
       - etablissement

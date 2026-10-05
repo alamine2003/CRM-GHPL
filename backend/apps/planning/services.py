@@ -1,4 +1,5 @@
-"""Jours fériés (ORG-012), planning de la semaine (PLN-001) et visites planifiées (PLN-002)."""
+"""Jours fériés (ORG-012), planning de la semaine (PLN-001), visites planifiées (PLN-002), ordre
+de la journée, passages (PLN-003) et absences (PLN-009)."""
 
 from datetime import date
 
@@ -14,7 +15,7 @@ from apps.socle.services import aujourdhui
 
 from .calendrier import jours_de_la_semaine, lundi
 from .etats import MODIFIABLES
-from .models import JourFerie, Planning, Visite
+from .models import Absence, JourFerie, Passage, Periode, Planning, TypeAbsence, Visite
 
 
 def _auditer(action: str, objet, **details) -> None:
@@ -226,6 +227,7 @@ def _reseau_par_defaut(planning: Planning):
 def _appliquer(visite: Visite, champs: dict) -> None:
     if "date" in champs:
         _exiger_jour_planifiable(visite.planning, champs["date"])
+        _exiger_present(visite.planning, champs["date"])
     if champs.get("reseau") is not None:
         visite.poste = _poste_du_reseau(visite.planning, champs["reseau"])
     elif "reseau" in champs:
@@ -238,6 +240,77 @@ def _appliquer(visite: Visite, champs: dict) -> None:
             setattr(visite, cle, (champs[cle] or "").strip())
 
 
+def _visites_du_jour(planning: Planning, jour: date):
+    return planning.visites.filter(archive_le__isnull=True, date=jour).order_by("ordre", "cree_le")
+
+
+def ranger(planning: Planning, jour: date, ordre: list | None = None) -> None:
+    """Ordre de la journée (0.2.3). Les visites d'un passage restent ensemble ; les visites à
+    heure fixe occupent leurs places dans l'ordre chronologique, celles sans heure gardent la
+    place que le délégué leur a donnée (`ordre`, liste d'identifiants de visites)."""
+    visites = list(_visites_du_jour(planning, jour))
+    if ordre is not None:
+        rang = {str(i): n for n, i in enumerate(ordre)}
+        visites.sort(key=lambda v: rang.get(str(v.pk), len(rang)))
+    # Unités : une visite seule, ou toutes les visites d'un passage (à la place de la première).
+    unites: list[list[Visite]] = []
+    par_passage: dict = {}
+    for v in visites:
+        if v.passage_id is None:
+            unites.append([v])
+        elif v.passage_id in par_passage:
+            par_passage[v.passage_id].append(v)
+        else:
+            par_passage[v.passage_id] = [v]
+            unites.append(par_passage[v.passage_id])
+    places = [n for n, u in enumerate(unites) if u[0].heure is not None]
+    chronologiques = sorted((unites[n] for n in places), key=lambda u: u[0].heure)
+    for n, unite in zip(places, chronologiques, strict=True):
+        unites[n] = unite
+    rang = 0
+    for unite in unites:
+        for v in unite:
+            rang += 1
+            if v.ordre != rang:
+                Visite.objects.filter(pk=v.pk).update(ordre=rang)
+
+
+def _dernier_rang(planning: Planning, jour: date) -> int:
+    derniere = _visites_du_jour(planning, jour).order_by("-ordre").first()
+    return derniere.ordre if derniere else 0
+
+
+def _accorder_passage(visite: Visite) -> Passage | None:
+    """Une visite quitte son passage si elle change de jour ou de lieu, et rejoint d'office le
+    passage de son nouveau lieu ce jour-là ; elle en prend l'heure. Rend le passage quitté."""
+    ancien = visite.passage
+    if ancien and (
+        ancien.date != visite.date or ancien.etablissement_id != visite.etablissement_id
+    ):
+        visite.passage = None
+    if visite.passage is None and visite.etablissement_id:
+        visite.passage = Passage.objects.filter(
+            planning=visite.planning, date=visite.date, etablissement_id=visite.etablissement_id,
+            archive_le__isnull=True,
+        ).first()  # fmt: skip
+    if visite.passage is not None:
+        if visite.passage == ancien and visite.heure != ancien.heure:
+            # L'heure d'une visite du passage est celle du passage : elle change pour toutes.
+            ancien.heure = visite.heure
+            ancien.save(update_fields=["heure", "modifie_le"])
+            ancien.visites.filter(archive_le__isnull=True).update(heure=visite.heure)
+        else:
+            visite.heure = visite.passage.heure
+    return ancien if ancien is not None and visite.passage != ancien else None
+
+
+def _dissoudre_si_seul(passage: Passage | None) -> None:
+    """Un passage n'a de sens qu'à partir de deux visites."""
+    if passage is not None and passage.visites.filter(archive_le__isnull=True).count() < 2:
+        passage.visites.update(passage=None)
+        passage.archiver()
+
+
 @transaction.atomic
 def ajouter_visite(planning: Planning, **champs) -> Visite:
     _exiger_modifiable(planning)
@@ -245,7 +318,10 @@ def ajouter_visite(planning: Planning, **champs) -> Visite:
     if "reseau" not in champs:
         champs["reseau"] = _reseau_par_defaut(planning)
     _appliquer(visite, champs)
+    _accorder_passage(visite)
+    visite.ordre = _dernier_rang(planning, visite.date) + 1
     visite.save()
+    ranger(planning, visite.date)
     _auditer("visite.planification", visite, planning=str(planning.pk), date=str(visite.date))
     return visite
 
@@ -253,14 +329,181 @@ def ajouter_visite(planning: Planning, **champs) -> Visite:
 @transaction.atomic
 def modifier_visite(visite: Visite, **champs) -> Visite:
     _exiger_modifiable(visite.planning)
+    avant = visite.date
     _appliquer(visite, champs)
+    quitte = _accorder_passage(visite)
+    if visite.date != avant:
+        visite.ordre = _dernier_rang(visite.planning, visite.date) + 1
     visite.save()
+    _dissoudre_si_seul(quitte)
+    ranger(visite.planning, visite.date)
+    if visite.date != avant:
+        ranger(visite.planning, avant)
+    visite.refresh_from_db()
     return visite
 
 
 @transaction.atomic
 def retirer_visite(visite: Visite) -> Visite:
     _exiger_modifiable(visite.planning)
+    passage = visite.passage
+    visite.passage = None
+    visite.save(update_fields=["passage", "modifie_le"])
     visite.archiver()
+    _dissoudre_si_seul(passage)
+    ranger(visite.planning, visite.date)
     _auditer("visite.retrait", visite, planning=str(visite.planning_id), date=str(visite.date))
     return visite
+
+
+@transaction.atomic
+def ordonner(planning: Planning, jour: date, visites: list) -> None:
+    """Le délégué place ses visites dans la journée ; l'heure garde le dernier mot."""
+    _exiger_modifiable(planning)
+    du_jour = {str(v.pk) for v in _visites_du_jour(planning, jour)}
+    if {str(v) for v in visites} != du_jour or len(visites) != len(du_jour):
+        raise ErreurMetier(
+            "ordre_invalide",
+            _("L'ordre doit reprendre exactement les visites de ce jour."),
+            champ="visites",
+        )
+    ranger(planning, jour, [str(v) for v in visites])
+
+
+# --- Passages (PLN-003) -----------------------------------------------------------------------
+
+
+@transaction.atomic
+def regrouper(planning: Planning, visites: list[Visite]) -> Passage:
+    """Regroupe en un passage des visites du même jour dans le même établissement. L'heure du
+    passage est la plus matinale de ses visites ; un passage existant au même lieu les reçoit."""
+    _exiger_modifiable(planning)
+    if len({v.pk for v in visites}) < 2:
+        raise ErreurMetier(
+            "passage_trop_petit", _("Un passage regroupe au moins deux visites."), champ="visites"
+        )
+    lieux = {(v.date, v.etablissement_id) for v in visites}
+    if len(lieux) != 1 or None in {e for _d, e in lieux}:
+        raise ErreurMetier(
+            "passage_disparate",
+            _("Un passage regroupe des visites du même jour, dans le même établissement."),
+            champ="visites",
+        )
+    jour, etablissement = lieux.pop()
+    heures = [v.heure for v in visites if v.heure is not None]
+    passage = Passage.objects.filter(
+        planning=planning, date=jour, etablissement_id=etablissement, archive_le__isnull=True
+    ).first()
+    if passage is None:
+        passage = Passage.objects.create(
+            pays=planning.pays, planning=planning, date=jour, etablissement_id=etablissement,
+            heure=min(heures) if heures else None,
+        )  # fmt: skip
+        _auditer("passage.creation", passage, planning=str(planning.pk), date=str(jour))
+    Visite.objects.filter(pk__in=[v.pk for v in visites]).update(
+        passage=passage, heure=passage.heure
+    )
+    ranger(planning, jour)
+    return passage
+
+
+@transaction.atomic
+def dissocier(passage: Passage) -> Passage:
+    """Les visites redeviennent indépendantes et gardent l'heure du passage."""
+    _exiger_modifiable(passage.planning)
+    passage.visites.update(passage=None)
+    passage.archiver()
+    _auditer("passage.dissociation", passage, planning=str(passage.planning_id),
+             date=str(passage.date))  # fmt: skip
+    ranger(passage.planning, passage.date)
+    return passage
+
+
+# --- Absences (PLN-009) -----------------------------------------------------------------------
+
+#: Part de la journée travaillée selon les absences déclarées (CA1, RG-022) : une demi-journée
+#: d'absence réduit de moitié les seuils du jour (contrôles en 0.2.4).
+PART_ABSENTE = {Periode.JOURNEE: 1.0, Periode.MATIN: 0.5, Periode.APRES_MIDI: 0.5}
+
+
+def part_travaillee(planning: Planning, jour: date) -> float:
+    absences = planning.absences.filter(archive_le__isnull=True, date=jour)
+    return max(0.0, 1.0 - sum(PART_ABSENTE[a.periode] for a in absences))
+
+
+def _exiger_present(planning: Planning, jour: date) -> None:
+    """Une journée entière d'absence ne reçoit pas de visite."""
+    if planning.absences.filter(archive_le__isnull=True, date=jour,
+                                periode=Periode.JOURNEE).exists():  # fmt: skip
+        raise ErreurMetier(
+            "jour_absent",
+            _("Vous êtes absent toute cette journée : elle ne reçoit pas de visite."),
+            champ="date",
+        )
+
+
+def _verifier_absence(absence: Absence) -> None:
+    _exiger_jour_planifiable(absence.planning, absence.date)
+    if absence.type == TypeAbsence.AUTRE and not absence.commentaire:
+        raise ErreurMetier(
+            "motif_requis",
+            _("Précisez le motif d'une absence « autre »."),
+            champ="commentaire",
+        )
+    autres = absence.planning.absences.filter(archive_le__isnull=True, date=absence.date).exclude(
+        pk=absence.pk
+    )
+    if any(
+        Periode.JOURNEE in (a.periode, absence.periode) or a.periode == absence.periode
+        for a in autres
+    ):
+        raise ErreurMetier(
+            "absence_chevauchement",
+            _("Une absence est déjà déclarée sur cette période."),
+            status.HTTP_409_CONFLICT,
+            champ="periode",
+        )
+    if absence.periode == Periode.JOURNEE:
+        nombre = _visites_du_jour(absence.planning, absence.date).count()
+        if nombre:
+            raise ErreurMetier(
+                "absence_avec_visites",
+                _("Des visites sont prévues ce jour-là : déplacez-les ou retirez-les d'abord."),
+                status.HTTP_409_CONFLICT,
+                champ="periode",
+                visites=nombre,
+            )
+
+
+@transaction.atomic
+def declarer_absence(planning: Planning, *, date: date, type: str, periode: str = Periode.JOURNEE,
+                     commentaire: str = "") -> Absence:  # fmt: skip
+    _exiger_modifiable(planning)
+    absence = Absence(pays=planning.pays, planning=planning, date=date, type=type,
+                      periode=periode, commentaire=(commentaire or "").strip())  # fmt: skip
+    _verifier_absence(absence)
+    absence.save()
+    _auditer("absence.declaration", absence, planning=str(planning.pk), date=str(date),
+             periode=periode, type=type)  # fmt: skip
+    return absence
+
+
+@transaction.atomic
+def modifier_absence(absence: Absence, **champs) -> Absence:
+    _exiger_modifiable(absence.planning)
+    if "commentaire" in champs:
+        champs["commentaire"] = (champs["commentaire"] or "").strip()
+    for cle, valeur in champs.items():
+        setattr(absence, cle, valeur)
+    _verifier_absence(absence)
+    absence.save()
+    return absence
+
+
+@transaction.atomic
+def retirer_absence(absence: Absence) -> Absence:
+    _exiger_modifiable(absence.planning)
+    absence.archiver()
+    _auditer("absence.retrait", absence, planning=str(absence.planning_id),
+             date=str(absence.date))  # fmt: skip
+    return absence

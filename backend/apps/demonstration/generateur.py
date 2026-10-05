@@ -412,7 +412,38 @@ class Generateur:
                 objectif="Présenter le produit du mois" if complete else "",
             )  # fmt: skip
             nombre += 1
-        return nombre
+        return nombre + self._passage_et_absence(planning, jours, reseau, cibles)
+
+    @staticmethod
+    def _passage_et_absence(planning, jours, reseau, cibles) -> int:
+        """PLN-003 et PLN-009 : deux confrères vus au même lieu le même jour, regroupés en un
+        passage, et une demi-journée de formation en fin de semaine."""
+        from collections import defaultdict
+
+        from apps.planning import services as pln
+        from apps.prospects.models import Exercice
+
+        if len(jours) < 2:
+            return 0
+        deja = set(planning.visites.values_list("prospect_id", flat=True))
+        par_lieu = defaultdict(list)
+        for ex in (
+            Exercice.objects.filter(fin__isnull=True, prospect__in=[c.prospect for c in cibles])
+            .exclude(prospect_id__in=deja)
+            .select_related("etablissement", "prospect")
+        ):
+            par_lieu[ex.etablissement].append(ex.prospect)
+        lieu, prospects = next(((e, p) for e, p in par_lieu.items() if len(p) >= 2), (None, []))
+        visites = [
+            pln.ajouter_visite(planning, date=jours[1], prospect=p, etablissement=lieu,
+                               reseau=reseau, heure=time(11, 0), objectif="Réunion de service")
+            for p in prospects[:2]
+        ]  # fmt: skip
+        if visites:
+            pln.regrouper(planning, visites)
+        pln.declarer_absence(planning, date=jours[-1], periode="apres_midi", type="formation",
+                             commentaire="Formation produit")  # fmt: skip
+        return len(visites)
 
     def jours_feries(self, pays) -> int:
         """Calendrier de l'année en cours et de la suivante (ORG-012) : seulement les fêtes à
