@@ -547,13 +547,13 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
 | Indicateur | Définition |
 |---|---|
 | Prospects planifiés | prospects distincts du planning approuvé de la semaine |
-| Base retenue | base de la couverture (égale aux prospects planifiés dans l'exemple ; cas où elle diffère : à préciser) |
+| Base retenue | **liste cible (portefeuille) du délégué** sur la période [D, 5 octobre 2026] |
 | Prospects visités | prospects distincts visités, planifiés ou non |
 | Planifiés visités | prospects planifiés effectivement visités |
 | Visites non planifiées | prospects visités hors planning (visites imprévues) |
 | Visites géolocalisées | visites avec position GPS (définition exacte : à préciser) |
-| Taux de géolocalisation | visites géolocalisées / prospects visités |
-| Taux de couverture | prospects visités / base retenue |
+| Taux de géolocalisation | visites géolocalisées / prospects visités [D, 5 octobre 2026] |
+| Taux de couverture | prospects de la liste cible visités / liste cible |
 | Taux de réalisation du plan | planifiés visités / prospects planifiés |
 | Taux de respect du plan | planifiés visités / prospects visités |
 | Volume relatif | prospects visités / plus grand nombre de prospects visités de l'équipe |
@@ -568,7 +568,11 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
   - « couverture du **portefeuille** » et « réalisation du planning » reprises telles quelles de BirdNotes : leurs valeurs ne se recalculent pas toujours à partir des comptages (une couverture de 61 % sans aucune visite, par exemple) ;
   - classement **par ordre de priorité** et non pondéré : géolocalisation, puis réalisation du planning, puis nombre de prospects planifiés ;
   - une fiche de performance par délégué, l'onglet « Meilleur délégué du mois » et le total de l'agence.
-- Dans l'application, chaque taux sera **recalculé à partir des visites** (jamais repris d'un outil externe) ; la période (semaine ou mois) et la méthode (pondérée ou par priorité) restent à choisir [H].
+- Dans l'application, chaque taux sera **recalculé à partir des visites** (jamais repris d'un outil externe).
+- **Périodes** [D, 5 octobre 2026] : toutes, de 24 heures à 1 an (24 h, 7 jours, 30 jours, 90 jours, 6 mois, 1 an, ou dates choisies), avec la comparaison à la période précédente (variation en % ou en points).
+- **Méthode** : score pondéré (version hebdomadaire, la plus récente) [H] ; le classement par priorité de la version mensuelle n'est pas repris sauf demande.
+- **Profil du délégué** (modèle : tableau de bord BirdNotes « Profil délégué — Vue Insight V2 ») : filtres supérieur, délégué et période ; visites réalisées, prospects planifiés, taux de réalisation du planning (planifiés visités / planifiés) ; planifiés vs visités (visités planifiés, visités non planifiés, planifiés non visités) ; visites géolocalisées et non géolocalisées ; taux de couverture du portefeuille ; chaque indicateur avec la période précédente et sa variation ; courbe des visites planifiées et réalisées par jour ; fréquence des prospects visités (potentiel, nombre de visites, adresse, secteur, localité, spécialité, activité H/P) ; prospects non visités avec leur date de dernière visite. Les échantillons remis viennent des rapports (RG-038, cycle 0.5).
+- **Hors périmètre actuel** : le chiffre d'affaires (CA TTC pharmacie/parapharmacie, grossistes, par gamme, moyen par visite) suppose des données de vente que le CRM ne reçoit pas ; à décider avec leur source.
 
 ## 15. Exigences fonctionnelles
 
