@@ -10,6 +10,14 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { lire } from './baseLocale';
 import {
+  type ChampsVisite,
+  estTransitoire,
+  garderBrouillon,
+  mettreEnAttente,
+  nouvelIdentifiant,
+  oublierBrouillon,
+} from './Brouillons';
+import {
   Alerte,
   Bouton,
   Carte,
@@ -176,12 +184,15 @@ export function FormulaireVisite({
   semaine,
   jour,
   visite,
+  brouillon,
   surTermine,
   surAnnuler,
 }: {
   semaine: Semaine;
   jour: string;
   visite?: Visite;
+  /** Saisie reprise d'un brouillon gardé sur le téléphone (PLN-007). */
+  brouillon?: ChampsVisite;
   surTermine: (message: string) => void;
   surAnnuler: () => void;
 }) {
@@ -201,20 +212,40 @@ export function FormulaireVisite({
     : undefined;
   const unSeulReseau = semaine.reseaux.length === 1 ? (semaine.reseaux[0]?.id ?? null) : null;
 
-  const [date, setDate] = useState(visite?.date ?? jour);
+  const [date, setDate] = useState(brouillon?.date ?? visite?.date ?? jour);
   const [prospect, setProspect] = useState<Choix | null>(
-    visite?.prospect
-      ? {
-          ...visite.prospect,
-          detail: visite.prospect.specialite_libelle || visite.prospect.type_libelle,
-        }
-      : null,
+    brouillon
+      ? brouillon.prospect
+      : visite?.prospect
+        ? {
+            ...visite.prospect,
+            detail: visite.prospect.specialite_libelle || visite.prospect.type_libelle,
+          }
+        : null,
   );
-  const [lieu, setLieu] = useState<Lieu | null>(visite?.etablissement ?? null);
-  const [heure, setHeure] = useState(visite?.heure ?? '');
-  const [reseau, setReseau] = useState<string | null>(visite?.reseau?.id ?? unSeulReseau);
-  const [objectif, setObjectif] = useState(visite?.objectif ?? '');
-  const [note, setNote] = useState(visite?.note ?? '');
+  const [lieu, setLieu] = useState<Lieu | null>(
+    brouillon ? brouillon.lieu : (visite?.etablissement ?? null),
+  );
+  const [heure, setHeure] = useState(brouillon?.heure ?? visite?.heure ?? '');
+  const [reseau, setReseau] = useState<string | null>(
+    brouillon ? brouillon.reseau : (visite?.reseau?.id ?? unSeulReseau),
+  );
+  const [objectif, setObjectif] = useState(brouillon?.objectif ?? visite?.objectif ?? '');
+  const [note, setNote] = useState(brouillon?.note ?? visite?.note ?? '');
+
+  // PLN-007 CA1 : la saisie est gardée sur le téléphone à chaque changement ; si l'application
+  // se ferme, rien n'est perdu.
+  useEffect(() => {
+    const minuterie = setTimeout(() => {
+      void garderBrouillon({
+        objet: 'visite',
+        semaine: semaine.semaine,
+        visite: visite?.id,
+        champs: { date, heure, prospect, lieu, reseau, objectif, note },
+      });
+    }, 300);
+    return () => clearTimeout(minuterie);
+  }, [semaine.semaine, visite?.id, date, heure, prospect, lieu, reseau, objectif, note]);
   const [envoi, setEnvoi] = useState<'enregistrer' | 'retirer' | 'copier' | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -237,14 +268,45 @@ export function FormulaireVisite({
       objectif: objectif.trim(),
       note: note.trim(),
     };
+    // L'identifiant est tiré ici : renvoyée après une coupure, la visite n'est créée qu'une fois.
+    const ajout = { ...saisie, id: nouvelIdentifiant() };
     try {
       if (visite) await client.visites.modifier(visite.id, saisie);
-      else if (semaine.planning) await client.plannings.ajouterVisite(semaine.planning.id, saisie);
+      else if (semaine.planning) await client.plannings.ajouterVisite(semaine.planning.id, ajout);
+      await oublierBrouillon();
       surTermine(visite ? t('visites.modifiee') : t('visites.ajoutee'));
     } catch (e) {
+      if (estTransitoire(e) && semaine.planning) {
+        // Sans réseau : la visite attend sur le téléphone et partira au retour du réseau.
+        const resume = [
+          libelleJour({ date } as JourSemaine),
+          prospect ? nomProspect(prospect, t) : '',
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        await mettreEnAttente(
+          visite
+            ? { id: nouvelIdentifiant(), type: 'modif_visite', visite: visite.id, saisie, resume }
+            : {
+                id: ajout.id,
+                type: 'ajout_visite',
+                planning: semaine.planning.id,
+                saisie: ajout,
+                resume,
+              },
+        );
+        await oublierBrouillon();
+        surTermine(t('attente.gardee'));
+        return;
+      }
       setErreur(messageErreur(e, t('erreurs.reseau')));
       setEnvoi(null);
     }
+  }
+
+  function annuler() {
+    void oublierBrouillon();
+    surAnnuler();
   }
 
   /** Copie de la visite, telle qu'enregistrée, sur un autre jour (PLN-005). */
@@ -254,6 +316,7 @@ export function FormulaireVisite({
     setErreur(null);
     try {
       await client.visites.copier(visite.id, j.date);
+      await oublierBrouillon();
       surTermine(t('visites.copiee', { jour: libelleJour(j) }));
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));
@@ -267,6 +330,7 @@ export function FormulaireVisite({
     setErreur(null);
     try {
       await client.visites.retirer(visite.id);
+      await oublierBrouillon();
       surTermine(t('visites.retiree'));
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));
@@ -391,7 +455,7 @@ export function FormulaireVisite({
         desactive={heureIllisible || envoi === 'retirer'}
         onPress={() => void enregistrer()}
       />
-      <Bouton secondaire libelle={t('commun.annuler')} onPress={surAnnuler} />
+      <Bouton secondaire libelle={t('commun.annuler')} onPress={annuler} />
       {visite && jours.length > 1 && (
         <Section titre={t('visites.copierVers')}>
           <Texte variante="discret">{t('visites.copierAide')}</Texte>

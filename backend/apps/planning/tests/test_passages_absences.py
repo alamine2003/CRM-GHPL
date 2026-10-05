@@ -236,3 +236,43 @@ def test_un_autre_delegue_ne_touche_ni_passage_ni_absence(monde, terrain):
     autre = client_de(monde["sup.sn"])
     assert autre.post(f"/api/v1/passages/{passage.pk}/dissocier/").status_code == 404
     assert autre.post(f"/api/v1/absences/{absence.pk}/retirer/").status_code == 404
+
+
+# --- Envoi rejoué après une coupure (0.2.7) ----------------------------------------------------
+
+
+def test_une_visite_renvoyee_avec_son_identifiant_n_est_creee_qu_une_fois(monde, terrain):
+    import uuid
+
+    deleg = client_de(monde["deleg.sn"])
+    identifiant = str(uuid.uuid4())
+    url = f"/api/v1/plannings/{terrain['planning'].pk}/visites/"
+    corps = {"id": identifiant, "date": "2026-10-13", "prospect": str(terrain["medecin"].pk)}
+    premiere = deleg.post(url, corps, format="json")
+    assert premiere.status_code == 201 and premiere.json()["id"] == identifiant
+    # La réponse s'est perdue : le téléphone renvoie la même saisie.
+    seconde = deleg.post(url, corps, format="json")
+    assert seconde.status_code == 201 and seconde.json()["id"] == identifiant
+    assert Visite.objects.filter(pk=identifiant).count() == Visite.objects.count() == 1
+    assert EvenementAudit.objects.filter(action="visite.planification").count() == 1
+
+
+def test_une_absence_renvoyee_n_est_declaree_qu_une_fois(monde, terrain):
+    import uuid
+
+    deleg = client_de(monde["deleg.sn"])
+    corps = {"id": str(uuid.uuid4()), "date": "2026-10-15", "type": "formation"}
+    for _ in range(2):
+        assert deleg.post(absences(terrain), corps, format="json").status_code == 201
+    assert Absence.objects.count() == 1
+
+
+def test_un_identifiant_deja_pris_ailleurs_est_refuse(monde, terrain):
+    autre = services.creer_planning(monde["sn"], monde["deleg.sn"], terrain["planning"].semaine
+                                    + __import__("datetime").timedelta(days=7))  # fmt: skip
+    visite = services.ajouter_visite(autre, date=autre.semaine)
+    r = client_de(monde["deleg.sn"]).post(
+        f"/api/v1/plannings/{terrain['planning'].pk}/visites/",
+        {"id": str(visite.pk), "date": "2026-10-13"}, format="json",
+    )  # fmt: skip
+    assert r.status_code == 409 and r.json()["code"] == "identifiant_pris"

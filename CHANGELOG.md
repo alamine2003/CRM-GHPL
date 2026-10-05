@@ -2,6 +2,38 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.7] — Brouillons sauvegardés et hors connexion de base
+
+Septième jalon du cycle 0.2 « Planning ».
+
+### Ajouté — PLN-007
+
+- **Brouillon de saisie** (**CA1**) : la fiche d'une visite ou d'une absence est gardée sur le téléphone, chiffrée, à chaque changement.
+  - Si l'application se ferme en pleine saisie, la semaine affiche à la réouverture « Une nouvelle visite n'a pas été enregistrée », avec « Reprendre la saisie » et « Abandonner cette saisie ».
+  - Enregistrer, annuler, copier ou retirer efface le brouillon.
+- **Sans réseau**, une visite ou une absence enregistrée reste sur le téléphone : « Pas de réseau : enregistrée sur le téléphone, elle partira dès que le réseau revient. »
+  - Une carte « 1 envoi en attente » la liste, avec « Envoyer maintenant ».
+  - La file part d'elle-même à la relecture suivante de la semaine ; « Réseau retrouvé : 1 envoi est parti » le confirme.
+  - Un refus du serveur n'est jamais mis en attente : il s'affiche ; refusé au rejeu, l'envoi garde son message jusqu'à ce qu'on l'abandonne.
+- **Semaine hors ligne** : la dernière semaine lue s'affiche sans réseau (« Hors ligne : semaine telle qu'au 5 oct., 11:50 »).
+- **Sans doublon** : chaque nouvelle visite ou absence porte un identifiant tiré sur le téléphone ; renvoyée après une coupure, elle n'est créée qu'une fois (le serveur rend celle qui existe).
+- prd.md §14.14 consigne le périmètre ; la synchronisation complète reste au cycle 0.8.
+
+### Architecture
+
+- Serveur : `id` facultatif à la création d'une visite ou d'une absence, création idempotente, `identifiant_pris` si l'identifiant appartient à un autre planning.
+- Mobile : `src/Brouillons.ts`, `src/Attente.tsx` ; `oublier` dans la base locale.
+
+### Design
+
+Revue sur le rendu réel, réseau coupé puis rétabli : mobile à 360 px et à 390 px en thème sombre. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Semaine, réseau revenu | « Pas de réseau : enregistrée sur le téléphone » restait affiché après l'envoi | Remplacé par « Réseau retrouvé : 1 envoi est parti » |
+| Semaine, sans réseau | Le message de mise en attente en vert, couleur des succès | En bleu : une information, pas un succès |
+| Envois en attente | « Enregistrés… ils partent » pour un seul envoi | Accordé au nombre |
+
 ## [0.2.6] — Vues semaine, jour et détail ; kilométrage estimé
 
 Sixième jalon du cycle 0.2 « Planning ».

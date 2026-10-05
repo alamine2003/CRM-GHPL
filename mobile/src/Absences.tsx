@@ -5,9 +5,17 @@
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { Absence, PeriodeAbsence, Semaine, TypeAbsence } from '@innov/api-client';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  type ChampsAbsence,
+  estTransitoire,
+  garderBrouillon,
+  mettreEnAttente,
+  nouvelIdentifiant,
+  oublierBrouillon,
+} from './Brouillons';
 import { Alerte, Bouton, Champ, Texte, usePalette } from './composants';
 import { Pilule } from './Etablissements';
 import { police } from './polices';
@@ -53,21 +61,43 @@ export function FormulaireAbsence({
   semaine,
   jour,
   absence,
+  brouillon,
   surTermine,
   surAnnuler,
 }: {
   semaine: Semaine;
   jour: string;
   absence?: Absence;
+  /** Saisie reprise d'un brouillon gardé sur le téléphone (PLN-007). */
+  brouillon?: ChampsAbsence;
   surTermine: (message: string) => void;
   surAnnuler: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
-  const [date, setDate] = useState(absence?.date ?? jour);
-  const [type, setType] = useState<TypeAbsence | null>(absence?.type ?? null);
-  const [periode, setPeriode] = useState<PeriodeAbsence>(absence?.periode ?? 'journee');
-  const [commentaire, setCommentaire] = useState(absence?.commentaire ?? '');
+  const [date, setDate] = useState(brouillon?.date ?? absence?.date ?? jour);
+  const [type, setType] = useState<TypeAbsence | null>(
+    brouillon ? brouillon.type : (absence?.type ?? null),
+  );
+  const [periode, setPeriode] = useState<PeriodeAbsence>(
+    brouillon?.periode ?? absence?.periode ?? 'journee',
+  );
+  const [commentaire, setCommentaire] = useState(
+    brouillon?.commentaire ?? absence?.commentaire ?? '',
+  );
+
+  // PLN-007 : la saisie est gardée sur le téléphone à chaque changement.
+  useEffect(() => {
+    const minuterie = setTimeout(() => {
+      void garderBrouillon({
+        objet: 'absence',
+        semaine: semaine.semaine,
+        absence: absence?.id,
+        champs: { date, type, periode, commentaire },
+      });
+    }, 300);
+    return () => clearTimeout(minuterie);
+  }, [semaine.semaine, absence?.id, date, type, periode, commentaire]);
   const [envoi, setEnvoi] = useState<'enregistrer' | 'retirer' | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -83,12 +113,26 @@ export function FormulaireAbsence({
     setEnvoi('enregistrer');
     setErreur(null);
     const saisie = { date, type, periode, commentaire: commentaire.trim() };
+    const ajout = { ...saisie, id: nouvelIdentifiant() };
     try {
       if (absence) await client.absences.modifier(absence.id, saisie);
-      else if (semaine.planning)
-        await client.plannings.declarerAbsence(semaine.planning.id, saisie);
+      else if (semaine.planning) await client.plannings.declarerAbsence(semaine.planning.id, ajout);
+      await oublierBrouillon();
       surTermine(absence ? t('absences.modifiee') : t('absences.declaree'));
     } catch (e) {
+      // Sans réseau, une nouvelle absence attend sur le téléphone (PLN-007).
+      if (estTransitoire(e) && !absence && semaine.planning) {
+        await mettreEnAttente({
+          id: ajout.id,
+          type: 'ajout_absence',
+          planning: semaine.planning.id,
+          saisie: ajout,
+          resume: `${libelleJour(date)} · ${t(`absences.types.${type}`)}`,
+        });
+        await oublierBrouillon();
+        surTermine(t('attente.gardee'));
+        return;
+      }
       setErreur(messageErreur(e, t('erreurs.reseau')));
       setEnvoi(null);
     }
@@ -100,6 +144,7 @@ export function FormulaireAbsence({
     setErreur(null);
     try {
       await client.absences.retirer(absence.id);
+      await oublierBrouillon();
       surTermine(t('absences.retiree'));
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));
@@ -159,7 +204,14 @@ export function FormulaireAbsence({
         desactive={!type || motifManquant || envoi === 'retirer'}
         onPress={() => void enregistrer()}
       />
-      <Bouton secondaire libelle={t('commun.annuler')} onPress={surAnnuler} />
+      <Bouton
+        secondaire
+        libelle={t('commun.annuler')}
+        onPress={() => {
+          void oublierBrouillon();
+          surAnnuler();
+        }}
+      />
       {absence && (
         <Pressable
           accessibilityRole="button"

@@ -14,6 +14,10 @@ export async function ecrire<T>(cle: string, valeur: T): Promise<void> {
   memoire.set(cle, { valeur, maj: new Date().toISOString() });
 }
 
+export async function oublier(cle: string): Promise<void> {
+  memoire.delete(cle);
+}
+
 export async function effacer(): Promise<void> {
   memoire.clear();
 }

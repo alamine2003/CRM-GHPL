@@ -10,6 +10,20 @@ import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 import { FormulaireAbsence } from '../src/Absences';
+import { BandeauBrouillon, CarteAttente } from '../src/Attente';
+import { ecrire, lire } from '../src/baseLocale';
+import {
+  abandonnerEnvoi,
+  type Brouillon,
+  type ChampsAbsence,
+  type ChampsVisite,
+  type Envoi,
+  envoyerAttente,
+  estTransitoire,
+  lireAttente,
+  lireBrouillon,
+  oublierBrouillon,
+} from '../src/Brouillons';
 import { kilometres } from '../src/Itineraire';
 import { PoserDepuisCible } from '../src/Pose';
 import { CarteControles, ObjectifDuJour } from '../src/Controles';
@@ -17,6 +31,14 @@ import { Journee } from '../src/Journee';
 import { FormulaireVisite } from '../src/Visites';
 
 const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
+
+/** Clé de la semaine gardée sur le téléphone : son lundi, ou « courante ». */
+const cleSemaine = (jour?: string) => {
+  if (!jour) return 'semaine.courante';
+  const d = new Date(`${jour}T12:00:00`);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return `semaine.${jourIso(d)}`;
+};
 
 const jourIso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -42,24 +64,44 @@ export default function EcranSemaine() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [creation, setCreation] = useState(false);
   const [edition, setEdition] = useState<
-    | { objet: 'visite'; jour: string; visite?: Visite }
-    | { objet: 'absence'; jour: string; absence?: Absence }
+    | { objet: 'visite'; jour: string; visite?: Visite; brouillon?: ChampsVisite }
+    | { objet: 'absence'; jour: string; absence?: Absence; brouillon?: ChampsAbsence }
     | { objet: 'cible'; jour: string }
     | null
   >(null);
   /** Jour dont le délégué règle l'ordre à la main. */
   const [reprise, setReprise] = useState(false);
+  const [horsLigne, setHorsLigne] = useState<string | null>(null);
+  const [brouillon, setBrouillon] = useState<Brouillon | null>(null);
+  const [attente, setAttente] = useState<Envoi[]>([]);
+  const [envoiAttente, setEnvoiAttente] = useState(false);
   const [reordonner, setReordonner] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  // Une saisie gardée faute de réseau se dit en information, pas en succès.
+  const [tonMessage, setTonMessage] = useState<'succes' | 'info'>('succes');
   const aujourdhui = jourIso(new Date());
 
   const charger = useCallback(
     (cible?: string) =>
-      client.plannings
-        .semaine(cible)
+      // Ce qui attend sur le téléphone part d'abord : la semaine relue le contient déjà.
+      envoyerAttente(client)
+        .catch(() => 0)
+        .then(async (partis) => {
+          setAttente(await lireAttente());
+          // Ce qui attendait est parti : le dire, à la place de « enregistrée sur le téléphone ».
+          if (partis > 0) {
+            setMessage(t('attente.envoyes', { count: partis }));
+            setTonMessage('succes');
+          }
+        })
+        .then(() => client.plannings.semaine(cible))
         .then((s) => {
           setSemaine(s);
           setErreur(null);
+          setHorsLigne(null);
+          // La semaine reste lisible sans réseau (PLN-007, base locale chiffrée).
+          void ecrire(cleSemaine(cible), s).catch(() => undefined);
+          void ecrire(cleSemaine(s.semaine), s).catch(() => undefined);
           // Visite demandée depuis son détail : son formulaire s'ouvre, une seule fois.
           const visite = s.visites.find((v) => v.id === aModifier.current);
           aModifier.current = undefined;
@@ -67,9 +109,31 @@ export default function EcranSemaine() {
             setEdition({ objet: 'visite', jour: visite.date, visite });
           }
         })
-        .catch((e: unknown) => setErreur(messageErreur(e, t('erreurs.reseau')))),
+        .catch(async (e: unknown) => {
+          const memoire = estTransitoire(e)
+            ? await lire<Semaine>(cleSemaine(cible)).catch(() => null)
+            : null;
+          if (memoire) {
+            setSemaine(memoire.valeur);
+            setHorsLigne(memoire.maj);
+            setErreur(null);
+          } else {
+            setErreur(messageErreur(e, t('erreurs.reseau')));
+          }
+        }),
     [client, t],
   );
+
+  // Une saisie interrompue (application fermée, téléphone éteint) se retrouve ici (PLN-007).
+  useEffect(() => {
+    let actif = true;
+    void lireBrouillon().then((b) => {
+      if (actif) setBrouillon(b);
+    });
+    return () => {
+      actif = false;
+    };
+  }, []);
 
   // L'onglet reste monté : un nouvel aller vers /semaine?jour=… change ses paramètres.
   useEffect(() => {
@@ -96,6 +160,24 @@ export default function EcranSemaine() {
 
   const date = (iso: string, options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(i18n.language, options).format(new Date(`${iso}T12:00:00`));
+
+  /** Reprend la saisie interrompue : sur sa semaine, avec ses champs tels qu'ils étaient. */
+  function reprendreBrouillon(b: Brouillon) {
+    if (!semaine) return;
+    if (b.semaine !== semaine.semaine) {
+      setJour(b.semaine);
+      return;
+    }
+    setMessage(null);
+    setBrouillon(null);
+    if (b.objet === 'visite') {
+      const visite = b.visite ? semaine.visites.find((v) => v.id === b.visite) : undefined;
+      setEdition({ objet: 'visite', jour: b.champs.date, visite, brouillon: b.champs });
+    } else {
+      const absence = b.absence ? semaine.absences.find((a) => a.id === b.absence) : undefined;
+      setEdition({ objet: 'absence', jour: b.champs.date, absence, brouillon: b.champs });
+    }
+  }
 
   /** Action rapide sur la semaine (regrouper, dissocier, ordonner) puis relecture. */
   async function executer(action: () => Promise<unknown>, succes?: string) {
@@ -169,6 +251,7 @@ export default function EcranSemaine() {
     '';
   const objectifs = new Map((semaine?.controles?.objectifs ?? []).map((o) => [o.date, o]));
   const terminer = (texte: string) => {
+    setTonMessage(texte === t('attente.gardee') ? 'info' : 'succes');
     setEdition(null);
     setMessage(texte);
     if (semaine) void charger(semaine.semaine);
@@ -183,6 +266,7 @@ export default function EcranSemaine() {
             semaine={semaine}
             jour={edition.jour}
             visite={edition.visite}
+            brouillon={edition.brouillon}
             surAnnuler={() => setEdition(null)}
             surTermine={terminer}
           />
@@ -198,6 +282,7 @@ export default function EcranSemaine() {
             semaine={semaine}
             jour={edition.jour}
             absence={edition.absence}
+            brouillon={edition.brouillon}
             surAnnuler={() => setEdition(null)}
             surTermine={terminer}
           />
@@ -238,11 +323,46 @@ export default function EcranSemaine() {
       </View>
 
       {erreur && <Alerte type="erreur">{erreur}</Alerte>}
+      {horsLigne && (
+        <Alerte type="attention">
+          {t('attente.horsLigne', {
+            date: new Intl.DateTimeFormat(i18n.language, {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            }).format(new Date(horsLigne)),
+          })}
+        </Alerte>
+      )}
+      {brouillon && semaine && (
+        <BandeauBrouillon
+          brouillon={brouillon}
+          surReprendre={() => reprendreBrouillon(brouillon)}
+          surAbandonner={() => {
+            void oublierBrouillon();
+            setBrouillon(null);
+          }}
+        />
+      )}
+      {attente.length > 0 && (
+        <CarteAttente
+          envois={attente}
+          envoi={envoiAttente}
+          surEnvoyer={() => {
+            setEnvoiAttente(true);
+            void charger(semaine?.semaine).finally(() => setEnvoiAttente(false));
+          }}
+          surAbandonner={(id) =>
+            void abandonnerEnvoi(id).then(async () => setAttente(await lireAttente()))
+          }
+        />
+      )}
       {!semaine ? (
         !erreur && <Texte variante="discret">{t('session.chargement')}</Texte>
       ) : (
         <>
-          {message && <Alerte type="succes">{message}</Alerte>}
+          {message && <Alerte type={tonMessage}>{message}</Alerte>}
           <Carte style={{ gap: 8 }}>
             <Texte variante="sousTitre">{t('semaine.planning')}</Texte>
             {semaine.planning ? (

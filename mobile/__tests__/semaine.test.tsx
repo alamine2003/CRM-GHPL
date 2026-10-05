@@ -1,11 +1,23 @@
-import type { ClientApi, Semaine, Visite } from '@innov/api-client';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { type ClientApi, ErreurApi, type Semaine, type Visite } from '@innov/api-client';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import EcranSemaine from '../app/semaine';
 import i18n from '../src/i18n';
 import { ContexteSession, type Session } from '../src/session';
 import { VueDetail, VueJour } from '../src/Itineraire';
 import { lireHeure } from '../src/Visites';
+
+// La base chiffrée (SQLCipher) n'existe que sur le téléphone : une mémoire la remplace ici.
+const mockMemoire = new Map<string, { valeur: unknown; maj: string }>();
+jest.mock('../src/baseLocale', () => ({
+  lire: jest.fn(async (cle: string) => mockMemoire.get(cle) ?? null),
+  ecrire: jest.fn(async (cle: string, valeur: unknown) =>
+    mockMemoire.set(cle, { valeur, maj: '2026-10-26T08:00:00.000Z' }),
+  ),
+  oublier: jest.fn(async (cle: string) => mockMemoire.delete(cle)),
+  effacer: jest.fn(async () => mockMemoire.clear()),
+}));
+jest.mock('expo-crypto', () => ({ randomUUID: () => 'uuid-du-telephone' }));
 
 const mockPousser = jest.fn();
 const mockParametres: { jour?: string; modifier?: string } = {};
@@ -111,6 +123,7 @@ async function rendre(
 }
 
 beforeEach(async () => {
+  mockMemoire.clear();
   await i18n.changeLanguage('fr');
 });
 
@@ -203,6 +216,7 @@ test('PLN-002 : le délégué ajoute une visite depuis sa liste cible', async ()
   await fireEvent.changeText(screen.getByLabelText('Objectif'), 'Présenter le produit');
   await fireEvent.press(screen.getByText('Enregistrer'));
   expect(ajouterVisite).toHaveBeenCalledWith('pl1', {
+    id: 'uuid-du-telephone',
     date: '2026-10-27',
     heure: '09:30',
     prospect: 'p1',
@@ -310,6 +324,7 @@ test('PLN-009 : le délégué déclare une demi-journée de formation', async ()
   await fireEvent.press(screen.getByText('Matin'));
   await fireEvent.press(screen.getByText('Enregistrer'));
   expect(declarerAbsence).toHaveBeenCalledWith('pl1', {
+    id: 'uuid-du-telephone',
     date: '2026-10-29',
     type: 'formation',
     periode: 'matin',
@@ -606,4 +621,99 @@ test('PLN-006 : le détail d’une visite mène à ses fiches et à sa modificat
     pathname: '/semaine',
     params: { jour: '2026-10-27', modifier: 'v1' },
   });
+});
+
+test('PLN-007 : sans réseau, la visite attend sur le téléphone puis part une seule fois', async () => {
+  const semaine = jest
+    .fn()
+    .mockResolvedValueOnce({ ...EN_PREPARATION, visites: [] })
+    .mockRejectedValueOnce(new TypeError('Network request failed'))
+    .mockResolvedValue({ ...EN_PREPARATION, visites: [VISITE] });
+  // Le réseau manque à l'enregistrement et à la relecture qui suit, puis revient.
+  const ajouterVisite = jest
+    .fn()
+    .mockRejectedValueOnce(new TypeError('Network request failed'))
+    .mockRejectedValueOnce(new TypeError('Network request failed'))
+    .mockResolvedValue(VISITE);
+  await rendre({ semaine, ajouterVisite } as unknown as Partial<ClientApi['plannings']>, {
+    ciblage: { mesListes: jest.fn(async () => []) },
+  });
+  await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[1]!);
+  await fireEvent.changeText(screen.getByLabelText('Objectif'), 'Présenter le produit');
+  await fireEvent.press(screen.getByText('Enregistrer'));
+  // Pas de réseau : la semaine gardée s'affiche, la visite attend.
+  expect(await screen.findByText(/Pas de réseau : enregistrée sur le téléphone/)).toBeTruthy();
+  expect(screen.getByText(/Hors ligne : semaine telle qu/)).toBeTruthy();
+  expect(screen.getByText('1 envoi en attente')).toBeTruthy();
+  expect(screen.getByText(/Nouvelle visite · mar\. 27/)).toBeTruthy();
+  // Le réseau revient : l'envoi part avec le même identifiant, la file se vide.
+  await fireEvent.press(screen.getByText('Envoyer maintenant'));
+  await waitFor(() => expect(screen.queryByText('1 envoi en attente')).toBeNull());
+  expect(screen.getByText('Réseau retrouvé : 1 envoi est parti.')).toBeTruthy();
+  expect(screen.queryByText(/Pas de réseau : enregistrée/)).toBeNull();
+  expect(ajouterVisite).toHaveBeenCalledTimes(3);
+  expect(new Set(ajouterVisite.mock.calls.map((c) => c[1].id))).toEqual(
+    new Set(['uuid-du-telephone']),
+  );
+});
+
+test('PLN-007 CA1 : la saisie en cours est gardée sur le téléphone', async () => {
+  await rendre(
+    { semaine: jest.fn(async () => EN_PREPARATION) },
+    { ciblage: { mesListes: jest.fn(async () => []) } },
+  );
+  await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[2]!);
+  await fireEvent.changeText(screen.getByLabelText('Objectif'), 'Remettre les échantillons');
+  await waitFor(() =>
+    expect(
+      (mockMemoire.get('planning.brouillon')?.valeur as { champs: { objectif: string } })?.champs
+        .objectif,
+    ).toBe('Remettre les échantillons'),
+  );
+  // Annuler oublie le brouillon.
+  await fireEvent.press(screen.getByText('Annuler'));
+  await waitFor(() => expect(mockMemoire.has('planning.brouillon')).toBe(false));
+});
+
+test('PLN-007 CA1 : une saisie interrompue se retrouve à la réouverture', async () => {
+  mockMemoire.set('planning.brouillon', {
+    valeur: {
+      objet: 'visite',
+      semaine: '2026-10-26',
+      champs: {
+        date: '2026-10-28',
+        heure: '9h',
+        prospect: null,
+        lieu: null,
+        reseau: 'r1',
+        objectif: 'Remettre les échantillons',
+        note: '',
+      },
+    },
+    maj: '2026-10-26T08:00:00.000Z',
+  });
+  await rendre(
+    { semaine: jest.fn(async () => EN_PREPARATION) },
+    { ciblage: { mesListes: jest.fn(async () => []) } },
+  );
+  expect(await screen.findByText("Une nouvelle visite n'a pas été enregistrée.")).toBeTruthy();
+  await fireEvent.press(screen.getByText('Reprendre la saisie'));
+  expect(await screen.findByDisplayValue('Remettre les échantillons')).toBeTruthy();
+  expect(screen.getByDisplayValue('9h')).toBeTruthy();
+});
+
+test('un refus du serveur reste à l’écran, sans mise en attente', async () => {
+  const ajouterVisite = jest.fn(async () => {
+    throw new ErreurApi(400, 'jour_ferie', 'Ce jour est férié : il ne se planifie pas.');
+  });
+  await rendre(
+    { semaine: jest.fn(async () => EN_PREPARATION), ajouterVisite } as unknown as Partial<
+      ClientApi['plannings']
+    >,
+    { ciblage: { mesListes: jest.fn(async () => []) } },
+  );
+  await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[0]!);
+  await fireEvent.press(screen.getByText('Enregistrer'));
+  expect(await screen.findByText('Ce jour est férié : il ne se planifie pas.')).toBeTruthy();
+  expect(mockMemoire.has('planning.attente')).toBe(false);
 });

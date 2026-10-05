@@ -68,6 +68,12 @@ export async function ecrire<T>(cleDonnee: string, valeur: T): Promise<void> {
   );
 }
 
+/** Oublie une seule donnée (un brouillon envoyé, une file vidée). */
+export async function oublier(cleDonnee: string): Promise<void> {
+  const db = await base();
+  await db.runAsync('DELETE FROM memoire WHERE cle = ?', cleDonnee);
+}
+
 /** À la déconnexion (ou à l'effacement à distance, 0.8) : plus rien ne reste sur le téléphone. */
 export async function effacer(): Promise<void> {
   if (!ouverture) {

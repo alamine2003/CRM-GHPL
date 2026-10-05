@@ -3380,6 +3380,8 @@ export interface components {
       | 'delegue'
       | 'admin_technique';
     SaisieAbsence: {
+      /** Format: uuid */
+      id?: string;
       /** Format: date */
       date: string;
       /** @default journee */
@@ -3452,6 +3454,8 @@ export interface components {
       localite?: string | null;
     };
     SaisieVisite: {
+      /** Format: uuid */
+      id?: string;
       /** Format: date */
       date: string;
       /** Format: time */

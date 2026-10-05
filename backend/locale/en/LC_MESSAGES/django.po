@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-05 10:04+0000\n"
+"POT-Creation-Date: 2026-10-05 11:43+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -503,6 +503,9 @@ msgstr "This day is a public holiday: it cannot be planned."
 
 msgid "Ce réseau n'est pas celui d'un poste que vous occupez cette semaine."
 msgstr "This network does not belong to a position you hold this week."
+
+msgid "Cet identifiant appartient déjà à un autre objet."
+msgstr "This identifier already belongs to another item."
 
 msgid "L'ordre doit reprendre exactement les visites de ce jour."
 msgstr "The order must list exactly the visits of that day."

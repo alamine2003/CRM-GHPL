@@ -1503,5 +1503,31 @@
     "km": "{{km}} km estimated",
     "plus_one": "Show {{count}} more",
     "plus_other": "Show {{count}} more"
+  },
+  "attente": {
+    "gardee": "No network: saved on the phone, it will be sent as soon as the network is back.",
+    "titre_one": "{{count}} item waiting to be sent",
+    "titre_other": "{{count}} items waiting to be sent",
+    "envoyer": "Send now",
+    "abandonner": "Discard",
+    "abandonnerUn": "Discard: {{resume}}",
+    "horsLigne": "Offline: week as of {{date}}.",
+    "types": {
+      "ajout_visite": "New visit",
+      "modif_visite": "Edited visit",
+      "ajout_absence": "Absence"
+    },
+    "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
+    "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
+    "envoyes_one": "Network back: {{count}} item sent.",
+    "envoyes_other": "Network back: {{count}} items sent."
+  },
+  "brouillon": {
+    "visite": "A new visit was not saved.",
+    "visiteModifiee": "A visit edit was not saved.",
+    "absence": "An absence was not saved.",
+    "aide": "What you were typing was kept on this phone when the app closed.",
+    "reprendre": "Resume",
+    "abandonner": "Discard this entry"
   }
 }

@@ -499,6 +499,13 @@ Les comptes, l'organisation (postes, affectations) et l'historique des visites n
 - **Portail** (PLN-006) : la rubrique « Planning » montre la semaine en colonnes, le résumé, les contrôles et le kilométrage. En préparation, on glisse un prospect de sa liste cible sur un jour pour y poser une visite pré-remplie (PLN-005 CA1), ou une visite d'un jour à l'autre pour la déplacer ; le bouton « Poser » fait la même chose au clavier. Heure, objectif et passages se saisissent sur le téléphone [H].
 - **Kilométrage estimé** (PLN-010) : à vol d'oiseau entre les établissements, dans l'ordre de la journée ; un passage compte pour un arrêt ; le trajet commence au premier lieu, faute de point de départ connu [H] ; un lieu sans coordonnées est sauté et signalé (« estimation partielle »). Aucun montant n'est calculé ni affiché (CA2). Un calcul par itinéraire routier pourra remplacer le vol d'oiseau si un pays le demande [H].
 
+### 14.14 Brouillons et hors connexion de base (mise en œuvre 0.2.7)
+
+- **Brouillon de saisie** (PLN-007 CA1) : la fiche d'une visite ou d'une absence en cours est gardée dans la base locale chiffrée à chaque changement. Si l'application se ferme (appel, batterie, système), la semaine propose à la réouverture de reprendre la saisie telle qu'elle était, ou de l'abandonner. Un seul brouillon à la fois [H] : le dernier formulaire ouvert.
+- **Envoi en attente** : sans réseau, une visite ou une absence enregistrée reste sur le téléphone, dans une file visible (« 1 envoi en attente »), et part d'elle-même à la relecture suivante de la semaine, ou à la demande. L'identifiant de chaque nouvel objet est tiré sur le téléphone (anticipe OFF-002 CA1) : un envoi rejoué après une coupure ne crée pas de doublon (anticipe OFF-003 CA2). Un refus du serveur (jour férié, fiche inactive…) n'est pas mis en attente : il s'affiche, et un envoi refusé au rejeu garde son message jusqu'à ce que le délégué l'abandonne.
+- **Semaine hors ligne** : la dernière semaine lue est gardée sur le téléphone et s'affiche sans réseau, avec l'heure de sa dernière mise à jour.
+- La synchronisation complète (7 jours hors ligne, conflits, pièces jointes) reste au cycle 0.8 (OFF-001 à OFF-007).
+
 ## 15. Exigences fonctionnelles
 
 Chaque exigence porte : un identifiant stable, la version de première livraison prévue, et des critères d'acceptation vérifiables (« CA »).

@@ -77,6 +77,8 @@ class VisiteSerializer(serializers.ModelSerializer):
 
 
 class SaisieVisiteSerializer(serializers.Serializer):
+    #: Identifiant donné par le téléphone : un envoi rejoué ne crée pas de doublon (0.2.7).
+    id = serializers.UUIDField(required=False)
     date = serializers.DateField()
     heure = serializers.TimeField(required=False, allow_null=True, input_formats=["%H:%M"])
     prospect = serializers.UUIDField(required=False, allow_null=True)
@@ -87,6 +89,7 @@ class SaisieVisiteSerializer(serializers.Serializer):
 
 
 class ModificationVisiteSerializer(SaisieVisiteSerializer):
+    id = None
     date = serializers.DateField(required=False)
 
 
@@ -145,6 +148,7 @@ class AbsenceSerializer(serializers.ModelSerializer):
 
 
 class SaisieAbsenceSerializer(serializers.Serializer):
+    id = serializers.UUIDField(required=False)
     date = serializers.DateField()
     periode = serializers.ChoiceField(choices=Periode.choices, required=False,
                                       default=Periode.JOURNEE)  # fmt: skip

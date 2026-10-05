@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.2.6
+  version: 0.2.7
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/absences/{id}/:
@@ -6982,6 +6982,9 @@ components:
     SaisieAbsence:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
         date:
           type: string
           format: date
@@ -7141,6 +7144,9 @@ components:
     SaisieVisite:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
         date:
           type: string
           format: date

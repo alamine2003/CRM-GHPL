@@ -311,10 +311,29 @@ def _dissoudre_si_seul(passage: Passage | None) -> None:
         passage.archiver()
 
 
+def _deja_envoye(modele, planning: Planning, identifiant):
+    """Un objet créé hors connexion porte l'identifiant que lui a donné le téléphone (0.2.7,
+    OFF-002 CA1) : renvoyé deux fois après une coupure, il n'est créé qu'une fois (OFF-003 CA2)."""
+    if identifiant is None:
+        return None
+    existant = modele.objects.filter(pk=identifiant).first()
+    if existant is not None and existant.planning_id != planning.pk:
+        raise ErreurMetier(
+            "identifiant_pris",
+            _("Cet identifiant appartient déjà à un autre objet."),
+            status.HTTP_409_CONFLICT,
+        )
+    return existant
+
+
 @transaction.atomic
-def ajouter_visite(planning: Planning, **champs) -> Visite:
+def ajouter_visite(planning: Planning, id=None, **champs) -> Visite:
+    if existante := _deja_envoye(Visite, planning, id):
+        return existante
     _exiger_modifiable(planning)
     visite = Visite(pays=planning.pays, planning=planning, date=champs["date"])
+    if id is not None:
+        visite.pk = id
     if "reseau" not in champs:
         champs["reseau"] = _reseau_par_defaut(planning)
     _appliquer(visite, champs)
@@ -581,10 +600,14 @@ def _verifier_absence(absence: Absence) -> None:
 
 @transaction.atomic
 def declarer_absence(planning: Planning, *, date: date, type: str, periode: str = Periode.JOURNEE,
-                     commentaire: str = "") -> Absence:  # fmt: skip
+                     commentaire: str = "", id=None) -> Absence:  # fmt: skip
+    if existante := _deja_envoye(Absence, planning, id):
+        return existante
     _exiger_modifiable(planning)
     absence = Absence(pays=planning.pays, planning=planning, date=date, type=type,
                       periode=periode, commentaire=(commentaire or "").strip())  # fmt: skip
+    if id is not None:
+        absence.pk = id
     _verifier_absence(absence)
     absence.save()
     _auditer("absence.declaration", absence, planning=str(planning.pk), date=str(date),
