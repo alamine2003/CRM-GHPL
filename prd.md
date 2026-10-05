@@ -562,6 +562,13 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
 - **Appréciation** : Excellent, Bon, À consolider, Insuffisant, Aucune activité (aucune visite). Seuils déduits de l'exemple [H, à confirmer] : Bon dès 40, À consolider dès 15, Insuffisant en dessous ; le seuil d'Excellent est entre 44,4 et 69,3.
 - Une ligne « Moyenne de l'équipe » résume chaque colonne.
 - Points proposés à la discussion [H] : rapporter le volume à l'objectif du poste plutôt qu'au meilleur de l'équipe ; tenir compte des jours non travaillés (fériés, congés, commandos) ; signaler une visite faite sans planning.
+- **Version mensuelle antérieure** (classement d'août, 30 derniers jours, source BI BirdNotes « Vue Insight V2 ») [D, fournie le 5 octobre 2026] :
+  - mêmes comptages, plus « planifiés non visités » (planifiés − planifiés visités) et « visites non géolocalisées » (visités − géolocalisées) ;
+  - taux de géolocalisation rapporté aux **planifiés** (géolocalisées / planifiés), et non aux visités comme dans la version hebdomadaire ;
+  - « couverture du **portefeuille** » et « réalisation du planning » reprises telles quelles de BirdNotes : leurs valeurs ne se recalculent pas toujours à partir des comptages (une couverture de 61 % sans aucune visite, par exemple) ;
+  - classement **par ordre de priorité** et non pondéré : géolocalisation, puis réalisation du planning, puis nombre de prospects planifiés ;
+  - une fiche de performance par délégué, l'onglet « Meilleur délégué du mois » et le total de l'agence.
+- Dans l'application, chaque taux sera **recalculé à partir des visites** (jamais repris d'un outil externe) ; la période (semaine ou mois) et la méthode (pondérée ou par priorité) restent à choisir [H].
 
 ## 15. Exigences fonctionnelles
 
