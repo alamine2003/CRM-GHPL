@@ -95,13 +95,13 @@ def senegal(monde):
     from apps.planning.services import creer_jour_ferie
 
     ferie = creer_jour_ferie(sn, date=date(2099, 4, 4), libelle="Fête nationale")
-    from apps.planning.models import Absence, Passage, Planning, Visite
+    from apps.planning.models import Activite, Passage, Planning, Visite
 
     planning = Planning.objects.create(pays=sn, delegue=monde["deleg.sn"], semaine=date(2099, 4, 6))
     visite = Visite.objects.create(pays=sn, planning=planning, date=date(2099, 4, 7))
     passage = Passage.objects.create(pays=sn, planning=planning, date=date(2099, 4, 7),
                                      etablissement=etab)  # fmt: skip
-    absence = Absence.objects.create(pays=sn, planning=planning, date=date(2099, 4, 8),
+    activite = Activite.objects.create(pays=sn, planning=planning, date=date(2099, 4, 8),
                                      type="formation")  # fmt: skip
     return {
         "prospect-historique": prospect.pk, "etablissement-historique": etab.pk,
@@ -113,8 +113,8 @@ def senegal(monde):
         "planning-poser": planning.pk, "planning-reprendre": planning.pk,
         "planning-soumettre": planning.pk,
         "visite-copier": visite.pk,
-        "passage-dissocier": passage.pk, "planning-absences": planning.pk,
-        "absence": absence.pk, "absence-retirer": absence.pk,
+        "passage-dissocier": passage.pk, "planning-activites": planning.pk,
+        "activite": activite.pk, "activite-retirer": activite.pk,
         "ciblage-liste": poste.pk, "ciblage-candidats": poste.pk,
         "cible": cible.pk, "cible-retirer": cible.pk,
         "prospect-exercices": prospect.pk, "etablissement-exercices": etab.pk,

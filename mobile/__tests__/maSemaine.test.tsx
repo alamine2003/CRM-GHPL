@@ -14,7 +14,7 @@ const BASE = {
   peut_creer: false,
   modifiable: false,
   passages: [],
-  absences: [],
+  activites: [],
   controles: null,
   kilometrage: null,
   reprenables: 0,

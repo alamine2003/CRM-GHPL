@@ -57,7 +57,7 @@ const SEMAINE: Semaine = {
   modifiable: true,
   visites: [VISITE],
   passages: [],
-  absences: [],
+  activites: [],
   controles: {
     bloquants: [
       {

@@ -401,7 +401,7 @@ class Generateur:
         nombre += self._passage_et_absence(planning, jours, reseau, cibles, absence=False)
         # PLN-018 : une matinée d'accompagnement par le superviseur, avec son explication.
         if len(jours) > 2:
-            pln.declarer_absence(planning, date=jours[2], periode="matin", type="accompagnement",
+            pln.declarer_activite(planning, date=jours[2], periode="matin", type="accompagnement",
                                  commentaire="Double visite avec le superviseur : coaching sur "
                                  "la présentation du produit du mois")  # fmt: skip
         if controles.bloquants(planning) or pln.postes_sans_superviseur(planning):
@@ -490,7 +490,7 @@ class Generateur:
         if visites:
             pln.regrouper(planning, visites)
         if absence:
-            pln.declarer_absence(planning, date=jours[-1], periode="apres_midi",
+            pln.declarer_activite(planning, date=jours[-1], periode="apres_midi",
                                  type="formation", commentaire="Formation produit")  # fmt: skip
         return len(visites)
 

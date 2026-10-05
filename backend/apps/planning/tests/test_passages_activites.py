@@ -13,7 +13,7 @@ from apps.audit.models import EvenementAudit
 from apps.perimetre.tests.conftest import client_de
 from apps.planning import services
 from apps.planning.etats import StatutPlanning
-from apps.planning.models import Absence, Passage, Visite
+from apps.planning.models import Activite, Passage, Visite
 from apps.planning.services import creer_jour_ferie
 from apps.prospects.services import creer_exercice, creer_prospect
 
@@ -153,7 +153,7 @@ def test_dissocier_un_passage(monde, terrain):
 
 
 def absences(terrain):
-    return f"/api/v1/plannings/{terrain['planning'].pk}/absences/"
+    return f"/api/v1/plannings/{terrain['planning'].pk}/activites/"
 
 
 def test_pln009_ca1_une_demi_journee_reduit_de_moitie_les_seuils(monde, terrain):
@@ -165,18 +165,18 @@ def test_pln009_ca1_une_demi_journee_reduit_de_moitie_les_seuils(monde, terrain)
                         "type": "formation", "commentaire": "", "demande_superviseur": False,
                         "avec_visites": False}  # fmt: skip
     planning = terrain["planning"]
-    jour = Absence.objects.get().date
+    jour = Activite.objects.get().date
     assert services.part_travaillee(planning, jour) == 0.5
     # La journée entière chevauche le matin.
     r = deleg.post(absences(terrain), {"date": "2026-10-15", "periode": "journee",
                                        "type": "conge"}, format="json")  # fmt: skip
-    assert r.status_code == 409 and r.json()["code"] == "absence_chevauchement"
+    assert r.status_code == 409 and r.json()["code"] == "activite_chevauchement"
     # Une demi-journée d'absence laisse planifier des visites ce jour-là…
     visite = poser(deleg, terrain, date="2026-10-15")
     # … mais l'autre demi-journée ferait une journée entière : pas avec une visite (0.2.9).
     apres_midi = {"date": "2026-10-15", "periode": "apres_midi", "type": "reunion"}
     r = deleg.post(absences(terrain), apres_midi, format="json")
-    assert r.status_code == 409 and r.json()["code"] == "absence_avec_visites"
+    assert r.status_code == 409 and r.json()["code"] == "activite_avec_visites"
     deleg.post(f"/api/v1/visites/{visite['id']}/retirer/")
     assert deleg.post(absences(terrain), apres_midi, format="json").status_code == 201
     assert services.part_travaillee(planning, jour) == 0.0
@@ -185,8 +185,8 @@ def test_pln009_ca1_une_demi_journee_reduit_de_moitie_les_seuils(monde, terrain)
                    format="json")  # fmt: skip
     assert r.status_code == 400 and r.json()["code"] == "jour_absent"
     semaine = deleg.get(SEMAINE, {"semaine": "2026-10-12"}).json()
-    assert [a["periode"] for a in semaine["absences"]] == ["apres_midi", "matin"]
-    assert EvenementAudit.objects.filter(action="absence.declaration").count() == 2
+    assert [a["periode"] for a in semaine["activites"]] == ["apres_midi", "matin"]
+    assert EvenementAudit.objects.filter(action="activite.declaration").count() == 2
 
 
 def test_une_journee_d_absence_ne_recoit_pas_de_visite(monde, terrain):
@@ -194,7 +194,7 @@ def test_une_journee_d_absence_ne_recoit_pas_de_visite(monde, terrain):
     visite = poser(deleg, terrain, date="2026-10-14")
     corps = {"date": "2026-10-14", "type": "maladie"}
     r = deleg.post(absences(terrain), corps, format="json")
-    assert r.status_code == 409 and r.json()["code"] == "absence_avec_visites"
+    assert r.status_code == 409 and r.json()["code"] == "activite_avec_visites"
     deleg.post(f"/api/v1/visites/{visite['id']}/retirer/")
     assert deleg.post(absences(terrain), corps, format="json").status_code == 201
     r = deleg.post(f"/api/v1/plannings/{terrain['planning'].pk}/visites/",
@@ -213,10 +213,10 @@ def test_absence_motif_jour_ferie_modification_et_retrait(monde, terrain):
     r = deleg.post(absences(terrain), {"date": "2026-10-13", "type": "autre",
                                        "commentaire": "Rendez-vous"}, format="json")  # fmt: skip
     absence = r.json()["id"]
-    r = deleg.patch(f"/api/v1/absences/{absence}/", {"periode": "apres_midi"}, format="json")
+    r = deleg.patch(f"/api/v1/activites/{absence}/", {"periode": "apres_midi"}, format="json")
     assert r.status_code == 200 and r.json()["periode"] == "apres_midi"
-    assert deleg.post(f"/api/v1/absences/{absence}/retirer/").status_code == 200
-    assert deleg.get(SEMAINE, {"semaine": "2026-10-12"}).json()["absences"] == []
+    assert deleg.post(f"/api/v1/activites/{absence}/retirer/").status_code == 200
+    assert deleg.get(SEMAINE, {"semaine": "2026-10-12"}).json()["activites"] == []
 
 
 def test_un_planning_soumis_ne_change_plus(monde, terrain):
@@ -227,7 +227,7 @@ def test_un_planning_soumis_ne_change_plus(monde, terrain):
     terrain["planning"].save()
     for chemin, corps in (
         ("passages/", {"visites": [a["id"], b["id"]]}),
-        ("absences/", {"date": "2026-10-15", "type": "formation"}),
+        ("activites/", {"date": "2026-10-15", "type": "formation"}),
         ("ordre/", {"date": "2026-10-13", "visites": [b["id"], a["id"]]}),
     ):
         r = deleg.post(f"/api/v1/plannings/{terrain['planning'].pk}/{chemin}", corps,
@@ -240,11 +240,11 @@ def test_un_autre_delegue_ne_touche_ni_passage_ni_absence(monde, terrain):
     poser(deleg, terrain)
     poser(deleg, terrain, confrere(monde, terrain, "Sow"))
     passage = services.regrouper(terrain["planning"], list(Visite.objects.all()))
-    absence = services.declarer_absence(terrain["planning"], date=passage.date.replace(day=15),
+    absence = services.declarer_activite(terrain["planning"], date=passage.date.replace(day=15),
                                         type="formation")  # fmt: skip
     autre = client_de(monde["sup.sn"])
     assert autre.post(f"/api/v1/passages/{passage.pk}/dissocier/").status_code == 404
-    assert autre.post(f"/api/v1/absences/{absence.pk}/retirer/").status_code == 404
+    assert autre.post(f"/api/v1/activites/{absence.pk}/retirer/").status_code == 404
 
 
 # --- Envoi rejoué après une coupure (0.2.7) ----------------------------------------------------
@@ -273,7 +273,7 @@ def test_une_absence_renvoyee_n_est_declaree_qu_une_fois(monde, terrain):
     corps = {"id": str(uuid.uuid4()), "date": "2026-10-15", "type": "formation"}
     for _ in range(2):
         assert deleg.post(absences(terrain), corps, format="json").status_code == 201
-    assert Absence.objects.count() == 1
+    assert Activite.objects.count() == 1
 
 
 def test_un_identifiant_deja_pris_ailleurs_est_refuse(monde, terrain):

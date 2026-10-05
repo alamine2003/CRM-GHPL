@@ -33,7 +33,7 @@ def _mercredi_7_octobre():
 
 def declarer(monde, terrain, **corps):
     return client_de(monde["deleg.sn"]).post(
-        f"/api/v1/plannings/{terrain['planning'].pk}/absences/", corps, format="json"
+        f"/api/v1/plannings/{terrain['planning'].pk}/activites/", corps, format="json"
     )
 
 
@@ -64,7 +64,7 @@ def test_ca1_un_commando_s_explique(monde, terrain):
 def test_ca1_les_visites_d_un_jour_de_deplacement_ne_sont_pas_des_anomalies(monde, terrain):
     couverte = hors_secteur(monde, terrain, MARDI)
     signalee = hors_secteur(monde, terrain, MERCREDI)
-    services.declarer_absence(terrain["planning"], date=MARDI, type="deplacement",
+    services.declarer_activite(terrain["planning"], date=MARDI, type="deplacement",
                               commentaire="Aide à un collègue à Mbour",
                               demande_superviseur=True)  # fmt: skip
     hors = [a for a in controles.signalements(terrain["planning"])
@@ -73,27 +73,27 @@ def test_ca1_les_visites_d_un_jour_de_deplacement_ne_sont_pas_des_anomalies(mond
     assert str(couverte.pk) not in {v for a in hors for v in a.visites}
     # Le superviseur lit l'activité, son explication et qui l'a demandée.
     semaine = client_de(monde["deleg.sn"]).get(SEMAINE, {"semaine": "2026-10-12"}).json()
-    (activite,) = semaine["absences"]
+    (activite,) = semaine["activites"]
     assert activite == activite | {"type": "deplacement", "demande_superviseur": True,
                                    "commentaire": "Aide à un collègue à Mbour"}  # fmt: skip
 
 
 def test_ca2_une_activite_avec_visites_ne_reduit_pas_l_objectif(monde, terrain):
-    services.declarer_absence(terrain["planning"], date=MARDI, type="accompagnement",
+    services.declarer_activite(terrain["planning"], date=MARDI, type="accompagnement",
                               commentaire="Double visite avec le superviseur")  # fmt: skip
     assert services.part_travaillee(terrain["planning"], MARDI) == 1.0
     # La journée reçoit ses visites ; un congé la vide, lui.
     services.ajouter_visite(terrain["planning"], date=MARDI, heure=time(9, 0),
                             prospect=terrain["medecin"], etablissement=terrain["clinique"],
                             objectif="Vasculor")  # fmt: skip
-    services.declarer_absence(terrain["planning"], date=MERCREDI, type="conge")
+    services.declarer_activite(terrain["planning"], date=MERCREDI, type="conge")
     assert services.part_travaillee(terrain["planning"], MERCREDI) == 0.0
     objectifs = {o.date: o for o in controles.bilan(terrain["planning"]).objectifs}
     assert MERCREDI not in objectifs and objectifs[MARDI].min == 6
 
 
 def test_seul_un_deplacement_se_dit_demande_par_le_superviseur(terrain):
-    commando = services.declarer_absence(
+    commando = services.declarer_activite(
         terrain["planning"], date=MARDI, type="commando", commentaire="Commando",
         demande_superviseur=True,
     )  # fmt: skip

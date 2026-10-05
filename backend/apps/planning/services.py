@@ -1,5 +1,5 @@
 """Jours fériés (ORG-012), planning de la semaine (PLN-001), visites planifiées (PLN-002), ordre
-de la journée, passages (PLN-003) et absences (PLN-009)."""
+de la journée, passages (PLN-003) et activités connexes (PLN-009, PLN-018)."""
 
 from datetime import date, datetime, time, timedelta
 
@@ -18,12 +18,12 @@ from .calendrier import jours_de_la_semaine, jours_planifiables, lundi
 from .etats import MODIFIABLES, StatutPlanning
 from .models import (
     AVEC_VISITES,
-    Absence,
+    Activite,
     JourFerie,
     Passage,
     Periode,
     Planning,
-    TypeAbsence,
+    TypeActivite,
     Visite,
 )
 
@@ -649,7 +649,7 @@ def dissocier(passage: Passage) -> Passage:
     return passage
 
 
-# --- Absences (PLN-009) -----------------------------------------------------------------------
+# --- Activités connexes (PLN-009, PLN-018) ---------------------------------------------------
 
 #: Part de la journée travaillée selon les absences déclarées (CA1, RG-022) : une demi-journée
 #: d'absence réduit de moitié les seuils du jour (contrôles en 0.2.4).
@@ -662,14 +662,14 @@ def _part_absente(absences) -> float:
 
 
 def part_travaillee(planning: Planning, jour: date) -> float:
-    absences = planning.absences.filter(archive_le__isnull=True, date=jour)
+    absences = planning.activites.filter(archive_le__isnull=True, date=jour)
     return max(0.0, 1.0 - _part_absente(absences))
 
 
 def jours_d_activite_avec_visites(planning: Planning) -> set[date]:
     """Jours couverts par un commando, un déplacement ou un accompagnement (PLN-018)."""
     return set(
-        planning.absences.filter(archive_le__isnull=True, type__in=AVEC_VISITES).values_list(
+        planning.activites.filter(archive_le__isnull=True, type__in=AVEC_VISITES).values_list(
             "date", flat=True
         )
     )
@@ -690,43 +690,43 @@ def _exiger_present(planning: Planning, jour: date) -> None:
         )
 
 
-def _verifier_absence(absence: Absence) -> None:
-    _exiger_jour_planifiable(absence.planning, absence.date)
-    if absence.type == TypeAbsence.AUTRE and not absence.commentaire:
+def _verifier_activite(activite: Activite) -> None:
+    _exiger_jour_planifiable(activite.planning, activite.date)
+    if activite.type == TypeActivite.AUTRE and not activite.commentaire:
         raise ErreurMetier(
             "motif_requis",
             _("Précisez le motif d'une absence « autre »."),
             champ="commentaire",
         )
-    if absence.avec_visites and not absence.commentaire:
+    if activite.avec_visites and not activite.commentaire:
         # PLN-018 CA1 : un commando ou un déplacement se renseigne en détail.
         raise ErreurMetier(
             "explication_requise",
             _("Expliquez cette activité : où, avec qui, et pourquoi."),
             champ="commentaire",
         )
-    if absence.type != TypeAbsence.DEPLACEMENT:
-        absence.demande_superviseur = False
-    autres = absence.planning.absences.filter(archive_le__isnull=True, date=absence.date).exclude(
-        pk=absence.pk
-    )
+    if activite.type != TypeActivite.DEPLACEMENT:
+        activite.demande_superviseur = False
+    autres = activite.planning.activites.filter(
+        archive_le__isnull=True, date=activite.date
+    ).exclude(pk=activite.pk)
     if any(
-        Periode.JOURNEE in (a.periode, absence.periode) or a.periode == absence.periode
+        Periode.JOURNEE in (a.periode, activite.periode) or a.periode == activite.periode
         for a in autres
     ):
         raise ErreurMetier(
-            "absence_chevauchement",
-            _("Une absence est déjà déclarée sur cette période."),
+            "activite_chevauchement",
+            _("Une activité est déjà déclarée sur cette période."),
             status.HTTP_409_CONFLICT,
             champ="periode",
         )
     # Une absence qui couvre la journée entière (seule, ou avec l'autre demi-journée) ne
     # laisse pas de visite ce jour-là.
-    if not absence.avec_visites and PART_ABSENTE[absence.periode] + _part_absente(autres) >= 1:
-        nombre = _visites_du_jour(absence.planning, absence.date).count()
+    if not activite.avec_visites and PART_ABSENTE[activite.periode] + _part_absente(autres) >= 1:
+        nombre = _visites_du_jour(activite.planning, activite.date).count()
         if nombre:
             raise ErreurMetier(
-                "absence_avec_visites",
+                "activite_avec_visites",
                 _("Des visites sont prévues ce jour-là : déplacez-les ou retirez-les d'abord."),
                 status.HTTP_409_CONFLICT,
                 champ="periode",
@@ -735,43 +735,43 @@ def _verifier_absence(absence: Absence) -> None:
 
 
 @transaction.atomic
-def declarer_absence(planning: Planning, *, date: date, type: str, periode: str = Periode.JOURNEE,
+def declarer_activite(planning: Planning, *, date: date, type: str, periode: str = Periode.JOURNEE,
                      commentaire: str = "", demande_superviseur: bool = False,
-                     id=None) -> Absence:  # fmt: skip
+                     id=None) -> Activite:  # fmt: skip
     _verrouiller(planning)
-    if existante := _deja_envoye(Absence, planning, id):
+    if existante := _deja_envoye(Activite, planning, id):
         return existante
     _exiger_modifiable(planning)
-    absence = Absence(pays=planning.pays, planning=planning, date=date, type=type,
+    activite = Activite(pays=planning.pays, planning=planning, date=date, type=type,
                       periode=periode, commentaire=(commentaire or "").strip(),
                       demande_superviseur=demande_superviseur)  # fmt: skip
     if id is not None:
-        absence.pk = id
-    _verifier_absence(absence)
-    absence.save()
-    _auditer("absence.declaration", absence, planning=str(planning.pk), date=str(date),
+        activite.pk = id
+    _verifier_activite(activite)
+    activite.save()
+    _auditer("activite.declaration", activite, planning=str(planning.pk), date=str(date),
              periode=periode, type=type)  # fmt: skip
-    return absence
+    return activite
 
 
 @transaction.atomic
-def modifier_absence(absence: Absence, **champs) -> Absence:
-    _exiger_modifiable(absence.planning)
+def modifier_activite(activite: Activite, **champs) -> Activite:
+    _exiger_modifiable(activite.planning)
     if "commentaire" in champs:
         champs["commentaire"] = (champs["commentaire"] or "").strip()
     for cle, valeur in champs.items():
-        setattr(absence, cle, valeur)
-    _verifier_absence(absence)
-    absence.save()
-    _auditer("absence.modification", absence, planning=str(absence.planning_id),
+        setattr(activite, cle, valeur)
+    _verifier_activite(activite)
+    activite.save()
+    _auditer("activite.modification", activite, planning=str(activite.planning_id),
              champs=sorted(champs))  # fmt: skip
-    return absence
+    return activite
 
 
 @transaction.atomic
-def retirer_absence(absence: Absence) -> Absence:
-    _exiger_modifiable(absence.planning)
-    absence.archiver()
-    _auditer("absence.retrait", absence, planning=str(absence.planning_id),
-             date=str(absence.date))  # fmt: skip
-    return absence
+def retirer_activite(activite: Activite) -> Activite:
+    _exiger_modifiable(activite.planning)
+    activite.archiver()
+    _auditer("activite.retrait", activite, planning=str(activite.planning_id),
+             date=str(activite.date))  # fmt: skip
+    return activite

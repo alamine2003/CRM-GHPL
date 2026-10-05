@@ -6,12 +6,12 @@
  *   superviseur), accompagnement du superviseur ; elles s'expliquent et gardent leurs visites.
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { Absence, PeriodeAbsence, Semaine, TypeAbsence } from '@innov/api-client';
+import type { Activite, PeriodeActivite, Semaine, TypeActivite } from '@innov/api-client';
 import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
-  type ChampsAbsence,
+  type ChampsActivite,
   estTransitoire,
   garderBrouillon,
   mettreEnAttente,
@@ -23,54 +23,54 @@ import { Pilule } from './Etablissements';
 import { police } from './polices';
 import { messageErreur, useSession } from './session';
 
-const SANS_VISITE: TypeAbsence[] = ['conge', 'maladie', 'formation', 'reunion', 'autre'];
-const AVEC_VISITES: TypeAbsence[] = ['commando', 'deplacement', 'accompagnement'];
+const SANS_VISITE: TypeActivite[] = ['conge', 'maladie', 'formation', 'reunion', 'autre'];
+const AVEC_VISITES: TypeActivite[] = ['commando', 'deplacement', 'accompagnement'];
 
-export const avecVisites = (type: TypeAbsence | null) => !!type && AVEC_VISITES.includes(type);
+export const avecVisites = (type: TypeActivite | null) => !!type && AVEC_VISITES.includes(type);
 
-const ICONES: Partial<Record<TypeAbsence, keyof typeof MaterialIcons.glyphMap>> = {
+const ICONES: Partial<Record<TypeActivite, keyof typeof MaterialIcons.glyphMap>> = {
   commando: 'groups',
   deplacement: 'directions-car',
   accompagnement: 'supervisor-account',
 };
-const PERIODES: PeriodeAbsence[] = ['journee', 'matin', 'apres_midi'];
+const PERIODES: PeriodeActivite[] = ['journee', 'matin', 'apres_midi'];
 
-/** Ligne d'une absence dans la journée : « Formation · après-midi ». */
-export function LigneAbsence({ absence, onPress }: { absence: Absence; onPress?: () => void }) {
+/** Ligne d'une activité dans la journée : « Formation · après-midi ». */
+export function LigneActivite({ activite, onPress }: { activite: Activite; onPress?: () => void }) {
   const { t } = useTranslation();
   const p = usePalette();
-  const libelle = t('absences.ligne', {
-    type: t(`absences.types.${absence.type}`),
-    periode: t(`absences.periodes.${absence.periode ?? 'journee'}`),
+  const libelle = t('activites.ligne', {
+    type: t(`activites.types.${activite.type}`),
+    periode: t(`activites.periodes.${activite.periode ?? 'journee'}`),
   });
   return (
     <Pressable
       accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityHint={onPress ? t('absences.modifier') : undefined}
+      accessibilityHint={onPress ? t('activites.modifier') : undefined}
       disabled={!onPress}
       onPress={onPress}
       style={({ pressed }) => [styles.ligne, pressed && { backgroundColor: p.fond }]}
     >
       <View style={styles.icone}>
         <MaterialIcons
-          name={ICONES[absence.type] ?? 'event-busy'}
+          name={ICONES[activite.type] ?? 'event-busy'}
           size={20}
-          color={absence.avec_visites ? p.texte : p.texteSecondaire}
+          color={activite.avec_visites ? p.texte : p.texteSecondaire}
         />
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         {/* Une activité avec visites est du travail : elle se lit comme une ligne de la journée. */}
         <Text
-          style={[styles.libelle, { color: absence.avec_visites ? p.texte : p.texteSecondaire }]}
+          style={[styles.libelle, { color: activite.avec_visites ? p.texte : p.texteSecondaire }]}
         >
           {libelle}
         </Text>
-        {absence.demande_superviseur ? (
-          <Texte variante="discret">{t('absences.parSuperviseur')}</Texte>
+        {activite.demande_superviseur ? (
+          <Texte variante="discret">{t('activites.parSuperviseur')}</Texte>
         ) : null}
-        {absence.commentaire ? (
-          <Texte variante="discret" numberOfLines={absence.avec_visites ? 3 : 1}>
-            {absence.commentaire}
+        {activite.commentaire ? (
+          <Texte variante="discret" numberOfLines={activite.avec_visites ? 3 : 1}>
+            {activite.commentaire}
           </Texte>
         ) : null}
       </View>
@@ -79,51 +79,51 @@ export function LigneAbsence({ absence, onPress }: { absence: Absence; onPress?:
   );
 }
 
-/** Saisie d'une absence, en pleine page ; ajout si `absence` est absente. */
-export function FormulaireAbsence({
+/** Saisie d'une activité, en pleine page ; ajout si `activite` est absente. */
+export function FormulaireActivite({
   semaine,
   jour,
-  absence,
+  activite,
   brouillon,
   surTermine,
   surAnnuler,
 }: {
   semaine: Semaine;
   jour: string;
-  absence?: Absence;
+  activite?: Activite;
   /** Saisie reprise d'un brouillon gardé sur le téléphone (PLN-007). */
-  brouillon?: ChampsAbsence;
+  brouillon?: ChampsActivite;
   surTermine: (message: string) => void;
   surAnnuler: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
-  const [date, setDate] = useState(brouillon?.date ?? absence?.date ?? jour);
-  const [type, setType] = useState<TypeAbsence | null>(
-    brouillon ? brouillon.type : (absence?.type ?? null),
+  const [date, setDate] = useState(brouillon?.date ?? activite?.date ?? jour);
+  const [type, setType] = useState<TypeActivite | null>(
+    brouillon ? brouillon.type : (activite?.type ?? null),
   );
-  const [periode, setPeriode] = useState<PeriodeAbsence>(
-    brouillon?.periode ?? absence?.periode ?? 'journee',
+  const [periode, setPeriode] = useState<PeriodeActivite>(
+    brouillon?.periode ?? activite?.periode ?? 'journee',
   );
   const [commentaire, setCommentaire] = useState(
-    brouillon?.commentaire ?? absence?.commentaire ?? '',
+    brouillon?.commentaire ?? activite?.commentaire ?? '',
   );
   const [demandeSuperviseur, setDemandeSuperviseur] = useState(
-    brouillon?.demande_superviseur ?? absence?.demande_superviseur ?? false,
+    brouillon?.demande_superviseur ?? activite?.demande_superviseur ?? false,
   );
 
   // PLN-007 : la saisie est gardée sur le téléphone à chaque changement.
   useEffect(() => {
     const minuterie = setTimeout(() => {
       void garderBrouillon({
-        objet: 'absence',
+        objet: 'activite',
         semaine: semaine.semaine,
-        absence: absence?.id,
+        activite: activite?.id,
         champs: { date, type, periode, commentaire, demande_superviseur: demandeSuperviseur },
       });
     }, 300);
     return () => clearTimeout(minuterie);
-  }, [semaine.semaine, absence?.id, date, type, periode, commentaire, demandeSuperviseur]);
+  }, [semaine.semaine, activite?.id, date, type, periode, commentaire, demandeSuperviseur]);
   const [envoi, setEnvoi] = useState<'enregistrer' | 'retirer' | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -148,19 +148,20 @@ export function FormulaireAbsence({
     };
     const ajout = { ...saisie, id: nouvelIdentifiant() };
     try {
-      if (absence) await client.absences.modifier(absence.id, saisie);
-      else if (semaine.planning) await client.plannings.declarerAbsence(semaine.planning.id, ajout);
+      if (activite) await client.activites.modifier(activite.id, saisie);
+      else if (semaine.planning)
+        await client.plannings.declarerActivite(semaine.planning.id, ajout);
       await oublierBrouillon();
-      surTermine(absence ? t('absences.modifiee') : t('absences.declaree'));
+      surTermine(activite ? t('activites.modifiee') : t('activites.declaree'));
     } catch (e) {
       // Sans réseau, une nouvelle absence attend sur le téléphone (PLN-007).
-      if (estTransitoire(e) && !absence && semaine.planning) {
+      if (estTransitoire(e) && !activite && semaine.planning) {
         await mettreEnAttente({
           id: ajout.id,
-          type: 'ajout_absence',
+          type: 'ajout_activite',
           planning: semaine.planning.id,
           saisie: ajout,
-          resume: `${libelleJour(date)} · ${t(`absences.types.${type}`)}`,
+          resume: `${libelleJour(date)} · ${t(`activites.types.${type}`)}`,
         });
         await oublierBrouillon();
         surTermine(t('attente.gardee'));
@@ -172,13 +173,13 @@ export function FormulaireAbsence({
   }
 
   async function retirer() {
-    if (!absence) return;
+    if (!activite) return;
     setEnvoi('retirer');
     setErreur(null);
     try {
-      await client.absences.retirer(absence.id);
+      await client.activites.retirer(activite.id);
       await oublierBrouillon();
-      surTermine(t('absences.retiree'));
+      surTermine(t('activites.retiree'));
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));
       setEnvoi(null);
@@ -188,12 +189,12 @@ export function FormulaireAbsence({
   return (
     <View style={{ gap: 16 }}>
       <Texte variante="sousTitre">
-        {absence ? t('absences.modifier') : t('absences.nouvelle')}
+        {activite ? t('activites.modifier') : t('activites.nouvelle')}
       </Texte>
-      <Texte variante="discret">{t('absences.aide')}</Texte>
+      <Texte variante="discret">{t('activites.aide')}</Texte>
       {erreur && <Alerte type="erreur">{erreur}</Alerte>}
 
-      <Groupe titre={t('absences.champs.date')}>
+      <Groupe titre={t('activites.champs.date')}>
         {jours.map((j) => (
           <Pilule
             key={j.date}
@@ -203,45 +204,45 @@ export function FormulaireAbsence({
           />
         ))}
       </Groupe>
-      <Groupe titre={t('absences.sansVisite')}>
+      <Groupe titre={t('activites.sansVisite')}>
         {SANS_VISITE.map((v) => (
           <Pilule
             key={v}
-            libelle={t(`absences.types.${v}`)}
+            libelle={t(`activites.types.${v}`)}
             actif={type === v}
             onPress={() => setType(v)}
           />
         ))}
       </Groupe>
-      <Groupe titre={t('absences.avecVisites')}>
+      <Groupe titre={t('activites.avecVisites')}>
         {AVEC_VISITES.map((v) => (
           <Pilule
             key={v}
-            libelle={t(`absences.types.${v}`)}
+            libelle={t(`activites.types.${v}`)}
             actif={type === v}
             onPress={() => setType(v)}
           />
         ))}
       </Groupe>
-      <Groupe titre={t('absences.champs.periode')}>
+      <Groupe titre={t('activites.champs.periode')}>
         {PERIODES.map((v) => (
           <Pilule
             key={v}
-            libelle={t(`absences.periodes.${v}`)}
+            libelle={t(`activites.periodes.${v}`)}
             actif={periode === v}
             onPress={() => setPeriode(v)}
           />
         ))}
       </Groupe>
       {type === 'deplacement' && (
-        <Groupe titre={t('absences.demande')}>
+        <Groupe titre={t('activites.demande')}>
           <Pilule
-            libelle={t('absences.demandeMoi')}
+            libelle={t('activites.demandeMoi')}
             actif={!demandeSuperviseur}
             onPress={() => setDemandeSuperviseur(false)}
           />
           <Pilule
-            libelle={t('absences.demandeSuperviseur')}
+            libelle={t('activites.demandeSuperviseur')}
             actif={demandeSuperviseur}
             onPress={() => setDemandeSuperviseur(true)}
           />
@@ -250,10 +251,10 @@ export function FormulaireAbsence({
       <Champ
         libelle={
           avec
-            ? t('absences.explication')
+            ? t('activites.explication')
             : type === 'autre'
-              ? t('absences.motif')
-              : t('absences.commentaire')
+              ? t('activites.motif')
+              : t('activites.commentaire')
         }
         value={commentaire}
         onChangeText={setCommentaire}
@@ -262,7 +263,7 @@ export function FormulaireAbsence({
       />
       {motifManquant && (
         <Texte variante="discret">
-          {avec ? t('absences.explicationRequise') : t('absences.motifRequis')}
+          {avec ? t('activites.explicationRequise') : t('activites.motifRequis')}
         </Texte>
       )}
 
@@ -280,7 +281,7 @@ export function FormulaireAbsence({
           surAnnuler();
         }}
       />
-      {absence && (
+      {activite && (
         <Pressable
           accessibilityRole="button"
           disabled={envoi !== null}
@@ -288,7 +289,7 @@ export function FormulaireAbsence({
           style={({ pressed }) => [styles.retirer, pressed && { opacity: 0.6 }]}
         >
           <Retirer
-            libelle={envoi === 'retirer' ? t('session.chargement') : t('absences.retirer')}
+            libelle={envoi === 'retirer' ? t('session.chargement') : t('activites.retirer')}
           />
         </Pressable>
       )}

@@ -206,10 +206,12 @@ urlpatterns = [
         name="passage-dissocier",
     ),
     path(
-        "plannings/<uuid:id>/absences/", pln.AbsencesPlanningVue.as_view(), name="planning-absences"
+        "plannings/<uuid:id>/activites/",
+        pln.ActivitesPlanningVue.as_view(),
+        name="planning-activites",
     ),
-    path("absences/<uuid:id>/", pln.AbsenceVue.as_view(), name="absence"),
-    path("absences/<uuid:id>/retirer/", pln.AbsenceRetraitVue.as_view(), name="absence-retirer"),
+    path("activites/<uuid:id>/", pln.ActiviteVue.as_view(), name="activite"),
+    path("activites/<uuid:id>/retirer/", pln.ActiviteRetraitVue.as_view(), name="activite-retirer"),
     path("doublons/<uuid:id>/trancher/", dbl.DoublonDecisionVue.as_view(), name="doublon-trancher"),
     path("fusions/", dbl.FusionsVue.as_view(), name="fusions"),
     path("fusions/<uuid:id>/defaire/", dbl.DefusionVue.as_view(), name="fusion-defaire"),

@@ -46,7 +46,7 @@ export function BandeauBrouillon({
       <Texte variante="fort">
         {brouillon.objet === 'visite'
           ? t(brouillon.visite ? 'brouillon.visiteModifiee' : 'brouillon.visite')
-          : t('brouillon.absence')}
+          : t('brouillon.activite')}
       </Texte>
       <Texte variante="discret">{empechement ?? t('brouillon.aide')}</Texte>
       {!empechement && <Bouton libelle={t('brouillon.reprendre')} onPress={surReprendre} />}

@@ -57,7 +57,7 @@ const SEMAINE: Semaine = {
   modifiable: false,
   visites: [],
   passages: [],
-  absences: [],
+  activites: [],
   controles: null,
   kilometrage: null,
   reprenables: 0,
@@ -320,10 +320,10 @@ test('PLN-003 CA1 : un passage s’affiche « Établissement · n prescripteurs 
 });
 
 test('PLN-009 : le délégué déclare une demi-journée de formation', async () => {
-  const declarerAbsence = jest.fn(async () => ({}));
+  const declarerActivite = jest.fn(async () => ({}));
   await rendre({
     semaine: jest.fn(async () => EN_PREPARATION),
-    declarerAbsence,
+    declarerActivite,
   } as unknown as Partial<ClientApi['plannings']>);
   await fireEvent.press(await screen.findByLabelText('Déclarer une activité le jeudi 29 octobre'));
   // « Autre » exige un motif ; la formation, non.
@@ -332,7 +332,7 @@ test('PLN-009 : le délégué déclare une demi-journée de formation', async ()
   await fireEvent.press(screen.getByText('Formation'));
   await fireEvent.press(screen.getByText('Matin'));
   await fireEvent.press(screen.getByText('Enregistrer'));
-  expect(declarerAbsence).toHaveBeenCalledWith('pl1', {
+  expect(declarerActivite).toHaveBeenCalledWith('pl1', {
     id: 'uuid-du-telephone',
     date: '2026-10-29',
     type: 'formation',
@@ -348,7 +348,7 @@ test('PLN-009 : une journée entière d’absence ne propose plus d’ajouter un
     semaine: jest.fn(async () => ({
       ...EN_PREPARATION,
       visites: [],
-      absences: [
+      activites: [
         {
           id: 'a1',
           date: '2026-10-28',
@@ -940,10 +940,10 @@ test('un refus du serveur dans la vue jour n’affiche pas une semaine gardée',
 });
 
 test('PLN-018 CA1 : un déplacement s’explique et dit qui l’a demandé', async () => {
-  const declarerAbsence = jest.fn(async () => ({}));
+  const declarerActivite = jest.fn(async () => ({}));
   await rendre({
     semaine: jest.fn(async () => EN_PREPARATION),
-    declarerAbsence,
+    declarerActivite,
   } as unknown as Partial<ClientApi['plannings']>);
   await fireEvent.press(await screen.findByLabelText('Déclarer une activité le jeudi 29 octobre'));
   await fireEvent.press(screen.getByText('Déplacement'));
@@ -955,7 +955,7 @@ test('PLN-018 CA1 : un déplacement s’explique et dit qui l’a demandé', asy
   );
   await fireEvent.press(screen.getByText('Demandé par mon superviseur'));
   await fireEvent.press(screen.getByText('Enregistrer'));
-  expect(declarerAbsence).toHaveBeenCalledWith('pl1', {
+  expect(declarerActivite).toHaveBeenCalledWith('pl1', {
     id: 'uuid-du-telephone',
     date: '2026-10-29',
     type: 'deplacement',
@@ -970,7 +970,7 @@ test('PLN-018 CA2 : un jour de commando garde ses visites et se lit comme du tra
     semaine: jest.fn(async () => ({
       ...EN_PREPARATION,
       visites: [],
-      absences: [
+      activites: [
         {
           id: 'a1',
           date: '2026-10-28',

@@ -151,7 +151,7 @@ class ChangementSerializer(serializers.Serializer):
     nouveau = serializers.CharField(max_length=256, trim_whitespace=False)
 
 
-class ActiviteSerializer(serializers.Serializer):
+class ActiviteCompteSerializer(serializers.Serializer):
     """Événement d'audit de l'utilisateur lui-même (connexions, sécurité du compte)."""
 
     le = serializers.DateTimeField()

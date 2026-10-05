@@ -102,7 +102,7 @@ def test_ca2_reprendre_la_semaine_precedente(monde, terrain):
     services.regrouper(precedente, [a, b])
     services.ajouter_visite(precedente, date=date(2026, 10, 16), prospect=confrere,
                             etablissement=terrain["clinique"])  # fmt: skip
-    services.declarer_absence(precedente, date=date(2026, 10, 14), type="formation")
+    services.declarer_activite(precedente, date=date(2026, 10, 14), type="formation")
     # Semaine suivante : le vendredi 23 est férié.
     services.creer_jour_ferie(monde["sn"], date=date(2026, 10, 23), libelle="Fête fictive")
     suivante = services.creer_planning(monde["sn"], monde["deleg.sn"], date(2026, 10, 19))
@@ -119,7 +119,7 @@ def test_ca2_reprendre_la_semaine_precedente(monde, terrain):
         ("2026-10-20", "10:00:00", "Vasculor"), ("2026-10-20", "10:00:00", "")}  # fmt: skip
     # Le passage suit ; l'absence, non.
     assert Passage.objects.filter(planning=suivante, archive_le__isnull=True).count() == 1
-    assert not suivante.absences.exists()
+    assert not suivante.activites.exists()
     assert EvenementAudit.objects.filter(action="planning.reprise").exists()
     # Une semaine qui a déjà des visites ne se reprend pas (pas de doublons).
     assert deleg.get(SEMAINE, {"semaine": "2026-10-19"}).json()["reprenables"] == 0

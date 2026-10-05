@@ -1377,7 +1377,7 @@
     "nombre_one": "Stop · {{count}} prescriber",
     "nombre_other": "Stop · {{count}} prescribers"
   },
-  "absences": {
+  "activites": {
     "declarer": "Declare an activity",
     "declarerLe": "Declare an activity on {{jour}}",
     "nouvelle": "New activity",
@@ -1539,7 +1539,7 @@
     "types": {
       "ajout_visite": "New visit",
       "modif_visite": "Edited visit",
-      "ajout_absence": "Absence"
+      "ajout_activite": "Activity"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -1549,7 +1549,7 @@
   "brouillon": {
     "visite": "A new visit was not saved.",
     "visiteModifiee": "A visit edit was not saved.",
-    "absence": "An absence was not saved.",
+    "activite": "An activity was not saved.",
     "aide": "What you were typing was kept on this phone when the app closed.",
     "reprendre": "Resume",
     "abandonner": "Discard this entry",

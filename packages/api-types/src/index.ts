@@ -42,7 +42,7 @@ export type EtapeDoubleAuth = Schemas['EtapeDoubleAuth'];
 export type EtatDoubleAuth = Schemas['EtatDoubleAuth'];
 export type InitialisationDoubleAuth = Schemas['InitialisationDoubleAuth'];
 export type SessionOuverte = Schemas['Session'];
-export type Activite = Schemas['Activite'];
+export type ActiviteCompte = Schemas['ActiviteCompte'];
 export type ValeurReferentiel = Schemas['Valeur'];
 export type ListeReferentiel = Schemas['ListeEnum'];
 export type Produit = Schemas['Produit'];
@@ -89,11 +89,11 @@ export type SaisieVisite = Schemas['SaisieVisite'];
 export type ModificationVisite = Schemas['PatchedModificationVisite'];
 // Passages et absences (PLN-003, PLN-009).
 export type Passage = Schemas['Passage'];
-export type Absence = Schemas['Absence'];
-export type TypeAbsence = Schemas['TypeAbsenceEnum'];
-export type PeriodeAbsence = Schemas['PeriodeAbsenceEnum'];
-export type SaisieAbsence = Schemas['SaisieAbsence'];
-export type ModificationAbsence = Schemas['PatchedModificationAbsence'];
+export type Activite = Schemas['Activite'];
+export type TypeActivite = Schemas['TypeActiviteEnum'];
+export type PeriodeActivite = Schemas['PeriodeActiviteEnum'];
+export type SaisieActivite = Schemas['SaisieActivite'];
+export type ModificationActivite = Schemas['PatchedModificationActivite'];
 // Contrôles du planning (PLN-004).
 export type ControlePlanning = Schemas['ControlePlanning'];
 export type CodeControle = Schemas['CodeControleEnum'];

@@ -1,4 +1,4 @@
-import type { Absence, PlanningEnAttente } from '@innov/api-client';
+import type { Activite, PlanningEnAttente } from '@innov/api-client';
 import DirectionsCarRounded from '@mui/icons-material/DirectionsCarRounded';
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
@@ -13,7 +13,7 @@ import { useSession } from '../contexteSession';
 
 type Traduire = ReturnType<typeof useTranslation>['t'];
 
-const ICONES: Partial<Record<Absence['type'], ReactNode>> = {
+const ICONES: Partial<Record<Activite['type'], ReactNode>> = {
   commando: <GroupsRounded fontSize="small" />,
   deplacement: <DirectionsCarRounded fontSize="small" />,
   accompagnement: <SupervisorAccountRounded fontSize="small" />,
@@ -157,11 +157,11 @@ function CartePlanning({ ligne, maintenant }: { ligne: PlanningEnAttente; mainte
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
                   {jour(a.date, { weekday: 'short', day: 'numeric' })} ·{' '}
-                  {t('absences.ligne', {
-                    type: t(`absences.types.${a.type}`),
-                    periode: t(`absences.periodes.${a.periode ?? 'journee'}`),
+                  {t('activites.ligne', {
+                    type: t(`activites.types.${a.type}`),
+                    periode: t(`activites.periodes.${a.periode ?? 'journee'}`),
                   })}
-                  {a.demande_superviseur ? ` · ${t('absences.parSuperviseur')}` : ''}
+                  {a.demande_superviseur ? ` · ${t('activites.parSuperviseur')}` : ''}
                 </Typography>
                 {a.commentaire && (
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>

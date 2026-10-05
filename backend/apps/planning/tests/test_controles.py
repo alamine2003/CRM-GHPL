@@ -100,7 +100,7 @@ def test_rg015_une_fiche_devenue_inactive_bloque(monde, terrain):
 def test_ca2_les_seuils_du_jour_sont_signales_au_prorata_des_absences(monde, terrain):
     # VM : 6 à 10 visites par jour (paramètre par défaut).
     visite(terrain, heure=time(9, 0))
-    services.declarer_absence(terrain["planning"], date=date(2026, 10, 15), periode="matin",
+    services.declarer_activite(terrain["planning"], date=date(2026, 10, 15), periode="matin",
                               type="formation")  # fmt: skip
     bilan = controles.bilan(terrain["planning"])
     objectifs = {o.date: (o.visites, o.min, o.max) for o in bilan.objectifs}
@@ -124,7 +124,7 @@ def test_ca2_les_seuils_du_jour_sont_signales_au_prorata_des_absences(monde, ter
 
 def test_un_jour_ferie_ou_une_journee_d_absence_sort_des_seuils(monde, terrain):
     services.creer_jour_ferie(monde["sn"], date=date(2026, 10, 16), libelle="Fête fictive")
-    services.declarer_absence(terrain["planning"], date=date(2026, 10, 14), type="conge")
+    services.declarer_activite(terrain["planning"], date=date(2026, 10, 14), type="conge")
     jours = [o.date for o in controles.bilan(terrain["planning"]).objectifs]
     assert jours == [date(2026, 10, 12), MARDI, date(2026, 10, 15)]
 

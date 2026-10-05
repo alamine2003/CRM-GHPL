@@ -6,10 +6,10 @@
  * en mode « Réordonner », seules celles sans heure se déplacent.
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { Absence, Controles, JourSemaine, Passage, Visite } from '@innov/api-client';
+import type { Activite, Controles, JourSemaine, Passage, Visite } from '@innov/api-client';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { LigneAbsence } from './Absences';
+import { LigneActivite } from './Activites';
 import { alertesDeVisite } from './Controles';
 import { Texte, useLien, usePalette } from './composants';
 import { police } from './polices';
@@ -59,15 +59,15 @@ export function Journee({
   jour,
   visites,
   passages,
-  absences,
+  activites,
   modifiable,
   reordonner,
   controles,
   libelleJour,
   surVisite,
   surAjouterVisite,
-  surAbsence,
-  surDeclarerAbsence,
+  surActivite,
+  surDeclarerActivite,
   surRegrouper,
   surDissocier,
   surOrdonner,
@@ -76,7 +76,7 @@ export function Journee({
   jour: JourSemaine;
   visites: Visite[];
   passages: Passage[];
-  absences: Absence[];
+  activites: Activite[];
   modifiable: boolean;
   reordonner: boolean;
   controles: Controles | null;
@@ -84,8 +84,8 @@ export function Journee({
   libelleJour: string;
   surVisite: (v: Visite) => void;
   surAjouterVisite: () => void;
-  surAbsence: (a: Absence) => void;
-  surDeclarerAbsence: () => void;
+  surActivite: (a: Activite) => void;
+  surDeclarerActivite: () => void;
   surRegrouper: (visites: Visite[]) => void;
   surDissocier: (passage: Passage) => void;
   surOrdonner: (visites: string[]) => void;
@@ -98,12 +98,12 @@ export function Journee({
   const unites = unitesDuJour(visites, passages);
   // Absent toute la journée : une absence « journée », ou matin et après-midi (un commando ou un
   // déplacement, lui, garde ses visites).
-  const parts = absences
+  const parts = activites
     .filter((a) => !a.avec_visites)
     .reduce((n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1), 0);
   const absentToutLeJour = parts >= 2;
   // Une activité de plus ne se déclare que sur une période encore libre.
-  const occupees = absences.reduce(
+  const occupees = activites.reduce(
     (n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1),
     0,
   );
@@ -119,11 +119,11 @@ export function Journee({
 
   return (
     <>
-      {absences.map((a) => (
-        <LigneAbsence
+      {activites.map((a) => (
+        <LigneActivite
           key={a.id}
-          absence={a}
-          onPress={modifiable && !reordonner ? () => surAbsence(a) : undefined}
+          activite={a}
+          onPress={modifiable && !reordonner ? () => surActivite(a) : undefined}
         />
       ))}
       {unites.map((u, i) => {
@@ -227,10 +227,10 @@ export function Journee({
           {occupees < 2 && (
             <LienAction
               icone="event-busy"
-              libelle={t('absences.declarerCourt')}
-              description={t('absences.declarerLe', { jour: libelleJour })}
+              libelle={t('activites.declarerCourt')}
+              description={t('activites.declarerLe', { jour: libelleJour })}
               couleur={p.texteSecondaire}
-              onPress={surDeclarerAbsence}
+              onPress={surDeclarerActivite}
             />
           )}
           {ordonnable(unites) && (

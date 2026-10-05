@@ -1,5 +1,5 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { Absence, Semaine, Visite } from '@innov/api-client';
+import type { Activite, Semaine, Visite } from '@innov/api-client';
 import { marque } from '@innov/design';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,12 +9,12 @@ import { Alerte, Bouton, Carte, Texte, useLien, usePalette } from '../src/compos
 import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
-import { FormulaireAbsence } from '../src/Absences';
+import { FormulaireActivite } from '../src/Activites';
 import { BandeauBrouillon, BandeauHorsLigne, CarteAttente } from '../src/Attente';
 import {
   abandonnerEnvoi,
   type Brouillon,
-  type ChampsAbsence,
+  type ChampsActivite,
   type ChampsVisite,
   type Envoi,
   envoyerAttente,
@@ -47,7 +47,7 @@ function empechementBrouillon(
   const disparu =
     b.objet === 'visite'
       ? !!b.visite && !semaine.visites.some((v) => v.id === b.visite)
-      : !!b.absence && !semaine.absences.some((a) => a.id === b.absence);
+      : !!b.activite && !semaine.activites.some((a) => a.id === b.activite);
   return disparu ? t('brouillon.disparu') : undefined;
 }
 
@@ -73,7 +73,7 @@ export default function EcranSemaine() {
   const [creation, setCreation] = useState(false);
   const [edition, setEdition] = useState<
     | { objet: 'visite'; jour: string; visite?: Visite; brouillon?: ChampsVisite }
-    | { objet: 'absence'; jour: string; absence?: Absence; brouillon?: ChampsAbsence }
+    | { objet: 'activite'; jour: string; activite?: Activite; brouillon?: ChampsActivite }
     | { objet: 'cible'; jour: string }
     | null
   >(null);
@@ -180,8 +180,8 @@ export default function EcranSemaine() {
       const visite = b.visite ? semaine.visites.find((v) => v.id === b.visite) : undefined;
       setEdition({ objet: 'visite', jour: b.champs.date, visite, brouillon: b.champs });
     } else {
-      const absence = b.absence ? semaine.absences.find((a) => a.id === b.absence) : undefined;
-      setEdition({ objet: 'absence', jour: b.champs.date, absence, brouillon: b.champs });
+      const activite = b.activite ? semaine.activites.find((a) => a.id === b.activite) : undefined;
+      setEdition({ objet: 'activite', jour: b.champs.date, activite, brouillon: b.champs });
     }
   }
 
@@ -284,10 +284,10 @@ export default function EcranSemaine() {
             surTermine={terminer}
           />
         ) : (
-          <FormulaireAbsence
+          <FormulaireActivite
             semaine={semaine}
             jour={edition.jour}
-            absence={edition.absence}
+            activite={edition.activite}
             brouillon={edition.brouillon}
             surAnnuler={() => setEdition(null)}
             surTermine={terminer}
@@ -505,7 +505,7 @@ export default function EcranSemaine() {
                     jour={j}
                     visites={duJour}
                     passages={semaine.passages.filter((x) => x.date === j.date)}
-                    absences={semaine.absences.filter((a) => a.date === j.date)}
+                    activites={semaine.activites.filter((a) => a.date === j.date)}
                     modifiable={modifiable}
                     reordonner={reordonner === j.date}
                     controles={semaine.controles}
@@ -524,13 +524,13 @@ export default function EcranSemaine() {
                       setMessage(null);
                       setEdition({ objet: 'visite', jour: j.date });
                     }}
-                    surAbsence={(a) => {
+                    surActivite={(a) => {
                       setMessage(null);
-                      setEdition({ objet: 'absence', jour: j.date, absence: a });
+                      setEdition({ objet: 'activite', jour: j.date, activite: a });
                     }}
-                    surDeclarerAbsence={() => {
+                    surDeclarerActivite={() => {
                       setMessage(null);
-                      setEdition({ objet: 'absence', jour: j.date });
+                      setEdition({ objet: 'activite', jour: j.date });
                     }}
                     surRegrouper={(liste) =>
                       void executer(

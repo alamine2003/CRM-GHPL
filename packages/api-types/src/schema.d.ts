@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-  '/api/v1/absences/{id}/': {
+  '/api/v1/activites/{id}/': {
     parameters: {
       query?: never;
       header?: never;
@@ -17,10 +17,10 @@ export interface paths {
     delete?: never;
     options?: never;
     head?: never;
-    patch: operations['absence_modifier'];
+    patch: operations['activite_modifier'];
     trace?: never;
   };
-  '/api/v1/absences/{id}/retirer/': {
+  '/api/v1/activites/{id}/retirer/': {
     parameters: {
       query?: never;
       header?: never;
@@ -29,7 +29,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations['absence_retirer'];
+    post: operations['activite_retirer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1459,7 +1459,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/plannings/{id}/absences/': {
+  '/api/v1/plannings/{id}/activites/': {
     parameters: {
       query?: never;
       header?: never;
@@ -1468,7 +1468,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    post: operations['absence_declarer'];
+    post: operations['activite_declarer'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2169,19 +2169,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    Absence: {
+    Activite: {
       /** Format: uuid */
       readonly id: string;
       /** Format: date */
       date: string;
-      periode?: components['schemas']['PeriodeAbsenceEnum'];
-      type: components['schemas']['TypeAbsenceEnum'];
+      periode?: components['schemas']['PeriodeActiviteEnum'];
+      type: components['schemas']['TypeActiviteEnum'];
       commentaire?: string;
       demande_superviseur?: boolean;
       readonly avec_visites: boolean;
     };
     /** @description Événement d'audit de l'utilisateur lui-même (connexions, sécurité du compte). */
-    Activite: {
+    ActiviteCompte: {
       /** Format: date-time */
       le: string;
       action: string;
@@ -2922,11 +2922,11 @@ export interface components {
     PatchedLibelle: {
       libelle?: string;
     };
-    PatchedModificationAbsence: {
+    PatchedModificationActivite: {
       /** Format: date */
       date?: string;
-      periode?: components['schemas']['PeriodeAbsenceEnum'];
-      type?: components['schemas']['TypeAbsenceEnum'];
+      periode?: components['schemas']['PeriodeActiviteEnum'];
+      type?: components['schemas']['TypeActiviteEnum'];
       commentaire?: string;
       demande_superviseur?: boolean;
     };
@@ -3059,7 +3059,7 @@ export interface components {
      *     * `apres_midi` - Après-midi
      * @enum {string}
      */
-    PeriodeAbsenceEnum: 'journee' | 'matin' | 'apres_midi';
+    PeriodeActiviteEnum: 'journee' | 'matin' | 'apres_midi';
     Personne: {
       /** Format: uuid */
       id: string;
@@ -3098,7 +3098,7 @@ export interface components {
       postes: string[];
       visites: number;
       signalements: components['schemas']['SignalementResume'][];
-      readonly activites: components['schemas']['Absence'][];
+      readonly activites: components['schemas']['Activite'][];
     };
     /**
      * @description * `brouillon` - En préparation
@@ -3444,14 +3444,14 @@ export interface components {
       | 'superviseur'
       | 'delegue'
       | 'admin_technique';
-    SaisieAbsence: {
+    SaisieActivite: {
       /** Format: uuid */
       id?: string;
       /** Format: date */
       date: string;
       /** @default journee */
-      periode: components['schemas']['PeriodeAbsenceEnum'];
-      type: components['schemas']['TypeAbsenceEnum'];
+      periode: components['schemas']['PeriodeActiviteEnum'];
+      type: components['schemas']['TypeActiviteEnum'];
       commentaire?: string;
       /** @default false */
       demande_superviseur: boolean;
@@ -3576,7 +3576,7 @@ export interface components {
       modifiable: boolean;
       visites: components['schemas']['Visite'][];
       passages: components['schemas']['Passage'][];
-      absences: components['schemas']['Absence'][];
+      activites: components['schemas']['Activite'][];
       reprenables: number;
       kilometrage: components['schemas']['Kilometrage'] | null;
       controles: components['schemas']['Controles'] | null;
@@ -3700,7 +3700,7 @@ export interface components {
      *     * `accompagnement` - Accompagnement du superviseur
      * @enum {string}
      */
-    TypeAbsenceEnum:
+    TypeActiviteEnum:
       | 'conge'
       | 'formation'
       | 'reunion'
@@ -3808,7 +3808,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  absence_modifier: {
+  activite_modifier: {
     parameters: {
       query?: never;
       header?: never;
@@ -3819,9 +3819,9 @@ export interface operations {
     };
     requestBody?: {
       content: {
-        'application/json': components['schemas']['PatchedModificationAbsence'];
-        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationAbsence'];
-        'multipart/form-data': components['schemas']['PatchedModificationAbsence'];
+        'application/json': components['schemas']['PatchedModificationActivite'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationActivite'];
+        'multipart/form-data': components['schemas']['PatchedModificationActivite'];
       };
     };
     responses: {
@@ -3830,12 +3830,12 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['Absence'];
+          'application/json': components['schemas']['Activite'];
         };
       };
     };
   };
-  absence_retirer: {
+  activite_retirer: {
     parameters: {
       query?: never;
       header?: never;
@@ -3851,7 +3851,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['Absence'];
+          'application/json': components['schemas']['Activite'];
         };
       };
     };
@@ -3937,7 +3937,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['Activite'][];
+          'application/json': components['schemas']['ActiviteCompte'][];
         };
       };
     };
@@ -6171,7 +6171,7 @@ export interface operations {
       };
     };
   };
-  absence_declarer: {
+  activite_declarer: {
     parameters: {
       query?: never;
       header?: never;
@@ -6182,9 +6182,9 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['SaisieAbsence'];
-        'application/x-www-form-urlencoded': components['schemas']['SaisieAbsence'];
-        'multipart/form-data': components['schemas']['SaisieAbsence'];
+        'application/json': components['schemas']['SaisieActivite'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieActivite'];
+        'multipart/form-data': components['schemas']['SaisieActivite'];
       };
     };
     responses: {
@@ -6193,7 +6193,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          'application/json': components['schemas']['Absence'];
+          'application/json': components['schemas']['Activite'];
         };
       };
     };

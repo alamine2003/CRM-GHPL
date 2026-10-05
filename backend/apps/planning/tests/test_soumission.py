@@ -108,7 +108,7 @@ def test_ca1_apres_l_echeance_la_soumission_est_acceptee_et_marquee_en_retard(mo
 def test_une_semaine_toute_d_absence_se_soumet_sans_visite(monde, terrain):
     org.rattacher(terrain["poste"], monde["sup.sn"], date(2026, 1, 1))
     for jour in range(12, 17):
-        services.declarer_absence(terrain["planning"], date=date(2026, 10, jour), type="conge")
+        services.declarer_activite(terrain["planning"], date=date(2026, 10, jour), type="conge")
     assert soumettre(monde, terrain).status_code == 200
 
 

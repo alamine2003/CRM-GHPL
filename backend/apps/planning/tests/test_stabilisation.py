@@ -86,12 +86,12 @@ def test_l_ordre_et_le_passage_gardent_version_et_journal(monde, terrain):
 def test_modifier_une_visite_ou_une_absence_est_audite(terrain):
     v = visite(terrain)
     services.modifier_visite(v, objectif="Échantillons")
-    absence = services.declarer_absence(terrain["planning"], date=date(2026, 10, 16),
+    activite = services.declarer_activite(terrain["planning"], date=date(2026, 10, 16),
                                         periode="matin", type="formation")  # fmt: skip
-    services.modifier_absence(absence, type="reunion")
+    services.modifier_activite(activite, type="reunion")
     modif = EvenementAudit.objects.get(action="visite.modification")
     assert modif.details["champs"] == ["objectif"]
-    assert EvenementAudit.objects.get(action="absence.modification").details["champs"] == ["type"]
+    assert EvenementAudit.objects.get(action="activite.modification").details["champs"] == ["type"]
 
 
 def test_le_lieu_principal_a_valider_d_un_autre_n_est_pas_propose(monde, terrain):

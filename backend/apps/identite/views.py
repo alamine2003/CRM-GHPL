@@ -13,7 +13,7 @@ from apps.socle.erreurs import ErreurMetier
 from . import double_auth, services
 from .models import Session, Utilisateur
 from .serializers import (
-    ActiviteSerializer,
+    ActiviteCompteSerializer,
     ChangementLangueSerializer,
     ChangementSerializer,
     CodeSerializer,
@@ -385,7 +385,7 @@ class ActiviteView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(responses=ActiviteSerializer(many=True), operation_id="mon_activite")
+    @extend_schema(responses=ActiviteCompteSerializer(many=True), operation_id="mon_activite")
     def get(self, request):
         from apps.audit.models import EvenementAudit
 
@@ -405,4 +405,4 @@ class ActiviteView(APIView):
             }
             for e in evenements
         ]
-        return Response(ActiviteSerializer(lignes, many=True).data)
+        return Response(ActiviteCompteSerializer(lignes, many=True).data)

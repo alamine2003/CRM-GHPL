@@ -203,7 +203,7 @@ export function FormulaireVisite({
   const { client } = useSession();
   // Une journée entière d'absence ne reçoit pas de visite (PLN-009).
   const absents = new Set(
-    semaine.absences.filter((a) => a.periode === 'journee').map((a) => a.date),
+    semaine.activites.filter((a) => a.periode === 'journee').map((a) => a.date),
   );
   const jours = semaine.jours.filter(
     (j) => j.planifiable && (!absents.has(j.date) || j.date === visite?.date),

@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { LigneAbsence } from './Absences';
+import { LigneActivite } from './Activites';
 import { Alerte, Bouton, Carte, MarquePotentiel, Texte, useLien, usePalette } from './composants';
 import { alertesDeVisite } from './Controles';
 import { nomProspect } from './Fiches';
@@ -92,7 +92,7 @@ export function VueJour({ jour }: { jour: string }) {
   if (!semaine) return <Texte variante="discret">{t('session.chargement')}</Texte>;
 
   const visites = semaine.visites.filter((v) => v.date === jour);
-  const absences = semaine.absences.filter((a) => a.date === jour);
+  const activites = semaine.activites.filter((a) => a.date === jour);
   const unites = unitesDuJour(
     visites,
     semaine.passages.filter((x) => x.date === jour),
@@ -117,10 +117,10 @@ export function VueJour({ jour }: { jour: string }) {
         )}
       </Carte>
 
-      {absences.length > 0 && (
+      {activites.length > 0 && (
         <Carte style={{ paddingVertical: 4 }}>
-          {absences.map((a) => (
-            <LigneAbsence key={a.id} absence={a} />
+          {activites.map((a) => (
+            <LigneActivite key={a.id} activite={a} />
           ))}
         </Carte>
       )}

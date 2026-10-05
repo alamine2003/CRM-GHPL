@@ -57,7 +57,7 @@ function nom(
  * déplacement ou un accompagnement garde ses visites (PLN-018).
  */
 function jourAbsent(s: Semaine, date: string) {
-  const parts = s.absences
+  const parts = s.activites
     .filter((a) => a.date === date && !a.avec_visites)
     .reduce((n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1), 0);
   return parts >= 2;
@@ -583,7 +583,7 @@ function Colonne({
         )}
       </Box>
       <Stack spacing={1} sx={{ p: 1, flex: 1 }}>
-        {s.absences
+        {s.activites
           .filter((a) => a.date === date)
           .map((a) => (
             <Stack
@@ -599,9 +599,9 @@ function Colonne({
               <EventBusyRounded fontSize="small" sx={{ mt: 0.25 }} />
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="body2" sx={{ fontWeight: a.avec_visites ? 600 : 400 }}>
-                  {t('absences.ligne', {
-                    type: t(`absences.types.${a.type}`),
-                    periode: t(`absences.periodes.${a.periode ?? 'journee'}`),
+                  {t('activites.ligne', {
+                    type: t(`activites.types.${a.type}`),
+                    periode: t(`activites.periodes.${a.periode ?? 'journee'}`),
                   })}
                 </Typography>
                 {a.avec_visites && a.commentaire && (

@@ -4,7 +4,7 @@ from rest_framework import serializers
 from apps.organisation.serializers import ResumeSerializer
 
 from .controles import CODES, GRAVITES
-from .models import Absence, JourFerie, Passage, Periode, Planning, TypeAbsence, Visite
+from .models import Activite, JourFerie, Passage, Periode, Planning, TypeActivite, Visite
 from .services import RAISONS_REPRISE
 
 
@@ -151,9 +151,9 @@ class RegroupementSerializer(serializers.Serializer):
     visites = serializers.ListField(child=serializers.UUIDField(), min_length=2)
 
 
-class AbsenceSerializer(serializers.ModelSerializer):
+class ActiviteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Absence
+        model = Activite
         fields = ["id", "date", "periode", "type", "commentaire", "demande_superviseur",
                   "avec_visites"]  # fmt: skip
         read_only_fields = ["avec_visites"]
@@ -162,20 +162,20 @@ class AbsenceSerializer(serializers.ModelSerializer):
     avec_visites = serializers.BooleanField(read_only=True)
 
 
-class SaisieAbsenceSerializer(serializers.Serializer):
+class SaisieActiviteSerializer(serializers.Serializer):
     id = serializers.UUIDField(required=False)
     date = serializers.DateField()
     periode = serializers.ChoiceField(choices=Periode.choices, required=False,
                                       default=Periode.JOURNEE)  # fmt: skip
-    type = serializers.ChoiceField(choices=TypeAbsence.choices)
+    type = serializers.ChoiceField(choices=TypeActivite.choices)
     commentaire = serializers.CharField(max_length=500, required=False, allow_blank=True)
     demande_superviseur = serializers.BooleanField(required=False, default=False)
 
 
-class ModificationAbsenceSerializer(serializers.Serializer):
+class ModificationActiviteSerializer(serializers.Serializer):
     date = serializers.DateField(required=False)
     periode = serializers.ChoiceField(choices=Periode.choices, required=False)
-    type = serializers.ChoiceField(choices=TypeAbsence.choices, required=False)
+    type = serializers.ChoiceField(choices=TypeActivite.choices, required=False)
     commentaire = serializers.CharField(max_length=500, required=False, allow_blank=True)
     demande_superviseur = serializers.BooleanField(required=False)
 
@@ -263,7 +263,7 @@ class SemaineSerializer(serializers.Serializer):
     modifiable = serializers.BooleanField()
     visites = VisiteSerializer(many=True)
     passages = PassageSerializer(many=True)
-    absences = AbsenceSerializer(many=True)
+    activites = ActiviteSerializer(many=True)
     #: Visites de la semaine précédente que la reprise recopierait (PLN-005 CA2) ; 0 sinon.
     reprenables = serializers.IntegerField()
     #: Kilométrage estimé (PLN-010) ; nul sans planning.
@@ -298,6 +298,6 @@ class PlanningEnAttenteSerializer(serializers.Serializer):
     signalements = SignalementResumeSerializer(many=True)
     activites = serializers.SerializerMethodField()
 
-    @extend_schema_field(AbsenceSerializer(many=True))
+    @extend_schema_field(ActiviteSerializer(many=True))
     def get_activites(self, ligne) -> list[dict]:
-        return AbsenceSerializer(ligne["activites"], many=True).data
+        return ActiviteSerializer(ligne["activites"], many=True).data

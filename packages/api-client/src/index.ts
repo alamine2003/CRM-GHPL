@@ -15,10 +15,10 @@ import type {
   Qualite,
   Semaine,
   Reprise,
-  Absence,
-  ModificationAbsence,
+  Activite,
+  ModificationActivite,
   Passage,
-  SaisieAbsence,
+  SaisieActivite,
   ModificationVisite,
   SaisieVisite,
   Visite,
@@ -40,7 +40,7 @@ import type {
   Localite,
   LotImport,
   SecteurSaisie,
-  Activite,
+  ActiviteCompte,
   Affectation,
   Appareil,
   DescriptionAppareil,
@@ -95,12 +95,12 @@ export type {
   ControlePlanning,
   Controles,
   ObjectifJour,
-  Absence,
-  ModificationAbsence,
+  Activite,
+  ModificationActivite,
   Passage,
-  PeriodeAbsence,
-  SaisieAbsence,
-  TypeAbsence,
+  PeriodeActivite,
+  SaisieActivite,
+  TypeActivite,
   ModificationVisite,
   SaisieVisite,
   StatutVisite,
@@ -130,7 +130,7 @@ export type {
   Localite,
   LotImport,
   SecteurSaisie,
-  Activite,
+  ActiviteCompte,
   Affectation,
   Appareil,
   CodeRole,
@@ -679,8 +679,8 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { visites },
         }),
-      declarerAbsence: (planning: string, saisie: SaisieAbsence) =>
-        requete<Absence>(`/api/v1/plannings/${planning}/absences/`, {
+      declarerActivite: (planning: string, saisie: SaisieActivite) =>
+        requete<Activite>(`/api/v1/plannings/${planning}/activites/`, {
           methode: 'POST',
           corps: saisie,
         }),
@@ -690,12 +690,12 @@ export function creerClient(options: OptionsClient) {
       dissocier: (id: string) =>
         requete<Passage>(`/api/v1/passages/${id}/dissocier/`, { methode: 'POST' }),
     },
-    /** Absences déclarées dans le planning (PLN-009). */
-    absences: {
-      modifier: (id: string, champs: ModificationAbsence) =>
-        requete<Absence>(`/api/v1/absences/${id}/`, { methode: 'PATCH', corps: champs }),
+    /** Activites déclarées dans le planning (PLN-009). */
+    activites: {
+      modifier: (id: string, champs: ModificationActivite) =>
+        requete<Activite>(`/api/v1/activites/${id}/`, { methode: 'PATCH', corps: champs }),
       retirer: (id: string) =>
-        requete<Absence>(`/api/v1/absences/${id}/retirer/`, { methode: 'POST' }),
+        requete<Activite>(`/api/v1/activites/${id}/retirer/`, { methode: 'POST' }),
     },
     /** Visites d'un planning en préparation (PLN-002). */
     visites: {
@@ -933,7 +933,7 @@ export function creerClient(options: OptionsClient) {
         requete<void>('/api/v1/auth/sessions/autres/revoquer/', { methode: 'POST' }),
     },
     /** Derniers événements de sécurité du compte (AUD-001). */
-    activite: () => requete<Activite[]>('/api/v1/auth/activite/'),
+    activite: () => requete<ActiviteCompte[]>('/api/v1/auth/activite/'),
     /** État technique du service (administrateur technique, siège). */
     exploitation: () => requete<EtatExploitation>('/api/v1/exploitation/'),
     /** Signale une erreur du client ; ne lève jamais (le signalement est un renfort). */

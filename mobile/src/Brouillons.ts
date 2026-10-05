@@ -9,7 +9,12 @@
  *   le réseau revient, et le serveur ne crée rien deux fois (OFF-003 CA2). La synchronisation
  *   complète (conflits, 7 jours hors ligne) arrive au cycle 0.8.
  */
-import type { ClientApi, ModificationVisite, SaisieAbsence, SaisieVisite } from '@innov/api-client';
+import type {
+  ClientApi,
+  ModificationVisite,
+  SaisieActivite,
+  SaisieVisite,
+} from '@innov/api-client';
 import { ErreurApi } from '@innov/api-client';
 import * as Crypto from 'expo-crypto';
 import { ecrire, lire, oublier } from './baseLocale';
@@ -35,10 +40,10 @@ export type ChampsVisite = {
   note: string;
 };
 
-export type ChampsAbsence = {
+export type ChampsActivite = {
   date: string;
-  type: SaisieAbsence['type'] | null;
-  periode: NonNullable<SaisieAbsence['periode']>;
+  type: SaisieActivite['type'] | null;
+  periode: NonNullable<SaisieActivite['periode']>;
   commentaire: string;
   /** Déplacement demandé par le superviseur (0.3.1) ; absent des brouillons plus anciens. */
   demande_superviseur?: boolean;
@@ -46,7 +51,7 @@ export type ChampsAbsence = {
 
 export type Brouillon =
   | { objet: 'visite'; semaine: string; visite?: string; champs: ChampsVisite }
-  | { objet: 'absence'; semaine: string; absence?: string; champs: ChampsAbsence };
+  | { objet: 'activite'; semaine: string; activite?: string; champs: ChampsActivite };
 
 export type Envoi =
   | {
@@ -67,9 +72,9 @@ export type Envoi =
     }
   | {
       id: string;
-      type: 'ajout_absence';
+      type: 'ajout_activite';
       planning: string;
-      saisie: SaisieAbsence;
+      saisie: SaisieActivite;
       resume: string;
       erreur?: string;
     };
@@ -149,7 +154,7 @@ async function rejouer(client: ClientApi): Promise<number> {
       } else if (envoi.type === 'modif_visite') {
         await client.visites.modifier(envoi.visite, envoi.saisie);
       } else {
-        await client.plannings.declarerAbsence(envoi.planning, envoi.saisie);
+        await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       }
       partis.add(envoi.id);
     } catch (e) {

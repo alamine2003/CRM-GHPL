@@ -43,7 +43,7 @@ def soumis(planning, terrain, **activite):
     services.ajouter_visite(planning, date=MARDI, heure=time(9, 0), prospect=terrain["medecin"],
                             etablissement=terrain["clinique"], objectif="Vasculor")  # fmt: skip
     if activite:
-        services.declarer_absence(planning, date=LUNDI, **activite)
+        services.declarer_activite(planning, date=LUNDI, **activite)
     return services.soumettre(planning)
 
 

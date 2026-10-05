@@ -6,7 +6,8 @@
   lundi. Ses versions, passages, absences et visites arrivent de 0.2.2 à 0.2.8.
 - `Visite` (PLN-002), rangée dans sa journée par `ordre` (0.2.3).
 - `Passage` (PLN-003) : plusieurs visites d'un même établissement le même jour, à une même heure.
-- `Absence` (PLN-009) : congé, formation, réunion, maladie… sur une journée ou une demi-journée.
+- `Activite` (PLN-009, PLN-018) : activité connexe sur une journée ou une demi-journée, sans
+  visite (congé, formation, réunion, maladie…) ou avec visites (commando, déplacement…).
 """
 
 from django.conf import settings
@@ -93,7 +94,7 @@ class Periode(models.TextChoices):
     APRES_MIDI = "apres_midi", "Après-midi"
 
 
-class TypeAbsence(models.TextChoices):
+class TypeActivite(models.TextChoices):
     """Type d'une activité connexe (PLN-009, PLN-018) : sans visite (absence) ou avec visites."""
 
     CONGE = "conge", "Congé"
@@ -109,21 +110,21 @@ class TypeAbsence(models.TextChoices):
 #: Activités connexes pendant lesquelles le délégué visite (0.3.1, PLN-018) : elles ne
 #: réduisent pas l'objectif du jour, exigent une explication, et couvrent les visites hors
 #: secteur ou hors liste cible de leur journée.
-AVEC_VISITES = frozenset({TypeAbsence.COMMANDO, TypeAbsence.DEPLACEMENT,
-                          TypeAbsence.ACCOMPAGNEMENT})  # fmt: skip
+AVEC_VISITES = frozenset({TypeActivite.COMMANDO, TypeActivite.DEPLACEMENT,
+                          TypeActivite.ACCOMPAGNEMENT})  # fmt: skip
 
 
-class Absence(ModeleDePays):
+class Activite(ModeleDePays):
     """Activité connexe déclarée dans le planning (PLN-009, PLN-018). Sans visite (congé,
     maladie, formation, réunion, autre), elle réduit les seuils du jour au prorata (CA1,
     RG-022) ; avec visites (commando, déplacement, accompagnement du superviseur), elle
     s'explique et justifie les visites hors secteur de sa journée. Elle se valide avec le
     planning (cycle 0.3)."""
 
-    planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="absences")
+    planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="activites")
     date = models.DateField()
     periode = models.CharField(max_length=12, choices=Periode.choices, default=Periode.JOURNEE)
-    type = models.CharField(max_length=16, choices=TypeAbsence.choices)
+    type = models.CharField(max_length=16, choices=TypeActivite.choices)
     #: Motif d'une absence « autre », ou explication d'une activité avec visites.
     commentaire = models.CharField(max_length=500, blank=True)
     #: Déplacement demandé par le superviseur (sinon justifié par le délégué).

@@ -51,7 +51,7 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     assert JourFerie.objects.filter(pays__code="SN", libelle="Toussaint").count() == 2
     # Deux semaines du premier délégué (cycle 0.2) : la semaine en cours soumise à temps
     # (PLN-008), la suivante en préparation, dont une visite à compléter (PLN-001, PLN-002).
-    from apps.planning.models import Absence, Passage, Planning
+    from apps.planning.models import Activite, Passage, Planning
 
     soumis, prepare = Planning.objects.filter(pays__code="SN").order_by("semaine")
     assert (soumis.statut, soumis.en_retard, prepare.statut) == ("soumis", False, "brouillon")
@@ -62,8 +62,8 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     # PLN-009).
     assert [p.visites.count() for p in Passage.objects.filter(pays__code="SN")] == [2, 2]
     # La semaine soumise montre une matinée d'accompagnement du superviseur (PLN-018).
-    assert soumis.absences.get().type == "accompagnement"
-    assert Absence.objects.filter(pays__code="SN", periode="apres_midi").count() == 1
+    assert soumis.activites.get().type == "accompagnement"
+    assert Activite.objects.filter(pays__code="SN", periode="apres_midi").count() == 1
 
 
 def test_aucune_donnee_reelle(monkeypatch):

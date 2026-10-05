@@ -4,9 +4,9 @@ info:
   version: 0.3.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
-  /api/v1/absences/{id}/:
+  /api/v1/activites/{id}/:
     patch:
-      operationId: absence_modifier
+      operationId: activite_modifier
       parameters:
       - in: path
         name: id
@@ -15,18 +15,18 @@ paths:
           format: uuid
         required: true
       tags:
-      - absences
+      - activites
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedModificationAbsence'
+              $ref: '#/components/schemas/PatchedModificationActivite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedModificationAbsence'
+              $ref: '#/components/schemas/PatchedModificationActivite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedModificationAbsence'
+              $ref: '#/components/schemas/PatchedModificationActivite'
       security:
       - jetonAcces: []
       responses:
@@ -34,11 +34,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Absence'
+                $ref: '#/components/schemas/Activite'
           description: ''
-  /api/v1/absences/{id}/retirer/:
+  /api/v1/activites/{id}/retirer/:
     post:
-      operationId: absence_retirer
+      operationId: activite_retirer
       parameters:
       - in: path
         name: id
@@ -47,7 +47,7 @@ paths:
           format: uuid
         required: true
       tags:
-      - absences
+      - activites
       security:
       - jetonAcces: []
       responses:
@@ -55,7 +55,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Absence'
+                $ref: '#/components/schemas/Activite'
           description: ''
   /api/v1/affectations/{id}/terminer/:
     post:
@@ -143,7 +143,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Activite'
+                  $ref: '#/components/schemas/ActiviteCompte'
           description: ''
   /api/v1/auth/connexion/:
     post:
@@ -2504,9 +2504,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Planning'
           description: ''
-  /api/v1/plannings/{id}/absences/:
+  /api/v1/plannings/{id}/activites/:
     post:
-      operationId: absence_declarer
+      operationId: activite_declarer
       parameters:
       - in: path
         name: id
@@ -2520,13 +2520,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SaisieAbsence'
+              $ref: '#/components/schemas/SaisieActivite'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SaisieAbsence'
+              $ref: '#/components/schemas/SaisieActivite'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SaisieAbsence'
+              $ref: '#/components/schemas/SaisieActivite'
         required: true
       security:
       - jetonAcces: []
@@ -2535,7 +2535,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Absence'
+                $ref: '#/components/schemas/Activite'
           description: ''
   /api/v1/plannings/{id}/ordre/:
     post:
@@ -3945,7 +3945,7 @@ paths:
           description: ''
 components:
   schemas:
-    Absence:
+    Activite:
       type: object
       properties:
         id:
@@ -3956,9 +3956,9 @@ components:
           type: string
           format: date
         periode:
-          $ref: '#/components/schemas/PeriodeAbsenceEnum'
+          $ref: '#/components/schemas/PeriodeActiviteEnum'
         type:
-          $ref: '#/components/schemas/TypeAbsenceEnum'
+          $ref: '#/components/schemas/TypeActiviteEnum'
         commentaire:
           type: string
           maxLength: 500
@@ -3972,7 +3972,7 @@ components:
       - date
       - id
       - type
-    Activite:
+    ActiviteCompte:
       type: object
       description: Événement d'audit de l'utilisateur lui-même (connexions, sécurité
         du compte).
@@ -5780,16 +5780,16 @@ components:
         libelle:
           type: string
           maxLength: 120
-    PatchedModificationAbsence:
+    PatchedModificationActivite:
       type: object
       properties:
         date:
           type: string
           format: date
         periode:
-          $ref: '#/components/schemas/PeriodeAbsenceEnum'
+          $ref: '#/components/schemas/PeriodeActiviteEnum'
         type:
-          $ref: '#/components/schemas/TypeAbsenceEnum'
+          $ref: '#/components/schemas/TypeActiviteEnum'
         commentaire:
           type: string
           maxLength: 500
@@ -6098,7 +6098,7 @@ components:
           format: date
       required:
       - reseau
-    PeriodeAbsenceEnum:
+    PeriodeActiviteEnum:
       enum:
       - journee
       - matin
@@ -6204,7 +6204,7 @@ components:
         activites:
           type: array
           items:
-            $ref: '#/components/schemas/Absence'
+            $ref: '#/components/schemas/Activite'
           readOnly: true
       required:
       - activites
@@ -7098,7 +7098,7 @@ components:
         * `superviseur` - Superviseur
         * `delegue` - Délégué
         * `admin_technique` - Administrateur technique
-    SaisieAbsence:
+    SaisieActivite:
       type: object
       properties:
         id:
@@ -7109,10 +7109,10 @@ components:
           format: date
         periode:
           allOf:
-          - $ref: '#/components/schemas/PeriodeAbsenceEnum'
+          - $ref: '#/components/schemas/PeriodeActiviteEnum'
           default: journee
         type:
-          $ref: '#/components/schemas/TypeAbsenceEnum'
+          $ref: '#/components/schemas/TypeActiviteEnum'
         commentaire:
           type: string
           maxLength: 500
@@ -7396,10 +7396,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Passage'
-        absences:
+        activites:
           type: array
           items:
-            $ref: '#/components/schemas/Absence'
+            $ref: '#/components/schemas/Activite'
         reprenables:
           type: integer
         kilometrage:
@@ -7415,7 +7415,7 @@ components:
           items:
             $ref: '#/components/schemas/Resume'
       required:
-      - absences
+      - activites
       - controles
       - courante
       - fuseau
@@ -7665,7 +7665,7 @@ components:
       required:
       - motif
       - pays
-    TypeAbsenceEnum:
+    TypeActiviteEnum:
       enum:
       - conge
       - formation

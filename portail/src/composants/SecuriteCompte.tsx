@@ -1,4 +1,4 @@
-import type { Activite, SessionOuverte } from '@innov/api-client';
+import type { ActiviteCompte, SessionOuverte } from '@innov/api-client';
 import {
   Box,
   Button,
@@ -218,7 +218,7 @@ export function CarteSessions() {
   );
 }
 
-function cleAction(a: Activite) {
+function cleAction(a: ActiviteCompte) {
   const base = a.action.replace(/\./g, '_');
   return a.action === 'connexion' && a.resultat === 'echec' ? 'connexion_echec' : base;
 }
