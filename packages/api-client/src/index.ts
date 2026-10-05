@@ -9,7 +9,10 @@
  */
 import type {
   ChangementFiche,
+  JourFerie,
+  Planning,
   Qualite,
+  Semaine,
   DecisionDoublon,
   DoublonProbable,
   Fusion,
@@ -74,7 +77,11 @@ import type {
 
 export type {
   ChangementFiche,
+  JourFerie,
+  JourSemaine,
+  Planning,
   Qualite,
+  Semaine,
   ComparaisonFiche,
   DecisionDoublon,
   DoublonProbable,
@@ -597,6 +604,24 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { motif },
         }),
+    },
+    /** Calendrier des jours fériés du pays (ORG-012). */
+    joursFeries: {
+      liste: (annee?: number) =>
+        requete<JourFerie[]>(`/api/v1/jours-feries/${annee ? `?annee=${annee}` : ''}`),
+      creer: (saisie: { date: string; libelle: string; variable?: boolean }) =>
+        requete<JourFerie>('/api/v1/jours-feries/', { methode: 'POST', corps: saisie }),
+      modifier: (id: string, champs: { date?: string; libelle?: string; variable?: boolean }) =>
+        requete<JourFerie>(`/api/v1/jours-feries/${id}/`, { methode: 'PATCH', corps: champs }),
+      retirer: (id: string) =>
+        requete<JourFerie>(`/api/v1/jours-feries/${id}/retirer/`, { methode: 'POST' }),
+    },
+    /** Semaine du délégué et son planning (PLN-001). */
+    plannings: {
+      semaine: (jour?: string) =>
+        requete<Semaine>(`/api/v1/plannings/semaine/${jour ? `?semaine=${jour}` : ''}`),
+      creer: (semaine: string) =>
+        requete<Planning>('/api/v1/plannings/', { methode: 'POST', corps: { semaine } }),
     },
     /** Qualité des données du pays actif (0.1.9). */
     qualite: () => requete<Qualite>('/api/v1/qualite/'),

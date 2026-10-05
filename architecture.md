@@ -447,6 +447,7 @@ Mise en œuvre (0.0.3) : le jeton d'accès porte l'identifiant de session (`sid`
   - `df`, `dm` : postes dont un réseau est dans leur `Perimetre` daté ;
   - `superviseur` : postes rattachés (`Rattachement` actif) + postes des remplacements actifs ;
   - `delegue` : ses occupations actives ; prospects de sa liste cible et de ses secteurs ; ses propres visites et rapports.
+- Mise en œuvre 0.2.1 (ORG-012, PLN-001) : application `planning`. `JourFerie(pays, date, libelle, variable)` et `Planning(delegue, semaine, statut)`, sous sécurité au niveau des lignes. `planning/calendrier.py` donne les jours ouvrés d'une semaine (paramètre `jours_ouvres`) avec leurs jours fériés ; `jours_planifiables` sert aux contrôles de la semaine (0.2.4). Le délégué ne lit que ses propres plannings ; la validation (cycle 0.3) aura sa propre vue.
 - Mise en œuvre 0.1.8 (PRP-007 à PRP-014) : `prospects/doublons.py` (détecteur, suggestions, fusion, défusion, file), `prospects/propositions.py` (propositions et décideurs : administrateur pays, ou superviseur des postes occupés par l'auteur), tables `Fusion`, `DoublonProbable`, `Changement` (historique champ par champ) et `Proposition`, toutes sous sécurité au niveau des lignes. Une fusion déplace exercices et listes cibles vers la fiche conservée et garde la liste de ce qu'elle a déplacé (`transferts`) : la défusion rend exactement ces objets. Import de l'organisation : `imports/organisation.py`, lecture du classeur par `imports/tableur.py` (XML lu avec `defusedxml`).
 - Mise en œuvre 0.1.7 (PRP-005 CA2) : la recherche des fiches applique ce périmètre (`prospects/recherche.py`) ; pour les rôles de terrain, le périmètre des fiches est formé des secteurs de leurs postes, de leurs listes cibles et de leurs propres fiches ; la portée « pays » se demande explicitement (RG-024) ; une fiche commune reste lisible par son identifiant.
 - **Permissions d'action** : vérifiées dans les commandes (section 7.4), jamais seulement dans l'interface.
@@ -555,7 +556,8 @@ Mise en œuvre (0.0.5) : les liens datés de l'organisation (`Occupation`, `Ratt
 | `ListeCible` | `poste_id`, `prospect_id`, `frequence_cible`, `periode` (mois), `debut`, `fin` | Mise en œuvre 0.1.6 : entité `Cible(poste, prospect, frequence, debut, fin)` ; la fréquence se compte par cycle de visite (`cycle_visite_semaines`) et non par mois ; défaut selon le potentiel (`frequence_cible_a|b|c`) |
 | `CandidatDoublon` | `fiche_a_id`, `fiche_b_id`, `score`, `criteres`, `decision`, `decide_par` | Paires « garder séparées » mémorisées |
 | `Fusion` | `conservee_id`, `absorbee_id`, `mode` (`automatique`, `manuelle`), `etat_avant` (JSON), `defusionnee_le` | Réversible |
-| `Planning` | `delegue_id`, `semaine` (lundi), `statut`, `version_courante`, `soumis_le`, `en_retard`, `approuve_par`, `mode_decision` | Unique `(delegue_id, semaine)` |
+| `Planning` | `delegue_id`, `semaine` (lundi), `statut`, `version_courante`, `soumis_le`, `en_retard`, `approuve_par`, `mode_decision` | Unique `(delegue_id, semaine)`. Mise en œuvre 0.2.1 : `delegue`, `semaine`, `statut` ; les autres champs arrivent avec les versions et la validation |
+| `JourFerie` | `pays_id`, `date`, `libelle`, `variable` | Mise en œuvre 0.2.1 (ORG-012) : unique `(pays, date)` hors archives ; modifiable jusqu'à la veille |
 | `VersionPlanning` | `planning_id`, `numero`, `contenu` (JSON figé), `statut`, `soumis_le`, `decide_le`, `decide_par`, `commentaire` | Append-only |
 | `Passage` | `planning_id`, `etablissement_id`, `date`, `heure` | — |
 | `Absence` | `planning_id`, `date`, `demi_journee`, `type` | — |
@@ -912,7 +914,7 @@ flowchart LR
 | ADR-008 | Authentification nominative, JWT court + rafraîchissement rotatif lié à l'appareil, TOTP pour les rôles sensibles | [D] méthode ; [R] mécanisme `0.0.3` | Exigences SEC-001 à SEC-004 |
 | ADR-009 | Journal d'audit append-only, écrit dans la transaction métier, chaîné par pays | [D] append-only ; [R] chaînage `0.9.2` | Preuve et non-répudiation |
 | ADR-010 | Aucune validation ni approbation automatique ; validation par lot limitée aux journées conformes | [D] | Objectif n° 1 |
-| ADR-011 | Commandes métier et machines à états définies au serveur, miroir TypeScript vérifié | [R] `0.2.1` | Une seule source de vérité des transitions |
+| ADR-011 | Commandes métier et machines à états définies au serveur, miroir TypeScript vérifié | [D] mis en œuvre en `0.2.1` : `planning/etats.py` → `packages/domaine/src/etats.json` (`make schema`), test de concordance côté serveur | Une seule source de vérité des transitions |
 | ADR-012 | Schéma OpenAPI versionné → types TypeScript générés pour portail et mobile | [R] `0.0.1` | Pas de divergence de contrat |
 | ADR-013 | Dépôt unique (monorepo) avec espaces de travail npm | [R] `0.0.1` | Partage de types, de règles, de traductions, de jetons de design |
 | ADR-014 | Notifications par boîte d'envoi transactionnelle, Expo Push, regroupement ; courriel limité à la sécurité | [D] canaux ; [R] mécanisme `0.3.8` | Pas de saturation ; pas de notification sans action |

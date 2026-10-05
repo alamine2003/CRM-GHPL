@@ -1258,5 +1258,46 @@
     "quiExerceIci": "Qui exerce ici",
     "personne": "Aucun prospect n'y exerce actuellement.",
     "lieux": "Lieux d'exercice"
+  },
+  "joursFeries": {
+    "titre": "Jours fériés",
+    "ajouter": "Ajouter",
+    "annee": "Année",
+    "vide": "Aucun jour férié saisi pour {{annee}}.",
+    "variable": "Date variable",
+    "retirer": "Retirer",
+    "retire": "« {{libelle}} » retiré du calendrier.",
+    "ajouterTitre": "Ajouter un jour férié",
+    "modifierTitre": "Modifier le jour férié",
+    "aide": "Un jour férié n'est pas planifiable et ne compte pas dans les contrôles de la semaine. Sa date se modifie jusqu'à la veille.",
+    "date": "Date",
+    "libelle": "Libellé",
+    "dateVariable": "Date variable (fête religieuse annoncée peu avant)"
+  },
+  "semaine": {
+    "periode": "Du {{debut}} au {{fin}}",
+    "precedente": "Semaine précédente",
+    "suivante": "Semaine suivante",
+    "cetteSemaine": "Cette semaine",
+    "revenir": "Revenir à cette semaine",
+    "ferie": "Férié · {{libelle}}",
+    "aujourdhui": "Aujourd'hui",
+    "feriesExclus_one": "Le jour férié ne se planifie pas et ne compte pas dans les contrôles de la semaine.",
+    "feriesExclus_other": "Les {{count}} jours fériés ne se planifient pas et ne comptent pas dans les contrôles de la semaine.",
+    "planning": "Planning",
+    "statuts": {
+      "brouillon": "En préparation",
+      "soumis": "Soumis au superviseur",
+      "a_reviser": "À réviser",
+      "approuve": "Approuvé",
+      "en_cours": "En cours",
+      "termine": "Terminé",
+      "annule": "Annulé"
+    },
+    "visitesBientot": "Les visites se planifient dans cette semaine à partir de la prochaine version.",
+    "aPreparer": "Aucun planning pour cette semaine.",
+    "preparer": "Préparer cette semaine",
+    "passee": "Semaine passée : elle ne se planifie plus.",
+    "sansPoste": "Vous n'occupez aucun poste cette semaine."
   }
 }

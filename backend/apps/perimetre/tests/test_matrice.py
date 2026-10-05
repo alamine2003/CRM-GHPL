@@ -14,6 +14,8 @@ ATTENDU = {
     Action.PAYS_CREER: {"admin_siege"},
     Action.PROPOSITIONS_CREER: {"delegue"},
     Action.PROPOSITIONS_TRANCHER: {"admin_pays", "superviseur"},
+    Action.JOURS_FERIES_GERER: {"admin_pays"},
+    Action.PLANNINGS_PREPARER: {"superviseur", "delegue"},
     Action.PAYS_CHANGER_STATUT: {"admin_siege"},
     Action.DESIGNER_RESPONSABLES_PAYS: {"admin_siege"},
     Action.UTILISATEURS_GERER: {"admin_siege", "admin_pays"},
@@ -165,6 +167,8 @@ REQUETES = {
         "post", lambda m: f"/api/v1/propositions/{_proposition_en_attente(m).pk}/trancher/",
         {"decision": "refuser"}, 200,
     ),
+    Action.JOURS_FERIES_GERER: ("get", "/api/v1/jours-feries/", None, 200),
+    Action.PLANNINGS_PREPARER: ("get", "/api/v1/plannings/semaine/", None, 200),
 }  # fmt: skip
 
 

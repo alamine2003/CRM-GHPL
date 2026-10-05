@@ -19,7 +19,7 @@ mobile:
 telephone:
 	./scripts/telephone.sh
 
-# Régénère le schéma OpenAPI puis les types TypeScript (ADR-012).
+# Régénère le schéma OpenAPI, les types TypeScript (ADR-012) et la table des états (ADR-011).
 # Après tout nouveau message serveur : extraire, puis traduire dans locale/en (USR-004).
 messages:
 	cd backend && .venv/bin/python manage.py makemessages -l en --no-location
@@ -27,6 +27,7 @@ messages:
 
 schema:
 	cd backend && .venv/bin/python manage.py spectacular --file schema.yaml --validate --fail-on-warn
+	cd backend && .venv/bin/python manage.py exporter_etats
 	npm run api:types
 
 lint:

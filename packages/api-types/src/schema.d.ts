@@ -838,6 +838,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/jours-feries/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['jours_feries_liste'];
+    put?: never;
+    post: operations['jour_ferie_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/jours-feries/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['jour_ferie_modifier'];
+    trace?: never;
+  };
+  '/api/v1/jours-feries/{id}/retirer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['jour_ferie_retirer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/organisation/divisions/': {
     parameters: {
       query?: never;
@@ -1341,6 +1389,38 @@ export interface paths {
     put?: never;
     /** @description Le siège en vue consolidée voit tous les pays ; sinon, seulement le pays actif. */
     post: operations['pays_statut'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['planning_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/semaine/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['planning_semaine'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -2038,6 +2118,10 @@ export interface components {
       /** @description Code ISO d'une filiale du catalogue. */
       code: string;
     };
+    CreationPlanning: {
+      /** Format: date */
+      semaine: string;
+    };
     CreationPoste: {
       libelle: string;
       type_poste: components['schemas']['TypePosteEnum'];
@@ -2317,6 +2401,21 @@ export interface components {
       /** @description Vrai si le compte doit activer la double authentification avant tout accès. */
       double_auth_a_activer: boolean;
     };
+    JourFerie: {
+      /** Format: uuid */
+      readonly id: string;
+      /** Format: date */
+      date: string;
+      libelle: string;
+      variable?: boolean;
+      readonly modifiable: boolean;
+    };
+    JourSemaine: {
+      /** Format: date */
+      date: string;
+      ferie: string | null;
+      planifiable: boolean;
+    };
     Langue: {
       code: string;
       libelle: string;
@@ -2475,6 +2574,12 @@ export interface components {
       principal?: boolean;
       presence?: string;
     };
+    PatchedModificationJourFerie: {
+      /** Format: date */
+      date?: string;
+      libelle?: string;
+      variable?: boolean;
+    };
     PatchedModificationPoste: {
       libelle?: string;
       type_poste?: components['schemas']['TypePosteEnum'];
@@ -2588,6 +2693,27 @@ export interface components {
       prenom: string;
       nom: string;
     };
+    Planning: {
+      /** Format: uuid */
+      readonly id: string;
+      /** Format: date */
+      semaine: string;
+      statut?: components['schemas']['PlanningStatutEnum'];
+      /** Format: date-time */
+      readonly cree_le: string;
+    };
+    /**
+     * @description * `brouillon` - En préparation
+     *     * `soumis` - Soumis
+     *     * `a_reviser` - À réviser
+     *     * `approuve` - Approuvé
+     *     * `en_cours` - En cours
+     *     * `termine` - Terminé
+     *     * `annule` - Annulé
+     * @enum {string}
+     */
+    PlanningStatutEnum:
+      'brouillon' | 'soumis' | 'a_reviser' | 'approuve' | 'en_cours' | 'termine' | 'annule';
     /**
      * @description * `android` - Android
      *     * `ios` - iOS
@@ -2909,6 +3035,13 @@ export interface components {
       principal?: boolean | null;
       presence?: string;
     };
+    SaisieJourFerie: {
+      /** Format: date */
+      date: string;
+      libelle: string;
+      /** @default false */
+      variable: boolean;
+    };
     SaisieProposition: {
       /** Format: uuid */
       prospect?: string;
@@ -2965,6 +3098,19 @@ export interface components {
       libelle: string;
       zone: string;
       localites: components['schemas']['Lieu'][];
+    };
+    /** @description Semaine du délégué : ses jours ouvrés, ses jours fériés et son planning (PLN-001). */
+    Semaine: {
+      /** Format: date */
+      semaine: string;
+      /** Format: date */
+      precedente: string;
+      /** Format: date */
+      suivante: string;
+      courante: boolean;
+      jours: components['schemas']['JourSemaine'][];
+      planning: components['schemas']['Planning'] | null;
+      peut_creer: boolean;
     };
     Session: {
       /** Format: uuid */
@@ -4327,6 +4473,100 @@ export interface operations {
       };
     };
   };
+  jours_feries_liste: {
+    parameters: {
+      query?: {
+        annee?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourFerie'][];
+        };
+      };
+    };
+  };
+  jour_ferie_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieJourFerie'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieJourFerie'];
+        'multipart/form-data': components['schemas']['SaisieJourFerie'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourFerie'];
+        };
+      };
+    };
+  };
+  jour_ferie_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationJourFerie'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationJourFerie'];
+        'multipart/form-data': components['schemas']['PatchedModificationJourFerie'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourFerie'];
+        };
+      };
+    };
+  };
+  jour_ferie_retirer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['JourFerie'];
+        };
+      };
+    };
+  };
   divisions_liste: {
     parameters: {
       query?: never;
@@ -5296,6 +5536,53 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Pays'];
+        };
+      };
+    };
+  };
+  planning_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreationPlanning'];
+        'application/x-www-form-urlencoded': components['schemas']['CreationPlanning'];
+        'multipart/form-data': components['schemas']['CreationPlanning'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Planning'];
+        };
+      };
+    };
+  };
+  planning_semaine: {
+    parameters: {
+      query?: {
+        /** @description Un jour de la semaine ; par défaut, celle-ci */
+        semaine?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Semaine'];
         };
       };
     };

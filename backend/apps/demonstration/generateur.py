@@ -10,7 +10,7 @@ aucun téléphone, aucun courriel joignable (CA2).
 import random
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.apps import apps
 from django.db import connection, transaction
@@ -19,6 +19,7 @@ from apps.identite.models import Role, Utilisateur
 from apps.identite.services import attribuer_role, creer_utilisateur
 from apps.organisation import services as org
 from apps.organisation.models import Poste, TypePoste
+from apps.planning.services import creer_jour_ferie
 from apps.prospects import ciblage
 from apps.prospects.models import Etablissement, Prospect
 from apps.prospects.propositions import proposer
@@ -149,6 +150,19 @@ class Bilan:
     comptes: dict[str, str] = field(default_factory=dict)
 
 
+def _paques(annee: int) -> date:
+    """Dimanche de Pâques (calendrier grégorien, algorithme de Meeus)."""
+    a, b, c = annee % 19, annee // 100, annee % 100
+    d, e = divmod(b, 4)
+    g = (8 * b + 13) // 25
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = divmod(c, 4)
+    m = (32 + 2 * e + 2 * i - h - k) % 7
+    n = (a + 11 * h + 19 * m) // 433
+    mois = (h + m - 7 * n + 90) // 25
+    return date(annee, mois, (h + m - 7 * n + 33 * mois + 19) % 32)
+
+
 def vider() -> None:
     """Vide toutes les tables métier et le journal d'audit (démonstration uniquement).
 
@@ -163,6 +177,7 @@ def vider() -> None:
         "referentiel",
         "prospects",
         "imports",
+        "planning",
         "audit",
     ):
         for modele in apps.get_app_config(etiquette).get_models(include_auto_created=True):
@@ -310,6 +325,7 @@ class Generateur:
         self.bilan.pays[code]["exercices"] = self.exercices(pays)
         self.bilan.pays[code]["cibles"] = self.cibles(pays)
         self.bilan.pays[code].update(self.a_trancher(pays, delegues[0]))
+        self.bilan.pays[code]["jours_feries"] = self.jours_feries(pays)
 
     def exercices(self, pays) -> int:
         """Lieux d'exercice fictifs (PRP-004) : chaque prospect exerce dans un établissement de
@@ -357,6 +373,32 @@ class Generateur:
             for cible in ciblage.ajouter(poste, prospects, admin)["creees"]:
                 if cible.prospect.potentiel == "A" and a.random() < 0.3:
                     ciblage.modifier_frequence(cible, cible.frequence + 1)
+                nombre += 1
+        return nombre
+
+    def jours_feries(self, pays) -> int:
+        """Calendrier de l'année en cours et de la suivante (ORG-012) : seulement les fêtes à
+        date certaine (fixes, ou calculées depuis Pâques). Les fêtes à date variable (Korité,
+        Tabaski…) restent à saisir par l'administrateur pays quand leur date est annoncée."""
+        annee = aujourdhui(pays).year
+        independance = {"SN": (4, 4), "TG": (4, 27)}.get(pays.code)
+        nombre = 0
+        for a in (annee, annee + 1):
+            paques = _paques(a)
+            jours = [
+                (date(a, 1, 1), "Jour de l'an"),
+                (date(a, 5, 1), "Fête du travail"),
+                (date(a, 8, 15), "Assomption"),
+                (date(a, 11, 1), "Toussaint"),
+                (date(a, 12, 25), "Noël"),
+                (paques + timedelta(days=1), "Lundi de Pâques"),
+                (paques + timedelta(days=39), "Ascension"),
+                (paques + timedelta(days=50), "Lundi de Pentecôte"),
+            ]
+            if independance:
+                jours.append((date(a, *independance), "Fête de l'indépendance"))
+            for jour, libelle in jours:
+                creer_jour_ferie(pays, date=jour, libelle=libelle)
                 nombre += 1
         return nombre
 

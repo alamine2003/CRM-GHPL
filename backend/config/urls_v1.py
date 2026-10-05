@@ -8,6 +8,7 @@ from drf_spectacular.views import SpectacularAPIView
 from apps.identite import vues_comptes as comptes
 from apps.imports import vues as imp
 from apps.organisation import vues as org
+from apps.planning import vues as pln
 from apps.prospects import vues as prs
 from apps.prospects import vues_ciblage as cib
 from apps.prospects import vues_doublons as dbl
@@ -178,6 +179,15 @@ urlpatterns = [
     ),
     path("doublons/", dbl.DoublonsVue.as_view(), name="doublons"),
     path("qualite/", dbl.QualiteVue.as_view(), name="qualite"),
+    path("jours-feries/", pln.JoursFeriesVue.as_view(), name="jours-feries"),
+    path("jours-feries/<uuid:id>/", pln.JourFerieVue.as_view(), name="jour-ferie"),
+    path(
+        "jours-feries/<uuid:id>/retirer/",
+        pln.JourFerieRetraitVue.as_view(),
+        name="jour-ferie-retirer",
+    ),
+    path("plannings/", pln.PlanningsVue.as_view(), name="plannings"),
+    path("plannings/semaine/", pln.SemaineVue.as_view(), name="planning-semaine"),
     path("doublons/<uuid:id>/trancher/", dbl.DoublonDecisionVue.as_view(), name="doublon-trancher"),
     path("fusions/", dbl.FusionsVue.as_view(), name="fusions"),
     path("fusions/<uuid:id>/defaire/", dbl.DefusionVue.as_view(), name="fusion-defaire"),

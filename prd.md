@@ -162,6 +162,7 @@ Tous les types de poste suivent **le même workflow** planning → visite → ra
 | Accepter ou refuser une proposition (PRP-014) | Non | Non | Non | Oui | Non | Non | Oui (périm.) | Non |
 | Tenir une liste cible | Non | Non | Non | Oui | Non | Non | Oui (périm.) | Non |
 | Fixer les objectifs d'un réseau | Non | Non | Non | Oui | Non | Oui (périm.) | Non | Non |
+| Tenir le calendrier des jours fériés (ORG-012) | Non | Non | Non | Oui | Non | Non | Non | Non |
 | Créer et soumettre un planning | Non | Non | Non | Non | Non | Non | Oui (s'il occupe un poste) | Oui (le sien) |
 | Approuver ou faire réviser un planning | Non | Non | Non | Non | Non | Escalade / remplacement / superviseur-visiteur | Oui (périm.) | Non |
 | Réaliser une visite, rédiger un rapport | Non | Non | Non | Non | Non | Non | Oui (s'il occupe un poste) | Oui |
@@ -444,6 +445,13 @@ Les prospects, établissements, secteurs, localités et produits viennent de Bir
 - garde la **référence BirdNotes** de chaque fiche reprise : un réimport la retrouve et ne crée rien.
 
 Les comptes, l'organisation (postes, affectations) et l'historique des visites ne sont pas repris en 0.1.4 : l'organisation vient du fichier d'organisation (ORG-014).
+
+### 14.8 Calendrier et semaine (mise en œuvre 0.2.1)
+
+- Une semaine se désigne par son lundi ; ses jours sont les jours ouvrés du pays (RG-014). Un jour férié y figure, marqué et non planifiable (PLN-001 CA2), et sort des jours comptés par les contrôles de la semaine (ORG-012 CA1, RG-022).
+- Un jour férié se modifie ou se retire jusqu'à la veille ; à partir du jour même, il est acquis (ORG-012 CA2) [H]. La mention « date variable » signale une fête dont la date s'annonce peu avant ; la règle est la même pour toutes les dates.
+- Le planning se crée pour la semaine en cours ou une semaine à venir, jamais une semaine passée [H], par qui occupe un poste cette semaine-là (§6.3).
+- La démonstration ne contient que les jours fériés à date certaine (fixes ou calculés depuis Pâques) ; les fêtes à date variable restent à saisir par l'administrateur pays.
 
 ## 15. Exigences fonctionnelles
 

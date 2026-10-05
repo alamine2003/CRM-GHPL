@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
 import { EnTeteCarte, EnTetePage, Etiquette } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
+import JoursFeries from '../composants/JoursFeries';
 import { useSession } from '../contexteSession';
 
 type Valeur = unknown;
@@ -281,6 +282,7 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
   });
   const [edition, setEdition] = useState<Parametre | null>(null);
   const modifier = perimetre.actions.includes('parametres.modifier');
+  const joursFeries = perimetre.actions.includes('jours_feries.gerer');
   const parCle = new Map((parametres.data ?? []).map((p) => [p.cle, p]));
 
   return (
@@ -301,7 +303,7 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
             alignItems: 'start',
           }}
         >
-          {GROUPES.map((groupe) => (
+          {GROUPES.flatMap((groupe) => [
             <Card key={groupe.cle}>
               <EnTeteCarte titre={t(`parametres.groupes.${groupe.cle}`)} />
               {groupe.parametres
@@ -348,8 +350,12 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
                     )}
                   </Stack>
                 ))}
-            </Card>
-          ))}
+            </Card>,
+            // ORG-012 : le calendrier des jours fériés suit les jours ouvrés du pays.
+            groupe.cle === 'calendrier' && joursFeries ? (
+              <JoursFeries key="jours-feries" pays={pays.code} />
+            ) : null,
+          ])}
         </Box>
       )}
       {edition && pays && (

@@ -10,7 +10,7 @@ import { police } from './polices';
 /** Onglets ; ceux d'une version future mènent à un écran « bientôt ». */
 export const ONGLETS = [
   { cle: 'tournee', icone: 'home', chemin: '/' },
-  { cle: 'semaine', icone: 'calendar-month', chemin: '/semaine', version: '0.2.1' },
+  { cle: 'semaine', icone: 'calendar-month', chemin: '/semaine' },
   { cle: 'prospects', icone: 'people', chemin: '/prospects' },
   { cle: 'chiffres', icone: 'bar-chart', chemin: '/chiffres', version: '0.7.1' },
   { cle: 'profil', icone: 'person', chemin: '/profil' },

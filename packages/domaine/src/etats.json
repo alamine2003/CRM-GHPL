@@ -1,0 +1,36 @@
+{
+  "planning": {
+    "statuts": [
+      "brouillon",
+      "soumis",
+      "a_reviser",
+      "approuve",
+      "en_cours",
+      "termine",
+      "annule"
+    ],
+    "transitions": {
+      "brouillon": [
+        "soumis"
+      ],
+      "soumis": [
+        "approuve",
+        "a_reviser"
+      ],
+      "a_reviser": [
+        "soumis"
+      ],
+      "approuve": [
+        "en_cours",
+        "soumis",
+        "annule"
+      ],
+      "en_cours": [
+        "termine",
+        "soumis"
+      ],
+      "termine": [],
+      "annule": []
+    }
+  }
+}

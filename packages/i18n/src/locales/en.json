@@ -1258,5 +1258,46 @@
     "quiExerceIci": "Who practises here",
     "personne": "No prospect currently practises here.",
     "lieux": "Places of practice"
+  },
+  "joursFeries": {
+    "titre": "Public holidays",
+    "ajouter": "Add",
+    "annee": "Year",
+    "vide": "No public holiday entered for {{annee}}.",
+    "variable": "Movable date",
+    "retirer": "Remove",
+    "retire": "“{{libelle}}” removed from the calendar.",
+    "ajouterTitre": "Add a public holiday",
+    "modifierTitre": "Edit the public holiday",
+    "aide": "A public holiday cannot be planned and does not count in the week's checks. Its date can be changed until the day before.",
+    "date": "Date",
+    "libelle": "Label",
+    "dateVariable": "Movable date (religious holiday announced shortly before)"
+  },
+  "semaine": {
+    "periode": "{{debut}} to {{fin}}",
+    "precedente": "Previous week",
+    "suivante": "Next week",
+    "cetteSemaine": "This week",
+    "revenir": "Back to this week",
+    "ferie": "Holiday · {{libelle}}",
+    "aujourdhui": "Today",
+    "feriesExclus_one": "The public holiday cannot be planned and does not count in the week's checks.",
+    "feriesExclus_other": "The {{count}} public holidays cannot be planned and do not count in the week's checks.",
+    "planning": "Planning",
+    "statuts": {
+      "brouillon": "Being prepared",
+      "soumis": "Submitted to the supervisor",
+      "a_reviser": "To be revised",
+      "approuve": "Approved",
+      "en_cours": "In progress",
+      "termine": "Completed",
+      "annule": "Cancelled"
+    },
+    "visitesBientot": "Visits can be planned in this week from the next version.",
+    "aPreparer": "No planning for this week.",
+    "preparer": "Prepare this week",
+    "passee": "Past week: it can no longer be planned.",
+    "sansPoste": "You hold no position this week."
   }
 }

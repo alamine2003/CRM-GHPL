@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 23:08+0000\n"
+"POT-Creation-Date: 2026-10-05 01:25+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -301,9 +301,6 @@ msgid "{n} groupes"
 msgstr "{n} groups"
 
 #, python-brace-format
-#| msgid ""
-#| "Fiches au même nom ({n}) : gardées pour la file des doublons, où le "
-#| "superviseur tranchera (0.1.8)."
 msgid ""
 "Fiches au même nom ({n}) : versées dans la file des doublons, que tranche "
 "l'administrateur pays."
@@ -322,9 +319,6 @@ msgstr ""
 "\"INTERMEDIARE\" locality in BirdNotes, which is not one: sector kept, "
 "locality to be specified."
 
-#| msgid ""
-#| "Doublons probables signalés par BirdNotes : gardés pour la file des doublons"
-#| " (0.1.8)."
 msgid ""
 "Doublons probables signalés par BirdNotes : versés dans la file des "
 "doublons, rien n'est fusionné à l'import."
@@ -336,9 +330,6 @@ msgstr ""
 msgid "{n} demandes"
 msgstr "{n} requests"
 
-#| msgid ""
-#| "Demandes de modification en attente dans BirdNotes : à traiter avec les "
-#| "propositions de modification (0.1.8)."
 msgid ""
 "Demandes de modification en attente dans BirdNotes : non reprises, leur "
 "auteur n'a pas encore de compte ; à reproposer depuis INNOV CRM."
@@ -462,6 +453,41 @@ msgstr "Action not allowed."
 
 msgid "Vous n'avez pas accès à ce pays."
 msgstr "You do not have access to this country."
+
+#, python-format
+msgid "Ce planning ne peut pas passer de « %(de)s » à « %(vers)s »."
+msgstr "This planning cannot go from “%(de)s” to “%(vers)s”."
+
+msgid ""
+"Un jour férié ne se modifie plus à partir de son jour : seule une date à "
+"venir peut changer."
+msgstr ""
+"A public holiday can no longer change from its own day onwards: only a "
+"future date can be changed."
+
+msgid "Ce jour est déjà férié dans ce pays."
+msgstr "This day is already a public holiday in this country."
+
+msgid "Le libellé est obligatoire."
+msgstr "The label is required."
+
+msgid "Une semaine se désigne par son lundi."
+msgstr "A week is identified by its Monday."
+
+msgid "Une semaine passée ne se planifie plus."
+msgstr "A past week can no longer be planned."
+
+msgid "Vous n'occupez aucun poste cette semaine : pas de planning à préparer."
+msgstr "You hold no position this week: there is no planning to prepare."
+
+msgid "Un planning existe déjà pour cette semaine."
+msgstr "A planning already exists for this week."
+
+msgid "Année invalide."
+msgstr "Invalid year."
+
+msgid "Date invalide : format AAAA-MM-JJ attendu."
+msgstr "Invalid date: YYYY-MM-DD format expected."
 
 msgid "La fréquence cible va de 1 à 20 visites par cycle."
 msgstr "The target frequency ranges from 1 to 20 visits per cycle."

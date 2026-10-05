@@ -43,6 +43,10 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
 
     assert DoublonProbable.objects.filter(pays__code="SN", statut="en_attente").count() >= 2
     assert Proposition.objects.filter(pays__code="SN", statut="en_attente").count() == 1
+    # Calendrier des jours fériés à date certaine (ORG-012), deux années.
+    from apps.planning.models import JourFerie
+
+    assert JourFerie.objects.filter(pays__code="SN", libelle="Toussaint").count() == 2
 
 
 def test_aucune_donnee_reelle(monkeypatch):

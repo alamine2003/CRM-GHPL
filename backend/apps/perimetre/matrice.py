@@ -39,6 +39,8 @@ class Action(StrEnum):
     CIBLES_GERER = "cibles.gerer"
     PROPOSITIONS_CREER = "propositions.creer"
     PROPOSITIONS_TRANCHER = "propositions.trancher"
+    JOURS_FERIES_GERER = "jours_feries.gerer"
+    PLANNINGS_PREPARER = "plannings.preparer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -109,6 +111,11 @@ MATRICE: dict[Action, frozenset[str]] = {
     # ou le superviseur des postes de l'auteur (périmètre) l'accepte ou la refuse.
     Action.PROPOSITIONS_CREER: frozenset({Role.DELEGUE}),
     Action.PROPOSITIONS_TRANCHER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
+    # « Tenir le calendrier des jours fériés » (ORG-012).
+    Action.JOURS_FERIES_GERER: frozenset({Role.ADMIN_PAYS}),
+    # « Créer et soumettre un planning » : le délégué, le superviseur s'il occupe un poste
+    # (vérifié par le service, PLN-001).
+    Action.PLANNINGS_PREPARER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
 }
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.

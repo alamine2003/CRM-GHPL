@@ -2,6 +2,49 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.2.1] — Semaine, jours ouvrés, jours fériés
+
+Premier jalon du cycle 0.2 « Planning ».
+
+### Ajouté — calendrier des jours fériés (ORG-012)
+
+- L'administrateur pays tient le calendrier dans **Paramètres**, juste après le groupe « Calendrier » : ajouter, modifier, retirer un jour férié, année en cours ou suivante.
+  - **CA1** : un jour férié n'est pas planifiable et sort des jours comptés par les contrôles de la semaine (RG-022).
+  - **CA2** : une date se modifie ou se retire jusqu'à la veille ; à partir du jour même, elle est acquise et grisée. La mention « date variable » signale les fêtes annoncées peu avant (Korité, Tabaski…).
+  - Un même jour ne peut pas être férié deux fois ; chaque changement est audité.
+- Nouveau droit `jours_feries.gerer` (administrateur pays) ; prd.md §6.3 complétée.
+
+### Ajouté — semaine et planning du délégué (PLN-001)
+
+- **Onglet « Semaine »** du téléphone, qui n'est plus « à venir » :
+  - les jours ouvrés du pays (lundi–vendredi par défaut, paramètre `jours_ouvres`, RG-014) ;
+  - les jours fériés affichés et non planifiables (**CA2**) ;
+  - le repère « Aujourd'hui » et la navigation d'une semaine à l'autre ;
+  - « Préparer cette semaine » crée le planning au statut « En préparation ».
+- **CA1 (RG-012)** : un seul planning par délégué et par semaine, garanti par une contrainte en base.
+  - Une semaine se désigne par son lundi ; une semaine passée ne se planifie plus.
+  - Il faut occuper un poste cette semaine-là : le délégué, ou le superviseur qui assure une activité de terrain (prd.md §6.3).
+- Nouveau droit `plannings.preparer` (délégué, superviseur) ; création auditée.
+- Les visites s'ajouteront au planning à partir de 0.2.2.
+
+### Architecture
+
+- **ADR-011** : la machine à états du planning (prd.md §17.1) est définie au serveur (`planning/etats.py`). `make schema` l'exporte vers `packages/domaine/src/etats.json`, que lisent les clients (`peutPasser`, `transitionsPlanning`) ; un test serveur échoue si le fichier n'est pas à jour.
+- Nouvelle application `planning` ; tables `JourFerie` et `Planning` sous sécurité au niveau des lignes ; routes couvertes par la matrice et les tests d'isolation.
+- Démonstration : jours fériés à date certaine de l'année en cours et de la suivante (fêtes fixes, et fêtes calculées depuis Pâques) pour le Sénégal et le Togo.
+
+### Design
+
+Revue sur le rendu réel : mobile à 360 et 414 px, portail à 360, 414, 834 et 1440 px. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Semaine (mobile) | « Aucune visite » répété sur chaque jour, le jour férié noyé dans ce bruit | Ligne vide quand il n'y a rien ; seul le jour férié porte une mention |
+| Semaine (mobile) | Jours en minuscules (« lundi ») sur deux lignes | « Lundi 5 oct. » sur une ligne de 48 px |
+| Jours fériés (portail, 360 px) | Libellé écrasé à une largeur nulle par la date et les boutons | Les boutons passent à la ligne sur petit écran |
+| Jours fériés (portail) | Dates longues sur deux lignes (« ven. 25 décembre ») | Mois abrégé (« ven. 25 déc. ») |
+| Ajout d'un jour férié | Date proposée : le 1er janvier, déjà passé, donc refusé | Demain par défaut dans l'année en cours |
+
 ## [0.1.9] — Stabilisation, qualité des données et démonstration du cycle 0.1
 
 Neuvième et dernier jalon du cycle 0.1 « Référentiel ».

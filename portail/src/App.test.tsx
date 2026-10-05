@@ -672,6 +672,56 @@ describe('portail — administration 0.0.6 (USR-003, USR-004, USR-006, ORG-011)'
     );
   });
 
+  it('tient le calendrier des jours fériés : ajout, date variable, date acquise (ORG-012)', async () => {
+    const annee = new Date().getFullYear();
+    const liste = vi.fn(async () => [
+      {
+        id: 'f1',
+        date: `${annee}-01-01`,
+        libelle: "Jour de l'an",
+        variable: false,
+        modifiable: false,
+      },
+      {
+        id: 'f2',
+        date: `${annee}-12-25`,
+        libelle: 'Noël',
+        variable: false,
+        modifiable: true,
+      },
+    ]);
+    const creer = vi.fn(async () => ({}));
+    rendre(
+      clientAdmin({
+        perimetre: vi.fn(async () => ({
+          ...ADMIN,
+          actions: [...ADMIN.actions, 'jours_feries.gerer'],
+        })),
+        pays: { parametres: vi.fn(async () => []) } as unknown as ClientApi['pays'],
+        joursFeries: { liste, creer } as unknown as ClientApi['joursFeries'],
+      }),
+      '/parametres',
+    );
+    expect(await screen.findByText('Noël')).toBeInTheDocument();
+    // Une date passée est acquise : plus de bouton pour la modifier ou la retirer (CA2).
+    const passe = screen.getByText("Jour de l'an").closest('li')!;
+    expect(within(passe).queryByRole('button')).toBeNull();
+    const avenir = screen.getByText('Noël').closest('li')!;
+    expect(within(avenir).getByRole('button', { name: 'Retirer' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter' }));
+    await saisir('Date', `${annee}-06-16`);
+    await saisir('Libellé', 'Tabaski');
+    fireEvent.click(screen.getByLabelText(/Date variable/));
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    await vi.waitFor(() =>
+      expect(creer).toHaveBeenCalledWith({
+        date: `${annee}-06-16`,
+        libelle: 'Tabaski',
+        variable: true,
+      }),
+    );
+  });
+
   it.each(['/', '/equipe', '/profil', '/organisation'])(
     'la page %s ne présente aucune violation d’accessibilité détectable',
     async (chemin) => {

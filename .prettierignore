@@ -7,3 +7,5 @@ mobile/android/
 mobile/ios/
 package-lock.json
 *.md
+# Généré par `make schema` depuis le serveur (ADR-011).
+packages/domaine/src/etats.json

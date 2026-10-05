@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.1.9
+  version: 0.2.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/affectations/{id}/terminer/:
@@ -1265,6 +1265,105 @@ paths:
               schema:
                 $ref: '#/components/schemas/Informations'
           description: ''
+  /api/v1/jours-feries/:
+    get:
+      operationId: jours_feries_liste
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+      tags:
+      - jours-feries
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JourFerie'
+          description: ''
+    post:
+      operationId: jour_ferie_creer
+      tags:
+      - jours-feries
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieJourFerie'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieJourFerie'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieJourFerie'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JourFerie'
+          description: ''
+  /api/v1/jours-feries/{id}/:
+    patch:
+      operationId: jour_ferie_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - jours-feries
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationJourFerie'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationJourFerie'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationJourFerie'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JourFerie'
+          description: ''
+  /api/v1/jours-feries/{id}/retirer/:
+    post:
+      operationId: jour_ferie_retirer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - jours-feries
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JourFerie'
+          description: ''
   /api/v1/organisation/divisions/:
     get:
       operationId: divisions_liste
@@ -2304,6 +2403,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pays'
+          description: ''
+  /api/v1/plannings/:
+    post:
+      operationId: planning_creer
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreationPlanning'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreationPlanning'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreationPlanning'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planning'
+          description: ''
+  /api/v1/plannings/semaine/:
+    get:
+      operationId: planning_semaine
+      parameters:
+      - in: query
+        name: semaine
+        schema:
+          type: string
+          format: date
+        description: Un jour de la semaine ; par défaut, celle-ci
+      tags:
+      - plannings
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Semaine'
           description: ''
   /api/v1/propositions/:
     get:
@@ -3849,6 +3995,14 @@ components:
           maxLength: 2
       required:
       - code
+    CreationPlanning:
+      type: object
+      properties:
+        semaine:
+          type: string
+          format: date
+      required:
+      - semaine
     CreationPoste:
       type: object
       properties:
@@ -4559,6 +4713,44 @@ components:
       - expire_dans
       - rafraichissement
       - utilisateur
+    JourFerie:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        date:
+          type: string
+          format: date
+        libelle:
+          type: string
+          maxLength: 120
+        variable:
+          type: boolean
+        modifiable:
+          type: boolean
+          readOnly: true
+      required:
+      - date
+      - id
+      - libelle
+      - modifiable
+    JourSemaine:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        ferie:
+          type: string
+          nullable: true
+        planifiable:
+          type: boolean
+      required:
+      - date
+      - ferie
+      - planifiable
     Langue:
       type: object
       properties:
@@ -4930,6 +5122,17 @@ components:
         presence:
           type: string
           maxLength: 120
+    PatchedModificationJourFerie:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        libelle:
+          type: string
+          maxLength: 120
+        variable:
+          type: boolean
     PatchedModificationPoste:
       type: object
       properties:
@@ -5220,6 +5423,44 @@ components:
       - identifiant
       - nom
       - prenom
+    Planning:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        semaine:
+          type: string
+          format: date
+        statut:
+          $ref: '#/components/schemas/PlanningStatutEnum'
+        cree_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cree_le
+      - id
+      - semaine
+    PlanningStatutEnum:
+      enum:
+      - brouillon
+      - soumis
+      - a_reviser
+      - approuve
+      - en_cours
+      - termine
+      - annule
+      type: string
+      description: |-
+        * `brouillon` - En préparation
+        * `soumis` - Soumis
+        * `a_reviser` - À réviser
+        * `approuve` - Approuvé
+        * `en_cours` - En cours
+        * `termine` - Terminé
+        * `annule` - Annulé
     PlateformeEnum:
       enum:
       - android
@@ -6053,6 +6294,21 @@ components:
           maxLength: 120
       required:
       - etablissement
+    SaisieJourFerie:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        libelle:
+          type: string
+          maxLength: 120
+        variable:
+          type: boolean
+          default: false
+      required:
+      - date
+      - libelle
     SaisieProposition:
       type: object
       properties:
@@ -6188,6 +6444,40 @@ components:
       - libelle
       - localites
       - zone
+    Semaine:
+      type: object
+      description: 'Semaine du délégué : ses jours ouvrés, ses jours fériés et son
+        planning (PLN-001).'
+      properties:
+        semaine:
+          type: string
+          format: date
+        precedente:
+          type: string
+          format: date
+        suivante:
+          type: string
+          format: date
+        courante:
+          type: boolean
+        jours:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourSemaine'
+        planning:
+          allOf:
+          - $ref: '#/components/schemas/Planning'
+          nullable: true
+        peut_creer:
+          type: boolean
+      required:
+      - courante
+      - jours
+      - peut_creer
+      - planning
+      - precedente
+      - semaine
+      - suivante
     Session:
       type: object
       properties:

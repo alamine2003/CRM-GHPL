@@ -3,3 +3,4 @@
  * Ce module ne dépend d'aucune bibliothèque d'interface.
  */
 export * from './version';
+export * from './etats';
