@@ -209,6 +209,11 @@ class Visite(ModeleDePays):
     )
     commentaire_ecart = models.CharField(max_length=500, blank=True)
     ecart_le = models.DateTimeField(null=True, blank=True)
+    #: Visite reportée dont celle-ci prend la suite (VIS-007 CA1) ; une visite ne se reporte
+    #: qu'une fois.
+    reportee_de = models.OneToOneField(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="report"
+    )
 
     class Meta:
         ordering = ["date", "ordre", "heure"]

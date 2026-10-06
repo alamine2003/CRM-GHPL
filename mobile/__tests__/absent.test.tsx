@@ -55,6 +55,8 @@ const VISITE: VisiteProgramme = {
   motif_ecart: null,
   commentaire_ecart: '',
   ecart_le: null,
+  reportee_de: null,
+  report: null,
   modification_en_attente: false,
 };
 
@@ -124,6 +126,8 @@ test('VIS-005 : avec un motif, la visite passe « prospect absent » et le progr
     motif_ecart: MOTIF,
     commentaire_ecart: s.commentaire,
     ecart_le: s.le,
+    reportee_de: null,
+    report: null,
   }));
   await rendre(absent);
   await fireEvent.press(await screen.findByText('Prospect absent'));

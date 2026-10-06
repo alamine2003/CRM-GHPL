@@ -179,16 +179,19 @@ def _verrouiller(planning: Planning) -> None:
     )
 
 
-def _exiger_modifiable(planning: Planning, *, apres_approbation: bool = False) -> bool:
+def _exiger_modifiable(planning: Planning, *, apres_approbation: bool = False,
+                       report: bool = False) -> bool:  # fmt: skip
     """Le planning se prépare ou se révise ; ou bien, pour une commande qui le permet, il est
     approuvé : la commande rend alors vrai, et le changement sera mineur et tracé, ou majeur et
-    soumis de nouveau (PLN-015, RG-018). Une modification déjà soumise attend sa décision."""
+    soumis de nouveau (PLN-015, RG-018). Une modification déjà soumise attend sa décision.
+    Un report (VIS-007 CA2) pose sa nouvelle visite même la semaine commencée : c'est une
+    modification majeure, soumise au superviseur."""
     _verrouiller(planning)
     if planning.statut in MODIFIABLES:
         _exiger_ouvert(planning)
         return False
     if apres_approbation and planning.statut in APRES_APPROBATION:
-        if semaine_commencee(planning):
+        if semaine_commencee(planning) and not report:
             raise ErreurMetier(
                 "semaine_commencee",
                 _("La semaine a commencé : le planning validé ne se modifie plus."),
@@ -427,11 +430,11 @@ def _deja_envoye(modele, planning: Planning, identifiant):
 
 
 @transaction.atomic
-def ajouter_visite(planning: Planning, id=None, **champs) -> Visite:
+def ajouter_visite(planning: Planning, id=None, report: bool = False, **champs) -> Visite:
     _verrouiller(planning)
     if existante := _deja_envoye(Visite, planning, id):
         return existante
-    approuve = _exiger_modifiable(planning, apres_approbation=True)
+    approuve = _exiger_modifiable(planning, apres_approbation=True, report=report)
     _exiger_jour_ouvert(planning, champs["date"])
     visite = Visite(pays=planning.pays, planning=planning, date=champs["date"])
     if id is not None:

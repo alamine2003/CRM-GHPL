@@ -13,7 +13,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { lire, ecrire } from './baseLocale';
 import { envoyerAttente, estTransitoire } from './Brouillons';
 import { garderDetail } from './DetailVisite';
-import { CLE_PROGRAMME as CLE, ecouterProgramme, ExecutionVisite } from './Execution';
+import {
+  CLE_PROGRAMME as CLE,
+  ecouterProgramme,
+  ExecutionVisite,
+  joursOuvresDe,
+} from './Execution';
 import { Alerte, Carte, Etiquette, MarquePotentiel, Texte, usePalette } from './composants';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
@@ -176,6 +181,8 @@ export function ProgrammeDuJour() {
                 fuseau={programme.fuseau}
                 attenteSecondes={programme.attente_gps_secondes}
                 motifs={programme.motifs_ecart}
+                joursOuvres={joursOuvresDe(programme)}
+                semaine={programme.semaine}
                 surTerminee={setAnnonce}
               />
             ) : (
@@ -267,7 +274,7 @@ function LigneVisite({
   jour: JourProgramme;
   grande?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const p = usePalette();
   // Un passage : plusieurs prescripteurs du même lieu, vus à la suite (PLN-003).
   const confreres = visite.passage
@@ -300,12 +307,26 @@ function LigneVisite({
           {/* En tête, « En cours depuis … » le dit déjà sous la carte. */}
           {visite.statut !== 'prevue' && !(grande && visite.statut === 'en_cours') && (
             <Etiquette ton={visite.statut === 'effectuee' ? 'succes' : 'attention'}>
-              {visite.motif_ecart
-                ? t('execution.ecartLu', {
-                    statut: t(`visites.statuts.${visite.statut}`),
-                    motif: visite.motif_ecart.libelle,
+              {visite.statut === 'reportee' && visite.report
+                ? t('execution.reporteeAu', {
+                    jour: [
+                      new Intl.DateTimeFormat(i18n.language, {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short',
+                        timeZone: 'UTC',
+                      }).format(new Date(`${visite.report.date}T12:00:00Z`)),
+                      visite.report.heure,
+                    ]
+                      .filter(Boolean)
+                      .join(' · '),
                   })
-                : t(`visites.statuts.${visite.statut}`)}
+                : visite.motif_ecart
+                  ? t('execution.ecartLu', {
+                      statut: t(`visites.statuts.${visite.statut}`),
+                      motif: visite.motif_ecart.libelle,
+                    })
+                  : t(`visites.statuts.${visite.statut}`)}
             </Etiquette>
           )}
           {visite.modification_en_attente && <Etiquette>{t('programme.enAttente')}</Etiquette>}

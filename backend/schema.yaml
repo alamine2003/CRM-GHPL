@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.6
+  version: 0.4.7
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4456,6 +4456,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/{id}/reporter/:
+    post:
+      operationId: visite_reporter
+      description: |-
+        VIS-007 : reporter une visite prévue ; un motif est obligatoire, la nouvelle visite est
+        liée à l'originale (CA1) et passe par le superviseur dans une semaine approuvée (CA2).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Report'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Report'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Report'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
   /api/v1/visites/{id}/retirer/:
     post:
       operationId: visite_retirer
@@ -8339,6 +8375,51 @@ components:
       required:
       - delegue
       - semaine
+    Report:
+      type: object
+      description: |-
+        VIS-007 : un report, comme un écart, plus le jour et l'heure de la nouvelle visite ;
+        l'identifiant de la nouvelle visite vient du téléphone (envoi rejouable, 0.2.7).
+      properties:
+        le:
+          type: string
+          format: date-time
+        motif:
+          type: string
+          format: uuid
+          nullable: true
+        commentaire:
+          type: string
+          maxLength: 500
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        id:
+          type: string
+          format: uuid
+      required:
+      - date
+      - le
+    ReportLu:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          nullable: true
+      required:
+      - date
+      - heure
+      - id
     Reprise:
       type: object
       properties:
@@ -9460,6 +9541,16 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        reportee_de:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        report:
+          allOf:
+          - $ref: '#/components/schemas/ReportLu'
+          nullable: true
+          readOnly: true
       required:
       - commentaire_ecart
       - date
@@ -9475,6 +9566,8 @@ components:
       - manquants
       - motif_ecart
       - prospect
+      - report
+      - reportee_de
       - reseau
       - sans_gps
     VisiteFigee:
@@ -9644,6 +9737,16 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        reportee_de:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        report:
+          allOf:
+          - $ref: '#/components/schemas/ReportLu'
+          nullable: true
+          readOnly: true
         modification_en_attente:
           type: boolean
       required:
@@ -9662,6 +9765,8 @@ components:
       - modification_en_attente
       - motif_ecart
       - prospect
+      - report
+      - reportee_de
       - reseau
       - sans_gps
     VisiteStatutEnum:

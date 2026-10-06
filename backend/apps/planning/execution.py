@@ -12,6 +12,11 @@ Annuler (VIS-006) : une visite prévue, le jour même ou à l'avance, ou une vis
 de sa journée se justifie « non réalisée », avec un motif ; le programme la montre « à
 justifier » (CA1).
 
+Reporter (VIS-007) : une visite prévue passe « reportée » avec un motif, et une nouvelle visite
+liée (CA1) se pose au jour choisi, après le jour prévu. Dans une semaine déjà approuvée, cet
+ajout est une modification majeure soumise au superviseur (CA2, RG-018) ; dans une semaine en
+préparation, il s'ajoute au planning, créé au besoin.
+
 Démarrer (VIS-003) : la visite passe « en cours » à l'heure réelle donnée par le téléphone,
 avec la position du moment si le pays active la géolocalisation (RG-028). Le téléphone peut
 démarrer sans réseau : l'envoi part plus tard, et le rejouer ne change rien (OFF-003). Sans
@@ -255,3 +260,64 @@ def non_realisee(visite: Visite, le: datetime, motif, commentaire: str = "") -> 
     """VIS-009 : « non réalisée », une fois sa journée finie, avec un motif obligatoire."""
     return _declarer_ecart(visite, StatutVisite.NON_REALISEE, le, motif, commentaire,
                            _exiger_journee_finie, "visite.non_realisee")  # fmt: skip
+
+
+def _exiger_apres(visite: Visite, nouvelle_date, today) -> None:
+    date_approuvee, _jour = _jour_approuve(visite, timezone.now())
+    if nouvelle_date.isoformat() <= date_approuvee or nouvelle_date < today:
+        raise ErreurMetier(
+            "report_avant",
+            _("Choisissez un jour après celui prévu : changer l'heure dans la journée n'est pas "
+              "un report."),
+            champ="date",
+        )  # fmt: skip
+
+
+def _planning_de(visite: Visite, jour):
+    """Le planning du délégué pour la semaine du nouveau jour, créé s'il n'existe pas."""
+    from . import services
+    from .calendrier import lundi
+    from .models import Planning
+
+    semaine = lundi(jour)
+    if semaine == visite.planning.semaine:
+        return visite.planning
+    existant = Planning.objects.filter(delegue_id=visite.planning.delegue_id,
+                                       semaine=semaine).first()  # fmt: skip
+    return existant or services.creer_planning(visite.planning.pays, visite.planning.delegue,
+                                               semaine)  # fmt: skip
+
+
+@transaction.atomic
+def reporter(visite: Visite, le: datetime, motif, date, heure=None, commentaire: str = "",
+             id=None) -> Visite:  # fmt: skip
+    """VIS-007 : « reportée » avec un motif, et la nouvelle visite liée à l'originale (CA1)."""
+    from apps.socle.services import aujourdhui
+
+    from . import services
+    from .services import _auditer
+
+    visite = _verrouiller(visite)
+    if visite.statut == StatutVisite.REPORTEE and visite.ecart_le == le:
+        return visite  # rejeu du même envoi (OFF-003)
+    exiger_transition_visite(visite.statut, StatutVisite.REPORTEE)
+    pays = visite.planning.pays
+    motif = _exiger_motif(pays, motif)
+    _exiger_passe(le, "le")
+    _exiger_pas_passee(visite, le)
+    _exiger_apres(visite, date, aujourdhui(pays))
+    suite = services.ajouter_visite(
+        _planning_de(visite, date), id=id, report=True, date=date, heure=heure,
+        prospect=visite.prospect,
+        etablissement=visite.etablissement, reseau=visite.reseau, objectif=visite.objectif,
+    )  # fmt: skip
+    Visite.objects.filter(pk=suite.pk).update(reportee_de=visite)
+    visite.statut = StatutVisite.REPORTEE
+    visite.motif_ecart = motif
+    visite.commentaire_ecart = (commentaire or "").strip()
+    visite.ecart_le = le
+    visite.save(update_fields=["statut", "motif_ecart", "commentaire_ecart", "ecart_le",
+                               "modifie_le"])  # fmt: skip
+    _auditer("visite.reportee", visite, motif=motif.code, le=le.isoformat(),
+             nouvelle=str(suite.pk), date=date.isoformat())  # fmt: skip
+    return visite

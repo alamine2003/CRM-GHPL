@@ -205,6 +205,7 @@ urlpatterns = [
     path("visites/<uuid:id>/terminer/", pln.TerminaisonVue.as_view(), name="visite-terminer"),
     path("visites/<uuid:id>/absent/", pln.AbsenceProspectVue.as_view(), name="visite-absent"),
     path("visites/<uuid:id>/annuler/", pln.AnnulationVisiteVue.as_view(), name="visite-annuler"),
+    path("visites/<uuid:id>/reporter/", pln.ReportVisiteVue.as_view(), name="visite-reporter"),
     path(
         "visites/<uuid:id>/non-realisee/", pln.NonRealiseeVue.as_view(), name="visite-non-realisee"
     ),  # fmt: skip

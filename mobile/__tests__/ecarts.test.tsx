@@ -56,6 +56,8 @@ const VISITE: VisiteProgramme = {
   motif_ecart: null,
   commentaire_ecart: '',
   ecart_le: null,
+  reportee_de: null,
+  report: null,
   modification_en_attente: false,
 };
 
@@ -117,6 +119,8 @@ test('VIS-006 : la visite s’annule avec son motif ; sans motif, impossible (CA
     statut: 'annulee',
     motif_ecart: MOTIF,
     ecart_le: s.le,
+    reportee_de: null,
+    report: null,
   }));
   await rendre({ annuler });
   await fireEvent.press(await screen.findByText('Annuler la visite'));

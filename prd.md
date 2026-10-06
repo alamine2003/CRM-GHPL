@@ -639,6 +639,15 @@ Mise en œuvre (0.3.9) :
 - **Affichage** : « Annulée · motif », « Non réalisée · motif » dans la journée ; le détail donne le statut à jour, le motif (« Motif de l'annulation », « Motif de la non-réalisation ») et le commentaire. Les écarts s'annoncent sur un ton neutre, l'effectuée en vert.
 - Hypothèses [H] : annulation possible à l'avance sur toute la semaine approuvée ; « à justifier » limité à la semaine en cours et à la précédente.
 
+### 14.28 Reporter une visite (mise en œuvre 0.4.7)
+
+- **Reporter** (VIS-007) : une visite prévue, le jour même ou à l'avance, passe « reportée » avec un motif de la liste du pays et un commentaire facultatif. Le délégué choisit le nouveau jour parmi les prochains jours ouvrés, après le jour prévu, et l'heure (reprise de la visite, modifiable). Changer seulement l'heure dans la journée n'est pas un report (`report_avant`) : c'est une modification mineure (PLN-015).
+- **CA1** : la nouvelle visite reprend le prospect, le lieu, le réseau et l'objectif et référence la visite d'origine (`reportee_de`) ; la visite reportée indique « Reportée au jeudi 8 octobre · 10:30 ».
+- **CA2** : dans une semaine déjà approuvée, même commencée, la nouvelle visite est une modification majeure : une nouvelle version est soumise au superviseur et la visite n'entre au programme qu'une fois approuvée. Dans une semaine en préparation, elle s'ajoute au planning (créé au besoin, avant sa fermeture).
+- **Règles** : sans motif, impossible (RG-031) ; une visite en cours ne se reporte pas ; une visite ne se reporte qu'une fois. Hors connexion, le report attend dans la file avec l'identifiant de la nouvelle visite, donné par le téléphone : rejoué, il ne crée rien de plus.
+- Une modification soumise (dont un report) garde la version approuvée comme référence : visites « à justifier » et historique restent lisibles.
+- Hypothèses [H] : un report dans la semaine commencée est permis malgré la fermeture du lundi (exception au verrouillage de la 0.3.9) ; pendant qu'une modification attend la décision du superviseur, un second report de la même semaine est refusé (`modification_en_attente`).
+
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :

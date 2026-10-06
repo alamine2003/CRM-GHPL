@@ -2511,6 +2511,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/{id}/reporter/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description VIS-007 : reporter une visite prévue ; un motif est obligatoire, la nouvelle visite est
+     *     liée à l'originale (CA1) et passe par le superviseur dans une semaine approuvée (CA2).
+     */
+    post: operations['visite_reporter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/retirer/': {
     parameters: {
       query?: never;
@@ -4093,6 +4113,30 @@ export interface components {
       /** Format: date */
       semaine: string;
     };
+    /**
+     * @description VIS-007 : un report, comme un écart, plus le jour et l'heure de la nouvelle visite ;
+     *     l'identifiant de la nouvelle visite vient du téléphone (envoi rejouable, 0.2.7).
+     */
+    Report: {
+      /** Format: date-time */
+      le: string;
+      /** Format: uuid */
+      motif?: string | null;
+      commentaire?: string;
+      /** Format: date */
+      date: string;
+      /** Format: time */
+      heure?: string | null;
+      /** Format: uuid */
+      id?: string;
+    };
+    ReportLu: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      date: string;
+      heure: string | null;
+    };
     Reprise: {
       copiees: number;
       ignorees: components['schemas']['VisiteIgnoree'][];
@@ -4573,6 +4617,9 @@ export interface components {
       readonly commentaire_ecart: string;
       /** Format: date-time */
       readonly ecart_le: string | null;
+      /** Format: uuid */
+      readonly reportee_de: string | null;
+      readonly report: components['schemas']['ReportLu'] | null;
     };
     /** @description Une visite telle que soumise dans une version (RG-037). */
     VisiteFigee: {
@@ -4637,6 +4684,9 @@ export interface components {
       readonly commentaire_ecart: string;
       /** Format: date-time */
       readonly ecart_le: string | null;
+      /** Format: uuid */
+      readonly reportee_de: string | null;
+      readonly report: components['schemas']['ReportLu'] | null;
       modification_en_attente: boolean;
     };
     /**
@@ -8717,6 +8767,33 @@ export interface operations {
         'application/json': components['schemas']['Ecart'];
         'application/x-www-form-urlencoded': components['schemas']['Ecart'];
         'multipart/form-data': components['schemas']['Ecart'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  visite_reporter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Report'];
+        'application/x-www-form-urlencoded': components['schemas']['Report'];
+        'multipart/form-data': components['schemas']['Report'];
       };
     };
     responses: {

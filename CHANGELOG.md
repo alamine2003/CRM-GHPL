@@ -2,6 +2,31 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.7] — Reporter une visite
+
+Septième jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — reporter une visite (VIS-007)
+
+- « Reporter » sur une visite prévue : motif de la liste du pays, nouveau jour parmi les prochains jours ouvrés, heure (reprise de la visite), commentaire facultatif.
+- **CA1** : la nouvelle visite reprend prospect, lieu, réseau et objectif et référence la visite d'origine ; la visite reportée indique son nouveau jour.
+- **CA2** : dans la semaine approuvée, le nouveau jour est une modification soumise au superviseur (« Le nouveau jour attend l'accord de votre superviseur ») ; dans une semaine en préparation, la visite s'ajoute au planning.
+- Sans réseau, le report attend dans la file ; rejoué, il ne crée qu'une nouvelle visite.
+
+### Corrigé
+
+- Une modification soumise faisait disparaître les visites « à justifier » et l'historique de la semaine : la version approuvée reste la référence.
+
+### Design
+
+Revue sur le rendu réel au téléphone (360 px clair, 390 px sombre) : boutons d'écart, panneau de report, annonce, détail. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Programme du jour | « Reportée · Rendez-vous reporté » ne disait pas quand. | « Reportée au jeu. 8 oct. · 10:30 ». |
+| Programme du jour | Trois écarts sur une ligne ne tiennent pas à 360 px. | Deux par ligne : « Prospect absent », « Reporter », puis « Annuler la visite ». |
+| Accueil | Après un report dans la semaine, « À justifier » disparaissait. | Corrigé côté serveur (voir ci-dessus). |
+
 ## [0.4.6] — Annuler une visite, visite non réalisée
 
 Sixième jalon du cycle 0.4 « Exécution des visites ».

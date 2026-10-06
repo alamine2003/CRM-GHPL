@@ -60,6 +60,8 @@ const VISITE: VisiteProgramme = {
   motif_ecart: null,
   commentaire_ecart: '',
   ecart_le: null,
+  reportee_de: null,
+  report: null,
   modification_en_attente: false,
 };
 
@@ -160,6 +162,8 @@ test('VIS-003 CA2 : sans GPS, la visite démarre quand même, « sans GPS »', a
     motif_ecart: null,
     commentaire_ecart: '',
     ecart_le: null,
+    reportee_de: null,
+    report: null,
   }));
   await rendre(demarrer);
   await fireEvent.press(await screen.findByText('Démarrer la visite'));
@@ -199,6 +203,8 @@ test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', asyn
     motif_ecart: null,
     commentaire_ecart: '',
     ecart_le: null,
+    reportee_de: null,
+    report: null,
   }));
   const demarrer = jest.fn();
   const session = {

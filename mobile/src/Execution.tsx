@@ -220,13 +220,18 @@ function dureeMinutes(debut: string | null, fin: string) {
 }
 
 /** Les écarts d'une visite (prd.md §12, RG-031) : chacun exige un motif de la liste du pays. */
-export type TypeEcart = 'absent' | 'annuler' | 'non_realisee';
+export type TypeEcart = 'absent' | 'annuler' | 'non_realisee' | 'reporter';
 
 const ECARTS = {
   absent: { statut: 'prospect_absent', envoi: 'absent_visite' },
   annuler: { statut: 'annulee', envoi: 'annuler_visite' },
   non_realisee: { statut: 'non_realisee', envoi: 'non_realisee_visite' },
+  reporter: { statut: 'reportee', envoi: 'reporter_visite' },
 } as const;
+
+/** Le nouveau jour d'une visite reportée (VIS-007) ; la nouvelle visite reçoit son identifiant
+ * du téléphone, pour qu'un envoi rejoué ne la crée qu'une fois. */
+export type NouveauJour = { date: string; heure: string };
 
 /** Déclare un écart : la file part d'abord, puis la déclaration ; sans réseau, elle attend. */
 export async function declarerEcart(
@@ -236,13 +241,16 @@ export async function declarerEcart(
   motif: { id: string; libelle: string },
   commentaire: string,
   resume: string,
+  nouveauJour?: NouveauJour,
 ): Promise<'parti' | 'en_attente'> {
   const saisie = { le: new Date().toISOString(), motif: motif.id, commentaire: commentaire.trim() };
+  const report = nouveauJour && { ...saisie, ...nouveauJour, id: nouvelIdentifiant() };
   const local = {
     statut: ECARTS[type].statut,
     motif_ecart: motif,
     commentaire_ecart: saisie.commentaire,
     ecart_le: saisie.le,
+    ...(report && { report: { id: report.id, date: report.date, heure: report.heure } }),
   };
   if ((await lireAttente()).length) await envoyerAttente(client).catch(() => 0);
   const encoreEnAttente = (await lireAttente()).some(
@@ -250,28 +258,41 @@ export async function declarerEcart(
   );
   try {
     if (encoreEnAttente) throw new TypeError('Un envoi de cette visite attend encore');
-    const envoyer = {
-      absent: client.visites.absent,
-      annuler: client.visites.annuler,
-      non_realisee: client.visites.nonRealisee,
-    }[type];
-    const recue = await envoyer(visite.id, saisie);
+    const recue = report
+      ? await client.visites.reporter(visite.id, report)
+      : await {
+          absent: client.visites.absent,
+          annuler: client.visites.annuler,
+          non_realisee: client.visites.nonRealisee,
+          reporter: client.visites.annuler, // jamais : un report porte son nouveau jour
+        }[type](visite.id, saisie);
     await changerVisite(visite.id, {
       statut: recue.statut,
       motif_ecart: recue.motif_ecart,
       commentaire_ecart: recue.commentaire_ecart,
       ecart_le: recue.ecart_le,
+      report: recue.report,
     });
     return 'parti';
   } catch (e) {
     if (!estTransitoire(e)) throw e;
-    await mettreEnAttente({
-      id: nouvelIdentifiant(),
-      type: ECARTS[type].envoi,
-      visite: visite.id,
-      saisie,
-      resume,
-    });
+    await mettreEnAttente(
+      report
+        ? {
+            id: nouvelIdentifiant(),
+            type: 'reporter_visite',
+            visite: visite.id,
+            saisie: report,
+            resume,
+          }
+        : {
+            id: nouvelIdentifiant(),
+            type: ECARTS[type].envoi as 'absent_visite' | 'annuler_visite' | 'non_realisee_visite',
+            visite: visite.id,
+            saisie,
+            resume,
+          },
+    );
     await changerVisite(visite.id, local);
     return 'en_attente';
   }
@@ -294,13 +315,32 @@ const TEXTES_ECART = {
     confirmer: 'execution.confirmerNonRealisee',
     note: 'execution.nonRealiseeNote',
   },
+  reporter: {
+    titre: 'execution.reportTitre',
+    confirmer: 'execution.confirmerReport',
+    note: 'execution.reportNote',
+  },
 } as const;
 
 const MOTIF_LU: Record<string, string> = {
   prospect_absent: 'execution.motifLu',
   annulee: 'execution.motifAnnulee',
   non_realisee: 'execution.motifNonRealisee',
+  reportee: 'execution.motifReport',
 };
+
+const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** Les prochains jours ouvrés après `apres` (jours de la semaine du pays), pour un report. */
+export function joursProposes(apres: string, joursOuvres: number[], nombre = 8): string[] {
+  const jours: string[] = [];
+  const d = new Date(`${apres}T12:00:00Z`);
+  for (let i = 0; i < 31 && jours.length < nombre; i++) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    if (joursOuvres.includes(d.getUTCDay())) jours.push(d.toISOString().slice(0, 10));
+  }
+  return jours;
+}
 
 export function distanceLisible(
   metres: number,
@@ -325,6 +365,8 @@ export function ExecutionVisite({
   fuseau,
   attenteSecondes = 60,
   motifs = [],
+  joursOuvres = [1, 2, 3, 4, 5],
+  semaine,
   surTerminee,
 }: {
   visite: VisiteProgramme;
@@ -334,6 +376,10 @@ export function ExecutionVisite({
   attenteSecondes?: number;
   /** Motifs d'écart du pays (prd.md §12), gardés avec le programme. */
   motifs?: { id: string; libelle: string }[];
+  /** Jours ouvrés du pays (0 = dimanche), pour proposer le nouveau jour d'un report. */
+  joursOuvres?: number[];
+  /** Lundi de la semaine du programme : un report dans cette semaine passe par le superviseur. */
+  semaine?: string;
   /** La visite terminée quitte souvent l'écran (la suivante prend sa place) : on l'annonce. */
   surTerminee?: (annonce: { texte: string; ton: 'info' | 'succes' }) => void;
 }) {
@@ -344,6 +390,8 @@ export function ExecutionVisite({
     type: TypeEcart;
     motif: string | null;
     commentaire: string;
+    date?: string | null;
+    heure?: string;
   } | null>(null);
   const [message, setMessage] = useState<{
     ton: 'erreur' | 'info' | 'succes';
@@ -360,6 +408,13 @@ export function ExecutionVisite({
       return new Date(iso).toTimeString().slice(0, 5);
     }
   };
+  const jourLisible = (iso: string, mois: 'long' | 'short' = 'long') =>
+    new Intl.DateTimeFormat(i18n.language, {
+      weekday: mois === 'long' ? 'long' : 'short',
+      day: 'numeric',
+      month: mois,
+      timeZone: 'UTC',
+    }).format(new Date(`${iso}T12:00:00Z`));
   const resume = [visite.heure, visite.prospect ? nomProspect(visite.prospect, t) : '']
     .filter(Boolean)
     .join(' · ');
@@ -416,6 +471,10 @@ export function ExecutionVisite({
     setEnvoi(true);
     setMessage(null);
     try {
+      const nouveauJour =
+        ecart.type === 'reporter' && ecart.date
+          ? { date: ecart.date, heure: ecart.heure ?? '' }
+          : undefined;
       const issue = await declarerEcart(
         client,
         ecart.type,
@@ -423,11 +482,16 @@ export function ExecutionVisite({
         motif,
         ecart.commentaire,
         resume,
+        nouveauJour,
       );
-      const texte = t(TEXTES_ECART[ecart.type].note, {
+      let texte = t(TEXTES_ECART[ecart.type].note, {
         nom: visite.prospect ? nomProspect(visite.prospect, t) : t('visites.sansProspect'),
         motif: motif.libelle,
+        jour: nouveauJour ? `${jourLisible(nouveauJour.date)} · ${nouveauJour.heure}` : '',
       });
+      // Dans la semaine approuvée, le nouveau jour est une modification soumise (VIS-007 CA2).
+      if (nouveauJour && semaine && nouveauJour.date < plusSept(semaine))
+        texte = t('execution.reportSoumis', { texte });
       setEcart(null);
       const horsLigne = issue === 'en_attente';
       // Un écart se note sans se féliciter : l'annonce reste neutre.
@@ -463,6 +527,30 @@ export function ExecutionVisite({
           />
         ))}
       </View>
+      {ecart.type === 'reporter' && (
+        <>
+          <Texte variante="libelle">{t('execution.nouveauJour')}</Texte>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {joursProposes(visite.date > aujourdhui ? visite.date : aujourdhui, joursOuvres)
+              .filter((j) => j > visite.date)
+              .map((j) => (
+                <Pilule
+                  key={j}
+                  libelle={jourLisible(j, 'short')}
+                  actif={ecart.date === j}
+                  onPress={() => setEcart({ ...ecart, date: j })}
+                />
+              ))}
+          </View>
+          <Champ
+            libelle={t('execution.nouvelleHeure')}
+            value={ecart.heure ?? ''}
+            onChangeText={(heure) => setEcart({ ...ecart, heure })}
+            maxLength={5}
+            keyboardType="numbers-and-punctuation"
+          />
+        </>
+      )}
       <Champ
         libelle={t('execution.commentaire')}
         value={ecart.commentaire}
@@ -473,27 +561,30 @@ export function ExecutionVisite({
       <Bouton
         libelle={t(TEXTES_ECART[ecart.type].confirmer)}
         chargement={envoi}
-        desactive={!ecart.motif}
+        desactive={
+          !ecart.motif ||
+          (ecart.type === 'reporter' && (!ecart.date || !HEURE.test(ecart.heure ?? '')))
+        }
         onPress={() => void confirmerEcart()}
       />
       <Bouton secondaire libelle={t('execution.annuler')} onPress={() => setEcart(null)} />
     </View>
   );
   const boutonEcart = (type: TypeEcart, libelle: string) => (
-    <View key={type} style={{ flex: 1 }}>
+    <View key={type} style={{ flexGrow: 1, flexBasis: '40%' }}>
       <Bouton
         secondaire
         libelle={libelle}
         onPress={() => {
           setMessage(null);
-          setEcart({ type, motif: null, commentaire: '' });
+          setEcart({ type, motif: null, commentaire: '', date: null, heure: visite.heure ?? '' });
         }}
       />
     </View>
   );
-  // Les écarts, secondaires, côte à côte sous l'action principale.
+  // Les écarts, secondaires, côte à côte sous l'action principale (deux par ligne).
   const ecarts = (...types: [TypeEcart, string][]) => (
-    <View style={{ flexDirection: 'row', gap: 8 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       {types.map(([type, libelle]) => boutonEcart(type, libelle))}
     </View>
   );
@@ -505,6 +596,15 @@ export function ExecutionVisite({
         <Texte variante="libelle">{t(motifLu)}</Texte>
         <Texte variante="fort">{visite.motif_ecart.libelle}</Texte>
         {visite.commentaire_ecart ? <Texte>{visite.commentaire_ecart}</Texte> : null}
+        {visite.report && (
+          <Texte variante="fort">
+            {t('execution.reporteeAu', {
+              jour: [jourLisible(visite.report.date), visite.report.heure]
+                .filter(Boolean)
+                .join(' · '),
+            })}
+          </Texte>
+        )}
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
       </View>
     );
@@ -591,7 +691,8 @@ export function ExecutionVisite({
     return (
       <View style={{ gap: 6 }}>
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
-        {formulaireEcart || ecarts(['annuler', t('execution.annulerVisite')])}
+        {formulaireEcart ||
+          ecarts(['reporter', t('execution.reporter')], ['annuler', t('execution.annulerVisite')])}
       </View>
     );
   }
@@ -606,7 +707,11 @@ export function ExecutionVisite({
             chargement={envoi}
             onPress={() => void agir('demarrer')}
           />
-          {ecarts(['absent', t('execution.absent')], ['annuler', t('execution.annulerVisite')])}
+          {ecarts(
+            ['absent', t('execution.absent')],
+            ['reporter', t('execution.reporter')],
+            ['annuler', t('execution.annulerVisite')],
+          )}
         </>
       )}
       {attente}
@@ -647,6 +752,20 @@ export function ExecutionDepuisProgramme({ id }: { id: string }) {
       fuseau={programme.fuseau}
       attenteSecondes={programme.attente_gps_secondes}
       motifs={programme.motifs_ecart}
+      joursOuvres={joursOuvresDe(programme)}
+      semaine={programme.semaine}
     />
   );
+}
+
+/** Les jours de la semaine où le pays travaille, d'après les journées du programme. */
+export function joursOuvresDe(programme: Programme): number[] {
+  const jours = programme.jours.map((j) => new Date(`${j.date}T12:00:00Z`).getUTCDay());
+  return jours.length ? jours : [1, 2, 3, 4, 5];
+}
+
+function plusSept(lundi: string) {
+  const d = new Date(`${lundi}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 7);
+  return d.toISOString().slice(0, 10);
 }

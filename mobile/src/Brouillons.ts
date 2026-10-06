@@ -14,6 +14,7 @@ import type {
   Demarrage,
   Ecart,
   ModificationVisite,
+  Report,
   Terminaison,
   SaisieActivite,
   SaisieVisite,
@@ -108,6 +109,15 @@ export type Envoi =
       saisie: Ecart;
       resume: string;
       erreur?: string;
+    }
+  | {
+      id: string;
+      /** Report déclaré sans réseau (VIS-007), avec l'identifiant de la nouvelle visite. */
+      type: 'reporter_visite';
+      visite: string;
+      saisie: Report;
+      resume: string;
+      erreur?: string;
     };
 
 /** Panne de réseau ou serveur indisponible : la saisie attend ; un refus métier, non. */
@@ -188,6 +198,8 @@ async function rejouer(client: ClientApi): Promise<number> {
         await client.visites.demarrer(envoi.visite, envoi.saisie);
       } else if (envoi.type === 'terminer_visite') {
         await client.visites.terminer(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'reporter_visite') {
+        await client.visites.reporter(envoi.visite, envoi.saisie);
       } else if (envoi.type === 'ajout_activite') {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       } else {

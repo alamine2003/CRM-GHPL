@@ -133,6 +133,12 @@ class EtablissementVisiteSerializer(serializers.Serializer):
     nom = serializers.CharField()
 
 
+class ReportLuSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    date = serializers.DateField()
+    heure = serializers.CharField(allow_null=True)
+
+
 class VisiteSerializer(serializers.ModelSerializer):
     prospect = ProspectVisiteSerializer(allow_null=True)
     etablissement = EtablissementVisiteSerializer(allow_null=True)
@@ -148,14 +154,29 @@ class VisiteSerializer(serializers.ModelSerializer):
         fields = ["id", "date", "heure", "prospect", "etablissement", "reseau", "objectif",
                   "note", "statut", "manquants", "passage", "ordre", "debut_le", "sans_gps",
                   "distance_debut_m", "fin_le", "fin_sans_gps", "distance_fin_m",
-                  "motif_ecart", "commentaire_ecart", "ecart_le"]  # fmt: skip
+                  "motif_ecart", "commentaire_ecart", "ecart_le", "reportee_de",
+                  "report"]  # fmt: skip
         read_only_fields = ["debut_le", "sans_gps", "distance_debut_m", "fin_le", "fin_sans_gps",
-                            "distance_fin_m", "commentaire_ecart", "ecart_le"]  # fmt: skip
+                            "distance_fin_m", "commentaire_ecart", "ecart_le",
+                            "reportee_de"]  # fmt: skip
+
+    #: La visite qui prend la suite d'une visite reportée (VIS-007).
+    report = serializers.SerializerMethodField()
 
     def get_manquants(self, visite) -> list[str]:
         from .services import champs_manquants
 
         return champs_manquants(visite)
+
+    @extend_schema_field(ReportLuSerializer(allow_null=True))
+    def get_report(self, visite) -> dict | None:
+        if visite.statut != "reportee":
+            return None
+        suite = Visite.objects.filter(reportee_de=visite).only("id", "date", "heure").first()
+        if suite is None:
+            return None
+        return {"id": suite.pk, "date": suite.date,
+                "heure": suite.heure.strftime("%H:%M") if suite.heure else None}  # fmt: skip
 
 
 class SaisieVisiteSerializer(serializers.Serializer):
@@ -690,6 +711,18 @@ class TerminaisonSerializer(serializers.Serializer):
     longitude = serializers.FloatField(required=False, allow_null=True, min_value=-180,
                                        max_value=180)  # fmt: skip
     precision_m = serializers.FloatField(required=False, allow_null=True, min_value=0)
+
+
+class ReportSerializer(serializers.Serializer):
+    """VIS-007 : un report, comme un écart, plus le jour et l'heure de la nouvelle visite ;
+    l'identifiant de la nouvelle visite vient du téléphone (envoi rejouable, 0.2.7)."""
+
+    le = serializers.DateTimeField()
+    motif = serializers.UUIDField(required=False, allow_null=True)
+    commentaire = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    date = serializers.DateField()
+    heure = serializers.TimeField(required=False, allow_null=True, input_formats=["%H:%M"])
+    id = serializers.UUIDField(required=False)
 
 
 class EcartSerializer(serializers.Serializer):

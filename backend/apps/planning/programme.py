@@ -12,13 +12,15 @@ programme la rappelle tant qu'elle n'est pas justifiée, sur la semaine et la pr
 
 from datetime import date, time, timedelta
 
+from django.db.models import Q
+
 from apps.identite.models import Utilisateur
 from apps.socle.models import Pays
 from apps.socle.services import aujourdhui, valeur_parametre
 
 from .calendrier import jours_de_la_semaine, lundi
 from .etats import StatutVisite
-from .models import Activite, Planning, Visite
+from .models import Activite, Decision, Planning, Visite
 
 
 class Etat:
@@ -79,10 +81,12 @@ def a_justifier(pays: Pays, delegue: Utilisateur, today: date) -> list[Visite]:
     from . import services
 
     semaine = lundi(today)
+    # Une version approuvée suffit : une modification soumise (un report, VIS-007 CA2) laisse
+    # le planning « soumis » sans retirer ce qui a été approuvé.
     plannings = Planning.objects.filter(
-        pays=pays, delegue=delegue, statut__in=EXECUTES,
+        pays=pays, delegue=delegue, versions__decision=Decision.APPROUVE,
         semaine__in=[semaine - timedelta(days=7), semaine],
-    ).order_by("semaine")  # fmt: skip
+    ).distinct().order_by("semaine")  # fmt: skip
     return [
         v
         for p in plannings
@@ -149,12 +153,13 @@ def historique(visite: Visite, nombre: int = 3) -> list[Visite]:
         return []
     return list(
         Visite.objects.filter(
+            Q(planning__statut__in=EXECUTES) | Q(planning__versions__decision=Decision.APPROUVE),
             planning__delegue_id=visite.planning.delegue_id,
-            planning__statut__in=EXECUTES,
             prospect_id=visite.prospect_id,
             archive_le__isnull=True,
             date__lt=visite.date,
         )
         .select_related("etablissement")
+        .distinct()
         .order_by("-date", "-heure")[:nombre]
     )

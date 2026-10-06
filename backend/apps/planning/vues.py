@@ -797,3 +797,21 @@ class NonRealiseeVue(VueVisites):
         v = _lire(s.EcartSerializer, request)
         visite = non_realisee(visite, v["le"], v.get("motif"), v.get("commentaire", ""))
         return Response(s.VisiteSerializer(visite).data)
+
+
+class ReportVisiteVue(VueVisites):
+    """VIS-007 : reporter une visite prévue ; un motif est obligatoire, la nouvelle visite est
+    liée à l'originale (CA1) et passe par le superviseur dans une semaine approuvée (CA2)."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.ReportSerializer, responses=s.VisiteSerializer,
+                   operation_id="visite_reporter")  # fmt: skip
+    def post(self, request, id):
+        from .execution import reporter
+
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.ReportSerializer, request)
+        visite = reporter(visite, v["le"], v.get("motif"), v["date"], v.get("heure"),
+                          v.get("commentaire", ""), v.get("id"))  # fmt: skip
+        return Response(s.VisiteSerializer(visite).data)

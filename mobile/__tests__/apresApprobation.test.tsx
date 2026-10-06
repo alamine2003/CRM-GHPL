@@ -60,6 +60,8 @@ const VISITE: Visite = {
   motif_ecart: null,
   commentaire_ecart: '',
   ecart_le: null,
+  reportee_de: null,
+  report: null,
 };
 
 const APPROUVEE: Semaine = {

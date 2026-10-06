@@ -1548,7 +1548,8 @@
       "terminer_visite": "Visit ended",
       "absent_visite": "Prospect absent",
       "annuler_visite": "Visit cancelled",
-      "non_realisee_visite": "Visit not carried out"
+      "non_realisee_visite": "Visit not carried out",
+      "reporter_visite": "Visit postponed"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -1902,6 +1903,15 @@
     "motifAnnulee": "Reason for cancellation",
     "motifNonRealisee": "Reason it was not carried out",
     "ecartLu": "{{statut}} · {{motif}}",
-    "aJustifier": "Still planned after its day: say what happened."
+    "aJustifier": "Still planned after its day: say what happened.",
+    "reporter": "Postpone",
+    "reportTitre": "Postpone this visit",
+    "nouveauJour": "New day (required)",
+    "nouvelleHeure": "Time (required, HH:MM)",
+    "confirmerReport": "Confirm postponement",
+    "reportNote": "Visit to {{nom}} postponed to {{jour}}: {{motif}}.",
+    "reportSoumis": "{{texte}} The new day awaits your supervisor's approval.",
+    "motifReport": "Reason for postponement",
+    "reporteeAu": "Postponed to {{jour}}"
   }
 }

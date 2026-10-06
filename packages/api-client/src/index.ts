@@ -27,6 +27,7 @@ import type {
   Demarrage,
   Terminaison,
   Ecart,
+  Report,
   Qualite,
   Semaine,
   Reprise,
@@ -143,6 +144,7 @@ export type {
   Demarrage,
   Terminaison,
   Ecart,
+  Report,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -790,6 +792,9 @@ export function creerClient(options: OptionsClient) {
       /** Non réalisée (VIS-009) : une visite restée prévue après sa journée, avec un motif. */
       nonRealisee: (id: string, ecart: Ecart) =>
         requete<Visite>(`/api/v1/visites/${id}/non-realisee/`, { methode: 'POST', corps: ecart }),
+      /** Reporter (VIS-007) : motif obligatoire ; la nouvelle visite, liée, au jour choisi. */
+      reporter: (id: string, report: Report) =>
+        requete<Visite>(`/api/v1/visites/${id}/reporter/`, { methode: 'POST', corps: report }),
       copier: (id: string, date: string) =>
         requete<Visite>(`/api/v1/visites/${id}/copier/`, { methode: 'POST', corps: { date } }),
     },
