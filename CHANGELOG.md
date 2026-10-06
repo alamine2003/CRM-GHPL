@@ -2,6 +2,37 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.8] — Centre de notifications, rappels et escalade
+
+Huitième jalon du cycle 0.3 « Validation des plannings ».
+
+### Ajouté — centre de notifications (NOT-001)
+
+- Portail : une cloche dans la barre du haut, avec le nombre de non lues, ouvre la page **Notifications** : les 100 plus récentes, lues et non lues, avec leur date ; « Tout marquer comme lu ».
+- Téléphone : « Tout voir » sur la carte de l'accueil ouvre le centre.
+- **CA1** : chaque notification ouvre l'écran de l'action attendue — le planning à décider, la file, ou la semaine concernée — et passe en lue.
+
+### Ajouté — rappel du planning non soumis (NOT-006)
+
+- Le mercredi à 9 h, heure du pays (**CA1**), le délégué dont la semaine suivante n'est pas soumise reçoit « Votre planning de la semaine n n'est pas encore soumis : à soumettre avant le jeudi … à 18:00 ». Une seule fois ; un jour férié le reporte au jour ouvré suivant ; plus rien après l'échéance.
+
+### Ajouté — escalade vers le DM (PLN-016, RG-019)
+
+- **CA1** : sans décision 24 heures ouvrées après la soumission (paramètre du pays, week-end et jours fériés exclus), le DM du périmètre est notifié (« Escalade : le planning de … attend une décision depuis 24 h ouvrées ») et le trouve dans sa file : « Escaladé : sans décision de … depuis le … ».
+- **CA2** : sa décision porte le mode `escalade` (« · par escalade » dans la décision et l'historique). Le superviseur garde la main jusque-là.
+- Le lundi à 9 h, chaque DM apprend combien de plannings de la semaine ne sont pas approuvés dans ses réseaux.
+- Tâche périodique toutes les 15 minutes (Celery beat ; service `worker` en développement), idempotente ; commande `executer_echeances`.
+- Hypothèses à confirmer (prd.md §14.20) : décompte des heures ouvrées, heures du rappel et de l'alerte, une notification d'escalade par planning ; les autres rappels arrivent avec le push, les rapports et la synchronisation.
+
+### Design
+
+Revue sur le rendu réel : accueil et centre du portail (superviseur et délégué) en bureau, téléphone et sombre, accueil et centre du téléphone à 360 px et en sombre. Le parcours du DM (escalade) n'a pas été capturé : son compte de démonstration exige la double authentification ; il est couvert par les tests. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Centre (portail) | L'infobulle de la cloche restait affichée après le clic et couvrait « Tout marquer comme lu ». | Infobulle au survol seulement. |
+| Accueil (téléphone, 360 px) | « 2 nouvelles notifications » et « Toutes les notifications » se disputaient la ligne, le titre sur deux lignes. | « Tout voir ». |
+
 ## [0.3.7] — Verrouillage et modifications après approbation
 
 Septième jalon du cycle 0.3 « Validation des plannings ».

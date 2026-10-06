@@ -229,6 +229,12 @@ CACHES = {
     )
 }
 
+# Worker et ordonnanceur (architecture §7.5) : file Redis ; sans Redis, exécution sur place.
+CELERY_BROKER_URL = os.environ.get("REDIS_URL", "memory://")
+CELERY_TASK_ALWAYS_EAGER = not os.environ.get("REDIS_URL")
+CELERY_TIMEZONE = "UTC"
+CELERY_TASK_IGNORE_RESULT = True
+
 # Courriel : uniquement sécurité du compte (NOT-004). Console en développement.
 EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "INNOV CRM <ne-pas-repondre@localhost>")

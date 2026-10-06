@@ -26,6 +26,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { type DragEvent, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import { EnTeteCarte, EnTetePage, Ligne, Potentiel } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { HistoriqueVersions } from '../composants/HistoriqueVersions';
@@ -50,7 +51,9 @@ export default function Planning() {
   const { client } = useSession();
   const notifier = useNotifier();
   const requetes = useQueryClient();
-  const [jour, setJour] = useState<string | undefined>(undefined);
+  // Arrivée depuis une notification (NOT-001) : la semaine qu'elle concerne.
+  const [parametres] = useSearchParams();
+  const [jour, setJour] = useState<string | undefined>(parametres.get('semaine') ?? undefined);
   const [ouverte, setOuverte] = useState<Visite | null>(null);
   const semaine = useQuery({
     queryKey: ['planning-semaine', jour ?? 'courante'],

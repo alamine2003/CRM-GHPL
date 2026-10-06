@@ -2621,6 +2621,7 @@ export interface components {
       approbation: components['schemas']['SuiviApprobation'] | null;
       delegue: components['schemas']['Delegue'];
       remplace: components['schemas']['Delegue'] | null;
+      escalade: components['schemas']['Escalade'] | null;
       postes: string[];
     };
     /** @description Contrôle du planning (PLN-004) : `bloquant` (RG-015) ou `signalement` (RG-016). */
@@ -2839,6 +2840,10 @@ export interface components {
       numero_semaine?: number;
       version?: number;
       motif?: components['schemas']['DonneesNotificationMotifEnum'];
+      /** Format: date-time */
+      echeance?: string;
+      heures?: number;
+      nombre?: number;
       /** Format: date */
       debut?: string;
       /** Format: date */
@@ -2880,6 +2885,12 @@ export interface components {
       pile?: string;
       ecran?: string;
       reference?: string;
+    };
+    /** @description PLN-016 : le planning est arrivé au DM faute de décision du responsable du poste. */
+    Escalade: {
+      /** Format: date-time */
+      le: string;
+      responsables: components['schemas']['Delegue'][];
     };
     Etablissement: {
       /** Format: uuid */
@@ -3161,9 +3172,10 @@ export interface components {
     /**
      * @description * `direct` - Décision du responsable du poste
      *     * `remplacement` - Décision du remplaçant
+     *     * `escalade` - Décision par escalade
      * @enum {string}
      */
-    ModeDecisionEnum: 'direct' | 'remplacement';
+    ModeDecisionEnum: 'direct' | 'remplacement' | 'escalade';
     Modification: {
       visite: components['schemas']['VisiteFigee'];
       champs: components['schemas']['ChampsEnum'][];
@@ -3238,10 +3250,19 @@ export interface components {
      *     * `planning_approuve` - Planning approuvé
      *     * `revision_demandee` - Révision demandée
      *     * `remplacement_attribue` - Remplacement attribué
+     *     * `rappel_planning` - Planning non soumis
+     *     * `escalade` - Escalade
+     *     * `plannings_non_approuves` - Plannings non approuvés
      * @enum {string}
      */
     NotificationTypeEnum:
-      'planning_soumis' | 'planning_approuve' | 'revision_demandee' | 'remplacement_attribue';
+      | 'planning_soumis'
+      | 'planning_approuve'
+      | 'revision_demandee'
+      | 'remplacement_attribue'
+      | 'rappel_planning'
+      | 'escalade'
+      | 'plannings_non_approuves';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
@@ -3486,6 +3507,7 @@ export interface components {
       fuseau: string;
       delegue: components['schemas']['Delegue'];
       remplace: components['schemas']['Delegue'] | null;
+      escalade: components['schemas']['Escalade'] | null;
       postes: string[];
       visites: number;
       signalements: components['schemas']['SignalementResume'][];
@@ -5631,7 +5653,10 @@ export interface operations {
   };
   notifications_liste: {
     parameters: {
-      query?: never;
+      query?: {
+        /** @description Le centre complet : lues et non lues (NOT-001) */
+        centre?: boolean;
+      };
       header?: never;
       path?: never;
       cookie?: never;

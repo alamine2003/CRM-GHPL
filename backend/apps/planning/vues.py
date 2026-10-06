@@ -375,6 +375,21 @@ class ActiviteRetraitVue(VueActivites):
 # --- Soumission (PLN-008) ---------------------------------------------------------------------
 
 
+def _escalade(utilisateur, planning):
+    """PLN-016 : pour le DM qui décide par escalade, depuis quand et à la place de qui."""
+    from apps.identite.models import Utilisateur
+
+    from .models import ModeDecision
+
+    if services.mode_de_decision(utilisateur, planning) != ModeDecision.ESCALADE:
+        return None
+    version = planning.versions.first()
+    return {
+        "le": version.escalade_le,
+        "responsables": list(Utilisateur.objects.filter(pk__in=services.responsables(planning))),
+    }
+
+
 def _remplace(utilisateur, planning):
     """Le superviseur titulaire quand l'utilisateur décide en remplacement (ORG-013)."""
     from apps.identite.models import Utilisateur
@@ -409,6 +424,7 @@ class FileValidationVue(VuePerimetre):
                 "fuseau": pays.fuseau,
                 "delegue": planning.delegue,
                 "remplace": _remplace(request.user, planning),
+                "escalade": _escalade(request.user, planning),
                 "postes": [p.libelle for p in services.postes_de_la_semaine(planning)],
                 "visites": planning.visites.filter(archive_le__isnull=True).count(),
                 "signalements": [{"code": c, "nombre": n} for c, n in compte.items()],
@@ -450,6 +466,7 @@ class ConsultationVue(VueSupervision):
         donnees = _semaine(planning.pays, planning.semaine, planning) | {
             "delegue": planning.delegue,
             "remplace": _remplace(request.user, planning),
+            "escalade": _escalade(request.user, planning),
             "postes": [p.libelle for p in services.postes_de_la_semaine(planning)],
         }
         return Response(s.ConsultationSerializer(donnees).data)

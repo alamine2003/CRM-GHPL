@@ -89,6 +89,7 @@ const CONSULTATION: Consultation = {
   approbation: null,
   delegue: { id: 'u1', prenom: 'Aminata', nom: 'FICTIVE' },
   remplace: null,
+  escalade: null,
   postes: ['VM Plateau'],
 };
 
@@ -98,6 +99,7 @@ function ligne(id: string, prenom: string): PlanningEnAttente {
     fuseau: 'Africa/Dakar',
     delegue: { id: `u-${id}`, prenom, nom: 'FICTIF' },
     remplace: null,
+    escalade: null,
     postes: [],
     visites: 0,
     signalements: [],

@@ -136,7 +136,8 @@
     "doublons": "Duplicates",
     "propositions": "Proposals",
     "validation": "Plans to approve",
-    "remplacements": "Replacements"
+    "remplacements": "Replacements",
+    "notifications": "Notifications"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -1647,7 +1648,20 @@
     "remplacement_attribue": "You replace {{nom}} from {{debut}} to {{fin}}",
     "planning_soumis": "{{nom}}'s planning to decide: week {{numero}}{{suite}}",
     "version": " (version {{version}})",
-    "versionModification": " (change, version {{version}})"
+    "versionModification": " (change, version {{version}})",
+    "rappel_planning": "Your planning for week {{numero}} is not submitted yet: submit it before {{echeance}}",
+    "escalade": "Escalation: {{nom}}'s planning (week {{numero}}) has awaited a decision for {{heures}} working hours",
+    "plannings_non_approuves_one": "{{count}} planning for week {{numero}} is not approved in your networks",
+    "plannings_non_approuves_other": "{{count}} plannings for week {{numero}} are not approved in your networks",
+    "centre": "Notifications",
+    "centreSousTitre": "The 100 most recent; each opens what it expects from you.",
+    "aucune": "No notifications yet.",
+    "nonLue": "Unread",
+    "voirTout": "All notifications",
+    "cloche_zero": "Notifications",
+    "cloche_one": "Notifications, {{count}} unread",
+    "cloche_other": "Notifications, {{count}} unread",
+    "toutVoir": "See all"
   },
   "revision": {
     "demander": "Request a revision",
@@ -1779,5 +1793,10 @@
     "surTelephone": "To change it, use the mobile app: a visit's time changes freely, the rest is submitted to your supervisor.",
     "aDecider": "To decide: {{liste}}",
     "enAttenteCourt": "Pending"
+  },
+  "escalade": {
+    "ligne": "Escalated: no decision from {{noms}} since {{date}}",
+    "court": "Escalated",
+    "parEscalade": "by escalation"
   }
 }

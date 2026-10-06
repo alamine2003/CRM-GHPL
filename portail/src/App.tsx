@@ -33,6 +33,7 @@ const Planning = lazy(() => import('./pages/Planning'));
 const Validation = lazy(() => import('./pages/Validation'));
 const ConsultationPlanning = lazy(() => import('./pages/ConsultationPlanning'));
 const Remplacements = lazy(() => import('./pages/Remplacements'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 
 type Rendu = (utilisateur: Moi, perimetre: Perimetre) => ReactNode;
 
@@ -57,6 +58,10 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
   '/planning': { titre: 'navigation.planning', rendu: () => <Planning /> },
   '/validation': { titre: 'navigation.validation', rendu: () => <Validation /> },
   '/remplacements': { titre: 'navigation.remplacements', rendu: () => <Remplacements /> },
+  '/notifications': {
+    titre: 'navigation.notifications',
+    rendu: (_, p) => <Notifications fuseau={p.pays_actif?.fuseau} />,
+  },
   '/ciblage': { titre: 'navigation.ciblage', rendu: (_, p) => <Ciblage perimetre={p} /> },
   '/doublons': { titre: 'navigation.doublons', rendu: (_, p) => <Doublons perimetre={p} /> },
   '/propositions': {

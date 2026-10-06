@@ -36,6 +36,7 @@ import Logo from './Logo';
 import { ENTREES, type Entree } from './navigation';
 import SelecteurPays from './SelecteurPays';
 import { BasculeApparence } from './Apparence';
+import { Cloche } from './Cloche';
 import { FiletDemonstration, MentionDemonstration } from './BandeauDemonstration';
 import { useDemonstration } from './demonstration';
 
@@ -337,6 +338,7 @@ export default function CadreApplication({
           <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
             <ChoixLangue />
           </Box>
+          {perimetre.actions.includes('notifications.lire') && <Cloche />}
           <BasculeApparence />
           <MenuUtilisateur utilisateur={utilisateur} />
         </Box>

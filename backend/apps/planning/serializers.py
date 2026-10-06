@@ -398,6 +398,13 @@ class RevisionSerializer(serializers.Serializer):
     remarques = RemarqueSerializer(many=True, required=False)
 
 
+class EscaladeSerializer(serializers.Serializer):
+    """PLN-016 : le planning est arrivé au DM faute de décision du responsable du poste."""
+
+    le = serializers.DateTimeField()
+    responsables = DelegueSerializer(many=True)
+
+
 class PlanningEnAttenteSerializer(serializers.Serializer):
     """Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et
     ses activités connexes, avec leur explication (PLN-018)."""
@@ -408,6 +415,8 @@ class PlanningEnAttenteSerializer(serializers.Serializer):
     delegue = DelegueSerializer()
     #: Superviseur remplacé quand l'utilisateur décide en remplacement (ORG-013).
     remplace = DelegueSerializer(allow_null=True)
+    #: Escaladé à ce DM faute de décision (PLN-016) ; nul sinon.
+    escalade = EscaladeSerializer(allow_null=True)
     postes = serializers.ListField(child=serializers.CharField())
     visites = serializers.IntegerField()
     signalements = SignalementResumeSerializer(many=True)
@@ -425,6 +434,8 @@ class ConsultationSerializer(SemaineSerializer):
     delegue = DelegueSerializer()
     #: Superviseur remplacé quand l'utilisateur décide en remplacement (ORG-013).
     remplace = DelegueSerializer(allow_null=True)
+    #: Escaladé à ce DM faute de décision (PLN-016) ; nul sinon.
+    escalade = EscaladeSerializer(allow_null=True)
     postes = serializers.ListField(child=serializers.CharField())
 
 

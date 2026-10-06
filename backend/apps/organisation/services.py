@@ -399,6 +399,17 @@ def superviseurs_du_dm(dm: Utilisateur, pays: Pays, jour: date | None = None) ->
     )
 
 
+def dms_des_reseaux(pays: Pays, reseaux, jour: date | None = None) -> set:
+    """DM dont le périmètre daté couvre l'un de ces réseaux (ORG-008) : ceux qui reçoivent
+    l'escalade d'un planning (PLN-016, RG-019)."""
+    jour = jour or aujourdhui(pays)
+    return set(
+        PerimetreReseau.objects.filter(actif_le(jour), pays=pays, reseau__in=reseaux)
+        .values_list("utilisateur_id", flat=True)
+        .distinct()
+    )
+
+
 def remplacements_actifs(pays: Pays, jour: date | None = None):
     jour = jour or aujourdhui(pays)
     return Remplacement.objects.filter(

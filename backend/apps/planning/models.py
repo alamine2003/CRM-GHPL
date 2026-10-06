@@ -193,10 +193,11 @@ class Decision(models.TextChoices):
 
 class ModeDecision(models.TextChoices):
     """Qui a décidé (prd.md §11) : le superviseur du poste (ou le DM d'un superviseur-visiteur,
-    RG-023), son remplaçant daté (RG-020) ; l'escalade arrive en 0.3.8."""
+    RG-023), son remplaçant daté (RG-020), ou le DM du périmètre par escalade (RG-019)."""
 
     DIRECT = "direct", "Décision du responsable du poste"
     REMPLACEMENT = "remplacement", "Décision du remplaçant"
+    ESCALADE = "escalade", "Décision par escalade"
 
 
 class MotifVersion(models.TextChoices):
@@ -235,6 +236,8 @@ class VersionPlanning(ModeleDePays):
     #: l'heure d'une visite dans sa journée, `{"visite", "date", "avant", "apres", "le"}`. Le
     #: contenu soumis ne change pas ; la référence d'exécution les applique.
     modifications = models.JSONField(default=list, blank=True)
+    #: Escaladée au DM du périmètre, faute de décision dans le délai (PLN-016, RG-019).
+    escalade_le = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["planning", "-numero"]

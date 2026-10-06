@@ -96,3 +96,23 @@ export function libelleVersion(
     ? t('apresApprobation.version', { numero })
     : t('resoumission.version', { numero });
 }
+
+/** PLN-016 : « Escaladé : sans décision de Kossi GUEYE depuis le lundi 12 octobre à 17:00 ». */
+export function texteEscalade(
+  escalade: { le: string; responsables: { prenom: string; nom: string }[] },
+  t: Traduire,
+  langue: string,
+  fuseau: string,
+) {
+  return t('escalade.ligne', {
+    noms: escalade.responsables.map((r) => `${r.prenom} ${r.nom}`).join(', '),
+    date: new Intl.DateTimeFormat(langue, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: fuseau,
+    }).format(new Date(escalade.le)),
+  });
+}

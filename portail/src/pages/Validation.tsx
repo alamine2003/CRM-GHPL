@@ -8,7 +8,7 @@ import { Link as LienRouteur } from 'react-router';
 import { EnTetePage } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { ListeActivites } from '../composants/SemainePlanning';
-import { libelleVersion } from '../composants/planningTextes';
+import { libelleVersion, texteEscalade } from '../composants/planningTextes';
 import { useSession } from '../contexteSession';
 
 type Traduire = ReturnType<typeof useTranslation>['t'];
@@ -143,6 +143,11 @@ function CartePlanning({ ligne, maintenant }: { ligne: PlanningEnAttente; mainte
             </Stack>
           </Box>
         </Stack>
+        {ligne.escalade && (
+          <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 600 }}>
+            {texteEscalade(ligne.escalade, t, i18n.language, ligne.fuseau)}
+          </Typography>
+        )}
         {alertes.length > 0 && (
           <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
             {alertes.map((a) => (

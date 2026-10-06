@@ -96,7 +96,12 @@ function Decision({ version, fuseau }: { version: VersionPlanning; fuseau?: stri
   const { t, i18n } = useTranslation();
   const p = usePalette();
   if (!version.decision || !version.decide_le) return null;
-  const mode = version.mode === 'remplacement' ? ` · ${t('versions.enRemplacement')}` : '';
+  const mode =
+    version.mode === 'remplacement'
+      ? ` · ${t('versions.enRemplacement')}`
+      : version.mode === 'escalade'
+        ? ` · ${t('escalade.parEscalade')}`
+        : '';
   return (
     <View style={[styles.detail, { borderTopColor: p.ligne }]}>
       <Texte variante="discret">

@@ -2,6 +2,7 @@ import type { ClientApi, Semaine, Visite } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import axe from 'axe-core';
 import { createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContexteNotifications } from '../contexteNotifications';
 import { ContexteSession, type Session } from '../contexteSession';
@@ -115,7 +116,9 @@ function rendre(client: Partial<Record<keyof ClientApi, unknown>>) {
     >
       <ContexteNotifications.Provider value={notifier}>
         <ContexteSession.Provider value={session}>
-          <Planning />
+          <MemoryRouter>
+            <Planning />
+          </MemoryRouter>
         </ContexteSession.Provider>
       </ContexteNotifications.Provider>
     </QueryClientProvider>,

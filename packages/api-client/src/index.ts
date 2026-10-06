@@ -773,6 +773,8 @@ export function creerClient(options: OptionsClient) {
     /** Centre de notifications : les siennes, dans le pays actif (prd.md §18). */
     notifications: {
       liste: () => requete<ResumeNotifications>('/api/v1/notifications/'),
+      /** NOT-001 : le centre complet, lues et non lues. */
+      centre: () => requete<ResumeNotifications>('/api/v1/notifications/?centre=1'),
       lue: (id: string) =>
         requete<Notification>(`/api/v1/notifications/${id}/lue/`, { methode: 'POST' }),
       toutesLues: () =>

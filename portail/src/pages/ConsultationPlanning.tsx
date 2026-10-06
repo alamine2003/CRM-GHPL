@@ -4,6 +4,7 @@ import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -30,7 +31,7 @@ import {
 } from '../composants/SemainePlanning';
 import { HistoriqueVersions } from '../composants/HistoriqueVersions';
 import { AttenteApprobation, HeuresChangees } from '../composants/SuiviApprobation';
-import { libelleVersion } from '../composants/planningTextes';
+import { libelleVersion, texteEscalade } from '../composants/planningTextes';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 
@@ -132,6 +133,11 @@ export default function ConsultationPlanning({ id }: { id: string }) {
             remarques={brouillon}
             suivant={suivant ? `/validation/${suivant.planning.id}` : '/validation'}
           />
+          {c.escalade && (
+            <Alert severity="warning" variant="outlined">
+              {texteEscalade(c.escalade, t, i18n.language, c.fuseau)}
+            </Alert>
+          )}
           <AttenteApprobation semaine={c} jourCourt={jourCourt} />
           {aDecider && decision?.decision === 'a_reviser' && (
             <RevisionPrecedente consultation={c} jourCourt={jourCourt} />
@@ -357,6 +363,7 @@ function BandeauDecision({
                 numero: decision.numero,
               })}
               {decision.mode === 'remplacement' ? ` · ${t('remplacements.enRemplacement')}` : ''}
+              {decision.mode === 'escalade' ? ` · ${t('escalade.parEscalade')}` : ''}
             </Typography>
             {decision.commentaire && (
               <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'pre-line' }}>

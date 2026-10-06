@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.3.7
+  version: 0.3.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -1420,6 +1420,12 @@ paths:
   /api/v1/notifications/:
     get:
       operationId: notifications_liste
+      parameters:
+      - in: query
+        name: centre
+        schema:
+          type: boolean
+        description: 'Le centre complet : lues et non lues (NOT-001)'
       tags:
       - notifications
       security:
@@ -4814,6 +4820,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/Delegue'
           nullable: true
+        escalade:
+          allOf:
+          - $ref: '#/components/schemas/Escalade'
+          nullable: true
         postes:
           type: array
           items:
@@ -4824,6 +4834,7 @@ components:
       - controles
       - courante
       - delegue
+      - escalade
       - fuseau
       - jours
       - kilometrage
@@ -5403,6 +5414,13 @@ components:
           type: integer
         motif:
           $ref: '#/components/schemas/DonneesNotificationMotifEnum'
+        echeance:
+          type: string
+          format: date-time
+        heures:
+          type: integer
+        nombre:
+          type: integer
         debut:
           type: string
           format: date
@@ -5494,6 +5512,21 @@ components:
       - client
       - message
       - version
+    Escalade:
+      type: object
+      description: 'PLN-016 : le planning est arrivé au DM faute de décision du responsable
+        du poste.'
+      properties:
+        le:
+          type: string
+          format: date-time
+        responsables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Delegue'
+      required:
+      - le
+      - responsables
     Etablissement:
       type: object
       properties:
@@ -6157,10 +6190,12 @@ components:
       enum:
       - direct
       - remplacement
+      - escalade
       type: string
       description: |-
         * `direct` - Décision du responsable du poste
         * `remplacement` - Décision du remplaçant
+        * `escalade` - Décision par escalade
     Modification:
       type: object
       properties:
@@ -6348,12 +6383,18 @@ components:
       - planning_approuve
       - revision_demandee
       - remplacement_attribue
+      - rappel_planning
+      - escalade
+      - plannings_non_approuves
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
         * `planning_approuve` - Planning approuvé
         * `revision_demandee` - Révision demandée
         * `remplacement_attribue` - Remplacement attribué
+        * `rappel_planning` - Planning non soumis
+        * `escalade` - Escalade
+        * `plannings_non_approuves` - Plannings non approuvés
     NullEnum:
       enum:
       - null
@@ -6938,6 +6979,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/Delegue'
           nullable: true
+        escalade:
+          allOf:
+          - $ref: '#/components/schemas/Escalade'
+          nullable: true
         postes:
           type: array
           items:
@@ -6956,6 +7001,7 @@ components:
       required:
       - activites
       - delegue
+      - escalade
       - fuseau
       - planning
       - postes

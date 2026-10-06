@@ -2,7 +2,7 @@
 actif. Le DM, le superviseur et le délégué y trouvent les événements de leurs plannings."""
 
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
 
 from apps.perimetre.matrice import Action
@@ -13,8 +13,9 @@ from .models import Notification
 from .serializers import NotificationSerializer, ResumeNotificationsSerializer
 
 LIRE = Action.NOTIFICATIONS_LIRE
-#: Les plus récentes ; le centre complet, avec ses préférences, arrive en 0.3.8.
+#: Les plus récentes sur l'accueil ; le centre (NOT-001) en demande davantage.
 LIMITE = 30
+LIMITE_CENTRE = 100
 
 
 class VueNotifications(VuePerimetre):
@@ -29,12 +30,18 @@ class VueNotifications(VuePerimetre):
 class NotificationsVue(VueNotifications):
     actions = {"GET": LIRE}
 
-    @extend_schema(responses=ResumeNotificationsSerializer, operation_id="notifications_liste")
+    @extend_schema(
+        parameters=[OpenApiParameter("centre", bool, required=False,
+                                     description="Le centre complet : lues et non lues (NOT-001)")],
+        responses=ResumeNotificationsSerializer,
+        operation_id="notifications_liste",
+    )  # fmt: skip
     def get(self, request):
         qs = self.get_queryset()
+        limite = LIMITE_CENTRE if request.query_params.get("centre") in ("1", "true") else LIMITE
         return Response(
             ResumeNotificationsSerializer(
-                {"non_lues": qs.filter(lue_le__isnull=True).count(), "notifications": qs[:LIMITE]}
+                {"non_lues": qs.filter(lue_le__isnull=True).count(), "notifications": qs[:limite]}
             ).data
         )
 

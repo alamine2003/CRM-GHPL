@@ -136,7 +136,8 @@
     "doublons": "Doublons",
     "propositions": "Propositions",
     "validation": "Plannings à valider",
-    "remplacements": "Remplaçants"
+    "remplacements": "Remplaçants",
+    "notifications": "Notifications"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -1647,7 +1648,20 @@
     "remplacement_attribue": "Vous remplacez {{nom}} du {{debut}} au {{fin}}",
     "planning_soumis": "Planning de {{nom}} à décider : semaine {{numero}}{{suite}}",
     "version": " (version {{version}})",
-    "versionModification": " (modification, version {{version}})"
+    "versionModification": " (modification, version {{version}})",
+    "rappel_planning": "Votre planning de la semaine {{numero}} n'est pas encore soumis : à soumettre avant le {{echeance}}",
+    "escalade": "Escalade : le planning de {{nom}} (semaine {{numero}}) attend une décision depuis {{heures}} h ouvrées",
+    "plannings_non_approuves_one": "{{count}} planning de la semaine {{numero}} n'est pas approuvé dans vos réseaux",
+    "plannings_non_approuves_other": "{{count}} plannings de la semaine {{numero}} ne sont pas approuvés dans vos réseaux",
+    "centre": "Notifications",
+    "centreSousTitre": "Les 100 plus récentes ; chacune ouvre ce qu'elle attend de vous.",
+    "aucune": "Aucune notification pour l'instant.",
+    "nonLue": "Non lue",
+    "voirTout": "Toutes les notifications",
+    "cloche_zero": "Notifications",
+    "cloche_one": "Notifications, {{count}} non lue",
+    "cloche_other": "Notifications, {{count}} non lues",
+    "toutVoir": "Tout voir"
   },
   "revision": {
     "demander": "Demander une révision",
@@ -1779,5 +1793,10 @@
     "surTelephone": "Pour le modifier, utilisez l'application mobile : l'heure d'une visite change librement, le reste est soumis à votre superviseur.",
     "aDecider": "À décider : {{liste}}",
     "enAttenteCourt": "En attente"
+  },
+  "escalade": {
+    "ligne": "Escaladé : sans décision de {{noms}} depuis le {{date}}",
+    "court": "Escaladé",
+    "parEscalade": "par escalade"
   }
 }

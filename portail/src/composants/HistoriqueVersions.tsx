@@ -310,6 +310,7 @@ function Decision({
               par: version.par ?? '',
             })}
             {version.mode === 'remplacement' ? ` · ${t('versions.enRemplacement')}` : ''}
+            {version.mode === 'escalade' ? ` · ${t('escalade.parEscalade')}` : ''}
           </Typography>
           {version.commentaire && (
             <Typography

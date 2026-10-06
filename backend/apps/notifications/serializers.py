@@ -15,6 +15,11 @@ class DonneesNotificationSerializer(serializers.Serializer):
     motif = serializers.ChoiceField(
         choices=["soumission", "revision", "modification"], required=False
     )
+    #: Rappel (NOT-006) : échéance ; escalade (PLN-016) : délai en heures ouvrées ; plannings
+    #: non approuvés le lundi : leur nombre.
+    echeance = serializers.DateTimeField(required=False)
+    heures = serializers.IntegerField(required=False)
+    nombre = serializers.IntegerField(required=False)
     #: Remplacement attribué (ORG-013) : période et superviseur remplacé.
     debut = serializers.DateField(required=False)
     fin = serializers.DateField(required=False)

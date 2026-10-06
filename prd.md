@@ -553,6 +553,19 @@ Mise en œuvre [D, 5 octobre 2026, livrée en 0.3.1, PLN-018] :
   - au portail, le délégué lit son planning approuvé mais le modifie depuis le téléphone ;
   - le passage automatique « approuvé → en cours » le premier jour, et « en cours → terminé », attendent le cycle 0.4 (programme du jour).
 
+### 14.20 Centre de notifications, rappels et escalade (mise en œuvre 0.3.8)
+
+- **Centre** (NOT-001) : une cloche avec le nombre de non lues dans la barre du portail ; « Toutes les notifications » sur l'accueil du téléphone. Les 100 plus récentes, lues et non lues ; chacune ouvre l'écran de l'action attendue (planning à décider, file, semaine du délégué) et passe en lue.
+- **Rappel** (NOT-006) : le mercredi à 9 h (heure du pays, paramètre `rappel_planning_non_soumis`), au délégué dont la semaine suivante n'est pas soumise (absente, en préparation ou à réviser), jusqu'à l'échéance ; un jour férié le reporte au jour ouvré suivant ; une seule fois par semaine.
+- **Escalade** (PLN-016, RG-019) : un planning soumis sans décision depuis 24 heures ouvrées (`delai_escalade_heures_ouvrees`) est escaladé au DM dont le périmètre couvre les réseaux du poste ; il le trouve dans sa file (« Escaladé : sans décision de … depuis … ») et décide en mode `escalade`. Le superviseur garde la main.
+- **Alerte du lundi** (RG-019) : à 9 h le lundi (`alerte_planning_non_approuve`), chaque DM apprend combien de plannings de la semaine ne sont pas approuvés dans ses réseaux, plannings absents compris.
+- **Tâche périodique** : toutes les 15 minutes (Celery beat), à l'heure de chaque pays ; chaque envoi est idempotent. Commande `executer_echeances` pour la rejouer sans worker.
+- Hypothèses [H] à confirmer :
+  - « heures ouvrées » : toutes les heures des jours ouvrés du pays, hors jours fériés (un vendredi soir n'escalade pas le samedi) ;
+  - heures du rappel (mercredi 9 h) et de l'alerte (lundi 9 h) ;
+  - une notification d'escalade par planning, plutôt que « n décisions en attente » regroupées (le regroupement arrive avec le push, NOT-003) ;
+  - rappels « visite proche », « rapport non soumis » et « délégué non synchronisé depuis 48 h » : avec le push sur le téléphone (0.8.5), les rapports (cycle 0.5) et la synchronisation (cycle 0.8).
+
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :
@@ -1065,7 +1078,7 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 | 0.3.5 | Nouvelle version et resoumission (PLN-014) ; resoumission jamais en retard (PLN-008 CA2) ; notification « Planning soumis » |
 | 0.3.6 | Historique et comparaison des versions (PLN-014 CA1, CA2 ; AUD-003 pour les plannings) |
 | 0.3.7 | Verrouillage, modifications mineures et majeures après approbation (PLN-015, RG-018) |
-| 0.3.8 | Centre de notifications, rappels, escalade vers le DM |
+| 0.3.8 | Centre de notifications (NOT-001), rappel du planning non soumis (NOT-006), escalade vers le DM et alerte du lundi (PLN-016, RG-019) |
 | 0.3.9 | Recette complète du workflow de planning, démonstration |
 
 ### Cycle 0.4 — Exécution des visites

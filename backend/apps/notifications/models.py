@@ -2,7 +2,7 @@
 
 Une ligne par événement et par destinataire, écrite dans la transaction de l'événement. Le
 texte n'est pas stocké : le client le compose dans la langue de l'utilisateur à partir du type
-et des données, sans donnée de santé. L'envoi push (Expo) arrive en 0.3.8.
+et des données, sans donnée de santé. L'envoi push (Expo) arrive en 0.8.5 (NOT-002).
 """
 
 from django.conf import settings
@@ -16,6 +16,10 @@ class TypeNotification(models.TextChoices):
     PLANNING_APPROUVE = "planning_approuve", "Planning approuvé"
     REVISION_DEMANDEE = "revision_demandee", "Révision demandée"
     REMPLACEMENT_ATTRIBUE = "remplacement_attribue", "Remplacement attribué"
+    #: Rappels et escalade (NOT-006, PLN-016, 0.3.8).
+    RAPPEL_PLANNING = "rappel_planning", "Planning non soumis"
+    ESCALADE = "escalade", "Escalade"
+    PLANNINGS_NON_APPROUVES = "plannings_non_approuves", "Plannings non approuvés"
 
 
 class Notification(ModeleDePays):

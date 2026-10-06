@@ -540,7 +540,9 @@ def responsables(planning: Planning) -> set:
 
 def mode_de_decision(utilisateur, planning: Planning) -> str | None:
     """`direct` pour un responsable du poste, `remplacement` pour son remplaçant daté
-    aujourd'hui (ORG-013, RG-020), sinon rien. Jamais sur son propre planning (PLN-017 CA1)."""
+    aujourd'hui (ORG-013, RG-020), `escalade` pour le DM du périmètre quand la version en
+    attente lui a été escaladée (PLN-016, RG-019), sinon rien. Jamais sur son propre planning
+    (PLN-017 CA1)."""
     from apps.organisation.services import remplaces_par
 
     from .models import ModeDecision
@@ -552,7 +554,20 @@ def mode_de_decision(utilisateur, planning: Planning) -> str | None:
         return ModeDecision.DIRECT
     if any(r.pk in titulaires for r in remplaces_par(utilisateur, planning.pays)):
         return ModeDecision.REMPLACEMENT
+    if est_escalade(planning):
+        from .echeances import dms_du_planning
+
+        if utilisateur.pk in dms_du_planning(planning):
+            return ModeDecision.ESCALADE
     return None
+
+
+def est_escalade(planning: Planning) -> bool:
+    """La version qui attend une décision a été escaladée au DM (PLN-016)."""
+    if planning.statut != StatutPlanning.SOUMIS:
+        return False
+    derniere = planning.versions.first()
+    return bool(derniere and not derniere.decision and derniere.escalade_le)
 
 
 def supervise(utilisateur, planning: Planning) -> bool:
@@ -574,7 +589,17 @@ def plannings_a_valider(superviseur, pays) -> list[Planning]:
         .select_related("delegue")
         .distinct()
     )  # fmt: skip
-    return sorted((p for p in candidats if supervise(superviseur, p)), key=lambda p: p.soumis_le)
+    # Escaladés à ce DM (PLN-016) : les plannings de ses réseaux restés sans décision.
+    escalades = (
+        Planning.objects.filter(pays=pays, statut=StatutPlanning.SOUMIS,
+                                versions__escalade_le__isnull=False,
+                                versions__decision="")
+        .exclude(delegue=superviseur)
+        .select_related("delegue")
+        .distinct()
+    )  # fmt: skip
+    plannings = {p.pk: p for p in [*candidats, *escalades] if supervise(superviseur, p)}
+    return sorted(plannings.values(), key=lambda p: p.soumis_le)
 
 
 @transaction.atomic

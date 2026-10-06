@@ -24,6 +24,7 @@ const LIGNE: PlanningEnAttente = {
   fuseau: 'Africa/Dakar',
   delegue: { id: 'u1', prenom: 'Awa', nom: 'FICTIVE' },
   remplace: null,
+  escalade: null,
   postes: ['VM Plateau'],
   visites: 12,
   signalements: [
@@ -104,6 +105,27 @@ describe('PLN-011 : file des plannings en attente', () => {
     expect(
       await screen.findByText(
         'Aucun planning en attente : tous les plannings soumis de votre équipe ont été traités.',
+      ),
+    ).toBeTruthy();
+  });
+});
+
+describe('PLN-016 : escalade vers le DM', () => {
+  it('CA1 : le DM voit le planning escaladé et qui n’a pas décidé', async () => {
+    rendre(
+      vi.fn(async () => [
+        {
+          ...LIGNE,
+          escalade: {
+            le: '2026-10-12T17:00:00Z',
+            responsables: [{ id: 's1', prenom: 'Kossi', nom: 'FICTIF' }],
+          },
+        },
+      ]),
+    );
+    expect(
+      await screen.findByText(
+        'Escaladé : sans décision de Kossi FICTIF depuis le lundi 12 octobre à 17:00',
       ),
     ).toBeTruthy();
   });

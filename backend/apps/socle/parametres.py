@@ -187,6 +187,20 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             _booleen,
         ),
         DefinitionParametre(
+            "rappel_planning_non_soumis",
+            "Rappel du planning non soumis, semaine précédente (NOT-006)",
+            {"jour": 3, "heure": "09:00"},
+            _echeance,
+            hypothese=True,
+        ),
+        DefinitionParametre(
+            "alerte_planning_non_approuve",
+            "Alerte au DM des plannings non approuvés, jour de la semaine (RG-019)",
+            {"jour": 1, "heure": "09:00"},
+            _echeance,
+            hypothese=True,
+        ),
+        DefinitionParametre(
             "delai_escalade_heures_ouvrees",
             "Délai avant escalade vers le DM (RG-019)",
             24,

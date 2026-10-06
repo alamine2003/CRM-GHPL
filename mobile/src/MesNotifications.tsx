@@ -1,7 +1,7 @@
 /**
  * Notifications non lues sur l'accueil (prd.md §18, 0.3.3) : « Votre planning de la semaine n
  * est approuvé » (PLN-012 CA2). Toucher une notification ouvre la semaine et la marque lue ;
- * le centre complet, avec le push, arrive en 0.3.8.
+ * « Toutes les notifications » mène au centre (NOT-001, 0.3.8). Le push arrive en 0.8.5.
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { Notification } from '@innov/api-client';
@@ -12,6 +12,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Carte, Texte, usePalette } from './composants';
 import { police } from './polices';
 import { useSession } from './session';
+import { iconeNotification, semaineDeNotification, texteNotification } from './textesNotifications';
 
 export function MesNotifications() {
   const { t, i18n } = useTranslation();
@@ -21,6 +22,7 @@ export function MesNotifications() {
   const [non_lues, setNonLues] = useState<Notification[]>([]);
   const lecteur =
     etat.statut === 'connecte' && etat.perimetre.actions.includes('notifications.lire');
+  const fuseau = etat.statut === 'connecte' ? etat.perimetre.pays_actif?.fuseau : undefined;
 
   useEffect(() => {
     let actif = true;
@@ -38,20 +40,11 @@ export function MesNotifications() {
   }, [lecteur, client]);
 
   if (non_lues.length === 0) return null;
-  const jour = (iso?: string) =>
-    iso
-      ? new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' }).format(
-          new Date(`${iso}T12:00:00`),
-        )
-      : '';
-
   function ouvrir(n: Notification) {
     setNonLues((liste) => liste.filter((x) => x.id !== n.id));
     void client.notifications.lue(n.id).catch(() => undefined);
-    // Un planning à décider se décide au portail ; ici, la notification se marque lue.
-    if (n.donnees.semaine && n.type !== 'planning_soumis') {
-      routeur.push({ pathname: '/semaine', params: { jour: n.donnees.semaine } });
-    }
+    const semaine = semaineDeNotification(n);
+    if (semaine) routeur.push({ pathname: '/semaine', params: { jour: semaine } });
   }
 
   return (
@@ -67,26 +60,21 @@ export function MesNotifications() {
         <Texte variante="sousTitre" style={{ flex: 1 }}>
           {t('notifications.titre', { count: non_lues.length })}
         </Texte>
-        {non_lues.length > 1 && (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              setNonLues([]);
-              void client.notifications.toutesLues().catch(() => undefined);
-            }}
-            style={styles.toutVu}
-          >
-            <Text style={[styles.toutVuTexte, { color: p.texte }]}>
-              {t('notifications.toutVu')}
-            </Text>
-          </Pressable>
-        )}
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => routeur.push('/notifications')}
+          style={styles.toutVu}
+        >
+          <Text style={[styles.toutVuTexte, { color: p.texte }]}>
+            {t('notifications.toutVoir')}
+          </Text>
+        </Pressable>
       </View>
       {non_lues.map((n) => (
         <Pressable
           key={n.id}
           accessibilityRole="button"
-          accessibilityHint={n.donnees.semaine ? t('notifications.voir') : undefined}
+          accessibilityHint={semaineDeNotification(n) ? t('notifications.voir') : undefined}
           onPress={() => ouvrir(n)}
           style={({ pressed }) => [
             styles.ligne,
@@ -95,35 +83,12 @@ export function MesNotifications() {
           ]}
         >
           <MaterialIcons
-            name={
-              n.type === 'revision_demandee'
-                ? 'rate-review'
-                : n.type === 'remplacement_attribue'
-                  ? 'swap-horiz'
-                  : 'check-circle'
-            }
+            name={iconeNotification(n, p).nom}
             size={22}
-            color={
-              n.type === 'revision_demandee'
-                ? p.attention
-                : n.type === 'remplacement_attribue'
-                  ? p.info
-                  : p.succes
-            }
+            color={iconeNotification(n, p).couleur}
           />
           <Text style={[styles.texte, { color: p.texte }]}>
-            {t(`notifications.${n.type}`, {
-              numero: n.donnees.numero_semaine,
-              nom: n.donnees.nom,
-              debut: jour(n.donnees.debut),
-              fin: jour(n.donnees.fin),
-              suite:
-                n.donnees.motif === 'modification'
-                  ? t('notifications.versionModification', { version: n.donnees.version })
-                  : n.donnees.version && n.donnees.version > 1
-                    ? t('notifications.version', { version: n.donnees.version })
-                    : '',
-            })}
+            {texteNotification(n, t, i18n.language, fuseau)}
           </Text>
           <MaterialIcons name="chevron-right" size={22} color={p.texteDiscret} />
         </Pressable>
