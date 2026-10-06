@@ -65,6 +65,7 @@ const SEMAINE: Semaine = {
   demande_envoyee: false,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   approbation: null,
+  conformite: [],
 };
 
 const PLANNING = {
@@ -1076,4 +1077,24 @@ test('PLN-008 CA2 : après révision, la nouvelle soumission ne compte pas de re
   ).toBeGreaterThan(0);
   expect(screen.queryByText(/Échéance passée/)).toBeNull();
   expect(screen.getByText('Soumettre la version 2')).toBeTruthy();
+});
+
+const IMPREVUE: Visite = {
+  ...VISITE,
+  id: 'v9',
+  heure: '11:40',
+  statut: 'en_cours',
+  manquants: [],
+  est_imprevue: true,
+  justification: 'Croisé à la pharmacie',
+};
+
+test('VIS-008 CA2 : la visite imprévue se lit « Imprévue » dans la semaine et le détail', async () => {
+  const semaine = { ...EN_PREPARATION, visites: [IMPREVUE] };
+  await rendre({ semaine: jest.fn(async () => semaine) });
+  expect(await screen.findByText('Imprévue')).toBeTruthy();
+  expect(screen.queryByText(/À compléter/)).toBeNull();
+  await rendreVue(<VueDetail id="v9" jour="2026-10-27" />, semaine);
+  expect(await screen.findByText('Justification de la visite imprévue')).toBeTruthy();
+  expect(screen.getByText('Croisé à la pharmacie')).toBeTruthy();
 });

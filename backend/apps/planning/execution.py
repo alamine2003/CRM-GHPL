@@ -79,6 +79,12 @@ def _position(pays, latitude, longitude, precision_m):
             round(precision_m) if precision_m is not None else None, False)  # fmt: skip
 
 
+def _recalculer(visite: Visite) -> None:
+    from .conformite import recalculer
+
+    recalculer(visite.planning, visite.date)
+
+
 def _verrouiller(visite: Visite) -> Visite:
     return (
         Visite.objects.select_for_update(of=("self",))
@@ -120,6 +126,7 @@ def terminer(visite: Visite, fin_le: datetime, latitude=None, longitude=None,
     visite.save(update_fields=["statut", "fin_le", "fin_latitude", "fin_longitude",
                                "fin_precision_m", "fin_sans_gps", "distance_fin_m",
                                "modifie_le"])  # fmt: skip
+    _recalculer(visite)  # conformité de la journée, à la réception (VIS-010)
     _auditer("visite.fin", visite, fin_le=fin_le.isoformat(), sans_gps=sans_gps,
              distance_m=visite.distance_fin_m,
              duree_min=round((fin_le - visite.debut_le).total_seconds() / 60))  # fmt: skip
@@ -149,6 +156,7 @@ def demarrer(visite: Visite, debut_le: datetime, latitude=None, longitude=None,
     visite.save(update_fields=["statut", "debut_le", "debut_latitude", "debut_longitude",
                                "debut_precision_m", "sans_gps", "distance_debut_m",
                                "modifie_le"])  # fmt: skip
+    _recalculer(visite)  # conformité de la journée, à la réception (VIS-010)
     _auditer("visite.demarrage", visite, debut_le=debut_le.isoformat(), sans_gps=visite.sans_gps,
              distance_m=visite.distance_debut_m)  # fmt: skip
     return visite
@@ -244,6 +252,7 @@ def _declarer_ecart(visite: Visite, statut: str, le: datetime, motif, commentair
     visite.ecart_le = le
     visite.save(update_fields=["statut", "motif_ecart", "commentaire_ecart", "ecart_le",
                                "modifie_le"])  # fmt: skip
+    _recalculer(visite)  # conformité de la journée, à la réception (VIS-010)
     _auditer(action, visite, motif=motif.code, le=le.isoformat())
     return visite
 
@@ -322,6 +331,7 @@ def reporter(visite: Visite, le: datetime, motif, date, heure=None, commentaire:
     visite.ecart_le = le
     visite.save(update_fields=["statut", "motif_ecart", "commentaire_ecart", "ecart_le",
                                "modifie_le"])  # fmt: skip
+    _recalculer(visite)  # conformité de la journée, à la réception (VIS-010)
     _auditer("visite.reportee", visite, motif=motif.code, le=le.isoformat(),
              nouvelle=str(suite.pk), date=date.isoformat())  # fmt: skip
     return visite
@@ -382,6 +392,7 @@ def visite_imprevue(delegue, pays, *, le: datetime, prospect, etablissement=None
     visite.distance_debut_m = _distance_m(visite, lat, lon) if lat is not None else None
     visite.ordre = services._dernier_rang(planning, jour) + 1
     visite.save()
+    _recalculer(visite)  # conformité de la journée, à la réception (VIS-010)
     _auditer("visite.imprevue", visite, planning=str(planning.pk), date=jour.isoformat(),
              sans_gps=visite.sans_gps, distance_m=visite.distance_debut_m)  # fmt: skip
     return visite

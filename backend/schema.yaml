@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.8
+  version: 0.4.9
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4934,6 +4934,14 @@ components:
         * `pr` - Pr
         * `m` - M.
         * `mme` - Mme
+    ClassementEnum:
+      enum:
+      - conforme
+      - a_verifier
+      type: string
+      description: |-
+        * `conforme` - Conforme
+        * `a_verifier` - À vérifier
     ClientEnum:
       enum:
       - portail
@@ -5086,6 +5094,32 @@ components:
       - deplacees
       - modifiees
       - retirees
+    ConformiteJournee:
+      type: object
+      description: 'VIS-010 : une journée « conforme » ou « à vérifier », avec ses
+        écarts.'
+      properties:
+        date:
+          type: string
+          format: date
+        classement:
+          $ref: '#/components/schemas/ClassementEnum'
+        ecarts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EcartConformite'
+        fige:
+          type: boolean
+          readOnly: true
+        terminee:
+          type: boolean
+          readOnly: true
+      required:
+      - classement
+      - date
+      - ecarts
+      - fige
+      - terminee
     Connexion:
       type: object
       properties:
@@ -5179,6 +5213,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/SuiviApprobation'
           nullable: true
+        conformite:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConformiteJournee'
         fermee:
           type: boolean
         demande_envoyee:
@@ -5200,6 +5238,7 @@ components:
       required:
       - activites
       - approbation
+      - conformite
       - controles
       - courante
       - delegue
@@ -5981,6 +6020,66 @@ components:
           maxLength: 500
       required:
       - le
+    EcartConformite:
+      type: object
+      description: 'Un écart de conformité (VIS-010) : la visite en cause et ce qui
+        a été mesuré.'
+      properties:
+        code:
+          $ref: '#/components/schemas/EcartConformiteCodeEnum'
+        visite:
+          type: string
+          format: uuid
+          nullable: true
+        prospect:
+          type: string
+          nullable: true
+        heure:
+          type: string
+          nullable: true
+        debut:
+          type: string
+          nullable: true
+        fin:
+          type: string
+          nullable: true
+        distance_m:
+          type: integer
+        seuil_m:
+          type: integer
+        minutes:
+          type: integer
+        seuil:
+          type: integer
+        nombre:
+          type: integer
+        tolerees:
+          type: integer
+        justification:
+          type: string
+      required:
+      - code
+      - heure
+      - prospect
+      - visite
+    EcartConformiteCodeEnum:
+      enum:
+      - hors_plage
+      - distance
+      - duree_courte
+      - duree_longue
+      - imprevue
+      - a_justifier
+      - sans_gps
+      type: string
+      description: |-
+        * `hors_plage` - hors_plage
+        * `distance` - distance
+        * `duree_courte` - duree_courte
+        * `duree_longue` - duree_longue
+        * `imprevue` - imprevue
+        * `a_justifier` - a_justifier
+        * `sans_gps` - sans_gps
     ErreurClient:
       type: object
       properties:
@@ -9008,6 +9107,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/SuiviApprobation'
           nullable: true
+        conformite:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConformiteJournee'
         fermee:
           type: boolean
         demande_envoyee:
@@ -9015,6 +9118,7 @@ components:
       required:
       - activites
       - approbation
+      - conformite
       - controles
       - courante
       - demande_envoyee

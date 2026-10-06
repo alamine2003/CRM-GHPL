@@ -96,6 +96,7 @@ const SEMAINE: Semaine = {
   demande_envoyee: false,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   approbation: null,
+  conformite: [],
 };
 
 const LISTES = [

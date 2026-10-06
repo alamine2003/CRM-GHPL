@@ -2734,6 +2734,12 @@ export interface components {
      */
     CiviliteEnum: 'dr' | 'pr' | 'm' | 'mme';
     /**
+     * @description * `conforme` - Conforme
+     *     * `a_verifier` - À vérifier
+     * @enum {string}
+     */
+    ClassementEnum: 'conforme' | 'a_verifier';
+    /**
      * @description * `portail` - Portail web
      *     * `mobile` - Application mobile
      * @enum {string}
@@ -2805,6 +2811,15 @@ export interface components {
       deplacees: components['schemas']['Deplacement'][];
       modifiees: components['schemas']['Modification'][];
     };
+    /** @description VIS-010 : une journée « conforme » ou « à vérifier », avec ses écarts. */
+    ConformiteJournee: {
+      /** Format: date */
+      date: string;
+      classement: components['schemas']['ClassementEnum'];
+      ecarts: components['schemas']['EcartConformite'][];
+      readonly fige: boolean;
+      readonly terminee: boolean;
+    };
     Connexion: {
       identifiant: string;
       mot_de_passe: string;
@@ -2842,6 +2857,7 @@ export interface components {
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
       approbation: components['schemas']['SuiviApprobation'] | null;
+      conformite: components['schemas']['ConformiteJournee'][];
       fermee: boolean;
       demande_envoyee: boolean;
       delegue: components['schemas']['Delegue'];
@@ -3155,6 +3171,41 @@ export interface components {
       motif?: string | null;
       commentaire?: string;
     };
+    /** @description Un écart de conformité (VIS-010) : la visite en cause et ce qui a été mesuré. */
+    EcartConformite: {
+      code: components['schemas']['EcartConformiteCodeEnum'];
+      /** Format: uuid */
+      visite: string | null;
+      prospect: string | null;
+      heure: string | null;
+      debut?: string | null;
+      fin?: string | null;
+      distance_m?: number;
+      seuil_m?: number;
+      minutes?: number;
+      seuil?: number;
+      nombre?: number;
+      tolerees?: number;
+      justification?: string;
+    };
+    /**
+     * @description * `hors_plage` - hors_plage
+     *     * `distance` - distance
+     *     * `duree_courte` - duree_courte
+     *     * `duree_longue` - duree_longue
+     *     * `imprevue` - imprevue
+     *     * `a_justifier` - a_justifier
+     *     * `sans_gps` - sans_gps
+     * @enum {string}
+     */
+    EcartConformiteCodeEnum:
+      | 'hors_plage'
+      | 'distance'
+      | 'duree_courte'
+      | 'duree_longue'
+      | 'imprevue'
+      | 'a_justifier'
+      | 'sans_gps';
     ErreurClient: {
       client: components['schemas']['ClientEnum'];
       version: string;
@@ -4403,6 +4454,7 @@ export interface components {
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
       approbation: components['schemas']['SuiviApprobation'] | null;
+      conformite: components['schemas']['ConformiteJournee'][];
       fermee: boolean;
       demande_envoyee: boolean;
     };

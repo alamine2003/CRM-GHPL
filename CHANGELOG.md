@@ -2,6 +2,37 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.9] — Contrôles de conformité, recette et démonstration du cycle 0.4
+
+Dernier jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — contrôles de conformité (VIS-010, RG-029)
+
+- Chaque journée du délégué est classée « conforme » ou « à vérifier » par le serveur, à chaque réception et à chaque consultation ; rien n'est bloqué.
+- Écarts relevés : hors de la plage horaire, pointage trop loin du lieu, visite trop courte ou trop longue, visite imprévue, visite restée prévue (à justifier), visites sans GPS au-delà de la tolérance.
+- **CA1** : une journée sans écart est « conforme » ; la journée du jour reste « en cours » tant qu'elle n'est pas finie.
+- **CA2** : seuils du pays dans « Paramètres » ; nouveau paramètre « Durée d'une visite » (3 à 180 minutes par défaut).
+- **CA3** : recalculée tant que la journée n'est pas validée ; figée ensuite avec les seuils appliqués (la validation arrive au cycle 0.6).
+- Portail : carte « Conformité des journées » sur le planning consulté par le superviseur, écart par écart.
+
+### Corrigé (recette du cycle)
+
+- Un report dans la semaine commencée (VIS-007 CA2) laissait la modification « fermée » : absente de la file du superviseur et impossible à approuver. Une modification d'un planning déjà approuvé n'est plus fermée ; le superviseur la trouve dans « Plannings à valider » et la décide.
+- « 1 visite sans GPS » au singulier.
+
+### Recette et démonstration
+
+- `recette-0.4.md` : chaque critère du cycle relié à son test ; `demonstration-0.4.md` : scénario de fin de cycle.
+
+### Design
+
+Revue sur le rendu réel du portail (bureau 1440 px, téléphone 390 px, sombre) : semaine en cours et semaine passée du délégué. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Conformité, téléphone | Le résumé se tassait à côté du titre de la carte. | Le résumé passe sous le titre. |
+| Conformité, journée du jour | La journée en cours se lisait « Conforme » alors qu'elle n'était pas finie. | « Journée en cours : aucun écart pour l'instant », en gris. |
+
 ## [0.4.8] — Visite imprévue
 
 Huitième jalon du cycle 0.4 « Exécution des visites ».

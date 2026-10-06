@@ -22,6 +22,7 @@ const BASE = {
   demande_envoyee: false,
   reseaux: [],
   approbation: null,
+  conformite: [],
 } satisfies Partial<Semaine>;
 
 const PLANNING = {

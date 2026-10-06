@@ -287,3 +287,32 @@ class VersionPlanning(ModeleDePays):
 
     def __str__(self):
         return f"{self.planning} v{self.numero}"
+
+
+class Classement(models.TextChoices):
+    CONFORME = "conforme", "Conforme"
+    A_VERIFIER = "a_verifier", "À vérifier"
+
+
+class ConformiteJournee(ModeleDePays):
+    """Contrôles de conformité d'une journée d'un délégué (VIS-010, RG-029) : calculés par le
+    serveur à la réception et recalculés tant que la journée n'est pas validée ; figée à la
+    validation (cycle 0.6), elle ne change plus, même si les paramètres changent (CA3)."""
+
+    delegue = models.ForeignKey("identite.Utilisateur", on_delete=models.PROTECT,
+                                related_name="+")  # fmt: skip
+    planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="conformites")
+    date = models.DateField()
+    classement = models.CharField(max_length=12, choices=Classement.choices)
+    ecarts = models.JSONField(default=list)
+    #: Les seuils appliqués, pour relire le calcul tel qu'il a été fait.
+    seuils = models.JSONField(default=dict)
+    calcule_le = models.DateTimeField()
+    fige_le = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "conformité d'une journée"
+        ordering = ["date"]
+        constraints = [
+            models.UniqueConstraint(fields=["delegue", "date"], name="conformite_journee_unique")
+        ]

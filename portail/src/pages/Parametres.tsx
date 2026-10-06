@@ -48,6 +48,7 @@ const GROUPES: { cle: string; parametres: string[] }[] = [
       'plage_horaire_visites',
       'visites_sans_gps_tolerees',
       'distance_pointage_m',
+      'duree_visite_minutes',
       'geolocalisation_active',
       'attente_gps_secondes',
     ],
@@ -85,6 +86,8 @@ function Apercu({ cle, valeur }: { cle: string; valeur: Valeur }) {
       return <>{t('parametres.secondes', { n: valeur })}</>;
     case 'plage_horaire_visites':
       return <>{t('parametres.de', { debut: v.debut, fin: v.fin })}</>;
+    case 'duree_visite_minutes':
+      return <>{t('parametres.minutes', { min: v.min, max: v.max })}</>;
     case 'geolocalisation_active':
       return <>{valeur ? t('commun.oui') : t('commun.non')}</>;
     case 'seuils_visites_jour':
@@ -201,6 +204,13 @@ function Editeur({
             changer({ ...v, debut: h }),
           )}
           {heure(t('parametres.champs.fin'), v.fin as string, (h) => changer({ ...v, fin: h }))}
+        </Stack>
+      );
+    case 'duree_visite_minutes':
+      return (
+        <Stack direction="row" spacing={1.5}>
+          {entier(t('parametres.min'), v.min as number, (n) => changer({ ...v, min: n }))}
+          {entier(t('parametres.max'), v.max as number, (n) => changer({ ...v, max: n }))}
         </Stack>
       );
     case 'geolocalisation_active':

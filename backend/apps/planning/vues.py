@@ -21,7 +21,7 @@ from apps.perimetre.vues import VuePerimetre
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.services import aujourdhui
 
-from . import controles, kilometrage, services
+from . import conformite, controles, kilometrage, services
 from . import serializers as s
 from .calendrier import jours_de_la_semaine, lundi
 from .etats import MODIFIABLES, StatutPlanning
@@ -162,6 +162,10 @@ def _semaine(pays, debut: date, planning: Planning | None) -> dict:
         "kilometrage": kilometrage.estimer(planning) if planning else None,
         "reseaux": _reseaux(planning) if planning else [],
         "approbation": services.suivi_apres_approbation(planning) if planning else None,
+        # Contrôles de conformité (VIS-010) : recalculés à la lecture tant que non validés.
+        "conformite": conformite.de_la_semaine(planning)
+        if planning and services.reference(planning)
+        else [],
     }
 
 

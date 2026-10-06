@@ -29,6 +29,7 @@ import {
   DetailVisite,
   ListeActivites,
 } from '../composants/SemainePlanning';
+import { CarteConformite } from '../composants/Conformite';
 import { HistoriqueVersions } from '../composants/HistoriqueVersions';
 import { BoutonRouvrir } from '../composants/Reouverture';
 import { AttenteApprobation, HeuresChangees } from '../composants/SuiviApprobation';
@@ -154,6 +155,13 @@ export default function ConsultationPlanning({ id }: { id: string }) {
             <Resume consultation={c} />
             {c.controles && <CarteControles controles={c.controles} jourCourt={jourCourt} />}
           </Box>
+          <CarteConformite
+            semaine={c}
+            jourLong={(iso) => {
+              const d = date(iso, { weekday: 'long', day: 'numeric' });
+              return d.charAt(0).toUpperCase() + d.slice(1);
+            }}
+          />
           <HeuresChangees semaine={c} jourCourt={jourCourt} />
           <HistoriqueVersions planning={c.planning!.id} fuseau={c.fuseau} />
           {c.activites.length > 0 && (

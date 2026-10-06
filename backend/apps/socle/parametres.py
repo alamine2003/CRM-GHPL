@@ -65,6 +65,20 @@ def _plage(valeur: Any) -> None:
         raise ValidationError("Le début doit précéder la fin.")
 
 
+def _bornes(minimum: int, maximum: int) -> Callable[[Any], None]:
+    """Un objet {min, max} d'entiers, min < max, dans [minimum, maximum]."""
+
+    def valider(valeur: Any) -> None:
+        if not isinstance(valeur, dict) or set(valeur) != {"min", "max"}:
+            raise ValidationError("Objet {min, max} attendu.")
+        for borne in ("min", "max"):
+            _entier(minimum, maximum)(valeur[borne])
+        if valeur["min"] >= valeur["max"]:
+            raise ValidationError("Le minimum doit être inférieur au maximum.")
+
+    return valider
+
+
 def _seuils(valeur: Any) -> None:
     if not isinstance(valeur, dict) or set(valeur) != set(TYPES_POSTE):
         raise ValidationError(f"Un seuil par type de poste attendu : {', '.join(TYPES_POSTE)}.")
@@ -163,6 +177,14 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             # Tolérance appliquée aujourd'hui au Sénégal (décision du 4 octobre 2026).
             100,
             _entier(10, 5000),
+        ),
+        DefinitionParametre(
+            "duree_visite_minutes",
+            "Durée d'une visite conforme, en minutes : en deçà ou au-delà, la journée est à "
+            "vérifier (VIS-010)",
+            {"min": 3, "max": 180},
+            _bornes(1, 600),
+            hypothese=True,
         ),
         DefinitionParametre(
             "cycle_visite_semaines",

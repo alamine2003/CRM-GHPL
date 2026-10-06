@@ -643,7 +643,7 @@ Mise en œuvre (0.3.9) :
 
 - **Reporter** (VIS-007) : une visite prévue, le jour même ou à l'avance, passe « reportée » avec un motif de la liste du pays et un commentaire facultatif. Le délégué choisit le nouveau jour parmi les prochains jours ouvrés, après le jour prévu, et l'heure (reprise de la visite, modifiable). Changer seulement l'heure dans la journée n'est pas un report (`report_avant`) : c'est une modification mineure (PLN-015).
 - **CA1** : la nouvelle visite reprend le prospect, le lieu, le réseau et l'objectif et référence la visite d'origine (`reportee_de`) ; la visite reportée indique « Reportée au jeudi 8 octobre · 10:30 ».
-- **CA2** : dans une semaine déjà approuvée, même commencée, la nouvelle visite est une modification majeure : une nouvelle version est soumise au superviseur et la visite n'entre au programme qu'une fois approuvée. Dans une semaine en préparation, elle s'ajoute au planning (créé au besoin, avant sa fermeture).
+- **CA2** : dans une semaine déjà approuvée, même commencée, la nouvelle visite est une modification majeure : une nouvelle version est soumise au superviseur et la visite n'entre au programme qu'une fois approuvée. La semaine commencée ne ferme pas cette modification : elle est dans la file du superviseur (corrigé en 0.4.9). Dans une semaine en préparation, elle s'ajoute au planning (créé au besoin, avant sa fermeture).
 - **Règles** : sans motif, impossible (RG-031) ; une visite en cours ne se reporte pas ; une visite ne se reporte qu'une fois. Hors connexion, le report attend dans la file avec l'identifiant de la nouvelle visite, donné par le téléphone : rejoué, il ne crée rien de plus.
 - Une modification soumise (dont un report) garde la version approuvée comme référence : visites « à justifier » et historique restent lisibles.
 - Hypothèses [H] : un report dans la semaine commencée est permis malgré la fermeture du lundi (exception au verrouillage de la 0.3.9) ; pendant qu'une modification attend la décision du superviseur, un second report de la même semaine est refusé (`modification_en_attente`).
@@ -657,6 +657,16 @@ Mise en œuvre (0.3.9) :
 - **Hors connexion** : elle démarre sur le téléphone avec un identifiant donné par celui-ci et attend dans la file ; rejouée, elle n'est créée qu'une fois.
 - La visite en cours la plus récemment démarrée passe en tête du programme (« Prochaine visite »).
 - Hypothèse [H] : une visite imprévue exige un planning approuvé pour la semaine (`semaine_non_approuvee` sinon).
+
+### 14.30 Contrôles de conformité (mise en œuvre 0.4.9)
+
+- **Contrôles** (VIS-010, RG-029) : calculés par le serveur à chaque réception (démarrage, fin, écart, report, visite imprévue) et relus à chaque consultation ; ils ne bloquent rien et classent chaque journée passée ou du jour du délégué « conforme » ou « à vérifier ».
+- **Écarts relevés**, visite par visite : début ou fin **hors de la plage horaire** ; début ou fin **plus loin du lieu** que la distance de pointage ; durée d'une visite effectuée **trop courte ou trop longue** ; **visite imprévue** (avec sa justification) ; visite **restée prévue** après sa journée (à justifier). Pour la journée : visites **sans GPS au-delà de la tolérance**. Une visite déclarée en écart sans avoir démarré (absent, annulée, reportée, non réalisée) n'a que son motif.
+- **CA1** : une journée sans aucun écart est « conforme ». La journée du jour se lit « Journée en cours : aucun écart pour l'instant » tant qu'elle n'est pas finie.
+- **CA2** : seuils du pays, modifiables dans « Paramètres » : plage horaire (8 h – 20 h), visites sans GPS tolérées par journée (3) [H], distance de pointage (100 m), durée d'une visite (3 à 180 minutes) [H].
+- **CA3** : tant que la journée n'est pas validée, elle est recalculée avec les paramètres du moment ; validée (cycle 0.6), elle est figée avec les seuils appliqués et ne change plus.
+- **Portail** : sur le planning consulté par le superviseur, la carte « Conformité des journées » résume (« 4 journées contrôlées, 2 à vérifier ») et détaille chaque écart (« 11:00 · prospect : pointée à 130 m du lieu (seuil 100 m) »). La file de travail des journées et la validation par lot arrivent avec les rapports (RPT-012, RPT-013, cycle 0.6).
+- Hypothèses [H] : la tolérance « sans GPS » s'entend par journée, au-delà de 3 visites ; la durée anormale est en deçà de 3 minutes ou au-delà de 3 heures ; une visite restée prévue après sa journée compte comme écart.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

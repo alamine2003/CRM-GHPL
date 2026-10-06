@@ -142,3 +142,50 @@ def test_vis007_une_modification_soumise_garde_les_visites_a_justifier(monde, te
         assert Planning.objects.get(pk=planning.pk).statut == "soumis"
         p = client_de(monde["deleg.sn"]).get("/api/v1/programme/").json()
     assert [v["id"] for v in p["a_justifier"]] == [str(oubliee.pk)]
+
+
+def test_vis007_ca2_le_superviseur_trouve_et_approuve_le_report_de_la_semaine(monde, approuvee):
+    """La semaine commencée ne ferme pas la modification : elle est dans la file du
+    superviseur, il l'approuve, et la nouvelle visite entre au programme."""
+    with freeze_time("2026-10-13 08:30"):
+        reporter(monde, approuvee, le="2026-10-13T08:28:00Z", motif=str(motif(monde).pk),
+                 date="2026-10-15", heure="10:00", id=NOUVELLE)  # fmt: skip
+        sup = client_de(monde["sup.sn"])
+        file = sup.get("/api/v1/plannings/a-valider/").json()
+        assert str(approuvee.planning_id) in [str(ligne["planning"]["id"]) for ligne in file]
+        r = sup.post(f"/api/v1/plannings/{approuvee.planning_id}/approuver/", format="json")
+        assert r.status_code == 200, r.json()
+        p = client_de(monde["deleg.sn"]).get("/api/v1/programme/").json()
+    jeudi = next(j for j in p["jours"] if j["date"] == "2026-10-15")
+    assert NOUVELLE in [v["id"] for v in jeudi["visites"]]
+
+
+def test_pln015_ca2_les_autres_visites_restent_executables(monde, terrain, approuvee):
+    """Une modification soumise (un report) n'empêche pas d'exécuter les visites approuvées."""
+    planning = Planning.objects.get(pk=approuvee.planning_id)
+    with freeze_time("2026-10-08 09:00"):
+        Planning.objects.filter(pk=planning.pk).update(statut="brouillon")
+        planning.refresh_from_db()
+        from apps.planning.tests.conftest import valeur
+        from apps.prospects.services import creer_exercice, creer_prospect
+
+        confrere = creer_prospect(
+            monde["sn"], monde["admin.sn"], actif=True, nom="Sarr", prenom="Ibou",
+            potentiel="B", type=valeur(monde, "type_prospect", "medecin"),
+            specialite=valeur(monde, "specialite", "cardiologie"),
+        )  # fmt: skip
+        creer_exercice(confrere, terrain["clinique"], monde["admin.sn"])
+        seconde = services.ajouter_visite(planning, date=MARDI, heure=time(11, 0), objectif="B",
+                                          prospect=confrere,
+                                          etablissement=terrain["clinique"])  # fmt: skip
+        services.soumettre(planning)
+        services.approuver(planning, monde["sup.sn"])
+    with freeze_time("2026-10-13 08:30"):
+        reporter(monde, approuvee, le="2026-10-13T08:28:00Z", motif=str(motif(monde).pk),
+                 date="2026-10-15", heure="10:00", id=NOUVELLE)  # fmt: skip
+        assert Planning.objects.get(pk=planning.pk).statut == "soumis"
+    with freeze_time("2026-10-13 11:05"):
+        r = client_de(monde["deleg.sn"]).post(f"/api/v1/visites/{seconde.pk}/demarrer/",
+                                              {"debut_le": "2026-10-13T11:02:00Z"},
+                                              format="json")  # fmt: skip
+    assert (r.status_code, r.json()["statut"]) == (200, "en_cours")

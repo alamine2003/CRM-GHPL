@@ -459,7 +459,8 @@
       "geolocalisation_active": "Visit geolocation",
       "delai_escalade_heures_ouvrees": "Delay before escalation to the DM (working hours)",
       "conservation": "Retention periods",
-      "attente_gps_secondes": "Position wait (seconds)"
+      "attente_gps_secondes": "Position wait (seconds)",
+      "duree_visite_minutes": "Visit duration (minutes)"
     },
     "jours": {
       "1": "Mon",
@@ -488,7 +489,8 @@
       "pieces": "Attachments (years)"
     },
     "semaineDuPlanning": "{{jour}} {{heure}}, week of the planning",
-    "secondes": "{{n}} seconds"
+    "secondes": "{{n}} seconds",
+    "minutes": "{{min}} to {{max}} minutes"
   },
   "paysPage": {
     "titre": "Countries",
@@ -1924,5 +1926,27 @@
     "imprevueNote": "Unplanned visit to {{nom}} started at {{heure}}.",
     "justificationLue": "Justification of the unplanned visit",
     "prospect": "Prospect (required)"
+  },
+  "conformite": {
+    "titre": "Day compliance",
+    "resume_one": "{{count}} day checked, {{aVerifier}} to review",
+    "resume_other": "{{count}} days checked, {{aVerifier}} to review",
+    "toutesConformes_one": "{{count}} day checked, compliant",
+    "toutesConformes_other": "{{count}} days checked, all compliant",
+    "conforme": "Compliant",
+    "aVerifier_one": "To review · {{count}} issue",
+    "aVerifier_other": "To review · {{count}} issues",
+    "fige": "Validated: frozen",
+    "ecarts": {
+      "hors_plage": "{{qui}}: {{heures}}, outside visiting hours",
+      "distance": "{{qui}}: checked in {{distance}} m from the place (limit {{seuil}} m)",
+      "duree_courte": "{{qui}}: only {{minutes}} min (minimum {{seuil}} min)",
+      "duree_longue": "{{qui}}: {{minutes}} min (maximum {{seuil}} min)",
+      "imprevue": "{{qui}}: unplanned visit, “{{justification}}”",
+      "a_justifier": "{{qui}}: still planned, to account for",
+      "sans_gps_one": "{{count}} visit without GPS (tolerance: {{tolerees}})",
+      "sans_gps_other": "{{count}} visits without GPS (tolerance: {{tolerees}})"
+    },
+    "enCours": "Day in progress: no issue so far"
   }
 }

@@ -104,6 +104,7 @@ const CONSULTATION: Consultation = {
   demande_envoyee: false,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   approbation: null,
+  conformite: [],
   delegue: { id: 'u1', prenom: 'Aminata', nom: 'FICTIVE' },
   remplace: null,
   escalade: null,
@@ -396,5 +397,108 @@ describe('0.3.9 : planning fermé le lundi 0 h', () => {
     expect(mockNotifier).toHaveBeenCalledWith(
       'Rédaction rouverte : Aminata FICTIVE en est prévenu.',
     );
+  });
+});
+
+describe('VIS-010 : conformité des journées', () => {
+  it('chaque journée dit « conforme » ou « à vérifier », écart par écart', async () => {
+    rendre(
+      vi.fn(async () => ({
+        ...CONSULTATION,
+        conformite: [
+          {
+            date: '2026-10-12',
+            classement: 'conforme' as const,
+            ecarts: [],
+            fige: false,
+            terminee: true,
+          },
+          {
+            date: '2026-10-13',
+            classement: 'a_verifier' as const,
+            fige: false,
+            terminee: true,
+            ecarts: [
+              {
+                code: 'distance' as const,
+                visite: 'v1',
+                prospect: 'Awa FICTIF',
+                heure: '09:00',
+                distance_m: 350,
+                seuil_m: 100,
+              },
+              {
+                code: 'imprevue' as const,
+                visite: 'v9',
+                prospect: 'Ibou EXEMPLE',
+                heure: '11:40',
+                justification: 'Croisé en ville',
+              },
+            ],
+          },
+        ],
+      })),
+    );
+    expect(await screen.findByText('Conformité des journées')).toBeTruthy();
+    expect(screen.getByText('2 journées contrôlées, 1 à vérifier')).toBeTruthy();
+    expect(screen.getByText('Conforme')).toBeTruthy();
+    expect(screen.getByText('À vérifier · 2 écarts')).toBeTruthy();
+    expect(
+      screen.getByText('09:00 · Awa FICTIF : pointée à 350 m du lieu (seuil 100 m)'),
+    ).toBeTruthy();
+    expect(
+      screen.getByText('11:40 · Ibou EXEMPLE : visite imprévue, « Croisé en ville »'),
+    ).toBeTruthy();
+  });
+});
+
+describe('VIS-010 CA1 et VIS-008 CA2 : journée en cours, visite imprévue', () => {
+  it('la journée du jour sans écart reste « en cours » ; l’imprévue est marquée et hors compte', async () => {
+    rendre(
+      vi.fn(async () => ({
+        ...CONSULTATION,
+        visites: [
+          ...CONSULTATION.visites,
+          {
+            ...VISITE,
+            id: 'v9',
+            heure: '11:40',
+            manquants: [],
+            est_imprevue: true,
+            justification: 'Croisé en ville',
+          },
+        ],
+        conformite: [
+          {
+            date: '2026-10-13',
+            classement: 'conforme' as const,
+            ecarts: [],
+            fige: false,
+            terminee: false,
+          },
+          {
+            date: '2026-10-12',
+            classement: 'a_verifier' as const,
+            fige: false,
+            terminee: true,
+            ecarts: [
+              {
+                code: 'sans_gps' as const,
+                visite: null,
+                prospect: null,
+                heure: null,
+                nombre: 1,
+                tolerees: 0,
+              },
+            ],
+          },
+        ],
+      })),
+    );
+    expect(await screen.findByText("Journée en cours : aucun écart pour l'instant")).toBeTruthy();
+    expect(screen.getByText('1 visite sans GPS (tolérance : 0)')).toBeTruthy();
+    expect(screen.getByText('Imprévue')).toBeTruthy();
+    // L'imprévue ne compte pas parmi les visites planifiées.
+    expect(screen.getByText(/^1 visite planifiée/)).toBeTruthy();
   });
 });

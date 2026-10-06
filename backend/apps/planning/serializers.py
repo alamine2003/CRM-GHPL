@@ -6,6 +6,7 @@ from apps.organisation.serializers import ResumeSerializer
 from .controles import CODES, GRAVITES
 from .models import (
     Activite,
+    ConformiteJournee,
     Decision,
     JourFerie,
     ModeDecision,
@@ -386,6 +387,51 @@ class SuiviApprobationSerializer(serializers.Serializer):
     mineures = ModificationMineureSerializer(many=True)
 
 
+CODES_CONFORMITE = ("hors_plage", "distance", "duree_courte", "duree_longue", "imprevue",
+                    "a_justifier", "sans_gps")  # fmt: skip
+
+
+class EcartConformiteSerializer(serializers.Serializer):
+    """Un écart de conformité (VIS-010) : la visite en cause et ce qui a été mesuré."""
+
+    code = serializers.ChoiceField(choices=CODES_CONFORMITE)
+    visite = serializers.UUIDField(allow_null=True)
+    prospect = serializers.CharField(allow_null=True)
+    heure = serializers.CharField(allow_null=True)
+    debut = serializers.CharField(required=False, allow_null=True)
+    fin = serializers.CharField(required=False, allow_null=True)
+    distance_m = serializers.IntegerField(required=False)
+    seuil_m = serializers.IntegerField(required=False)
+    minutes = serializers.IntegerField(required=False)
+    seuil = serializers.IntegerField(required=False)
+    nombre = serializers.IntegerField(required=False)
+    tolerees = serializers.IntegerField(required=False)
+    justification = serializers.CharField(required=False, allow_blank=True)
+
+
+class ConformiteJourneeSerializer(serializers.ModelSerializer):
+    """VIS-010 : une journée « conforme » ou « à vérifier », avec ses écarts."""
+
+    ecarts = EcartConformiteSerializer(many=True)
+    #: Validée (cycle 0.6) : le classement ne bouge plus, même si les seuils changent (CA3).
+    fige = serializers.SerializerMethodField()
+
+    #: La journée est finie ; celle du jour peut encore changer.
+    terminee = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ConformiteJournee
+        fields = ["date", "classement", "ecarts", "fige", "terminee"]
+
+    def get_fige(self, conformite) -> bool:
+        return conformite.fige_le is not None
+
+    def get_terminee(self, conformite) -> bool:
+        from apps.socle.services import aujourdhui
+
+        return conformite.date < aujourdhui(conformite.pays)
+
+
 class SemaineSerializer(serializers.Serializer):
     """Semaine du délégué : ses jours ouvrés, ses jours fériés et son planning (PLN-001)."""
 
@@ -414,6 +460,8 @@ class SemaineSerializer(serializers.Serializer):
     reseaux = ResumeSerializer(many=True)
     #: Planning déjà approuvé : référence, changements mineurs, modification en attente.
     approbation = SuiviApprobationSerializer(allow_null=True)
+    #: Conformité des journées passées ou du jour (VIS-010) ; vide avant l'approbation.
+    conformite = ConformiteJourneeSerializer(many=True)
     #: Semaine en cours fermée le lundi 0 h pour ce délégué : seul son superviseur la rouvre.
     fermee = serializers.BooleanField()
     #: La réouverture a déjà été demandée au superviseur.

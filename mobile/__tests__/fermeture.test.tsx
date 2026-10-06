@@ -54,6 +54,7 @@ const FERMEE: Semaine = {
   demande_envoyee: false,
   reseaux: [],
   approbation: null,
+  conformite: [],
 };
 
 async function rendre(semaines: Semaine[]) {

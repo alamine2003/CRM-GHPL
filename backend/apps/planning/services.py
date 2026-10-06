@@ -554,9 +554,10 @@ def semaine_commencee(planning: Planning) -> bool:
 def est_ferme(planning: Planning) -> bool:
     """Le lundi 0 h, tout planning de la semaine qui n'est pas validé est fermé : plus de
     soumission, de décision ni de modification, tant que le superviseur n'a pas rouvert la
-    rédaction (décision du 6 octobre 2026)."""
+    rédaction (décision du 6 octobre 2026). Une modification soumise d'un planning déjà
+    approuvé (un report, VIS-007 CA2) n'est pas fermée : elle attend la décision."""
     return (planning.statut not in VALIDES and planning.reouvert_le is None
-            and semaine_commencee(planning))  # fmt: skip
+            and semaine_commencee(planning) and reference(planning) is None)  # fmt: skip
 
 
 def _exiger_ouvert(planning: Planning) -> None:

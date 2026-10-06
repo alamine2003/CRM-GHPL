@@ -111,6 +111,7 @@ const APPROUVEE: Semaine = {
   demande_envoyee: false,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   approbation: { reference: 1, modifiable: true, en_attente: [], retraits: [], mineures: [] },
+  conformite: [],
 };
 
 async function rendre(semaine: Semaine, modifier = jest.fn(async () => VISITE)) {

@@ -459,7 +459,8 @@
       "geolocalisation_active": "Géolocalisation des visites",
       "delai_escalade_heures_ouvrees": "Délai avant escalade au DM (heures ouvrées)",
       "conservation": "Durées de conservation",
-      "attente_gps_secondes": "Attente de la position (secondes)"
+      "attente_gps_secondes": "Attente de la position (secondes)",
+      "duree_visite_minutes": "Durée d'une visite (minutes)"
     },
     "jours": {
       "1": "Lun",
@@ -488,7 +489,8 @@
       "pieces": "Pièces jointes (ans)"
     },
     "semaineDuPlanning": "{{jour}} {{heure}}, semaine du planning",
-    "secondes": "{{n}} secondes"
+    "secondes": "{{n}} secondes",
+    "minutes": "de {{min}} à {{max}} minutes"
   },
   "paysPage": {
     "titre": "Pays",
@@ -1924,5 +1926,27 @@
     "imprevueNote": "Visite imprévue chez {{nom}} démarrée à {{heure}}.",
     "justificationLue": "Justification de la visite imprévue",
     "prospect": "Prospect (obligatoire)"
+  },
+  "conformite": {
+    "titre": "Conformité des journées",
+    "resume_one": "{{count}} journée contrôlée, {{aVerifier}} à vérifier",
+    "resume_other": "{{count}} journées contrôlées, {{aVerifier}} à vérifier",
+    "toutesConformes_one": "{{count}} journée contrôlée, conforme",
+    "toutesConformes_other": "{{count}} journées contrôlées, toutes conformes",
+    "conforme": "Conforme",
+    "aVerifier_one": "À vérifier · {{count}} écart",
+    "aVerifier_other": "À vérifier · {{count}} écarts",
+    "fige": "Validée : figée",
+    "ecarts": {
+      "hors_plage": "{{qui}} : {{heures}}, hors de la plage horaire",
+      "distance": "{{qui}} : pointée à {{distance}} m du lieu (seuil {{seuil}} m)",
+      "duree_courte": "{{qui}} : {{minutes}} min seulement (minimum {{seuil}} min)",
+      "duree_longue": "{{qui}} : {{minutes}} min (maximum {{seuil}} min)",
+      "imprevue": "{{qui}} : visite imprévue, « {{justification}} »",
+      "a_justifier": "{{qui}} : restée prévue, à justifier",
+      "sans_gps_one": "{{count}} visite sans GPS (tolérance : {{tolerees}})",
+      "sans_gps_other": "{{count}} visites sans GPS (tolérance : {{tolerees}})"
+    },
+    "enCours": "Journée en cours : aucun écart pour l'instant"
   }
 }
