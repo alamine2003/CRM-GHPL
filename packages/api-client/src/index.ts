@@ -22,6 +22,7 @@ import type {
   Planning,
   PlanningEnAttente,
   SemaineFermee,
+  Programme,
   Qualite,
   Semaine,
   Reprise,
@@ -131,6 +132,9 @@ export type {
   Planning,
   PlanningEnAttente,
   SemaineFermee,
+  Programme,
+  VisiteProgramme,
+  JourProgramme,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -699,6 +703,9 @@ export function creerClient(options: OptionsClient) {
       /** Révision commentée, sur le planning ou des visites précises (PLN-013, RG-017). */
       reviser: (id: string, revision: Revision) =>
         requete<Planning>(`/api/v1/plannings/${id}/reviser/`, { methode: 'POST', corps: revision }),
+      /** Programme de la semaine, tel qu'approuvé (VIS-001) : ce que le délégué exécute. */
+      programme: (jour?: string) =>
+        requete<Programme>(`/api/v1/programme/${jour ? `?semaine=${jour}` : ''}`),
       semaine: (jour?: string) =>
         requete<Semaine>(`/api/v1/plannings/semaine/${jour ? `?semaine=${jour}` : ''}`),
       creer: (semaine: string) =>

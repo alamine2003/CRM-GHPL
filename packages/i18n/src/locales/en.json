@@ -190,7 +190,6 @@
     },
     "bienvenue": "Welcome",
     "sousTitreConnexion": "Sign in to find your round.",
-    "prochainement": "Your round and visits arrive in the next versions.",
     "aVenir": {
       "semaine": "Prepare your week from your target list and follow its approval.",
       "prospects": "Find your prospects, even offline, and suggest new ones.",
@@ -1819,5 +1818,24 @@
     "rouvertSucces": "Reopened: {{nom}} has been notified.",
     "consultation": "Week closed since Monday 00:00: this planning cannot be decided until it is reopened.",
     "reouverture": "Reopening"
+  },
+  "programme": {
+    "visites_zero": "No visit",
+    "titre": "Today's programme",
+    "semaine": "This week's programme",
+    "prochaine": "Next visit",
+    "aucuneAujourdhui": "No visit planned today.",
+    "termine": "All of today's visits are past.",
+    "visites_one": "{{count}} visit",
+    "visites_other": "{{count}} visits",
+    "visitesAujourdhui_one": "{{count}} visit today",
+    "visitesAujourdhui_other": "{{count}} visits today",
+    "version": "Following approved version {{numero}}",
+    "nonApprouve": "Your planning for this week is not approved yet: no programme to follow for now.",
+    "sansPlanning": "No planning this week: no programme.",
+    "enAttente": "Change pending",
+    "horsLigne": "Offline: programme as of {{date}}.",
+    "ferie": "Holiday · {{libelle}}",
+    "voirSemaine": "Open the Week tab"
   }
 }

@@ -582,3 +582,38 @@ class SemaineFermeeSerializer(serializers.Serializer):
     planning = PlanningSerializer(allow_null=True)
     #: Le délégué a demandé la réouverture.
     demande = serializers.BooleanField()
+
+
+class VisiteProgrammeSerializer(VisiteSerializer):
+    """Une visite du programme, à la date et à l'heure approuvées (VIS-001)."""
+
+    #: Une modification majeure la touche et attend la décision du superviseur (RG-018).
+    modification_en_attente = serializers.BooleanField()
+
+    class Meta(VisiteSerializer.Meta):
+        fields = [*VisiteSerializer.Meta.fields, "modification_en_attente"]
+
+
+class JourProgrammeSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    ferie = serializers.CharField(allow_null=True)
+    visites = VisiteProgrammeSerializer(many=True)
+    activites = ActiviteSerializer(many=True)
+
+
+class ProgrammeSerializer(serializers.Serializer):
+    """VIS-001 : le programme de la semaine, tel qu'approuvé, journée par journée."""
+
+    semaine = serializers.DateField()
+    #: Le jour du pays : la journée à montrer en premier.
+    aujourdhui = serializers.DateField()
+    fuseau = serializers.CharField()
+    #: `approuve` : le programme est là ; sinon, pourquoi il n'y en a pas.
+    etat = serializers.ChoiceField(choices=["approuve", "non_approuve", "sans_planning",
+                                            "sans_poste"])  # fmt: skip
+    planning = PlanningSerializer(allow_null=True)
+    #: Numéro de la version approuvée que le délégué exécute.
+    version = serializers.IntegerField(allow_null=True)
+    jours = JourProgrammeSerializer(many=True)
+    #: La prochaine visite du jour : la première qui n'est pas encore faite.
+    prochaine = serializers.UUIDField(allow_null=True)

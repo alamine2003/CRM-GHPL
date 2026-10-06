@@ -1,15 +1,16 @@
 import type { Langue } from '@innov/i18n';
 import { useTranslation } from 'react-i18next';
-import { Alerte, Carte, Texte } from '../src/composants';
+import { Alerte } from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { MaSemaine } from '../src/MaSemaine';
 import { MesProduits } from '../src/MesProduits';
 import { MesNotifications } from '../src/MesNotifications';
 import { MesPropositions } from '../src/MesPropositions';
 import { MonPoste } from '../src/MonPoste';
+import { ProgrammeDuJour } from '../src/Programme';
 import { useSession } from '../src/session';
 
-/** Tournée du délégué connecté. Les visites arrivent au cycle 0.4 (prd.md §23). */
+/** Tournée du délégué connecté : son programme du jour en tête (VIS-001, 0.4.1). */
 export default function Accueil() {
   const { t, i18n } = useTranslation();
   const { etat } = useSession();
@@ -32,15 +33,10 @@ export default function Accueil() {
       {roles.length === 0 && <Alerte type="info">{t('roles.aucun')}</Alerte>}
       <MesNotifications />
       <MesPropositions />
+      {(roles.includes('delegue') || roles.includes('superviseur')) && <ProgrammeDuJour />}
       {roles.includes('delegue') && <MaSemaine />}
       <MonPoste />
       <MesProduits />
-      <Carte>
-        <Texte variante="sousTitre">{t('mobile.onglets.tournee')}</Texte>
-        <Texte variante="discret" style={{ marginTop: 4 }}>
-          {t('mobile.prochainement')}
-        </Texte>
-      </Carte>
     </Ecran>
   );
 }

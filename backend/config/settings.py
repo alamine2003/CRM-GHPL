@@ -262,6 +262,7 @@ SPECTACULAR_SETTINGS = {
         "DecisionPlanningEnum": "apps.planning.models.Decision",
         "ModeDecisionEnum": "apps.planning.models.ModeDecision",
         "MotifVersionEnum": "apps.planning.models.MotifVersion",
+        "VisiteStatutEnum": "apps.planning.etats.StatutVisite",
     },
 }
 

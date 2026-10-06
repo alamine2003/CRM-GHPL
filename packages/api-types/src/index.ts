@@ -103,6 +103,10 @@ export type JourSemaine = Schemas['JourSemaine'];
 // Visites planifiées (PLN-002).
 export type Visite = Schemas['Visite'];
 export type StatutVisite = Schemas['VisiteStatutEnum'];
+/** Programme de la semaine du délégué, tel qu'approuvé (VIS-001, cycle 0.4). */
+export type Programme = Schemas['Programme'];
+export type VisiteProgramme = Schemas['VisiteProgramme'];
+export type JourProgramme = Schemas['JourProgramme'];
 export type SaisieVisite = Schemas['SaisieVisite'];
 export type ModificationVisite = Schemas['PatchedModificationVisite'];
 // Passages et absences (PLN-003, PLN-009).

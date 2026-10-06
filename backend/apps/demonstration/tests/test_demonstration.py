@@ -58,9 +58,10 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     from apps.planning import services as pln
     from apps.planning.models import Activite, Passage, Planning
 
-    approuve, prepare, soumis = Planning.objects.filter(pays__code="SN").order_by(
+    prepare, approuve, soumis = Planning.objects.filter(pays__code="SN").order_by(
         "statut", "semaine")  # fmt: skip
-    assert (approuve.statut, prepare.statut, soumis.statut) == ("approuve", "brouillon", "soumis")
+    # Approuvée, la semaine en cours a commencé : elle est « en cours » (cycle 0.4).
+    assert (approuve.statut, prepare.statut, soumis.statut) == ("en_cours", "brouillon", "soumis")
     assert approuve.reouvert_le is None and not approuve.en_retard
     version = approuve.versions.get()
     assert (version.decision, version.mode) == ("approuve", "direct")

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.3.9
+  version: 0.4.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3022,6 +3022,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/DemandeReouverture'
           description: ''
+  /api/v1/programme/:
+    get:
+      operationId: programme
+      description: |-
+        VIS-001 : le programme de la semaine, tel qu'approuvé ; le téléphone le garde pour
+        l'afficher sans réseau (CA1).
+      parameters:
+      - in: query
+        name: semaine
+        schema:
+          type: string
+          format: date
+        description: Un jour de la semaine ; par défaut, celle-ci
+      tags:
+      - programme
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Programme'
+          description: ''
   /api/v1/propositions/:
     get:
       operationId: propositions_liste
@@ -5790,6 +5814,18 @@ components:
       - active
       - codes_secours_restants
       - requise
+    EtatEnum:
+      enum:
+      - approuve
+      - non_approuve
+      - sans_planning
+      - sans_poste
+      type: string
+      description: |-
+        * `approuve` - approuve
+        * `non_approuve` - non_approuve
+        * `sans_planning` - sans_planning
+        * `sans_poste` - sans_poste
     EtatExploitation:
       type: object
       properties:
@@ -6063,6 +6099,28 @@ components:
       - etapes
       - km
       - sans_coordonnees
+    JourProgramme:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        ferie:
+          type: string
+          nullable: true
+        visites:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisiteProgramme'
+        activites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activite'
+      required:
+      - activites
+      - date
+      - ferie
+      - visites
     JourSemaine:
       type: object
       properties:
@@ -7326,6 +7384,45 @@ components:
       - code
       - id
       - libelle
+    Programme:
+      type: object
+      description: 'VIS-001 : le programme de la semaine, tel qu''approuvé, journée
+        par journée.'
+      properties:
+        semaine:
+          type: string
+          format: date
+        aujourdhui:
+          type: string
+          format: date
+        fuseau:
+          type: string
+        etat:
+          $ref: '#/components/schemas/EtatEnum'
+        planning:
+          allOf:
+          - $ref: '#/components/schemas/Planning'
+          nullable: true
+        version:
+          type: integer
+          nullable: true
+        jours:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourProgramme'
+        prochaine:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - aujourdhui
+      - etat
+      - fuseau
+      - jours
+      - planning
+      - prochaine
+      - semaine
+      - version
     Proposition:
       type: object
       properties:
@@ -9031,6 +9128,65 @@ components:
       - date
       - raison
       - visite
+    VisiteProgramme:
+      type: object
+      description: Une visite du programme, à la date et à l'heure approuvées (VIS-001).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        prospect:
+          allOf:
+          - $ref: '#/components/schemas/ProspectVisite'
+          nullable: true
+        etablissement:
+          allOf:
+          - $ref: '#/components/schemas/EtablissementVisite'
+          nullable: true
+        reseau:
+          allOf:
+          - $ref: '#/components/schemas/Resume'
+          nullable: true
+        objectif:
+          type: string
+          maxLength: 200
+        note:
+          type: string
+          maxLength: 500
+        statut:
+          $ref: '#/components/schemas/VisiteStatutEnum'
+        manquants:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        passage:
+          type: string
+          format: uuid
+          nullable: true
+        ordre:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        modification_en_attente:
+          type: boolean
+      required:
+      - date
+      - etablissement
+      - heure
+      - id
+      - manquants
+      - modification_en_attente
+      - prospect
+      - reseau
     VisiteStatutEnum:
       enum:
       - prevue

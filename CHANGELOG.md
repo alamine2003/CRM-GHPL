@@ -2,6 +2,30 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.1] — Programme du jour
+
+Premier jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — programme du jour (VIS-001)
+
+- Sur l'accueil du téléphone (« Tournée »), le programme du jour : les visites de la version approuvée, dans l'ordre, la **prochaine visite** en tête avec son lieu et son objectif ; un passage dit « Lieu · n prescripteurs ». Dessous, le reste de la semaine, jour par jour.
+- Le délégué suit la version approuvée (RG-018) : une modification qui attend la décision du superviseur n'y entre pas ; la visite touchée reste à sa place, marquée « Modification en attente ».
+- **CA1** : sans réseau, le téléphone affiche le dernier programme lu (« Hors ligne : programme tel qu'au … ») et le détail de chaque visite.
+- Sans planning approuvé, le programme le dit.
+
+### Ajouté — le planning avance avec la semaine
+
+- Le premier jour de sa semaine, un planning approuvé passe « en cours » ; la semaine finie, « terminé » (tâche périodique, journal d'audit). La démonstration montre la semaine en cours « en cours ».
+
+### Design
+
+Revue sur le rendu réel au téléphone (360 et 414 px, sombre), en ligne et hors ligne, pour un délégué au planning approuvé et pour un délégué sans planning. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Programme du jour | Deux visites à la même heure, dans le même lieu, sans dire qu'elles forment un passage. | « Lieu · 2 prescripteurs », sur deux lignes au besoin. |
+| Programme de la semaine | « 0 visite » pour un jour sans visite. | « Aucune visite ». |
+
 ## [0.3.9] — Fermeture de la semaine et recette du cycle
 
 Neuvième et dernier jalon du cycle 0.3 « Validation des plannings ». Il livre les décisions du 6 octobre 2026 (prd.md §14.21) et la recette du cycle.

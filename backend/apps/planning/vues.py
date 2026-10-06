@@ -661,3 +661,32 @@ class ReouvertureVue(VuePerimetre):
             raise Http404
         planning = services.rouvrir(pays, delegue, v["semaine"], request.user)
         return Response(s.PlanningSerializer(planning).data)
+
+
+# --- Programme du délégué (VIS-001, cycle 0.4) ---------------------------------------------
+
+
+class ProgrammeVue(VuePlannings):
+    """VIS-001 : le programme de la semaine, tel qu'approuvé ; le téléphone le garde pour
+    l'afficher sans réseau (CA1)."""
+
+    actions = {"GET": PREPARER}
+
+    @extend_schema(
+        parameters=[OpenApiParameter("semaine", date, required=False,
+                                     description="Un jour de la semaine ; par défaut, celle-ci")],
+        responses=s.ProgrammeSerializer,
+        operation_id="programme",
+    )  # fmt: skip
+    def get(self, request):
+        from .programme import programme
+
+        pays = pays_requis(self.perimetre)
+        brute = request.query_params.get("semaine")
+        try:
+            jour = date.fromisoformat(brute) if brute else None
+        except ValueError as erreur:
+            raise ErreurMetier(
+                "semaine_invalide", _("Date invalide : format AAAA-MM-JJ attendu."), champ="semaine"
+            ) from erreur
+        return Response(s.ProgrammeSerializer(programme(pays, request.user, jour)).data)

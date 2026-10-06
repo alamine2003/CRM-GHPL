@@ -463,8 +463,9 @@ class Generateur:
         )  # fmt: skip
         # Construite après coup, la semaine avait été rouverte le temps de la poser : validée,
         # elle n'en garde pas trace.
+        # La semaine a commencé : approuvée, elle est « en cours » (prd.md §17.1, cycle 0.4).
         type(planning).objects.filter(pk=planning.pk).update(
-            statut=StatutPlanning.APPROUVE, reouvert_le=None, reouvert_par=None)  # fmt: skip
+            statut=StatutPlanning.EN_COURS, reouvert_le=None, reouvert_par=None)  # fmt: skip
         return nombre
 
     @staticmethod

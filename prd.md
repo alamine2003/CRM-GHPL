@@ -551,7 +551,7 @@ Mise en œuvre [D, 5 octobre 2026, livrée en 0.3.1, PLN-018] :
   - tant qu'une modification attend la décision, le planning ne change plus (`modification_en_attente`) ;
   - poser des prospects de la liste cible n'est pas possible sur un planning approuvé (`ajout_incomplet`) : chaque ajout se fait complet, une visite à la fois ; la copie d'une visite non plus, depuis le téléphone ;
   - au portail, le délégué lit son planning approuvé mais le modifie depuis le téléphone ;
-  - le passage automatique « approuvé → en cours » le premier jour, et « en cours → terminé », attendent le cycle 0.4 (programme du jour).
+  - le passage automatique « approuvé → en cours » le premier jour, et « en cours → terminé », est livré en 0.4.1 (§14.22).
 
 ### 14.20 Centre de notifications, rappels et escalade (mise en œuvre 0.3.8)
 
@@ -586,6 +586,18 @@ Mise en œuvre (0.3.9) :
 - Décisions [D] du 6 octobre 2026, après la livraison :
   - une semaine passée ne se rouvre pas : elle s'analyse telle quelle, et une semaine sans rien de fait reste une semaine où rien n'a été fait ;
   - le paramètre `echeance_approbation_planning` (vendredi 18 h) est conservé dans les paramètres du pays, bien que l'approbation se fasse désormais avant la fermeture.
+
+### 14.22 Programme du jour (mise en œuvre 0.4.1)
+
+- **Programme** (VIS-001) : sur l'accueil du téléphone (« Tournée »), le délégué voit le programme du jour : les visites de la **version approuvée** de son planning, dans l'ordre de la journée, avec la **prochaine visite** en tête (la première qui n'est pas encore faite), son lieu et son objectif ; puis le reste de la semaine, jour par jour (nombre de visites, activités, jours fériés). Une visite s'ouvre sur son détail.
+- **Version approuvée** (RG-018) : les heures changées depuis l'approbation sont suivies ; une modification majeure qui attend la décision du superviseur n'entre pas au programme, et la visite qu'elle touche reste à sa place approuvée, marquée « Modification en attente ».
+- **Sans version approuvée** : le programme le dit (« pas encore approuvé », « aucun planning cette semaine ») ; rien à exécuter.
+- **Hors connexion** (CA1) : le téléphone garde le dernier programme lu, et la semaine pour ouvrir le détail d'une visite ; sans réseau, il les affiche avec « Hors ligne : programme tel qu'au … ».
+- **États du planning** (prd.md §17.1) : le premier jour de sa semaine, un planning approuvé passe « en cours » ; la semaine finie, « terminé » (tâche périodique, journal d'audit).
+- Hypothèses [H] à confirmer :
+  - la prochaine visite est la première non faite dans l'ordre de la journée, même si son heure est passée ;
+  - la distance au lieu s'affichera avec le démarrage de la visite et la position (VIS-003, 0.4.3) ;
+  - le programme vit sur le téléphone ; le portail garde la vue semaine.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

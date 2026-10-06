@@ -1806,6 +1806,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/programme/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description VIS-001 : le programme de la semaine, tel qu'approuvé ; le téléphone le garde pour
+     *     l'afficher sans réseau (CA1).
+     */
+    get: operations['programme'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/propositions/': {
     parameters: {
       query?: never;
@@ -3020,6 +3040,14 @@ export interface components {
       requise: boolean;
       codes_secours_restants: number;
     };
+    /**
+     * @description * `approuve` - approuve
+     *     * `non_approuve` - non_approuve
+     *     * `sans_planning` - sans_planning
+     *     * `sans_poste` - sans_poste
+     * @enum {string}
+     */
+    EtatEnum: 'approuve' | 'non_approuve' | 'sans_planning' | 'sans_poste';
     EtatExploitation: {
       /** @description Vrai si la base refuse toute modification du journal d'audit (AUD-001 CA2). */
       audit_immuable: boolean;
@@ -3135,6 +3163,13 @@ export interface components {
       km: number;
       sans_coordonnees: number;
       etapes: components['schemas']['Etape'][];
+    };
+    JourProgramme: {
+      /** Format: date */
+      date: string;
+      ferie: string | null;
+      visites: components['schemas']['VisiteProgramme'][];
+      activites: components['schemas']['Activite'][];
     };
     JourSemaine: {
       /** Format: date */
@@ -3664,6 +3699,20 @@ export interface components {
       code: string;
       libelle: string;
       classe_libelle?: string | null;
+    };
+    /** @description VIS-001 : le programme de la semaine, tel qu'approuvé, journée par journée. */
+    Programme: {
+      /** Format: date */
+      semaine: string;
+      /** Format: date */
+      aujourdhui: string;
+      fuseau: string;
+      etat: components['schemas']['EtatEnum'];
+      planning: components['schemas']['Planning'] | null;
+      version: number | null;
+      jours: components['schemas']['JourProgramme'][];
+      /** Format: uuid */
+      prochaine: string | null;
     };
     Proposition: {
       /** Format: uuid */
@@ -4361,6 +4410,26 @@ export interface components {
       /** Format: date */
       date: string;
       raison: components['schemas']['RaisonRepriseEnum'];
+    };
+    /** @description Une visite du programme, à la date et à l'heure approuvées (VIS-001). */
+    VisiteProgramme: {
+      /** Format: uuid */
+      readonly id: string;
+      /** Format: date */
+      date: string;
+      /** Format: time */
+      heure: string | null;
+      prospect: components['schemas']['ProspectVisite'] | null;
+      etablissement: components['schemas']['EtablissementVisite'] | null;
+      reseau: components['schemas']['Resume'] | null;
+      objectif?: string;
+      note?: string;
+      statut?: components['schemas']['VisiteStatutEnum'];
+      readonly manquants: string[];
+      /** Format: uuid */
+      passage?: string | null;
+      ordre?: number;
+      modification_en_attente: boolean;
     };
     /**
      * @description * `prevue` - Prévue
@@ -7216,6 +7285,28 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['DemandeReouverture'];
+        };
+      };
+    };
+  };
+  programme: {
+    parameters: {
+      query?: {
+        /** @description Un jour de la semaine ; par défaut, celle-ci */
+        semaine?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Programme'];
         };
       };
     };

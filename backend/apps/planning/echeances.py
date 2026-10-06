@@ -9,6 +9,9 @@
 - Alerte du lundi (RG-019) : à la fermeture du lundi 0 h, les plannings de la semaine qui ne
   sont pas approuvés sont signalés au DM.
 
+- Exécution (cycle 0.4, prd.md §17.1) : le premier jour de sa semaine, un planning approuvé
+  passe « en cours » ; la semaine finie, « terminé ».
+
 Chaque envoi est idempotent : la tâche peut tourner toutes les quinze minutes sans répéter.
 """
 
@@ -198,10 +201,32 @@ def alertes_non_approuves(pays: Pays, maintenant: datetime) -> int:
     return envoyes
 
 
+def avancer_plannings(pays: Pays, maintenant: datetime) -> int:
+    """Approuvé → en cours le premier jour de la semaine ; en cours → terminé la semaine
+    finie (prd.md §17.1). Rend le nombre de plannings qui ont changé d'état."""
+    from .etats import exiger_transition
+    from .services import _auditer
+
+    lundi_courant = lundi(_aujourdhui(pays, maintenant))
+    nombre = 0
+    for statut, vers, filtre in (
+        # Dans cet ordre : une semaine approuvée déjà finie passe en cours, puis terminée.
+        (StatutPlanning.APPROUVE, StatutPlanning.EN_COURS, {"semaine__lte": lundi_courant}),
+        (StatutPlanning.EN_COURS, StatutPlanning.TERMINE, {"semaine__lt": lundi_courant}),
+    ):
+        for planning in Planning.objects.filter(pays=pays, statut=statut, **filtre):
+            exiger_transition(planning.statut, vers)
+            planning.statut = vers
+            planning.save(update_fields=["statut", "modifie_le"])
+            _auditer(f"planning.{vers}", planning, semaine=str(planning.semaine))
+            nombre += 1
+    return nombre
+
+
 def executer(maintenant: datetime | None = None) -> dict:
     """Une passe sur chaque pays, chacun dans sa transaction et son isolation (ADR-003)."""
     maintenant = maintenant or timezone.now()
-    bilan = {"rappels": 0, "escalades": 0, "alertes": 0}
+    bilan = {"rappels": 0, "escalades": 0, "alertes": 0, "plannings": 0}
     for pays in Pays.objects.filter(statut=Pays.Statut.ACTIF):
         with transaction.atomic():
             with connection.cursor() as curseur:
@@ -209,4 +234,5 @@ def executer(maintenant: datetime | None = None) -> dict:
             bilan["rappels"] += rappels(pays, maintenant)
             bilan["escalades"] += escalades(pays, maintenant)
             bilan["alertes"] += alertes_non_approuves(pays, maintenant)
+            bilan["plannings"] += avancer_plannings(pays, maintenant)
     return bilan

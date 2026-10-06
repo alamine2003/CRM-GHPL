@@ -190,7 +190,6 @@
     },
     "bienvenue": "Bienvenue",
     "sousTitreConnexion": "Connectez-vous pour retrouver votre tournée.",
-    "prochainement": "Votre tournée et vos visites arrivent dans les prochaines versions.",
     "aVenir": {
       "semaine": "Préparez votre semaine depuis votre liste cible et suivez son approbation.",
       "prospects": "Retrouvez vos prospects, même sans réseau, et proposez-en de nouveaux.",
@@ -1819,5 +1818,24 @@
     "rouvertSucces": "Rédaction rouverte : {{nom}} en est prévenu.",
     "consultation": "Semaine fermée depuis lundi 0 h : ce planning ne se décide plus tant que sa rédaction n'est pas rouverte.",
     "reouverture": "Réouverture"
+  },
+  "programme": {
+    "visites_zero": "Aucune visite",
+    "titre": "Programme du jour",
+    "semaine": "Programme de la semaine",
+    "prochaine": "Prochaine visite",
+    "aucuneAujourdhui": "Aucune visite prévue aujourd'hui.",
+    "termine": "Toutes les visites du jour sont passées.",
+    "visites_one": "{{count}} visite",
+    "visites_other": "{{count}} visites",
+    "visitesAujourdhui_one": "{{count}} visite aujourd'hui",
+    "visitesAujourdhui_other": "{{count}} visites aujourd'hui",
+    "version": "Selon la version {{numero}} approuvée",
+    "nonApprouve": "Votre planning de cette semaine n'est pas encore approuvé : pas de programme à suivre pour l'instant.",
+    "sansPlanning": "Aucun planning cette semaine : pas de programme.",
+    "enAttente": "Modification en attente",
+    "horsLigne": "Hors ligne : programme tel qu'au {{date}}.",
+    "ferie": "Férié · {{libelle}}",
+    "voirSemaine": "Ouvrir l'onglet Semaine"
   }
 }
