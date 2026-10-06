@@ -114,8 +114,9 @@ CATALOGUE: dict[str, DefinitionParametre] = {
         ),
         DefinitionParametre(
             "echeance_soumission_planning",
-            "Échéance de soumission du planning, semaine précédente (RG-013)",
-            {"jour": 4, "heure": "18:00"},
+            "Fermeture de la semaine : jour et heure, dans la semaine du planning, avant "
+            "lesquels il est soumis (RG-013, décision du 6 octobre 2026)",
+            {"jour": 1, "heure": "00:00"},
             _echeance,
         ),
         DefinitionParametre(
@@ -189,16 +190,14 @@ CATALOGUE: dict[str, DefinitionParametre] = {
         DefinitionParametre(
             "rappel_planning_non_soumis",
             "Rappel du planning non soumis, semaine précédente (NOT-006)",
-            {"jour": 3, "heure": "09:00"},
+            {"jour": 5, "heure": "09:00"},
             _echeance,
-            hypothese=True,
         ),
         DefinitionParametre(
             "alerte_planning_non_approuve",
             "Alerte au DM des plannings non approuvés, jour de la semaine (RG-019)",
-            {"jour": 1, "heure": "09:00"},
+            {"jour": 1, "heure": "00:00"},
             _echeance,
-            hypothese=True,
         ),
         DefinitionParametre(
             "delai_escalade_heures_ouvrees",

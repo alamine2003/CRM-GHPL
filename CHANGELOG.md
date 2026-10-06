@@ -2,6 +2,43 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.3.9] — Fermeture de la semaine et recette du cycle
+
+Neuvième et dernier jalon du cycle 0.3 « Validation des plannings ». Il livre les décisions du 6 octobre 2026 (prd.md §14.21) et la recette du cycle.
+
+### Modifié — fermeture de la semaine le lundi 0 h (RG-013, PLN-008 CA1)
+
+- Le délégué rédige le planning de sa semaine et le soumet avant le **lundi 0 h** de cette semaine, heure du pays ; l'échéance du jeudi 18 h disparaît. Le paramètre du pays s'appelle « Fermeture de la semaine ».
+- Le lundi à 0 h, tout planning de la semaine qui n'est pas validé — en préparation, à réviser ou soumis — est **fermé** : plus de soumission, de décision ni de modification ; sans planning, la semaine ne se crée plus.
+- Un planning validé ne se modifie plus du tout dès le lundi 0 h (PLN-015, RG-018).
+
+### Ajouté — demande et réouverture
+
+- Délégué (téléphone et portail) : « La semaine a commencé lundi à 0 h sans planning validé : elle est fermée », et « Demander la réouverture » ; la demande part une fois au superviseur du poste et à son remplaçant.
+- Superviseur (portail) : « Semaines fermées » sous la file, avec « Réouverture demandée » ; « Rouvrir la rédaction », après confirmation, crée le planning au besoin et prévient le délégué. Un planning fermé consulté ne propose plus que la réouverture.
+- La réouverture reste inscrite (date, auteur, journal d'audit) : on sait que le planning n'a pas été fait à temps. La soumission qui suit est marquée « en retard » ; le superviseur décide ensuite normalement.
+
+### Modifié — rappels et escalade (NOT-006, RG-019)
+
+- Le rappel du planning non soumis part le **vendredi à 9 h** et vaut jusqu'à la fermeture.
+- L'alerte des plannings non approuvés arrive au DM à la fermeture, le lundi à 0 h.
+- Un planning fermé n'est plus escaladé, sauf après sa réouverture ; l'escalade compte toujours 24 heures ouvrées, du lundi au vendredi sans les jours fériés.
+
+### Recette et démonstration
+
+- [`recette-0.3.md`](recette-0.3.md) relie chaque critère d'acceptation du cycle au test qui le prouve ; scénario : [`demonstration-0.3.md`](demonstration-0.3.md).
+- Démonstration : la semaine en cours du premier délégué est validée et la suivante en préparation ; un second délégué a sa semaine suivante soumise et sa semaine en cours fermée, avec une demande de réouverture.
+- Hypothèses à confirmer (prd.md §14.21) : seule la semaine en cours se rouvre ; le paramètre « Échéance d'approbation » n'est plus utilisé.
+
+### Design
+
+Revue sur le rendu réel : page « Plannings à valider » du superviseur (bureau, téléphone, sombre) et sa confirmation, semaine fermée du délégué au portail et au téléphone (360 px, sombre), semaine validée qui ne se modifie plus. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Semaines fermées (portail) | La demande de réouverture se perdait au milieu des délégués sans planning. | Les demandes passent en tête, puis l'ordre alphabétique. |
+| Semaine fermée du délégué (portail) | Cinq colonnes de jours vides sous le message, sans rien à y faire. | Sans planning, la semaine fermée ne montre que le message et la demande. |
+
 ## [0.3.8] — Centre de notifications, rappels et escalade
 
 Huitième jalon du cycle 0.3 « Validation des plannings ».

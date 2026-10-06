@@ -151,3 +151,20 @@ def test_pln017_le_dm_approuve_le_planning_du_superviseur_visiteur(monde, terrai
     assert r.status_code == 200, r.content
     assert r.json()["decision"]["par"] == f"{dm.first_name} {dm.last_name}"
     assert client_de(sup).get("/api/v1/notifications/").json()["non_lues"] == 1
+
+
+def test_rg037_la_version_figee_garde_passages_et_activites(monde, terrain):
+    """RG-037 : la version figée garde aussi les passages et les activités connexes."""
+    from .test_passages_activites import confrere
+
+    org.rattacher(terrain["poste"], monde["sup.sn"], date(2026, 1, 1))
+    planning = terrain["planning"]
+    visites = [services.ajouter_visite(planning, date=date(2026, 10, 13), heure=time(9, 0),
+                                       prospect=p, etablissement=terrain["clinique"],
+                                       objectif="Vasculor")
+               for p in (terrain["medecin"], confrere(monde, terrain, "Fictif"))]  # fmt: skip
+    services.regrouper(planning, visites)
+    services.declarer_activite(planning, date=date(2026, 10, 16), type="formation")
+    services.soumettre(planning)
+    contenu = planning.versions.get().contenu
+    assert len(contenu["passages"]) == 1 and len(contenu["activites"]) == 1

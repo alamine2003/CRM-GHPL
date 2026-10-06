@@ -1,4 +1,4 @@
-import type { PlanningEnAttente } from '@innov/api-client';
+import type { PlanningEnAttente, SemaineFermee } from '@innov/api-client';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import { Box, Card, CardActionArea, Chip, Skeleton, Stack, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
 import { EnTetePage } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
+import { BoutonRouvrir } from '../composants/Reouverture';
 import { ListeActivites } from '../composants/SemainePlanning';
 import { libelleVersion, texteEscalade } from '../composants/planningTextes';
 import { useSession } from '../contexteSession';
@@ -16,13 +17,14 @@ type Traduire = ReturnType<typeof useTranslation>['t'];
 /**
  * File des plannings en attente du superviseur (PLN-011, 0.3.1) : les plannings soumis de son
  * équipe, du plus ancien au plus récent (CA1), avec leurs alertes et leurs activités connexes
- * expliquées (PLN-018). Chaque carte ouvre la consultation du planning (0.3.2) ; la décision
- * arrive en 0.3.3.
+ * expliquées (PLN-018). Chaque carte ouvre la consultation du planning (0.3.2). Dessous, les
+ * semaines fermées le lundi 0 h sans planning validé, que le superviseur peut rouvrir (0.3.9).
  */
 export default function Validation() {
   const { t } = useTranslation();
   const { client } = useSession();
   const file = useQuery({ queryKey: ['plannings-a-valider'], queryFn: client.plannings.aValider });
+  const fermes = useQuery({ queryKey: ['plannings-fermes'], queryFn: client.plannings.fermes });
   // L'heure d'ouverture de la page sert de repère à l'ancienneté de chaque soumission.
   const [maintenant] = useState(() => Date.now());
 
@@ -53,6 +55,55 @@ export default function Validation() {
           ))}
         </Stack>
       )}
+      {!!fermes.data?.length && <SemainesFermees lignes={fermes.data} />}
+    </Stack>
+  );
+}
+
+function SemainesFermees({ lignes }: { lignes: SemaineFermee[] }) {
+  const { t } = useTranslation();
+  return (
+    <Stack spacing={1.5} component="section" aria-labelledby="semaines-fermees">
+      <Box>
+        <Typography id="semaines-fermees" variant="h6" component="h2">
+          {t('fermeture.liste')}
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {t('fermeture.listeAide')}
+        </Typography>
+      </Box>
+      <Stack spacing={1} component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+        {lignes.map((ligne) => (
+          <Card component="li" key={ligne.delegue.id} sx={{ p: 2 }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1.5}
+              sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700 }}>
+                  {ligne.delegue.prenom} {ligne.delegue.nom}
+                </Typography>
+                <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {ligne.planning
+                      ? t(`semaine.statuts.${ligne.planning.statut}`)
+                      : t('fermeture.sansPlanning')}
+                  </Typography>
+                  {ligne.demande && (
+                    <Chip size="small" color="warning" label={t('fermeture.demandeRecue')} />
+                  )}
+                </Stack>
+              </Box>
+              <BoutonRouvrir
+                delegue={ligne.delegue}
+                semaine={ligne.semaine}
+                variante={ligne.demande ? 'contained' : 'outlined'}
+              />
+            </Stack>
+          </Card>
+        ))}
+      </Stack>
     </Stack>
   );
 }

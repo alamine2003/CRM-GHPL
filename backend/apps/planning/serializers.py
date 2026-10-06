@@ -77,12 +77,20 @@ class PlanningSerializer(serializers.ModelSerializer):
     numero_version = serializers.SerializerMethodField()
     #: Pourquoi cette dernière version : soumission, après révision, modification (PLN-015).
     motif_version = serializers.SerializerMethodField()
+    #: Fermé le lundi 0 h sans être validé : plus rien ne s'y fait avant sa réouverture.
+    ferme = serializers.SerializerMethodField()
 
     class Meta:
         model = Planning
         fields = ["id", "semaine", "statut", "cree_le", "soumis_le", "en_retard", "echeance",
-                  "decision", "numero_version", "motif_version"]  # fmt: skip
-        read_only_fields = ["statut", "soumis_le", "en_retard"]
+                  "decision", "numero_version", "motif_version", "ferme",
+                  "reouvert_le"]  # fmt: skip
+        read_only_fields = ["statut", "soumis_le", "en_retard", "reouvert_le"]
+
+    def get_ferme(self, planning) -> bool:
+        from .services import est_ferme
+
+        return est_ferme(planning)
 
     def get_echeance(self, planning) -> str:
         from .services import echeance
@@ -378,6 +386,10 @@ class SemaineSerializer(serializers.Serializer):
     reseaux = ResumeSerializer(many=True)
     #: Planning déjà approuvé : référence, changements mineurs, modification en attente.
     approbation = SuiviApprobationSerializer(allow_null=True)
+    #: Semaine en cours fermée le lundi 0 h pour ce délégué : seul son superviseur la rouvre.
+    fermee = serializers.BooleanField()
+    #: La réouverture a déjà été demandée au superviseur.
+    demande_envoyee = serializers.BooleanField()
 
 
 class DelegueSerializer(serializers.Serializer):
@@ -546,3 +558,27 @@ class DetailVersionSerializer(VersionSerializer):
             "contenu_activites": version.contenu.get("activites", []),
             "comparaison": comparaison,
         }
+
+
+class SemaineCibleSerializer(serializers.Serializer):
+    semaine = serializers.DateField()
+
+
+class DemandeReouvertureSerializer(serializers.Serializer):
+    #: Responsables prévenus ; 0 quand la demande était déjà faite.
+    destinataires = serializers.IntegerField()
+
+
+class ReouvertureSerializer(serializers.Serializer):
+    delegue = serializers.UUIDField()
+    semaine = serializers.DateField()
+
+
+class SemaineFermeeSerializer(serializers.Serializer):
+    """Un délégué dont la semaine en cours est fermée, sans planning validé."""
+
+    delegue = DelegueSerializer()
+    semaine = serializers.DateField()
+    planning = PlanningSerializer(allow_null=True)
+    #: Le délégué a demandé la réouverture.
+    demande = serializers.BooleanField()

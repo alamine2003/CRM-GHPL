@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 11:01+0000\n"
+"POT-Creation-Date: 2026-10-06 12:21+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -513,8 +513,16 @@ msgstr "A past week can no longer be planned."
 msgid "Vous n'occupez aucun poste cette semaine : pas de planning à préparer."
 msgstr "You hold no position this week: there is no planning to prepare."
 
+msgid ""
+"La semaine est fermée depuis le lundi 0 h : demandez à votre superviseur de "
+"rouvrir la rédaction de votre planning."
+msgstr "The week has been closed since Monday 00:00: ask your supervisor to reopen your planning for editing."
+
 msgid "Un planning existe déjà pour cette semaine."
 msgstr "A planning already exists for this week."
+
+msgid "La semaine a commencé : le planning validé ne se modifie plus."
+msgstr "The week has started: the approved planning can no longer be changed."
 
 msgid ""
 "Une modification de ce planning attend la décision de votre superviseur : la "
@@ -543,6 +551,11 @@ msgstr "This identifier already belongs to another item."
 
 msgid "L'ordre doit reprendre exactement les visites de ce jour."
 msgstr "The order must list exactly the visits of that day."
+
+msgid ""
+"La semaine est fermée depuis le lundi 0 h : le superviseur doit d'abord "
+"rouvrir la rédaction du planning."
+msgstr "The week has been closed since Monday 00:00: the supervisor must first reopen the planning for editing."
 
 msgid ""
 "Votre poste n'est rattaché à aucun superviseur cette semaine : personne ne "
@@ -612,6 +625,34 @@ msgstr "An activity is already declared for this period."
 msgid ""
 "Des visites sont prévues ce jour-là : déplacez-les ou retirez-les d'abord."
 msgstr "Visits are planned that day: move or remove them first."
+
+msgid "Une semaine passée ne se rouvre plus."
+msgstr "A past week can no longer be reopened."
+
+msgid "Ce planning n'est pas fermé : il se prépare ou se soumet normalement."
+msgstr "This planning is not closed: prepare or submit it as usual."
+
+msgid "Cette semaine n'est pas encore fermée : préparez votre planning."
+msgstr "This week is not closed yet: prepare your planning."
+
+msgid ""
+"Votre poste n'est rattaché à aucun superviseur cette semaine : prévenez "
+"l'administrateur pays."
+msgstr "Your position has no supervisor this week: let the country administrator know."
+
+msgid ""
+"Cette semaine n'est pas encore fermée : le délégué peut encore préparer son "
+"planning."
+msgstr "This week is not closed yet: the representative can still prepare their planning."
+
+msgid "Ce délégué n'occupe aucun poste cette semaine."
+msgstr "This representative holds no position this week."
+
+msgid "Seul le responsable de ce poste cette semaine-là rouvre ce planning."
+msgstr "Only the person in charge of this position that week can reopen this planning."
+
+msgid "Ce planning n'est pas fermé : rien à rouvrir."
+msgstr "This planning is not closed: there is nothing to reopen."
 
 msgid "Année invalide."
 msgstr "Invalid year."

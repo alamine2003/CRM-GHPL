@@ -2,6 +2,7 @@ import type { Notification } from '@innov/api-client';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
+import LockOpenRounded from '@mui/icons-material/LockOpenRounded';
 import NotificationImportantRounded from '@mui/icons-material/NotificationImportantRounded';
 import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import ScheduleRounded from '@mui/icons-material/ScheduleRounded';
@@ -19,6 +20,8 @@ export const ICONES: Record<Notification['type'], ReactNode> = {
   rappel_planning: <ScheduleRounded color="warning" fontSize="small" />,
   escalade: <NotificationImportantRounded color="error" fontSize="small" />,
   plannings_non_approuves: <EventBusyRounded color="warning" fontSize="small" />,
+  reouverture_demandee: <LockOpenRounded color="warning" fontSize="small" />,
+  redaction_rouverte: <LockOpenRounded color="primary" fontSize="small" />,
 };
 
 /** Texte d'une notification, composé dans la langue de l'utilisateur (prd.md §18). */
@@ -63,7 +66,11 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
 export function destination(n: Notification) {
   if ((n.type === 'planning_soumis' || n.type === 'escalade') && n.donnees.planning)
     return `/validation/${n.donnees.planning}`;
-  if (n.type === 'remplacement_attribue' || n.type === 'plannings_non_approuves')
+  if (
+    n.type === 'remplacement_attribue' ||
+    n.type === 'plannings_non_approuves' ||
+    n.type === 'reouverture_demandee'
+  )
     return '/validation';
   return n.donnees.semaine ? `/planning?semaine=${n.donnees.semaine}` : '/planning';
 }

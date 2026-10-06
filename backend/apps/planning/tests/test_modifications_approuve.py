@@ -140,18 +140,16 @@ def test_un_changement_majeur_bloque_est_refuse_sans_rien_changer(monde, terrain
     assert planning.visites.filter(archive_le__isnull=True).count() == 2
 
 
-def test_une_journee_passee_est_verrouillee(monde, approuve):
+def test_des_le_lundi_0_h_plus_rien_ne_change(monde, approuve):
+    """Décision du 6 octobre 2026 : la semaine commencée, le planning validé ne se modifie
+    plus, même l'heure d'une visite à venir."""
     planning, mardi, mercredi = approuve
     with freeze_time("2026-10-14 08:00"):
         deleg = client_de(monde["deleg.sn"])
-        r = deleg.patch(visite_url(mardi), {"heure": "15:00"}, format="json")
-        assert (r.status_code, r.json()["code"]) == (409, "jour_passe")
-        # Ni vers une journée passée.
-        r = deleg.patch(visite_url(mercredi), {"date": "2026-10-13"}, format="json")
-        assert (r.status_code, r.json()["code"]) == (409, "jour_passe")
-        # Aujourd'hui reste modifiable : l'heure d'une visite plus tard dans la journée.
-        r = deleg.patch(visite_url(mercredi), {"heure": "14:00"}, format="json")
-        assert r.status_code == 200
+        for visite, champs in ((mardi, {"heure": "15:00"}), (mercredi, {"date": "2026-10-13"}),
+                               (mercredi, {"heure": "14:00"})):  # fmt: skip
+            r = deleg.patch(visite_url(visite), champs, format="json")
+            assert (r.status_code, r.json()["code"]) == (409, "semaine_commencee")
     planning.refresh_from_db()
     assert planning.statut == "approuve"
 

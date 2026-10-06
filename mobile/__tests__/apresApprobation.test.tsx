@@ -83,6 +83,8 @@ const APPROUVEE: Semaine = {
     },
     numero_version: 1,
     motif_version: 'soumission',
+    ferme: false,
+    reouvert_le: null,
   },
   peut_creer: false,
   modifiable: false,
@@ -92,6 +94,8 @@ const APPROUVEE: Semaine = {
   controles: null,
   kilometrage: null,
   reprenables: 0,
+  fermee: false,
+  demande_envoyee: false,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   approbation: { reference: 1, modifiable: true, en_attente: [], retraits: [], mineures: [] },
 };

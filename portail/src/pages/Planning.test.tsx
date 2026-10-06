@@ -56,6 +56,8 @@ const SEMAINE: Semaine = {
     decision: null,
     numero_version: null,
     motif_version: null,
+    ferme: false,
+    reouvert_le: null,
   },
   peut_creer: false,
   modifiable: true,
@@ -77,6 +79,8 @@ const SEMAINE: Semaine = {
   },
   kilometrage: { total_km: 12.5, sans_coordonnees: 0, jours: [] },
   reprenables: 0,
+  fermee: false,
+  demande_envoyee: false,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   approbation: null,
 };
@@ -269,6 +273,48 @@ describe('PLN-006 : vue semaine du portail', () => {
     expect(await screen.findByText(/^Soumis le /)).toBeTruthy();
     expect(screen.getByText('En retard')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Soumettre le planning' })).toBeNull();
+  });
+
+  it('0.3.9 : la semaine fermée sans planning se fait rouvrir sur demande', async () => {
+    const demanderReouverture = vi.fn(async () => ({ destinataires: 1 }));
+    const fermee = {
+      ...SEMAINE,
+      planning: null,
+      visites: [],
+      controles: null,
+      kilometrage: null,
+      modifiable: false,
+      fermee: true,
+    };
+    const semaine = vi
+      .fn()
+      .mockResolvedValueOnce(fermee)
+      .mockResolvedValue({ ...fermee, demande_envoyee: true });
+    const { container } = rendre({
+      plannings: { semaine, demanderReouverture },
+      ciblage: { mesListes: vi.fn(async () => LISTES) },
+    });
+    expect(await screen.findByText(/elle est fermée/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Préparer cette semaine' })).toBeNull();
+    expect(await violations(container)).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Demander la réouverture' }));
+    await waitFor(() => expect(demanderReouverture).toHaveBeenCalledWith(SEMAINE.semaine));
+    expect(notifier).toHaveBeenCalledWith('Demande envoyée à votre superviseur.');
+    expect(await screen.findByText(/vous serez prévenu/)).toBeTruthy();
+  });
+
+  it('0.3.9 : rouvert par le superviseur, la réouverture reste dite', async () => {
+    rendre({
+      plannings: {
+        semaine: vi.fn(async () => ({
+          ...SEMAINE,
+          planning: { ...SEMAINE.planning!, reouvert_le: '2026-10-27T09:30:00Z' },
+        })),
+      },
+      ciblage: { mesListes: vi.fn(async () => LISTES) },
+    });
+    expect(await screen.findByText('Réouverture')).toBeTruthy();
+    expect(screen.getByText(/le planning n'a pas été fait à temps/)).toBeTruthy();
   });
 
   it('accessibilité : la semaine en préparation et la confirmation de soumission (WCAG 2.1 AA)', async () => {

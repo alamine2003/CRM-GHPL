@@ -49,26 +49,42 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     from apps.planning.models import JourFerie
 
     assert JourFerie.objects.filter(pays__code="SN", libelle="Toussaint").count() == 2
-    # Deux semaines du premier délégué (cycle 0.2) : la semaine en cours soumise à temps
-    # (PLN-008), la suivante en préparation, dont une visite à compléter (PLN-001, PLN-002).
+    # Le cycle du planning (0.3.9). Premier délégué : la semaine en cours validée avant la
+    # fermeture du lundi 0 h (PLN-012), la suivante en préparation, dont une visite à compléter
+    # (PLN-001, PLN-002). Second délégué : la semaine suivante soumise, à décider (PLN-011), et
+    # la semaine en cours fermée, dont il a demandé la réouverture.
+    from apps.notifications.models import Notification
+    from apps.planning import controles
+    from apps.planning import services as pln
     from apps.planning.models import Activite, Passage, Planning
 
-    soumis, prepare = Planning.objects.filter(pays__code="SN").order_by("semaine")
-    assert (soumis.statut, soumis.en_retard, prepare.statut) == ("soumis", False, "brouillon")
-    assert soumis.versions.get().numero == 1 and not prepare.versions.exists()
-    assert soumis.soumis_le is not None and prepare.semaine == soumis.semaine + timedelta(days=7)
-    assert soumis.visites.count() == 7 and not soumis.visites.filter(heure__isnull=True).exists()
+    approuve, prepare, soumis = Planning.objects.filter(pays__code="SN").order_by(
+        "statut", "semaine")  # fmt: skip
+    assert (approuve.statut, prepare.statut, soumis.statut) == ("approuve", "brouillon", "soumis")
+    assert approuve.reouvert_le is None and not approuve.en_retard
+    version = approuve.versions.get()
+    assert (version.decision, version.mode) == ("approuve", "direct")
+    assert version.soumis_le < pln.echeance(approuve) and version.decide_par is not None
+    assert (
+        approuve.visites.count() == 7 and not approuve.visites.filter(heure__isnull=True).exists()
+    )
+    assert prepare.semaine == soumis.semaine == approuve.semaine + timedelta(days=7)
+    assert prepare.delegue == approuve.delegue != soumis.delegue
     assert prepare.visites.count() == 6 and prepare.visites.filter(heure__isnull=True).count() == 1
+    assert soumis.versions.get().numero == 1 and not prepare.versions.exists()
+    assert not soumis.en_retard and soumis.soumis_le < pln.echeance(soumis)
     # Chaque semaine a son passage de deux confrères ; la formation est à préparer (PLN-003,
     # PLN-009).
-    assert [p.visites.count() for p in Passage.objects.filter(pays__code="SN")] == [2, 2]
-    # La semaine soumise montre une matinée d'accompagnement du superviseur (PLN-018).
-    assert soumis.activites.get().type == "accompagnement"
-    # Une visite hors liste cible, à trouver en consultant la semaine (0.3.2).
-    from apps.planning import controles
-
+    assert [p.visites.count() for p in Passage.objects.filter(pays__code="SN")] == [2, 2, 2]
+    # Les semaines complètes montrent une matinée d'accompagnement du superviseur (PLN-018) et
+    # une visite hors liste cible, à trouver en consultant la semaine (0.3.2).
+    assert approuve.activites.get().type == soumis.activites.get().type == "accompagnement"
     assert "hors_cible" in {a.code for a in controles.signalements(soumis)}
     assert Activite.objects.filter(pays__code="SN", periode="apres_midi").count() == 1
+    # La semaine fermée du second délégué : pas de planning, une demande de réouverture.
+    assert not Planning.objects.filter(delegue=soumis.delegue, semaine=approuve.semaine).exists()
+    assert pln.reouverture_demandee(soumis.delegue, approuve.semaine)
+    assert Notification.objects.filter(type="reouverture_demandee").exists()
 
 
 def test_aucune_donnee_reelle(monkeypatch):

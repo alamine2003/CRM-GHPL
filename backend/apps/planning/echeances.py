@@ -1,11 +1,13 @@
 """Échéances du planning évaluées par la tâche périodique (0.3.8, architecture §7.5).
 
-- Rappel du planning non soumis (NOT-006) : le mercredi de la semaine précédente, à l'heure du
-  pays, au délégué dont la semaine suivante n'est pas encore soumise.
+- Rappel du planning non soumis (NOT-006) : le vendredi 9 h de la semaine précédente, à l'heure
+  du pays, au délégué dont la semaine suivante n'est pas encore soumise, jusqu'à la fermeture
+  du lundi 0 h (décision du 6 octobre 2026).
 - Escalade (PLN-016, RG-019) : un planning soumis sans décision depuis le délai du pays, compté
-  en heures ouvrées, va au DM du périmètre, qui peut alors décider (mode `escalade`).
-- Alerte du lundi (RG-019) : les plannings de la semaine qui ne sont pas approuvés le lundi
-  matin sont signalés au DM.
+  en heures ouvrées, va au DM du périmètre, qui peut alors décider (mode `escalade`) ; un
+  planning fermé n'escalade plus : seule sa réouverture le remet en jeu.
+- Alerte du lundi (RG-019) : à la fermeture du lundi 0 h, les plannings de la semaine qui ne
+  sont pas approuvés sont signalés au DM.
 
 Chaque envoi est idempotent : la tâche peut tourner toutes les quinze minutes sans répéter.
 """
@@ -81,19 +83,16 @@ def _nom(utilisateur) -> str:
 
 
 def rappels(pays: Pays, maintenant: datetime) -> int:
-    """NOT-006 : planning de la semaine suivante non soumis, le mercredi à 9 h par défaut, et
-    jusqu'à l'échéance ; un jour férié reporte le rappel au jour ouvré suivant."""
+    """NOT-006 : planning de la semaine suivante non soumis, le vendredi à 9 h par défaut, et
+    jusqu'à la fermeture du lundi 0 h ; un seul rappel par semaine."""
     from apps.notifications.models import TypeNotification
     from apps.notifications.services import notifier_une_fois
 
-    aujourdhui = _aujourdhui(pays, maintenant)
-    if aujourdhui.isoweekday() not in set(valeur_parametre(pays, "jours_ouvres")) or feries(
-        pays, aujourdhui, aujourdhui
-    ):
-        return 0
-    cible = lundi(aujourdhui) + timedelta(days=7)
+    from .services import fermeture
+
+    cible = lundi(_aujourdhui(pays, maintenant)) + timedelta(days=7)
     debut = _moment(pays, cible - timedelta(days=7), "rappel_planning_non_soumis")
-    echeance = _moment(pays, cible - timedelta(days=7), "echeance_soumission_planning")
+    echeance = fermeture(pays, cible)
     if not debut <= maintenant < echeance:
         return 0
     soumis = set(
@@ -148,6 +147,8 @@ def escalader(planning: Planning, maintenant: datetime) -> set:
 
 def escalades(pays: Pays, maintenant: datetime) -> int:
     """Les plannings soumis restés sans décision au-delà du délai (24 h ouvrées par défaut)."""
+    from .services import fermeture
+
     delai = valeur_parametre(pays, "delai_escalade_heures_ouvrees")
     nombre = 0
     for planning in Planning.objects.filter(pays=pays, statut=StatutPlanning.SOUMIS).select_related(
@@ -156,6 +157,9 @@ def escalades(pays: Pays, maintenant: datetime) -> int:
         version = planning.versions.first()
         if version is None or version.decision or version.escalade_le:
             continue
+        # Fermé le lundi 0 h sans réouverture : plus personne ne le décide, le DM non plus.
+        if planning.reouvert_le is None and maintenant >= fermeture(pays, planning.semaine):
+            continue
         if heures_ouvrees(pays, version.soumis_le, maintenant) >= delai:
             escalader(planning, maintenant)
             nombre += 1
@@ -163,8 +167,8 @@ def escalades(pays: Pays, maintenant: datetime) -> int:
 
 
 def alertes_non_approuves(pays: Pays, maintenant: datetime) -> int:
-    """RG-019 : le lundi matin (9 h par défaut), chaque DM apprend combien de plannings de la
-    semaine, dans ses réseaux, ne sont pas approuvés — absents compris."""
+    """RG-019 : à la fermeture du lundi 0 h (par défaut), chaque DM apprend combien de
+    plannings de la semaine, dans ses réseaux, ne sont pas approuvés — absents compris."""
     from apps.identite.models import Utilisateur
     from apps.notifications.models import TypeNotification
     from apps.notifications.services import notifier_une_fois

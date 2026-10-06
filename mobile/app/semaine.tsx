@@ -28,7 +28,7 @@ import { PoserDepuisCible } from '../src/Pose';
 import { CarteControles, ObjectifDuJour, remarquesDeRevision } from '../src/Controles';
 import { Journee } from '../src/Journee';
 import { garderSemaine, jourIso, semaineGardee } from '../src/semaineLocale';
-import { CarteSoumission, dateHeure, EtatSoumission } from '../src/Soumission';
+import { CarteSoumission, dateHeure, EtatSoumission, SemaineFermee } from '../src/Soumission';
 import { FormulaireVisite, LienAction } from '../src/Visites';
 
 const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
@@ -402,6 +402,10 @@ export default function EcranSemaine() {
                 {apresApprobation && (
                   <Texte variante="discret">{t('apresApprobation.regleCourte')}</Texte>
                 )}
+                {suivi && !suivi.modifiable && semaine.planning.statut === 'approuve' && (
+                  <Texte variante="discret">{t('fermeture.semaineCommencee')}</Texte>
+                )}
+                <SemaineFermee semaine={semaine} surDemande={terminer} />
                 {enDecision && <Alerte type="info">{t('apresApprobation.attente')}</Alerte>}
                 {enDecision && suivi && suivi.retraits.length > 0 && (
                   <Texte variante="discret">
@@ -484,6 +488,8 @@ export default function EcranSemaine() {
                   onPress={() => void preparer()}
                 />
               </>
+            ) : semaine.fermee ? (
+              <SemaineFermee semaine={semaine} surDemande={terminer} />
             ) : (
               <Texte variante="discret">
                 {semaine.suivante <= aujourdhui ? t('semaine.passee') : t('semaine.sansPoste')}

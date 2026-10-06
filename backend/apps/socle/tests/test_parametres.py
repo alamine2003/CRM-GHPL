@@ -28,7 +28,9 @@ def test_valeurs_par_defaut_du_cadrage():
     pays = creer_pays("SN")
     valeurs = parametres_en_vigueur(pays)
     assert valeurs["jours_ouvres"] == [1, 2, 3, 4, 5]
-    assert valeurs["echeance_soumission_planning"] == {"jour": 4, "heure": "18:00"}
+    # Fermeture de la semaine le lundi 0 h (RG-013, décision du 6 octobre 2026).
+    assert valeurs["echeance_soumission_planning"] == {"jour": 1, "heure": "00:00"}
+    assert valeurs["rappel_planning_non_soumis"] == {"jour": 5, "heure": "09:00"}
     assert valeurs["echeance_approbation_planning"] == {"jour": 5, "heure": "18:00"}
     assert valeurs["heure_limite_rapport"] == "23:59"
     assert valeurs["distance_pointage_m"] == 100

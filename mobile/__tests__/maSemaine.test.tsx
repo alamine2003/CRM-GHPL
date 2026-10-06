@@ -18,6 +18,8 @@ const BASE = {
   controles: null,
   kilometrage: null,
   reprenables: 0,
+  fermee: false,
+  demande_envoyee: false,
   reseaux: [],
   approbation: null,
 } satisfies Partial<Semaine>;
@@ -31,6 +33,8 @@ const PLANNING = {
   decision: null,
   numero_version: null,
   motif_version: null,
+  ferme: false,
+  reouvert_le: null,
 };
 
 const COURANTE: Semaine = {

@@ -450,7 +450,7 @@
     "cles": {
       "format_date": "Format d'affichage des dates",
       "jours_ouvres": "Jours ouvrés",
-      "echeance_soumission_planning": "Échéance de soumission du planning",
+      "echeance_soumission_planning": "Fermeture de la semaine (soumettre avant)",
       "echeance_approbation_planning": "Échéance d'approbation du planning",
       "heure_limite_rapport": "Heure limite du rapport",
       "seuils_visites_jour": "Visites par jour et par type de poste",
@@ -1653,6 +1653,8 @@
     "escalade": "Escalade : le planning de {{nom}} (semaine {{numero}}) attend une décision depuis {{heures}} h ouvrées",
     "plannings_non_approuves_one": "{{count}} planning de la semaine {{numero}} n'est pas approuvé dans vos réseaux",
     "plannings_non_approuves_other": "{{count}} plannings de la semaine {{numero}} ne sont pas approuvés dans vos réseaux",
+    "reouverture_demandee": "{{nom}} demande la réouverture de son planning de la semaine {{numero}}",
+    "redaction_rouverte": "{{nom}} a rouvert la rédaction de votre planning de la semaine {{numero}}",
     "centre": "Notifications",
     "centreSousTitre": "Les 100 plus récentes ; chacune ouvre ce qu'elle attend de vous.",
     "aucune": "Aucune notification pour l'instant.",
@@ -1798,5 +1800,24 @@
     "ligne": "Escaladé : sans décision de {{noms}} depuis le {{date}}",
     "court": "Escaladé",
     "parEscalade": "par escalade"
+  },
+  "fermeture": {
+    "titre": "Semaine fermée",
+    "delegue": "La semaine a commencé lundi à 0 h sans planning validé : elle est fermée. Seul votre superviseur peut en rouvrir la rédaction.",
+    "demander": "Demander la réouverture",
+    "demandeEnvoyee": "Demande envoyée à votre superviseur : vous serez prévenu dès qu'il aura rouvert la rédaction.",
+    "demandeSucces": "Demande envoyée à votre superviseur.",
+    "rouverte": "Rédaction rouverte le {{date}} : le planning n'a pas été fait à temps, sa soumission sera marquée en retard.",
+    "semaineCommencee": "La semaine a commencé : ce planning validé ne se modifie plus.",
+    "liste": "Semaines fermées",
+    "listeAide": "Ces délégués n'ont pas de planning validé pour la semaine en cours. Rouvrir la rédaction leur permet de le préparer et de le soumettre ; la réouverture reste inscrite.",
+    "sansPlanning": "Aucun planning",
+    "demandeRecue": "Réouverture demandée",
+    "rouvrir": "Rouvrir la rédaction",
+    "rouvrirConfirmation": "Rouvrir la rédaction du planning de {{nom}} ? Il pourra le préparer et le soumettre ; sa soumission sera marquée en retard.",
+    "rouvrirConfirmer": "Oui, rouvrir",
+    "rouvertSucces": "Rédaction rouverte : {{nom}} en est prévenu.",
+    "consultation": "Semaine fermée depuis lundi 0 h : ce planning ne se décide plus tant que sa rédaction n'est pas rouverte.",
+    "reouverture": "Réouverture"
   }
 }

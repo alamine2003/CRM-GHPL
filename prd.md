@@ -351,7 +351,7 @@ sequenceDiagram
 Règles principales : `RG-010` à `RG-024`. Points clés :
 
 - Une semaine = un planning par délégué, avec des **versions** successives (`RG-012`).
-- Échéance de soumission : jeudi 18 h ; échéance d'approbation : vendredi 18 h ; paramétrables par pays (`RG-013`).
+- Le planning se soumet avant le lundi 0 h de sa semaine ; à cette heure, tout planning non validé est fermé et seul le superviseur en rouvre la rédaction ; paramétrable par pays (`RG-013`, décision du 6 octobre 2026, §14.21).
 - Contrôles **bloquants** à la soumission : champs obligatoires, prospect et établissement actifs du même pays, conflit horaire exact, doublon de visite (même prospect, même jour) (`RG-015`).
 - Contrôles **signalés** au superviseur, non bloquants : seuils de visites par jour, prospect hors liste cible, prospect hors secteur, prospect A non planifié sur le mois, soumission en retard (`RG-016`).
 - Après approbation : modification **mineure** libre et tracée (heure, même jour) ; modification **majeure** (jour, prospect, ajout, retrait) = nouvelle version soumise ; les visites non concernées restent exécutables (`RG-018`).
@@ -543,7 +543,7 @@ Mise en œuvre [D, 5 octobre 2026, livrée en 0.3.1, PLN-018] :
 
 ### 14.19 Planning approuvé : verrouillage et modifications (mise en œuvre 0.3.7)
 
-- **Verrouillage** (PLN-015, RG-018) : approuvé, le planning ne se modifie plus librement ; une journée passée ne change plus du tout (`jour_passe`), ni ce qu'on voudrait y déplacer. Aujourd'hui reste modifiable.
+- **Verrouillage** (PLN-015, RG-018) : approuvé, le planning ne se modifie plus librement ; une journée passée ne change plus du tout (`jour_passe`), ni ce qu'on voudrait y déplacer. Depuis 0.3.9 (§14.21), plus rien ne change dès le lundi 0 h de la semaine (`semaine_commencee`).
 - **Mineure** (CA1) : seule l'heure d'une visite change, dans sa journée (avec les autres visites du même passage). Le planning reste approuvé ; le changement est tracé au journal d'audit et sur la version approuvée, où le superviseur le lit (« Heure changée depuis l'approbation »). Changer l'ordre d'une journée à venir reste libre aussi.
 - **Majeure** (CA2) : tout autre changement — jour, prospect, lieu, réseau, objectif, note, ajout, retrait, activité connexe — refait le contrôle final et devient aussitôt une nouvelle version soumise (« Version n · modification après approbation ») ; s'il ne passe pas le contrôle final, il est refusé et rien ne change. Le superviseur voit ce qui attend (« À décider : … », retraits) ; les autres visites restent prévues selon la version approuvée. Une modification après approbation n'est jamais en retard.
 - Hypothèses [H] à confirmer :
@@ -561,12 +561,12 @@ Mise en œuvre [D, 5 octobre 2026, livrée en 0.3.1, PLN-018] :
 - **Alerte du lundi** (RG-019) : à 9 h le lundi (`alerte_planning_non_approuve`), chaque DM apprend combien de plannings de la semaine ne sont pas approuvés dans ses réseaux, plannings absents compris.
 - **Tâche périodique** : toutes les 15 minutes (Celery beat), à l'heure de chaque pays ; chaque envoi est idempotent. Commande `executer_echeances` pour la rejouer sans worker.
 - Hypothèses [H] à confirmer :
-  - heure de l'alerte du lundi (9 h) ; le rappel passe au vendredi 9 h (§14.21) ;
+  - l'alerte du lundi passe à 0 h, à la fermeture, et le rappel au vendredi 9 h (§14.21, livrés en 0.3.9) ;
   - heures ouvrées de l'escalade : du lundi au vendredi, sans les jours fériés [D, 6 octobre 2026] ;
   - une notification d'escalade par planning, plutôt que « n décisions en attente » regroupées (le regroupement arrive avec le push, NOT-003) ;
   - rappels « visite proche », « rapport non soumis » et « délégué non synchronisé depuis 48 h » : avec le push sur le téléphone (0.8.5), les rapports (cycle 0.5) et la synchronisation (cycle 0.8).
 
-### 14.21 Fermeture de la semaine (décisions du 6 octobre 2026, à livrer)
+### 14.21 Fermeture de la semaine (décisions du 6 octobre 2026, livrées en 0.3.9)
 
 Décisions [D] du 6 octobre 2026, qui modifient RG-013, PLN-008 CA1 et RG-018 :
 - **Date limite** : le délégué soumet le planning de sa semaine avant le **lundi 0 h** de cette semaine (heure du pays). L'échéance du jeudi 18 h est supprimée.
@@ -575,6 +575,17 @@ Décisions [D] du 6 octobre 2026, qui modifient RG-013, PLN-008 CA1 et RG-018 :
 - **Planning validé** : modifiable selon RG-018 jusqu'au lundi 0 h ; plus du tout ensuite.
 - **Rappel** (NOT-006) : le **vendredi à 9 h**, au délégué dont le planning de la semaine suivante n'est pas soumis.
 - **Escalade** (RG-019) : inchangée ; les 24 heures ouvrées se comptent du lundi au vendredi, sans les jours fériés. Le délégué peut déclarer une activité connexe d'une journée ; les écarts se règlent hors de l'application.
+
+Mise en œuvre (0.3.9) :
+- Le paramètre pays `echeance_soumission_planning` (« Fermeture de la semaine », lundi 0 h par défaut) se lit désormais dans la semaine du planning ; les valeurs de l'ancienne règle (jeudi de la semaine précédente) sont effacées à la migration.
+- **Délégué** : sur sa semaine fermée, le téléphone et le portail disent « La semaine a commencé lundi à 0 h sans planning validé : elle est fermée » et proposent « Demander la réouverture » ; la demande part une fois, au superviseur du poste et à son remplaçant (notification « … demande la réouverture de son planning »). Sans planning, la semaine ne se crée plus (`semaine_fermee`).
+- **Superviseur** : sous sa file, « Semaines fermées » liste ses délégués sans planning validé pour la semaine en cours, avec « Réouverture demandée » ; « Rouvrir la rédaction », après confirmation, crée le planning s'il n'existait pas, inscrit la date et l'auteur de la réouverture (journal d'audit `planning.reouverture`) et prévient le délégué. Un planning fermé consulté ne propose plus que la réouverture. Seul le responsable du poste (ou son remplaçant) rouvre ; seule la semaine en cours se rouvre.
+- Après la réouverture, le délégué prépare et soumet : la soumission est marquée « en retard » ; le superviseur décide normalement.
+- Un planning soumis et fermé quitte la file et n'est plus escaladé, sauf après sa réouverture.
+- **Démonstration** : la semaine en cours du premier délégué est validée, la suivante en préparation ; un second délégué a sa semaine suivante soumise et sa semaine en cours fermée, avec une demande de réouverture.
+- Hypothèses [H] à confirmer :
+  - la demande et la réouverture valent pour la semaine en cours seulement ; une semaine passée reste close ;
+  - le paramètre `echeance_approbation_planning` (vendredi 18 h) n'est plus utilisé : l'approbation se fait avant la fermeture.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
@@ -679,7 +690,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | PLN-005 | Déplacer, copier, supprimer une visite avant soumission ; glisser-déposer depuis la liste cible. | 0.2.5 | CA1 : un glisser-déposer crée une visite pré-remplie (prospect, établissement principal). CA2 : copier la semaine précédente est possible. |
 | PLN-006 | Vues mobile semaine, jour, détail ; vue portail semaine. | 0.2.6 | CA1 : la vue semaine affiche le nombre de visites par jour et le statut du planning. |
 | PLN-007 | Sauvegarde automatique du brouillon et reprise. | 0.2.7 | CA1 : fermer l'application en cours de saisie ne perd aucune visite. |
-| PLN-008 | Soumission avec contrôle final ; marquage `en_retard` après l'échéance. | 0.2.8, 0.3.5 | CA1 : une soumission après jeudi 18 h (heure du pays) est acceptée et marquée « en retard ». CA2 (0.3.5, décision du 5 octobre 2026) : une nouvelle soumission après révision n'est jamais en retard ; seul compte le retard de la première soumission. |
+| PLN-008 | Soumission avec contrôle final ; marquage `en_retard` après l'échéance. | 0.2.8, 0.3.5, 0.3.9 | CA1 (0.3.9, décision du 6 octobre 2026) : après le lundi 0 h de la semaine (heure du pays), le planning est fermé ; une fois sa rédaction rouverte par le superviseur, sa soumission est acceptée et marquée « en retard ». CA2 (0.3.5, décision du 5 octobre 2026) : une nouvelle soumission après révision n'est jamais en retard ; seul compte le retard de la première soumission. |
 | PLN-009 | Absences déclarées (`conge`, `formation`, `reunion`, `maladie`, `autre`) par jour ou demi-journée. | 0.2.3 | CA1 : une demi-journée d'absence réduit de moitié les seuils du jour. CA2 : l'absence est validée avec le planning. |
 | PLN-010 | Kilométrage estimé de la semaine (sans montant). | 0.2.6 | CA1 : le kilométrage est calculé à partir des coordonnées des établissements, à vol d'oiseau ou par itinéraire [H]. CA2 : aucun montant de frais n'est affiché. |
 | PLN-011 | Le superviseur dispose d'une file des plannings en attente et consulte chacun en détail. | 0.3.1, 0.3.2 | CA1 : la file est triée par ancienneté de soumission et affiche les alertes. CA2 (0.3.2) : il ouvre un planning de la file et voit la semaine, ses activités, ses contrôles, le kilométrage et le détail de chaque visite avec ses alertes, sans rien pouvoir modifier ; un planning en préparation ou d'un délégué qu'il ne supervise pas lui est introuvable. |
@@ -687,7 +698,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | PLN-013 | Le superviseur demande une révision, sur le planning ou une visite précise, avec commentaire obligatoire. | 0.3.4 | CA1 : une demande sans commentaire est refusée. CA2 : le délégué voit le commentaire sur la visite concernée. |
 | PLN-014 | Nouvelle version après révision ; historique et comparaison des versions. | 0.3.5, 0.3.6 | CA1 : la comparaison montre les visites ajoutées, retirées, déplacées. CA2 : toutes les versions restent consultables. |
 | PLN-015 | Modifications après approbation : mineure libre et tracée, majeure soumise à nouvelle approbation (`RG-018`). | 0.3.7 | CA1 : changer l'heure d'une visite dans la même journée ne change pas le statut. CA2 : ajouter une visite crée une version soumise ; les autres visites restent exécutables. |
-| PLN-016 | Escalade vers le DM sans décision 24 h ouvrées après soumission ; alerte au DM si rien n'est approuvé le lundi matin. | 0.3.8 | CA1 : l'escalade notifie le DM du périmètre. CA2 : la décision du DM porte le mode `escalade`. |
+| PLN-016 | Escalade vers le DM sans décision 24 h ouvrées après soumission ; alerte au DM si rien n'est approuvé à la fermeture du lundi 0 h. | 0.3.8, 0.3.9 | CA1 : l'escalade notifie le DM du périmètre. CA2 : la décision du DM porte le mode `escalade`. |
 | PLN-017 | Le planning d'un superviseur qui occupe un poste de délégué est approuvé par son DM. | 0.3.3 | CA1 : il n'apparaît pas dans sa propre file. |
 | PLN-018 | Activités connexes déclarées dans le planning : absences (PLN-009), commando, déplacement (justifié ou demandé par le superviseur), accompagnement du superviseur (§14.17). | 0.3.1 | CA1 : une activité avec visites exige une explication ; ses visites hors secteur ou hors liste cible ne sont pas signalées comme anomalies. CA2 : une activité avec visites ne réduit pas l'objectif du jour ; une absence le réduit. |
 
@@ -739,7 +750,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | NOT-003 | Regroupement anti-saturation : au plus une notification push par type et par heure et par utilisateur ; les suivantes sont regroupées. | 0.8.5 | CA1 : 20 rapports soumis en 10 minutes produisent une seule notification « 20 rapports à valider ». |
 | NOT-004 | Courriel réservé à la sécurité du compte (récupération d'accès, nouvel appareil, double authentification) et au secours d'une décision en attente depuis plus de 48 h [H]. | 0.8.6 | CA1 : aucun autre courriel n'est envoyé. |
 | NOT-005 | Préférences par utilisateur dans les limites fixées par le pays (certaines notifications ne peuvent pas être désactivées : révision demandée, correction demandée, escalade). | 0.8.6 | CA1 : une notification obligatoire ne peut pas être désactivée. |
-| NOT-006 | Rappels : planning non soumis (mercredi), visite proche, rapport non soumis (18 h), délégué non synchronisé depuis 48 h (au superviseur). | 0.3.8 | CA1 : les heures suivent le fuseau du pays. |
+| NOT-006 | Rappels : planning non soumis (vendredi 9 h, décision du 6 octobre 2026), visite proche, rapport non soumis (18 h), délégué non synchronisé depuis 48 h (au superviseur). | 0.3.8 | CA1 : les heures suivent le fuseau du pays. |
 
 ### 15.8 Tableaux de bord et pilotage — DSH
 
@@ -811,7 +822,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | RG-010 | Un délégué possède un superviseur actif (via son poste) pour soumettre un planning. | [D] |
 | RG-011 | Une personne occupant plusieurs postes a **un seul planning** par semaine ; chaque visite porte le poste et le réseau concernés ; l'approbateur est le superviseur du poste principal. | [H] |
 | RG-012 | Une semaine ne possède qu'un planning par délégué, avec plusieurs versions successives. | [D] |
-| RG-013 | Soumission avant jeudi 18 h et approbation avant vendredi 18 h de la semaine précédente, paramétrables par pays. Remplacée par la décision du 6 octobre 2026 (§14.21) : soumission avant le lundi 0 h de la semaine, fermeture à cette heure, réouverture par le superviseur. | [D] |
+| RG-013 | Soumission avant jeudi 18 h et approbation avant vendredi 18 h de la semaine précédente, paramétrables par pays. Remplacée par la décision du 6 octobre 2026 (§14.21, livrée en 0.3.9) : soumission avant le lundi 0 h de la semaine, fermeture à cette heure, réouverture par le superviseur. | [D] |
 | RG-014 | La période de planning est du lundi au vendredi par défaut, configurable par pays (jours ouvrés). | [D] |
 | RG-015 | Contrôles bloquants à la soumission : champs obligatoires ; prospect et établissement actifs, du même pays, liés par un exercice actif ; pas deux visites à la même heure ; pas deux visites du même prospect le même jour. | [D] |
 | RG-016 | Signalements non bloquants : seuils de visites par jour et type de poste ; prospect hors liste cible ; prospect hors secteur ; prospect A non planifié dans le mois ; soumission en retard. | [D] |
@@ -1089,7 +1100,7 @@ Convention [D] : `0.0.1` → `0.0.9`, puis `0.1.1` → `0.1.9`, …, `0.9.1` →
 | 0.3.6 | Historique et comparaison des versions (PLN-014 CA1, CA2 ; AUD-003 pour les plannings) |
 | 0.3.7 | Verrouillage, modifications mineures et majeures après approbation (PLN-015, RG-018) |
 | 0.3.8 | Centre de notifications (NOT-001), rappel du planning non soumis (NOT-006), escalade vers le DM et alerte du lundi (PLN-016, RG-019) |
-| 0.3.9 | Recette complète du workflow de planning, démonstration |
+| 0.3.9 | Fermeture de la semaine le lundi 0 h et réouverture par le superviseur (§14.21) ; recette complète du workflow de planning, démonstration |
 
 ### Cycle 0.4 — Exécution des visites
 

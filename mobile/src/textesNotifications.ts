@@ -60,6 +60,10 @@ export function iconeNotification(
       return { nom: 'notification-important', couleur: p.erreur };
     case 'plannings_non_approuves':
       return { nom: 'event-busy', couleur: p.attention };
+    case 'reouverture_demandee':
+      return { nom: 'lock-open', couleur: p.attention };
+    case 'redaction_rouverte':
+      return { nom: 'lock-open', couleur: p.info };
     case 'planning_soumis':
       return { nom: 'assignment-turned-in', couleur: p.info };
     default:
@@ -72,6 +76,11 @@ export function iconeNotification(
  * une alerte de DM se traitent au portail : la notification se marque lue, sans écran.
  */
 export function semaineDeNotification(n: Notification): string | undefined {
-  const auPortail = ['planning_soumis', 'escalade', 'plannings_non_approuves'];
+  const auPortail = [
+    'planning_soumis',
+    'escalade',
+    'plannings_non_approuves',
+    'reouverture_demandee',
+  ];
   return n.donnees.semaine && !auPortail.includes(n.type) ? n.donnees.semaine : undefined;
 }

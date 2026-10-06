@@ -9,6 +9,7 @@ from datetime import date, timedelta
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -114,12 +115,19 @@ class SemaineVue(VuePlannings):
             ) from erreur
         debut = lundi(jour)
         planning = self.get_queryset().filter(semaine=debut).first()
+        fermee = services.semaine_fermee(pays, request.user, debut, planning)
         donnees = _semaine(pays, debut, planning) | {
             "peut_creer": planning is None
             and debut >= lundi(aujourdhui(pays))
+            and not fermee
+            and timezone.now() < services.fermeture(pays, debut)
             and services.occupe_un_poste(request.user, pays, debut),
-            "modifiable": bool(planning) and planning.statut in MODIFIABLES,
+            "modifiable": bool(planning)
+            and planning.statut in MODIFIABLES
+            and not services.est_ferme(planning),
             "reprenables": _reprenables(planning),
+            "fermee": fermee,
+            "demande_envoyee": fermee and services.reouverture_demandee(request.user, debut),
         }
         return Response(s.SemaineSerializer(donnees).data)
 
@@ -145,6 +153,8 @@ def _semaine(pays, debut: date, planning: Planning | None) -> dict:
         "peut_creer": False,
         "modifiable": False,
         "reprenables": 0,
+        "fermee": False,
+        "demande_envoyee": False,
         "visites": _visites(planning) if planning else [],
         "passages": _passages(planning) if planning else [],
         "activites": list(planning.activites.filter(archive_le__isnull=True)) if planning else [],
@@ -592,3 +602,62 @@ class VisiteCopieVue(VueVisites):
         v = _lire(s.CopieSerializer, request)
         copie = services.copier_visite(visite, v["date"])
         return Response(s.VisiteSerializer(copie).data, status=status.HTTP_201_CREATED)
+
+
+# --- Fermeture de la semaine (décision du 6 octobre 2026) ------------------------------------
+
+
+class DemandeReouvertureVue(VuePlannings):
+    """Le délégué dont la semaine est fermée demande à son superviseur d'en rouvrir la
+    rédaction ; une seule demande par semaine."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.SemaineCibleSerializer, responses=s.DemandeReouvertureSerializer,
+                   operation_id="planning_demander_reouverture")  # fmt: skip
+    def post(self, request):
+        pays = pays_requis(self.perimetre)
+        v = _lire(s.SemaineCibleSerializer, request)
+        nombre = services.demander_reouverture(pays, request.user, v["semaine"])
+        return Response(s.DemandeReouvertureSerializer({"destinataires": nombre}).data)
+
+
+class SemainesFermeesVue(VuePerimetre):
+    """Les délégués supervisés dont la semaine en cours est fermée : le superviseur peut rouvrir
+    leur rédaction ; la réouverture reste inscrite."""
+
+    actions = {"GET": Action.PLANNINGS_VALIDER}
+    serializer_class = s.SemaineFermeeSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Planning.objects.none())
+
+    @extend_schema(responses=s.SemaineFermeeSerializer(many=True),
+                   operation_id="plannings_fermes")  # fmt: skip
+    def get(self, request):
+        pays = pays_requis(self.perimetre)
+        lignes = services.semaines_fermees(request.user, pays)
+        return Response(s.SemaineFermeeSerializer(lignes, many=True).data)
+
+
+class ReouvertureVue(VuePerimetre):
+    """Le superviseur du poste (ou son remplaçant) rouvre la rédaction d'un planning fermé."""
+
+    actions = {"POST": Action.PLANNINGS_VALIDER}
+    serializer_class = s.PlanningSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Planning.objects.none())
+
+    @extend_schema(request=s.ReouvertureSerializer, responses=s.PlanningSerializer,
+                   operation_id="planning_rouvrir")  # fmt: skip
+    def post(self, request):
+        from apps.identite.models import Utilisateur
+
+        pays = pays_requis(self.perimetre)
+        v = _lire(s.ReouvertureSerializer, request)
+        delegue = Utilisateur.objects.filter(pk=v["delegue"]).first()
+        if delegue is None:
+            raise Http404
+        planning = services.rouvrir(pays, delegue, v["semaine"], request.user)
+        return Response(s.PlanningSerializer(planning).data)

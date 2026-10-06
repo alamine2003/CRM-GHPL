@@ -1,6 +1,6 @@
-import type { ClientApi, PlanningEnAttente } from '@innov/api-client';
+import type { ClientApi, PlanningEnAttente, SemaineFermee } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import axe from 'axe-core';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,6 +20,8 @@ const LIGNE: PlanningEnAttente = {
     decision: null,
     numero_version: null,
     motif_version: null,
+    ferme: false,
+    reouvert_le: null,
   },
   fuseau: 'Africa/Dakar',
   delegue: { id: 'u1', prenom: 'Awa', nom: 'FICTIVE' },
@@ -45,10 +47,14 @@ const LIGNE: PlanningEnAttente = {
   ],
 };
 
-function rendre(aValider: () => Promise<PlanningEnAttente[]>) {
+function rendre(
+  aValider: () => Promise<PlanningEnAttente[]>,
+  fermes: () => Promise<SemaineFermee[]> = async () => [],
+  rouvrir = vi.fn(async () => LIGNE.planning),
+) {
   const session = {
     etat: { statut: 'chargement' },
-    client: { plannings: { aValider } } as unknown as ClientApi,
+    client: { plannings: { aValider, fermes, rouvrir } } as unknown as ClientApi,
   } as unknown as Session;
   return render(
     <QueryClientProvider
@@ -128,5 +134,50 @@ describe('PLN-016 : escalade vers le DM', () => {
         'Escaladé : sans décision de Kossi FICTIF depuis le lundi 12 octobre à 17:00',
       ),
     ).toBeTruthy();
+  });
+});
+
+describe('0.3.9 : semaines fermées le lundi 0 h', () => {
+  const FERMEE: SemaineFermee = {
+    delegue: { id: 'u2', prenom: 'Moussa', nom: 'FICTIF' },
+    semaine: '2026-10-12',
+    planning: null,
+    demande: true,
+  };
+
+  it('le superviseur voit qui est fermé, qui a demandé, et rouvre après confirmation', async () => {
+    const rouvrir = vi.fn(async () => LIGNE.planning);
+    const fermes = vi
+      .fn<() => Promise<SemaineFermee[]>>()
+      .mockResolvedValueOnce([
+        FERMEE,
+        {
+          ...FERMEE,
+          delegue: { id: 'u3', prenom: 'Awa', nom: 'FICTIVE' },
+          planning: { ...LIGNE.planning, statut: 'brouillon', ferme: true },
+          demande: false,
+        },
+      ])
+      .mockResolvedValue([]);
+    const { container } = rendre(
+      vi.fn(async () => []),
+      fermes,
+      rouvrir,
+    );
+    expect(await screen.findByRole('heading', { name: 'Semaines fermées' })).toBeTruthy();
+    expect(screen.getByText('Aucun planning')).toBeTruthy();
+    expect(screen.getByText('En préparation')).toBeTruthy();
+    expect(screen.getAllByText('Réouverture demandée')).toHaveLength(1);
+    const resultat = await axe.run(container, {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
+      rules: { 'color-contrast': { enabled: false } },
+    });
+    expect(resultat.violations.map((v) => v.id)).toEqual([]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Rouvrir la rédaction' })[0]!);
+    expect(screen.getByText(/Rouvrir la rédaction du planning de Moussa FICTIF/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Oui, rouvrir' }));
+    await waitFor(() => expect(rouvrir).toHaveBeenCalledWith('u2', '2026-10-12'));
+    // La liste se recharge : plus rien à rouvrir.
+    await waitFor(() => expect(screen.queryByText('Semaines fermées')).toBeNull());
   });
 });

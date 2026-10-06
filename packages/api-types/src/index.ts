@@ -80,6 +80,8 @@ export type JourFerie = Schemas['JourFerie'];
 export type Planning = Schemas['Planning'];
 /** Ligne de la file du superviseur (PLN-011). */
 export type PlanningEnAttente = Schemas['PlanningEnAttente'];
+/** Délégué dont la semaine en cours est fermée le lundi 0 h (décision du 6 octobre 2026). */
+export type SemaineFermee = Schemas['SemaineFermee'];
 export type ConsultationPlanning = Schemas['Consultation'];
 export type DecisionPlanning = Schemas['Decision'];
 export type Revision = Schemas['Revision'];

@@ -326,7 +326,15 @@ class Generateur:
         self.bilan.pays[code]["cibles"] = self.cibles(pays)
         self.bilan.pays[code].update(self.a_trancher(pays, delegues[0]))
         self.bilan.pays[code]["jours_feries"] = self.jours_feries(pays)
-        self.bilan.pays[code]["visites"] = self.plannings(pays, delegues[0])
+        # Le second délégué du scénario de planning dépend du même superviseur que le premier :
+        # les postes se rattachent aux superviseurs à tour de rôle.
+        second = len(superviseurs)
+        if second < min(len(delegues), len(rattaches)):
+            self.premier(f"delegue semaine fermee ({code})", delegues[second])
+            equipe = [delegues[0], delegues[second]]
+        else:
+            equipe = [delegues[0]]
+        self.bilan.pays[code]["visites"] = self.plannings(pays, equipe)
 
     def exercices(self, pays) -> int:
         """Lieux d'exercice fictifs (PRP-004) : chaque prospect exerce dans un établissement de
@@ -377,26 +385,32 @@ class Generateur:
                 nombre += 1
         return nombre
 
-    def plannings(self, pays, delegue) -> int:
-        """Le cycle 0.2 en deux semaines du premier délégué : la semaine en cours, déjà soumise
-        à temps (PLN-008), et la suivante en préparation (PLN-001 à PLN-009)."""
+    def plannings(self, pays, delegues) -> int:
+        """Le cycle du planning sur deux délégués (0.3.9). Le premier : sa semaine en cours
+        validée avant la fermeture du lundi 0 h (PLN-012), la suivante en préparation (PLN-001
+        à PLN-009). Le second : sa semaine suivante soumise, à décider par le superviseur
+        (PLN-011), et sa semaine en cours fermée sans planning, dont il a demandé la
+        réouverture (décision du 6 octobre 2026)."""
         from apps.planning.calendrier import lundi
 
         courante = lundi(aujourdhui(pays))
-        return self.semaine_soumise(pays, delegue, courante) + self.semaine_en_preparation(
-            pays, delegue, courante + timedelta(days=7)
-        )
+        suivante = courante + timedelta(days=7)
+        nombre = self.semaine_approuvee(pays, delegues[0], courante)
+        nombre += self.semaine_en_preparation(pays, delegues[0], suivante)
+        if len(delegues) > 1:
+            nombre += self.semaine_soumise(pays, delegues[1], suivante)
+            self.semaine_fermee(pays, delegues[1], courante)
+        return nombre
 
-    def semaine_soumise(self, pays, delegue, semaine) -> int:
-        """Visites complètes et un passage, soumis au superviseur avant l'échéance : la semaine
-        se lit, sans se modifier."""
+    def _semaine_complete(self, pays, delegue, semaine):
+        """Visites complètes, un passage, une matinée d'accompagnement et une visite hors liste
+        cible : une semaine prête à soumettre, sans point bloquant."""
         from apps.planning import controles
         from apps.planning import services as pln
-        from apps.planning.etats import StatutPlanning
 
         planning, jours, reseau, cibles = self._planning(pays, delegue, semaine)
         if planning is None:
-            return 0
+            return None, 0
         nombre = self._visites(planning, jours, reseau, cibles, a_completer=False)
         nombre += self._passage_et_absence(planning, jours, reseau, cibles, absence=False)
         # PLN-018 : une matinée d'accompagnement par le superviseur, avec son explication.
@@ -406,16 +420,64 @@ class Generateur:
                                  "la présentation du produit du mois")  # fmt: skip
         nombre += self._hors_cible(planning, jours, reseau)
         if controles.bloquants(planning) or pln.postes_sans_superviseur(planning):
-            return nombre
-        # Soumis la veille de l'échéance, en fin d'après-midi : à temps (RG-013).
+            return None, nombre
+        return planning, nombre
+
+    @staticmethod
+    def _figer_soumis(planning, soumis_le):
+        from apps.planning import services as pln
+        from apps.planning.etats import StatutPlanning
+
         type(planning).objects.filter(pk=planning.pk).update(
-            statut=StatutPlanning.SOUMIS, en_retard=False,
-            soumis_le=pln.echeance(planning) - timedelta(days=1, hours=1),
-        )  # fmt: skip
-        # Sa version figée, comme à toute soumission (RG-037) : le superviseur la décidera.
+            statut=StatutPlanning.SOUMIS, en_retard=False, soumis_le=soumis_le)  # fmt: skip
+        # Sa version figée, comme à toute soumission (RG-037).
         planning.refresh_from_db()
-        pln.figer(planning)
+        return pln.figer(planning)
+
+    def semaine_soumise(self, pays, delegue, semaine) -> int:
+        """Soumise au superviseur il y a deux heures, bien avant la fermeture : elle attend sa
+        décision dans la file (PLN-011)."""
+        from django.utils import timezone
+
+        planning, nombre = self._semaine_complete(pays, delegue, semaine)
+        if planning is not None:
+            self._figer_soumis(planning, timezone.now() - timedelta(hours=2))
         return nombre
+
+    def semaine_approuvee(self, pays, delegue, semaine) -> int:
+        """Soumise le vendredi précédent à 17 h et validée le lendemain par le superviseur du
+        poste : la semaine en cours est la référence du délégué (PLN-012)."""
+        from apps.planning import services as pln
+        from apps.planning.etats import StatutPlanning
+        from apps.planning.models import Decision, ModeDecision
+
+        planning, nombre = self._semaine_complete(pays, delegue, semaine)
+        if planning is None:
+            return nombre
+        fermeture = pln.fermeture(pays, semaine)
+        version = self._figer_soumis(planning, fermeture - timedelta(days=2, hours=7))
+        superviseur = Utilisateur.objects.filter(pk__in=pln.responsables(planning)).first()
+        type(version).objects.filter(pk=version.pk).update(
+            decision=Decision.APPROUVE, mode=ModeDecision.DIRECT, decide_par=superviseur,
+            decide_le=fermeture - timedelta(days=1, hours=14),
+        )  # fmt: skip
+        # Construite après coup, la semaine avait été rouverte le temps de la poser : validée,
+        # elle n'en garde pas trace.
+        type(planning).objects.filter(pk=planning.pk).update(
+            statut=StatutPlanning.APPROUVE, reouvert_le=None, reouvert_par=None)  # fmt: skip
+        return nombre
+
+    @staticmethod
+    def semaine_fermee(pays, delegue, semaine) -> None:
+        """Sans planning le lundi 0 h, la semaine est fermée : le délégué a demandé à son
+        superviseur d'en rouvrir la rédaction."""
+        from apps.planning import services as pln
+        from apps.socle.erreurs import ErreurMetier
+
+        try:
+            pln.demander_reouverture(pays, delegue, semaine)
+        except ErreurMetier:  # sans superviseur ni poste : rien à demander
+            pass
 
     def semaine_en_preparation(self, pays, delegue, semaine) -> int:
         """Quelques visites de la liste cible, dont une encore à compléter (heure et objectif),
@@ -428,17 +490,29 @@ class Generateur:
 
     @staticmethod
     def _planning(pays, delegue, semaine):
+        from django.utils import timezone
+
         from apps.planning import services as pln
         from apps.planning.calendrier import jours_planifiables
+        from apps.planning.models import Planning
         from apps.prospects.models import Cible
 
         if not pln.occupe_un_poste(delegue, pays, semaine):
             return None, [], None, []
-        planning = pln.creer_planning(pays, delegue, semaine)
+        if timezone.now() < pln.fermeture(pays, semaine):
+            planning = pln.creer_planning(pays, delegue, semaine)
+        else:
+            # La semaine en cours est fermée depuis le lundi 0 h : la démonstration la pose
+            # comme rouverte, le temps de la construire.
+            planning = Planning.objects.create(pays=pays, delegue=delegue, semaine=semaine,
+                                               reouvert_le=timezone.now())  # fmt: skip
         reseau = next((r for p in pln.postes_de_la_semaine(planning) for r in p.reseaux.all()),
                       None)  # fmt: skip
         cibles = list(
-            Cible.objects.filter(fin__isnull=True, poste__occupations__utilisateur=delegue)
+            # Fiches actives seulement : une fiche inactive bloquerait la soumission (RG-015).
+            Cible.objects.filter(
+                fin__isnull=True, poste__occupations__utilisateur=delegue, prospect__statut="actif"
+            )
             .select_related("prospect")
             .order_by("-prospect__potentiel", "prospect__nom")[:20]
         )
@@ -451,15 +525,17 @@ class Generateur:
         heures = ["09:00", "10:30", "15:00", "16:30"]
         nombre = 0
         for cible in cibles:
-            lieu = cible.prospect.exercices.filter(fin__isnull=True).order_by("-principal").first()
-            if lieu is None or not jours:
+            # Le lieu que le délégué peut viser (PRP-006 : un lieu « à valider » reste à son
+            # auteur).
+            lieu = pln.lieu_principal(cible.prospect, jours[0], planning.delegue) if jours else None
+            if lieu is None:
                 continue
             if nombre == 4:
                 break
             complete = nombre < 3 or not a_completer
             pln.ajouter_visite(
                 planning, date=jours[nombre % len(jours)], prospect=cible.prospect,
-                etablissement=lieu.etablissement, reseau=reseau,
+                etablissement=lieu, reseau=reseau,
                 heure=time.fromisoformat(heures[nombre]) if complete else None,
                 objectif="Présenter le produit du mois" if complete else "",
             )  # fmt: skip

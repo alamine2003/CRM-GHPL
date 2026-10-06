@@ -21,6 +21,7 @@ import type {
   JourFerie,
   Planning,
   PlanningEnAttente,
+  SemaineFermee,
   Qualite,
   Semaine,
   Reprise,
@@ -129,6 +130,7 @@ export type {
   ResumeNotifications,
   Planning,
   PlanningEnAttente,
+  SemaineFermee,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -669,6 +671,20 @@ export function creerClient(options: OptionsClient) {
     plannings: {
       /** File du superviseur : plannings soumis de son équipe, du plus ancien (PLN-011). */
       aValider: () => requete<PlanningEnAttente[]>('/api/v1/plannings/a-valider/'),
+      /** Délégués supervisés dont la semaine en cours est fermée depuis le lundi 0 h. */
+      fermes: () => requete<SemaineFermee[]>('/api/v1/plannings/fermes/'),
+      /** Le superviseur rouvre la rédaction d'un planning fermé ; la réouverture est inscrite. */
+      rouvrir: (delegue: string, semaine: string) =>
+        requete<Planning>('/api/v1/plannings/fermes/rouvrir/', {
+          methode: 'POST',
+          corps: { delegue, semaine },
+        }),
+      /** Le délégué demande à son superviseur de rouvrir sa semaine fermée. */
+      demanderReouverture: (semaine: string) =>
+        requete<{ destinataires: number }>('/api/v1/plannings/semaine/reouverture/', {
+          methode: 'POST',
+          corps: { semaine },
+        }),
       /** Un planning soumis consulté par son superviseur, sans rien y modifier (0.3.2). */
       consulter: (id: string) =>
         requete<ConsultationPlanning>(`/api/v1/plannings/${id}/consultation/`),

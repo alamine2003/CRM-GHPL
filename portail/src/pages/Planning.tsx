@@ -167,9 +167,10 @@ export default function Planning() {
           <Resume semaine={s} agir={agir} jourCourt={jourCourt} />
           <HeuresChangees semaine={s} jourCourt={jourCourt} />
           {s.planning && <HistoriqueVersions planning={s.planning.id} fuseau={s.fuseau} />}
+          {/* Fermée sans planning : des jours vides n'apprendraient rien. */}
           <Box
             sx={{
-              display: 'grid',
+              display: s.fermee && !s.planning ? 'none' : 'grid',
               gap: 2,
               gridTemplateColumns: { xs: '1fr', lg: modifiable ? '1fr 300px' : '1fr' },
               alignItems: 'start',
@@ -338,6 +339,18 @@ function Resume({
                       })}
                     />
                   )}
+                {s.planning.reouvert_le && (
+                  <Ligne
+                    libelle={t('fermeture.reouverture')}
+                    valeur={t('fermeture.rouverte', { date: dateHeure(s.planning.reouvert_le) })}
+                  />
+                )}
+                {s.approbation && !s.approbation.modifiable && s.planning.statut === 'approuve' && (
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {t('fermeture.semaineCommencee')}
+                  </Typography>
+                )}
+                <SemaineFermee semaine={s} agir={agir} />
                 {s.modifiable && (
                   <Box>
                     <Button
@@ -404,6 +417,8 @@ function Resume({
                   </Button>
                 </Box>
               </>
+            ) : s.fermee ? (
+              <SemaineFermee semaine={s} agir={agir} />
             ) : (
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {t('semaine.sansPoste')}
@@ -586,5 +601,48 @@ function ListeAGlisser({
         ))}
       </Menu>
     </Card>
+  );
+}
+
+/**
+ * Semaine fermée le lundi 0 h sans planning validé (décision du 6 octobre 2026) : le délégué
+ * demande à son superviseur d'en rouvrir la rédaction, une seule fois.
+ */
+function SemaineFermee({
+  semaine,
+  agir,
+}: {
+  semaine: Semaine;
+  agir: (action: () => Promise<unknown>, succes?: string) => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const [envoi, setEnvoi] = useState(false);
+  if (!semaine.fermee) return null;
+  return (
+    <Stack spacing={1}>
+      <Alert severity="warning">{t('fermeture.delegue')}</Alert>
+      {semaine.demande_envoyee ? (
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {t('fermeture.demandeEnvoyee')}
+        </Typography>
+      ) : (
+        <Box>
+          <Button
+            variant="contained"
+            disabled={envoi}
+            onClick={() => {
+              setEnvoi(true);
+              void agir(
+                () => client.plannings.demanderReouverture(semaine.semaine),
+                t('fermeture.demandeSucces'),
+              ).finally(() => setEnvoi(false));
+            }}
+          >
+            {t('fermeture.demander')}
+          </Button>
+        </Box>
+      )}
+    </Stack>
   );
 }

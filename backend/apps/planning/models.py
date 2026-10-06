@@ -52,6 +52,13 @@ class Planning(ModeleDePays):
     #: Dernière soumission (PLN-008) ; « en retard » si elle a suivi l'échéance du pays (RG-013).
     soumis_le = models.DateTimeField(null=True, blank=True)
     en_retard = models.BooleanField(default=False)
+    #: Rédaction rouverte par le superviseur après la fermeture du lundi 0 h (décision du
+    #: 6 octobre 2026) : on sait que le planning n'a pas été fait à temps.
+    reouvert_le = models.DateTimeField(null=True, blank=True)
+    reouvert_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
+        related_name="+",
+    )  # fmt: skip
 
     class Meta:
         ordering = ["-semaine"]

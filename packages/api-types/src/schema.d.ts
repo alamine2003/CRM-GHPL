@@ -1733,6 +1733,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/plannings/fermes/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Les délégués supervisés dont la semaine en cours est fermée : le superviseur peut rouvrir
+     *     leur rédaction ; la réouverture reste inscrite.
+     */
+    get: operations['plannings_fermes'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/fermes/rouvrir/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description Le superviseur du poste (ou son remplaçant) rouvre la rédaction d'un planning fermé. */
+    post: operations['planning_rouvrir'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/semaine/': {
     parameters: {
       query?: never;
@@ -1743,6 +1780,26 @@ export interface paths {
     get: operations['planning_semaine'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/plannings/semaine/reouverture/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description Le délégué dont la semaine est fermée demande à son superviseur d'en rouvrir la
+     *     rédaction ; une seule demande par semaine.
+     */
+    post: operations['planning_demander_reouverture'];
     delete?: never;
     options?: never;
     head?: never;
@@ -2619,6 +2676,8 @@ export interface components {
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
       approbation: components['schemas']['SuiviApprobation'] | null;
+      fermee: boolean;
+      demande_envoyee: boolean;
       delegue: components['schemas']['Delegue'];
       remplace: components['schemas']['Delegue'] | null;
       escalade: components['schemas']['Escalade'] | null;
@@ -2765,6 +2824,9 @@ export interface components {
       id: string;
       prenom: string;
       nom: string;
+    };
+    DemandeReouverture: {
+      destinataires: number;
     };
     Deplacement: {
       visite: components['schemas']['VisiteFigee'];
@@ -3253,6 +3315,8 @@ export interface components {
      *     * `rappel_planning` - Planning non soumis
      *     * `escalade` - Escalade
      *     * `plannings_non_approuves` - Plannings non approuvés
+     *     * `reouverture_demandee` - Réouverture demandée
+     *     * `redaction_rouverte` - Rédaction rouverte
      * @enum {string}
      */
     NotificationTypeEnum:
@@ -3262,7 +3326,9 @@ export interface components {
       | 'remplacement_attribue'
       | 'rappel_planning'
       | 'escalade'
-      | 'plannings_non_approuves';
+      | 'plannings_non_approuves'
+      | 'reouverture_demandee'
+      | 'redaction_rouverte';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
@@ -3497,6 +3563,9 @@ export interface components {
       readonly numero_version: number | null;
       readonly motif_version:
         (components['schemas']['MotifVersionEnum'] | components['schemas']['NullEnum']) | null;
+      readonly ferme: boolean;
+      /** Format: date-time */
+      readonly reouvert_le: string | null;
     };
     /**
      * @description Ligne de la file du superviseur (PLN-011) : le planning, son délégué, ses alertes et
@@ -3807,6 +3876,12 @@ export interface components {
       readonly etat: string;
       readonly terminable: boolean;
     };
+    Reouverture: {
+      /** Format: uuid */
+      delegue: string;
+      /** Format: date */
+      semaine: string;
+    };
     Reprise: {
       copiees: number;
       ignorees: components['schemas']['VisiteIgnoree'][];
@@ -4035,6 +4110,20 @@ export interface components {
       controles: components['schemas']['Controles'] | null;
       reseaux: components['schemas']['Resume'][];
       approbation: components['schemas']['SuiviApprobation'] | null;
+      fermee: boolean;
+      demande_envoyee: boolean;
+    };
+    SemaineCible: {
+      /** Format: date */
+      semaine: string;
+    };
+    /** @description Un délégué dont la semaine en cours est fermée, sans planning validé. */
+    SemaineFermee: {
+      delegue: components['schemas']['Delegue'];
+      /** Format: date */
+      semaine: string;
+      planning: components['schemas']['Planning'] | null;
+      demande: boolean;
     };
     Session: {
       /** Format: uuid */
@@ -7040,6 +7129,50 @@ export interface operations {
       };
     };
   };
+  plannings_fermes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SemaineFermee'][];
+        };
+      };
+    };
+  };
+  planning_rouvrir: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Reouverture'];
+        'application/x-www-form-urlencoded': components['schemas']['Reouverture'];
+        'multipart/form-data': components['schemas']['Reouverture'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Planning'];
+        };
+      };
+    };
+  };
   planning_semaine: {
     parameters: {
       query?: {
@@ -7058,6 +7191,31 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Semaine'];
+        };
+      };
+    };
+  };
+  planning_demander_reouverture: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SemaineCible'];
+        'application/x-www-form-urlencoded': components['schemas']['SemaineCible'];
+        'multipart/form-data': components['schemas']['SemaineCible'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DemandeReouverture'];
         };
       };
     };

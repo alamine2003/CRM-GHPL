@@ -11,8 +11,8 @@ import { Alerte, Bouton, Carte, Etiquette, Texte, usePalette } from './composant
 import { messageErreur, useSession } from './session';
 
 /**
- * « jeudi 8 octobre à 18:00 », dans la langue du délégué et à l'heure du pays (l'échéance est
- * « jeudi 18 h, heure du pays », quel que soit le réglage du téléphone).
+ * « lundi 12 octobre à 00:00 », dans la langue du délégué et à l'heure du pays (la semaine
+ * ferme le lundi 0 h, heure du pays, quel que soit le réglage du téléphone).
  */
 export function dateHeure(iso: string, langue: string, fuseau?: string) {
   const options: Intl.DateTimeFormatOptions = {
@@ -61,6 +61,16 @@ export function EtatSoumission({
     );
   }
   if (!modifiable) return null;
+  // Rouvert par le superviseur après la fermeture : on sait qu'il n'a pas été fait à temps.
+  if (planning.reouvert_le && planning.statut === 'brouillon') {
+    return (
+      <Texte variante="discret">
+        {t('fermeture.rouverte', {
+          date: dateHeure(planning.reouvert_le, i18n.language, fuseau),
+        })}
+      </Texte>
+    );
+  }
   // Une nouvelle soumission après révision n'est jamais en retard (PLN-008 CA2).
   if (planning.statut === 'a_reviser') {
     return <Texte variante="discret">{t('soumission.sansRetard')}</Texte>;
@@ -165,5 +175,52 @@ export function CarteSoumission({
         </>
       )}
     </Carte>
+  );
+}
+
+/**
+ * Semaine fermée le lundi 0 h sans planning validé (décision du 6 octobre 2026) : rien ne s'y
+ * fait plus ; le délégué demande à son superviseur d'en rouvrir la rédaction, une fois.
+ */
+export function SemaineFermee({
+  semaine,
+  surDemande,
+}: {
+  semaine: Semaine;
+  surDemande: (message: string) => void;
+}) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const [envoi, setEnvoi] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  if (!semaine.fermee) return null;
+
+  async function demander() {
+    setEnvoi(true);
+    setErreur(null);
+    try {
+      await client.plannings.demanderReouverture(semaine.semaine);
+      surDemande(t('fermeture.demandeSucces'));
+    } catch (e) {
+      setErreur(messageErreur(e, t('erreurs.reseau')));
+    } finally {
+      setEnvoi(false);
+    }
+  }
+
+  return (
+    <View style={{ gap: 8 }}>
+      <Alerte type="attention">{t('fermeture.delegue')}</Alerte>
+      {erreur && <Alerte type="erreur">{erreur}</Alerte>}
+      {semaine.demande_envoyee ? (
+        <Texte variante="discret">{t('fermeture.demandeEnvoyee')}</Texte>
+      ) : (
+        <Bouton
+          libelle={t('fermeture.demander')}
+          chargement={envoi}
+          onPress={() => void demander()}
+        />
+      )}
+    </View>
   );
 }

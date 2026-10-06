@@ -54,7 +54,10 @@ def test_une_resoumission_apres_revision_n_est_pas_en_retard(monde, revise):
 def test_un_premier_retard_reste_apres_la_revision(monde, terrain):
     org.rattacher(terrain["poste"], monde["sup.sn"], date(2026, 1, 1))
     planning = terrain["planning"]
-    with freeze_time("2026-10-09 09:00"):
+    with freeze_time("2026-10-12 08:00"):
+        # Fermé le lundi 0 h, rouvert par le superviseur : la soumission est en retard.
+        services.rouvrir(monde["sn"], monde["deleg.sn"], planning.semaine, monde["sup.sn"])
+        planning.refresh_from_db()
         services.ajouter_visite(planning, date=MARDI, heure=time(9, 0),
                                 prospect=terrain["medecin"], etablissement=terrain["clinique"],
                                 objectif="Vasculor")  # fmt: skip

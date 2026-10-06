@@ -450,7 +450,7 @@
     "cles": {
       "format_date": "Date display format",
       "jours_ouvres": "Working days",
-      "echeance_soumission_planning": "Plan submission deadline",
+      "echeance_soumission_planning": "Week closing (submit before)",
       "echeance_approbation_planning": "Plan approval deadline",
       "heure_limite_rapport": "Report deadline",
       "seuils_visites_jour": "Visits per day by position type",
@@ -1653,6 +1653,8 @@
     "escalade": "Escalation: {{nom}}'s planning (week {{numero}}) has awaited a decision for {{heures}} working hours",
     "plannings_non_approuves_one": "{{count}} planning for week {{numero}} is not approved in your networks",
     "plannings_non_approuves_other": "{{count}} plannings for week {{numero}} are not approved in your networks",
+    "reouverture_demandee": "{{nom}} asks you to reopen their planning for week {{numero}}",
+    "redaction_rouverte": "{{nom}} reopened your planning for week {{numero}}",
     "centre": "Notifications",
     "centreSousTitre": "The 100 most recent; each opens what it expects from you.",
     "aucune": "No notifications yet.",
@@ -1798,5 +1800,24 @@
     "ligne": "Escalated: no decision from {{noms}} since {{date}}",
     "court": "Escalated",
     "parEscalade": "by escalation"
+  },
+  "fermeture": {
+    "titre": "Week closed",
+    "delegue": "The week started on Monday at 00:00 without an approved planning: it is closed. Only your supervisor can reopen it for editing.",
+    "demander": "Ask to reopen",
+    "demandeEnvoyee": "Request sent to your supervisor: you will be notified as soon as they reopen it.",
+    "demandeSucces": "Request sent to your supervisor.",
+    "rouverte": "Reopened on {{date}}: the planning was not done on time, its submission will be marked late.",
+    "semaineCommencee": "The week has started: this approved planning can no longer be changed.",
+    "liste": "Closed weeks",
+    "listeAide": "These representatives have no approved planning for the current week. Reopening lets them prepare and submit it; the reopening is recorded.",
+    "sansPlanning": "No planning",
+    "demandeRecue": "Reopening requested",
+    "rouvrir": "Reopen for editing",
+    "rouvrirConfirmation": "Reopen {{nom}}'s planning for editing? They will be able to prepare and submit it; the submission will be marked late.",
+    "rouvrirConfirmer": "Yes, reopen",
+    "rouvertSucces": "Reopened: {{nom}} has been notified.",
+    "consultation": "Week closed since Monday 00:00: this planning cannot be decided until it is reopened.",
+    "reouverture": "Reopening"
   }
 }

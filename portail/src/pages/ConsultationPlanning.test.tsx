@@ -59,6 +59,8 @@ const CONSULTATION: Consultation = {
     decision: null,
     numero_version: null,
     motif_version: null,
+    ferme: false,
+    reouvert_le: null,
   },
   peut_creer: false,
   modifiable: false,
@@ -85,6 +87,8 @@ const CONSULTATION: Consultation = {
   },
   kilometrage: { total_km: 12.5, sans_coordonnees: 0, jours: [] },
   reprenables: 0,
+  fermee: false,
+  demande_envoyee: false,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   approbation: null,
   delegue: { id: 'u1', prenom: 'Aminata', nom: 'FICTIVE' },
@@ -311,6 +315,8 @@ describe('PLN-015 : modification après approbation', () => {
         statut: 'approuve',
         numero_version: 1,
         motif_version: 'soumission',
+        ferme: false,
+        reouvert_le: null,
       },
       approbation: {
         reference: 1,
@@ -354,5 +360,28 @@ describe('PLN-015 : modification après approbation', () => {
     expect(screen.getByText('À décider : mar. 13 09:00 · Dr Awa FICTIF')).toBeTruthy();
     const mardi = screen.getByLabelText('mardi 13');
     expect(within(mardi).getByText('En attente')).toBeTruthy();
+  });
+});
+
+describe('0.3.9 : planning fermé le lundi 0 h', () => {
+  it('la décision cède la place à la réouverture, après confirmation', async () => {
+    const rouvrir = vi.fn(async () => ({ ...CONSULTATION.planning!, ferme: false }));
+    rendreAvec({
+      consulter: vi.fn(async () => ({
+        ...CONSULTATION,
+        planning: { ...CONSULTATION.planning!, ferme: true },
+      })),
+      rouvrir,
+    });
+    expect(await screen.findByText(/ne se décide plus/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Approuver' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Rouvrir la rédaction' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Oui, rouvrir' }));
+    await waitFor(() =>
+      expect(rouvrir).toHaveBeenCalledWith(CONSULTATION.delegue.id, CONSULTATION.semaine),
+    );
+    expect(mockNotifier).toHaveBeenCalledWith(
+      'Rédaction rouverte : Aminata FICTIVE en est prévenu.',
+    );
   });
 });

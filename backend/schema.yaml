@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.3.8
+  version: 0.3.9
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2925,6 +2925,53 @@ paths:
                 items:
                   $ref: '#/components/schemas/PlanningEnAttente'
           description: ''
+  /api/v1/plannings/fermes/:
+    get:
+      operationId: plannings_fermes
+      description: |-
+        Les délégués supervisés dont la semaine en cours est fermée : le superviseur peut rouvrir
+        leur rédaction ; la réouverture reste inscrite.
+      tags:
+      - plannings
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SemaineFermee'
+          description: ''
+  /api/v1/plannings/fermes/rouvrir/:
+    post:
+      operationId: planning_rouvrir
+      description: Le superviseur du poste (ou son remplaçant) rouvre la rédaction
+        d'un planning fermé.
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reouverture'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reouverture'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reouverture'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planning'
+          description: ''
   /api/v1/plannings/semaine/:
     get:
       operationId: planning_semaine
@@ -2945,6 +2992,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Semaine'
+          description: ''
+  /api/v1/plannings/semaine/reouverture/:
+    post:
+      operationId: planning_demander_reouverture
+      description: |-
+        Le délégué dont la semaine est fermée demande à son superviseur d'en rouvrir la
+        rédaction ; une seule demande par semaine.
+      tags:
+      - plannings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SemaineCible'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SemaineCible'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SemaineCible'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemandeReouverture'
           description: ''
   /api/v1/propositions/:
     get:
@@ -4814,6 +4890,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/SuiviApprobation'
           nullable: true
+        fermee:
+          type: boolean
+        demande_envoyee:
+          type: boolean
         delegue:
           $ref: '#/components/schemas/Delegue'
         remplace:
@@ -4834,7 +4914,9 @@ components:
       - controles
       - courante
       - delegue
+      - demande_envoyee
       - escalade
+      - fermee
       - fuseau
       - jours
       - kilometrage
@@ -5205,6 +5287,13 @@ components:
       - id
       - nom
       - prenom
+    DemandeReouverture:
+      type: object
+      properties:
+        destinataires:
+          type: integer
+      required:
+      - destinataires
     Deplacement:
       type: object
       properties:
@@ -6386,6 +6475,8 @@ components:
       - rappel_planning
       - escalade
       - plannings_non_approuves
+      - reouverture_demandee
+      - redaction_rouverte
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
@@ -6395,6 +6486,8 @@ components:
         * `rappel_planning` - Planning non soumis
         * `escalade` - Escalade
         * `plannings_non_approuves` - Plannings non approuvés
+        * `reouverture_demandee` - Réouverture demandée
+        * `redaction_rouverte` - Rédaction rouverte
     NullEnum:
       enum:
       - null
@@ -6952,14 +7045,24 @@ components:
           oneOf:
           - $ref: '#/components/schemas/MotifVersionEnum'
           - $ref: '#/components/schemas/NullEnum'
+        ferme:
+          type: boolean
+          readOnly: true
+        reouvert_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
       required:
       - cree_le
       - decision
       - echeance
       - en_retard
+      - ferme
       - id
       - motif_version
       - numero_version
+      - reouvert_le
       - semaine
       - soumis_le
       - statut
@@ -7795,6 +7898,18 @@ components:
       - remplacant
       - superviseur
       - terminable
+    Reouverture:
+      type: object
+      properties:
+        delegue:
+          type: string
+          format: uuid
+        semaine:
+          type: string
+          format: date
+      required:
+      - delegue
+      - semaine
     Reprise:
       type: object
       properties:
@@ -8313,11 +8428,17 @@ components:
           allOf:
           - $ref: '#/components/schemas/SuiviApprobation'
           nullable: true
+        fermee:
+          type: boolean
+        demande_envoyee:
+          type: boolean
       required:
       - activites
       - approbation
       - controles
       - courante
+      - demande_envoyee
+      - fermee
       - fuseau
       - jours
       - kilometrage
@@ -8331,6 +8452,34 @@ components:
       - semaine
       - suivante
       - visites
+    SemaineCible:
+      type: object
+      properties:
+        semaine:
+          type: string
+          format: date
+      required:
+      - semaine
+    SemaineFermee:
+      type: object
+      description: Un délégué dont la semaine en cours est fermée, sans planning validé.
+      properties:
+        delegue:
+          $ref: '#/components/schemas/Delegue'
+        semaine:
+          type: string
+          format: date
+        planning:
+          allOf:
+          - $ref: '#/components/schemas/Planning'
+          nullable: true
+        demande:
+          type: boolean
+      required:
+      - delegue
+      - demande
+      - planning
+      - semaine
     Session:
       type: object
       properties:

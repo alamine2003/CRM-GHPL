@@ -20,6 +20,9 @@ class TypeNotification(models.TextChoices):
     RAPPEL_PLANNING = "rappel_planning", "Planning non soumis"
     ESCALADE = "escalade", "Escalade"
     PLANNINGS_NON_APPROUVES = "plannings_non_approuves", "Plannings non approuvés"
+    #: Fermeture de la semaine (décision du 6 octobre 2026, 0.3.9).
+    REOUVERTURE_DEMANDEE = "reouverture_demandee", "Réouverture demandée"
+    REDACTION_ROUVERTE = "redaction_rouverte", "Rédaction rouverte"
 
 
 class Notification(ModeleDePays):

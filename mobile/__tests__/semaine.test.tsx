@@ -61,6 +61,8 @@ const SEMAINE: Semaine = {
   controles: null,
   kilometrage: null,
   reprenables: 0,
+  fermee: false,
+  demande_envoyee: false,
   reseaux: [{ id: 'r1', libelle: 'Cardio' }],
   approbation: null,
 };
@@ -76,6 +78,8 @@ const PLANNING = {
   decision: null,
   numero_version: null,
   motif_version: null,
+  ferme: false,
+  reouvert_le: null,
 };
 
 const VISITE: Visite = {

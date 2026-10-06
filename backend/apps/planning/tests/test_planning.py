@@ -45,7 +45,8 @@ def test_la_semaine_montre_les_jours_ouvres_et_les_jours_feries(monde):
     ]  # fmt: skip
     assert r["jours"][4] == {"date": "2026-10-09", "ferie": "Fête de la semaine",
                              "planifiable": False}  # fmt: skip
-    assert r["planning"] is None and r["peut_creer"] is True
+    # Mardi : la semaine en cours a fermé le lundi 0 h (décision du 6 octobre 2026).
+    assert r["planning"] is None and (r["peut_creer"], r["fermee"]) == (False, True)
 
 
 def test_les_jours_ouvres_suivent_le_pays(monde):
@@ -80,8 +81,10 @@ def test_une_semaine_se_designe_par_son_lundi_et_ne_se_planifie_pas_dans_le_pass
     assert deleg.post(URL, {"semaine": "2026-09-28"}, format="json").json()["code"] == (
         "semaine_passee"
     )
-    # La semaine en cours se planifie encore.
-    assert deleg.post(URL, {"semaine": "2026-10-05"}, format="json").status_code == 201
+    # La semaine en cours a fermé le lundi 0 h : seul le superviseur en rouvre la rédaction.
+    assert deleg.post(URL, {"semaine": "2026-10-05"}, format="json").json()["code"] == (
+        "semaine_fermee"
+    )
     assert deleg.get(SEMAINE, {"semaine": "2026-09-30"}).json()["peut_creer"] is False
 
 

@@ -42,12 +42,13 @@ def pret(monde, terrain):
     )  # fmt: skip
 
 
-def test_l_echeance_est_jeudi_18_h_de_la_semaine_precedente(monde, terrain):
+def test_l_echeance_est_le_lundi_0_h_de_la_semaine(monde, terrain):
+    """RG-013, décision du 6 octobre 2026 : la semaine ferme le lundi 0 h."""
     assert services.echeance(terrain["planning"]) == datetime(
-        2026, 10, 8, 18, 0, tzinfo=ZoneInfo("Africa/Dakar"))  # fmt: skip
-    # Paramètre du pays (RG-013) : vendredi midi.
-    definir_parametre(monde["sn"], "echeance_soumission_planning", {"jour": 5, "heure": "12:00"})
-    assert services.echeance(terrain["planning"]).isoformat().startswith("2026-10-09T12:00")
+        2026, 10, 12, 0, 0, tzinfo=ZoneInfo("Africa/Dakar"))  # fmt: skip
+    # Paramètre du pays (RG-013) : lundi 8 h.
+    definir_parametre(monde["sn"], "echeance_soumission_planning", {"jour": 1, "heure": "08:00"})
+    assert services.echeance(terrain["planning"]).isoformat().startswith("2026-10-12T08:00")
 
 
 def test_org007_ca1_sans_superviseur_pas_de_soumission(monde, terrain):
@@ -93,9 +94,12 @@ def test_ca1_soumis_a_temps_puis_plus_modifiable(monde, terrain):
 
 def test_ca1_apres_l_echeance_la_soumission_est_acceptee_et_marquee_en_retard(monde, terrain):
     pret(monde, terrain)
-    with freeze_time("2026-10-09 10:00"):
+    with freeze_time("2026-10-12 10:00"):
         # Avant de soumettre, l'échéance passée est déjà dite au délégué.
         assert "echeance_depassee" in [a.code for a in controles.signalements(terrain["planning"])]
+        # Fermé le lundi 0 h : il faut que le superviseur rouvre la rédaction.
+        assert soumettre(monde, terrain).json()["code"] == "semaine_fermee"
+        services.rouvrir(monde["sn"], monde["deleg.sn"], date(2026, 10, 12), monde["sup.sn"])
         r = soumettre(monde, terrain)
         assert r.status_code == 200 and r.json()["en_retard"] is True
         # Le superviseur le verra (RG-016).

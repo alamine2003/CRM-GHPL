@@ -127,3 +127,16 @@ def test_regles_de_la_periode(monde, remplacant):
     assert r.status_code == 409 and r.json()["code"] == "remplacement_chevauchement"
     r = designer(sup, monde["sup.sn"], monde["deleg.sn"], debut="2026-10-12", fin="2026-10-13")
     assert r.status_code == 400 and r.json()["code"] == "superviseur_invalide"
+
+
+def test_ca2_la_revision_du_remplacant_porte_le_mode_remplacement(monde, remplacant, soumis):
+    """RG-020 : une demande de révision faite par le remplaçant porte son mode et son nom."""
+    org.designer_remplacant(monde["sn"], monde["sup.sn"], remplacant, date(2026, 10, 7),
+                            date(2026, 10, 9), par=monde["sup.sn"])  # fmt: skip
+    corps = {"commentaire": "Ajoutez des visites."}
+    r = client_de(remplacant).post(f"/api/v1/plannings/{soumis.pk}/reviser/", corps, format="json")
+    assert r.status_code == 200, r.content
+    decision = r.json()["decision"]
+    assert (decision["decision"], decision["mode"]) == ("a_reviser", "remplacement")
+    assert decision["par"] == "Ousmane FICTIF"
+    assert soumis.versions.get().decide_par == remplacant

@@ -30,6 +30,7 @@ import {
   ListeActivites,
 } from '../composants/SemainePlanning';
 import { HistoriqueVersions } from '../composants/HistoriqueVersions';
+import { BoutonRouvrir } from '../composants/Reouverture';
 import { AttenteApprobation, HeuresChangees } from '../composants/SuiviApprobation';
 import { libelleVersion, texteEscalade } from '../composants/planningTextes';
 import { useNotifier } from '../contexteNotifications';
@@ -337,6 +338,28 @@ function BandeauDecision({
   }
 
   const decision = planning.decision;
+  // Fermé le lundi 0 h sans décision : il faut d'abord en rouvrir la rédaction.
+  if (planning.ferme) {
+    return (
+      <Card sx={{ p: 2 }}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
+        >
+          <Box>
+            <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
+              {t('fermeture.titre')}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {t('fermeture.consultation')}
+            </Typography>
+          </Box>
+          <BoutonRouvrir delegue={c.delegue} semaine={c.semaine} />
+        </Stack>
+      </Card>
+    );
+  }
   if (planning.statut !== 'soumis') {
     if (!decision) return null;
     const revision = decision.decision === 'a_reviser';

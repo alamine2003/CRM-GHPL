@@ -131,6 +131,13 @@ def creer_planning(pays: Pays, delegue: Utilisateur, semaine: date) -> Planning:
             _("Vous n'occupez aucun poste cette semaine : pas de planning à préparer."),
             status.HTTP_403_FORBIDDEN,
         )
+    if timezone.now() >= fermeture(pays, semaine):
+        raise ErreurMetier(
+            "semaine_fermee",
+            _("La semaine est fermée depuis le lundi 0 h : demandez à votre superviseur de "
+              "rouvrir la rédaction de votre planning."),
+            status.HTTP_409_CONFLICT,
+        )  # fmt: skip
     existant = Planning.objects.filter(delegue=delegue, semaine=semaine).first()
     if existant:
         raise ErreurMetier(
@@ -178,8 +185,15 @@ def _exiger_modifiable(planning: Planning, *, apres_approbation: bool = False) -
     soumis de nouveau (PLN-015, RG-018). Une modification déjà soumise attend sa décision."""
     _verrouiller(planning)
     if planning.statut in MODIFIABLES:
+        _exiger_ouvert(planning)
         return False
     if apres_approbation and planning.statut in APRES_APPROBATION:
+        if semaine_commencee(planning):
+            raise ErreurMetier(
+                "semaine_commencee",
+                _("La semaine a commencé : le planning validé ne se modifie plus."),
+                status.HTTP_409_CONFLICT,
+            )
         return True
     if planning.statut == StatutPlanning.SOUMIS and reference(planning) is not None:
         raise ErreurMetier(
@@ -506,17 +520,50 @@ def ordonner(planning: Planning, jour: date, visites: list) -> None:
 # --- Soumission (PLN-008) ---------------------------------------------------------------------
 
 
-def echeance(planning: Planning) -> datetime:
-    """Échéance de soumission (RG-013) : par défaut jeudi 18 h de la semaine précédente, à
-    l'heure du pays ; jour et heure sont des paramètres du pays."""
+def fermeture(pays: Pays, semaine: date) -> datetime:
+    """Fermeture de la semaine (RG-013, décision du 6 octobre 2026) : le planning se soumet
+    avant le lundi 0 h de sa semaine, à l'heure du pays ; jour et heure sont un paramètre du
+    pays, lu dans la semaine du planning."""
     from zoneinfo import ZoneInfo
 
     from apps.socle.services import valeur_parametre
 
-    regle = valeur_parametre(planning.pays, "echeance_soumission_planning")
-    jour = planning.semaine - timedelta(days=7) + timedelta(days=regle["jour"] - 1)
+    regle = valeur_parametre(pays, "echeance_soumission_planning")
+    jour = semaine + timedelta(days=regle["jour"] - 1)
     heure, minute = (int(x) for x in regle["heure"].split(":"))
-    return datetime.combine(jour, time(heure, minute), tzinfo=ZoneInfo(planning.pays.fuseau))
+    return datetime.combine(jour, time(heure, minute), tzinfo=ZoneInfo(pays.fuseau))
+
+
+def echeance(planning: Planning) -> datetime:
+    """L'échéance de soumission d'un planning : la fermeture de sa semaine."""
+    return fermeture(planning.pays, planning.semaine)
+
+
+#: Un planning validé n'est jamais « fermé » : il est la référence de la semaine.
+VALIDES = (StatutPlanning.APPROUVE, StatutPlanning.EN_COURS, StatutPlanning.TERMINE,
+           StatutPlanning.ANNULE)  # fmt: skip
+
+
+def semaine_commencee(planning: Planning) -> bool:
+    return timezone.now() >= echeance(planning)
+
+
+def est_ferme(planning: Planning) -> bool:
+    """Le lundi 0 h, tout planning de la semaine qui n'est pas validé est fermé : plus de
+    soumission, de décision ni de modification, tant que le superviseur n'a pas rouvert la
+    rédaction (décision du 6 octobre 2026)."""
+    return (planning.statut not in VALIDES and planning.reouvert_le is None
+            and semaine_commencee(planning))  # fmt: skip
+
+
+def _exiger_ouvert(planning: Planning) -> None:
+    if est_ferme(planning):
+        raise ErreurMetier(
+            "semaine_fermee",
+            _("La semaine est fermée depuis le lundi 0 h : le superviseur doit d'abord rouvrir "
+              "la rédaction du planning."),
+            status.HTTP_409_CONFLICT,
+        )  # fmt: skip
 
 
 def postes_sans_superviseur(planning: Planning) -> list:
@@ -598,7 +645,9 @@ def plannings_a_valider(superviseur, pays) -> list[Planning]:
         .select_related("delegue")
         .distinct()
     )  # fmt: skip
-    plannings = {p.pk: p for p in [*candidats, *escalades] if supervise(superviseur, p)}
+    # Un planning fermé le lundi 0 h ne se décide plus : il passe aux semaines fermées.
+    plannings = {p.pk: p for p in [*candidats, *escalades]
+                 if supervise(superviseur, p) and not est_ferme(p)}  # fmt: skip
     return sorted(plannings.values(), key=lambda p: p.soumis_le)
 
 
@@ -770,7 +819,8 @@ def suivi_apres_approbation(planning: Planning) -> dict | None:
     noms = {v["id"]: (v.get("prospect") or {}).get("nom") for v in ref.contenu.get("visites", [])}
     return {
         "reference": ref.numero,
-        "modifiable": planning.statut in APRES_APPROBATION,
+        # Dès la fermeture du lundi 0 h, le planning validé ne se modifie plus (§14.21).
+        "modifiable": planning.statut in APRES_APPROBATION and not semaine_commencee(planning),
         "en_attente": en_attente,
         "retraits": retraits,
         "mineures": [m | {"prospect": noms.get(m["visite"])} for m in ref.modifications],
@@ -819,6 +869,7 @@ def approuver(planning: Planning, par) -> Planning:
     from .etats import exiger_transition
 
     _verrouiller(planning)
+    _exiger_ouvert(planning)
     exiger_transition(planning.statut, StatutPlanning.APPROUVE)
     mode = _exiger_decideur(planning, par)
     if anomalies := controles.bloquants(planning):
@@ -847,6 +898,7 @@ def demander_revision(planning: Planning, par, commentaire: str = "", remarques=
     from .etats import exiger_transition
 
     _verrouiller(planning)
+    _exiger_ouvert(planning)
     exiger_transition(planning.statut, StatutPlanning.A_REVISER)
     mode = _exiger_decideur(planning, par)
     commentaire = (commentaire or "").strip()
@@ -1247,3 +1299,172 @@ def versions_avec_comparaison(planning: Planning) -> list[tuple[VersionPlanning,
         )
         precedente = v
     return list(reversed(resultat))
+
+
+# --- Fermeture de la semaine et réouverture (décision du 6 octobre 2026) ---------------------
+
+
+def _nom(utilisateur) -> str:
+    return f"{utilisateur.first_name} {utilisateur.last_name}".strip()
+
+
+def _exiger_semaine_en_cours(pays: Pays, semaine: date) -> None:
+    """Seule la semaine en cours se rouvre : une semaine passée est close pour de bon."""
+    if semaine < lundi(aujourdhui(pays)):
+        raise ErreurMetier(
+            "semaine_passee", _("Une semaine passée ne se rouvre plus."), champ="semaine"
+        )
+
+
+def semaine_fermee(
+    pays: Pays, delegue: Utilisateur, semaine: date, planning: Planning | None
+) -> bool:
+    """La semaine en cours est fermée pour ce délégué : son planning n'est pas validé (ni
+    rouvert), ou il n'en a pas et la fermeture est passée."""
+    if semaine != lundi(aujourdhui(pays)):
+        return False
+    if planning is not None:
+        return est_ferme(planning)
+    return timezone.now() >= fermeture(pays, semaine) and occupe_un_poste(delegue, pays, semaine)
+
+
+@transaction.atomic
+def demander_reouverture(pays: Pays, delegue: Utilisateur, semaine: date) -> int:
+    """Le délégué dont la semaine est fermée demande à son superviseur — et au remplaçant de
+    celui-ci — de rouvrir la rédaction ; une seule demande par semaine. Rend le nombre de
+    destinataires prévenus."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier_une_fois
+
+    semaine = lundi(semaine)
+    _exiger_semaine_en_cours(pays, semaine)
+    planning = Planning.objects.filter(delegue=delegue, semaine=semaine).first()
+    if planning is not None and not est_ferme(planning):
+        raise ErreurMetier(
+            "semaine_ouverte",
+            _("Ce planning n'est pas fermé : il se prépare ou se soumet normalement."),
+            status.HTTP_409_CONFLICT,
+        )
+    if planning is None:
+        if timezone.now() < fermeture(pays, semaine):
+            raise ErreurMetier(
+                "semaine_ouverte",
+                _("Cette semaine n'est pas encore fermée : préparez votre planning."),
+                status.HTTP_409_CONFLICT,
+            )
+        if not occupe_un_poste(delegue, pays, semaine):
+            raise ErreurMetier(
+                "sans_poste",
+                _("Vous n'occupez aucun poste cette semaine : pas de planning à préparer."),
+                status.HTTP_403_FORBIDDEN,
+            )
+        # Le planning n'existe pas encore : ses responsables se lisent sur les postes occupés.
+        planning = Planning(pays=pays, delegue=delegue, semaine=semaine)
+    destinataires = destinataires_decision(planning)
+    if not destinataires:
+        raise ErreurMetier(
+            "sans_superviseur",
+            _("Votre poste n'est rattaché à aucun superviseur cette semaine : prévenez "
+              "l'administrateur pays."),
+            status.HTTP_409_CONFLICT,
+        )  # fmt: skip
+    envoyees = 0
+    for destinataire in destinataires:
+        envoyees += notifier_une_fois(
+            destinataire, TypeNotification.REOUVERTURE_DEMANDEE, pays,
+            cle=f"reouverture:{delegue.pk}:{semaine}", delegue=str(delegue.pk),
+            nom=_nom(delegue), semaine=semaine.isoformat(),
+            numero_semaine=semaine.isocalendar().week,
+        ) is not None  # fmt: skip
+    return envoyees
+
+
+def reouverture_demandee(delegue: Utilisateur, semaine: date) -> bool:
+    from apps.notifications.models import Notification, TypeNotification
+
+    return Notification.objects.filter(
+        type=TypeNotification.REOUVERTURE_DEMANDEE,
+        donnees__cle=f"reouverture:{delegue.pk}:{semaine}",
+    ).exists()
+
+
+@transaction.atomic
+def rouvrir(pays: Pays, delegue: Utilisateur, semaine: date, par) -> Planning:
+    """Seul le superviseur du poste (ou son remplaçant, ou le DM par escalade) rouvre la
+    rédaction d'un planning fermé ; il le crée s'il n'existait pas. La réouverture reste
+    inscrite sur le planning et au journal : on sait qu'il n'a pas été fait à temps. Le délégué
+    en est notifié."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+
+    semaine = lundi(semaine)
+    _exiger_semaine_en_cours(pays, semaine)
+    if timezone.now() < fermeture(pays, semaine):
+        raise ErreurMetier(
+            "semaine_ouverte",
+            _("Cette semaine n'est pas encore fermée : le délégué peut encore préparer son "
+              "planning."),
+            status.HTTP_409_CONFLICT,
+        )  # fmt: skip
+    planning = Planning.objects.filter(delegue=delegue, semaine=semaine).first()
+    if planning is None:
+        if not occupe_un_poste(delegue, pays, semaine):
+            raise ErreurMetier(
+                "sans_poste",
+                _("Ce délégué n'occupe aucun poste cette semaine."),
+                status.HTTP_409_CONFLICT,
+            )
+        planning = Planning.objects.create(pays=pays, delegue=delegue, semaine=semaine)
+        _auditer("planning.creation", planning, semaine=str(semaine))
+    _verrouiller(planning)
+    if mode_de_decision(par, planning) is None:
+        raise ErreurMetier(
+            "non_decideur",
+            _("Seul le responsable de ce poste cette semaine-là rouvre ce planning."),
+            status.HTTP_403_FORBIDDEN,
+        )
+    if not est_ferme(planning):
+        raise ErreurMetier(
+            "semaine_ouverte",
+            _("Ce planning n'est pas fermé : rien à rouvrir."),
+            status.HTTP_409_CONFLICT,
+        )
+    planning.reouvert_le = timezone.now()
+    planning.reouvert_par = par
+    planning.save(update_fields=["reouvert_le", "reouvert_par", "modifie_le"])
+    _auditer("planning.reouverture", planning, semaine=str(semaine), statut=planning.statut)
+    notifier(delegue, TypeNotification.REDACTION_ROUVERTE, pays, **_semaine_notifiee(planning),
+             nom=_nom(par))  # fmt: skip
+    return planning
+
+
+def semaines_fermees(superviseur, pays) -> list[dict]:
+    """Les délégués supervisés — et, pendant un remplacement, ceux du superviseur remplacé —
+    dont la semaine en cours est fermée : sans planning, en préparation, à réviser, ou soumis
+    sans décision. Le superviseur peut rouvrir leur rédaction."""
+    from apps.organisation.models import Rattachement
+    from apps.organisation.services import remplaces_par
+
+    semaine = lundi(aujourdhui(pays))
+    if timezone.now() < fermeture(pays, semaine):
+        return []
+    titulaires = {superviseur.pk, *(r.pk for r in remplaces_par(superviseur, pays))}
+    postes = Rattachement.objects.filter(actif_le(semaine), pays=pays,
+                                         superviseur__in=titulaires).values("poste")  # fmt: skip
+    delegues = {
+        o.utilisateur for o in Occupation.objects.filter(
+            actif_le(semaine), poste__in=postes, poste__archive_le__isnull=True,
+        ).select_related("utilisateur")
+    } - {superviseur}  # fmt: skip
+    plannings = {p.delegue_id: p for p in Planning.objects.filter(pays=pays, semaine=semaine,
+                                                                 delegue__in=delegues)}  # fmt: skip
+    lignes = []
+    for delegue in delegues:
+        planning = plannings.get(delegue.pk)
+        if planning is not None and not est_ferme(planning):
+            continue
+        lignes.append({"delegue": delegue, "semaine": semaine, "planning": planning,
+                       "demande": reouverture_demandee(delegue, semaine)})  # fmt: skip
+    # Ceux qui ont demandé la réouverture d'abord, puis par nom.
+    return sorted(lignes, key=lambda x: (not x["demande"], x["delegue"].last_name,
+                                         x["delegue"].first_name))  # fmt: skip
