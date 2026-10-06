@@ -583,9 +583,9 @@ Mise en œuvre (0.3.9) :
 - Après la réouverture, le délégué prépare et soumet : la soumission est marquée « en retard » ; le superviseur décide normalement.
 - Un planning soumis et fermé quitte la file et n'est plus escaladé, sauf après sa réouverture.
 - **Démonstration** : la semaine en cours du premier délégué est validée, la suivante en préparation ; un second délégué a sa semaine suivante soumise et sa semaine en cours fermée, avec une demande de réouverture.
-- Hypothèses [H] à confirmer :
-  - la demande et la réouverture valent pour la semaine en cours seulement ; une semaine passée reste close ;
-  - le paramètre `echeance_approbation_planning` (vendredi 18 h) n'est plus utilisé : l'approbation se fait avant la fermeture.
+- Décisions [D] du 6 octobre 2026, après la livraison :
+  - une semaine passée ne se rouvre pas : elle s'analyse telle quelle, et une semaine sans rien de fait reste une semaine où rien n'a été fait ;
+  - le paramètre `echeance_approbation_planning` (vendredi 18 h) est conservé dans les paramètres du pays, bien que l'approbation se fasse désormais avant la fermeture.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

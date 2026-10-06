@@ -28,7 +28,7 @@ Neuvième et dernier jalon du cycle 0.3 « Validation des plannings ». Il livre
 
 - [`recette-0.3.md`](recette-0.3.md) relie chaque critère d'acceptation du cycle au test qui le prouve ; scénario : [`demonstration-0.3.md`](demonstration-0.3.md).
 - Démonstration : la semaine en cours du premier délégué est validée et la suivante en préparation ; un second délégué a sa semaine suivante soumise et sa semaine en cours fermée, avec une demande de réouverture.
-- Hypothèses à confirmer (prd.md §14.21) : seule la semaine en cours se rouvre ; le paramètre « Échéance d'approbation » n'est plus utilisé.
+- Décidé le 6 octobre 2026 (prd.md §14.21) : une semaine passée ne se rouvre pas, elle s'analyse telle quelle ; le paramètre « Échéance d'approbation » est conservé.
 
 ### Design
 
