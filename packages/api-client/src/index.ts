@@ -29,6 +29,11 @@ import type {
   Ecart,
   Report,
   Imprevue,
+  Rapport,
+  SaisieRapport,
+  ChampRapport,
+  SaisieChamp,
+  ModificationChamp,
   Qualite,
   Semaine,
   Reprise,
@@ -147,6 +152,16 @@ export type {
   Ecart,
   Report,
   Imprevue,
+  Rapport,
+  StatutRapport,
+  StatutRapportVisite,
+  SaisieRapport,
+  DefinitionChamp,
+  TypeChamp,
+  ValeursChamps,
+  ChampRapport,
+  SaisieChamp,
+  ModificationChamp,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -802,6 +817,29 @@ export function creerClient(options: OptionsClient) {
         requete<Visite>(`/api/v1/visites/${id}/reporter/`, { methode: 'POST', corps: report }),
       copier: (id: string, date: string) =>
         requete<Visite>(`/api/v1/visites/${id}/copier/`, { methode: 'POST', corps: { date } }),
+      /** Rapport de la visite effectuée (RPT-001) : ouvert en brouillon à la première lecture. */
+      rapport: (id: string) => requete<Rapport>(`/api/v1/visites/${id}/rapport/`),
+      enregistrerRapport: (id: string, saisie: SaisieRapport) =>
+        requete<Rapport>(`/api/v1/visites/${id}/rapport/`, { methode: 'PUT', corps: saisie }),
+      /** Soumission (RPT-002) : refusée tant que le socle ou un champ obligatoire manque. */
+      soumettreRapport: (id: string, soumisLe: string) =>
+        requete<Rapport>(`/api/v1/visites/${id}/rapport/soumettre/`, {
+          methode: 'POST',
+          corps: { soumis_le: soumisLe },
+        }),
+    },
+    /** Champs supplémentaires du rapport, par pays (RPT-008). */
+    rapports: {
+      champs: () => requete<ChampRapport[]>('/api/v1/rapports/champs/'),
+      creerChamp: (saisie: SaisieChamp) =>
+        requete<ChampRapport>('/api/v1/rapports/champs/', { methode: 'POST', corps: saisie }),
+      modifierChamp: (id: string, champs: ModificationChamp) =>
+        requete<ChampRapport>(`/api/v1/rapports/champs/${id}/`, {
+          methode: 'PATCH',
+          corps: champs,
+        }),
+      archiverChamp: (id: string) =>
+        requete<ChampRapport>(`/api/v1/rapports/champs/${id}/archiver/`, { methode: 'POST' }),
     },
     /** Qualité des données du pays actif (0.1.9). */
     qualite: () => requete<Qualite>('/api/v1/qualite/'),

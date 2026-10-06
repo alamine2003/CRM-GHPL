@@ -61,6 +61,7 @@ const LISTES: ListeReferentiel[] = [
   'type_etablissement',
   'classe_therapeutique',
   'motif_ecart',
+  'resultat_visite',
 ];
 
 type Onglet = 'produits' | 'portefeuilles' | 'listes';

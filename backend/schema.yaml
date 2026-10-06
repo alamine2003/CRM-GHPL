@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.9
+  version: 0.5.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3534,6 +3534,100 @@ paths:
               schema:
                 $ref: '#/components/schemas/Qualite'
           description: ''
+  /api/v1/rapports/champs/:
+    get:
+      operationId: champs_rapport
+      tags:
+      - rapports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChampRapport'
+          description: ''
+    post:
+      operationId: champ_rapport_creer
+      tags:
+      - rapports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieChamp'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieChamp'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieChamp'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampRapport'
+          description: ''
+  /api/v1/rapports/champs/{id}/:
+    patch:
+      operationId: champ_rapport_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - rapports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationChamp'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationChamp'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationChamp'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampRapport'
+          description: ''
+  /api/v1/rapports/champs/{id}/archiver/:
+    post:
+      operationId: champ_rapport_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - rapports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChampRapport'
+          description: ''
   /api/v1/referentiel/mon-portefeuille/:
     get:
       operationId: mon_portefeuille
@@ -3747,6 +3841,7 @@ paths:
           - classe_therapeutique
           - grade
           - motif_ecart
+          - resultat_visite
           - specialite
           - type_etablissement
           - type_prospect
@@ -4456,6 +4551,97 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/{id}/rapport/:
+    get:
+      operationId: rapport_lire
+      description: 'RPT-001 : le rapport de la visite effectuée, ouvert en brouillon
+        à la première lecture.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapport'
+          description: ''
+    put:
+      operationId: rapport_enregistrer
+      description: 'RPT-001 : le rapport de la visite effectuée, ouvert en brouillon
+        à la première lecture.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieRapport'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieRapport'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieRapport'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapport'
+          description: ''
+  /api/v1/visites/{id}/rapport/soumettre/:
+    post:
+      operationId: rapport_soumettre
+      description: 'RPT-002 CA1 : la soumission exige le socle et les champs obligatoires
+        du pays.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SoumissionRapport'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SoumissionRapport'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SoumissionRapport'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rapport'
+          description: ''
   /api/v1/visites/{id}/reporter/:
     post:
       operationId: visite_reporter
@@ -4832,6 +5018,39 @@ components:
       required:
       - remplacants
       - superviseurs
+    ChampRapport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        libelle:
+          type: string
+          readOnly: true
+        type:
+          allOf:
+          - $ref: '#/components/schemas/TypeChampEnum'
+          readOnly: true
+        options:
+          readOnly: true
+        obligatoire:
+          type: boolean
+          readOnly: true
+        ordre:
+          type: integer
+          readOnly: true
+      required:
+      - code
+      - id
+      - libelle
+      - obligatoire
+      - options
+      - ordre
+      - type
     ChampsEnum:
       enum:
       - prospect
@@ -5636,6 +5855,28 @@ components:
       description: |-
         * `accepter` - accepter
         * `refuser` - refuser
+    DefinitionChamp:
+      type: object
+      description: Un champ du pays tel qu'à la création du rapport (RPT-008 CA1).
+      properties:
+        code:
+          type: string
+        libelle:
+          type: string
+        type:
+          $ref: '#/components/schemas/TypeChampEnum'
+        options:
+          type: array
+          items:
+            type: string
+        obligatoire:
+          type: boolean
+      required:
+      - code
+      - libelle
+      - obligatoire
+      - options
+      - type
     DefinitionPortefeuille:
       type: object
       properties:
@@ -6731,6 +6972,7 @@ components:
       - classe_therapeutique
       - grade
       - motif_ecart
+      - resultat_visite
       type: string
       description: |-
         * `type_prospect` - Types de prospect
@@ -6739,6 +6981,7 @@ components:
         * `classe_therapeutique` - Classes thérapeutiques
         * `grade` - Grades
         * `motif_ecart` - Motifs d'écart
+        * `resultat_visite` - Résultats de visite
     ListeEtablissements:
       type: object
       description: Une page de résultats (PRP-005 CA3).
@@ -7233,6 +7476,22 @@ components:
           maxLength: 500
         demande_superviseur:
           type: boolean
+    PatchedModificationChamp:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        options:
+          type: array
+          items:
+            type: string
+            maxLength: 120
+        obligatoire:
+          type: boolean
+        ordre:
+          type: integer
+          minimum: 0
     PatchedModificationExercice:
       type: object
       properties:
@@ -8413,6 +8672,91 @@ components:
         * `jour_hors_semaine` - jour_hors_semaine
         * `jour_ferie` - jour_ferie
         * `jour_absent` - jour_absent
+    Rapport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        visite:
+          type: string
+          format: uuid
+          readOnly: true
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutRapportEnum'
+          readOnly: true
+        produits:
+          type: array
+          items:
+            type: string
+            format: uuid
+        resultat:
+          type: string
+          format: uuid
+          nullable: true
+        resume:
+          type: string
+          readOnly: true
+        prochaine_action:
+          type: string
+          readOnly: true
+        champs: {}
+        definitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DefinitionChamp'
+        soumis_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        manquants:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        produits_proposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
+          readOnly: true
+        resultats_proposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
+          readOnly: true
+      required:
+      - champs
+      - definitions
+      - id
+      - manquants
+      - prochaine_action
+      - produits
+      - produits_proposes
+      - resultat
+      - resultats_proposes
+      - resume
+      - soumis_le
+      - statut
+      - visite
+    RapportStatutEnum:
+      enum:
+      - attendu
+      - brouillon
+      - soumis
+      - a_corriger
+      - valide
+      - rouvert
+      type: string
+      description: |-
+        * `attendu` - attendu
+        * `brouillon` - brouillon
+        * `soumis` - soumis
+        * `a_corriger` - a_corriger
+        * `valide` - valide
+        * `rouvert` - rouvert
     Rattachement:
       type: object
       properties:
@@ -8811,6 +9155,25 @@ components:
       required:
       - date
       - type
+    SaisieChamp:
+      type: object
+      properties:
+        libelle:
+          type: string
+          maxLength: 120
+        type:
+          $ref: '#/components/schemas/TypeChampEnum'
+        options:
+          type: array
+          items:
+            type: string
+            maxLength: 120
+        obligatoire:
+          type: boolean
+          default: false
+      required:
+      - libelle
+      - type
     SaisieEtablissement:
       type: object
       properties:
@@ -8952,6 +9315,25 @@ components:
           type: string
           format: uuid
           nullable: true
+    SaisieRapport:
+      type: object
+      properties:
+        produits:
+          type: array
+          items:
+            type: string
+            format: uuid
+        resultat:
+          type: string
+          format: uuid
+          nullable: true
+        resume:
+          type: string
+          maxLength: 4000
+        prochaine_action:
+          type: string
+          maxLength: 500
+        champs: {}
     SaisieVisite:
       type: object
       properties:
@@ -9214,6 +9596,14 @@ components:
       required:
       - code
       - nombre
+    SoumissionRapport:
+      type: object
+      properties:
+        soumis_le:
+          type: string
+          format: date-time
+      required:
+      - soumis_le
     SourceEnum:
       enum:
       - birdnotes
@@ -9261,6 +9651,20 @@ components:
           $ref: '#/components/schemas/StatutEnum'
       required:
       - statut
+    StatutRapportEnum:
+      enum:
+      - brouillon
+      - soumis
+      - a_corriger
+      - valide
+      - rouvert
+      type: string
+      description: |-
+        * `brouillon` - Brouillon
+        * `soumis` - Soumis
+        * `a_corriger` - À corriger
+        * `valide` - Validé
+        * `rouvert` - Rouvert
     SuiviApprobation:
       type: object
       description: |-
@@ -9474,6 +9878,18 @@ components:
         * `commando` - Commando
         * `deplacement` - Déplacement
         * `accompagnement` - Accompagnement du superviseur
+    TypeChampEnum:
+      enum:
+      - texte
+      - nombre
+      - liste
+      - case
+      type: string
+      description: |-
+        * `texte` - Texte
+        * `nombre` - Nombre
+        * `liste` - Liste
+        * `case` - Case à cocher
     TypePosteEnum:
       enum:
       - vm
@@ -9731,6 +10147,12 @@ components:
         justification:
           type: string
           readOnly: true
+        rapport_statut:
+          nullable: true
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/RapportStatutEnum'
+          - $ref: '#/components/schemas/NullEnum'
       required:
       - commentaire_ecart
       - date
@@ -9748,6 +10170,7 @@ components:
       - manquants
       - motif_ecart
       - prospect
+      - rapport_statut
       - report
       - reportee_de
       - reseau
@@ -9935,6 +10358,12 @@ components:
         justification:
           type: string
           readOnly: true
+        rapport_statut:
+          nullable: true
+          readOnly: true
+          oneOf:
+          - $ref: '#/components/schemas/RapportStatutEnum'
+          - $ref: '#/components/schemas/NullEnum'
         modification_en_attente:
           type: boolean
       required:
@@ -9955,6 +10384,7 @@ components:
       - modification_en_attente
       - motif_ecart
       - prospect
+      - rapport_statut
       - report
       - reportee_de
       - reseau

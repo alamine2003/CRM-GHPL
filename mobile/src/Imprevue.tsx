@@ -81,6 +81,7 @@ export async function declarerImprevue(
     reportee_de: null,
     report: null,
     est_imprevue: true,
+    rapport_statut: null,
     justification: saisie.justification,
     modification_en_attente: false,
   };

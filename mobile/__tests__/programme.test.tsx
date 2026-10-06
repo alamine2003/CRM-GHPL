@@ -52,6 +52,7 @@ const visite = (id: string, heure: string, nom: string, date = '2026-10-13'): Vi
   reportee_de: null,
   report: null,
   est_imprevue: false,
+  rapport_statut: null,
   justification: '',
   modification_en_attente: false,
 });

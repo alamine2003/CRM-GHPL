@@ -26,6 +26,7 @@ class Liste(models.TextChoices):
     CLASSE_THERAPEUTIQUE = "classe_therapeutique", "Classes thérapeutiques"
     GRADE = "grade", "Grades"
     MOTIF_ECART = "motif_ecart", "Motifs d'écart"
+    RESULTAT_VISITE = "resultat_visite", "Résultats de visite"
 
 
 def _unique_hors_archives(champs: list[str], nom: str) -> models.UniqueConstraint:

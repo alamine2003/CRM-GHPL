@@ -2,6 +2,38 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.1] — Rapport de visite : socle et champs par pays
+
+Premier jalon du cycle 0.5 « Rapports de visite ».
+
+### Ajouté — rapport de visite (RPT-001, RPT-002, RG-030, RG-033)
+
+- Après une visite effectuée, « Rédiger le rapport » sur le téléphone : sous l'annonce de la visite terminée et sous la visite elle-même ; « Reprendre le rapport » pour un brouillon, « Voir le rapport » une fois soumis.
+- **RPT-001 CA1** : tant que le rapport n'est pas soumis, la visite se lit « Rapport à rédiger » ou « Rapport en brouillon » dans le programme du jour.
+- Socle : produits présentés touchés dans l'ordre de présentation (rang affiché), résultat de la visite, résumé de l'échange, prochaine action. Seuls les produits du portefeuille du réseau de la visite, au jour de la visite, sont proposés ; un champ les filtre au-delà de 8.
+- **RPT-002 CA1** : incomplet, il ne se soumet pas ; l'écran dit ce qui manque. Soumis, il se lit sans se modifier.
+- « Enregistrer le brouillon » à tout moment ; en 0.5.1 le rapport s'écrit avec du réseau (brouillon sur le téléphone en 0.5.6, soumission hors connexion en 0.5.7).
+- Nouvelle liste de référence « Résultats de visite » [H] : objectif atteint, partiellement atteint, non atteint, à relancer.
+
+### Ajouté — champs du rapport par pays (RPT-008)
+
+- Portail, « Paramètres » : carte « Champs du rapport » ; texte libre, nombre, liste de choix (au moins deux), oui / non ; obligatoires ou facultatifs ; modifier, retirer.
+- **CA1** : un rapport garde les champs de son ouverture ; un changement ne vaut que pour les rapports suivants.
+
+### Démonstration
+
+- Portefeuilles en place depuis un trimestre ; champ « Patients concernés par semaine » au Sénégal et au Togo ; rapports soumis pour les visites passées, un brouillon, un rapport attendu.
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px clair et 390 px sombre ; portail 1440 px et 390 px). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Programme du jour | Après « Terminer la visite », la visite quittait la carte : rien ne menait au rapport. | « Rédiger le rapport » sous l'annonce de la visite terminée ; il disparaît une fois le rapport soumis. |
+| Rapport, produits | Un portefeuille de 24 produits repoussait tout le formulaire. | Champ « Chercher un produit » au-delà de 8 ; les produits choisis restent visibles. |
+| Rapport soumis | Le résumé, aligné à droite à côté de son libellé, se lisait mal. | Libellé au-dessus, texte sur toute la largeur. |
+
 ## [0.4.9] — Contrôles de conformité, recette et démonstration du cycle 0.4
 
 Dernier jalon du cycle 0.4 « Exécution des visites ».

@@ -7,6 +7,7 @@
  * quand même, « sans GPS » (CA2) ; avec une position, la distance au lieu s'affiche (CA3).
  */
 import type { ClientApi, DetailVisite, Programme, VisiteProgramme } from '@innov/api-client';
+import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -196,6 +197,7 @@ export async function terminerVisite(
   const saisie = { fin_le: new Date().toISOString(), ...(position ?? {}) };
   const local = {
     statut: 'effectuee' as const,
+    rapport_statut: 'attendu' as const,
     fin_le: saisie.fin_le,
     fin_sans_gps: geolocalisation && !position,
     distance_fin_m: position
@@ -215,6 +217,7 @@ export async function terminerVisite(
       fin_le: recue.fin_le,
       fin_sans_gps: recue.fin_sans_gps,
       distance_fin_m: recue.distance_fin_m ?? local.distance_fin_m,
+      rapport_statut: recue.rapport_statut ?? local.rapport_statut,
     });
     return 'parti';
   } catch (e) {
@@ -374,6 +377,22 @@ export function distanceLisible(
  * Ce que l'on peut faire d'une visite du programme : la démarrer le jour prévu, ou lire depuis
  * quand elle est en cours, à quelle distance du lieu.
  */
+/** Après la visite, le rapport (RPT-001) : à rédiger, à reprendre, ou soumis. */
+function ActionRapport({ visite }: { visite: VisiteProgramme }) {
+  const { t } = useTranslation();
+  const routeur = useRouter();
+  const statut = visite.rapport_statut ?? 'attendu';
+  const ouvrir = () => routeur.push({ pathname: '/rapport/[id]', params: { id: visite.id } });
+  if (statut === 'attendu' || statut === 'brouillon' || statut === 'a_corriger')
+    return (
+      <Bouton
+        libelle={t(statut === 'attendu' ? 'rapport.rediger' : 'rapport.reprendre')}
+        onPress={ouvrir}
+      />
+    );
+  return <Bouton secondaire libelle={t('rapport.voir')} onPress={ouvrir} />;
+}
+
 export function ExecutionVisite({
   visite,
   aujourdhui,
@@ -397,7 +416,7 @@ export function ExecutionVisite({
   /** Lundi de la semaine du programme : un report dans cette semaine passe par le superviseur. */
   semaine?: string;
   /** La visite terminée quitte souvent l'écran (la suivante prend sa place) : on l'annonce. */
-  surTerminee?: (annonce: { texte: string; ton: 'info' | 'succes' }) => void;
+  surTerminee?: (annonce: { texte: string; ton: 'info' | 'succes'; rapport?: string }) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
@@ -467,6 +486,8 @@ export function ExecutionVisite({
         const annonce = {
           texte: horsLigne ? t('execution.termineeHorsLigne', { texte }) : texte,
           ton: horsLigne ? ('info' as const) : ('succes' as const),
+          // Reçue par le serveur, la visite a son rapport à rédiger tout de suite (RPT-001).
+          rapport: horsLigne ? undefined : visite.id,
         };
         if (surTerminee) surTerminee(annonce);
         else setMessage(annonce);
@@ -649,6 +670,7 @@ export function ExecutionVisite({
         </Texte>
         {visite.fin_sans_gps && <Texte variante="discret">{t('execution.finSansGps')}</Texte>}
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
+        <ActionRapport visite={visite} />
       </View>
     );
   }

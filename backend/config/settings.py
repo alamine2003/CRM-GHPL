@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "apps.prospects",
     "apps.imports",
     "apps.planning",
+    "apps.rapports",
     "apps.notifications",
     "apps.demonstration",
     "apps.audit",
@@ -252,6 +253,8 @@ SPECTACULAR_SETTINGS = {
     "ENUM_NAME_OVERRIDES": {
         "LangueEnum": "apps.socle.models.CHOIX_LANGUES",
         "StatutEnum": "apps.socle.models.Pays.Statut",
+        "StatutRapportEnum": "apps.rapports.models.StatutRapport",
+        "TypeChampEnum": "apps.rapports.models.TypeChamp",
         "StatutFicheEnum": "apps.prospects.models.StatutFiche",
         "StatutLotEnum": "apps.imports.models.LotImport.Statut",
         "TypeActiviteEnum": "apps.planning.models.TypeActivite",

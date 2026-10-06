@@ -156,19 +156,33 @@ class VisiteSerializer(serializers.ModelSerializer):
                   "note", "statut", "manquants", "passage", "ordre", "debut_le", "sans_gps",
                   "distance_debut_m", "fin_le", "fin_sans_gps", "distance_fin_m",
                   "motif_ecart", "commentaire_ecart", "ecart_le", "reportee_de",
-                  "report", "est_imprevue", "justification"]  # fmt: skip
+                  "report", "est_imprevue", "justification", "rapport_statut"]  # fmt: skip
         read_only_fields = ["debut_le", "sans_gps", "distance_debut_m", "fin_le", "fin_sans_gps",
                             "distance_fin_m", "commentaire_ecart", "ecart_le",
                             "reportee_de", "est_imprevue", "justification"]  # fmt: skip
 
     #: La visite qui prend la suite d'une visite reportée (VIS-007).
     report = serializers.SerializerMethodField()
+    #: Le rapport d'une visite effectuée (RPT-001) : « attendu » tant qu'il n'est pas écrit.
+    rapport_statut = serializers.SerializerMethodField()
 
     def get_manquants(self, visite) -> list[str]:
         from .services import champs_manquants
 
         # Une visite imprévue (VIS-008) n'a rien à compléter : elle ne se soumet pas.
         return [] if visite.est_imprevue else champs_manquants(visite)
+
+    @extend_schema_field(
+        serializers.ChoiceField(
+            choices=["attendu", "brouillon", "soumis", "a_corriger", "valide", "rouvert"],
+            allow_null=True,
+        )  # fmt: skip
+    )
+    def get_rapport_statut(self, visite) -> str | None:
+        if visite.statut != "effectuee":
+            return None
+        rapport = getattr(visite, "rapport", None)
+        return rapport.statut if rapport is not None else "attendu"
 
     @extend_schema_field(ReportLuSerializer(allow_null=True))
     def get_report(self, visite) -> dict | None:

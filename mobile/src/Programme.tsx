@@ -19,7 +19,7 @@ import {
   ExecutionVisite,
   joursOuvresDe,
 } from './Execution';
-import { Alerte, Carte, Etiquette, MarquePotentiel, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Etiquette, MarquePotentiel, Texte, usePalette } from './composants';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
 import { VisiteImprevue } from './Imprevue';
@@ -33,7 +33,11 @@ export function ProgrammeDuJour() {
   const { client, etat } = useSession();
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [horsLigne, setHorsLigne] = useState<string | null>(null);
-  const [annonce, setAnnonce] = useState<{ texte: string; ton: 'info' | 'succes' } | null>(null);
+  const [annonce, setAnnonce] = useState<{
+    texte: string;
+    ton: 'info' | 'succes';
+    rapport?: string;
+  } | null>(null);
   const connecte = etat.statut === 'connecte';
 
   // Une visite démarrée sur le téléphone change le programme gardé : l'écran suit.
@@ -89,6 +93,11 @@ export function ProgrammeDuJour() {
       .sort((a, b) => (b.debut_le ?? '').localeCompare(a.debut_le ?? ''))[0] ??
     aujourdhui?.visites.find((v) => v.statut === 'prevue') ??
     null;
+  // Le bouton de l'annonce disparaît une fois le rapport soumis (RPT-001).
+  const rapportARediger = (id: string) =>
+    ['attendu', 'brouillon', 'a_corriger'].includes(
+      aujourdhui?.visites.find((v) => v.id === id)?.rapport_statut ?? 'attendu',
+    );
   const autresJours = programme.jours.filter((j) => j.date > programme.aujourdhui);
   // Restées prévues après leur journée : à justifier (VIS-009 CA1).
   const aJustifier = (programme.a_justifier ?? []).filter((v) => v.statut === 'prevue');
@@ -165,6 +174,13 @@ export function ProgrammeDuJour() {
           <>
             <Activites jour={aujourdhui} />
             {annonce && <Alerte type={annonce.ton}>{annonce.texte}</Alerte>}
+            {annonce?.rapport && rapportARediger(annonce.rapport) && (
+              <Bouton
+                secondaire
+                libelle={t('rapport.rediger')}
+                onPress={() => routeur.push(`/rapport/${annonce.rapport}`)}
+              />
+            )}
             {prochaine ? (
               <Pressable
                 accessibilityRole="button"
@@ -341,6 +357,9 @@ function LigneVisite({
           )}
           {visite.modification_en_attente && <Etiquette>{t('programme.enAttente')}</Etiquette>}
           {visite.est_imprevue && <Etiquette ton="neutre">{t('visites.imprevue')}</Etiquette>}
+          {(visite.rapport_statut === 'attendu' || visite.rapport_statut === 'brouillon') && (
+            <Etiquette>{t(`rapport.statuts.${visite.rapport_statut}`)}</Etiquette>
+          )}
         </View>
       </View>
       <MaterialIcons name="chevron-right" size={22} color={p.texteDiscret} />

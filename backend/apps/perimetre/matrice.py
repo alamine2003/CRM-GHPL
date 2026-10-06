@@ -44,6 +44,7 @@ class Action(StrEnum):
     PLANNINGS_VALIDER = "plannings.valider"
     NOTIFICATIONS_LIRE = "notifications.lire"
     REMPLACEMENTS_GERER = "remplacements.gerer"
+    RAPPORTS_REDIGER = "rapports.rediger"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -126,6 +127,9 @@ MATRICE: dict[Action, frozenset[str]] = {
     # « Désigner un remplaçant de superviseur » (ORG-013) : l'administrateur pays, le DM pour
     # les superviseurs de ses réseaux, le superviseur pour lui-même (périmètre dans la vue).
     Action.REMPLACEMENTS_GERER: frozenset({Role.ADMIN_PAYS, Role.DM, Role.SUPERVISEUR}),
+    # « Réaliser une visite, rédiger un rapport » : le délégué, le superviseur s'il occupe un
+    # poste ; chacun ses propres visites (RPT-001).
+    Action.RAPPORTS_REDIGER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}

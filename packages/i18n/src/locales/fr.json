@@ -686,14 +686,16 @@
       "type_etablissement": "Types d'établissement",
       "classe_therapeutique": "Classes thérapeutiques",
       "motif_ecart": "Motifs d'écart",
-      "grade": "Grades"
+      "grade": "Grades",
+      "resultat_visite": "Résultats de visite"
     },
     "aides": {
       "type_prospect": "Médecin, pharmacien, sage-femme… Chaque fiche prospect en porte un.",
       "specialite": "Rattachez une spécialité à un type de prospect pour ne la proposer qu'à lui.",
       "type_etablissement": "Cabinet, hôpital, pharmacie… Chaque établissement en porte un.",
       "classe_therapeutique": "Classement des produits (Cardio, Diabéto…).",
-      "motif_ecart": "Motifs qu'un délégué choisit quand une visite prévue n'a pas lieu."
+      "motif_ecart": "Motifs qu'un délégué choisit quand une visite prévue n'a pas lieu.",
+      "resultat_visite": "Liste courte que le délégué choisit dans son rapport de visite."
     },
     "valeur": {
       "nouvelle": "Nouvelle valeur",
@@ -1948,5 +1950,68 @@
       "sans_gps_other": "{{count}} visites sans GPS (tolérance : {{tolerees}})"
     },
     "enCours": "Journée en cours : aucun écart pour l'instant"
+  },
+  "rapport": {
+    "titre": "Rapport de visite",
+    "rediger": "Rédiger le rapport",
+    "reprendre": "Reprendre le rapport",
+    "voir": "Voir le rapport",
+    "statuts": {
+      "attendu": "Rapport à rédiger",
+      "brouillon": "Rapport en brouillon"
+    },
+    "produits": "Produits présentés",
+    "produitsAide": "Touchez les produits dans l'ordre où vous les avez présentés.",
+    "aucunProduit": "Aucun produit au portefeuille de ce réseau : voyez avec votre superviseur.",
+    "resultat": "Résultat de la visite",
+    "resume": "Résumé de l'échange",
+    "resumeIndice": "Ce que le prescripteur a dit, ses questions, ses objections",
+    "prochaineAction": "Prochaine action",
+    "prochaineActionIndice": "Par exemple : apporter l'étude clinique à la prochaine visite",
+    "champsPays": "Autres informations",
+    "facultatif": "{{libelle}} (facultatif)",
+    "oui": "Oui",
+    "non": "Non",
+    "socle": {
+      "produits": "produits présentés",
+      "resultat": "résultat",
+      "resume": "résumé",
+      "prochaine_action": "prochaine action"
+    },
+    "manque": "À compléter avant de soumettre : {{liste}}.",
+    "soumettre": "Soumettre le rapport",
+    "enregistrer": "Enregistrer le brouillon",
+    "enregistre": "Brouillon enregistré.",
+    "soumis": "Rapport soumis à votre superviseur.",
+    "soumisLe": "Rapport soumis : il ne se modifie plus.",
+    "aCorriger": "Votre superviseur demande une correction.",
+    "horsLigne": "Le rapport s'écrit avec du réseau pour l'instant. Votre visite est bien gardée sur le téléphone : réessayez dès que le réseau revient.",
+    "horsLigneEnvoi": "Pas de réseau : rien n'est perdu à l'écran, réessayez dès que le réseau revient.",
+    "reessayer": "Réessayer",
+    "filtrer": "Chercher un produit"
+  },
+  "champsRapport": {
+    "titre": "Champs du rapport",
+    "ajouter": "Ajouter un champ",
+    "retirer": "Retirer",
+    "aide": "Ils s'ajoutent au socle commun du rapport (produits, résultat, résumé, prochaine action). Un rapport déjà commencé garde les champs de son ouverture.",
+    "vide": "Aucun champ propre au pays : le rapport se limite au socle commun.",
+    "obligatoire": "Obligatoire",
+    "archive": "« {{libelle}} » retiré des prochains rapports.",
+    "ajouterTitre": "Ajouter un champ au rapport",
+    "modifierTitre": "Modifier le champ",
+    "aideDialogue": "La modification vaut pour les rapports ouverts à partir de maintenant.",
+    "libelle": "Libellé",
+    "type": "Type de réponse",
+    "typeFige": "Le type ne change plus une fois le champ créé.",
+    "types": {
+      "texte": "Texte libre",
+      "nombre": "Nombre",
+      "liste": "Liste de choix",
+      "case": "Oui / non"
+    },
+    "options": "Choix proposés",
+    "optionsAide": "Un choix par ligne, au moins deux.",
+    "obligatoireAvant": "Obligatoire pour soumettre"
   }
 }

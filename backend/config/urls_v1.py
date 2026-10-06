@@ -13,6 +13,7 @@ from apps.planning import vues as pln
 from apps.prospects import vues as prs
 from apps.prospects import vues_ciblage as cib
 from apps.prospects import vues_doublons as dbl
+from apps.rapports import vues as rap
 from apps.referentiel import vues as ref
 from apps.socle import vues_exploitation as exploitation
 from apps.socle import vues_pays as pays
@@ -204,12 +205,25 @@ urlpatterns = [
     path("visites/<uuid:id>/demarrer/", pln.DemarrageVue.as_view(), name="visite-demarrer"),
     path("visites/<uuid:id>/terminer/", pln.TerminaisonVue.as_view(), name="visite-terminer"),
     path("visites/imprevue/", pln.VisiteImprevueVue.as_view(), name="visite-imprevue"),
+    path("visites/<uuid:id>/rapport/", rap.RapportVisiteVue.as_view(), name="visite-rapport"),
+    path(
+        "visites/<uuid:id>/rapport/soumettre/",
+        rap.SoumissionRapportVue.as_view(),
+        name="visite-rapport-soumettre",
+    ),
+    path("rapports/champs/", rap.ChampsRapportVue.as_view(), name="champs-rapport"),
+    path("rapports/champs/<uuid:id>/", rap.ChampRapportVue.as_view(), name="champ-rapport"),
+    path(
+        "rapports/champs/<uuid:id>/archiver/",
+        rap.ChampRapportArchivageVue.as_view(),
+        name="champ-rapport-archiver",
+    ),
     path("visites/<uuid:id>/absent/", pln.AbsenceProspectVue.as_view(), name="visite-absent"),
     path("visites/<uuid:id>/annuler/", pln.AnnulationVisiteVue.as_view(), name="visite-annuler"),
     path("visites/<uuid:id>/reporter/", pln.ReportVisiteVue.as_view(), name="visite-reporter"),
     path(
         "visites/<uuid:id>/non-realisee/", pln.NonRealiseeVue.as_view(), name="visite-non-realisee"
-    ),  # fmt: skip
+    ),
     path("visites/<uuid:id>/retirer/", pln.VisiteRetraitVue.as_view(), name="visite-retirer"),
     path("plannings/<uuid:id>/ordre/", pln.OrdreVue.as_view(), name="planning-ordre"),
     path("plannings/<uuid:id>/poser/", pln.PoseVue.as_view(), name="planning-poser"),

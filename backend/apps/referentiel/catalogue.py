@@ -11,6 +11,7 @@ libellés génériques de la profession figurent ici.
 - Spécialités rattachées à leur type ; grades (docteur, professeur…).
 - Types d'établissement : prd.md §14.2, plus le poste de santé, premier type relevé.
 - Motifs d'écart : proposition [H], à confirmer par pays (dépendance prd.md §22).
+- Résultats de visite : liste courte du rapport (RPT-002), proposition [H] (0.5.1).
 - Classes thérapeutiques et produits : référentiel du laboratoire (import ou saisie).
 
 Chaque entrée : (code, libellé français, libellé anglais[, code du parent]).
@@ -106,6 +107,13 @@ MOTIFS_ECART = [
     ("autre", "Autre motif", "Other reason"),
 ]
 
+RESULTATS_VISITE = [
+    ("objectif_atteint", "Objectif atteint", "Objective met"),
+    ("partiellement_atteint", "Objectif partiellement atteint", "Objective partly met"),
+    ("non_atteint", "Objectif non atteint", "Objective not met"),
+    ("a_relancer", "À relancer", "Follow-up needed"),
+]
+
 #: Listes initiales, dans l'ordre de création (un parent avant ses enfants).
 INITIALES = {
     "type_prospect": TYPES_PROSPECT,
@@ -113,6 +121,7 @@ INITIALES = {
     "specialite": SPECIALITES,
     "grade": GRADES,
     "motif_ecart": MOTIFS_ECART,
+    "resultat_visite": RESULTATS_VISITE,
 }
 
 

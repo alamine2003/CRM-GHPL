@@ -119,6 +119,20 @@ export type Terminaison = Schemas['Terminaison'];
 export type Ecart = Schemas['Ecart'];
 export type Report = Schemas['Report'];
 export type Imprevue = Schemas['Imprevue'];
+/** Rapport de la visite effectuée : socle commun et champs du pays (RPT-001, RPT-008). */
+export type Rapport = Schemas['Rapport'];
+export type StatutRapport = Schemas['StatutRapportEnum'];
+/** Statut du rapport vu depuis la visite : « attendu » tant qu'il n'est pas ouvert. */
+export type StatutRapportVisite = Schemas['RapportStatutEnum'];
+export type SaisieRapport = Schemas['SaisieRapport'];
+export type DefinitionChamp = Schemas['DefinitionChamp'];
+export type TypeChamp = Schemas['TypeChampEnum'];
+/** Valeurs saisies des champs du pays, par code de champ. */
+export type ValeursChamps = Record<string, string | number | boolean | null>;
+/** Champ supplémentaire du rapport, propre au pays (RPT-008). */
+export type ChampRapport = Schemas['ChampRapport'];
+export type SaisieChamp = Schemas['SaisieChamp'];
+export type ModificationChamp = Schemas['PatchedModificationChamp'];
 // Passages et absences (PLN-003, PLN-009).
 export type Passage = Schemas['Passage'];
 export type Activite = Schemas['Activite'];

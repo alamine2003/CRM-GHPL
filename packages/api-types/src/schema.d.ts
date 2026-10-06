@@ -2037,6 +2037,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/rapports/champs/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['champs_rapport'];
+    put?: never;
+    post: operations['champ_rapport_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/rapports/champs/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['champ_rapport_modifier'];
+    trace?: never;
+  };
+  '/api/v1/rapports/champs/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['champ_rapport_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/referentiel/mon-portefeuille/': {
     parameters: {
       query?: never;
@@ -2511,6 +2559,41 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/{id}/rapport/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description RPT-001 : le rapport de la visite effectuée, ouvert en brouillon à la première lecture. */
+    get: operations['rapport_lire'];
+    /** @description RPT-001 : le rapport de la visite effectuée, ouvert en brouillon à la première lecture. */
+    put: operations['rapport_enregistrer'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/visites/{id}/rapport/soumettre/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description RPT-002 CA1 : la soumission exige le socle et les champs obligatoires du pays. */
+    post: operations['rapport_soumettre'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/reporter/': {
     parameters: {
       query?: never;
@@ -2687,6 +2770,16 @@ export interface components {
     CandidatsRemplacement: {
       superviseurs: components['schemas']['Personne'][];
       remplacants: components['schemas']['Personne'][];
+    };
+    ChampRapport: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly code: string;
+      readonly libelle: string;
+      readonly type: components['schemas']['TypeChampEnum'];
+      readonly options: unknown;
+      readonly obligatoire: boolean;
+      readonly ordre: number;
     };
     /**
      * @description * `prospect` - prospect
@@ -3015,6 +3108,14 @@ export interface components {
      * @enum {string}
      */
     DecisionPropositionDecisionEnum: 'accepter' | 'refuser';
+    /** @description Un champ du pays tel qu'à la création du rapport (RPT-008 CA1). */
+    DefinitionChamp: {
+      code: string;
+      libelle: string;
+      type: components['schemas']['TypeChampEnum'];
+      options: string[];
+      obligatoire: boolean;
+    };
     DefinitionPortefeuille: {
       produits: string[];
     };
@@ -3480,6 +3581,7 @@ export interface components {
      *     * `classe_therapeutique` - Classes thérapeutiques
      *     * `grade` - Grades
      *     * `motif_ecart` - Motifs d'écart
+     *     * `resultat_visite` - Résultats de visite
      * @enum {string}
      */
     ListeEnum:
@@ -3488,7 +3590,8 @@ export interface components {
       | 'type_etablissement'
       | 'classe_therapeutique'
       | 'grade'
-      | 'motif_ecart';
+      | 'motif_ecart'
+      | 'resultat_visite';
     /** @description Une page de résultats (PRP-005 CA3). */
     ListeEtablissements: {
       total: number;
@@ -3704,6 +3807,12 @@ export interface components {
       type?: components['schemas']['TypeActiviteEnum'];
       commentaire?: string;
       demande_superviseur?: boolean;
+    };
+    PatchedModificationChamp: {
+      libelle?: string;
+      options?: string[];
+      obligatoire?: boolean;
+      ordre?: number;
     };
     PatchedModificationExercice: {
       principal?: boolean;
@@ -4148,6 +4257,35 @@ export interface components {
      * @enum {string}
      */
     RaisonRepriseEnum: 'jour_hors_semaine' | 'jour_ferie' | 'jour_absent';
+    Rapport: {
+      /** Format: uuid */
+      readonly id: string;
+      /** Format: uuid */
+      readonly visite: string;
+      readonly statut: components['schemas']['StatutRapportEnum'];
+      produits: string[];
+      /** Format: uuid */
+      resultat: string | null;
+      readonly resume: string;
+      readonly prochaine_action: string;
+      champs: unknown;
+      definitions: components['schemas']['DefinitionChamp'][];
+      /** Format: date-time */
+      readonly soumis_le: string | null;
+      readonly manquants: string[];
+      readonly produits_proposes: components['schemas']['Resume'][];
+      readonly resultats_proposes: components['schemas']['Resume'][];
+    };
+    /**
+     * @description * `attendu` - attendu
+     *     * `brouillon` - brouillon
+     *     * `soumis` - soumis
+     *     * `a_corriger` - a_corriger
+     *     * `valide` - valide
+     *     * `rouvert` - rouvert
+     * @enum {string}
+     */
+    RapportStatutEnum: 'attendu' | 'brouillon' | 'soumis' | 'a_corriger' | 'valide' | 'rouvert';
     Rattachement: {
       /** Format: uuid */
       readonly id: string;
@@ -4328,6 +4466,13 @@ export interface components {
       /** @default false */
       demande_superviseur: boolean;
     };
+    SaisieChamp: {
+      libelle: string;
+      type: components['schemas']['TypeChampEnum'];
+      options?: string[];
+      /** @default false */
+      obligatoire: boolean;
+    };
     SaisieEtablissement: {
       nom?: string;
       /** Format: uuid */
@@ -4391,6 +4536,14 @@ export interface components {
       secteur?: string | null;
       /** Format: uuid */
       localite?: string | null;
+    };
+    SaisieRapport: {
+      produits?: string[];
+      /** Format: uuid */
+      resultat?: string | null;
+      resume?: string;
+      prochaine_action?: string;
+      champs?: unknown;
     };
     SaisieVisite: {
       /** Format: uuid */
@@ -4490,6 +4643,10 @@ export interface components {
       code: string;
       nombre: number;
     };
+    SoumissionRapport: {
+      /** Format: date-time */
+      soumis_le: string;
+    };
     /**
      * @description * `birdnotes` - BirdNotes
      *     * `organisation` - Fichier d'organisation
@@ -4521,6 +4678,15 @@ export interface components {
     StatutPays: {
       statut: components['schemas']['StatutEnum'];
     };
+    /**
+     * @description * `brouillon` - Brouillon
+     *     * `soumis` - Soumis
+     *     * `a_corriger` - À corriger
+     *     * `valide` - Validé
+     *     * `rouvert` - Rouvert
+     * @enum {string}
+     */
+    StatutRapportEnum: 'brouillon' | 'soumis' | 'a_corriger' | 'valide' | 'rouvert';
     /**
      * @description Un planning déjà approuvé (PLN-015, RG-018) : sa référence d'exécution, ses changements
      *     mineurs et, pendant une modification majeure, les visites en attente de décision.
@@ -4620,6 +4786,14 @@ export interface components {
       | 'deplacement'
       | 'accompagnement';
     /**
+     * @description * `texte` - Texte
+     *     * `nombre` - Nombre
+     *     * `liste` - Liste
+     *     * `case` - Case à cocher
+     * @enum {string}
+     */
+    TypeChampEnum: 'texte' | 'nombre' | 'liste' | 'case';
+    /**
      * @description * `vm` - Visiteur médical
      *     * `vm_otc` - Visiteur médical OTC
      *     * `kam` - Key Account Manager
@@ -4712,6 +4886,8 @@ export interface components {
       readonly report: components['schemas']['ReportLu'] | null;
       readonly est_imprevue: boolean;
       readonly justification: string;
+      readonly rapport_statut:
+        (components['schemas']['RapportStatutEnum'] | components['schemas']['NullEnum']) | null;
     };
     /** @description Une visite telle que soumise dans une version (RG-037). */
     VisiteFigee: {
@@ -4781,6 +4957,8 @@ export interface components {
       readonly report: components['schemas']['ReportLu'] | null;
       readonly est_imprevue: boolean;
       readonly justification: string;
+      readonly rapport_statut:
+        (components['schemas']['RapportStatutEnum'] | components['schemas']['NullEnum']) | null;
       modification_en_attente: boolean;
     };
     /**
@@ -8050,6 +8228,98 @@ export interface operations {
       };
     };
   };
+  champs_rapport: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChampRapport'][];
+        };
+      };
+    };
+  };
+  champ_rapport_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieChamp'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieChamp'];
+        'multipart/form-data': components['schemas']['SaisieChamp'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChampRapport'];
+        };
+      };
+    };
+  };
+  champ_rapport_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationChamp'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationChamp'];
+        'multipart/form-data': components['schemas']['PatchedModificationChamp'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChampRapport'];
+        };
+      };
+    };
+  };
+  champ_rapport_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ChampRapport'];
+        };
+      };
+    };
+  };
   mon_portefeuille: {
     parameters: {
       query?: never;
@@ -8241,6 +8511,7 @@ export interface operations {
           | 'classe_therapeutique'
           | 'grade'
           | 'motif_ecart'
+          | 'resultat_visite'
           | 'specialite'
           | 'type_etablissement'
           | 'type_prospect';
@@ -8870,6 +9141,81 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  rapport_lire: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Rapport'];
+        };
+      };
+    };
+  };
+  rapport_enregistrer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SaisieRapport'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieRapport'];
+        'multipart/form-data': components['schemas']['SaisieRapport'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Rapport'];
+        };
+      };
+    };
+  };
+  rapport_soumettre: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SoumissionRapport'];
+        'application/x-www-form-urlencoded': components['schemas']['SoumissionRapport'];
+        'multipart/form-data': components['schemas']['SoumissionRapport'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Rapport'];
         };
       };
     };

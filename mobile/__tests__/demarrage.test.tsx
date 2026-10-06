@@ -63,6 +63,7 @@ const VISITE: VisiteProgramme = {
   reportee_de: null,
   report: null,
   est_imprevue: false,
+  rapport_statut: null,
   justification: '',
   modification_en_attente: false,
 };

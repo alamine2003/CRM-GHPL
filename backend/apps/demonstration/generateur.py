@@ -403,6 +403,7 @@ class Generateur:
                                              statut=StatutPlanning.TERMINE)  # fmt: skip
         nombre += self.semaine_approuvee(pays, delegues[0], courante)
         self.passe_execute(pays, delegues[0])
+        self.rapports(pays, delegues[0])
         nombre += self.semaine_en_preparation(pays, delegues[0], suivante)
         if len(delegues) > 1:
             nombre += self.semaine_soumise(pays, delegues[1], suivante)
@@ -443,6 +444,47 @@ class Generateur:
                               distance_debut_m=20 + (i * 37) % 130,
                               distance_fin_m=15 + (i * 29) % 110)  # fmt: skip
             Visite.objects.filter(pk=visite.pk).update(**champs)
+
+    RESUMES = (
+        ("Bon accueil ; prescrit déjà la gamme, demande des données chez l'enfant.",
+         "Apporter l'étude pédiatrique à la prochaine visite."),
+        ("Réservé sur le prix pour sa patientèle ; intéressé par la forme sirop.",
+         "Revenir avec la grille de prix des génériques concurrents."),
+        ("Entretien court entre deux consultations ; a retenu le produit du mois.",
+         "Reprendre la présentation complète au prochain passage."),
+        ("Pose des questions sur les effets indésirables chez le sujet âgé.",
+         "Transmettre la question au service médical et rappeler sous quinze jours."),
+    )  # fmt: skip
+
+    def rapports(self, pays, delegue) -> None:
+        """Les rapports des visites passées (cycle 0.5) : un champ propre au pays (RPT-008),
+        les visites effectuées rapportées et soumises le jour même (RPT-001, RPT-002), sauf
+        l'avant-dernière, en brouillon, et la dernière, au rapport encore attendu."""
+        from apps.planning.etats import StatutVisite
+        from apps.planning.models import Visite
+        from apps.rapports import services as rap
+
+        if not rap.champs_actifs(pays).exists():
+            rap.creer_champ(pays, libelle="Patients concernés par semaine", type="nombre")
+        resultats = list(rap.resultats(pays))
+        effectuees = list(
+            Visite.objects.filter(planning__delegue=delegue, statut=StatutVisite.EFFECTUEE,
+                                  archive_le__isnull=True).order_by("date", "heure", "ordre")
+        )  # fmt: skip
+        if not resultats:
+            return
+        for i, visite in enumerate(effectuees[:-1]):
+            rapport = rap.rapport_de(visite)
+            produits = [str(p.pk) for p in rap.produits_proposes(visite)[: 1 + i % 3]]
+            resume, suite = self.RESUMES[i % len(self.RESUMES)]
+            if i == len(effectuees) - 2:
+                rap.enregistrer(rapport, produits=produits, resume=resume)
+                continue
+            rap.enregistrer(rapport, produits=produits, resultat=resultats[i % 3].pk,
+                            resume=resume, prochaine_action=suite,
+                            champs={d["code"]: 5 + (i * 7) % 30 for d in rapport.definitions
+                                    if d["type"] == "nombre"})  # fmt: skip
+            rap.soumettre(rapport, visite.fin_le + timedelta(minutes=40 + (i * 13) % 80))
 
     def _semaine_complete(self, pays, delegue, semaine):
         """Visites complètes, un passage, une matinée d'accompagnement et une visite hors liste
@@ -817,6 +859,12 @@ class Generateur:
             if orphelins:
                 courant = list(ref.produits_du_portefeuille([reseaux[0]], aujourdhui(pays)))
                 ref.definir_portefeuille(reseaux[0], courant + orphelins)
+        # Des portefeuilles en place depuis un trimestre : les visites passées de la démo ont
+        # leurs produits à présenter (RG-033 suit le portefeuille au jour de la visite).
+        from apps.referentiel.models import Portefeuille
+
+        Portefeuille.objects.filter(pays=pays, fin__isnull=True).update(
+            debut=aujourdhui(pays) - timedelta(days=90))  # fmt: skip
         return len(noms)
 
     @transaction.atomic

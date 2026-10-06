@@ -668,6 +668,18 @@ Mise en œuvre (0.3.9) :
 - **Portail** : sur le planning consulté par le superviseur, la carte « Conformité des journées » résume (« 4 journées contrôlées, 2 à vérifier ») et détaille chaque écart (« 11:00 · prospect : pointée à 130 m du lieu (seuil 100 m) »). La file de travail des journées et la validation par lot arrivent avec les rapports (RPT-012, RPT-013, cycle 0.6).
 - Hypothèses [H] : la tolérance « sans GPS » s'entend par journée, au-delà de 3 visites ; la durée anormale est en deçà de 3 minutes ou au-delà de 3 heures ; une visite restée prévue après sa journée compte comme écart.
 
+### 14.31 Rapport de visite (mise en œuvre 0.5.1)
+
+- **Ouverture** (RPT-001, RG-030) : une visite effectuée a un seul rapport, ouvert en **brouillon** à la première lecture. Avant la fin de la visite, il ne s'ouvre pas (« Le rapport s'écrit une fois la visite terminée »). Sur le téléphone, « Rédiger le rapport » apparaît sous l'annonce de la visite terminée et sous la visite effectuée ; « Reprendre le rapport » pour un brouillon, « Voir le rapport » une fois soumis.
+- **CA1 (RPT-001)** : tant qu'il n'est pas soumis, la visite se lit « Rapport à rédiger » ou « Rapport en brouillon » dans le programme du jour ; l'API donne `rapport_statut` pour chaque visite (`attendu`, `brouillon`, `soumis`…).
+- **Socle** (RPT-002) : produits présentés, touchés **dans l'ordre de présentation** (le rang s'affiche sur chaque produit) ; résultat de la visite, liste courte du pays ; résumé de l'échange ; prochaine action. Seuls les produits du **portefeuille du réseau de la visite, au jour de la visite**, sont proposés (RG-033) ; au-delà de 8 produits, un champ les filtre.
+- **CA1 (RPT-002)** : sans le socle complet et les champs obligatoires du pays, « Soumettre le rapport » reste inactif et l'écran dit ce qui manque (« À compléter avant de soumettre : résultat, prochaine action. ») ; le serveur refuse aussi (`rapport_incomplet`). Soumis, le rapport se lit sans se modifier.
+- **Champs du pays** (RPT-008) : texte libre, nombre, liste de choix (au moins deux), oui / non ; obligatoires ou facultatifs. Ils se gèrent dans « Paramètres », carte « Champs du rapport », par qui modifie les paramètres du pays (administrateur pays, siège) ; le type ne change plus une fois le champ créé ; « Retirer » l'ôte des rapports suivants.
+- **CA1 (RPT-008)** : un rapport garde les champs du pays tels qu'à son ouverture ; un champ ajouté, modifié ou retiré ne vaut que pour les rapports ouverts ensuite.
+- **Résultats de visite** : nouvelle liste de référence du pays, modifiable dans « Référentiels » ; valeurs initiales [H] : objectif atteint, objectif partiellement atteint, objectif non atteint, à relancer.
+- **Hors connexion** [H] : en 0.5.1, le rapport s'ouvre et s'envoie avec du réseau ; sans réseau, l'écran le dit et la visite reste gardée sur le téléphone. Le brouillon gardé sur le téléphone arrive en 0.5.6, la soumission hors connexion et le marquage en retard en 0.5.7 (RPT-010).
+- Hors de 0.5.1 : objectif rappelé en tête (RPT-003, 0.5.2), retour du prescripteur par produit, échantillons et cadeaux (RPT-004, RPT-005, 0.5.3), prochaine action typée avec échéance (RPT-006, 0.5.4).
+
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 20:16+0000\n"
+"POT-Creation-Date: 2026-10-06 22:55+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -537,7 +537,9 @@ msgstr "This identifier already belongs to another item."
 msgid ""
 "Votre planning de cette semaine n'est pas approuvé : une visite imprévue s'y "
 "rattache une fois le planning approuvé."
-msgstr "Your planning for this week is not approved: an unplanned visit can be added once it is."
+msgstr ""
+"Your planning for this week is not approved: an unplanned visit can be added "
+"once it is."
 
 msgid ""
 "Un jour férié ne se modifie plus à partir de son jour : seule une date à "
@@ -856,6 +858,32 @@ msgstr "The end cannot precede the start of the practice."
 
 msgid "Seul l'administrateur pays modifie une fiche commune."
 msgstr "Only the country administrator edits a shared record."
+
+msgid "Une liste propose au moins deux choix."
+msgstr "A list offers at least two choices."
+
+msgid "Le rapport s'écrit une fois la visite terminée."
+msgstr "The report is written once the visit is finished."
+
+msgid "Ce rapport est soumis : il ne se modifie plus."
+msgstr "This report is submitted: it can no longer be changed."
+
+#, python-format
+msgid "Valeur invalide pour « %(libelle)s »."
+msgstr "Invalid value for “%(libelle)s”."
+
+msgid ""
+"Seuls les produits du portefeuille du réseau de la visite se présentent."
+msgstr "Only products of the visit network's portfolio can be presented."
+
+msgid "Résultat inconnu."
+msgstr "Unknown result."
+
+msgid "Ce champ n'est pas dans ce rapport."
+msgstr "This field is not in this report."
+
+msgid "Complétez le rapport avant de le soumettre."
+msgstr "Complete the report before submitting it."
 
 msgid "Ce libellé ou ce code est déjà utilisé dans cette liste."
 msgstr "This label or code is already used in this list."

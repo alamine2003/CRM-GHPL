@@ -686,14 +686,16 @@
       "type_etablissement": "Institution types",
       "classe_therapeutique": "Therapeutic classes",
       "motif_ecart": "Deviation reasons",
-      "grade": "Titles"
+      "grade": "Titles",
+      "resultat_visite": "Visit outcomes"
     },
     "aides": {
       "type_prospect": "Doctor, pharmacist, midwife… Each prospect record has one.",
       "specialite": "Link a specialty to a prospect type to offer it only for that type.",
       "type_etablissement": "Practice, hospital, pharmacy… Each institution has one.",
       "classe_therapeutique": "Product classification (Cardio, Diabetes…).",
-      "motif_ecart": "Reasons a rep picks when a planned visit does not take place."
+      "motif_ecart": "Reasons a rep picks when a planned visit does not take place.",
+      "resultat_visite": "Short list the representative picks in the visit report."
     },
     "valeur": {
       "nouvelle": "New value",
@@ -1948,5 +1950,68 @@
       "sans_gps_other": "{{count}} visits without GPS (tolerance: {{tolerees}})"
     },
     "enCours": "Day in progress: no issue so far"
+  },
+  "rapport": {
+    "titre": "Visit report",
+    "rediger": "Write the report",
+    "reprendre": "Resume the report",
+    "voir": "View the report",
+    "statuts": {
+      "attendu": "Report to write",
+      "brouillon": "Report in draft"
+    },
+    "produits": "Products presented",
+    "produitsAide": "Tap the products in the order you presented them.",
+    "aucunProduit": "No product in this network's portfolio: check with your supervisor.",
+    "resultat": "Visit outcome",
+    "resume": "Summary of the discussion",
+    "resumeIndice": "What the prescriber said, their questions, their objections",
+    "prochaineAction": "Next action",
+    "prochaineActionIndice": "For example: bring the clinical study to the next visit",
+    "champsPays": "Other information",
+    "facultatif": "{{libelle}} (optional)",
+    "oui": "Yes",
+    "non": "No",
+    "socle": {
+      "produits": "products presented",
+      "resultat": "outcome",
+      "resume": "summary",
+      "prochaine_action": "next action"
+    },
+    "manque": "To complete before submitting: {{liste}}.",
+    "soumettre": "Submit the report",
+    "enregistrer": "Save draft",
+    "enregistre": "Draft saved.",
+    "soumis": "Report submitted to your supervisor.",
+    "soumisLe": "Report submitted: it can no longer be changed.",
+    "aCorriger": "Your supervisor asks for a correction.",
+    "horsLigne": "For now the report needs a network connection. Your visit is safely kept on the phone: try again when the network is back.",
+    "horsLigneEnvoi": "No network: nothing on screen is lost, try again when the network is back.",
+    "reessayer": "Try again",
+    "filtrer": "Find a product"
+  },
+  "champsRapport": {
+    "titre": "Report fields",
+    "ajouter": "Add a field",
+    "retirer": "Remove",
+    "aide": "They add to the common report core (products, outcome, summary, next action). A report already started keeps the fields it was opened with.",
+    "vide": "No country-specific field: the report is limited to the common core.",
+    "obligatoire": "Required",
+    "archive": "“{{libelle}}” removed from future reports.",
+    "ajouterTitre": "Add a report field",
+    "modifierTitre": "Edit the field",
+    "aideDialogue": "The change applies to reports opened from now on.",
+    "libelle": "Label",
+    "type": "Answer type",
+    "typeFige": "The type cannot change once the field is created.",
+    "types": {
+      "texte": "Free text",
+      "nombre": "Number",
+      "liste": "Choice list",
+      "case": "Yes / no"
+    },
+    "options": "Choices offered",
+    "optionsAide": "One choice per line, at least two.",
+    "obligatoireAvant": "Required to submit"
   }
 }

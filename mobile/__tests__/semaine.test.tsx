@@ -116,6 +116,7 @@ const VISITE: Visite = {
   reportee_de: null,
   report: null,
   est_imprevue: false,
+  rapport_statut: null,
   justification: '',
 };
 
@@ -140,6 +141,7 @@ const CONFRERE: Visite = {
   reportee_de: null,
   report: null,
   est_imprevue: false,
+  rapport_statut: null,
   justification: '',
 };
 

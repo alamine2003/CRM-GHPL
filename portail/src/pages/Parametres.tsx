@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import DialogueFormulaire from '../composants/Dialogue';
 import { EnTeteCarte, EnTetePage, Etiquette } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
+import ChampsRapport from '../composants/ChampsRapport';
 import JoursFeries from '../composants/JoursFeries';
 import { useSession } from '../contexteSession';
 
@@ -371,6 +372,10 @@ export default function Parametres({ perimetre }: { perimetre: Perimetre }) {
             // ORG-012 : le calendrier des jours fériés suit les jours ouvrés du pays.
             groupe.cle === 'calendrier' && joursFeries ? (
               <JoursFeries key="jours-feries" pays={pays.code} />
+            ) : null,
+            // RPT-008 : les champs du rapport propres au pays, à côté de son heure limite.
+            groupe.cle === 'rapports' ? (
+              <ChampsRapport key="champs-rapport" pays={pays.code} modifier={modifier} />
             ) : null,
           ])}
         </Box>

@@ -112,6 +112,9 @@ def senegal(monde):
     )  # fmt: skip
     activite = Activite.objects.create(pays=sn, planning=planning, date=date(2099, 4, 8),
                                      type="formation")  # fmt: skip
+    from apps.rapports.services import creer_champ
+
+    champ = creer_champ(sn, libelle="Patients par semaine", type="nombre")
     return {
         "prospect-historique": prospect.pk, "etablissement-historique": etab.pk,
         "doublon-trancher": doublon.pk, "fusion-defaire": fusion.pk,
@@ -130,6 +133,9 @@ def senegal(monde):
         "visite-absent": visite.pk,
         "visite-annuler": visite.pk,
         "visite-reporter": visite.pk,
+        "visite-rapport": visite.pk,
+        "visite-rapport-soumettre": visite.pk,
+        "champ-rapport": champ.pk, "champ-rapport-archiver": champ.pk,
         "visite-non-realisee": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,
         "activite": activite.pk, "activite-retirer": activite.pk,
