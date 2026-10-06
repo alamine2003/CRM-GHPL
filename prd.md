@@ -561,10 +561,20 @@ Mise en œuvre [D, 5 octobre 2026, livrée en 0.3.1, PLN-018] :
 - **Alerte du lundi** (RG-019) : à 9 h le lundi (`alerte_planning_non_approuve`), chaque DM apprend combien de plannings de la semaine ne sont pas approuvés dans ses réseaux, plannings absents compris.
 - **Tâche périodique** : toutes les 15 minutes (Celery beat), à l'heure de chaque pays ; chaque envoi est idempotent. Commande `executer_echeances` pour la rejouer sans worker.
 - Hypothèses [H] à confirmer :
-  - « heures ouvrées » : toutes les heures des jours ouvrés du pays, hors jours fériés (un vendredi soir n'escalade pas le samedi) ;
-  - heures du rappel (mercredi 9 h) et de l'alerte (lundi 9 h) ;
+  - heure de l'alerte du lundi (9 h) ; le rappel passe au vendredi 9 h (§14.21) ;
+  - heures ouvrées de l'escalade : du lundi au vendredi, sans les jours fériés [D, 6 octobre 2026] ;
   - une notification d'escalade par planning, plutôt que « n décisions en attente » regroupées (le regroupement arrive avec le push, NOT-003) ;
   - rappels « visite proche », « rapport non soumis » et « délégué non synchronisé depuis 48 h » : avec le push sur le téléphone (0.8.5), les rapports (cycle 0.5) et la synchronisation (cycle 0.8).
+
+### 14.21 Fermeture de la semaine (décisions du 6 octobre 2026, à livrer)
+
+Décisions [D] du 6 octobre 2026, qui modifient RG-013, PLN-008 CA1 et RG-018 :
+- **Date limite** : le délégué soumet le planning de sa semaine avant le **lundi 0 h** de cette semaine (heure du pays). L'échéance du jeudi 18 h est supprimée.
+- **Fermeture** : le lundi à 0 h, tout planning de la semaine qui n'est pas validé — en préparation, à réviser ou soumis — est fermé : plus de soumission, de décision ni de modification.
+- **Réouverture** : seul le superviseur peut rouvrir la rédaction d'un planning fermé ; le délégué rédige et soumet, le superviseur valide. La réouverture reste inscrite : on sait que le planning n'a pas été fait à temps.
+- **Planning validé** : modifiable selon RG-018 jusqu'au lundi 0 h ; plus du tout ensuite.
+- **Rappel** (NOT-006) : le **vendredi à 9 h**, au délégué dont le planning de la semaine suivante n'est pas soumis.
+- **Escalade** (RG-019) : inchangée ; les 24 heures ouvrées se comptent du lundi au vendredi, sans les jours fériés. Le délégué peut déclarer une activité connexe d'une journée ; les écarts se règlent hors de l'application.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
@@ -801,7 +811,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | RG-010 | Un délégué possède un superviseur actif (via son poste) pour soumettre un planning. | [D] |
 | RG-011 | Une personne occupant plusieurs postes a **un seul planning** par semaine ; chaque visite porte le poste et le réseau concernés ; l'approbateur est le superviseur du poste principal. | [H] |
 | RG-012 | Une semaine ne possède qu'un planning par délégué, avec plusieurs versions successives. | [D] |
-| RG-013 | Soumission avant jeudi 18 h et approbation avant vendredi 18 h de la semaine précédente, paramétrables par pays. | [D] |
+| RG-013 | Soumission avant jeudi 18 h et approbation avant vendredi 18 h de la semaine précédente, paramétrables par pays. Remplacée par la décision du 6 octobre 2026 (§14.21) : soumission avant le lundi 0 h de la semaine, fermeture à cette heure, réouverture par le superviseur. | [D] |
 | RG-014 | La période de planning est du lundi au vendredi par défaut, configurable par pays (jours ouvrés). | [D] |
 | RG-015 | Contrôles bloquants à la soumission : champs obligatoires ; prospect et établissement actifs, du même pays, liés par un exercice actif ; pas deux visites à la même heure ; pas deux visites du même prospect le même jour. | [D] |
 | RG-016 | Signalements non bloquants : seuils de visites par jour et type de poste ; prospect hors liste cible ; prospect hors secteur ; prospect A non planifié dans le mois ; soumission en retard. | [D] |
