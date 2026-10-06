@@ -630,6 +630,15 @@ Mise en œuvre (0.3.9) :
 - **Hors connexion** : sans réseau, la déclaration attend dans la file du téléphone (derrière un démarrage en attente) ; la visite se lit déjà « Prospect absent » dans le programme.
 - **Programme** : la visite absente laisse la place à la suivante (« Prospect absent noté pour … : motif ») et se lit « Prospect absent · motif » dans la journée ; le détail montre le motif et le commentaire.
 
+### 14.27 Annuler une visite, visite non réalisée (mise en œuvre 0.4.6)
+
+- **Annuler** (VIS-006) : une visite prévue s'annule le jour même ou à l'avance (depuis son détail pour un autre jour de la semaine), une visite en cours aussi ; motif de la liste du pays, commentaire facultatif. Une journée passée ne s'annule plus (`journee_passee`) : la visite se justifie « non réalisée ».
+- **Non réalisée** (VIS-009) : une visite approuvée restée « prévue » après la fin de sa journée apparaît **« À justifier »** en tête de l'accueil du délégué (CA1), sur la semaine en cours et la précédente ; depuis son détail, « Justifier : non réalisée » avec un motif. Une journée pas finie ne se déclare pas non réalisée (`journee_pas_finie`), ni une visite en cours.
+- **CA1** (VIS-006, VIS-009) : sans motif, impossible (`motif_requis`), comme pour l'absence du prospect (RG-031).
+- **Hors connexion** : comme les autres écarts, la déclaration attend dans la file du téléphone et la visite change déjà de statut.
+- **Affichage** : « Annulée · motif », « Non réalisée · motif » dans la journée ; le détail donne le statut à jour, le motif (« Motif de l'annulation », « Motif de la non-réalisation ») et le commentaire. Les écarts s'annoncent sur un ton neutre, l'effectuée en vert.
+- Hypothèses [H] : annulation possible à l'avance sur toute la semaine approuvée ; « à justifier » limité à la semaine en cours et à la précédente.
+
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :

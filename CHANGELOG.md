@@ -2,6 +2,37 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.6] — Annuler une visite, visite non réalisée
+
+Sixième jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — annuler une visite (VIS-006)
+
+- « Annuler la visite » sur une visite prévue, le jour même ou à l'avance depuis son détail, ou sur une visite en cours ; motif de la liste du pays, commentaire facultatif.
+- **CA1** : sans motif, impossible. Une journée passée ne s'annule plus : elle se justifie.
+
+### Ajouté — visite non réalisée (VIS-009)
+
+- **CA1** : une visite restée prévue après sa journée apparaît « À justifier » en tête de l'accueil (semaine en cours et précédente).
+- « Justifier : non réalisée » depuis son détail, avec un motif obligatoire.
+- Sans réseau, annulation et non-réalisation attendent dans la file du téléphone.
+
+### Modifié
+
+- Démonstration : les journées passées sont exécutées (visites effectuées, quelques écarts), une visite reste à justifier.
+- Le détail d'une visite montre son statut à jour après une action sur le téléphone ; « Effectuée » en vert dans l'historique.
+
+### Design
+
+Revue sur le rendu réel au téléphone (360 px clair : à justifier, motif, après ; 390 px sombre : annulation). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Détail d'une visite | Le statut restait « Prévue » après la justification. | Statut lu dans le programme gardé, à jour. |
+| Programme du jour | Trois grands boutons empilés sous la prochaine visite. | « Prospect absent » et « Annuler la visite » côte à côte sous « Démarrer ». |
+| Annonce | Une annulation s'annonçait en vert, comme une réussite. | Ton neutre pour les écarts. |
+| Dernières visites | « Effectuée » en orange, couleur d'alerte. | En vert. |
+
 ## [0.4.5] — Prospect absent
 
 Cinquième jalon du cycle 0.4 « Exécution des visites ».

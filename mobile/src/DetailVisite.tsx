@@ -147,7 +147,11 @@ export function CoordonneesEtHistorique({
                   {[date(h.date), h.heure].filter(Boolean).join(' · ')}
                 </Text>
                 {/* « Prévue » n'apprend rien sur une date passée : seul un résultat se dit. */}
-                {h.statut !== 'prevue' && <Etiquette>{t(`visites.statuts.${h.statut}`)}</Etiquette>}
+                {h.statut !== 'prevue' && (
+                  <Etiquette ton={h.statut === 'effectuee' ? 'succes' : 'attention'}>
+                    {t(`visites.statuts.${h.statut}`)}
+                  </Etiquette>
+                )}
               </View>
               {h.etablissement ? <Texte variante="discret">{h.etablissement}</Texte> : null}
               {h.objectif ? <Texte>{h.objectif}</Texte> : null}

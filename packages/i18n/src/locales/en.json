@@ -1546,7 +1546,9 @@
       "ajout_activite": "Activity",
       "demarrer_visite": "Visit started",
       "terminer_visite": "Visit ended",
-      "absent_visite": "Prospect absent"
+      "absent_visite": "Prospect absent",
+      "annuler_visite": "Visit cancelled",
+      "non_realisee_visite": "Visit not carried out"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -1842,7 +1844,9 @@
     "enAttente": "Change pending",
     "horsLigne": "Offline: programme as of {{date}}.",
     "ferie": "Holiday · {{libelle}}",
-    "voirSemaine": "Open the Week tab"
+    "voirSemaine": "Open the Week tab",
+    "aJustifier": "To account for",
+    "aJustifierNote": "Visits still planned after their day: choose a reason for each."
   },
   "detailVisite": {
     "coordonnees": "Contact details",
@@ -1882,10 +1886,22 @@
     "motif": "Reason (required)",
     "commentaire": "Comment (optional)",
     "confirmerAbsent": "Confirm absence",
-    "annuler": "Cancel",
+    "annuler": "Back",
     "absentNote": "Prospect absent recorded for {{nom}}: {{motif}}.",
-    "absentHorsLigne": "{{texte}} Offline: it will be sent as soon as the network is back.",
     "motifLu": "Reason for absence",
-    "absentLu": "Prospect absent · {{motif}}"
+    "annulerVisite": "Cancel the visit",
+    "annuleeTitre": "Cancel this visit",
+    "confirmerAnnulee": "Confirm cancellation",
+    "annuleeNote": "Visit to {{nom}} cancelled: {{motif}}.",
+    "nonRealisee": "Record as not carried out",
+    "nonRealiseeTitre": "Visit not carried out",
+    "confirmerNonRealisee": "Confirm",
+    "nonRealiseeNote": "Visit to {{nom}} recorded as not carried out: {{motif}}.",
+    "horsLigneEcart": "{{texte}} Offline: it will be sent as soon as the network is back.",
+    "refusEcart": "It was not accepted: {{message}}",
+    "motifAnnulee": "Reason for cancellation",
+    "motifNonRealisee": "Reason it was not carried out",
+    "ecartLu": "{{statut}} · {{motif}}",
+    "aJustifier": "Still planned after its day: say what happened."
   }
 }

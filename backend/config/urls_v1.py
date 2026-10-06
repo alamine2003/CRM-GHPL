@@ -204,6 +204,10 @@ urlpatterns = [
     path("visites/<uuid:id>/demarrer/", pln.DemarrageVue.as_view(), name="visite-demarrer"),
     path("visites/<uuid:id>/terminer/", pln.TerminaisonVue.as_view(), name="visite-terminer"),
     path("visites/<uuid:id>/absent/", pln.AbsenceProspectVue.as_view(), name="visite-absent"),
+    path("visites/<uuid:id>/annuler/", pln.AnnulationVisiteVue.as_view(), name="visite-annuler"),
+    path(
+        "visites/<uuid:id>/non-realisee/", pln.NonRealiseeVue.as_view(), name="visite-non-realisee"
+    ),  # fmt: skip
     path("visites/<uuid:id>/retirer/", pln.VisiteRetraitVue.as_view(), name="visite-retirer"),
     path("plannings/<uuid:id>/ordre/", pln.OrdreVue.as_view(), name="planning-ordre"),
     path("plannings/<uuid:id>/poser/", pln.PoseVue.as_view(), name="planning-poser"),

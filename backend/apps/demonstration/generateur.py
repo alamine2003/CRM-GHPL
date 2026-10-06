@@ -402,11 +402,47 @@ class Generateur:
             nombre += self.semaine_approuvee(pays, delegues[0], courante - timedelta(days=recul),
                                              statut=StatutPlanning.TERMINE)  # fmt: skip
         nombre += self.semaine_approuvee(pays, delegues[0], courante)
+        self.passe_execute(pays, delegues[0])
         nombre += self.semaine_en_preparation(pays, delegues[0], suivante)
         if len(delegues) > 1:
             nombre += self.semaine_soumise(pays, delegues[1], suivante)
             self.semaine_fermee(pays, delegues[1], courante)
         return nombre
+
+    @staticmethod
+    def passe_execute(pays, delegue) -> None:
+        """Les journées passées ont été faites (cycle 0.4) : la plupart des visites effectuées,
+        quelques écarts justifiés (VIS-005, VIS-006) ; la dernière visite passée reste prévue,
+        « à justifier » (VIS-009 CA1)."""
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        from apps.planning.etats import StatutVisite
+        from apps.planning.models import Visite
+
+        fuseau = ZoneInfo(pays.fuseau)
+        motifs = {v.code: v for v in Valeur.objects.filter(pays=pays, liste="motif_ecart")}
+        passees = list(
+            Visite.objects.filter(planning__delegue=delegue, planning__statut__in=(
+                "en_cours", "termine"), date__lt=aujourdhui(pays), archive_le__isnull=True)
+            .order_by("date", "heure", "ordre")
+        )  # fmt: skip
+        for i, visite in enumerate(passees[:-1]):
+            debut = datetime.combine(visite.date, visite.heure or time(9, 0), tzinfo=fuseau)
+            debut += timedelta(minutes=(i * 7) % 15)
+            if i % 9 == 4 and "cabinet_ferme" in motifs:
+                champs = dict(statut=StatutVisite.PROSPECT_ABSENT, ecart_le=debut,
+                              motif_ecart=motifs["cabinet_ferme"])  # fmt: skip
+            elif i % 11 == 7 and "rendez_vous_reporte" in motifs:
+                champs = dict(statut=StatutVisite.ANNULEE, ecart_le=debut - timedelta(hours=20),
+                              motif_ecart=motifs["rendez_vous_reporte"],
+                              commentaire_ecart="Reçoit la semaine prochaine")  # fmt: skip
+            else:
+                champs = dict(statut=StatutVisite.EFFECTUEE, debut_le=debut,
+                              fin_le=debut + timedelta(minutes=15 + (i * 5) % 20),
+                              distance_debut_m=20 + (i * 37) % 130,
+                              distance_fin_m=15 + (i * 29) % 110)  # fmt: skip
+            Visite.objects.filter(pk=visite.pk).update(**champs)
 
     def _semaine_complete(self, pays, delegue, semaine):
         """Visites complètes, un passage, une matinée d'accompagnement et une visite hors liste

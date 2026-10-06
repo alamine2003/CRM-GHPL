@@ -5,9 +5,12 @@ heures changées depuis son approbation. Une modification majeure qui attend la 
 superviseur n'y entre pas encore ; les visites qu'elle touche restent prévues comme approuvées.
 Chaque journée liste ses visites dans l'ordre ; la prochaine visite du jour est celle qui
 n'est pas encore faite, la première dans l'ordre (prd.md §12).
+
+Une visite restée prévue après la fin de sa journée est « à justifier » (VIS-009 CA1) : le
+programme la rappelle tant qu'elle n'est pas justifiée, sur la semaine et la précédente.
 """
 
-from datetime import date, time
+from datetime import date, time, timedelta
 
 from apps.identite.models import Utilisateur
 from apps.socle.models import Pays
@@ -45,18 +48,14 @@ def _motifs(pays: Pays) -> list:
     return list(motifs.order_by("ordre", "libelle"))
 
 
-def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dict:
-    """La semaine qui contient `jour` (aujourd'hui par défaut), telle qu'approuvée."""
+def _visites_approuvees(planning: Planning | None, ref) -> list[Visite]:
+    """Les fiches vivantes (statut, prospect, lieu), à la date et à l'heure approuvées."""
     from . import services
 
-    today = aujourdhui(pays)
-    semaine = lundi(jour or today)
-    planning = Planning.objects.filter(pays=pays, delegue=delegue, semaine=semaine).first()
-    ref = services.reference(planning) if planning else None
-    figees = sorted(services.contenu_effectif(ref).get("visites", []), key=_ordre) if ref else []
-    en_attente = set(services.suivi_apres_approbation(planning)["en_attente"]) if ref else set()
-
-    # Les fiches vivantes (statut, prospect, lieu), à la date et à l'heure approuvées.
+    if ref is None:
+        return []
+    figees = sorted(services.contenu_effectif(ref).get("visites", []), key=_ordre)
+    en_attente = set(services.suivi_apres_approbation(planning)["en_attente"])
     vivantes = Visite.objects.filter(pk__in=[v["id"] for v in figees]).select_related(
         "prospect__type", "prospect__specialite", "etablissement", "reseau", "motif_ecart"
     )
@@ -71,6 +70,36 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         visite.ordre = figee.get("ordre") or visite.ordre
         visite.modification_en_attente = figee["id"] in en_attente
         visites.append(visite)
+    return visites
+
+
+def a_justifier(pays: Pays, delegue: Utilisateur, today: date) -> list[Visite]:
+    """VIS-009 CA1 : les visites approuvées restées prévues après leur journée, sur la semaine
+    en cours et la précédente, les plus anciennes d'abord."""
+    from . import services
+
+    semaine = lundi(today)
+    plannings = Planning.objects.filter(
+        pays=pays, delegue=delegue, statut__in=EXECUTES,
+        semaine__in=[semaine - timedelta(days=7), semaine],
+    ).order_by("semaine")  # fmt: skip
+    return [
+        v
+        for p in plannings
+        for v in _visites_approuvees(p, services.reference(p))
+        if v.date < today and v.statut == StatutVisite.PREVUE
+    ]
+
+
+def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dict:
+    """La semaine qui contient `jour` (aujourd'hui par défaut), telle qu'approuvée."""
+    from . import services
+
+    today = aujourdhui(pays)
+    semaine = lundi(jour or today)
+    planning = Planning.objects.filter(pays=pays, delegue=delegue, semaine=semaine).first()
+    ref = services.reference(planning) if planning else None
+    visites = _visites_approuvees(planning, ref)
 
     activites = []
     if ref:
@@ -105,6 +134,7 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         "geolocalisation": valeur_parametre(pays, "geolocalisation_active"),
         "attente_gps_secondes": valeur_parametre(pays, "attente_gps_secondes"),
         "motifs_ecart": _motifs(pays),
+        "a_justifier": a_justifier(pays, delegue, today),
     }
 
 

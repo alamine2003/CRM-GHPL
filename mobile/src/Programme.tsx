@@ -27,7 +27,7 @@ export function ProgrammeDuJour() {
   const { client, etat } = useSession();
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [horsLigne, setHorsLigne] = useState<string | null>(null);
-  const [annonce, setAnnonce] = useState<{ texte: string; horsLigne: boolean } | null>(null);
+  const [annonce, setAnnonce] = useState<{ texte: string; ton: 'info' | 'succes' } | null>(null);
   const connecte = etat.statut === 'connecte';
 
   // Une visite démarrée sur le téléphone change le programme gardé : l'écran suit.
@@ -78,9 +78,41 @@ export function ProgrammeDuJour() {
   const prochaine =
     aujourdhui?.visites.find((v) => v.statut === 'prevue' || v.statut === 'en_cours') ?? null;
   const autresJours = programme.jours.filter((j) => j.date > programme.aujourdhui);
+  // Restées prévues après leur journée : à justifier (VIS-009 CA1).
+  const aJustifier = (programme.a_justifier ?? []).filter((v) => v.statut === 'prevue');
 
   return (
     <>
+      {aJustifier.length > 0 && (
+        <Carte style={{ gap: 4 }}>
+          <Texte variante="sousTitre">
+            {`${t('programme.aJustifier')} (${aJustifier.length})`}
+          </Texte>
+          <Texte variante="discret">{t('programme.aJustifierNote')}</Texte>
+          {aJustifier.map((v) => (
+            <Pressable
+              key={v.id}
+              accessibilityRole="button"
+              onPress={() => ouvrir(v)}
+              style={({ pressed }) => [
+                styles.ligne,
+                { borderTopColor: p.ligne },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <View style={{ gap: 2 }}>
+                <Text style={[styles.surTitre, { color: p.attention }]}>
+                  {jour(v.date, { weekday: 'long', day: 'numeric', month: 'long' })}
+                </Text>
+                <LigneVisite
+                  visite={v}
+                  jour={{ date: v.date, ferie: null, visites: aJustifier, activites: [] }}
+                />
+              </View>
+            </Pressable>
+          ))}
+        </Carte>
+      )}
       <Carte style={{ gap: 10 }}>
         <View style={{ gap: 2 }}>
           <Texte variante="sousTitre">{t('programme.titre')}</Texte>
@@ -120,9 +152,7 @@ export function ProgrammeDuJour() {
         ) : (
           <>
             <Activites jour={aujourdhui} />
-            {annonce && (
-              <Alerte type={annonce.horsLigne ? 'info' : 'succes'}>{annonce.texte}</Alerte>
-            )}
+            {annonce && <Alerte type={annonce.ton}>{annonce.texte}</Alerte>}
             {prochaine ? (
               <Pressable
                 accessibilityRole="button"
@@ -270,8 +300,11 @@ function LigneVisite({
           {/* En tête, « En cours depuis … » le dit déjà sous la carte. */}
           {visite.statut !== 'prevue' && !(grande && visite.statut === 'en_cours') && (
             <Etiquette ton={visite.statut === 'effectuee' ? 'succes' : 'attention'}>
-              {visite.statut === 'prospect_absent' && visite.motif_ecart
-                ? t('execution.absentLu', { motif: visite.motif_ecart.libelle })
+              {visite.motif_ecart
+                ? t('execution.ecartLu', {
+                    statut: t(`visites.statuts.${visite.statut}`),
+                    motif: visite.motif_ecart.libelle,
+                  })
                 : t(`visites.statuts.${visite.statut}`)}
             </Etiquette>
           )}

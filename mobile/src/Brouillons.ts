@@ -101,8 +101,9 @@ export type Envoi =
     }
   | {
       id: string;
-      /** Prospect absent déclaré sans réseau (VIS-005). */
-      type: 'absent_visite';
+      /** Écart déclaré sans réseau : prospect absent (VIS-005), annulée (VIS-006), non
+       * réalisée (VIS-009). */
+      type: 'absent_visite' | 'annuler_visite' | 'non_realisee_visite';
       visite: string;
       saisie: Ecart;
       resume: string;
@@ -187,10 +188,15 @@ async function rejouer(client: ClientApi): Promise<number> {
         await client.visites.demarrer(envoi.visite, envoi.saisie);
       } else if (envoi.type === 'terminer_visite') {
         await client.visites.terminer(envoi.visite, envoi.saisie);
-      } else if (envoi.type === 'absent_visite') {
-        await client.visites.absent(envoi.visite, envoi.saisie);
-      } else {
+      } else if (envoi.type === 'ajout_activite') {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
+      } else {
+        const declarer = {
+          absent_visite: client.visites.absent,
+          annuler_visite: client.visites.annuler,
+          non_realisee_visite: client.visites.nonRealisee,
+        }[envoi.type];
+        await declarer(envoi.visite, envoi.saisie);
       }
       partis.add(envoi.id);
     } catch (e) {

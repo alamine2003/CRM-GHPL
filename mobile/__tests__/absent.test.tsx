@@ -71,6 +71,7 @@ const PROGRAMME: Programme = {
   geolocalisation: true,
   attente_gps_secondes: 60,
   motifs_ecart: [{ id: 'm-absent', libelle: 'Absent du cabinet' }],
+  a_justifier: [],
   jours: [{ date: '2026-10-13', ferie: null, visites: [VISITE], activites: [] }],
 };
 
@@ -112,7 +113,7 @@ test('VIS-005 CA1 : sans motif, l’absence ne se confirme pas', async () => {
   await fireEvent.press(screen.getByText("Confirmer l'absence"));
   expect(absent).not.toHaveBeenCalled();
   // Annuler rend les boutons de la visite.
-  await fireEvent.press(screen.getByText('Annuler'));
+  await fireEvent.press(screen.getByText('Retour'));
   expect(screen.getByText('Démarrer la visite')).toBeTruthy();
 });
 

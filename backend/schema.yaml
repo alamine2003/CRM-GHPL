@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.5
+  version: 0.4.6
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4292,6 +4292,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/{id}/annuler/:
+    post:
+      operationId: visite_annuler
+      description: 'VIS-006 : annuler une visite prévue ou en cours ; un motif est
+        obligatoire (CA1).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
   /api/v1/visites/{id}/copier/:
     post:
       operationId: visite_copier
@@ -4385,6 +4420,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetailVisite'
+          description: ''
+  /api/v1/visites/{id}/non-realisee/:
+    post:
+      operationId: visite_non_realisee
+      description: 'VIS-009 : justifier une visite restée prévue après sa journée
+        ; motif obligatoire.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
           description: ''
   /api/v1/visites/{id}/retirer/:
     post:
@@ -7656,6 +7726,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/JourProgramme'
+        a_justifier:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisiteProgramme'
         prochaine:
           type: string
           format: uuid
@@ -7669,6 +7743,7 @@ components:
           items:
             $ref: '#/components/schemas/Resume'
       required:
+      - a_justifier
       - attente_gps_secondes
       - aujourdhui
       - etat

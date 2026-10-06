@@ -1,6 +1,7 @@
 /**
  * Démarrer puis terminer une visite (VIS-003, 0.4.3 ; VIS-004, 0.4.4), ou déclarer le prospect
- * absent, avec un motif de la liste du pays (VIS-005, 0.4.5). Le téléphone prend l'heure réelle et, si le pays active
+ * absent (VIS-005, 0.4.5), l'annuler (VIS-006) ou la justifier non réalisée (VIS-009, 0.4.6),
+ * avec un motif de la liste du pays. Le téléphone prend l'heure réelle et, si le pays active
  * la géolocalisation (RG-028), la position du moment — même sans réseau (CA1) : l'envoi part
  * aussitôt, ou attend dans la file et part au retour du réseau. Sans position, la visite démarre
  * quand même, « sans GPS » (CA2) ; avec une position, la distance au lieu s'affiche (CA3).
@@ -46,6 +47,9 @@ export async function changerVisite(id: string, champs: Partial<VisiteProgramme>
       ...j,
       visites: j.visites.map((v) => (v.id === id ? { ...v, ...champs } : v)),
     })),
+    a_justifier: (memoire.valeur.a_justifier ?? []).map((v) =>
+      v.id === id ? { ...v, ...champs } : v,
+    ),
   };
   await ecrire(CLE_PROGRAMME, programme).catch(() => undefined);
   ecouteurs.forEach((e) => e(programme));
@@ -215,9 +219,19 @@ function dureeMinutes(debut: string | null, fin: string) {
   return debut ? Math.max(1, Math.round((Date.parse(fin) - Date.parse(debut)) / 60000)) : 0;
 }
 
-/** Prospect absent (VIS-005) : la file part d'abord, puis la déclaration ; sinon elle attend. */
-export async function declarerAbsent(
+/** Les écarts d'une visite (prd.md §12, RG-031) : chacun exige un motif de la liste du pays. */
+export type TypeEcart = 'absent' | 'annuler' | 'non_realisee';
+
+const ECARTS = {
+  absent: { statut: 'prospect_absent', envoi: 'absent_visite' },
+  annuler: { statut: 'annulee', envoi: 'annuler_visite' },
+  non_realisee: { statut: 'non_realisee', envoi: 'non_realisee_visite' },
+} as const;
+
+/** Déclare un écart : la file part d'abord, puis la déclaration ; sans réseau, elle attend. */
+export async function declarerEcart(
   client: ClientApi,
+  type: TypeEcart,
   visite: VisiteProgramme,
   motif: { id: string; libelle: string },
   commentaire: string,
@@ -225,7 +239,7 @@ export async function declarerAbsent(
 ): Promise<'parti' | 'en_attente'> {
   const saisie = { le: new Date().toISOString(), motif: motif.id, commentaire: commentaire.trim() };
   const local = {
-    statut: 'prospect_absent' as const,
+    statut: ECARTS[type].statut,
     motif_ecart: motif,
     commentaire_ecart: saisie.commentaire,
     ecart_le: saisie.le,
@@ -236,7 +250,12 @@ export async function declarerAbsent(
   );
   try {
     if (encoreEnAttente) throw new TypeError('Un envoi de cette visite attend encore');
-    const recue = await client.visites.absent(visite.id, saisie);
+    const envoyer = {
+      absent: client.visites.absent,
+      annuler: client.visites.annuler,
+      non_realisee: client.visites.nonRealisee,
+    }[type];
+    const recue = await envoyer(visite.id, saisie);
     await changerVisite(visite.id, {
       statut: recue.statut,
       motif_ecart: recue.motif_ecart,
@@ -248,7 +267,7 @@ export async function declarerAbsent(
     if (!estTransitoire(e)) throw e;
     await mettreEnAttente({
       id: nouvelIdentifiant(),
-      type: 'absent_visite',
+      type: ECARTS[type].envoi,
       visite: visite.id,
       saisie,
       resume,
@@ -257,6 +276,31 @@ export async function declarerAbsent(
     return 'en_attente';
   }
 }
+
+/** Textes de chaque écart : titre du panneau, bouton de confirmation, annonce, motif lu. */
+const TEXTES_ECART = {
+  absent: {
+    titre: 'execution.absentTitre',
+    confirmer: 'execution.confirmerAbsent',
+    note: 'execution.absentNote',
+  },
+  annuler: {
+    titre: 'execution.annuleeTitre',
+    confirmer: 'execution.confirmerAnnulee',
+    note: 'execution.annuleeNote',
+  },
+  non_realisee: {
+    titre: 'execution.nonRealiseeTitre',
+    confirmer: 'execution.confirmerNonRealisee',
+    note: 'execution.nonRealiseeNote',
+  },
+} as const;
+
+const MOTIF_LU: Record<string, string> = {
+  prospect_absent: 'execution.motifLu',
+  annulee: 'execution.motifAnnulee',
+  non_realisee: 'execution.motifNonRealisee',
+};
 
 export function distanceLisible(
   metres: number,
@@ -291,14 +335,16 @@ export function ExecutionVisite({
   /** Motifs d'écart du pays (prd.md §12), gardés avec le programme. */
   motifs?: { id: string; libelle: string }[];
   /** La visite terminée quitte souvent l'écran (la suivante prend sa place) : on l'annonce. */
-  surTerminee?: (annonce: { texte: string; horsLigne: boolean }) => void;
+  surTerminee?: (annonce: { texte: string; ton: 'info' | 'succes' }) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const [envoi, setEnvoi] = useState(false);
-  const [absence, setAbsence] = useState<{ motif: string | null; commentaire: string } | null>(
-    null,
-  );
+  const [ecart, setEcart] = useState<{
+    type: TypeEcart;
+    motif: string | null;
+    commentaire: string;
+  } | null>(null);
   const [message, setMessage] = useState<{
     ton: 'erreur' | 'info' | 'succes';
     texte: string;
@@ -349,10 +395,10 @@ export function ExecutionVisite({
         const horsLigne = issue === 'en_attente';
         const annonce = {
           texte: horsLigne ? t('execution.termineeHorsLigne', { texte }) : texte,
-          horsLigne,
+          ton: horsLigne ? ('info' as const) : ('succes' as const),
         };
         if (surTerminee) surTerminee(annonce);
-        else setMessage({ ton: horsLigne ? 'info' : 'succes', texte: annonce.texte });
+        else setMessage(annonce);
       }
     } catch (e) {
       setMessage({
@@ -364,81 +410,99 @@ export function ExecutionVisite({
     }
   }
 
-  async function confirmerAbsent() {
-    const motif = motifs.find((m) => m.id === absence?.motif);
-    if (!absence || !motif) return;
+  async function confirmerEcart() {
+    const motif = motifs.find((m) => m.id === ecart?.motif);
+    if (!ecart || !motif) return;
     setEnvoi(true);
     setMessage(null);
     try {
-      const issue = await declarerAbsent(client, visite, motif, absence.commentaire, resume);
-      const texte = t('execution.absentNote', {
+      const issue = await declarerEcart(
+        client,
+        ecart.type,
+        visite,
+        motif,
+        ecart.commentaire,
+        resume,
+      );
+      const texte = t(TEXTES_ECART[ecart.type].note, {
         nom: visite.prospect ? nomProspect(visite.prospect, t) : t('visites.sansProspect'),
         motif: motif.libelle,
       });
-      setAbsence(null);
+      setEcart(null);
       const horsLigne = issue === 'en_attente';
+      // Un écart se note sans se féliciter : l'annonce reste neutre.
       const annonce = {
-        texte: horsLigne ? t('execution.absentHorsLigne', { texte }) : texte,
-        horsLigne,
+        texte: horsLigne ? t('execution.horsLigneEcart', { texte }) : texte,
+        ton: 'info' as const,
       };
       if (surTerminee) surTerminee(annonce);
-      else setMessage({ ton: horsLigne ? 'info' : 'succes', texte: annonce.texte });
+      else setMessage(annonce);
     } catch (e) {
       setMessage({
         ton: 'erreur',
-        texte: t('execution.refus', { message: messageErreur(e, t('erreurs.reseau')) }),
+        texte: t('execution.refusEcart', { message: messageErreur(e, t('erreurs.reseau')) }),
       });
     } finally {
       setEnvoi(false);
     }
   }
 
-  // Prospect absent : le motif est obligatoire (VIS-005 CA1), le commentaire facultatif.
-  const formulaireAbsence = absence && (
+  // Un écart : le motif est obligatoire (RG-031, CA1 de VIS-005, VIS-006, VIS-009), le
+  // commentaire facultatif.
+  const formulaireEcart = ecart && (
     <View style={{ gap: 10 }}>
-      <Texte variante="sousTitre">{t('execution.absentTitre')}</Texte>
+      <Texte variante="sousTitre">{t(TEXTES_ECART[ecart.type].titre)}</Texte>
       <Texte variante="libelle">{t('execution.motif')}</Texte>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {motifs.map((m) => (
           <Pilule
             key={m.id}
             libelle={m.libelle}
-            actif={absence.motif === m.id}
-            onPress={() => setAbsence({ ...absence, motif: m.id })}
+            actif={ecart.motif === m.id}
+            onPress={() => setEcart({ ...ecart, motif: m.id })}
           />
         ))}
       </View>
       <Champ
         libelle={t('execution.commentaire')}
-        value={absence.commentaire}
-        onChangeText={(commentaire) => setAbsence({ ...absence, commentaire })}
+        value={ecart.commentaire}
+        onChangeText={(commentaire) => setEcart({ ...ecart, commentaire })}
         maxLength={500}
         multiline
       />
       <Bouton
-        libelle={t('execution.confirmerAbsent')}
+        libelle={t(TEXTES_ECART[ecart.type].confirmer)}
         chargement={envoi}
-        desactive={!absence.motif}
-        onPress={() => void confirmerAbsent()}
+        desactive={!ecart.motif}
+        onPress={() => void confirmerEcart()}
       />
-      <Bouton secondaire libelle={t('execution.annuler')} onPress={() => setAbsence(null)} />
+      <Bouton secondaire libelle={t('execution.annuler')} onPress={() => setEcart(null)} />
     </View>
   );
-  const boutonAbsent = !absence && (
-    <Bouton
-      secondaire
-      libelle={t('execution.absent')}
-      onPress={() => {
-        setMessage(null);
-        setAbsence({ motif: null, commentaire: '' });
-      }}
-    />
+  const boutonEcart = (type: TypeEcart, libelle: string) => (
+    <View key={type} style={{ flex: 1 }}>
+      <Bouton
+        secondaire
+        libelle={libelle}
+        onPress={() => {
+          setMessage(null);
+          setEcart({ type, motif: null, commentaire: '' });
+        }}
+      />
+    </View>
+  );
+  // Les écarts, secondaires, côte à côte sous l'action principale.
+  const ecarts = (...types: [TypeEcart, string][]) => (
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      {types.map(([type, libelle]) => boutonEcart(type, libelle))}
+    </View>
   );
 
-  if (visite.statut === 'prospect_absent' && visite.motif_ecart) {
+  const motifLu = MOTIF_LU[visite.statut ?? ''];
+  if (motifLu && visite.motif_ecart) {
     return (
       <View style={{ gap: 6 }}>
-        <Texte variante="libelle">{t('execution.motifLu')}</Texte>
+        <Texte variante="libelle">{t(motifLu)}</Texte>
         <Texte variante="fort">{visite.motif_ecart.libelle}</Texte>
         {visite.commentaire_ecart ? <Texte>{visite.commentaire_ecart}</Texte> : null}
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
@@ -491,33 +555,58 @@ export function ExecutionVisite({
         </Texte>
         {visite.sans_gps && <Texte variante="discret">{t('execution.sansGps')}</Texte>}
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
-        {formulaireAbsence || (
+        {formulaireEcart || (
           <>
             <Bouton
               libelle={t('execution.terminer')}
               chargement={envoi}
               onPress={() => void agir('terminer')}
             />
-            {boutonAbsent}
+            {ecarts(['absent', t('execution.absent')], ['annuler', t('execution.annulerVisite')])}
           </>
         )}
         {attente}
       </View>
     );
   }
-  if (visite.statut !== 'prevue' || visite.date !== aujourdhui) return null;
+  if (visite.statut !== 'prevue') return null;
+
+  // Restée prévue après sa journée : elle se justifie (VIS-009 CA1).
+  if (visite.date < aujourdhui) {
+    return (
+      <View style={{ gap: 6 }}>
+        {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
+        {formulaireEcart || (
+          <>
+            <Alerte type="attention">{t('execution.aJustifier')}</Alerte>
+            {ecarts(['non_realisee', t('execution.nonRealisee')])}
+          </>
+        )}
+      </View>
+    );
+  }
+
+  // Un autre jour à venir : seule l'annulation se fait à l'avance (VIS-006).
+  if (visite.date > aujourdhui) {
+    return (
+      <View style={{ gap: 6 }}>
+        {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
+        {formulaireEcart || ecarts(['annuler', t('execution.annulerVisite')])}
+      </View>
+    );
+  }
 
   return (
     <View style={{ gap: 6 }}>
       {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
-      {formulaireAbsence || (
+      {formulaireEcart || (
         <>
           <Bouton
             libelle={t('execution.demarrer')}
             chargement={envoi}
             onPress={() => void agir('demarrer')}
           />
-          {boutonAbsent}
+          {ecarts(['absent', t('execution.absent')], ['annuler', t('execution.annulerVisite')])}
         </>
       )}
       {attente}
@@ -525,8 +614,8 @@ export function ExecutionVisite({
   );
 }
 
-/** Pour le détail d'une visite : la même action, d'après le programme gardé sur le téléphone. */
-export function ExecutionDepuisProgramme({ id }: { id: string }) {
+/** La visite telle que le programme gardé sur le téléphone la connaît, à jour des actions. */
+export function useVisiteDuProgramme(id: string) {
   const [programme, setProgramme] = useState<Programme | null>(null);
   useEffect(() => {
     let actif = true;
@@ -539,7 +628,16 @@ export function ExecutionDepuisProgramme({ id }: { id: string }) {
       arreter();
     };
   }, []);
-  const visite = programme?.jours.flatMap((j) => j.visites).find((v) => v.id === id);
+  const visite = [
+    ...(programme?.jours.flatMap((j) => j.visites) ?? []),
+    ...(programme?.a_justifier ?? []),
+  ].find((v) => v.id === id);
+  return { programme, visite };
+}
+
+/** Pour le détail d'une visite : la même action, d'après le programme gardé sur le téléphone. */
+export function ExecutionDepuisProgramme({ id }: { id: string }) {
+  const { programme, visite } = useVisiteDuProgramme(id);
   if (!programme || !visite) return null;
   return (
     <ExecutionVisite

@@ -63,6 +63,7 @@ const PROGRAMME: Programme = {
   geolocalisation: true,
   attente_gps_secondes: 60,
   motifs_ecart: [{ id: 'm-absent', libelle: 'Absent du cabinet' }],
+  a_justifier: [],
   jours: [
     { date: '2026-10-12', ferie: null, visites: [], activites: [] },
     {

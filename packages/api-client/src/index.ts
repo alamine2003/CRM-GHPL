@@ -784,6 +784,12 @@ export function creerClient(options: OptionsClient) {
       /** Prospect absent (VIS-005) : motif obligatoire ; rejouable depuis la file. */
       absent: (id: string, ecart: Ecart) =>
         requete<Visite>(`/api/v1/visites/${id}/absent/`, { methode: 'POST', corps: ecart }),
+      /** Annuler (VIS-006) : motif obligatoire ; le jour prévu ou à l'avance. */
+      annuler: (id: string, ecart: Ecart) =>
+        requete<Visite>(`/api/v1/visites/${id}/annuler/`, { methode: 'POST', corps: ecart }),
+      /** Non réalisée (VIS-009) : une visite restée prévue après sa journée, avec un motif. */
+      nonRealisee: (id: string, ecart: Ecart) =>
+        requete<Visite>(`/api/v1/visites/${id}/non-realisee/`, { methode: 'POST', corps: ecart }),
       copier: (id: string, date: string) =>
         requete<Visite>(`/api/v1/visites/${id}/copier/`, { methode: 'POST', corps: { date } }),
     },

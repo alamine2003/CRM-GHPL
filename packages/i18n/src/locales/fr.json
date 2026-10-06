@@ -1546,7 +1546,9 @@
       "ajout_activite": "Activité",
       "demarrer_visite": "Visite démarrée",
       "terminer_visite": "Visite terminée",
-      "absent_visite": "Prospect absent"
+      "absent_visite": "Prospect absent",
+      "annuler_visite": "Visite annulée",
+      "non_realisee_visite": "Visite non réalisée"
     },
     "aide_one": "Enregistré sur ce téléphone sans réseau ; il part de lui-même au retour du réseau.",
     "aide_other": "Enregistrés sur ce téléphone sans réseau ; ils partent d'eux-mêmes au retour du réseau.",
@@ -1842,7 +1844,9 @@
     "enAttente": "Modification en attente",
     "horsLigne": "Hors ligne : programme tel qu'au {{date}}.",
     "ferie": "Férié · {{libelle}}",
-    "voirSemaine": "Ouvrir l'onglet Semaine"
+    "voirSemaine": "Ouvrir l'onglet Semaine",
+    "aJustifier": "À justifier",
+    "aJustifierNote": "Visites restées prévues après leur journée : choisissez un motif pour chacune."
   },
   "detailVisite": {
     "coordonnees": "Coordonnées",
@@ -1882,10 +1886,22 @@
     "motif": "Motif (obligatoire)",
     "commentaire": "Commentaire (facultatif)",
     "confirmerAbsent": "Confirmer l'absence",
-    "annuler": "Annuler",
+    "annuler": "Retour",
     "absentNote": "Prospect absent noté pour {{nom}} : {{motif}}.",
-    "absentHorsLigne": "{{texte}} Sans réseau : l'envoi partira dès le retour du réseau.",
     "motifLu": "Motif de l'absence",
-    "absentLu": "Prospect absent · {{motif}}"
+    "annulerVisite": "Annuler la visite",
+    "annuleeTitre": "Annuler cette visite",
+    "confirmerAnnulee": "Confirmer l'annulation",
+    "annuleeNote": "Visite de {{nom}} annulée : {{motif}}.",
+    "nonRealisee": "Justifier : non réalisée",
+    "nonRealiseeTitre": "Visite non réalisée",
+    "confirmerNonRealisee": "Confirmer",
+    "nonRealiseeNote": "Visite de {{nom}} justifiée non réalisée : {{motif}}.",
+    "horsLigneEcart": "{{texte}} Sans réseau : l'envoi partira dès le retour du réseau.",
+    "refusEcart": "L'envoi n'a pas été accepté : {{message}}",
+    "motifAnnulee": "Motif de l'annulation",
+    "motifNonRealisee": "Motif de la non-réalisation",
+    "ecartLu": "{{statut}} · {{motif}}",
+    "aJustifier": "Restée prévue après sa journée : dites ce qui s'est passé."
   }
 }

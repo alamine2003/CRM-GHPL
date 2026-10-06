@@ -2420,6 +2420,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/{id}/annuler/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description VIS-006 : annuler une visite prévue ou en cours ; un motif est obligatoire (CA1). */
+    post: operations['visite_annuler'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/copier/': {
     parameters: {
       query?: never;
@@ -2471,6 +2488,23 @@ export interface paths {
     get: operations['visite_detail'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/visites/{id}/non-realisee/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description VIS-009 : justifier une visite restée prévue après sa journée ; motif obligatoire. */
+    post: operations['visite_non_realisee'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3835,6 +3869,7 @@ export interface components {
       planning: components['schemas']['Planning'] | null;
       version: number | null;
       jours: components['schemas']['JourProgramme'][];
+      a_justifier: components['schemas']['VisiteProgramme'][];
       /** Format: uuid */
       prochaine: string | null;
       geolocalisation: boolean;
@@ -8566,6 +8601,33 @@ export interface operations {
       };
     };
   };
+  visite_annuler: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Ecart'];
+        'application/x-www-form-urlencoded': components['schemas']['Ecart'];
+        'multipart/form-data': components['schemas']['Ecart'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
   visite_copier: {
     parameters: {
       query?: never;
@@ -8637,6 +8699,33 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['DetailVisite'];
+        };
+      };
+    };
+  };
+  visite_non_realisee: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Ecart'];
+        'application/x-www-form-urlencoded': components['schemas']['Ecart'];
+        'multipart/form-data': components['schemas']['Ecart'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'];
         };
       };
     };

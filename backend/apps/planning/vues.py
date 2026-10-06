@@ -765,3 +765,35 @@ class AbsenceProspectVue(VueVisites):
         v = _lire(s.EcartSerializer, request)
         visite = declarer_absent(visite, v["le"], v.get("motif"), v.get("commentaire", ""))
         return Response(s.VisiteSerializer(visite).data)
+
+
+class AnnulationVisiteVue(VueVisites):
+    """VIS-006 : annuler une visite prévue ou en cours ; un motif est obligatoire (CA1)."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.EcartSerializer, responses=s.VisiteSerializer,
+                   operation_id="visite_annuler")  # fmt: skip
+    def post(self, request, id):
+        from .execution import annuler
+
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.EcartSerializer, request)
+        visite = annuler(visite, v["le"], v.get("motif"), v.get("commentaire", ""))
+        return Response(s.VisiteSerializer(visite).data)
+
+
+class NonRealiseeVue(VueVisites):
+    """VIS-009 : justifier une visite restée prévue après sa journée ; motif obligatoire."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.EcartSerializer, responses=s.VisiteSerializer,
+                   operation_id="visite_non_realisee")  # fmt: skip
+    def post(self, request, id):
+        from .execution import non_realisee
+
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.EcartSerializer, request)
+        visite = non_realisee(visite, v["le"], v.get("motif"), v.get("commentaire", ""))
+        return Response(s.VisiteSerializer(visite).data)

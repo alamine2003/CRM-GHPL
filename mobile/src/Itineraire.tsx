@@ -19,7 +19,7 @@ import { nomProspect } from './Fiches';
 import { unitesDuJour } from './Journee';
 import { police } from './polices';
 import { CoordonneesEtHistorique } from './DetailVisite';
-import { ExecutionDepuisProgramme } from './Execution';
+import { ExecutionDepuisProgramme, useVisiteDuProgramme } from './Execution';
 import { BandeauHorsLigne } from './Attente';
 import { estTransitoire } from './Brouillons';
 import { garderSemaine, jourIso, semaineGardee } from './semaineLocale';
@@ -239,11 +239,14 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
   const p = usePalette();
   const routeur = useRouter();
   const { semaine, erreur, horsLigne } = useSemaineDu(jour);
+  // Démarrée, terminée ou justifiée sur le téléphone : le programme gardé le sait déjà.
+  const duProgramme = useVisiteDuProgramme(id).visite;
 
   if (erreur) return <Alerte type="erreur">{erreur}</Alerte>;
   if (!semaine) return <Texte variante="discret">{t('session.chargement')}</Texte>;
   const visite = semaine.visites.find((v) => v.id === id);
   if (!visite) return <Alerte type="attention">{t('detail.introuvable')}</Alerte>;
+  const statut = duProgramme?.statut ?? visite.statut;
 
   const alertes = alertesDeVisite(
     semaine.controles,
@@ -294,7 +297,7 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
         {ligne(t('visites.champs.objectif'), visite.objectif)}
         {ligne(t('visites.champs.reseau'), visite.reseau?.libelle)}
         {ligne(t('visites.champs.note'), visite.note)}
-        {ligne(t('detail.statut'), t(`visites.statuts.${visite.statut ?? 'prevue'}`))}
+        {ligne(t('detail.statut'), t(`visites.statuts.${statut ?? 'prevue'}`))}
         {visite.manquants.length > 0 && (
           <Text style={[styles.manque, { color: p.attention }]}>
             {t('visites.aCompleter', {

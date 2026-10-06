@@ -7,6 +7,10 @@ Prospect absent (VIS-005) : une visite prévue ou en cours passe « prospect abs
 motif choisi dans la liste du pays — sans motif, impossible (CA1) — et un commentaire
 facultatif.
 
+Annuler (VIS-006) : une visite prévue, le jour même ou à l'avance, ou une visite en cours, passe
+« annulée » avec un motif (CA1). Non réalisée (VIS-009) : une visite restée prévue après la fin
+de sa journée se justifie « non réalisée », avec un motif ; le programme la montre « à
+justifier » (CA1).
 
 Démarrer (VIS-003) : la visite passe « en cours » à l'heure réelle donnée par le téléphone,
 avec la position du moment si le pays active la géolocalisation (RG-028). Le téléphone peut
@@ -164,14 +168,7 @@ def _exiger_motif(pays, identifiant):
 
 def _exiger_jour_approuve(visite: Visite, moment: datetime) -> None:
     """Une visite se déclare le jour où le planning approuvé la prévoit."""
-    date_approuvee = _date_approuvee(visite)
-    if date_approuvee is None:
-        raise ErreurMetier(
-            "visite_non_approuvee",
-            _("Cette visite n'est pas dans le planning approuvé."),
-            status.HTTP_409_CONFLICT,
-        )
-    jour = moment.astimezone(ZoneInfo(visite.planning.pays.fuseau)).date().isoformat()
+    date_approuvee, jour = _jour_approuve(visite, moment)
     if jour != date_approuvee:
         raise ErreurMetier(
             "autre_jour",
@@ -181,25 +178,80 @@ def _exiger_jour_approuve(visite: Visite, moment: datetime) -> None:
         )
 
 
+def _jour_approuve(visite: Visite, moment: datetime) -> tuple[str, str]:
+    """La date approuvée de la visite et le jour du moment, dans le fuseau du pays."""
+    date_approuvee = _date_approuvee(visite)
+    if date_approuvee is None:
+        raise ErreurMetier(
+            "visite_non_approuvee",
+            _("Cette visite n'est pas dans le planning approuvé."),
+            status.HTTP_409_CONFLICT,
+        )
+    jour = moment.astimezone(ZoneInfo(visite.planning.pays.fuseau)).date().isoformat()
+    return date_approuvee, jour
+
+
+def _exiger_pas_passee(visite: Visite, moment: datetime) -> None:
+    """Une visite s'annule le jour prévu ou avant ; passée, elle se dit « non réalisée »."""
+    date_approuvee, jour = _jour_approuve(visite, moment)
+    if jour > date_approuvee:
+        raise ErreurMetier(
+            "journee_passee",
+            _("Sa journée est passée : justifiez cette visite comme non réalisée."),
+            status.HTTP_409_CONFLICT,
+            prevue_le=date_approuvee,
+        )
+
+
+def _exiger_journee_finie(visite: Visite, moment: datetime) -> None:
+    """VIS-009 : seule une visite dont la journée est finie se dit « non réalisée »."""
+    date_approuvee, jour = _jour_approuve(visite, moment)
+    if jour <= date_approuvee:
+        raise ErreurMetier(
+            "journee_pas_finie",
+            _("Sa journée n'est pas finie : démarrez, annulez ou déclarez le prospect absent."),
+            status.HTTP_409_CONFLICT,
+            prevue_le=date_approuvee,
+        )
+
+
 @transaction.atomic
-def declarer_absent(visite: Visite, le: datetime, motif, commentaire: str = "") -> Visite:
-    """VIS-005 : « prospect absent », avec un motif obligatoire (CA1)."""
+def _declarer_ecart(visite: Visite, statut: str, le: datetime, motif, commentaire: str,
+                    verifier, action: str) -> Visite:  # fmt: skip
+    """Un écart (prd.md §12, RG-031) : statut, motif obligatoire, commentaire facultatif."""
     from .services import _auditer
 
     visite = _verrouiller(visite)
-    if visite.statut == StatutVisite.PROSPECT_ABSENT and visite.ecart_le == le:
-        return visite
-    exiger_transition_visite(visite.statut, StatutVisite.PROSPECT_ABSENT)
-    pays = visite.planning.pays
-    motif = _exiger_motif(pays, motif)
+    if visite.statut == statut and visite.ecart_le == le:
+        return visite  # rejeu du même envoi (OFF-003)
+    exiger_transition_visite(visite.statut, statut)
+    motif = _exiger_motif(visite.planning.pays, motif)
     _exiger_passe(le, "le")
     if visite.statut == StatutVisite.PREVUE:
-        _exiger_jour_approuve(visite, le)
-    visite.statut = StatutVisite.PROSPECT_ABSENT
+        verifier(visite, le)
+    visite.statut = statut
     visite.motif_ecart = motif
     visite.commentaire_ecart = (commentaire or "").strip()
     visite.ecart_le = le
     visite.save(update_fields=["statut", "motif_ecart", "commentaire_ecart", "ecart_le",
                                "modifie_le"])  # fmt: skip
-    _auditer("visite.prospect_absent", visite, motif=motif.code, le=le.isoformat())
+    _auditer(action, visite, motif=motif.code, le=le.isoformat())
     return visite
+
+
+def declarer_absent(visite: Visite, le: datetime, motif, commentaire: str = "") -> Visite:
+    """VIS-005 : « prospect absent », le jour prévu, avec un motif obligatoire (CA1)."""
+    return _declarer_ecart(visite, StatutVisite.PROSPECT_ABSENT, le, motif, commentaire,
+                           _exiger_jour_approuve, "visite.prospect_absent")  # fmt: skip
+
+
+def annuler(visite: Visite, le: datetime, motif, commentaire: str = "") -> Visite:
+    """VIS-006 : « annulée », avec un motif obligatoire (CA1)."""
+    return _declarer_ecart(visite, StatutVisite.ANNULEE, le, motif, commentaire,
+                           _exiger_pas_passee, "visite.annulee")  # fmt: skip
+
+
+def non_realisee(visite: Visite, le: datetime, motif, commentaire: str = "") -> Visite:
+    """VIS-009 : « non réalisée », une fois sa journée finie, avec un motif obligatoire."""
+    return _declarer_ecart(visite, StatutVisite.NON_REALISEE, le, motif, commentaire,
+                           _exiger_journee_finie, "visite.non_realisee")  # fmt: skip
