@@ -155,10 +155,10 @@ class VisiteSerializer(serializers.ModelSerializer):
                   "note", "statut", "manquants", "passage", "ordre", "debut_le", "sans_gps",
                   "distance_debut_m", "fin_le", "fin_sans_gps", "distance_fin_m",
                   "motif_ecart", "commentaire_ecart", "ecart_le", "reportee_de",
-                  "report"]  # fmt: skip
+                  "report", "est_imprevue", "justification"]  # fmt: skip
         read_only_fields = ["debut_le", "sans_gps", "distance_debut_m", "fin_le", "fin_sans_gps",
                             "distance_fin_m", "commentaire_ecart", "ecart_le",
-                            "reportee_de"]  # fmt: skip
+                            "reportee_de", "est_imprevue", "justification"]  # fmt: skip
 
     #: La visite qui prend la suite d'une visite reportée (VIS-007).
     report = serializers.SerializerMethodField()
@@ -166,7 +166,8 @@ class VisiteSerializer(serializers.ModelSerializer):
     def get_manquants(self, visite) -> list[str]:
         from .services import champs_manquants
 
-        return champs_manquants(visite)
+        # Une visite imprévue (VIS-008) n'a rien à compléter : elle ne se soumet pas.
+        return [] if visite.est_imprevue else champs_manquants(visite)
 
     @extend_schema_field(ReportLuSerializer(allow_null=True))
     def get_report(self, visite) -> dict | None:
@@ -706,6 +707,22 @@ class TerminaisonSerializer(serializers.Serializer):
     """VIS-004 : l'heure réelle de fin et la position, prises par le téléphone."""
 
     fin_le = serializers.DateTimeField()
+    latitude = serializers.FloatField(required=False, allow_null=True, min_value=-90,
+                                      max_value=90)  # fmt: skip
+    longitude = serializers.FloatField(required=False, allow_null=True, min_value=-180,
+                                       max_value=180)  # fmt: skip
+    precision_m = serializers.FloatField(required=False, allow_null=True, min_value=0)
+
+
+class ImprevueSerializer(serializers.Serializer):
+    """VIS-008 : une visite hors planning, justifiée, prise sur le téléphone au moment où elle
+    commence (même hors connexion) ; l'identifiant vient du téléphone (0.2.7)."""
+
+    id = serializers.UUIDField(required=False)
+    le = serializers.DateTimeField()
+    prospect = serializers.UUIDField()
+    etablissement = serializers.UUIDField(required=False, allow_null=True)
+    justification = serializers.CharField(max_length=500, required=False, allow_blank=True)
     latitude = serializers.FloatField(required=False, allow_null=True, min_value=-90,
                                       max_value=90)  # fmt: skip
     longitude = serializers.FloatField(required=False, allow_null=True, min_value=-180,

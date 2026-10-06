@@ -648,6 +648,16 @@ Mise en œuvre (0.3.9) :
 - Une modification soumise (dont un report) garde la version approuvée comme référence : visites « à justifier » et historique restent lisibles.
 - Hypothèses [H] : un report dans la semaine commencée est permis malgré la fermeture du lundi (exception au verrouillage de la 0.3.9) ; pendant qu'une modification attend la décision du superviseur, un second report de la même semaine est refusé (`modification_en_attente`).
 
+### 14.29 Visite imprévue (mise en œuvre 0.4.8)
+
+- **Visite imprévue** (VIS-008, RG-027) : sous le programme du jour, « Visite imprévue » : le délégué choisit le prospect (liste cible d'abord, puis toutes les fiches du pays), son lieu, et écrit pourquoi la visite n'était pas prévue. La visite démarre aussitôt, rattachée au jour réel, avec l'heure et la position du moment (mêmes règles qu'un démarrage) ; elle se termine ou s'écarte (absent, annulée) comme les autres.
+- **CA1** : sans justification, elle ne démarre pas (`justification_requise`).
+- **CA2** : « Imprévue » sur le programme du jour, la semaine et le détail du délégué (avec la justification) et sur la semaine du planning au portail (justification au survol).
+- **Sans approbation** : elle ne passe pas par le superviseur et n'entre dans aucune version, aucun contrôle de préparation, aucun kilométrage estimé, aucune reprise de semaine ; elle ne compte pas parmi les visites planifiées et n'a rien « à compléter ».
+- **Hors connexion** : elle démarre sur le téléphone avec un identifiant donné par celui-ci et attend dans la file ; rejouée, elle n'est créée qu'une fois.
+- La visite en cours la plus récemment démarrée passe en tête du programme (« Prochaine visite »).
+- Hypothèse [H] : une visite imprévue exige un planning approuvé pour la semaine (`semaine_non_approuvee` sinon).
+
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :

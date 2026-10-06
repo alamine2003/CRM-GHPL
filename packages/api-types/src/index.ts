@@ -118,6 +118,7 @@ export type Terminaison = Schemas['Terminaison'];
 /** Écart déclaré : moment, motif de la liste du pays, commentaire (VIS-005). */
 export type Ecart = Schemas['Ecart'];
 export type Report = Schemas['Report'];
+export type Imprevue = Schemas['Imprevue'];
 // Passages et absences (PLN-003, PLN-009).
 export type Passage = Schemas['Passage'];
 export type Activite = Schemas['Activite'];

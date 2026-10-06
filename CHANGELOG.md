@@ -2,6 +2,32 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.8] — Visite imprévue
+
+Huitième jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — visite imprévue (VIS-008, RG-027)
+
+- « Visite imprévue » sous le programme du jour : prospect (liste cible ou recherche), lieu, justification ; la visite démarre aussitôt, au jour réel, avec l'heure et la position du moment.
+- **CA1** : sans justification, elle ne démarre pas.
+- **CA2** : marquée « Imprévue » sur le téléphone (programme, semaine, détail avec la justification) et sur la semaine du planning au portail.
+- Sans approbation : elle n'entre ni dans les versions, ni dans les contrôles, ni dans le kilométrage estimé, ni dans le compte des visites planifiées.
+- Sans réseau, elle démarre quand même et attend dans la file.
+
+### Modifié
+
+- « Prochaine visite » : la visite en cours la plus récemment démarrée passe en tête.
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px ; portail 1440 px, superviseur). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Portail, semaine du planning | La visite imprévue affichait « À compléter : Objectif » et comptait parmi les visites planifiées. | Rien à compléter ; « 7 visites planifiées », l'imprévue à part avec son repère. |
+| Programme du jour | Le panneau de la visite imprévue se collait à la liste du jour. | Un filet le détache, comme une nouvelle section. |
+| Programme du jour | Deux visites en cours : la plus ancienne restait « Prochaine visite ». | La dernière démarrée passe en tête. |
+
 ## [0.4.7] — Reporter une visite
 
 Septième jalon du cycle 0.4 « Exécution des visites ».

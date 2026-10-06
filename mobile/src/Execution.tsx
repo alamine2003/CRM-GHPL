@@ -55,6 +55,22 @@ export async function changerVisite(id: string, champs: Partial<VisiteProgramme>
   ecouteurs.forEach((e) => e(programme));
 }
 
+/** Ajoute une visite (une imprévue, VIS-008) au programme gardé, à son jour, et prévient. */
+export async function ajouterAuProgramme(visite: VisiteProgramme) {
+  const memoire = await lire<Programme>(CLE_PROGRAMME).catch(() => null);
+  if (!memoire) return;
+  const programme: Programme = {
+    ...memoire.valeur,
+    jours: memoire.valeur.jours.map((j) =>
+      j.date === visite.date && !j.visites.some((v) => v.id === visite.id)
+        ? { ...j, visites: [...j.visites, visite] }
+        : j,
+    ),
+  };
+  await ecrire(CLE_PROGRAMME, programme).catch(() => undefined);
+  ecouteurs.forEach((e) => e(programme));
+}
+
 type Position = { latitude: number; longitude: number; precision_m: number | null };
 
 /**

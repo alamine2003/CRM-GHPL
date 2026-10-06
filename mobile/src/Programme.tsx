@@ -22,6 +22,7 @@ import {
 import { Alerte, Carte, Etiquette, MarquePotentiel, Texte, usePalette } from './composants';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
+import { VisiteImprevue } from './Imprevue';
 import { useSession } from './session';
 import { garderSemaine } from './semaineLocale';
 
@@ -80,8 +81,14 @@ export function ProgrammeDuJour() {
   const aujourdhui = programme.jours.find((j) => j.date === programme.aujourdhui);
   // La prochaine : la première du jour pas encore faite (prd.md §14.22). Elle se recalcule ici :
   // une visite terminée sur le téléphone, même sans réseau, laisse la place à la suivante.
+  // La visite en cours la plus récemment démarrée d'abord (une imprévue, par exemple), sinon la
+  // première prévue.
   const prochaine =
-    aujourdhui?.visites.find((v) => v.statut === 'prevue' || v.statut === 'en_cours') ?? null;
+    aujourdhui?.visites
+      .filter((v) => v.statut === 'en_cours')
+      .sort((a, b) => (b.debut_le ?? '').localeCompare(a.debut_le ?? ''))[0] ??
+    aujourdhui?.visites.find((v) => v.statut === 'prevue') ??
+    null;
   const autresJours = programme.jours.filter((j) => j.date > programme.aujourdhui);
   // Restées prévues après leur journée : à justifier (VIS-009 CA1).
   const aJustifier = (programme.a_justifier ?? []).filter((v) => v.statut === 'prevue');
@@ -205,6 +212,9 @@ export function ProgrammeDuJour() {
                 </Pressable>
               ))}
           </>
+        )}
+        {programme.etat === 'approuve' && aujourdhui && (
+          <VisiteImprevue programme={programme} surAnnonce={setAnnonce} />
         )}
       </Carte>
       {programme.etat === 'approuve' && autresJours.length > 0 && (
@@ -330,6 +340,7 @@ function LigneVisite({
             </Etiquette>
           )}
           {visite.modification_en_attente && <Etiquette>{t('programme.enAttente')}</Etiquette>}
+          {visite.est_imprevue && <Etiquette ton="neutre">{t('visites.imprevue')}</Etiquette>}
         </View>
       </View>
       <MaterialIcons name="chevron-right" size={22} color={p.texteDiscret} />

@@ -203,6 +203,7 @@ urlpatterns = [
     path("visites/<uuid:id>/detail/", pln.VisiteDetailVue.as_view(), name="visite-detail"),
     path("visites/<uuid:id>/demarrer/", pln.DemarrageVue.as_view(), name="visite-demarrer"),
     path("visites/<uuid:id>/terminer/", pln.TerminaisonVue.as_view(), name="visite-terminer"),
+    path("visites/imprevue/", pln.VisiteImprevueVue.as_view(), name="visite-imprevue"),
     path("visites/<uuid:id>/absent/", pln.AbsenceProspectVue.as_view(), name="visite-absent"),
     path("visites/<uuid:id>/annuler/", pln.AnnulationVisiteVue.as_view(), name="visite-annuler"),
     path("visites/<uuid:id>/reporter/", pln.ReportVisiteVue.as_view(), name="visite-reporter"),

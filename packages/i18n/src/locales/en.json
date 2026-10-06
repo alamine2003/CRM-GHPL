@@ -1365,7 +1365,8 @@
       "reportee": "Postponed",
       "prospect_absent": "Prospect absent",
       "non_realisee": "Not done"
-    }
+    },
+    "imprevue": "Unplanned"
   },
   "passages": {
     "ligne_one": "{{lieu}} · {{count}} prescriber",
@@ -1549,7 +1550,8 @@
       "absent_visite": "Prospect absent",
       "annuler_visite": "Visit cancelled",
       "non_realisee_visite": "Visit not carried out",
-      "reporter_visite": "Visit postponed"
+      "reporter_visite": "Visit postponed",
+      "imprevue_visite": "Unplanned visit"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -1912,6 +1914,15 @@
     "reportNote": "Visit to {{nom}} postponed to {{jour}}: {{motif}}.",
     "reportSoumis": "{{texte}} The new day awaits your supervisor's approval.",
     "motifReport": "Reason for postponement",
-    "reporteeAu": "Postponed to {{jour}}"
+    "reporteeAu": "Postponed to {{jour}}",
+    "imprevue": "Unplanned visit",
+    "imprevueTitre": "Visit outside the planning",
+    "imprevueAide": "You meet a prospect who was not planned: the visit starts now, attached to today.",
+    "justification": "Justification (required)",
+    "justificationIndice": "Why was this visit not planned?",
+    "demarrerImprevue": "Start the unplanned visit",
+    "imprevueNote": "Unplanned visit to {{nom}} started at {{heure}}.",
+    "justificationLue": "Justification of the unplanned visit",
+    "prospect": "Prospect (required)"
   }
 }

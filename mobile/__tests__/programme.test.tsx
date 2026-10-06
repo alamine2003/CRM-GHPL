@@ -51,6 +51,8 @@ const visite = (id: string, heure: string, nom: string, date = '2026-10-13'): Vi
   ecart_le: null,
   reportee_de: null,
   report: null,
+  est_imprevue: false,
+  justification: '',
   modification_en_attente: false,
 });
 

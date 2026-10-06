@@ -1365,7 +1365,8 @@
       "reportee": "Reportée",
       "prospect_absent": "Prospect absent",
       "non_realisee": "Non réalisée"
-    }
+    },
+    "imprevue": "Imprévue"
   },
   "passages": {
     "ligne_one": "{{lieu}} · {{count}} prescripteur",
@@ -1549,7 +1550,8 @@
       "absent_visite": "Prospect absent",
       "annuler_visite": "Visite annulée",
       "non_realisee_visite": "Visite non réalisée",
-      "reporter_visite": "Visite reportée"
+      "reporter_visite": "Visite reportée",
+      "imprevue_visite": "Visite imprévue"
     },
     "aide_one": "Enregistré sur ce téléphone sans réseau ; il part de lui-même au retour du réseau.",
     "aide_other": "Enregistrés sur ce téléphone sans réseau ; ils partent d'eux-mêmes au retour du réseau.",
@@ -1912,6 +1914,15 @@
     "reportNote": "Visite de {{nom}} reportée au {{jour}} : {{motif}}.",
     "reportSoumis": "{{texte}} Le nouveau jour attend l'accord de votre superviseur.",
     "motifReport": "Motif du report",
-    "reporteeAu": "Reportée au {{jour}}"
+    "reporteeAu": "Reportée au {{jour}}",
+    "imprevue": "Visite imprévue",
+    "imprevueTitre": "Visite hors du planning",
+    "imprevueAide": "Vous rencontrez un prospect qui n'était pas prévu : la visite démarre maintenant, rattachée à aujourd'hui.",
+    "justification": "Justification (obligatoire)",
+    "justificationIndice": "Pourquoi cette visite n'était pas prévue ?",
+    "demarrerImprevue": "Démarrer la visite imprévue",
+    "imprevueNote": "Visite imprévue chez {{nom}} démarrée à {{heure}}.",
+    "justificationLue": "Justification de la visite imprévue",
+    "prospect": "Prospect (obligatoire)"
   }
 }

@@ -9,6 +9,7 @@ import DirectionsCarRounded from '@mui/icons-material/DirectionsCarRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
+import BoltRounded from '@mui/icons-material/BoltRounded';
 import HourglassEmptyRounded from '@mui/icons-material/HourglassEmptyRounded';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
@@ -319,6 +320,20 @@ function CarteVisite({
             }}
           >
             {remarque}
+          </Typography>
+        </Stack>
+      )}
+      {v.est_imprevue && (
+        // VIS-008 CA2 : faite hors du planning, sans approbation ; la justification au survol.
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{ alignItems: 'center', color: 'text.secondary' }}
+          title={v.justification}
+        >
+          <BoltRounded sx={{ fontSize: 16 }} />
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            {t('visites.imprevue')}
           </Typography>
         </Stack>
       )}

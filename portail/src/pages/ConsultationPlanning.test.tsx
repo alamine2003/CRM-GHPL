@@ -46,6 +46,8 @@ const VISITE: Visite = {
   ecart_le: null,
   reportee_de: null,
   report: null,
+  est_imprevue: false,
+  justification: '',
 };
 
 const CONSULTATION: Consultation = {

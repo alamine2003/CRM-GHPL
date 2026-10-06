@@ -104,6 +104,14 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
     planning = Planning.objects.filter(pays=pays, delegue=delegue, semaine=semaine).first()
     ref = services.reference(planning) if planning else None
     visites = _visites_approuvees(planning, ref)
+    if ref:
+        # Les visites imprévues (VIS-008) : faites, sans approbation, au jour réel.
+        imprevues = planning.visites.filter(archive_le__isnull=True, est_imprevue=True)
+        for v in imprevues.select_related("prospect__type", "prospect__specialite",
+                                          "etablissement", "reseau", "motif_ecart"):  # fmt: skip
+            v.modification_en_attente = False
+            visites.append(v)
+        visites.sort(key=lambda v: (v.date, v.heure or time(23, 59), v.ordre or 0))
 
     activites = []
     if ref:
@@ -116,7 +124,11 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
          "activites": [a for a in activites if a.date == j.date]}
         for j in jours_de_la_semaine(pays, semaine)
     ]  # fmt: skip
-    prochaine = next((v for v in visites if v.date == today and v.statut in A_FAIRE), None)
+    # La visite en cours la plus récemment démarrée d'abord (une imprévue, par exemple), sinon
+    # la première prévue.
+    du_jour = [v for v in visites if v.date == today and v.statut in A_FAIRE]
+    en_cours = [v for v in du_jour if v.statut == StatutVisite.EN_COURS and v.debut_le]
+    prochaine = max(en_cours, key=lambda v: v.debut_le, default=None) or next(iter(du_jour), None)
 
     if ref:
         etat = Etat.APPROUVE

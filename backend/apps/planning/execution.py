@@ -17,6 +17,10 @@ liée (CA1) se pose au jour choisi, après le jour prévu. Dans une semaine déj
 ajout est une modification majeure soumise au superviseur (CA2, RG-018) ; dans une semaine en
 préparation, il s'ajoute au planning, créé au besoin.
 
+Visite imprévue (VIS-008, RG-027) : rencontrée hors du planning, elle se déclare justifiée
+(CA1), rattachée au jour réel, et démarre aussitôt avec la position du moment ; elle ne passe
+pas par le superviseur et reste marquée « imprévue » partout (CA2).
+
 Démarrer (VIS-003) : la visite passe « en cours » à l'heure réelle donnée par le téléphone,
 avec la position du moment si le pays active la géolocalisation (RG-028). Le téléphone peut
 démarrer sans réseau : l'envoi part plus tard, et le rejouer ne change rien (OFF-003). Sans
@@ -320,4 +324,64 @@ def reporter(visite: Visite, le: datetime, motif, date, heure=None, commentaire:
                                "modifie_le"])  # fmt: skip
     _auditer("visite.reportee", visite, motif=motif.code, le=le.isoformat(),
              nouvelle=str(suite.pk), date=date.isoformat())  # fmt: skip
+    return visite
+
+
+def _exiger_justification(justification: str) -> str:
+    texte = (justification or "").strip()
+    if not texte:
+        raise ErreurMetier(
+            "justification_requise",
+            _("Dites pourquoi cette visite n'était pas prévue : la justification est "
+              "obligatoire."),
+            champ="justification",
+        )  # fmt: skip
+    return texte
+
+
+@transaction.atomic
+def visite_imprevue(delegue, pays, *, le: datetime, prospect, etablissement=None,
+                    justification: str = "", id=None, latitude=None, longitude=None,
+                    precision_m=None) -> Visite:  # fmt: skip
+    """VIS-008 : une visite hors planning, justifiée (CA1), au jour réel ; elle démarre."""
+    from . import services
+    from .calendrier import lundi
+    from .models import Planning
+    from .services import _auditer
+
+    if id is not None and (existante := Visite.objects.filter(pk=id).first()) is not None:
+        if existante.planning.delegue_id != delegue.pk or not existante.est_imprevue:
+            raise ErreurMetier("identifiant_pris",
+                               _("Cet identifiant appartient déjà à un autre objet."),
+                               status.HTTP_409_CONFLICT)  # fmt: skip
+        return existante  # rejeu du même envoi (OFF-003)
+    texte = _exiger_justification(justification)
+    _exiger_passe(le, "le")
+    jour = le.astimezone(ZoneInfo(pays.fuseau)).date()
+    planning = Planning.objects.filter(pays=pays, delegue=delegue, semaine=lundi(jour)).first()
+    if planning is None or services.reference(planning) is None:
+        raise ErreurMetier(
+            "semaine_non_approuvee",
+            _("Votre planning de cette semaine n'est pas approuvé : une visite imprévue s'y "
+              "rattache une fois le planning approuvé."),
+            status.HTTP_409_CONFLICT,
+        )  # fmt: skip
+    reseau = services._reseau_par_defaut(planning)
+    visite = Visite(pays=pays, planning=planning, date=jour, est_imprevue=True,
+                    justification=texte, prospect=prospect, etablissement=etablissement,
+                    reseau=reseau, heure=le.astimezone(ZoneInfo(pays.fuseau)).time()
+                    .replace(second=0, microsecond=0))  # fmt: skip
+    if id is not None:
+        visite.pk = id
+    if reseau is not None:
+        visite.poste = services._poste_du_reseau(planning, reseau)
+    lat, lon, precision, visite.sans_gps = _position(pays, latitude, longitude, precision_m)
+    visite.statut = StatutVisite.EN_COURS
+    visite.debut_le = le
+    visite.debut_latitude, visite.debut_longitude, visite.debut_precision_m = lat, lon, precision
+    visite.distance_debut_m = _distance_m(visite, lat, lon) if lat is not None else None
+    visite.ordre = services._dernier_rang(planning, jour) + 1
+    visite.save()
+    _auditer("visite.imprevue", visite, planning=str(planning.pk), date=jour.isoformat(),
+             sans_gps=visite.sans_gps, distance_m=visite.distance_debut_m)  # fmt: skip
     return visite

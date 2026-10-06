@@ -57,6 +57,8 @@ const VISITE: VisiteProgramme = {
   ecart_le: null,
   reportee_de: null,
   report: null,
+  est_imprevue: false,
+  justification: '',
   modification_en_attente: false,
 };
 
@@ -95,6 +97,8 @@ test('VIS-007 : reportée à un nouveau jour, avec son motif ; la semaine approu
     statut: 'reportee',
     motif_ecart: MOTIF,
     report: { id: s.id, date: s.date, heure: s.heure },
+    est_imprevue: false,
+    justification: '',
   }));
   await rendre(reporter);
   await fireEvent.press(screen.getByText('Reporter'));
@@ -133,6 +137,8 @@ test('VIS-007 CA1 : la visite reportée dit son motif et son nouveau jour', asyn
           statut: 'reportee',
           motif_ecart: MOTIF,
           report: { id: 'v2', date: '2026-10-15', heure: '10:00' },
+          est_imprevue: false,
+          justification: '',
         }}
         aujourdhui="2026-10-13"
         geolocalisation

@@ -53,6 +53,8 @@ const visite = (id: string, date: string, heure: string, nom: string) => ({
   ecart_le: null,
   reportee_de: null,
   report: null,
+  est_imprevue: false,
+  justification: '',
   prospect: { id: `p-${id}`, nom },
   etablissement: { id: 'e1', nom: 'Clinique Fictive' },
   objectif: '',

@@ -276,8 +276,13 @@ function Resume({
                   libelle={t('planification.visites')}
                   valeur={
                     aCompleter
-                      ? t('visites.bilanACompleter', { count: s.visites.length, aCompleter })
-                      : t('visites.bilan', { count: s.visites.length })
+                      ? t('visites.bilanACompleter', {
+                          count: s.visites.filter((v) => !v.est_imprevue).length,
+                          aCompleter,
+                        })
+                      : t('visites.bilan', {
+                          count: s.visites.filter((v) => !v.est_imprevue).length,
+                        })
                   }
                 />
                 {km && (

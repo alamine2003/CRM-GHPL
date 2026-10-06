@@ -177,7 +177,10 @@ class Visite(ModeleDePays):
     statut = models.CharField(
         max_length=16, choices=StatutVisite.choices, default=StatutVisite.PREVUE
     )
+    #: Visite faite hors du planning, le jour même (VIS-008, RG-027) : justifiée, sans
+    #: approbation préalable ; elle n'entre dans aucune version.
     est_imprevue = models.BooleanField(default=False)
+    justification = models.CharField(max_length=500, blank=True)
     passage = models.ForeignKey(
         Passage, null=True, blank=True, on_delete=models.SET_NULL, related_name="visites"
     )

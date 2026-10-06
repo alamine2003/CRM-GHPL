@@ -114,6 +114,8 @@ const VISITE: Visite = {
   ecart_le: null,
   reportee_de: null,
   report: null,
+  est_imprevue: false,
+  justification: '',
 };
 
 /** Un confrère vu au même lieu le même jour, à heure fixe. */
@@ -136,6 +138,8 @@ const CONFRERE: Visite = {
   ecart_le: null,
   reportee_de: null,
   report: null,
+  est_imprevue: false,
+  justification: '',
 };
 
 const EN_PREPARATION: Semaine = {

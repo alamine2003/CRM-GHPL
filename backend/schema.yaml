@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.7
+  version: 0.4.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4548,6 +4548,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/imprevue/:
+    post:
+      operationId: visite_imprevue
+      description: 'VIS-008 : déclarer une visite hors planning, justifiée (CA1),
+        qui démarre aussitôt.'
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Imprevue'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Imprevue'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Imprevue'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
 components:
   schemas:
     Activite:
@@ -6345,6 +6373,48 @@ components:
           default: true
       required:
       - fichier
+    Imprevue:
+      type: object
+      description: |-
+        VIS-008 : une visite hors planning, justifiée, prise sur le téléphone au moment où elle
+        commence (même hors connexion) ; l'identifiant vient du téléphone (0.2.7).
+      properties:
+        id:
+          type: string
+          format: uuid
+        le:
+          type: string
+          format: date-time
+        prospect:
+          type: string
+          format: uuid
+        etablissement:
+          type: string
+          format: uuid
+          nullable: true
+        justification:
+          type: string
+          maxLength: 500
+        latitude:
+          type: number
+          format: double
+          maximum: 90
+          minimum: -90
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          maximum: 180
+          minimum: -180
+          nullable: true
+        precision_m:
+          type: number
+          format: double
+          minimum: 0
+          nullable: true
+      required:
+      - le
+      - prospect
     Informations:
       type: object
       properties:
@@ -9551,6 +9621,12 @@ components:
           - $ref: '#/components/schemas/ReportLu'
           nullable: true
           readOnly: true
+        est_imprevue:
+          type: boolean
+          readOnly: true
+        justification:
+          type: string
+          readOnly: true
       required:
       - commentaire_ecart
       - date
@@ -9558,11 +9634,13 @@ components:
       - distance_debut_m
       - distance_fin_m
       - ecart_le
+      - est_imprevue
       - etablissement
       - fin_le
       - fin_sans_gps
       - heure
       - id
+      - justification
       - manquants
       - motif_ecart
       - prospect
@@ -9747,6 +9825,12 @@ components:
           - $ref: '#/components/schemas/ReportLu'
           nullable: true
           readOnly: true
+        est_imprevue:
+          type: boolean
+          readOnly: true
+        justification:
+          type: string
+          readOnly: true
         modification_en_attente:
           type: boolean
       required:
@@ -9756,11 +9840,13 @@ components:
       - distance_debut_m
       - distance_fin_m
       - ecart_le
+      - est_imprevue
       - etablissement
       - fin_le
       - fin_sans_gps
       - heure
       - id
+      - justification
       - manquants
       - modification_en_attente
       - motif_ecart

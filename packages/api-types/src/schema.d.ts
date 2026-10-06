@@ -2564,6 +2564,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/imprevue/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description VIS-008 : déclarer une visite hors planning, justifiée (CA1), qui démarre aussitôt. */
+    post: operations['visite_imprevue'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3298,6 +3315,27 @@ export interface components {
       fichier: string;
       /** @default true */
       simulation: boolean;
+    };
+    /**
+     * @description VIS-008 : une visite hors planning, justifiée, prise sur le téléphone au moment où elle
+     *     commence (même hors connexion) ; l'identifiant vient du téléphone (0.2.7).
+     */
+    Imprevue: {
+      /** Format: uuid */
+      id?: string;
+      /** Format: date-time */
+      le: string;
+      /** Format: uuid */
+      prospect: string;
+      /** Format: uuid */
+      etablissement?: string | null;
+      justification?: string;
+      /** Format: double */
+      latitude?: number | null;
+      /** Format: double */
+      longitude?: number | null;
+      /** Format: double */
+      precision_m?: number | null;
     };
     Informations: {
       produit: string;
@@ -4620,6 +4658,8 @@ export interface components {
       /** Format: uuid */
       readonly reportee_de: string | null;
       readonly report: components['schemas']['ReportLu'] | null;
+      readonly est_imprevue: boolean;
+      readonly justification: string;
     };
     /** @description Une visite telle que soumise dans une version (RG-037). */
     VisiteFigee: {
@@ -4687,6 +4727,8 @@ export interface components {
       /** Format: uuid */
       readonly reportee_de: string | null;
       readonly report: components['schemas']['ReportLu'] | null;
+      readonly est_imprevue: boolean;
+      readonly justification: string;
       modification_en_attente: boolean;
     };
     /**
@@ -8846,6 +8888,31 @@ export interface operations {
     };
     responses: {
       200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  visite_imprevue: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Imprevue'];
+        'application/x-www-form-urlencoded': components['schemas']['Imprevue'];
+        'multipart/form-data': components['schemas']['Imprevue'];
+      };
+    };
+    responses: {
+      201: {
         headers: {
           [name: string]: unknown;
         };

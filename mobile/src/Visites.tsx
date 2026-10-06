@@ -44,7 +44,7 @@ export type Choix = {
   detail: string;
 };
 
-type Lieu = { id: string; nom: string };
+export type Lieu = { id: string; nom: string };
 
 export function normaliser(texte: string) {
   return texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -124,7 +124,11 @@ export function LigneVisite({
             {visite.etablissement.nom}
           </Texte>
         )}
-        {manquants ? (
+        {visite.est_imprevue ? (
+          <Text style={[styles.manquants, { color: p.texteSecondaire }]}>
+            {t('visites.imprevue')}
+          </Text>
+        ) : manquants ? (
           <Text style={[styles.manquants, { color: p.attention }]}>
             {t('visites.aCompleter', { champs: manquants })}
           </Text>
@@ -547,7 +551,13 @@ function Section({ titre, children }: { titre: string; children: ReactNode }) {
  * Choix du prospect : la liste cible d'abord (gardée hors ligne), et si la personne n'y est pas,
  * une recherche dans toutes les fiches du pays.
  */
-function ChoixProspect({ client, surChoix }: { client: ClientApi; surChoix: (c: Choix) => void }) {
+export function ChoixProspect({
+  client,
+  surChoix,
+}: {
+  client: ClientApi;
+  surChoix: (c: Choix) => void;
+}) {
   const { t } = useTranslation();
   const [cibles, setCibles] = useState<Choix[] | null>(null);
   const [saisie, setSaisie] = useState('');
@@ -695,7 +705,7 @@ export function LigneChoix({
 }
 
 /** Lieux d'exercice actifs du prospect, le principal d'abord ; un seul est retenu d'office. */
-function ChoixLieu({
+export function ChoixLieu({
   client,
   prospect,
   lieu,

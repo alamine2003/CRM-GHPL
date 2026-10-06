@@ -13,6 +13,7 @@ import type {
   ClientApi,
   Demarrage,
   Ecart,
+  Imprevue,
   ModificationVisite,
   Report,
   Terminaison,
@@ -112,6 +113,15 @@ export type Envoi =
     }
   | {
       id: string;
+      /** Visite imprévue démarrée sans réseau (VIS-008), avec son identifiant. */
+      type: 'imprevue_visite';
+      visite: string;
+      saisie: Imprevue;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
       /** Report déclaré sans réseau (VIS-007), avec l'identifiant de la nouvelle visite. */
       type: 'reporter_visite';
       visite: string;
@@ -198,6 +208,8 @@ async function rejouer(client: ClientApi): Promise<number> {
         await client.visites.demarrer(envoi.visite, envoi.saisie);
       } else if (envoi.type === 'terminer_visite') {
         await client.visites.terminer(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'imprevue_visite') {
+        await client.visites.imprevue(envoi.saisie);
       } else if (envoi.type === 'reporter_visite') {
         await client.visites.reporter(envoi.visite, envoi.saisie);
       } else if (envoi.type === 'ajout_activite') {

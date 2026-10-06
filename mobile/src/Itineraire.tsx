@@ -297,6 +297,8 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
         {ligne(t('visites.champs.objectif'), visite.objectif)}
         {ligne(t('visites.champs.reseau'), visite.reseau?.libelle)}
         {ligne(t('visites.champs.note'), visite.note)}
+        {visite.est_imprevue &&
+          ligne(t('execution.justificationLue'), visite.justification || t('visites.imprevue'))}
         {ligne(t('detail.statut'), t(`visites.statuts.${statut ?? 'prevue'}`))}
         {visite.manquants.length > 0 && (
           <Text style={[styles.manque, { color: p.attention }]}>

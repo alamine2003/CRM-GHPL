@@ -194,7 +194,9 @@ def _reprenables(planning: Planning | None) -> int:
     if planning.visites.filter(archive_le__isnull=True).exists():
         return 0
     source = services.precedente(planning)
-    return source.visites.filter(archive_le__isnull=True).count() if source else 0
+    if source is None:
+        return 0
+    return source.visites.filter(archive_le__isnull=True, est_imprevue=False).count()
 
 
 def _passages(planning: Planning) -> list:
@@ -815,3 +817,19 @@ class ReportVisiteVue(VueVisites):
         visite = reporter(visite, v["le"], v.get("motif"), v["date"], v.get("heure"),
                           v.get("commentaire", ""), v.get("id"))  # fmt: skip
         return Response(s.VisiteSerializer(visite).data)
+
+
+class VisiteImprevueVue(VuePlannings):
+    """VIS-008 : déclarer une visite hors planning, justifiée (CA1), qui démarre aussitôt."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.ImprevueSerializer, responses={201: s.VisiteSerializer},
+                   operation_id="visite_imprevue")  # fmt: skip
+    def post(self, request):
+        from .execution import visite_imprevue
+
+        pays = pays_requis(self.perimetre)
+        v = _references(self.perimetre, _lire(s.ImprevueSerializer, request))
+        visite = visite_imprevue(request.user, pays, **v)
+        return Response(s.VisiteSerializer(visite).data, status=status.HTTP_201_CREATED)

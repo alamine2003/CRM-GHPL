@@ -75,7 +75,8 @@ class Bilan:
 
 def _visites(planning: Planning) -> list[Visite]:
     return list(
-        planning.visites.filter(archive_le__isnull=True)
+        # Une visite imprévue (VIS-008) n'est pas du plan : elle ne se contrôle pas ici.
+        planning.visites.filter(archive_le__isnull=True, est_imprevue=False)
         .select_related("prospect", "etablissement")
         .order_by("date", "ordre")
     )

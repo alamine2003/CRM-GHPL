@@ -734,7 +734,8 @@ def _contenu(planning: Planning) -> dict:
     def nom(p):
         return " ".join(x for x in (p.prenom, p.nom) if x) if p else None
 
-    visites = planning.visites.filter(archive_le__isnull=True).select_related(
+    # Une visite imprévue (VIS-008) n'entre dans aucune version : elle ne s'approuve pas.
+    visites = planning.visites.filter(archive_le__isnull=True, est_imprevue=False).select_related(
         "prospect", "etablissement", "reseau"
     )
     return {
@@ -1036,7 +1037,9 @@ def reprendre_semaine_precedente(planning: Planning) -> dict:
     copies: list[Visite] = []
     ignorees: list[dict] = []
     par_passage: dict = {}
-    for v in source.visites.filter(archive_le__isnull=True).order_by("date", "ordre"):
+    for v in source.visites.filter(archive_le__isnull=True, est_imprevue=False).order_by(
+        "date", "ordre"
+    ):
         cible = v.date + timedelta(days=7)
         raison = (
             "jour_hors_semaine" if cible not in jours

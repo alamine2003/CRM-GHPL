@@ -51,7 +51,7 @@ class Kilometrage:
 
 def estimer(planning: Planning) -> Kilometrage:
     visites = (
-        planning.visites.filter(archive_le__isnull=True)
+        planning.visites.filter(archive_le__isnull=True, est_imprevue=False)
         .select_related("etablissement")
         .order_by("date", "ordre")
     )
