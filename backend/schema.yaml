@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.1
+  version: 0.4.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4290,6 +4290,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/{id}/detail/:
+    get:
+      operationId: visite_detail
+      description: |-
+        VIS-002 : détail d'une visite du délégué, avec les coordonnées et son historique récent.
+        Une visite retirée par une modification encore en attente reste au programme : elle se lit
+        aussi.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailVisite'
+          description: ''
   /api/v1/visites/{id}/retirer/:
     post:
       operationId: visite_retirer
@@ -5026,6 +5051,51 @@ components:
       - bloquants
       - objectifs
       - signalements
+    CoordonneesLieu:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+        adresse:
+          type: string
+        localite:
+          type: string
+          nullable: true
+        telephone:
+          type: string
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          nullable: true
+      required:
+      - adresse
+      - id
+      - latitude
+      - longitude
+      - nom
+      - telephone
+    CoordonneesProspect:
+      type: object
+      properties:
+        telephone_mobile:
+          type: string
+        telephone_pro:
+          type: string
+        courriel:
+          type: string
+      required:
+      - courriel
+      - telephone_mobile
+      - telephone_pro
     Copie:
       type: object
       properties:
@@ -5485,6 +5555,30 @@ components:
       - remarques
       - soumis_le
       - visites
+    DetailVisite:
+      type: object
+      description: 'VIS-002 : la visite, les coordonnées du prospect et du lieu, et
+        l''historique.'
+      properties:
+        visite:
+          $ref: '#/components/schemas/Visite'
+        prospect:
+          allOf:
+          - $ref: '#/components/schemas/CoordonneesProspect'
+          nullable: true
+        lieu:
+          allOf:
+          - $ref: '#/components/schemas/CoordonneesLieu'
+          nullable: true
+        historique:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitePassee'
+      required:
+      - historique
+      - lieu
+      - prospect
+      - visite
     Division:
       type: object
       properties:
@@ -9128,6 +9222,32 @@ components:
       - date
       - raison
       - visite
+    VisitePassee:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        statut:
+          type: string
+        objectif:
+          type: string
+        etablissement:
+          type: string
+          nullable: true
+      required:
+      - date
+      - heure
+      - id
+      - objectif
+      - statut
     VisiteProgramme:
       type: object
       description: Une visite du programme, à la date et à l'heure approuvées (VIS-001).

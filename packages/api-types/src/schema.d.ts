@@ -2419,6 +2419,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/{id}/detail/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description VIS-002 : détail d'une visite du délégué, avec les coordonnées et son historique récent.
+     *     Une visite retirée par une modification encore en attente reste au programme : elle se lit
+     *     aussi.
+     */
+    get: operations['visite_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/retirer/': {
     parameters: {
       query?: never;
@@ -2724,6 +2745,23 @@ export interface components {
       signalements: components['schemas']['ControlePlanning'][];
       objectifs: components['schemas']['Objectif'][];
     };
+    CoordonneesLieu: {
+      /** Format: uuid */
+      id: string;
+      nom: string;
+      adresse: string;
+      localite?: string | null;
+      telephone: string;
+      /** Format: decimal */
+      latitude: string | null;
+      /** Format: decimal */
+      longitude: string | null;
+    };
+    CoordonneesProspect: {
+      telephone_mobile: string;
+      telephone_pro: string;
+      courriel: string;
+    };
     Copie: {
       /** Format: date */
       date: string;
@@ -2904,6 +2942,13 @@ export interface components {
       contenu_activites: components['schemas']['ActiviteFigee'][];
       comparaison: components['schemas']['ComparaisonVersions'] | null;
       modifications: components['schemas']['ModificationMineure'][];
+    };
+    /** @description VIS-002 : la visite, les coordonnées du prospect et du lieu, et l'historique. */
+    DetailVisite: {
+      visite: components['schemas']['Visite'];
+      prospect: components['schemas']['CoordonneesProspect'] | null;
+      lieu: components['schemas']['CoordonneesLieu'] | null;
+      historique: components['schemas']['VisitePassee'][];
     };
     Division: {
       /** Format: uuid */
@@ -4410,6 +4455,17 @@ export interface components {
       /** Format: date */
       date: string;
       raison: components['schemas']['RaisonRepriseEnum'];
+    };
+    VisitePassee: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date */
+      date: string;
+      /** Format: time */
+      heure: string | null;
+      statut: string;
+      objectif: string;
+      etablissement?: string | null;
     };
     /** @description Une visite du programme, à la date et à l'heure approuvées (VIS-001). */
     VisiteProgramme: {
@@ -8389,6 +8445,27 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  visite_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DetailVisite'];
         };
       };
     };

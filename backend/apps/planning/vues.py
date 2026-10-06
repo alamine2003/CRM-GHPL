@@ -690,3 +690,27 @@ class ProgrammeVue(VuePlannings):
                 "semaine_invalide", _("Date invalide : format AAAA-MM-JJ attendu."), champ="semaine"
             ) from erreur
         return Response(s.ProgrammeSerializer(programme(pays, request.user, jour)).data)
+
+
+class VisiteDetailVue(VuePerimetre):
+    """VIS-002 : détail d'une visite du délégué, avec les coordonnées et son historique récent.
+    Une visite retirée par une modification encore en attente reste au programme : elle se lit
+    aussi."""
+
+    actions = {"GET": PREPARER}
+    serializer_class = s.DetailVisiteSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(
+            Visite.objects.filter(planning__delegue=self.request.user)
+        ).select_related("planning", "prospect__type", "prospect__specialite",
+                         "etablissement__localite", "reseau")  # fmt: skip
+
+    @extend_schema(responses=s.DetailVisiteSerializer, operation_id="visite_detail")
+    def get(self, request, id):
+        from .programme import historique
+
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        donnees = {"visite": visite, "prospect": visite.prospect, "lieu": visite.etablissement,
+                   "historique": historique(visite)}  # fmt: skip
+        return Response(s.DetailVisiteSerializer(donnees).data)

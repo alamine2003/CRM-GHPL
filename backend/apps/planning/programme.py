@@ -96,3 +96,25 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         "jours": jours,
         "prochaine": prochaine.pk if prochaine else None,
     }
+
+
+#: Plannings dont les visites ont été prévues pour de bon : validés, puis exécutés.
+EXECUTES = ("approuve", "en_cours", "termine")
+
+
+def historique(visite: Visite, nombre: int = 3) -> list[Visite]:
+    """VIS-002 : les dernières visites du même délégué chez le même prospect, avant celle-ci,
+    dans des plannings validés ; jamais celles d'un collègue (CA1)."""
+    if visite.prospect_id is None:
+        return []
+    return list(
+        Visite.objects.filter(
+            planning__delegue_id=visite.planning.delegue_id,
+            planning__statut__in=EXECUTES,
+            prospect_id=visite.prospect_id,
+            archive_le__isnull=True,
+            date__lt=visite.date,
+        )
+        .select_related("etablissement")
+        .order_by("-date", "-heure")[:nombre]
+    )

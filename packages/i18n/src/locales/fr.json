@@ -1837,5 +1837,19 @@
     "horsLigne": "Hors ligne : programme tel qu'au {{date}}.",
     "ferie": "Férié · {{libelle}}",
     "voirSemaine": "Ouvrir l'onglet Semaine"
+  },
+  "detailVisite": {
+    "coordonnees": "Coordonnées",
+    "telephoneMobile": "Mobile",
+    "telephonePro": "Téléphone professionnel",
+    "courriel": "Courriel",
+    "adresse": "Adresse",
+    "telephoneLieu": "Téléphone du lieu",
+    "appeler": "Appeler {{numero}}",
+    "aucuneCoordonnee": "Aucune coordonnée enregistrée.",
+    "historique": "Dernières visites",
+    "historiqueAide": "Vos trois dernières visites chez ce prospect.",
+    "aucunHistorique": "Aucune visite précédente chez ce prospect.",
+    "horsLigne": "Hors ligne : coordonnées et historique tels qu'au {{date}}."
   }
 }

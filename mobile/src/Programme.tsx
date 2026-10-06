@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { lire, ecrire } from './baseLocale';
 import { estTransitoire } from './Brouillons';
+import { garderDetail } from './DetailVisite';
 import { Alerte, Carte, Etiquette, MarquePotentiel, Texte, usePalette } from './composants';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
@@ -39,7 +40,11 @@ export function ProgrammeDuJour() {
         setProgramme(lu);
         setHorsLigne(null);
         void ecrire(CLE, lu).catch(() => undefined);
-        // La semaine aussi : le détail d'une visite s'ouvre sans réseau.
+        // Le détail des visites du jour (coordonnées, historique) et la semaine : chaque
+        // visite s'ouvre sans réseau.
+        const jourLu = lu.jours.find((j) => j.date === lu.aujourdhui);
+        for (const v of jourLu?.visites ?? [])
+          void garderDetail(client, v.id).catch(() => undefined);
         void client.plannings
           .semaine(lu.semaine)
           .then((s) => garderSemaine(s, lu.semaine))

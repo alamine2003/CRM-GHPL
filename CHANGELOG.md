@@ -2,6 +2,30 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.2] — Détail d'une visite et historique récent
+
+Deuxième jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — détail d'une visite (VIS-002)
+
+- Sous le détail d'une visite : les **coordonnées** du prospect et du lieu (un appui sur un téléphone appelle), puis les **trois dernières visites** du délégué chez ce prospect, de la plus récente.
+- **CA1** : seules les visites du délégué, dans des plannings validés, entrent dans l'historique.
+- Le programme du jour prépare le détail de chaque visite de la journée : il se lit sans réseau.
+- Démonstration : les deux semaines précédentes du premier délégué, terminées, donnent un historique.
+
+### Décidé — programme du jour
+
+- La prochaine visite est la première non faite de la journée, même si son heure est passée ; le programme vit sur le téléphone (décisions du 6 octobre 2026, prd.md §14.22).
+
+### Design
+
+Revue sur le rendu réel au téléphone (360 px, sombre), en ligne et hors ligne. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Détail hors ligne | Deux bandeaux « Hors ligne » à la suite. | Un seul. |
+| Dernières visites | « Prévue » en orange sur des visites passées : trompeur. | Seul un résultat de visite s'affiche. |
+
 ## [0.4.1] — Programme du jour
 
 Premier jalon du cycle 0.4 « Exécution des visites ».

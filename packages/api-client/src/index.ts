@@ -23,6 +23,7 @@ import type {
   PlanningEnAttente,
   SemaineFermee,
   Programme,
+  DetailVisite,
   Qualite,
   Semaine,
   Reprise,
@@ -135,6 +136,7 @@ export type {
   Programme,
   VisiteProgramme,
   JourProgramme,
+  DetailVisite,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -758,6 +760,8 @@ export function creerClient(options: OptionsClient) {
     },
     /** Visites d'un planning en préparation (PLN-002). */
     visites: {
+      /** Détail : coordonnées du prospect et du lieu, 3 dernières visites du délégué (VIS-002). */
+      detail: (id: string) => requete<DetailVisite>(`/api/v1/visites/${id}/detail/`),
       modifier: (id: string, champs: ModificationVisite) =>
         requete<Visite>(`/api/v1/visites/${id}/`, { methode: 'PATCH', corps: champs }),
       retirer: (id: string) =>

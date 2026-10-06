@@ -107,6 +107,8 @@ export type StatutVisite = Schemas['VisiteStatutEnum'];
 export type Programme = Schemas['Programme'];
 export type VisiteProgramme = Schemas['VisiteProgramme'];
 export type JourProgramme = Schemas['JourProgramme'];
+/** Détail d'une visite : coordonnées et historique récent (VIS-002). */
+export type DetailVisite = Schemas['DetailVisite'];
 export type SaisieVisite = Schemas['SaisieVisite'];
 export type ModificationVisite = Schemas['PatchedModificationVisite'];
 // Passages et absences (PLN-003, PLN-009).

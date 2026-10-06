@@ -617,3 +617,39 @@ class ProgrammeSerializer(serializers.Serializer):
     jours = JourProgrammeSerializer(many=True)
     #: La prochaine visite du jour : la première qui n'est pas encore faite.
     prochaine = serializers.UUIDField(allow_null=True)
+
+
+class CoordonneesProspectSerializer(serializers.Serializer):
+    telephone_mobile = serializers.CharField(allow_blank=True)
+    telephone_pro = serializers.CharField(allow_blank=True)
+    courriel = serializers.CharField(allow_blank=True)
+
+
+class CoordonneesLieuSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    nom = serializers.CharField()
+    adresse = serializers.CharField(allow_blank=True)
+    localite = serializers.CharField(source="localite.libelle", default=None, allow_null=True)
+    telephone = serializers.CharField(allow_blank=True)
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6, allow_null=True)
+
+
+class VisitePasseeSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    date = serializers.DateField()
+    heure = serializers.TimeField(format="%H:%M", allow_null=True)
+    statut = serializers.CharField()
+    objectif = serializers.CharField(allow_blank=True)
+    etablissement = serializers.CharField(source="etablissement.nom", default=None,
+                                          allow_null=True)  # fmt: skip
+
+
+class DetailVisiteSerializer(serializers.Serializer):
+    """VIS-002 : la visite, les coordonnées du prospect et du lieu, et l'historique."""
+
+    visite = VisiteSerializer()
+    prospect = CoordonneesProspectSerializer(allow_null=True)
+    lieu = CoordonneesLieuSerializer(allow_null=True)
+    #: Les 3 dernières visites du délégué chez ce prospect, de la plus récente (CA1).
+    historique = VisitePasseeSerializer(many=True)

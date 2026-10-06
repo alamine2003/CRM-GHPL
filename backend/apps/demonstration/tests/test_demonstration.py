@@ -58,8 +58,11 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     from apps.planning import services as pln
     from apps.planning.models import Activite, Passage, Planning
 
-    prepare, approuve, soumis = Planning.objects.filter(pays__code="SN").order_by(
+    prepare, approuve, soumis, *terminees = Planning.objects.filter(pays__code="SN").order_by(
         "statut", "semaine")  # fmt: skip
+    # Les deux semaines précédentes du premier délégué, terminées : son historique (VIS-002).
+    assert [p.statut for p in terminees] == ["termine", "termine"]
+    assert all(p.delegue == approuve.delegue and p.visites.exists() for p in terminees)
     # Approuvée, la semaine en cours a commencé : elle est « en cours » (cycle 0.4).
     assert (approuve.statut, prepare.statut, soumis.statut) == ("en_cours", "brouillon", "soumis")
     assert approuve.reouvert_le is None and not approuve.en_retard
@@ -76,7 +79,7 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     assert not soumis.en_retard and soumis.soumis_le < pln.echeance(soumis)
     # Chaque semaine a son passage de deux confrères ; la formation est à préparer (PLN-003,
     # PLN-009).
-    assert [p.visites.count() for p in Passage.objects.filter(pays__code="SN")] == [2, 2, 2]
+    assert [p.visites.count() for p in Passage.objects.filter(pays__code="SN")] == [2] * 5
     # Les semaines complètes montrent une matinée d'accompagnement du superviseur (PLN-018) et
     # une visite hors liste cible, à trouver en consultant la semaine (0.3.2).
     assert approuve.activites.get().type == soumis.activites.get().type == "accompagnement"

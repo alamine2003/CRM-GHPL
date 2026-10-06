@@ -125,7 +125,7 @@ def senegal(monde):
         "planning-reviser": planning.pk, "planning-versions": planning.pk,
         "planning-version": planning.pk,
         "remplacement-terminer": remplacement.pk,
-        "visite-copier": visite.pk,
+        "visite-copier": visite.pk, "visite-detail": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,
         "activite": activite.pk, "activite-retirer": activite.pk,
         "ciblage-liste": poste.pk, "ciblage-candidats": poste.pk,

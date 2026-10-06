@@ -594,10 +594,16 @@ Mise en œuvre (0.3.9) :
 - **Sans version approuvée** : le programme le dit (« pas encore approuvé », « aucun planning cette semaine ») ; rien à exécuter.
 - **Hors connexion** (CA1) : le téléphone garde le dernier programme lu, et la semaine pour ouvrir le détail d'une visite ; sans réseau, il les affiche avec « Hors ligne : programme tel qu'au … ».
 - **États du planning** (prd.md §17.1) : le premier jour de sa semaine, un planning approuvé passe « en cours » ; la semaine finie, « terminé » (tâche périodique, journal d'audit).
-- Hypothèses [H] à confirmer :
-  - la prochaine visite est la première non faite dans l'ordre de la journée, même si son heure est passée ;
-  - la distance au lieu s'affichera avec le démarrage de la visite et la position (VIS-003, 0.4.3) ;
-  - le programme vit sur le téléphone ; le portail garde la vue semaine.
+- Décisions [D] du 6 octobre 2026 : la prochaine visite est la première non faite dans l'ordre de la journée, même si son heure est passée ; le programme vit sur le téléphone, le portail garde la vue semaine.
+- La distance au lieu s'affichera avec le démarrage de la visite et la position (VIS-003, 0.4.3).
+
+### 14.23 Détail d'une visite (mise en œuvre 0.4.2)
+
+- **Détail** (VIS-002) : depuis le programme ou la semaine, le détail d'une visite dit le prospect, le lieu, l'objectif, puis les **coordonnées** — téléphones du prospect (mobile, professionnel) et du lieu, qu'un appui appelle, courriel, adresse et localité du lieu — et les **trois dernières visites** du délégué chez ce prospect, de la plus récente : date, heure, lieu, objectif, et leur résultat dès qu'il existe (cycle 0.4).
+- **CA1** : l'historique ne compte que les visites du délégué connecté, dans des plannings validés (approuvés, en cours ou terminés) ; jamais celles d'un collègue, ni une visite d'un planning resté en préparation.
+- **Hors connexion** : le programme du jour prépare le détail de chaque visite de la journée ; sans réseau, il s'affiche tel qu'au dernier passage.
+- **Démonstration** : le premier délégué a ses deux semaines précédentes terminées, chez les mêmes prospects : l'historique se lit.
+- Hypothèse [H] : « Prévue » n'est pas affiché pour une visite passée : seul un résultat (effectuée, prospect absent…) se dit, dès 0.4.3.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

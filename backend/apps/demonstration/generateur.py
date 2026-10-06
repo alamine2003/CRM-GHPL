@@ -392,10 +392,16 @@ class Generateur:
         (PLN-011), et sa semaine en cours fermée sans planning, dont il a demandé la
         réouverture (décision du 6 octobre 2026)."""
         from apps.planning.calendrier import lundi
+        from apps.planning.etats import StatutPlanning
 
         courante = lundi(aujourdhui(pays))
         suivante = courante + timedelta(days=7)
-        nombre = self.semaine_approuvee(pays, delegues[0], courante)
+        # Les deux semaines précédentes, terminées : l'historique des visites (VIS-002).
+        nombre = 0
+        for recul in (14, 7):
+            nombre += self.semaine_approuvee(pays, delegues[0], courante - timedelta(days=recul),
+                                             statut=StatutPlanning.TERMINE)  # fmt: skip
+        nombre += self.semaine_approuvee(pays, delegues[0], courante)
         nombre += self.semaine_en_preparation(pays, delegues[0], suivante)
         if len(delegues) > 1:
             nombre += self.semaine_soumise(pays, delegues[1], suivante)
@@ -444,7 +450,7 @@ class Generateur:
             self._figer_soumis(planning, timezone.now() - timedelta(hours=2))
         return nombre
 
-    def semaine_approuvee(self, pays, delegue, semaine) -> int:
+    def semaine_approuvee(self, pays, delegue, semaine, statut=None) -> int:
         """Soumise le vendredi précédent à 17 h et validée le lendemain par le superviseur du
         poste : la semaine en cours est la référence du délégué (PLN-012)."""
         from apps.planning import services as pln
@@ -463,9 +469,11 @@ class Generateur:
         )  # fmt: skip
         # Construite après coup, la semaine avait été rouverte le temps de la poser : validée,
         # elle n'en garde pas trace.
-        # La semaine a commencé : approuvée, elle est « en cours » (prd.md §17.1, cycle 0.4).
+        # La semaine a commencé : approuvée, elle est « en cours » (prd.md §17.1, cycle 0.4) ;
+        # une semaine passée est « terminée ».
         type(planning).objects.filter(pk=planning.pk).update(
-            statut=StatutPlanning.EN_COURS, reouvert_le=None, reouvert_par=None)  # fmt: skip
+            statut=statut or StatutPlanning.EN_COURS, reouvert_le=None, reouvert_par=None
+        )
         return nombre
 
     @staticmethod
