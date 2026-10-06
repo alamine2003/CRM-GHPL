@@ -109,6 +109,9 @@ const VISITE: Visite = {
   fin_le: null,
   fin_sans_gps: false,
   distance_fin_m: null,
+  motif_ecart: null,
+  commentaire_ecart: '',
+  ecart_le: null,
 };
 
 /** Un confrère vu au même lieu le même jour, à heure fixe. */
@@ -126,6 +129,9 @@ const CONFRERE: Visite = {
   fin_le: null,
   fin_sans_gps: false,
   distance_fin_m: null,
+  motif_ecart: null,
+  commentaire_ecart: '',
+  ecart_le: null,
 };
 
 const EN_PREPARATION: Semaine = {

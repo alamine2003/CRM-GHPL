@@ -12,6 +12,7 @@
 import type {
   ClientApi,
   Demarrage,
+  Ecart,
   ModificationVisite,
   Terminaison,
   SaisieActivite,
@@ -97,6 +98,15 @@ export type Envoi =
       saisie: Terminaison;
       resume: string;
       erreur?: string;
+    }
+  | {
+      id: string;
+      /** Prospect absent déclaré sans réseau (VIS-005). */
+      type: 'absent_visite';
+      visite: string;
+      saisie: Ecart;
+      resume: string;
+      erreur?: string;
     };
 
 /** Panne de réseau ou serveur indisponible : la saisie attend ; un refus métier, non. */
@@ -177,6 +187,8 @@ async function rejouer(client: ClientApi): Promise<number> {
         await client.visites.demarrer(envoi.visite, envoi.saisie);
       } else if (envoi.type === 'terminer_visite') {
         await client.visites.terminer(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'absent_visite') {
+        await client.visites.absent(envoi.visite, envoi.saisie);
       } else {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       }

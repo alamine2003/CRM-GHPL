@@ -138,6 +138,8 @@ class VisiteSerializer(serializers.ModelSerializer):
     etablissement = EtablissementVisiteSerializer(allow_null=True)
     reseau = ResumeSerializer(allow_null=True)
     heure = serializers.TimeField(format="%H:%M", allow_null=True)
+    #: Motif d'un écart (prospect absent, annulée…), de la liste du pays (prd.md §12).
+    motif_ecart = ResumeSerializer(allow_null=True, read_only=True)
     #: Champs à compléter avant la soumission (PLN-002 CA1).
     manquants = serializers.SerializerMethodField()
 
@@ -145,9 +147,10 @@ class VisiteSerializer(serializers.ModelSerializer):
         model = Visite
         fields = ["id", "date", "heure", "prospect", "etablissement", "reseau", "objectif",
                   "note", "statut", "manquants", "passage", "ordre", "debut_le", "sans_gps",
-                  "distance_debut_m", "fin_le", "fin_sans_gps", "distance_fin_m"]  # fmt: skip
+                  "distance_debut_m", "fin_le", "fin_sans_gps", "distance_fin_m",
+                  "motif_ecart", "commentaire_ecart", "ecart_le"]  # fmt: skip
         read_only_fields = ["debut_le", "sans_gps", "distance_debut_m", "fin_le", "fin_sans_gps",
-                            "distance_fin_m"]  # fmt: skip
+                            "distance_fin_m", "commentaire_ecart", "ecart_le"]  # fmt: skip
 
     def get_manquants(self, visite) -> list[str]:
         from .services import champs_manquants
@@ -624,6 +627,8 @@ class ProgrammeSerializer(serializers.Serializer):
     geolocalisation = serializers.BooleanField()
     #: Attente de la position avant de continuer « sans GPS » (paramètre du pays).
     attente_gps_secondes = serializers.IntegerField()
+    #: Motifs d'écart du pays, gardés par le téléphone pour déclarer sans réseau (prd.md §12).
+    motifs_ecart = ResumeSerializer(many=True)
 
 
 class CoordonneesProspectSerializer(serializers.Serializer):
@@ -683,3 +688,12 @@ class TerminaisonSerializer(serializers.Serializer):
     longitude = serializers.FloatField(required=False, allow_null=True, min_value=-180,
                                        max_value=180)  # fmt: skip
     precision_m = serializers.FloatField(required=False, allow_null=True, min_value=0)
+
+
+class EcartSerializer(serializers.Serializer):
+    """Un écart déclaré par le délégué (VIS-005) : le moment, le motif obligatoire de la liste
+    du pays, un commentaire facultatif."""
+
+    le = serializers.DateTimeField()
+    motif = serializers.UUIDField(required=False, allow_null=True)
+    commentaire = serializers.CharField(max_length=500, required=False, allow_blank=True)

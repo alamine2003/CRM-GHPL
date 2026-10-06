@@ -3,6 +3,10 @@
 Terminer (VIS-004) : la visite passe « effectuée » à l'heure réelle de fin, après son début
 (CA1), avec la position du moment, aux mêmes règles qu'au début.
 
+Prospect absent (VIS-005) : une visite prévue ou en cours passe « prospect absent » avec un
+motif choisi dans la liste du pays — sans motif, impossible (CA1) — et un commentaire
+facultatif.
+
 
 Démarrer (VIS-003) : la visite passe « en cours » à l'heure réelle donnée par le téléphone,
 avec la position du moment si le pays active la géolocalisation (RG-028). Le téléphone peut
@@ -121,22 +125,8 @@ def demarrer(visite: Visite, debut_le: datetime, latitude=None, longitude=None,
         return visite
     exiger_transition_visite(visite.statut, StatutVisite.EN_COURS)
     pays = visite.planning.pays
-    date_approuvee = _date_approuvee(visite)
-    if date_approuvee is None:
-        raise ErreurMetier(
-            "visite_non_approuvee",
-            _("Cette visite n'est pas dans le planning approuvé : elle ne se démarre pas."),
-            status.HTTP_409_CONFLICT,
-        )
+    _exiger_jour_approuve(visite, debut_le)
     _exiger_passe(debut_le, "debut_le")
-    jour = debut_le.astimezone(ZoneInfo(pays.fuseau)).date().isoformat()
-    if jour != date_approuvee:
-        raise ErreurMetier(
-            "autre_jour",
-            _("Une visite se démarre le jour prévu par le planning approuvé."),
-            status.HTTP_409_CONFLICT,
-            prevue_le=date_approuvee,
-        )
     # Un pays qui n'enregistre pas la position (RG-028) : rien à garder, rien à signaler.
     lat, lon, precision, visite.sans_gps = _position(pays, latitude, longitude, precision_m)
     visite.statut = StatutVisite.EN_COURS
@@ -148,4 +138,68 @@ def demarrer(visite: Visite, debut_le: datetime, latitude=None, longitude=None,
                                "modifie_le"])  # fmt: skip
     _auditer("visite.demarrage", visite, debut_le=debut_le.isoformat(), sans_gps=visite.sans_gps,
              distance_m=visite.distance_debut_m)  # fmt: skip
+    return visite
+
+
+def motif_valide(pays, identifiant):
+    """Un motif d'écart actif de la liste du pays (prd.md §12), ou rien."""
+    from apps.referentiel.models import Liste, Valeur
+
+    if not identifiant:
+        return None
+    return Valeur.objects.filter(pays=pays, liste=Liste.MOTIF_ECART, pk=identifiant,
+                                 archive_le__isnull=True).first()  # fmt: skip
+
+
+def _exiger_motif(pays, identifiant):
+    motif = motif_valide(pays, identifiant)
+    if motif is None:
+        raise ErreurMetier(
+            "motif_requis",
+            _("Choisissez un motif dans la liste du pays : il est obligatoire."),
+            champ="motif",
+        )
+    return motif
+
+
+def _exiger_jour_approuve(visite: Visite, moment: datetime) -> None:
+    """Une visite se déclare le jour où le planning approuvé la prévoit."""
+    date_approuvee = _date_approuvee(visite)
+    if date_approuvee is None:
+        raise ErreurMetier(
+            "visite_non_approuvee",
+            _("Cette visite n'est pas dans le planning approuvé."),
+            status.HTTP_409_CONFLICT,
+        )
+    jour = moment.astimezone(ZoneInfo(visite.planning.pays.fuseau)).date().isoformat()
+    if jour != date_approuvee:
+        raise ErreurMetier(
+            "autre_jour",
+            _("Une visite se démarre le jour prévu par le planning approuvé."),
+            status.HTTP_409_CONFLICT,
+            prevue_le=date_approuvee,
+        )
+
+
+@transaction.atomic
+def declarer_absent(visite: Visite, le: datetime, motif, commentaire: str = "") -> Visite:
+    """VIS-005 : « prospect absent », avec un motif obligatoire (CA1)."""
+    from .services import _auditer
+
+    visite = _verrouiller(visite)
+    if visite.statut == StatutVisite.PROSPECT_ABSENT and visite.ecart_le == le:
+        return visite
+    exiger_transition_visite(visite.statut, StatutVisite.PROSPECT_ABSENT)
+    pays = visite.planning.pays
+    motif = _exiger_motif(pays, motif)
+    _exiger_passe(le, "le")
+    if visite.statut == StatutVisite.PREVUE:
+        _exiger_jour_approuve(visite, le)
+    visite.statut = StatutVisite.PROSPECT_ABSENT
+    visite.motif_ecart = motif
+    visite.commentaire_ecart = (commentaire or "").strip()
+    visite.ecart_le = le
+    visite.save(update_fields=["statut", "motif_ecart", "commentaire_ecart", "ecart_le",
+                               "modifie_le"])  # fmt: skip
+    _auditer("visite.prospect_absent", visite, motif=motif.code, le=le.isoformat())
     return visite

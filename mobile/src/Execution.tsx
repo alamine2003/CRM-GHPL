@@ -1,5 +1,6 @@
 /**
- * Démarrer puis terminer une visite (VIS-003, 0.4.3 ; VIS-004, 0.4.4). Le téléphone prend l'heure réelle et, si le pays active
+ * Démarrer puis terminer une visite (VIS-003, 0.4.3 ; VIS-004, 0.4.4), ou déclarer le prospect
+ * absent, avec un motif de la liste du pays (VIS-005, 0.4.5). Le téléphone prend l'heure réelle et, si le pays active
  * la géolocalisation (RG-028), la position du moment — même sans réseau (CA1) : l'envoi part
  * aussitôt, ou attend dans la file et part au retour du réseau. Sans position, la visite démarre
  * quand même, « sans GPS » (CA2) ; avec une position, la distance au lieu s'affiche (CA3).
@@ -17,7 +18,8 @@ import {
   mettreEnAttente,
   nouvelIdentifiant,
 } from './Brouillons';
-import { Alerte, Bouton, Texte } from './composants';
+import { Alerte, Bouton, Champ, Texte } from './composants';
+import { Pilule } from './Etablissements';
 import { nomProspect } from './Fiches';
 import { messageErreur, useSession } from './session';
 
@@ -213,6 +215,49 @@ function dureeMinutes(debut: string | null, fin: string) {
   return debut ? Math.max(1, Math.round((Date.parse(fin) - Date.parse(debut)) / 60000)) : 0;
 }
 
+/** Prospect absent (VIS-005) : la file part d'abord, puis la déclaration ; sinon elle attend. */
+export async function declarerAbsent(
+  client: ClientApi,
+  visite: VisiteProgramme,
+  motif: { id: string; libelle: string },
+  commentaire: string,
+  resume: string,
+): Promise<'parti' | 'en_attente'> {
+  const saisie = { le: new Date().toISOString(), motif: motif.id, commentaire: commentaire.trim() };
+  const local = {
+    statut: 'prospect_absent' as const,
+    motif_ecart: motif,
+    commentaire_ecart: saisie.commentaire,
+    ecart_le: saisie.le,
+  };
+  if ((await lireAttente()).length) await envoyerAttente(client).catch(() => 0);
+  const encoreEnAttente = (await lireAttente()).some(
+    (e) => 'visite' in e && e.visite === visite.id,
+  );
+  try {
+    if (encoreEnAttente) throw new TypeError('Un envoi de cette visite attend encore');
+    const recue = await client.visites.absent(visite.id, saisie);
+    await changerVisite(visite.id, {
+      statut: recue.statut,
+      motif_ecart: recue.motif_ecart,
+      commentaire_ecart: recue.commentaire_ecart,
+      ecart_le: recue.ecart_le,
+    });
+    return 'parti';
+  } catch (e) {
+    if (!estTransitoire(e)) throw e;
+    await mettreEnAttente({
+      id: nouvelIdentifiant(),
+      type: 'absent_visite',
+      visite: visite.id,
+      saisie,
+      resume,
+    });
+    await changerVisite(visite.id, local);
+    return 'en_attente';
+  }
+}
+
 export function distanceLisible(
   metres: number,
   t: ReturnType<typeof useTranslation>['t'],
@@ -235,6 +280,7 @@ export function ExecutionVisite({
   geolocalisation,
   fuseau,
   attenteSecondes = 60,
+  motifs = [],
   surTerminee,
 }: {
   visite: VisiteProgramme;
@@ -242,12 +288,17 @@ export function ExecutionVisite({
   geolocalisation: boolean;
   fuseau: string;
   attenteSecondes?: number;
+  /** Motifs d'écart du pays (prd.md §12), gardés avec le programme. */
+  motifs?: { id: string; libelle: string }[];
   /** La visite terminée quitte souvent l'écran (la suivante prend sa place) : on l'annonce. */
   surTerminee?: (annonce: { texte: string; horsLigne: boolean }) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const [envoi, setEnvoi] = useState(false);
+  const [absence, setAbsence] = useState<{ motif: string | null; commentaire: string } | null>(
+    null,
+  );
   const [message, setMessage] = useState<{
     ton: 'erreur' | 'info' | 'succes';
     texte: string;
@@ -296,12 +347,12 @@ export function ExecutionVisite({
           duree: t('execution.duree', { n: dureeMinutes(visite.debut_le, fin) }),
         });
         const horsLigne = issue === 'en_attente';
-        if (surTerminee) surTerminee({ texte, horsLigne });
-        else
-          setMessage({
-            ton: horsLigne ? 'info' : 'succes',
-            texte: horsLigne ? t('execution.termineeHorsLigne', { texte }) : texte,
-          });
+        const annonce = {
+          texte: horsLigne ? t('execution.termineeHorsLigne', { texte }) : texte,
+          horsLigne,
+        };
+        if (surTerminee) surTerminee(annonce);
+        else setMessage({ ton: horsLigne ? 'info' : 'succes', texte: annonce.texte });
       }
     } catch (e) {
       setMessage({
@@ -311,6 +362,88 @@ export function ExecutionVisite({
     } finally {
       setEnvoi(false);
     }
+  }
+
+  async function confirmerAbsent() {
+    const motif = motifs.find((m) => m.id === absence?.motif);
+    if (!absence || !motif) return;
+    setEnvoi(true);
+    setMessage(null);
+    try {
+      const issue = await declarerAbsent(client, visite, motif, absence.commentaire, resume);
+      const texte = t('execution.absentNote', {
+        nom: visite.prospect ? nomProspect(visite.prospect, t) : t('visites.sansProspect'),
+        motif: motif.libelle,
+      });
+      setAbsence(null);
+      const horsLigne = issue === 'en_attente';
+      const annonce = {
+        texte: horsLigne ? t('execution.absentHorsLigne', { texte }) : texte,
+        horsLigne,
+      };
+      if (surTerminee) surTerminee(annonce);
+      else setMessage({ ton: horsLigne ? 'info' : 'succes', texte: annonce.texte });
+    } catch (e) {
+      setMessage({
+        ton: 'erreur',
+        texte: t('execution.refus', { message: messageErreur(e, t('erreurs.reseau')) }),
+      });
+    } finally {
+      setEnvoi(false);
+    }
+  }
+
+  // Prospect absent : le motif est obligatoire (VIS-005 CA1), le commentaire facultatif.
+  const formulaireAbsence = absence && (
+    <View style={{ gap: 10 }}>
+      <Texte variante="sousTitre">{t('execution.absentTitre')}</Texte>
+      <Texte variante="libelle">{t('execution.motif')}</Texte>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {motifs.map((m) => (
+          <Pilule
+            key={m.id}
+            libelle={m.libelle}
+            actif={absence.motif === m.id}
+            onPress={() => setAbsence({ ...absence, motif: m.id })}
+          />
+        ))}
+      </View>
+      <Champ
+        libelle={t('execution.commentaire')}
+        value={absence.commentaire}
+        onChangeText={(commentaire) => setAbsence({ ...absence, commentaire })}
+        maxLength={500}
+        multiline
+      />
+      <Bouton
+        libelle={t('execution.confirmerAbsent')}
+        chargement={envoi}
+        desactive={!absence.motif}
+        onPress={() => void confirmerAbsent()}
+      />
+      <Bouton secondaire libelle={t('execution.annuler')} onPress={() => setAbsence(null)} />
+    </View>
+  );
+  const boutonAbsent = !absence && (
+    <Bouton
+      secondaire
+      libelle={t('execution.absent')}
+      onPress={() => {
+        setMessage(null);
+        setAbsence({ motif: null, commentaire: '' });
+      }}
+    />
+  );
+
+  if (visite.statut === 'prospect_absent' && visite.motif_ecart) {
+    return (
+      <View style={{ gap: 6 }}>
+        <Texte variante="libelle">{t('execution.motifLu')}</Texte>
+        <Texte variante="fort">{visite.motif_ecart.libelle}</Texte>
+        {visite.commentaire_ecart ? <Texte>{visite.commentaire_ecart}</Texte> : null}
+        {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
+      </View>
+    );
   }
 
   const attente = envoi && (
@@ -358,11 +491,16 @@ export function ExecutionVisite({
         </Texte>
         {visite.sans_gps && <Texte variante="discret">{t('execution.sansGps')}</Texte>}
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
-        <Bouton
-          libelle={t('execution.terminer')}
-          chargement={envoi}
-          onPress={() => void agir('terminer')}
-        />
+        {formulaireAbsence || (
+          <>
+            <Bouton
+              libelle={t('execution.terminer')}
+              chargement={envoi}
+              onPress={() => void agir('terminer')}
+            />
+            {boutonAbsent}
+          </>
+        )}
         {attente}
       </View>
     );
@@ -372,11 +510,16 @@ export function ExecutionVisite({
   return (
     <View style={{ gap: 6 }}>
       {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
-      <Bouton
-        libelle={t('execution.demarrer')}
-        chargement={envoi}
-        onPress={() => void agir('demarrer')}
-      />
+      {formulaireAbsence || (
+        <>
+          <Bouton
+            libelle={t('execution.demarrer')}
+            chargement={envoi}
+            onPress={() => void agir('demarrer')}
+          />
+          {boutonAbsent}
+        </>
+      )}
       {attente}
     </View>
   );
@@ -405,6 +548,7 @@ export function ExecutionDepuisProgramme({ id }: { id: string }) {
       geolocalisation={programme.geolocalisation}
       fuseau={programme.fuseau}
       attenteSecondes={programme.attente_gps_secondes}
+      motifs={programme.motifs_ecart}
     />
   );
 }

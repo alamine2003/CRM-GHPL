@@ -26,6 +26,7 @@ import type {
   DetailVisite,
   Demarrage,
   Terminaison,
+  Ecart,
   Qualite,
   Semaine,
   Reprise,
@@ -141,6 +142,7 @@ export type {
   DetailVisite,
   Demarrage,
   Terminaison,
+  Ecart,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -779,6 +781,9 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: terminaison,
         }),
+      /** Prospect absent (VIS-005) : motif obligatoire ; rejouable depuis la file. */
+      absent: (id: string, ecart: Ecart) =>
+        requete<Visite>(`/api/v1/visites/${id}/absent/`, { methode: 'POST', corps: ecart }),
       copier: (id: string, date: string) =>
         requete<Visite>(`/api/v1/visites/${id}/copier/`, { methode: 'POST', corps: { date } }),
     },

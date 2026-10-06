@@ -46,6 +46,9 @@ const visite = (id: string, heure: string, nom: string, date = '2026-10-13'): Vi
   fin_le: null,
   fin_sans_gps: false,
   distance_fin_m: null,
+  motif_ecart: null,
+  commentaire_ecart: '',
+  ecart_le: null,
   modification_en_attente: false,
 });
 
@@ -59,6 +62,7 @@ const PROGRAMME: Programme = {
   prochaine: 'v1',
   geolocalisation: true,
   attente_gps_secondes: 60,
+  motifs_ecart: [{ id: 'm-absent', libelle: 'Absent du cabinet' }],
   jours: [
     { date: '2026-10-12', ferie: null, visites: [], activites: [] },
     {

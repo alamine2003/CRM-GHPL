@@ -38,6 +38,13 @@ def _ordre(visite: dict) -> tuple:
     return (visite["date"], visite["heure"] or "99:99", visite.get("ordre") or 0)
 
 
+def _motifs(pays: Pays) -> list:
+    from apps.referentiel.models import Liste, Valeur
+
+    motifs = Valeur.objects.filter(pays=pays, liste=Liste.MOTIF_ECART, archive_le__isnull=True)
+    return list(motifs.order_by("ordre", "libelle"))
+
+
 def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dict:
     """La semaine qui contient `jour` (aujourd'hui par défaut), telle qu'approuvée."""
     from . import services
@@ -51,7 +58,7 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
 
     # Les fiches vivantes (statut, prospect, lieu), à la date et à l'heure approuvées.
     vivantes = Visite.objects.filter(pk__in=[v["id"] for v in figees]).select_related(
-        "prospect__type", "prospect__specialite", "etablissement", "reseau"
+        "prospect__type", "prospect__specialite", "etablissement", "reseau", "motif_ecart"
     )
     par_id = {str(v.pk): v for v in vivantes}
     visites = []
@@ -97,6 +104,7 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         "prochaine": prochaine.pk if prochaine else None,
         "geolocalisation": valeur_parametre(pays, "geolocalisation_active"),
         "attente_gps_secondes": valeur_parametre(pays, "attente_gps_secondes"),
+        "motifs_ecart": _motifs(pays),
     }
 
 

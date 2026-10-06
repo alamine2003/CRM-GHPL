@@ -749,3 +749,19 @@ class TerminaisonVue(VueVisites):
         visite = terminer(visite, v["fin_le"], v.get("latitude"), v.get("longitude"),
                           v.get("precision_m"))  # fmt: skip
         return Response(s.VisiteSerializer(visite).data)
+
+
+class AbsenceProspectVue(VueVisites):
+    """VIS-005 : le prospect est absent ; un motif de la liste du pays est obligatoire (CA1)."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.EcartSerializer, responses=s.VisiteSerializer,
+                   operation_id="visite_prospect_absent")  # fmt: skip
+    def post(self, request, id):
+        from .execution import declarer_absent
+
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.EcartSerializer, request)
+        visite = declarer_absent(visite, v["le"], v.get("motif"), v.get("commentaire", ""))
+        return Response(s.VisiteSerializer(visite).data)

@@ -2,6 +2,26 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.5] — Prospect absent
+
+Cinquième jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — prospect absent (VIS-005)
+
+- « Prospect absent » sur une visite prévue du jour ou en cours : le délégué choisit un motif dans la liste du pays et peut ajouter un commentaire.
+- **CA1** : sans motif, l'absence ne se confirme pas ; le serveur la refuse aussi.
+- Sans réseau, la déclaration attend dans la file du téléphone ; la visite se lit déjà « Prospect absent ».
+- Le programme annonce l'absence (« Prospect absent noté pour … : Cabinet fermé »), passe à la visite suivante et affiche « Prospect absent · motif » ; le détail montre le motif et le commentaire.
+
+### Design
+
+Revue sur le rendu réel au téléphone (360 px clair, 390 px sombre hors ligne) : choix du motif, après la déclaration, détail. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Programme du jour | La visite absente se lisait « Prospect absent », sans le motif. | « Prospect absent · Cabinet fermé ». |
+| Détail de la visite | « Prospect absent » répété sous le statut. | « Motif de l'absence » puis le motif et le commentaire. |
+
 ## [0.4.4] — Terminer une visite
 
 Quatrième jalon du cycle 0.4 « Exécution des visites ».

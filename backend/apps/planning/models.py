@@ -202,6 +202,13 @@ class Visite(ModeleDePays):
     fin_precision_m = models.PositiveIntegerField(null=True, blank=True)
     fin_sans_gps = models.BooleanField(default=False)
     distance_fin_m = models.PositiveIntegerField(null=True, blank=True)
+    # Écart (VIS-005 à VIS-009) : un motif de la liste du pays, un commentaire facultatif, et
+    # le moment où le délégué l'a déclaré (prd.md §12).
+    motif_ecart = models.ForeignKey(
+        "referentiel.Valeur", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    commentaire_ecart = models.CharField(max_length=500, blank=True)
+    ecart_le = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["date", "ordre", "heure"]

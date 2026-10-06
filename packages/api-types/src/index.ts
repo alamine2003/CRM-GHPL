@@ -115,6 +115,8 @@ export type ModificationVisite = Schemas['PatchedModificationVisite'];
 export type Demarrage = Schemas['Demarrage'];
 /** Fin d'une visite : heure réelle et position du téléphone (VIS-004). */
 export type Terminaison = Schemas['Terminaison'];
+/** Écart déclaré : moment, motif de la liste du pays, commentaire (VIS-005). */
+export type Ecart = Schemas['Ecart'];
 // Passages et absences (PLN-003, PLN-009).
 export type Passage = Schemas['Passage'];
 export type Activite = Schemas['Activite'];

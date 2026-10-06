@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.4
+  version: 0.4.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4257,6 +4257,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/{id}/absent/:
+    post:
+      operationId: visite_prospect_absent
+      description: 'VIS-005 : le prospect est absent ; un motif de la liste du pays
+        est obligatoire (CA1).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ecart'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
   /api/v1/visites/{id}/copier/:
     post:
       operationId: visite_copier
@@ -5794,6 +5829,24 @@ components:
         * `certain` - certain
         * `probable` - probable
         * `aucun` - aucun
+    Ecart:
+      type: object
+      description: |-
+        Un écart déclaré par le délégué (VIS-005) : le moment, le motif obligatoire de la liste
+        du pays, un commentaire facultatif.
+      properties:
+        le:
+          type: string
+          format: date-time
+        motif:
+          type: string
+          format: uuid
+          nullable: true
+        commentaire:
+          type: string
+          maxLength: 500
+      required:
+      - le
     ErreurClient:
       type: object
       properties:
@@ -7611,6 +7664,10 @@ components:
           type: boolean
         attente_gps_secondes:
           type: integer
+        motifs_ecart:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
       required:
       - attente_gps_secondes
       - aujourdhui
@@ -7618,6 +7675,7 @@ components:
       - fuseau
       - geolocalisation
       - jours
+      - motifs_ecart
       - planning
       - prochaine
       - semaine
@@ -9314,17 +9372,33 @@ components:
           type: integer
           readOnly: true
           nullable: true
+        motif_ecart:
+          allOf:
+          - $ref: '#/components/schemas/Resume'
+          readOnly: true
+          nullable: true
+        commentaire_ecart:
+          type: string
+          readOnly: true
+        ecart_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
       required:
+      - commentaire_ecart
       - date
       - debut_le
       - distance_debut_m
       - distance_fin_m
+      - ecart_le
       - etablissement
       - fin_le
       - fin_sans_gps
       - heure
       - id
       - manquants
+      - motif_ecart
       - prospect
       - reseau
       - sans_gps
@@ -9482,13 +9556,28 @@ components:
           type: integer
           readOnly: true
           nullable: true
+        motif_ecart:
+          allOf:
+          - $ref: '#/components/schemas/Resume'
+          readOnly: true
+          nullable: true
+        commentaire_ecart:
+          type: string
+          readOnly: true
+        ecart_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         modification_en_attente:
           type: boolean
       required:
+      - commentaire_ecart
       - date
       - debut_le
       - distance_debut_m
       - distance_fin_m
+      - ecart_le
       - etablissement
       - fin_le
       - fin_sans_gps
@@ -9496,6 +9585,7 @@ components:
       - id
       - manquants
       - modification_en_attente
+      - motif_ecart
       - prospect
       - reseau
       - sans_gps

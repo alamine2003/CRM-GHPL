@@ -121,11 +121,7 @@ export function ProgrammeDuJour() {
           <>
             <Activites jour={aujourdhui} />
             {annonce && (
-              <Alerte type={annonce.horsLigne ? 'info' : 'succes'}>
-                {annonce.horsLigne
-                  ? t('execution.termineeHorsLigne', { texte: annonce.texte })
-                  : annonce.texte}
-              </Alerte>
+              <Alerte type={annonce.horsLigne ? 'info' : 'succes'}>{annonce.texte}</Alerte>
             )}
             {prochaine ? (
               <Pressable
@@ -149,6 +145,7 @@ export function ProgrammeDuJour() {
                 geolocalisation={programme.geolocalisation}
                 fuseau={programme.fuseau}
                 attenteSecondes={programme.attente_gps_secondes}
+                motifs={programme.motifs_ecart}
                 surTerminee={setAnnonce}
               />
             ) : (
@@ -273,7 +270,9 @@ function LigneVisite({
           {/* En tête, « En cours depuis … » le dit déjà sous la carte. */}
           {visite.statut !== 'prevue' && !(grande && visite.statut === 'en_cours') && (
             <Etiquette ton={visite.statut === 'effectuee' ? 'succes' : 'attention'}>
-              {t(`visites.statuts.${visite.statut}`)}
+              {visite.statut === 'prospect_absent' && visite.motif_ecart
+                ? t('execution.absentLu', { motif: visite.motif_ecart.libelle })
+                : t(`visites.statuts.${visite.statut}`)}
             </Etiquette>
           )}
           {visite.modification_en_attente && <Etiquette>{t('programme.enAttente')}</Etiquette>}

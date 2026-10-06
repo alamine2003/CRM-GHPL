@@ -2403,6 +2403,23 @@ export interface paths {
     patch: operations['visite_modifier'];
     trace?: never;
   };
+  '/api/v1/visites/{id}/absent/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description VIS-005 : le prospect est absent ; un motif de la liste du pays est obligatoire (CA1). */
+    post: operations['visite_prospect_absent'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/copier/': {
     parameters: {
       query?: never;
@@ -3056,6 +3073,17 @@ export interface components {
      * @enum {string}
      */
     DoublonEnum: 'certain' | 'probable' | 'aucun';
+    /**
+     * @description Un écart déclaré par le délégué (VIS-005) : le moment, le motif obligatoire de la liste
+     *     du pays, un commentaire facultatif.
+     */
+    Ecart: {
+      /** Format: date-time */
+      le: string;
+      /** Format: uuid */
+      motif?: string | null;
+      commentaire?: string;
+    };
     ErreurClient: {
       client: components['schemas']['ClientEnum'];
       version: string;
@@ -3811,6 +3839,7 @@ export interface components {
       prochaine: string | null;
       geolocalisation: boolean;
       attente_gps_secondes: number;
+      motifs_ecart: components['schemas']['Resume'][];
     };
     Proposition: {
       /** Format: uuid */
@@ -4505,6 +4534,10 @@ export interface components {
       readonly fin_le: string | null;
       readonly fin_sans_gps: boolean;
       readonly distance_fin_m: number | null;
+      readonly motif_ecart: components['schemas']['Resume'] | null;
+      readonly commentaire_ecart: string;
+      /** Format: date-time */
+      readonly ecart_le: string | null;
     };
     /** @description Une visite telle que soumise dans une version (RG-037). */
     VisiteFigee: {
@@ -4565,6 +4598,10 @@ export interface components {
       readonly fin_le: string | null;
       readonly fin_sans_gps: boolean;
       readonly distance_fin_m: number | null;
+      readonly motif_ecart: components['schemas']['Resume'] | null;
+      readonly commentaire_ecart: string;
+      /** Format: date-time */
+      readonly ecart_le: string | null;
       modification_en_attente: boolean;
     };
     /**
@@ -8489,6 +8526,33 @@ export interface operations {
         'application/json': components['schemas']['PatchedModificationVisite'];
         'application/x-www-form-urlencoded': components['schemas']['PatchedModificationVisite'];
         'multipart/form-data': components['schemas']['PatchedModificationVisite'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  visite_prospect_absent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Ecart'];
+        'application/x-www-form-urlencoded': components['schemas']['Ecart'];
+        'multipart/form-data': components['schemas']['Ecart'];
       };
     };
     responses: {

@@ -1545,7 +1545,8 @@
       "modif_visite": "Edited visit",
       "ajout_activite": "Activity",
       "demarrer_visite": "Visit started",
-      "terminer_visite": "Visit ended"
+      "terminer_visite": "Visit ended",
+      "absent_visite": "Prospect absent"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -1875,6 +1876,16 @@
     "finSansGps": "Ended without GPS: position unavailable",
     "positionFin": "Looking for your position ({{n}} seconds at most; without an answer, the visit ends without GPS)…",
     "terminee": "Visit to {{nom}} ended: {{debut}} – {{fin}} · {{duree}}.",
-    "termineeHorsLigne": "{{texte}} Offline: it will be sent as soon as the network is back."
+    "termineeHorsLigne": "{{texte}} Offline: it will be sent as soon as the network is back.",
+    "absent": "Prospect absent",
+    "absentTitre": "The prospect is absent",
+    "motif": "Reason (required)",
+    "commentaire": "Comment (optional)",
+    "confirmerAbsent": "Confirm absence",
+    "annuler": "Cancel",
+    "absentNote": "Prospect absent recorded for {{nom}}: {{motif}}.",
+    "absentHorsLigne": "{{texte}} Offline: it will be sent as soon as the network is back.",
+    "motifLu": "Reason for absence",
+    "absentLu": "Prospect absent · {{motif}}"
   }
 }

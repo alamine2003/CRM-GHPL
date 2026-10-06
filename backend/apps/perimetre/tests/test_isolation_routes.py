@@ -127,6 +127,7 @@ def senegal(monde):
         "remplacement-terminer": remplacement.pk,
         "visite-copier": visite.pk, "visite-detail": visite.pk,
         "visite-demarrer": visite.pk, "visite-terminer": visite.pk,
+        "visite-absent": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,
         "activite": activite.pk, "activite-retirer": activite.pk,
         "ciblage-liste": poste.pk, "ciblage-candidats": poste.pk,

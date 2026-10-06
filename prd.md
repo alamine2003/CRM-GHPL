@@ -622,6 +622,14 @@ Mise en œuvre (0.3.9) :
 - **Programme** : la visite terminée laisse la place à la suivante (« Visite de … terminée : 09:02 – 09:27 · 25 min ») et se lit « Effectuée » dans la journée ; quand tout est fait, « Plus de visite à faire aujourd'hui ». La durée est inscrite au journal.
 - L'ouverture du rapport à la fin de la visite arrive avec les rapports (cycle 0.5).
 
+### 14.26 Prospect absent (mise en œuvre 0.4.5)
+
+- **Prospect absent** (VIS-005) : une visite prévue du jour, ou déjà en cours, se déclare « prospect absent » depuis le programme ou son détail. Le délégué choisit un motif dans la liste des motifs d'écart du pays (référentiel PRP-001, ajusté par l'administrateur pays) et peut ajouter un commentaire (500 caractères au plus).
+- **CA1** : sans motif, l'absence ne se confirme pas : le bouton reste inactif sur le téléphone et le serveur refuse (`motif_requis`) ; un motif archivé ou d'une autre liste est refusé aussi.
+- **Règles** : comme au démarrage, seule une visite de la version approuvée se déclare, le jour prévu, à une heure qui n'est pas dans le futur. Une visite effectuée ou déjà absente ne change plus. La déclaration est inscrite au journal d'audit avec le code du motif.
+- **Hors connexion** : sans réseau, la déclaration attend dans la file du téléphone (derrière un démarrage en attente) ; la visite se lit déjà « Prospect absent » dans le programme.
+- **Programme** : la visite absente laisse la place à la suivante (« Prospect absent noté pour … : motif ») et se lit « Prospect absent · motif » dans la journée ; le détail montre le motif et le commentaire.
+
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :
