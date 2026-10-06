@@ -2,6 +2,27 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.3] — Démarrer une visite
+
+Troisième jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — démarrer une visite (VIS-003)
+
+- « Démarrer la visite » sur la prochaine visite du programme, ou depuis son détail, le jour prévu : la visite passe « en cours » à l'heure réelle, avec la position du moment si le pays active la géolocalisation (RG-028).
+- **CA1** : sans réseau, l'heure et la position sont prises quand même ; le démarrage attend dans la file du téléphone et part au retour du réseau, sans doublon.
+- **CA2** : sans position (refus, panne, 15 s sans réponse), la visite démarre quand même, marquée « sans GPS ».
+- **CA3** : « En cours depuis 09:02 · À 110 m du lieu » ; le serveur garde la distance pour les contrôles de conformité (0.4.9).
+- Seule une visite du planning approuvé se démarre, le jour prévu, une seule fois ; le démarrage est inscrit au journal.
+
+### Design
+
+Revue sur le rendu réel au téléphone (360 px, sombre) : avec position, sans réseau, sans GPS. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Prochaine visite démarrée | « En cours » répété : étiquette sur la carte et ligne « En cours depuis … ». | L'étiquette disparaît de la carte. |
+| Démarrage sans réponse à l'autorisation de position | Le bouton tournait sans rien dire, sans limite. | « Recherche de votre position… » pendant l'attente ; au plus 30 s, puis la visite démarre sans GPS. |
+
 ## [0.4.2] — Détail d'une visite et historique récent
 
 Deuxième jalon du cycle 0.4 « Exécution des visites ».
@@ -12,6 +33,7 @@ Deuxième jalon du cycle 0.4 « Exécution des visites ».
 - **CA1** : seules les visites du délégué, dans des plannings validés, entrent dans l'historique.
 - Le programme du jour prépare le détail de chaque visite de la journée : il se lit sans réseau.
 - Démonstration : les deux semaines précédentes du premier délégué, terminées, donnent un historique.
+- Décidé le 6 octobre 2026 : sur une visite passée, seul un résultat s'affiche, jamais « Prévue ».
 
 ### Décidé — programme du jour
 

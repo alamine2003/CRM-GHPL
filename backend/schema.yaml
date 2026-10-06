@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.2
+  version: 0.4.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4290,6 +4290,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/{id}/demarrer/:
+    post:
+      operationId: visite_demarrer
+      description: |-
+        VIS-003 : le délégué démarre une visite de son programme ; l'envoi peut partir plus tard,
+        depuis la file du téléphone, sans rien changer s'il est rejoué.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Demarrage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Demarrage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Demarrage'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
   /api/v1/visites/{id}/detail/:
     get:
       operationId: visite_detail
@@ -5388,6 +5424,34 @@ components:
           type: integer
       required:
       - destinataires
+    Demarrage:
+      type: object
+      description: |-
+        VIS-003 : l'heure réelle et la position, prises par le téléphone au démarrage, même
+        hors connexion ; sans position, la visite démarre « sans GPS ».
+      properties:
+        debut_le:
+          type: string
+          format: date-time
+        latitude:
+          type: number
+          format: double
+          maximum: 90
+          minimum: -90
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          maximum: 180
+          minimum: -180
+          nullable: true
+        precision_m:
+          type: number
+          format: double
+          minimum: 0
+          nullable: true
+      required:
+      - debut_le
     Deplacement:
       type: object
       properties:
@@ -7508,10 +7572,13 @@ components:
           type: string
           format: uuid
           nullable: true
+        geolocalisation:
+          type: boolean
       required:
       - aujourdhui
       - etat
       - fuseau
+      - geolocalisation
       - jours
       - planning
       - prochaine
@@ -9158,14 +9225,29 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        debut_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        sans_gps:
+          type: boolean
+          readOnly: true
+        distance_debut_m:
+          type: integer
+          readOnly: true
+          nullable: true
       required:
       - date
+      - debut_le
+      - distance_debut_m
       - etablissement
       - heure
       - id
       - manquants
       - prospect
       - reseau
+      - sans_gps
     VisiteFigee:
       type: object
       description: Une visite telle que soumise dans une version (RG-037).
@@ -9296,10 +9378,24 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        debut_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        sans_gps:
+          type: boolean
+          readOnly: true
+        distance_debut_m:
+          type: integer
+          readOnly: true
+          nullable: true
         modification_en_attente:
           type: boolean
       required:
       - date
+      - debut_le
+      - distance_debut_m
       - etablissement
       - heure
       - id
@@ -9307,6 +9403,7 @@ components:
       - modification_en_attente
       - prospect
       - reseau
+      - sans_gps
     VisiteStatutEnum:
       enum:
       - prevue

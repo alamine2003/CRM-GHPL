@@ -11,15 +11,14 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { lire, ecrire } from './baseLocale';
-import { estTransitoire } from './Brouillons';
+import { envoyerAttente, estTransitoire } from './Brouillons';
 import { garderDetail } from './DetailVisite';
+import { CLE_PROGRAMME as CLE, ecouterProgramme, ExecutionVisite } from './Execution';
 import { Alerte, Carte, Etiquette, MarquePotentiel, Texte, usePalette } from './composants';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
 import { useSession } from './session';
 import { garderSemaine } from './semaineLocale';
-
-const CLE = 'programme.courant';
 
 export function ProgrammeDuJour() {
   const { t, i18n } = useTranslation();
@@ -30,10 +29,15 @@ export function ProgrammeDuJour() {
   const [horsLigne, setHorsLigne] = useState<string | null>(null);
   const connecte = etat.statut === 'connecte';
 
+  // Une visite démarrée sur le téléphone change le programme gardé : l'écran suit.
+  useEffect(() => ecouterProgramme(setProgramme), []);
+
   useEffect(() => {
     if (!connecte) return;
     let actif = true;
     Promise.resolve()
+      // D'abord ce qui attend dans la file (une visite démarrée sans réseau), puis le programme.
+      .then(() => envoyerAttente(client).catch(() => 0))
       .then(() => client.plannings.programme())
       .then((lu) => {
         if (!actif) return;
@@ -126,6 +130,14 @@ export function ProgrammeDuJour() {
                 <Text style={[styles.surTitre, { color: p.info }]}>{t('programme.prochaine')}</Text>
                 <LigneVisite visite={prochaine} jour={aujourdhui} grande />
               </Pressable>
+            ) : null}
+            {prochaine ? (
+              <ExecutionVisite
+                visite={prochaine}
+                aujourdhui={programme.aujourdhui}
+                geolocalisation={programme.geolocalisation}
+                fuseau={programme.fuseau}
+              />
             ) : (
               <Texte variante="discret">{t('programme.termine')}</Texte>
             )}
@@ -245,7 +257,8 @@ function LigneVisite({
         )}
         {grande && visite.objectif ? <Texte>{visite.objectif}</Texte> : null}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-          {visite.statut !== 'prevue' && (
+          {/* En tête, « En cours depuis … » le dit déjà sous la carte. */}
+          {visite.statut !== 'prevue' && !(grande && visite.statut === 'en_cours') && (
             <Etiquette>{t(`visites.statuts.${visite.statut}`)}</Etiquette>
           )}
           {visite.modification_en_attente && <Etiquette>{t('programme.enAttente')}</Etiquette>}

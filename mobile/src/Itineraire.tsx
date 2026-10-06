@@ -19,6 +19,7 @@ import { nomProspect } from './Fiches';
 import { unitesDuJour } from './Journee';
 import { police } from './polices';
 import { CoordonneesEtHistorique } from './DetailVisite';
+import { ExecutionDepuisProgramme } from './Execution';
 import { BandeauHorsLigne } from './Attente';
 import { estTransitoire } from './Brouillons';
 import { garderSemaine, jourIso, semaineGardee } from './semaineLocale';
@@ -313,6 +314,7 @@ export function VueDetail({ id, jour }: { id: string; jour: string }) {
           </Text>
         ))}
       </Carte>
+      <ExecutionDepuisProgramme id={visite.id} />
       <CoordonneesEtHistorique id={visite.id} horsLigneDit={!!horsLigne} />
       {visite.prospect && (
         <Bouton

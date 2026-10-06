@@ -603,7 +603,19 @@ Mise en œuvre (0.3.9) :
 - **CA1** : l'historique ne compte que les visites du délégué connecté, dans des plannings validés (approuvés, en cours ou terminés) ; jamais celles d'un collègue, ni une visite d'un planning resté en préparation.
 - **Hors connexion** : le programme du jour prépare le détail de chaque visite de la journée ; sans réseau, il s'affiche tel qu'au dernier passage.
 - **Démonstration** : le premier délégué a ses deux semaines précédentes terminées, chez les mêmes prospects : l'historique se lit.
-- Hypothèse [H] : « Prévue » n'est pas affiché pour une visite passée : seul un résultat (effectuée, prospect absent…) se dit, dès 0.4.3.
+- Décision [D] du 6 octobre 2026 : « Prévue » n'est pas affiché pour une visite passée ; seul un résultat (effectuée, prospect absent…) se dit, dès 0.4.3.
+
+### 14.24 Démarrer une visite (mise en œuvre 0.4.3)
+
+- **Démarrer** (VIS-003) : sur la prochaine visite du programme, ou depuis son détail, le jour prévu par le planning approuvé, « Démarrer la visite » la passe « en cours ». Le téléphone prend l'heure réelle et, si le pays active la géolocalisation (RG-028, `geolocalisation_active`), la position du moment.
+- **CA1 — hors connexion** : sans réseau, la position et l'heure sont prises quand même ; le démarrage attend dans la file du téléphone (« Démarrée sans réseau : l'envoi partira dès le retour du réseau ») et part au retour du réseau ; le rejouer ne change rien (OFF-003).
+- **CA2 — sans GPS** : position refusée, introuvable ou trop longue à venir (15 s pour la position, 30 s en tout avec la demande d'autorisation) : la visite démarre quand même, marquée « sans GPS ». Un pays qui n'active pas la géolocalisation ne garde aucune position, sans rien signaler.
+- **CA3 — distance** : « En cours depuis 09:02 · À 110 m du lieu », calculée à vol d'oiseau depuis la position de référence du lieu ; le serveur la garde (`distance_debut_m`) pour les contrôles de conformité (VIS-010, 0.4.9). Un lieu sans position : distance inconnue.
+- **Règles** : seule une visite de la version approuvée se démarre, le jour où elle est prévue, et une seule fois ; l'heure de début ne peut être dans le futur (5 minutes de tolérance pour l'horloge du téléphone). Le démarrage est inscrit au journal d'audit.
+- Hypothèses [H] à confirmer :
+  - plusieurs visites peuvent être « en cours » en même temps (un passage) ; aucune n'empêche de démarrer la suivante ;
+  - la position est attendue 15 secondes au plus, 30 secondes en comptant la demande d'autorisation ; « Recherche de votre position… » s'affiche pendant l'attente ;
+  - une visite démarrée la veille sans réseau garde sa date réelle, même si l'envoi arrive le lendemain.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

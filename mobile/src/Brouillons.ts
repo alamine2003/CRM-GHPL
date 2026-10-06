@@ -11,6 +11,7 @@
  */
 import type {
   ClientApi,
+  Demarrage,
   ModificationVisite,
   SaisieActivite,
   SaisieVisite,
@@ -75,6 +76,15 @@ export type Envoi =
       type: 'ajout_activite';
       planning: string;
       saisie: SaisieActivite;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Visite démarrée sans réseau (VIS-003 CA1) : l'heure et la position du moment. */
+      type: 'demarrer_visite';
+      visite: string;
+      saisie: Demarrage;
       resume: string;
       erreur?: string;
     };
@@ -153,6 +163,8 @@ async function rejouer(client: ClientApi): Promise<number> {
         await client.plannings.ajouterVisite(envoi.planning, envoi.saisie);
       } else if (envoi.type === 'modif_visite') {
         await client.visites.modifier(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'demarrer_visite') {
+        await client.visites.demarrer(envoi.visite, envoi.saisie);
       } else {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       }

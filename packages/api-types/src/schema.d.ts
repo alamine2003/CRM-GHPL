@@ -2419,6 +2419,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/{id}/demarrer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description VIS-003 : le délégué démarre une visite de son programme ; l'envoi peut partir plus tard,
+     *     depuis la file du téléphone, sans rien changer s'il est rejoué.
+     */
+    post: operations['visite_demarrer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/detail/': {
     parameters: {
       query?: never;
@@ -2885,6 +2905,20 @@ export interface components {
     };
     DemandeReouverture: {
       destinataires: number;
+    };
+    /**
+     * @description VIS-003 : l'heure réelle et la position, prises par le téléphone au démarrage, même
+     *     hors connexion ; sans position, la visite démarre « sans GPS ».
+     */
+    Demarrage: {
+      /** Format: date-time */
+      debut_le: string;
+      /** Format: double */
+      latitude?: number | null;
+      /** Format: double */
+      longitude?: number | null;
+      /** Format: double */
+      precision_m?: number | null;
     };
     Deplacement: {
       visite: components['schemas']['VisiteFigee'];
@@ -3758,6 +3792,7 @@ export interface components {
       jours: components['schemas']['JourProgramme'][];
       /** Format: uuid */
       prochaine: string | null;
+      geolocalisation: boolean;
     };
     Proposition: {
       /** Format: uuid */
@@ -4433,6 +4468,10 @@ export interface components {
       /** Format: uuid */
       passage?: string | null;
       ordre?: number;
+      /** Format: date-time */
+      readonly debut_le: string | null;
+      readonly sans_gps: boolean;
+      readonly distance_debut_m: number | null;
     };
     /** @description Une visite telle que soumise dans une version (RG-037). */
     VisiteFigee: {
@@ -4485,6 +4524,10 @@ export interface components {
       /** Format: uuid */
       passage?: string | null;
       ordre?: number;
+      /** Format: date-time */
+      readonly debut_le: string | null;
+      readonly sans_gps: boolean;
+      readonly distance_debut_m: number | null;
       modification_en_attente: boolean;
     };
     /**
@@ -8440,6 +8483,33 @@ export interface operations {
     };
     responses: {
       201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  visite_demarrer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Demarrage'];
+        'application/x-www-form-urlencoded': components['schemas']['Demarrage'];
+        'multipart/form-data': components['schemas']['Demarrage'];
+      };
+    };
+    responses: {
+      200: {
         headers: {
           [name: string]: unknown;
         };

@@ -40,6 +40,9 @@ const visite = (id: string, heure: string, nom: string, date = '2026-10-13'): Vi
   manquants: [],
   passage: null,
   ordre: 1,
+  debut_le: null,
+  sans_gps: false,
+  distance_debut_m: null,
   modification_en_attente: false,
 });
 
@@ -51,6 +54,7 @@ const PROGRAMME: Programme = {
   planning: null,
   version: 1,
   prochaine: 'v1',
+  geolocalisation: true,
   jours: [
     { date: '2026-10-12', ferie: null, visites: [], activites: [] },
     {

@@ -82,6 +82,16 @@ def exiger_transition(de: str, vers: str) -> None:
         )
 
 
+def exiger_transition_visite(de: str, vers: str) -> None:
+    if vers not in TRANSITIONS_VISITE.get(de, ()):
+        raise ErreurMetier(
+            "transition_interdite",
+            _("Cette visite ne peut pas passer de « %(de)s » à « %(vers)s ».")
+            % {"de": V(de).label, "vers": V(vers).label},
+            409,
+        )
+
+
 def exporter() -> dict:
     """Table partagée avec les clients (miroir TypeScript, ADR-011)."""
     return {

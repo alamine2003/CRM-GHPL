@@ -184,6 +184,17 @@ class Visite(ModeleDePays):
     #: Rang dans la journée (0.2.3) : les visites à heure fixe suivent l'ordre chronologique,
     #: celles sans heure restent où le délégué les a placées.
     ordre = models.PositiveSmallIntegerField(default=0)
+    # Exécution (VIS-003, 0.4.3) : l'heure réelle du début, prise par le téléphone, et la
+    # position à ce moment, si le pays active la géolocalisation (RG-028).
+    debut_le = models.DateTimeField(null=True, blank=True)
+    debut_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    debut_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    #: Précision annoncée par le téléphone, en mètres.
+    debut_precision_m = models.PositiveIntegerField(null=True, blank=True)
+    #: Démarrée sans position (CA2) : refus, panne ou géolocalisation coupée par le pays.
+    sans_gps = models.BooleanField(default=False)
+    #: Distance entre la position du début et le lieu de la visite (CA3), en mètres.
+    distance_debut_m = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ["date", "ordre", "heure"]

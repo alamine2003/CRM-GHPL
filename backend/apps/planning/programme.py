@@ -11,7 +11,7 @@ from datetime import date, time
 
 from apps.identite.models import Utilisateur
 from apps.socle.models import Pays
-from apps.socle.services import aujourdhui
+from apps.socle.services import aujourdhui, valeur_parametre
 
 from .calendrier import jours_de_la_semaine, lundi
 from .etats import StatutVisite
@@ -95,6 +95,7 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         "version": ref.numero if ref else None,
         "jours": jours,
         "prochaine": prochaine.pk if prochaine else None,
+        "geolocalisation": valeur_parametre(pays, "geolocalisation_active"),
     }
 
 

@@ -24,6 +24,7 @@ import type {
   SemaineFermee,
   Programme,
   DetailVisite,
+  Demarrage,
   Qualite,
   Semaine,
   Reprise,
@@ -137,6 +138,7 @@ export type {
   VisiteProgramme,
   JourProgramme,
   DetailVisite,
+  Demarrage,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -766,6 +768,9 @@ export function creerClient(options: OptionsClient) {
         requete<Visite>(`/api/v1/visites/${id}/`, { methode: 'PATCH', corps: champs }),
       retirer: (id: string) =>
         requete<Visite>(`/api/v1/visites/${id}/retirer/`, { methode: 'POST' }),
+      /** Démarre la visite (VIS-003) : rejouable sans effet depuis la file du téléphone. */
+      demarrer: (id: string, demarrage: Demarrage) =>
+        requete<Visite>(`/api/v1/visites/${id}/demarrer/`, { methode: 'POST', corps: demarrage }),
       copier: (id: string, date: string) =>
         requete<Visite>(`/api/v1/visites/${id}/copier/`, { methode: 'POST', corps: { date } }),
     },

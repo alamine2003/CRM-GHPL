@@ -35,6 +35,9 @@ const VISITE: Visite = {
   manquants: [],
   passage: null,
   ordre: 1,
+  debut_le: null,
+  sans_gps: false,
+  distance_debut_m: null,
 };
 
 const CONSULTATION: Consultation = {

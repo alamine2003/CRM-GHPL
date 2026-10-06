@@ -1540,7 +1540,8 @@
     "types": {
       "ajout_visite": "New visit",
       "modif_visite": "Edited visit",
-      "ajout_activite": "Activity"
+      "ajout_activite": "Activity",
+      "demarrer_visite": "Visit started"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -1851,5 +1852,18 @@
     "historiqueAide": "Your last three visits to this prospect.",
     "aucunHistorique": "No previous visit to this prospect.",
     "horsLigne": "Offline: contact details and history as of {{date}}."
+  },
+  "execution": {
+    "demarrer": "Start the visit",
+    "demarrage": "Starting…",
+    "enCours": "In progress since {{heure}}",
+    "distance": "{{distance}} from the place",
+    "sansGps": "No GPS: position unavailable",
+    "horsLigne": "Started offline: it will be sent as soon as the network is back.",
+    "refus": "The start was not accepted: {{message}}",
+    "metres": "{{n}} m",
+    "kilometres": "{{n}} km",
+    "lieuSansPosition": "The place has no recorded position: distance unknown.",
+    "position": "Looking for your position (30 seconds at most; without an answer, the visit starts without GPS)…"
   }
 }

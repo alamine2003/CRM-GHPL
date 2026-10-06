@@ -144,7 +144,9 @@ class VisiteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Visite
         fields = ["id", "date", "heure", "prospect", "etablissement", "reseau", "objectif",
-                  "note", "statut", "manquants", "passage", "ordre"]  # fmt: skip
+                  "note", "statut", "manquants", "passage", "ordre", "debut_le", "sans_gps",
+                  "distance_debut_m"]  # fmt: skip
+        read_only_fields = ["debut_le", "sans_gps", "distance_debut_m"]
 
     def get_manquants(self, visite) -> list[str]:
         from .services import champs_manquants
@@ -617,6 +619,8 @@ class ProgrammeSerializer(serializers.Serializer):
     jours = JourProgrammeSerializer(many=True)
     #: La prochaine visite du jour : la première qui n'est pas encore faite.
     prochaine = serializers.UUIDField(allow_null=True)
+    #: Le pays enregistre la position au début et à la fin des visites (RG-028).
+    geolocalisation = serializers.BooleanField()
 
 
 class CoordonneesProspectSerializer(serializers.Serializer):
@@ -653,3 +657,15 @@ class DetailVisiteSerializer(serializers.Serializer):
     lieu = CoordonneesLieuSerializer(allow_null=True)
     #: Les 3 dernières visites du délégué chez ce prospect, de la plus récente (CA1).
     historique = VisitePasseeSerializer(many=True)
+
+
+class DemarrageSerializer(serializers.Serializer):
+    """VIS-003 : l'heure réelle et la position, prises par le téléphone au démarrage, même
+    hors connexion ; sans position, la visite démarre « sans GPS »."""
+
+    debut_le = serializers.DateTimeField()
+    latitude = serializers.FloatField(required=False, allow_null=True, min_value=-90,
+                                      max_value=90)  # fmt: skip
+    longitude = serializers.FloatField(required=False, allow_null=True, min_value=-180,
+                                       max_value=180)  # fmt: skip
+    precision_m = serializers.FloatField(required=False, allow_null=True, min_value=0)

@@ -714,3 +714,21 @@ class VisiteDetailVue(VuePerimetre):
         donnees = {"visite": visite, "prospect": visite.prospect, "lieu": visite.etablissement,
                    "historique": historique(visite)}  # fmt: skip
         return Response(s.DetailVisiteSerializer(donnees).data)
+
+
+class DemarrageVue(VueVisites):
+    """VIS-003 : le délégué démarre une visite de son programme ; l'envoi peut partir plus tard,
+    depuis la file du téléphone, sans rien changer s'il est rejoué."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.DemarrageSerializer, responses=s.VisiteSerializer,
+                   operation_id="visite_demarrer")  # fmt: skip
+    def post(self, request, id):
+        from .execution import demarrer
+
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.DemarrageSerializer, request)
+        visite = demarrer(visite, v["debut_le"], v.get("latitude"), v.get("longitude"),
+                          v.get("precision_m"))  # fmt: skip
+        return Response(s.VisiteSerializer(visite).data)
