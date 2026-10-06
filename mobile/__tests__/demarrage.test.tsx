@@ -8,7 +8,7 @@ import i18n from '../src/i18n';
 import { ProgrammeDuJour } from '../src/Programme';
 import { ContexteSession, type Session } from '../src/session';
 
-// VIS-003 (0.4.3) : démarrer une visite — heure réelle, position si le pays l'active ; CA1 :
+// VIS-003 (0.4.3) et VIS-004 (0.4.4) : démarrer puis terminer une visite — heure réelle, position si le pays l'active ; CA1 :
 // capturée hors connexion ; CA2 : sans GPS, elle démarre quand même ; CA3 : la distance au lieu.
 
 const mockMemoire = new Map<string, { valeur: unknown; maj: string }>();
@@ -54,6 +54,9 @@ const VISITE: VisiteProgramme = {
   debut_le: null,
   sans_gps: false,
   distance_debut_m: null,
+  fin_le: null,
+  fin_sans_gps: false,
+  distance_fin_m: null,
   modification_en_attente: false,
 };
 
@@ -66,6 +69,7 @@ const PROGRAMME: Programme = {
   version: 1,
   prochaine: 'v1',
   geolocalisation: true,
+  attente_gps_secondes: 60,
   jours: [{ date: '2026-10-13', ferie: null, visites: [VISITE], activites: [] }],
 };
 
@@ -145,6 +149,9 @@ test('VIS-003 CA2 : sans GPS, la visite démarre quand même, « sans GPS »', a
     debut_le: s.debut_le,
     sans_gps: true,
     distance_debut_m: null,
+    fin_le: null,
+    fin_sans_gps: false,
+    distance_fin_m: null,
   }));
   await rendre(demarrer);
   await fireEvent.press(await screen.findByText('Démarrer la visite'));
@@ -165,4 +172,82 @@ test('un refus du serveur se dit et rien ne part dans la file', async () => {
 
 test('la distance se calcule comme sur le serveur (haversine)', () => {
   expect(Math.round(distanceKm([14.7, -17.4], [14.701, -17.4]) * 1000)).toBe(111);
+});
+
+const EN_COURS: VisiteProgramme = {
+  ...VISITE,
+  statut: 'en_cours',
+  debut_le: '2026-10-13T09:02:00.000Z',
+  distance_debut_m: 40,
+};
+
+test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', async () => {
+  const terminer = jest.fn(async (_id: string, s: { fin_le: string }) => ({
+    ...EN_COURS,
+    statut: 'effectuee',
+    fin_le: s.fin_le,
+    fin_sans_gps: false,
+    distance_fin_m: 35,
+  }));
+  const demarrer = jest.fn();
+  const session = {
+    etat: { statut: 'connecte' },
+    client: {
+      plannings: {
+        programme: jest.fn(async () => ({
+          ...PROGRAMME,
+          jours: [{ ...PROGRAMME.jours[0]!, visites: [EN_COURS] }],
+        })),
+        semaine: jest.fn(async () => ({})),
+      },
+      visites: {
+        demarrer,
+        terminer,
+        detail: jest.fn(async () => Promise.reject(new TypeError('x'))),
+      },
+    } as unknown as ClientApi,
+  } as unknown as Session;
+  jest.useFakeTimers({ doNotFake: ['setTimeout', 'setImmediate', 'nextTick'] });
+  jest.setSystemTime(new Date('2026-10-13T09:27:00.000Z'));
+  await render(
+    <ContexteSession.Provider value={session}>
+      <ProgrammeDuJour />
+    </ContexteSession.Provider>,
+  );
+  expect(await screen.findByText(/^En cours depuis 09:02 · À 40 m du lieu$/)).toBeTruthy();
+  await fireEvent.press(screen.getByText('Terminer la visite'));
+  expect(terminer).toHaveBeenCalledWith(
+    'v1',
+    expect.objectContaining({ fin_le: '2026-10-13T09:27:00.000Z', latitude: 14.701 }),
+  );
+  // Terminée, elle laisse la place : le programme l'annonce, et rien ne reste à faire.
+  expect(
+    await screen.findByText('Visite de Dr Awa FICTIF terminée : 09:02 – 09:27 · 25 min.'),
+  ).toBeTruthy();
+  expect(screen.getByText("Plus de visite à faire aujourd'hui.")).toBeTruthy();
+  expect(screen.getByText('Effectuée')).toBeTruthy();
+  expect(screen.queryByText('Terminer la visite')).toBeNull();
+  jest.useRealTimers();
+});
+
+test('VIS-004 : démarrée puis terminée sans réseau, les deux envois attendent dans l’ordre', async () => {
+  const horsReseau = jest.fn(async () => {
+    throw new TypeError('Network request failed');
+  });
+  const session = {
+    etat: { statut: 'connecte' },
+    client: {
+      plannings: { programme: jest.fn(async () => PROGRAMME), semaine: jest.fn(async () => ({})) },
+      visites: { demarrer: horsReseau, terminer: horsReseau, detail: horsReseau },
+    } as unknown as ClientApi,
+  } as unknown as Session;
+  await render(
+    <ContexteSession.Provider value={session}>
+      <ProgrammeDuJour />
+    </ContexteSession.Provider>,
+  );
+  await fireEvent.press(await screen.findByText('Démarrer la visite'));
+  await fireEvent.press(await screen.findByText('Terminer la visite'));
+  expect(await screen.findByText(/terminée : .* Sans réseau : l'envoi partira/)).toBeTruthy();
+  expect((await lireAttente()).map((e) => e.type)).toEqual(['demarrer_visite', 'terminer_visite']);
 });

@@ -2,6 +2,34 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.4.4] — Terminer une visite
+
+Quatrième jalon du cycle 0.4 « Exécution des visites ».
+
+### Ajouté — terminer une visite (VIS-004)
+
+- « Terminer la visite » sur une visite en cours : « effectuée », heure réelle de fin et position, aux mêmes règles qu'au début.
+- **CA1** : la fin suit le début ; sinon, elle est refusée.
+- Sans réseau, la fin attend derrière le démarrage dans la file du téléphone et les deux partent dans l'ordre.
+- Le programme annonce la visite terminée (« Visite de … terminée : 09:02 – 09:27 · 25 min »), passe à la suivante et marque la visite « Effectuée ».
+
+### Modifié — attente de la position
+
+- L'attente de la position, au début comme à la fin, est un paramètre du pays : 1 minute par défaut (décision du 6 octobre 2026), modifiable de 10 secondes à 5 minutes dans « Paramètres ».
+- Les paramètres du pays disent la fermeture de la semaine « lundi 00:00, semaine du planning ».
+
+### Décidé — démarrage
+
+- Plusieurs visites peuvent être en cours en même temps ; une visite démarrée sans réseau garde sa date et son heure réelles (décisions du 6 octobre 2026).
+
+### Design
+
+Revue sur le rendu réel au téléphone (360 px) : visite en cours, puis terminée. Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Programme après la fin | La visite terminée restait « Prochaine visite ». | La suivante prend sa place ; la visite terminée est annoncée et marquée « Effectuée » en vert. |
+
 ## [0.4.3] — Démarrer une visite
 
 Troisième jalon du cycle 0.4 « Exécution des visites ».

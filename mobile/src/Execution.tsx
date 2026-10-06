@@ -1,5 +1,5 @@
 /**
- * Démarrer une visite (VIS-003, 0.4.3). Le téléphone prend l'heure réelle et, si le pays active
+ * Démarrer puis terminer une visite (VIS-003, 0.4.3 ; VIS-004, 0.4.4). Le téléphone prend l'heure réelle et, si le pays active
  * la géolocalisation (RG-028), la position du moment — même sans réseau (CA1) : l'envoi part
  * aussitôt, ou attend dans la file et part au retour du réseau. Sans position, la visite démarre
  * quand même, « sans GPS » (CA2) ; avec une position, la distance au lieu s'affiche (CA3).
@@ -10,7 +10,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { ecrire, lire } from './baseLocale';
-import { estTransitoire, mettreEnAttente, nouvelIdentifiant } from './Brouillons';
+import {
+  envoyerAttente,
+  estTransitoire,
+  lireAttente,
+  mettreEnAttente,
+  nouvelIdentifiant,
+} from './Brouillons';
 import { Alerte, Bouton, Texte } from './composants';
 import { nomProspect } from './Fiches';
 import { messageErreur, useSession } from './session';
@@ -45,12 +51,12 @@ export async function changerVisite(id: string, champs: Partial<VisiteProgramme>
 
 type Position = { latitude: number; longitude: number; precision_m: number | null };
 
-/** Au-delà, la visite démarre « sans GPS » : la demande d'autorisation comprise. */
-const ATTENTE_MAX_MS = 30000;
-
-/** La position du moment, ou rien : refus, appareil sans GPS, ou trop long. */
-export async function prendrePosition(): Promise<Position | null> {
-  return attendreAuPlus(lirePosition(), ATTENTE_MAX_MS);
+/**
+ * La position du moment, ou rien : refus, appareil sans GPS, ou plus long que l'attente fixée
+ * par le pays (1 minute par défaut, demande d'autorisation comprise).
+ */
+export async function prendrePosition(attenteSecondes = 60): Promise<Position | null> {
+  return attendreAuPlus(lirePosition(), attenteSecondes * 1000);
 }
 
 /** La promesse, ou rien au-delà du délai ; le minuteur ne survit pas à la réponse. */
@@ -72,10 +78,9 @@ async function lirePosition(): Promise<Position | null> {
   try {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') return null;
-    const position = await attendreAuPlus(
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }),
-      15000,
-    );
+    const position = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
     if (!position) return null;
     return {
       latitude: position.coords.latitude,
@@ -118,8 +123,9 @@ export async function demarrerVisite(
   visite: VisiteProgramme,
   geolocalisation: boolean,
   resume: string,
+  attenteSecondes = 60,
 ): Promise<'parti' | 'en_attente'> {
-  const position = geolocalisation ? await prendrePosition() : null;
+  const position = geolocalisation ? await prendrePosition(attenteSecondes) : null;
   const saisie = { debut_le: new Date().toISOString(), ...(position ?? {}) };
   const distance = position
     ? await distanceAuLieu(visite.id, position.latitude, position.longitude)
@@ -153,6 +159,60 @@ export async function demarrerVisite(
   }
 }
 
+/**
+ * Termine la visite en cours (VIS-004). Ce qui attend dans la file part d'abord : une visite
+ * démarrée sans réseau doit être connue du serveur avant sa fin.
+ */
+export async function terminerVisite(
+  client: ClientApi,
+  visite: VisiteProgramme,
+  geolocalisation: boolean,
+  resume: string,
+  attenteSecondes = 60,
+): Promise<'parti' | 'en_attente'> {
+  const position = geolocalisation ? await prendrePosition(attenteSecondes) : null;
+  const saisie = { fin_le: new Date().toISOString(), ...(position ?? {}) };
+  const local = {
+    statut: 'effectuee' as const,
+    fin_le: saisie.fin_le,
+    fin_sans_gps: geolocalisation && !position,
+    distance_fin_m: position
+      ? await distanceAuLieu(visite.id, position.latitude, position.longitude)
+      : null,
+  };
+  const attente = await lireAttente();
+  if (attente.length) await envoyerAttente(client).catch(() => 0);
+  const encoreEnAttente = (await lireAttente()).some(
+    (e) => e.type === 'demarrer_visite' && e.visite === visite.id,
+  );
+  try {
+    if (encoreEnAttente) throw new TypeError('Démarrage encore en attente');
+    const recue = await client.visites.terminer(visite.id, saisie);
+    await changerVisite(visite.id, {
+      statut: recue.statut,
+      fin_le: recue.fin_le,
+      fin_sans_gps: recue.fin_sans_gps,
+      distance_fin_m: recue.distance_fin_m ?? local.distance_fin_m,
+    });
+    return 'parti';
+  } catch (e) {
+    if (!estTransitoire(e)) throw e;
+    await mettreEnAttente({
+      id: nouvelIdentifiant(),
+      type: 'terminer_visite',
+      visite: visite.id,
+      saisie,
+      resume,
+    });
+    await changerVisite(visite.id, local);
+    return 'en_attente';
+  }
+}
+
+function dureeMinutes(debut: string | null, fin: string) {
+  return debut ? Math.max(1, Math.round((Date.parse(fin) - Date.parse(debut)) / 60000)) : 0;
+}
+
 export function distanceLisible(
   metres: number,
   t: ReturnType<typeof useTranslation>['t'],
@@ -174,28 +234,114 @@ export function ExecutionVisite({
   aujourdhui,
   geolocalisation,
   fuseau,
+  attenteSecondes = 60,
+  surTerminee,
 }: {
   visite: VisiteProgramme;
   aujourdhui: string;
   geolocalisation: boolean;
   fuseau: string;
+  attenteSecondes?: number;
+  /** La visite terminée quitte souvent l'écran (la suivante prend sa place) : on l'annonce. */
+  surTerminee?: (annonce: { texte: string; horsLigne: boolean }) => void;
 }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const [envoi, setEnvoi] = useState(false);
-  const [message, setMessage] = useState<{ ton: 'erreur' | 'info'; texte: string } | null>(null);
-
-  if (visite.statut === 'en_cours' && visite.debut_le) {
-    let heure: string;
+  const [message, setMessage] = useState<{
+    ton: 'erreur' | 'info' | 'succes';
+    texte: string;
+  } | null>(null);
+  const heureDe = (iso: string) => {
     try {
-      heure = new Intl.DateTimeFormat(i18n.language, {
+      return new Intl.DateTimeFormat(i18n.language, {
         hour: '2-digit',
         minute: '2-digit',
         timeZone: fuseau,
-      }).format(new Date(visite.debut_le));
+      }).format(new Date(iso));
     } catch {
-      heure = new Date(visite.debut_le).toTimeString().slice(0, 5);
+      return new Date(iso).toTimeString().slice(0, 5);
     }
+  };
+  const resume = [visite.heure, visite.prospect ? nomProspect(visite.prospect, t) : '']
+    .filter(Boolean)
+    .join(' · ');
+
+  async function agir(action: 'demarrer' | 'terminer') {
+    setEnvoi(true);
+    setMessage(null);
+    try {
+      if (action === 'demarrer') {
+        const issue = await demarrerVisite(
+          client,
+          visite,
+          geolocalisation,
+          resume,
+          attenteSecondes,
+        );
+        if (issue === 'en_attente') setMessage({ ton: 'info', texte: t('execution.horsLigne') });
+      } else {
+        const fin = new Date().toISOString();
+        const issue = await terminerVisite(
+          client,
+          visite,
+          geolocalisation,
+          resume,
+          attenteSecondes,
+        );
+        const texte = t('execution.terminee', {
+          nom: visite.prospect ? nomProspect(visite.prospect, t) : t('visites.sansProspect'),
+          debut: visite.debut_le ? heureDe(visite.debut_le) : '',
+          fin: heureDe(fin),
+          duree: t('execution.duree', { n: dureeMinutes(visite.debut_le, fin) }),
+        });
+        const horsLigne = issue === 'en_attente';
+        if (surTerminee) surTerminee({ texte, horsLigne });
+        else
+          setMessage({
+            ton: horsLigne ? 'info' : 'succes',
+            texte: horsLigne ? t('execution.termineeHorsLigne', { texte }) : texte,
+          });
+      }
+    } catch (e) {
+      setMessage({
+        ton: 'erreur',
+        texte: t('execution.refus', { message: messageErreur(e, t('erreurs.reseau')) }),
+      });
+    } finally {
+      setEnvoi(false);
+    }
+  }
+
+  const attente = envoi && (
+    <Texte variante="discret" accessibilityLiveRegion="polite">
+      {geolocalisation
+        ? t(visite.statut === 'en_cours' ? 'execution.positionFin' : 'execution.position', {
+            n: attenteSecondes,
+          })
+        : t('execution.demarrage')}
+    </Texte>
+  );
+
+  if (visite.statut === 'effectuee' && visite.debut_le && visite.fin_le) {
+    const minutes = dureeMinutes(visite.debut_le, visite.fin_le);
+    return (
+      <View style={{ gap: 6 }}>
+        <Texte variante="fort">
+          {t('execution.effectuee', {
+            debut: heureDe(visite.debut_le),
+            fin: heureDe(visite.fin_le),
+            duree: t('execution.duree', { n: minutes }),
+          })}
+        </Texte>
+        {visite.fin_sans_gps && <Texte variante="discret">{t('execution.finSansGps')}</Texte>}
+        {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
+      </View>
+    );
+  }
+
+  if (visite.statut === 'en_cours' && visite.debut_le) {
+    const heure = heureDe(visite.debut_le);
     return (
       <View style={{ gap: 6 }}>
         <Texte variante="fort">
@@ -212,29 +358,16 @@ export function ExecutionVisite({
         </Texte>
         {visite.sans_gps && <Texte variante="discret">{t('execution.sansGps')}</Texte>}
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
+        <Bouton
+          libelle={t('execution.terminer')}
+          chargement={envoi}
+          onPress={() => void agir('terminer')}
+        />
+        {attente}
       </View>
     );
   }
   if (visite.statut !== 'prevue' || visite.date !== aujourdhui) return null;
-
-  async function demarrer() {
-    setEnvoi(true);
-    setMessage(null);
-    try {
-      const resume = [visite.heure, visite.prospect ? nomProspect(visite.prospect, t) : '']
-        .filter(Boolean)
-        .join(' · ');
-      const issue = await demarrerVisite(client, visite, geolocalisation, resume);
-      if (issue === 'en_attente') setMessage({ ton: 'info', texte: t('execution.horsLigne') });
-    } catch (e) {
-      setMessage({
-        ton: 'erreur',
-        texte: t('execution.refus', { message: messageErreur(e, t('erreurs.reseau')) }),
-      });
-    } finally {
-      setEnvoi(false);
-    }
-  }
 
   return (
     <View style={{ gap: 6 }}>
@@ -242,13 +375,9 @@ export function ExecutionVisite({
       <Bouton
         libelle={t('execution.demarrer')}
         chargement={envoi}
-        onPress={() => void demarrer()}
+        onPress={() => void agir('demarrer')}
       />
-      {envoi && (
-        <Texte variante="discret" accessibilityLiveRegion="polite">
-          {geolocalisation ? t('execution.position') : t('execution.demarrage')}
-        </Texte>
-      )}
+      {attente}
     </View>
   );
 }
@@ -275,6 +404,7 @@ export function ExecutionDepuisProgramme({ id }: { id: string }) {
       aujourdhui={programme.aujourdhui}
       geolocalisation={programme.geolocalisation}
       fuseau={programme.fuseau}
+      attenteSecondes={programme.attente_gps_secondes}
     />
   );
 }

@@ -188,6 +188,13 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             _booleen,
         ),
         DefinitionParametre(
+            "attente_gps_secondes",
+            "Attente de la position au début et à la fin d'une visite, en secondes ; au-delà, la "
+            "visite continue « sans GPS » (VIS-003, décision du 6 octobre 2026)",
+            60,
+            _entier(10, 300),
+        ),
+        DefinitionParametre(
             "rappel_planning_non_soumis",
             "Rappel du planning non soumis, semaine précédente (NOT-006)",
             {"jour": 5, "heure": "09:00"},

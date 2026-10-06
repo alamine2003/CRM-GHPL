@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.4.3
+  version: 0.4.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4372,6 +4372,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/Visite'
           description: ''
+  /api/v1/visites/{id}/terminer/:
+    post:
+      operationId: visite_terminer
+      description: 'VIS-004 : le délégué termine une visite en cours ; rejouable depuis
+        la file.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Terminaison'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Terminaison'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Terminaison'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visite'
+          description: ''
 components:
   schemas:
     Activite:
@@ -7574,7 +7609,10 @@ components:
           nullable: true
         geolocalisation:
           type: boolean
+        attente_gps_secondes:
+          type: integer
       required:
+      - attente_gps_secondes
       - aujourdhui
       - etat
       - fuseau
@@ -8963,6 +9001,33 @@ components:
       - mes_a_valider
       - potentiels
       - sans_lieu
+    Terminaison:
+      type: object
+      description: 'VIS-004 : l''heure réelle de fin et la position, prises par le
+        téléphone.'
+      properties:
+        fin_le:
+          type: string
+          format: date-time
+        latitude:
+          type: number
+          format: double
+          maximum: 90
+          minimum: -90
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          maximum: 180
+          minimum: -180
+          nullable: true
+        precision_m:
+          type: number
+          format: double
+          minimum: 0
+          nullable: true
+      required:
+      - fin_le
     Transfert:
       type: object
       properties:
@@ -9237,11 +9302,26 @@ components:
           type: integer
           readOnly: true
           nullable: true
+        fin_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        fin_sans_gps:
+          type: boolean
+          readOnly: true
+        distance_fin_m:
+          type: integer
+          readOnly: true
+          nullable: true
       required:
       - date
       - debut_le
       - distance_debut_m
+      - distance_fin_m
       - etablissement
+      - fin_le
+      - fin_sans_gps
       - heure
       - id
       - manquants
@@ -9390,13 +9470,28 @@ components:
           type: integer
           readOnly: true
           nullable: true
+        fin_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        fin_sans_gps:
+          type: boolean
+          readOnly: true
+        distance_fin_m:
+          type: integer
+          readOnly: true
+          nullable: true
         modification_en_attente:
           type: boolean
       required:
       - date
       - debut_le
       - distance_debut_m
+      - distance_fin_m
       - etablissement
+      - fin_le
+      - fin_sans_gps
       - heure
       - id
       - manquants

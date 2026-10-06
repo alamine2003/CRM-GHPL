@@ -732,3 +732,20 @@ class DemarrageVue(VueVisites):
         visite = demarrer(visite, v["debut_le"], v.get("latitude"), v.get("longitude"),
                           v.get("precision_m"))  # fmt: skip
         return Response(s.VisiteSerializer(visite).data)
+
+
+class TerminaisonVue(VueVisites):
+    """VIS-004 : le délégué termine une visite en cours ; rejouable depuis la file."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.TerminaisonSerializer, responses=s.VisiteSerializer,
+                   operation_id="visite_terminer")  # fmt: skip
+    def post(self, request, id):
+        from .execution import terminer
+
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.TerminaisonSerializer, request)
+        visite = terminer(visite, v["fin_le"], v.get("latitude"), v.get("longitude"),
+                          v.get("precision_m"))  # fmt: skip
+        return Response(s.VisiteSerializer(visite).data)

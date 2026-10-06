@@ -97,7 +97,7 @@ def test_seule_une_visite_approuvee_du_jour_se_demarre(monde, terrain, approuvee
         r = demarrer(monde, approuvee, debut_le="2026-10-12T08:59:00Z")
         assert (r.status_code, r.json()["code"]) == (409, "autre_jour")
         r = demarrer(monde, approuvee, debut_le="2026-10-13T09:00:00Z")
-        assert (r.status_code, r.json()["code"]) == (400, "debut_futur")
+        assert (r.status_code, r.json()["code"]) == (400, "moment_futur")
     # Une visite ajoutée après l'approbation, qui attend la décision, ne se démarre pas.
     with freeze_time("2026-10-09 09:00"):
         jeudi = dict(date=date(2026, 10, 15), heure=time(15, 0), objectif="B")

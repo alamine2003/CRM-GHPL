@@ -43,6 +43,9 @@ const visite = (id: string, heure: string, nom: string, date = '2026-10-13'): Vi
   debut_le: null,
   sans_gps: false,
   distance_debut_m: null,
+  fin_le: null,
+  fin_sans_gps: false,
+  distance_fin_m: null,
   modification_en_attente: false,
 });
 
@@ -55,6 +58,7 @@ const PROGRAMME: Programme = {
   version: 1,
   prochaine: 'v1',
   geolocalisation: true,
+  attente_gps_secondes: 60,
   jours: [
     { date: '2026-10-12', ferie: null, visites: [], activites: [] },
     {
@@ -150,7 +154,12 @@ test('sans version approuvée, le programme le dit', async () => {
   expect(screen.queryByText('Prochaine visite')).toBeNull();
 });
 
-test('toutes les visites passées : plus de prochaine', async () => {
-  await rendre(jest.fn(async () => ({ ...PROGRAMME, prochaine: null })));
-  expect(await screen.findByText('Toutes les visites du jour sont passées.')).toBeTruthy();
+test('toutes les visites du jour faites : plus de prochaine', async () => {
+  const faites = PROGRAMME.jours.map((j) => ({
+    ...j,
+    visites: j.visites.map((v) => ({ ...v, statut: 'effectuee' as const })),
+  }));
+  await rendre(jest.fn(async () => ({ ...PROGRAMME, prochaine: null, jours: faites })));
+  expect(await screen.findByText("Plus de visite à faire aujourd'hui.")).toBeTruthy();
+  expect(screen.getAllByText('Effectuée')).toHaveLength(2);
 });

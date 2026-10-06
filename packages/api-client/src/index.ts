@@ -25,6 +25,7 @@ import type {
   Programme,
   DetailVisite,
   Demarrage,
+  Terminaison,
   Qualite,
   Semaine,
   Reprise,
@@ -139,6 +140,7 @@ export type {
   JourProgramme,
   DetailVisite,
   Demarrage,
+  Terminaison,
   Qualite,
   Semaine,
   ComparaisonFiche,
@@ -771,6 +773,12 @@ export function creerClient(options: OptionsClient) {
       /** Démarre la visite (VIS-003) : rejouable sans effet depuis la file du téléphone. */
       demarrer: (id: string, demarrage: Demarrage) =>
         requete<Visite>(`/api/v1/visites/${id}/demarrer/`, { methode: 'POST', corps: demarrage }),
+      /** Termine la visite en cours (VIS-004) : rejouable sans effet depuis la file. */
+      terminer: (id: string, terminaison: Terminaison) =>
+        requete<Visite>(`/api/v1/visites/${id}/terminer/`, {
+          methode: 'POST',
+          corps: terminaison,
+        }),
       copier: (id: string, date: string) =>
         requete<Visite>(`/api/v1/visites/${id}/copier/`, { methode: 'POST', corps: { date } }),
     },

@@ -145,8 +145,9 @@ class VisiteSerializer(serializers.ModelSerializer):
         model = Visite
         fields = ["id", "date", "heure", "prospect", "etablissement", "reseau", "objectif",
                   "note", "statut", "manquants", "passage", "ordre", "debut_le", "sans_gps",
-                  "distance_debut_m"]  # fmt: skip
-        read_only_fields = ["debut_le", "sans_gps", "distance_debut_m"]
+                  "distance_debut_m", "fin_le", "fin_sans_gps", "distance_fin_m"]  # fmt: skip
+        read_only_fields = ["debut_le", "sans_gps", "distance_debut_m", "fin_le", "fin_sans_gps",
+                            "distance_fin_m"]  # fmt: skip
 
     def get_manquants(self, visite) -> list[str]:
         from .services import champs_manquants
@@ -621,6 +622,8 @@ class ProgrammeSerializer(serializers.Serializer):
     prochaine = serializers.UUIDField(allow_null=True)
     #: Le pays enregistre la position au début et à la fin des visites (RG-028).
     geolocalisation = serializers.BooleanField()
+    #: Attente de la position avant de continuer « sans GPS » (paramètre du pays).
+    attente_gps_secondes = serializers.IntegerField()
 
 
 class CoordonneesProspectSerializer(serializers.Serializer):
@@ -664,6 +667,17 @@ class DemarrageSerializer(serializers.Serializer):
     hors connexion ; sans position, la visite démarre « sans GPS »."""
 
     debut_le = serializers.DateTimeField()
+    latitude = serializers.FloatField(required=False, allow_null=True, min_value=-90,
+                                      max_value=90)  # fmt: skip
+    longitude = serializers.FloatField(required=False, allow_null=True, min_value=-180,
+                                       max_value=180)  # fmt: skip
+    precision_m = serializers.FloatField(required=False, allow_null=True, min_value=0)
+
+
+class TerminaisonSerializer(serializers.Serializer):
+    """VIS-004 : l'heure réelle de fin et la position, prises par le téléphone."""
+
+    fin_le = serializers.DateTimeField()
     latitude = serializers.FloatField(required=False, allow_null=True, min_value=-90,
                                       max_value=90)  # fmt: skip
     longitude = serializers.FloatField(required=False, allow_null=True, min_value=-180,

@@ -458,7 +458,8 @@
       "distance_pointage_m": "Distance de pointage (mètres)",
       "geolocalisation_active": "Géolocalisation des visites",
       "delai_escalade_heures_ouvrees": "Délai avant escalade au DM (heures ouvrées)",
-      "conservation": "Durées de conservation"
+      "conservation": "Durées de conservation",
+      "attente_gps_secondes": "Attente de la position (secondes)"
     },
     "jours": {
       "1": "Lun",
@@ -485,7 +486,9 @@
       "activite": "Activité (ans)",
       "gps": "GPS (mois)",
       "pieces": "Pièces jointes (ans)"
-    }
+    },
+    "semaineDuPlanning": "{{jour}} {{heure}}, semaine du planning",
+    "secondes": "{{n}} secondes"
   },
   "paysPage": {
     "titre": "Pays",
@@ -1541,7 +1544,8 @@
       "ajout_visite": "Nouvelle visite",
       "modif_visite": "Visite modifiée",
       "ajout_activite": "Activité",
-      "demarrer_visite": "Visite démarrée"
+      "demarrer_visite": "Visite démarrée",
+      "terminer_visite": "Visite terminée"
     },
     "aide_one": "Enregistré sur ce téléphone sans réseau ; il part de lui-même au retour du réseau.",
     "aide_other": "Enregistrés sur ce téléphone sans réseau ; ils partent d'eux-mêmes au retour du réseau.",
@@ -1826,7 +1830,7 @@
     "semaine": "Programme de la semaine",
     "prochaine": "Prochaine visite",
     "aucuneAujourdhui": "Aucune visite prévue aujourd'hui.",
-    "termine": "Toutes les visites du jour sont passées.",
+    "termine": "Plus de visite à faire aujourd'hui.",
     "visites_one": "{{count}} visite",
     "visites_other": "{{count}} visites",
     "visitesAujourdhui_one": "{{count}} visite aujourd'hui",
@@ -1864,6 +1868,13 @@
     "metres": "{{n}} m",
     "kilometres": "{{n}} km",
     "lieuSansPosition": "Le lieu n'a pas de position enregistrée : distance inconnue.",
-    "position": "Recherche de votre position (30 secondes au plus ; sans réponse, la visite démarre sans GPS)…"
+    "position": "Recherche de votre position ({{n}} secondes au plus ; sans réponse, la visite démarre sans GPS)…",
+    "terminer": "Terminer la visite",
+    "effectuee": "Effectuée · {{debut}} – {{fin}} · {{duree}}",
+    "duree": "{{n}} min",
+    "finSansGps": "Fin sans GPS : position indisponible",
+    "positionFin": "Recherche de votre position ({{n}} secondes au plus ; sans réponse, la visite se termine sans GPS)…",
+    "terminee": "Visite de {{nom}} terminée : {{debut}} – {{fin}} · {{duree}}.",
+    "termineeHorsLigne": "{{texte}} Sans réseau : l'envoi partira dès le retour du réseau."
   }
 }

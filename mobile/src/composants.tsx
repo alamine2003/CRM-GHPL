@@ -263,7 +263,7 @@ export function Etiquette({
   ton = 'attention',
 }: {
   children: ReactNode;
-  ton?: 'attention' | 'neutre';
+  ton?: 'attention' | 'neutre' | 'succes';
 }) {
   const p = usePalette();
   return (
@@ -271,7 +271,7 @@ export function Etiquette({
       style={{
         fontFamily: police.texteFort,
         fontSize: 12,
-        color: ton === 'attention' ? p.attention : p.texteSecondaire,
+        color: ton === 'attention' ? p.attention : ton === 'succes' ? p.succes : p.texteSecondaire,
       }}
     >
       {children}

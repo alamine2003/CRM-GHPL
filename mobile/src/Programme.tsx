@@ -27,6 +27,7 @@ export function ProgrammeDuJour() {
   const { client, etat } = useSession();
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [horsLigne, setHorsLigne] = useState<string | null>(null);
+  const [annonce, setAnnonce] = useState<{ texte: string; horsLigne: boolean } | null>(null);
   const connecte = etat.statut === 'connecte';
 
   // Une visite démarrée sur le téléphone change le programme gardé : l'écran suit.
@@ -72,7 +73,10 @@ export function ProgrammeDuJour() {
   const ouvrir = (v: VisiteProgramme) =>
     routeur.push({ pathname: '/visite/[id]', params: { id: v.id, jour: v.date } });
   const aujourdhui = programme.jours.find((j) => j.date === programme.aujourdhui);
-  const prochaine = aujourdhui?.visites.find((v) => v.id === programme.prochaine) ?? null;
+  // La prochaine : la première du jour pas encore faite (prd.md §14.22). Elle se recalcule ici :
+  // une visite terminée sur le téléphone, même sans réseau, laisse la place à la suivante.
+  const prochaine =
+    aujourdhui?.visites.find((v) => v.statut === 'prevue' || v.statut === 'en_cours') ?? null;
   const autresJours = programme.jours.filter((j) => j.date > programme.aujourdhui);
 
   return (
@@ -116,6 +120,13 @@ export function ProgrammeDuJour() {
         ) : (
           <>
             <Activites jour={aujourdhui} />
+            {annonce && (
+              <Alerte type={annonce.horsLigne ? 'info' : 'succes'}>
+                {annonce.horsLigne
+                  ? t('execution.termineeHorsLigne', { texte: annonce.texte })
+                  : annonce.texte}
+              </Alerte>
+            )}
             {prochaine ? (
               <Pressable
                 accessibilityRole="button"
@@ -137,6 +148,8 @@ export function ProgrammeDuJour() {
                 aujourdhui={programme.aujourdhui}
                 geolocalisation={programme.geolocalisation}
                 fuseau={programme.fuseau}
+                attenteSecondes={programme.attente_gps_secondes}
+                surTerminee={setAnnonce}
               />
             ) : (
               <Texte variante="discret">{t('programme.termine')}</Texte>
@@ -259,7 +272,9 @@ function LigneVisite({
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {/* En tête, « En cours depuis … » le dit déjà sous la carte. */}
           {visite.statut !== 'prevue' && !(grande && visite.statut === 'en_cours') && (
-            <Etiquette>{t(`visites.statuts.${visite.statut}`)}</Etiquette>
+            <Etiquette ton={visite.statut === 'effectuee' ? 'succes' : 'attention'}>
+              {t(`visites.statuts.${visite.statut}`)}
+            </Etiquette>
           )}
           {visite.modification_en_attente && <Etiquette>{t('programme.enAttente')}</Etiquette>}
         </View>

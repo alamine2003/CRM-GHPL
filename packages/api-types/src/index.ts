@@ -113,6 +113,8 @@ export type SaisieVisite = Schemas['SaisieVisite'];
 export type ModificationVisite = Schemas['PatchedModificationVisite'];
 /** Démarrage d'une visite : heure réelle et position du téléphone (VIS-003). */
 export type Demarrage = Schemas['Demarrage'];
+/** Fin d'une visite : heure réelle et position du téléphone (VIS-004). */
+export type Terminaison = Schemas['Terminaison'];
 // Passages et absences (PLN-003, PLN-009).
 export type Passage = Schemas['Passage'];
 export type Activite = Schemas['Activite'];

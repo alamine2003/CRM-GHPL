@@ -33,6 +33,9 @@ const VISITE: Visite = {
   debut_le: null,
   sans_gps: false,
   distance_debut_m: null,
+  fin_le: null,
+  fin_sans_gps: false,
+  distance_fin_m: null,
 };
 
 const SEMAINE: Semaine = {

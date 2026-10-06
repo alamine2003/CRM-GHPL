@@ -609,13 +609,18 @@ Mise en œuvre (0.3.9) :
 
 - **Démarrer** (VIS-003) : sur la prochaine visite du programme, ou depuis son détail, le jour prévu par le planning approuvé, « Démarrer la visite » la passe « en cours ». Le téléphone prend l'heure réelle et, si le pays active la géolocalisation (RG-028, `geolocalisation_active`), la position du moment.
 - **CA1 — hors connexion** : sans réseau, la position et l'heure sont prises quand même ; le démarrage attend dans la file du téléphone (« Démarrée sans réseau : l'envoi partira dès le retour du réseau ») et part au retour du réseau ; le rejouer ne change rien (OFF-003).
-- **CA2 — sans GPS** : position refusée, introuvable ou trop longue à venir (15 s pour la position, 30 s en tout avec la demande d'autorisation) : la visite démarre quand même, marquée « sans GPS ». Un pays qui n'active pas la géolocalisation ne garde aucune position, sans rien signaler.
+- **CA2 — sans GPS** : position refusée, introuvable ou trop longue à venir (paramètre du pays `attente_gps_secondes`, 1 minute par défaut, demande d'autorisation comprise) : la visite démarre quand même, marquée « sans GPS ». Un pays qui n'active pas la géolocalisation ne garde aucune position, sans rien signaler.
 - **CA3 — distance** : « En cours depuis 09:02 · À 110 m du lieu », calculée à vol d'oiseau depuis la position de référence du lieu ; le serveur la garde (`distance_debut_m`) pour les contrôles de conformité (VIS-010, 0.4.9). Un lieu sans position : distance inconnue.
 - **Règles** : seule une visite de la version approuvée se démarre, le jour où elle est prévue, et une seule fois ; l'heure de début ne peut être dans le futur (5 minutes de tolérance pour l'horloge du téléphone). Le démarrage est inscrit au journal d'audit.
-- Hypothèses [H] à confirmer :
-  - plusieurs visites peuvent être « en cours » en même temps (un passage) ; aucune n'empêche de démarrer la suivante ;
-  - la position est attendue 15 secondes au plus, 30 secondes en comptant la demande d'autorisation ; « Recherche de votre position… » s'affiche pendant l'attente ;
-  - une visite démarrée la veille sans réseau garde sa date réelle, même si l'envoi arrive le lendemain.
+- Décisions [D] du 6 octobre 2026 : plusieurs visites peuvent être « en cours » en même temps (un passage) ; l'attente de la position est de 1 minute, paramètre du pays ; une visite démarrée sans réseau garde sa date et son heure réelles, même si l'envoi arrive le lendemain.
+
+### 14.25 Terminer une visite (mise en œuvre 0.4.4)
+
+- **Terminer** (VIS-004) : une visite en cours se termine depuis le programme ou son détail : « effectuée », heure réelle de fin et position du moment, aux mêmes règles qu'au début (géolocalisation du pays, attente, « sans GPS » à la fin, distance au lieu).
+- **CA1** : la fin suit le début ; une heure de fin antérieure ou égale au début est refusée (`fin_avant_debut`), une heure dans le futur aussi.
+- **Hors connexion** : terminée sans réseau, la fin attend dans la file derrière le démarrage, et les deux partent dans l'ordre au retour du réseau.
+- **Programme** : la visite terminée laisse la place à la suivante (« Visite de … terminée : 09:02 – 09:27 · 25 min ») et se lit « Effectuée » dans la journée ; quand tout est fait, « Plus de visite à faire aujourd'hui ». La durée est inscrite au journal.
+- L'ouverture du rapport à la fin de la visite arrive avec les rapports (cycle 0.5).
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

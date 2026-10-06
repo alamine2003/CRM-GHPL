@@ -96,6 +96,7 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         "jours": jours,
         "prochaine": prochaine.pk if prochaine else None,
         "geolocalisation": valeur_parametre(pays, "geolocalisation_active"),
+        "attente_gps_secondes": valeur_parametre(pays, "attente_gps_secondes"),
     }
 
 

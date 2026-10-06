@@ -195,6 +195,13 @@ class Visite(ModeleDePays):
     sans_gps = models.BooleanField(default=False)
     #: Distance entre la position du début et le lieu de la visite (CA3), en mètres.
     distance_debut_m = models.PositiveIntegerField(null=True, blank=True)
+    # Fin (VIS-004, 0.4.4) : l'heure réelle et la position, comme au début.
+    fin_le = models.DateTimeField(null=True, blank=True)
+    fin_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    fin_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    fin_precision_m = models.PositiveIntegerField(null=True, blank=True)
+    fin_sans_gps = models.BooleanField(default=False)
+    distance_fin_m = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ["date", "ordre", "heure"]

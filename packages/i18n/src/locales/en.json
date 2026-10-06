@@ -458,7 +458,8 @@
       "distance_pointage_m": "Check-in distance (metres)",
       "geolocalisation_active": "Visit geolocation",
       "delai_escalade_heures_ouvrees": "Delay before escalation to the DM (working hours)",
-      "conservation": "Retention periods"
+      "conservation": "Retention periods",
+      "attente_gps_secondes": "Position wait (seconds)"
     },
     "jours": {
       "1": "Mon",
@@ -485,7 +486,9 @@
       "activite": "Activity (years)",
       "gps": "GPS (months)",
       "pieces": "Attachments (years)"
-    }
+    },
+    "semaineDuPlanning": "{{jour}} {{heure}}, week of the planning",
+    "secondes": "{{n}} seconds"
   },
   "paysPage": {
     "titre": "Countries",
@@ -1541,7 +1544,8 @@
       "ajout_visite": "New visit",
       "modif_visite": "Edited visit",
       "ajout_activite": "Activity",
-      "demarrer_visite": "Visit started"
+      "demarrer_visite": "Visit started",
+      "terminer_visite": "Visit ended"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -1826,7 +1830,7 @@
     "semaine": "This week's programme",
     "prochaine": "Next visit",
     "aucuneAujourdhui": "No visit planned today.",
-    "termine": "All of today's visits are past.",
+    "termine": "No more visits to do today.",
     "visites_one": "{{count}} visit",
     "visites_other": "{{count}} visits",
     "visitesAujourdhui_one": "{{count}} visit today",
@@ -1864,6 +1868,13 @@
     "metres": "{{n}} m",
     "kilometres": "{{n}} km",
     "lieuSansPosition": "The place has no recorded position: distance unknown.",
-    "position": "Looking for your position (30 seconds at most; without an answer, the visit starts without GPS)…"
+    "position": "Looking for your position ({{n}} seconds at most; without an answer, the visit starts without GPS)…",
+    "terminer": "End the visit",
+    "effectuee": "Done · {{debut}} – {{fin}} · {{duree}}",
+    "duree": "{{n}} min",
+    "finSansGps": "Ended without GPS: position unavailable",
+    "positionFin": "Looking for your position ({{n}} seconds at most; without an answer, the visit ends without GPS)…",
+    "terminee": "Visit to {{nom}} ended: {{debut}} – {{fin}} · {{duree}}.",
+    "termineeHorsLigne": "{{texte}} Offline: it will be sent as soon as the network is back."
   }
 }

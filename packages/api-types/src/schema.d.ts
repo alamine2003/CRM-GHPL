@@ -2476,6 +2476,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/{id}/terminer/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description VIS-004 : le délégué termine une visite en cours ; rejouable depuis la file. */
+    post: operations['visite_terminer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3793,6 +3810,7 @@ export interface components {
       /** Format: uuid */
       prochaine: string | null;
       geolocalisation: boolean;
+      attente_gps_secondes: number;
     };
     Proposition: {
       /** Format: uuid */
@@ -4357,6 +4375,17 @@ export interface components {
       /** @description Fiches actives sans lieu d'exercice en cours. */
       sans_lieu: number;
     };
+    /** @description VIS-004 : l'heure réelle de fin et la position, prises par le téléphone. */
+    Terminaison: {
+      /** Format: date-time */
+      fin_le: string;
+      /** Format: double */
+      latitude?: number | null;
+      /** Format: double */
+      longitude?: number | null;
+      /** Format: double */
+      precision_m?: number | null;
+    };
     Transfert: {
       /** Format: uuid */
       readonly id: string;
@@ -4472,6 +4501,10 @@ export interface components {
       readonly debut_le: string | null;
       readonly sans_gps: boolean;
       readonly distance_debut_m: number | null;
+      /** Format: date-time */
+      readonly fin_le: string | null;
+      readonly fin_sans_gps: boolean;
+      readonly distance_fin_m: number | null;
     };
     /** @description Une visite telle que soumise dans une version (RG-037). */
     VisiteFigee: {
@@ -4528,6 +4561,10 @@ export interface components {
       readonly debut_le: string | null;
       readonly sans_gps: boolean;
       readonly distance_debut_m: number | null;
+      /** Format: date-time */
+      readonly fin_le: string | null;
+      readonly fin_sans_gps: boolean;
+      readonly distance_fin_m: number | null;
       modification_en_attente: boolean;
     };
     /**
@@ -8550,6 +8587,33 @@ export interface operations {
       cookie?: never;
     };
     requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Visite'];
+        };
+      };
+    };
+  };
+  visite_terminer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['Terminaison'];
+        'application/x-www-form-urlencoded': components['schemas']['Terminaison'];
+        'multipart/form-data': components['schemas']['Terminaison'];
+      };
+    };
     responses: {
       200: {
         headers: {

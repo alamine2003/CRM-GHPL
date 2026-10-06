@@ -13,6 +13,7 @@ import type {
   ClientApi,
   Demarrage,
   ModificationVisite,
+  Terminaison,
   SaisieActivite,
   SaisieVisite,
 } from '@innov/api-client';
@@ -85,6 +86,15 @@ export type Envoi =
       type: 'demarrer_visite';
       visite: string;
       saisie: Demarrage;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Visite terminée sans réseau (VIS-004) : l'heure et la position du moment. */
+      type: 'terminer_visite';
+      visite: string;
+      saisie: Terminaison;
       resume: string;
       erreur?: string;
     };
@@ -165,6 +175,8 @@ async function rejouer(client: ClientApi): Promise<number> {
         await client.visites.modifier(envoi.visite, envoi.saisie);
       } else if (envoi.type === 'demarrer_visite') {
         await client.visites.demarrer(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'terminer_visite') {
+        await client.visites.terminer(envoi.visite, envoi.saisie);
       } else {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       }

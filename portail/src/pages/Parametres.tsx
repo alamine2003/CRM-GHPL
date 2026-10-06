@@ -49,6 +49,7 @@ const GROUPES: { cle: string; parametres: string[] }[] = [
       'visites_sans_gps_tolerees',
       'distance_pointage_m',
       'geolocalisation_active',
+      'attente_gps_secondes',
     ],
   },
   { cle: 'rapports', parametres: ['heure_limite_rapport'] },
@@ -71,11 +72,17 @@ function Apercu({ cle, valeur }: { cle: string; valeur: Valeur }) {
             .join(', ')}
         </>
       );
+    // Depuis 0.3.9, la soumission se lit dans la semaine du planning (prd.md §14.21).
     case 'echeance_soumission_planning':
+      return (
+        <>{t('parametres.semaineDuPlanning', { jour: jour(v.jour as number), heure: v.heure })}</>
+      );
     case 'echeance_approbation_planning':
       return (
         <>{t('parametres.semainePrecedente', { jour: jour(v.jour as number), heure: v.heure })}</>
       );
+    case 'attente_gps_secondes':
+      return <>{t('parametres.secondes', { n: valeur })}</>;
     case 'plage_horaire_visites':
       return <>{t('parametres.de', { debut: v.debut, fin: v.fin })}</>;
     case 'geolocalisation_active':
