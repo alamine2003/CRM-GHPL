@@ -79,6 +79,26 @@ class ActionPrecedenteSerializer(serializers.Serializer):
     visite_proposee = serializers.BooleanField()
 
 
+class RetourPrepareSerializer(serializers.Serializer):
+    libelle = serializers.CharField()
+    retour = serializers.ChoiceField(choices=RetourPrescripteur.choices)
+    date = serializers.DateField()
+
+
+class EchantillonPrepareSerializer(serializers.Serializer):
+    libelle = serializers.CharField()
+    quantite = serializers.IntegerField()
+
+
+class PreparationSerializer(serializers.Serializer):
+    """DC-47 : « Préparer ma visite » ; ce que le délégué a noté chez ce prospect."""
+
+    visites = serializers.IntegerField()
+    derniere = serializers.DateField()
+    retours = RetourPrepareSerializer(many=True)
+    echantillons = EchantillonPrepareSerializer(many=True)
+
+
 class RapportChronologieSerializer(serializers.ModelSerializer):
     """RPT-011 : un rapport dans la chronologie d'un prospect, prêt à lire."""
 

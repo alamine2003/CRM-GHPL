@@ -49,6 +49,7 @@ const DETAIL = {
     },
   ],
   action_precedente: null,
+  preparation: null,
 } satisfies DetailVisite;
 
 async function rendre(detail: jest.Mock) {
@@ -123,4 +124,22 @@ test('RPT-006 CA1 : la prochaine action notée la dernière fois est rappelée',
   expect(screen.getByText('Présenter une étude')).toBeTruthy();
   expect(screen.getByText('Apporter l’étude pédiatrique')).toBeTruthy();
   expect(screen.getByText(/À faire d'ici le .* · Nouvelle visite proposée/)).toBeTruthy();
+});
+
+test('DC-47 : « Préparer ma visite » rappelle les derniers retours et les échantillons', async () => {
+  await rendre(
+    jest.fn(async () => ({
+      ...DETAIL,
+      preparation: {
+        visites: 3,
+        derniere: '2026-10-06',
+        retours: [{ libelle: 'Produit Alpha', retour: 'peu', date: '2026-10-06' }],
+        echantillons: [{ libelle: 'Produit Alpha', quantite: 4 }],
+      },
+    })),
+  );
+  expect(await screen.findByText('Préparer ma visite')).toBeTruthy();
+  expect(screen.getByText(/3 visites rapportées, la dernière le 6 oct/)).toBeTruthy();
+  expect(screen.getByText(/Produit Alpha — Prescrit peu/)).toBeTruthy();
+  expect(screen.getByText('Produit Alpha × 4')).toBeTruthy();
 });

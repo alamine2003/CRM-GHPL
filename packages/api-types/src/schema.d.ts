@@ -3320,6 +3320,7 @@ export interface components {
       lieu: components['schemas']['CoordonneesLieu'] | null;
       historique: components['schemas']['VisitePassee'][];
       action_precedente: components['schemas']['ActionPrecedente'] | null;
+      preparation: components['schemas']['Preparation'] | null;
     };
     Division: {
       /** Format: uuid */
@@ -3423,6 +3424,10 @@ export interface components {
       | 'imprevue'
       | 'a_justifier'
       | 'sans_gps';
+    EchantillonPrepare: {
+      libelle: string;
+      quantite: number;
+    };
     ErreurClient: {
       client: components['schemas']['ClientEnum'];
       version: string;
@@ -4190,6 +4195,14 @@ export interface components {
      * @enum {string}
      */
     PotentielEnum: 'A' | 'B' | 'C';
+    /** @description DC-47 : « Préparer ma visite » ; ce que le délégué a noté chez ce prospect. */
+    Preparation: {
+      visites: number;
+      /** Format: date */
+      derniere: string;
+      retours: components['schemas']['RetourPrepare'][];
+      echantillons: components['schemas']['EchantillonPrepare'][];
+    };
     /** @description Un produit présenté, à son rang, avec le retour du prescripteur (RPT-004). */
     Presentation: {
       /** Format: uuid */
@@ -4611,6 +4624,12 @@ export interface components {
     ResumeNotifications: {
       non_lues: number;
       notifications: components['schemas']['Notification'][];
+    };
+    RetourPrepare: {
+      libelle: string;
+      retour: components['schemas']['RetourPrescripteurEnum'];
+      /** Format: date */
+      date: string;
     };
     /**
      * @description * `non_prescrit` - Ne prescrit pas

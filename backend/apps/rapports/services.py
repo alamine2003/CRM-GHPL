@@ -267,6 +267,42 @@ def action_precedente(visite: Visite) -> dict | None:
             "visite_proposee": rapport.visite_proposee}  # fmt: skip
 
 
+def preparation(visite: Visite) -> dict | None:
+    """DC-47, engagement 5 : « Préparer ma visite », lisible en 10 secondes. À partir des
+    rapports du même délégué chez ce prospect : le dernier retour sur chaque produit, les
+    échantillons déjà remis et le nombre de visites rapportées. Jamais ceux d'un collègue."""
+    if visite.prospect_id is None:
+        return None
+    rapports = list(
+        Rapport.objects.filter(delegue_id=visite.planning.delegue_id,
+                               visite__prospect_id=visite.prospect_id,
+                               visite__date__lt=visite.date)
+        .exclude(statut=StatutRapport.BROUILLON)
+        .select_related("visite")
+        .order_by("-visite__date", "-visite__heure")
+    )  # fmt: skip
+    if not rapports:
+        return None
+    retours: dict[str, dict] = {}
+    echantillons: dict[str, dict] = {}
+    for r in rapports:  # du plus récent au plus ancien : le premier retour vu est le dernier
+        for p in r.presentations:
+            cle = p.get("produit") or p.get("libelle")
+            if cle and cle not in retours and p.get("retour"):
+                retours[cle] = {"libelle": p.get("libelle") or "", "retour": p["retour"],
+                                "date": r.visite.date}  # fmt: skip
+        for x in r.remises:
+            if x.get("type") == TypeRemise.ECHANTILLON:
+                cle = x.get("produit") or x.get("libelle")
+                ligne = echantillons.setdefault(cle, {"libelle": x.get("libelle") or "",
+                                                      "quantite": 0})  # fmt: skip
+                ligne["quantite"] += int(x.get("quantite") or 0)
+    return {"visites": len(rapports), "derniere": rapports[0].visite.date,
+            "retours": list(retours.values()),
+            "echantillons": sorted(echantillons.values(),
+                                   key=lambda e: -e["quantite"])}  # fmt: skip
+
+
 def articles(pays):
     return Valeur.objects.filter(pays=pays, liste=Liste.ARTICLE_PROMOTIONNEL,
                                  archive_le__isnull=True).order_by("ordre", "libelle")  # fmt: skip

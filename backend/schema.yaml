@@ -6310,10 +6310,15 @@ components:
           allOf:
           - $ref: '#/components/schemas/ActionPrecedente'
           nullable: true
+        preparation:
+          allOf:
+          - $ref: '#/components/schemas/Preparation'
+          nullable: true
       required:
       - action_precedente
       - historique
       - lieu
+      - preparation
       - prospect
       - visite
     Division:
@@ -6512,6 +6517,16 @@ components:
         * `imprevue` - imprevue
         * `a_justifier` - a_justifier
         * `sans_gps` - sans_gps
+    EchantillonPrepare:
+      type: object
+      properties:
+        libelle:
+          type: string
+        quantite:
+          type: integer
+      required:
+      - libelle
+      - quantite
     ErreurClient:
       type: object
       properties:
@@ -8338,6 +8353,29 @@ components:
         * `A` - A
         * `B` - B
         * `C` - C
+    Preparation:
+      type: object
+      description: 'DC-47 : « Préparer ma visite » ; ce que le délégué a noté chez
+        ce prospect.'
+      properties:
+        visites:
+          type: integer
+        derniere:
+          type: string
+          format: date
+        retours:
+          type: array
+          items:
+            $ref: '#/components/schemas/RetourPrepare'
+        echantillons:
+          type: array
+          items:
+            $ref: '#/components/schemas/EchantillonPrepare'
+      required:
+      - derniere
+      - echantillons
+      - retours
+      - visites
     Presentation:
       type: object
       description: Un produit présenté, à son rang, avec le retour du prescripteur
@@ -9504,6 +9542,20 @@ components:
       required:
       - non_lues
       - notifications
+    RetourPrepare:
+      type: object
+      properties:
+        libelle:
+          type: string
+        retour:
+          $ref: '#/components/schemas/RetourPrescripteurEnum'
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - libelle
+      - retour
     RetourPrescripteurEnum:
       enum:
       - non_prescrit

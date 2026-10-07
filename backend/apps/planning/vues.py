@@ -731,14 +731,15 @@ class VisiteDetailVue(VuePerimetre):
 
     @extend_schema(responses=s.DetailVisiteSerializer, operation_id="visite_detail")
     def get(self, request, id):
-        from apps.rapports.services import action_precedente
+        from apps.rapports.services import action_precedente, preparation
 
         from .programme import historique
 
         visite = get_object_or_404(self.get_queryset(), pk=id)
         donnees = {"visite": visite, "prospect": visite.prospect, "lieu": visite.etablissement,
                    "historique": historique(visite),
-                   "action_precedente": action_precedente(visite)}  # fmt: skip
+                   "action_precedente": action_precedente(visite),
+                   "preparation": preparation(visite)}  # fmt: skip
         return Response(s.DetailVisiteSerializer(donnees).data)
 
 

@@ -9,7 +9,7 @@ import type { ClientApi, DetailVisite } from '@innov/api-client';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import { ActionPrecedente } from './ActionPrecedente';
+import { ActionPrecedente, PreparerVisite } from './ActionPrecedente';
 import { ecrire, lire } from './baseLocale';
 import { estTransitoire } from './Brouillons';
 import { Alerte, Carte, Etiquette, Texte, usePalette } from './composants';
@@ -95,6 +95,7 @@ export function CoordonneesEtHistorique({
           })}
         </Alerte>
       )}
+      <PreparerVisite preparation={detail.preparation} />
       <ActionPrecedente action={detail.action_precedente} />
       <Carte style={{ gap: 10 }}>
         <Texte variante="sousTitre">{t('detailVisite.coordonnees')}</Texte>

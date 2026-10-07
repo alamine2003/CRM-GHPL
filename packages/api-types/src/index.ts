@@ -133,6 +133,8 @@ export type Remise = Schemas['Remise'];
 export type TypeRemise = Schemas['TypeRemiseEnum'];
 /** Prochaine action notée à la dernière visite chez ce prospect, rappelée (RPT-006 CA1). */
 export type ActionPrecedente = Schemas['ActionPrecedente'];
+/** DC-47 : « Préparer ma visite ». */
+export type Preparation = Schemas['Preparation'];
 /** RPT-011 : un rapport dans la chronologie d'un prospect. */
 export type RapportChronologie = Schemas['RapportChronologie'];
 /** DC-61 : une visite proposée dans un rapport, à replanifier. */

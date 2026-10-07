@@ -12,7 +12,7 @@ from apps.organisation import services as org
 from apps.perimetre.tests.conftest import client_de
 from apps.planning import execution, services
 
-from .test_rapport import complet, portefeuille, type_action, url  # noqa: F401
+from .test_rapport import complet, effectuee, portefeuille, type_action, url  # noqa: F401
 
 pytestmark = pytest.mark.django_db
 
@@ -79,3 +79,25 @@ def test_rpt006_ca1_rappelee_a_la_visite_suivante(monde, deux_visites, portefeui
         assert r["action_precedente"] == attendu
     # Jamais l'action d'un collègue : un autre délégué ne voit pas cette visite.
     assert client_de(monde["sup.sn"]).get(detail).status_code in {403, 404}
+
+
+def test_dc47_preparer_ma_visite(monde, terrain, effectuee, portefeuille):  # noqa: F811
+    """Le dernier retour sur chaque produit et les échantillons remis, à la visite suivante."""
+    from apps.planning import services as pln
+
+    with freeze_time("2026-10-13 20:00"):
+        c = client_de(monde["deleg.sn"])
+        saisie = complet(monde, portefeuille[:1],
+                         remises=[{"type": "echantillon", "produit": str(portefeuille[0].pk),
+                                   "quantite": 3}])  # fmt: skip
+        assert c.put(url(effectuee), saisie, format="json").status_code == 200
+        c.post(url(effectuee, "soumettre/"), {"soumis_le": "2026-10-13T20:00:00Z"}, format="json")
+        suivante = pln.creer_planning(monde["sn"], monde["deleg.sn"], date(2026, 10, 19))
+        visite = pln.ajouter_visite(suivante, date=date(2026, 10, 20), heure=time(9, 0),
+                                    prospect=terrain["medecin"],
+                                    etablissement=terrain["clinique"])  # fmt: skip
+        d = c.get(f"/api/v1/visites/{visite.pk}/detail/").json()
+    p = d["preparation"]
+    assert (p["visites"], p["derniere"]) == (1, "2026-10-13")
+    assert p["retours"] == [{"libelle": "Cardiol", "retour": "prescrit", "date": "2026-10-13"}]
+    assert p["echantillons"] == [{"libelle": "Cardiol", "quantite": 3}]

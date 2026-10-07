@@ -2122,5 +2122,12 @@
       "matin": "The morning",
       "apres_midi": "The afternoon"
     }
+  },
+  "preparer": {
+    "titre": "Prepare my visit",
+    "visites_one": "{{count}} visit reported, the last on {{date}}",
+    "visites_other": "{{count}} visits reported, the last on {{date}}",
+    "retours": "Latest prescriber feedback",
+    "echantillons": "Samples already given"
   }
 }

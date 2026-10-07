@@ -165,6 +165,7 @@ export type {
   Remise,
   TypeRemise,
   ActionPrecedente,
+  Preparation,
   RapportChronologie,
   VisiteProposee,
   PieceJointe,
