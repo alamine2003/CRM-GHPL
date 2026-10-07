@@ -2,6 +2,30 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.6] — Brouillon automatique du rapport
+
+Sixième jalon du cycle 0.5 « Rapports de visite ».
+
+### Ajouté (RPT-009)
+
+- Le rapport s'enregistre tout seul, sans bouton : sur le téléphone à chaque saisie, puis au serveur dès que la frappe s'arrête. L'en-tête indique « Enregistré à … » ou « Gardé sur le téléphone à … ».
+- Sans réseau, la saisie attend dans la file d'envoi et part seule au retour du réseau ; un rapport déjà ouvert (ou préparé à la fin de la visite) se complète sans réseau.
+- **CA1** : le brouillon survit à la fermeture de l'application et au redémarrage du téléphone ; « Brouillon repris » signale une saisie retrouvée.
+- Les photos et documents en attente sont gardés dans l'espace de l'application et effacés une fois envoyés.
+
+### Retiré
+
+- Le bouton « Enregistrer le brouillon ».
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Rapport, saisie | L'état « Enregistré à … » n'apparaissait qu'en bas de page, sous le bouton « Soumettre » : invisible pendant la frappe. | Il s'affiche aussi sous le titre de l'écran, toujours visible. |
+| Rapport rouvert sans réseau | L'en-tête ne disait plus qu'une saisie attendait d'être envoyée. | « Gardé sur le téléphone à … » est repris de l'heure de la dernière saisie. |
+
 ## [0.5.5] — Pièces jointes du rapport
 
 Cinquième jalon du cycle 0.5 « Rapports de visite ».

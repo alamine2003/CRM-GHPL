@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { ecrire, lire } from './baseLocale';
+import { garderRapport } from './BrouillonRapport';
 import {
   envoyerAttente,
   estTransitoire,
@@ -219,6 +220,12 @@ export async function terminerVisite(
       distance_fin_m: recue.distance_fin_m ?? local.distance_fin_m,
       rapport_statut: recue.rapport_statut ?? local.rapport_statut,
     });
+    // RPT-009 : le rapport est gardé sur le téléphone dès la fin de la visite, pour s'écrire
+    // ensuite même sans réseau.
+    void Promise.resolve()
+      .then(() => client.visites.rapport(visite.id))
+      .then((r) => garderRapport(visite.id, r))
+      .catch(() => undefined);
     return 'parti';
   } catch (e) {
     if (!estTransitoire(e)) throw e;

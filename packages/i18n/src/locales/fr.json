@@ -1987,8 +1987,6 @@
     },
     "manque": "À compléter avant de soumettre : {{liste}}.",
     "soumettre": "Soumettre le rapport",
-    "enregistrer": "Enregistrer le brouillon",
-    "enregistre": "Brouillon enregistré.",
     "soumis": "Rapport soumis à votre superviseur.",
     "soumisLe": "Rapport soumis : il ne se modifie plus.",
     "aCorriger": "Votre superviseur demande une correction.",
@@ -2044,7 +2042,13 @@
     "echeanceLe": "À faire d'ici le {{date}}",
     "visiteProposee": "Proposer une nouvelle visite",
     "visiteProposeeLue": "Nouvelle visite proposée",
-    "actionPrecedente": "Action prévue à la visite du {{date}}"
+    "actionPrecedente": "Action prévue à la visite du {{date}}",
+    "gardeServeurCourt": "Enregistré à {{heure}}",
+    "gardeTelephoneCourt": "Gardé sur le téléphone à {{heure}}",
+    "gardeServeur": "Enregistré automatiquement à {{heure}}.",
+    "gardeTelephone": "Gardé sur le téléphone à {{heure}} : il sera enregistré au retour du réseau.",
+    "horsLigneLocal": "Sans réseau : vous complétez le rapport gardé sur le téléphone. Il s'enregistrera tout seul au retour du réseau ; la soumission attend le réseau.",
+    "repris": "Brouillon repris : vos dernières saisies, gardées sur le téléphone, ont été retrouvées."
   },
   "champsRapport": {
     "titre": "Champs du rapport",

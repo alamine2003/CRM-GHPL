@@ -1,4 +1,5 @@
 import secrets
+from datetime import UTC, datetime
 
 import pytest
 from rest_framework.test import APIClient
@@ -15,6 +16,11 @@ def _courriels_immediats(monkeypatch):
     monkeypatch.setattr(transaction, "on_commit", lambda fonction, *a, **k: fonction())
 
 
+# Début fixe des rôles de test : ils doivent valoir à toute heure figée par un test, y compris
+# un instant du jour même antérieur à l'heure réelle d'exécution.
+DEBUT_ROLES = datetime(2020, 1, 1, tzinfo=UTC)
+
+
 @pytest.fixture
 def monde(db):
     """Deux pays, un compte par rôle dans chacun, et le siège (données fictives)."""
@@ -28,7 +34,7 @@ def monde(db):
             identifiant, prenom=prenom.title(), nom=nom.title(), pays=pays
         )
         if role:
-            attribuer_role(utilisateur, role, pays if pays else None, par=None)
+            attribuer_role(utilisateur, role, pays if pays else None, par=None, debut=DEBUT_ROLES)
         comptes[alias] = utilisateur
         return utilisateur
 

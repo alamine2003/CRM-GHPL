@@ -18,6 +18,7 @@ import {
   nouvelIdentifiant,
   type PieceEnAttente,
 } from './Brouillons';
+import { garderFichier } from './BrouillonRapport';
 import { Alerte, Bouton, Texte, useLien, usePalette } from './composants';
 import { messageErreur, useSession } from './session';
 
@@ -49,6 +50,8 @@ export async function joindrePiece(
     return { issue: 'parti', piece };
   } catch (e) {
     if (!estTransitoire(e)) throw e;
+    // RPT-009 : la photo quitte le cache du téléphone pour un dossier durable.
+    saisie.uri = await garderFichier(saisie.uri, saisie.id);
     await mettreEnAttente({
       id: nouvelIdentifiant(),
       type: 'piece_jointe',

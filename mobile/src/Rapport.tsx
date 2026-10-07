@@ -2,21 +2,30 @@
  * Rapport de la visite effectuée (RPT-001 à RPT-005, RPT-008) : l'objectif prévu, le résultat
  * obtenu, les produits présentés dans l'ordre avec le retour du prescripteur, le résumé, la
  * prochaine action, les échantillons et cadeaux remis, puis les champs propres au pays.
- * Il s'enregistre en brouillon et se soumet une fois complet. En 0.5.1 il s'écrit avec du
- * réseau ; la saisie hors connexion arrive avec la synchronisation des rapports (0.5.6).
+ * Il s'enregistre tout seul (RPT-009) : sur le téléphone à chaque changement, au serveur dès que
+ * le réseau le permet ; déjà ouvert une fois, il se complète sans réseau. La soumission hors
+ * connexion arrive en 0.5.7.
  */
-import type {
-  DefinitionChamp,
-  Rapport,
-  SaisieRapport,
-  ValeursChamps,
-  VisiteProgramme,
-} from '@innov/api-client';
-import { useEffect, useState } from 'react';
+import type { DefinitionChamp, Rapport, ValeursChamps, VisiteProgramme } from '@innov/api-client';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Switch, View } from 'react-native';
 import { ActionPrecedente } from './ActionPrecedente';
-import { envoyerAttente, estTransitoire } from './Brouillons';
+import {
+  envoyerAttente,
+  estTransitoire,
+  lireAttente,
+  mettreEnAttente,
+  nouvelIdentifiant,
+} from './Brouillons';
+import {
+  garderRapport,
+  garderSaisie,
+  lireBrouillonRapport,
+  marquerEnvoye,
+  oublierBrouillon,
+  type SaisieLocale,
+} from './BrouillonRapport';
 import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from './composants';
 import { Pilule } from './Etablissements';
 import i18n from './i18n';
@@ -37,7 +46,7 @@ const SOCLE = [
 ] as const;
 const MODIFIABLES = new Set(['brouillon', 'a_corriger', 'rouvert']);
 
-type Saisie = Required<Omit<SaisieRapport, 'champs'>> & { champs: ValeursChamps };
+type Saisie = SaisieLocale;
 
 function saisieDe(rapport: Rapport): Saisie {
   return {
@@ -277,40 +286,115 @@ function RapportLu({ rapport }: { rapport: Rapport }) {
   );
 }
 
-export function FormulaireRapport({ id }: { id: string }) {
+export function FormulaireRapport({
+  id,
+  surGarde,
+}: {
+  id: string;
+  /** État d'enregistrement en une ligne, pour l'en-tête toujours visible de l'écran. */
+  surGarde?: (texte: string | undefined) => void;
+}) {
   const { t } = useTranslation();
   const { client } = useSession();
   const { programme, visite } = useVisiteDuProgramme(id);
   const [rapport, setRapport] = useState<Rapport | null>(null);
   const [saisie, setSaisie] = useState<Saisie | null>(null);
   const [erreurChargement, setErreurChargement] = useState<string | null>(null);
-  const [envoi, setEnvoi] = useState<'enregistrer' | 'soumettre' | null>(null);
+  const [envoi, setEnvoi] = useState<'soumettre' | null>(null);
   const [message, setMessage] = useState<{ texte: string; ton: 'erreur' | 'succes' } | null>(null);
 
   const [tentative, setTentative] = useState(0);
+  // RPT-009 : où la saisie est gardée, et depuis quand.
+  const [garde, setGarde] = useState<{ ou: 'telephone' | 'serveur'; le: Date } | null>(null);
+  const [repris, setRepris] = useState(false);
+  const [horsLigne, setHorsLigne] = useState(false);
+  const modifie = useRef(false);
+
+  useEffect(() => {
+    surGarde?.(
+      garde
+        ? t(garde.ou === 'serveur' ? 'rapport.gardeServeurCourt' : 'rapport.gardeTelephoneCourt', {
+            heure: garde.le.toTimeString().slice(0, 5),
+          })
+        : undefined,
+    );
+  }, [garde, surGarde, t]);
 
   useEffect(() => {
     let actif = true;
-    // La fin de visite restée dans la file part d'abord : le serveur doit la connaître.
-    void envoyerAttente(client)
-      .catch(() => 0)
-      .then(() => client.visites.rapport(id))
-      .then(
-        (r) => {
-          if (!actif) return;
-          setRapport(r);
-          setSaisie(saisieDe(r));
-        },
-        (e: unknown) =>
-          actif &&
-          setErreurChargement(
-            estTransitoire(e) ? t('rapport.horsLigne') : messageErreur(e, t('erreurs.reseau')),
-          ),
-      );
+    void (async () => {
+      const local = await lireBrouillonRapport(id);
+      // La fin de visite restée dans la file part d'abord : le serveur doit la connaître.
+      await envoyerAttente(client).catch(() => 0);
+      try {
+        const r = await client.visites.rapport(id);
+        await garderRapport(id, r);
+        if (!actif) return;
+        // Une saisie faite sur le téléphone, pas encore reçue par le serveur, l'emporte.
+        const enCours = local?.saisie && !local.envoye && MODIFIABLES.has(r.statut);
+        setRapport(r);
+        setSaisie(enCours ? local.saisie : saisieDe(r));
+        setRepris(!!enCours);
+        setHorsLigne(false);
+        // Repris : il sera renvoyé à la prochaine saisie ou depuis la file.
+        if (enCours && local.modifie_le)
+          setGarde({ ou: 'telephone', le: new Date(local.modifie_le) });
+      } catch (e) {
+        if (!actif) return;
+        if (estTransitoire(e) && local) {
+          // Sans réseau : le rapport déjà ouvert une fois se complète sur le téléphone.
+          setRapport(local.rapport);
+          setSaisie(local.saisie ?? saisieDe(local.rapport));
+          setHorsLigne(true);
+          if (local.saisie && !local.envoye && local.modifie_le)
+            setGarde({ ou: 'telephone', le: new Date(local.modifie_le) });
+          return;
+        }
+        setErreurChargement(
+          estTransitoire(e) ? t('rapport.horsLigne') : messageErreur(e, t('erreurs.reseau')),
+        );
+      }
+    })();
     return () => {
       actif = false;
     };
   }, [client, id, t, tentative]);
+
+  // Enregistrement automatique : sur le téléphone aussitôt, puis au serveur quand la saisie
+  // se pose ; sans réseau, l'envoi attend dans la file.
+  useEffect(() => {
+    if (!rapport || !saisie || !modifie.current || !MODIFIABLES.has(rapport.statut)) return;
+    const minuteur = setTimeout(() => {
+      void (async () => {
+        await garderSaisie(id, rapport, saisie);
+        try {
+          const r = await client.visites.enregistrerRapport(id, saisie);
+          await marquerEnvoye(id, r);
+          modifie.current = false;
+          setRapport((avant) => (avant ? { ...r, pieces_jointes: avant.pieces_jointes } : r));
+          setGarde({ ou: 'serveur', le: new Date() });
+          setHorsLigne(false);
+          await changerVisite(id, { rapport_statut: r.statut });
+        } catch (e) {
+          if (!estTransitoire(e)) {
+            setMessage({ texte: messageErreur(e, t('erreurs.reseau')), ton: 'erreur' });
+            return;
+          }
+          setGarde({ ou: 'telephone', le: new Date() });
+          const file = await lireAttente().catch(() => []);
+          if (!file.some((x) => x.type === 'brouillon_rapport' && x.visite === id))
+            await mettreEnAttente({
+              id: nouvelIdentifiant(),
+              type: 'brouillon_rapport',
+              visite: id,
+              resume: t('rapport.titre'),
+            });
+        }
+      })();
+    }, 800);
+    return () => clearTimeout(minuteur);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seule la saisie déclenche l'envoi
+  }, [saisie]);
 
   if (erreurChargement)
     return (
@@ -353,23 +437,22 @@ export function FormulaireRapport({ id }: { id: string }) {
       : (rapport.definitions.find((d) => d.code === code)?.libelle ?? code);
   const changer = (champs: Partial<Saisie>) => {
     setMessage(null);
+    modifie.current = true;
     setSaisie({ ...saisie, ...champs });
   };
-  async function agir(action: 'enregistrer' | 'soumettre') {
+  async function agir(action: 'soumettre') {
     if (!saisie) return;
     setEnvoi(action);
     setMessage(null);
     try {
-      let r = await client.visites.enregistrerRapport(id, saisie);
-      if (action === 'soumettre')
-        r = await client.visites.soumettreRapport(id, new Date().toISOString());
+      await client.visites.enregistrerRapport(id, saisie);
+      const r = await client.visites.soumettreRapport(id, new Date().toISOString());
+      modifie.current = false;
       setRapport(r);
       setSaisie(saisieDe(r));
+      await oublierBrouillon(id);
       await changerVisite(id, { rapport_statut: r.statut });
-      setMessage({
-        texte: t(action === 'soumettre' ? 'rapport.soumis' : 'rapport.enregistre'),
-        ton: 'succes',
-      });
+      setMessage({ texte: t('rapport.soumis'), ton: 'succes' });
     } catch (e) {
       setMessage({
         texte: estTransitoire(e)
@@ -388,6 +471,8 @@ export function FormulaireRapport({ id }: { id: string }) {
       {rapport.statut === 'a_corriger' && (
         <Alerte type="attention">{t('rapport.aCorriger')}</Alerte>
       )}
+      {horsLigne && <Alerte type="attention">{t('rapport.horsLigneLocal')}</Alerte>}
+      {repris && !horsLigne && <Alerte type="info">{t('rapport.repris')}</Alerte>}
 
       <ObjectifPrevu rapport={rapport} />
       <ActionPrecedente action={rapport.action_precedente} />
@@ -478,13 +563,13 @@ export function FormulaireRapport({ id }: { id: string }) {
           desactive={manquants.length > 0 || envoi !== null}
           onPress={() => void agir('soumettre')}
         />
-        <Bouton
-          secondaire
-          libelle={t('rapport.enregistrer')}
-          chargement={envoi === 'enregistrer'}
-          desactive={envoi !== null}
-          onPress={() => void agir('enregistrer')}
-        />
+        {garde && (
+          <Texte variante="discret" accessibilityLiveRegion="polite">
+            {t(garde.ou === 'serveur' ? 'rapport.gardeServeur' : 'rapport.gardeTelephone', {
+              heure: garde.le.toTimeString().slice(0, 5),
+            })}
+          </Texte>
+        )}
       </View>
     </View>
   );

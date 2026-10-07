@@ -704,6 +704,14 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». En 0.5.4, il est noté et rappelé ; il ne crée pas de visite dans le planning [H].
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.37 Brouillon automatique du rapport (mise en œuvre 0.5.6)
+
+- **Plus de bouton « Enregistrer »** (RPT-009) : chaque saisie est gardée aussitôt sur le téléphone, puis envoyée au serveur dès que la frappe s'arrête (moins d'une seconde). L'en-tête de l'écran dit en permanence où en est le rapport : « Enregistré à 10 h 42 » ou « Gardé sur le téléphone à 10 h 42 ».
+- **Sans réseau** : la saisie reste sur le téléphone et attend dans la file d'envoi ; elle part toute seule au retour du réseau. Un rapport ouvert une fois (ou préparé dès la fin de la visite, avec du réseau) s'ouvre et se complète sans réseau ; seule la soumission attend le réseau.
+- **CA1** : le brouillon survit à la fermeture de l'application et au redémarrage du téléphone (base locale chiffrée). À la réouverture, une saisie jamais reçue par le serveur l'emporte sur la version du serveur ; le message « Brouillon repris » le signale.
+- Les photos et documents en attente sont copiés dans l'espace propre de l'application, pour survivre eux aussi au redémarrage ; ils sont effacés du téléphone une fois envoyés, et le brouillon local l'est à la soumission.
+- Hypothèse [H] : en cas de saisie sur deux appareils, la dernière envoyée l'emporte.
+
 ### 14.36 Pièces jointes du rapport (mise en œuvre 0.5.5)
 
 - **Joindre** (RPT-007) : « Prendre une photo », « Galerie » ou « Document PDF », dans la section « Photos et documents » du rapport ; facultatif.
@@ -711,7 +719,7 @@ Mise en œuvre (0.3.9) :
 - **CA2** : une pièce jointe ne se lit que par qui voit le rapport ; elle n'a pas d'adresse publique et se lit par une adresse contrôlée, jamais gardée en cache. En 0.5.5, seul le délégué voit son rapport ; le superviseur le verra en 0.6.
 - **Sans réseau** : la pièce reste sur le téléphone, marquée « En attente du réseau », et part toute seule au retour du réseau. Une pièce prise **avant** la soumission du rapport peut arriver après ; une pièce prise après ne rejoint plus un rapport soumis.
 - **Retirer** : possible tant que le rapport n'est pas soumis. La pièce retirée est archivée, jamais effacée (RG-005), et suit la durée de conservation des pièces jointes du pays (3 ans par défaut, RG-060).
-- Hypothèses [H] : le fichier en attente est gardé dans le cache du téléphone jusqu'à la brouillon local (0.5.6) ; les pièces jointes sont stockées sur le disque du serveur en développement et dans le stockage objet (R2) au déploiement.
+- Hypothèses [H] : le fichier en attente est copié dans l'espace propre de l'application, qui survit au redémarrage (depuis 0.5.6), puis effacé une fois envoyé ; les pièces jointes sont stockées sur le disque du serveur en développement et dans le stockage objet (R2) au déploiement.
 
 ### 14.35 Faire mieux que l'outil actuel (décision du 7 octobre 2026)
 

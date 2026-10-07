@@ -1987,8 +1987,6 @@
     },
     "manque": "To complete before submitting: {{liste}}.",
     "soumettre": "Submit the report",
-    "enregistrer": "Save draft",
-    "enregistre": "Draft saved.",
     "soumis": "Report submitted to your supervisor.",
     "soumisLe": "Report submitted: it can no longer be changed.",
     "aCorriger": "Your supervisor asks for a correction.",
@@ -2044,7 +2042,13 @@
     "echeanceLe": "To do by {{date}}",
     "visiteProposee": "Suggest a new visit",
     "visiteProposeeLue": "New visit suggested",
-    "actionPrecedente": "Action planned at the visit of {{date}}"
+    "actionPrecedente": "Action planned at the visit of {{date}}",
+    "gardeServeurCourt": "Saved at {{heure}}",
+    "gardeTelephoneCourt": "Kept on the phone at {{heure}}",
+    "gardeServeur": "Saved automatically at {{heure}}.",
+    "gardeTelephone": "Kept on the phone at {{heure}}: it will be saved when the network is back.",
+    "horsLigneLocal": "No network: you are completing the report kept on the phone. It will save itself when the network is back; submitting waits for the network.",
+    "repris": "Draft restored: your latest entries, kept on the phone, have been recovered."
   },
   "champsRapport": {
     "titre": "Report fields",

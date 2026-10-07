@@ -72,9 +72,9 @@ def test_un_premier_retard_reste_apres_la_revision(monde, terrain):
 def test_la_soumission_notifie_le_superviseur_et_son_remplacant(monde, terrain):
     remplacant = creer_utilisateur("ousmane.fictif", prenom="Ousmane", nom="FICTIF",
                                    pays=monde["sn"])  # fmt: skip
-    attribuer_role(remplacant, Role.SUPERVISEUR, monde["sn"], par=None)
     org.rattacher(terrain["poste"], monde["sup.sn"], date(2026, 1, 1))
     with freeze_time("2026-10-07 09:00"):
+        attribuer_role(remplacant, Role.SUPERVISEUR, monde["sn"], par=None)
         org.designer_remplacant(monde["sn"], monde["sup.sn"], remplacant, date(2026, 10, 7),
                                 date(2026, 10, 9), monde["sup.sn"])  # fmt: skip
         services.ajouter_visite(terrain["planning"], date=MARDI, heure=time(9, 0),

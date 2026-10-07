@@ -24,6 +24,7 @@ import { Platform } from 'react-native';
 import { ErreurApi } from '@innov/api-client';
 import * as Crypto from 'expo-crypto';
 import { ecrire, lire, oublier } from './baseLocale';
+import { lireBrouillonRapport, marquerEnvoye, oublierFichier } from './BrouillonRapport';
 
 const CLE_BROUILLON = 'planning.brouillon';
 const CLE_ATTENTE = 'planning.attente';
@@ -127,6 +128,15 @@ export type Envoi =
       type: 'reporter_visite';
       visite: string;
       saisie: Report;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Brouillon du rapport saisi sans réseau (RPT-009) : la saisie est dans la base
+       * locale ; seul le rappel d'envoyer attend dans la file. */
+      type: 'brouillon_rapport';
+      visite: string;
       resume: string;
       erreur?: string;
     }
@@ -247,6 +257,13 @@ async function rejouer(client: ClientApi): Promise<number> {
           prise_le,
           fichier: await fichierAEnvoyer(uri, nom, type_mime),
         });
+        await oublierFichier(uri);
+      } else if (envoi.type === 'brouillon_rapport') {
+        const brouillon = await lireBrouillonRapport(envoi.visite);
+        if (brouillon?.saisie && !brouillon.envoye) {
+          const rapport = await client.visites.enregistrerRapport(envoi.visite, brouillon.saisie);
+          await marquerEnvoye(envoi.visite, rapport);
+        }
       } else if (envoi.type === 'ajout_activite') {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       } else {

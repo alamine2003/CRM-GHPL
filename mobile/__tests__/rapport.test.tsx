@@ -1,5 +1,6 @@
 import type { ClientApi, Rapport, VisiteProgramme } from '@innov/api-client';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { lireAttente } from '../src/Brouillons';
 import { ExecutionVisite } from '../src/Execution';
 import i18n from '../src/i18n';
 import { FormulaireRapport, manquantsDe } from '../src/Rapport';
@@ -63,6 +64,19 @@ const BROUILLON: Rapport = {
     { id: 'pb', libelle: 'Produit Beta' },
   ],
   resultats_proposes: [{ id: 'ok', libelle: 'Objectif atteint' }],
+};
+
+const saisieVide = {
+  presentations: [],
+  remises: [],
+  resultat: null,
+  resultat_obtenu: '',
+  resume: '',
+  prochaine_action: '',
+  prochaine_action_type: null,
+  prochaine_action_echeance: null,
+  visite_proposee: false,
+  champs: {},
 };
 
 function rendre(visites: Record<string, jest.Mock>) {
@@ -313,4 +327,66 @@ test('RPT-006 CA1 : le rapport rappelle l’action notée à la visite précéde
   });
   expect(await screen.findByText(/Action prévue à la visite du/)).toBeTruthy();
   expect(screen.getByText('Revenir avec les nouvelles données')).toBeTruthy();
+});
+
+describe('RPT-009 : brouillon gardé automatiquement', () => {
+  test('chaque saisie s’enregistre toute seule, sans bouton', async () => {
+    const enregistrerRapport = jest.fn(async (_id: string, s: object) => ({ ...BROUILLON, ...s }));
+    await rendre({ rapport: jest.fn(async () => BROUILLON), enregistrerRapport });
+    await fireEvent.changeText(await screen.findByLabelText("Résumé de l'échange"), 'Bon accueil');
+    await waitFor(() => expect(enregistrerRapport).toHaveBeenCalled(), { timeout: 3000 });
+    expect(enregistrerRapport.mock.calls[0]![1]).toMatchObject({ resume: 'Bon accueil' });
+    expect(await screen.findByText(/Enregistré automatiquement à/)).toBeTruthy();
+    expect(screen.queryByText('Enregistrer le brouillon')).toBeNull();
+  });
+
+  test('sans réseau, la saisie reste sur le téléphone et attend dans la file', async () => {
+    await rendre({
+      rapport: jest.fn(async () => BROUILLON),
+      enregistrerRapport: jest.fn(async () => {
+        throw new TypeError('Network request failed');
+      }),
+    });
+    await fireEvent.changeText(await screen.findByLabelText("Résumé de l'échange"), 'Hors réseau');
+    expect(await screen.findByText(/Gardé sur le téléphone à/, {}, { timeout: 3000 })).toBeTruthy();
+    expect(await lireAttente()).toEqual([
+      expect.objectContaining({ type: 'brouillon_rapport', visite: 'v1' }),
+    ]);
+    expect(mockMemoire.get('rapport.v1')?.valeur).toMatchObject({
+      envoye: false,
+      saisie: { resume: 'Hors réseau' },
+    });
+  });
+
+  test('CA1 : après un redémarrage, la saisie non envoyée est reprise', async () => {
+    // La session précédente a laissé une saisie sur le téléphone, jamais reçue par le serveur.
+    mockMemoire.set('rapport.v1', {
+      valeur: {
+        rapport: BROUILLON,
+        saisie: { ...saisieVide, resume: 'Saisi avant la coupure' },
+        modifie_le: '2026-10-13T09:50:00Z',
+        envoye: false,
+      },
+      maj: '2026-10-13T09:50:00Z',
+    });
+    await rendre({ rapport: jest.fn(async () => BROUILLON) });
+    expect(await screen.findByText(/Brouillon repris/)).toBeTruthy();
+    expect(screen.getByDisplayValue('Saisi avant la coupure')).toBeTruthy();
+  });
+
+  test('sans réseau, un rapport déjà ouvert se complète sur le téléphone', async () => {
+    mockMemoire.set('rapport.v1', {
+      valeur: { rapport: BROUILLON, saisie: null, modifie_le: null, envoye: true },
+      maj: '2026-10-13T09:50:00Z',
+    });
+    await rendre({
+      rapport: jest.fn(async () => {
+        throw new TypeError('Network request failed');
+      }),
+    });
+    expect(
+      await screen.findByText(/vous complétez le rapport gardé sur le téléphone/),
+    ).toBeTruthy();
+    expect(screen.getByText('Objectif prévu')).toBeTruthy();
+  });
 });
