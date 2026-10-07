@@ -78,6 +78,42 @@ class ActionPrecedenteSerializer(serializers.Serializer):
     visite_proposee = serializers.BooleanField()
 
 
+class RapportChronologieSerializer(serializers.ModelSerializer):
+    """RPT-011 : un rapport dans la chronologie d'un prospect, prêt à lire."""
+
+    date = serializers.DateField(source="visite.date")
+    heure = serializers.TimeField(source="visite.heure", allow_null=True, format="%H:%M")
+    etablissement = serializers.CharField(source="visite.etablissement.nom", allow_null=True,
+                                          default=None)  # fmt: skip
+    delegue_nom = serializers.SerializerMethodField()
+    #: Écrit par la personne qui lit : son nom n'a pas à se répéter.
+    de_moi = serializers.SerializerMethodField()
+    resultat = serializers.CharField(source="resultat.libelle", allow_null=True, default=None)
+    prochaine_action_type = serializers.CharField(source="prochaine_action_type.libelle",
+                                                  allow_null=True, default=None)  # fmt: skip
+    presentations = PresentationSerializer(many=True)
+    remises = RemiseSerializer(many=True)
+    en_retard = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Rapport
+        fields = ["id", "visite", "date", "heure", "etablissement", "delegue_nom", "de_moi",
+                  "statut", "en_retard", "objectif_prevu", "resultat", "resultat_obtenu",
+                  "presentations", "remises", "resume", "prochaine_action_type", "prochaine_action",
+                  "prochaine_action_echeance", "soumis_le"]  # fmt: skip
+        read_only_fields = fields
+
+    def get_delegue_nom(self, rapport) -> str:
+        return f"{rapport.delegue.first_name} {rapport.delegue.last_name}".strip()
+
+    def get_de_moi(self, rapport) -> bool:
+        lecteur = self.context.get("lecteur")
+        return lecteur is not None and rapport.delegue_id == lecteur.pk
+
+    def get_en_retard(self, rapport) -> bool:
+        return services.en_retard(rapport)
+
+
 class PieceJointeSerializer(serializers.ModelSerializer):
     """Un document PDF joint (RPT-007) ; le fichier se lit par sa propre adresse."""
 

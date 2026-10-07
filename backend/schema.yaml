@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.5.7
+  version: 0.5.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3447,6 +3447,32 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ChangementFiche'
+          description: ''
+  /api/v1/prospects/{id}/rapports/:
+    get:
+      operationId: prospect_rapports
+      description: |-
+        RPT-011 : les rapports d'un prospect que l'on a le droit de lire, du plus récent au
+        plus ancien ; CA1 : un délégué ne voit que les siens.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - prospects
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RapportChronologie'
           description: ''
   /api/v1/prospects/{id}/valider/:
     post:
@@ -8980,6 +9006,95 @@ components:
       - types_action_proposes
       - visite
       - visite_proposee
+    RapportChronologie:
+      type: object
+      description: 'RPT-011 : un rapport dans la chronologie d''un prospect, prêt
+        à lire.'
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        visite:
+          type: string
+          format: uuid
+          readOnly: true
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        etablissement:
+          type: string
+          nullable: true
+        delegue_nom:
+          type: string
+          readOnly: true
+        de_moi:
+          type: boolean
+          readOnly: true
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutRapportEnum'
+          readOnly: true
+        en_retard:
+          type: boolean
+          readOnly: true
+        objectif_prevu:
+          type: string
+          readOnly: true
+        resultat:
+          type: string
+          nullable: true
+        resultat_obtenu:
+          type: string
+          readOnly: true
+        presentations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Presentation'
+        remises:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remise'
+        resume:
+          type: string
+          readOnly: true
+        prochaine_action_type:
+          type: string
+          nullable: true
+        prochaine_action:
+          type: string
+          readOnly: true
+        prochaine_action_echeance:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        soumis_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - date
+      - de_moi
+      - delegue_nom
+      - en_retard
+      - heure
+      - id
+      - objectif_prevu
+      - presentations
+      - prochaine_action
+      - prochaine_action_echeance
+      - remises
+      - resultat_obtenu
+      - resume
+      - soumis_le
+      - statut
+      - visite
     RapportStatutEnum:
       enum:
       - attendu

@@ -795,8 +795,7 @@
       "identite": "Identité",
       "coordonnees": "Coordonnées",
       "etablissements": "Lieux d'exercice",
-      "visites": "Mes visites",
-      "visitesTexte": "Vos visites et rapports sur ce prospect arriveront avec les visites (0.4).",
+      "visites": "Rapports de visite",
       "creePar": "Créée par {{personne}} {{quand}}",
       "valider": "Valider la fiche",
       "validee": "Fiche validée : elle est désormais commune.",
@@ -2090,5 +2089,15 @@
     "horsLigne": "Pas de réseau : la pièce est gardée sur le téléphone et partira toute seule au retour du réseau.",
     "tropLourde": "Ce document dépasse 10 Mo.",
     "maximum": "{{n}} pièces jointes au plus : retirez-en une pour en ajouter une autre."
+  },
+  "chronologie": {
+    "titre": "Visites précédentes",
+    "aucune": "Aucun rapport de visite pour l'instant.",
+    "horsLigne": "Sans réseau : la dernière liste lue.",
+    "enRetard": "Soumis en retard",
+    "suite": "Suite :",
+    "plus_one": "Voir la visite plus ancienne",
+    "plus_other": "Voir les {{count}} visites plus anciennes",
+    "moins": "Voir moins"
   }
 }

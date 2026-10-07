@@ -2,6 +2,29 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.8] — Chronologie des rapports d'un prospect
+
+Huitième jalon du cycle 0.5 « Rapports de visite ».
+
+### Ajouté (RPT-011)
+
+- Téléphone : carte « Visites précédentes » sur la fiche d'un prospect (résultat, produits et retours, résumé, suite prévue), du plus récent au plus ancien ; trois visites, puis « Voir les visites plus anciennes » ; la dernière liste reste lisible sans réseau.
+- **CA1** : un délégué ne voit que ses propres rapports.
+- Portail : section « Rapports de visite » dans la fiche d'un prospect, pour le superviseur, le DM, le DF et le responsable pays, chacun dans son périmètre ; jamais un brouillon d'autrui [H].
+- Nouveau droit « lire les rapports » ; l'administration et le siège n'en disposent pas [H].
+- Relecture du cahier des charges (`revue-exigences.md`) : 13 exigences douteuses, avec choix et recommandations, en attente de décision (O-12).
+- Décision 15.A : les documents PDF restent dans le rapport.
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px, portail clair et sombre). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Fiche prospect (téléphone) | Le nom de la déléguée se répétait sur chacun de ses propres rapports. | Le nom n'apparaît que pour le rapport d'un autre. |
+| Fiche prospect (téléphone, portail) | « Suite : Envoyer de la documentation : Reprendre… » : deux deux-points de suite. | « Suite : Envoyer de la documentation — Reprendre… ». |
+| Fiche prospect (portail) | Les produits s'enchaînaient sur une ligne, avec leurs retours, difficiles à lire. | Un produit par ligne, dans une liste. |
+
 ## [0.5.7] — Soumission et retard du rapport ; pas de photo
 
 Septième jalon du cycle 0.5 « Rapports de visite ».

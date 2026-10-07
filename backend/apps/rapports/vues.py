@@ -1,6 +1,7 @@
 """API des rapports de visite (cycle 0.5).
 
 - Rapport d'une visite (RPT-001, RPT-002) : `rapports.rediger`, sur ses propres visites.
+- Chronologie des rapports d'un prospect (RPT-011) : `rapports.lire`, dans le périmètre.
 - Champs du rapport par pays (RPT-008) : lus avec les paramètres du pays, gérés par qui les
   modifie (administrateur pays, siège).
 """
@@ -23,6 +24,7 @@ from . import services
 from .models import ChampRapport, PieceJointe
 
 REDIGER = Action.RAPPORTS_REDIGER
+LIRE = Action.RAPPORTS_LIRE
 
 
 class VueVisitesDuDelegue(VuePerimetre):
@@ -154,3 +156,26 @@ class ChampRapportArchivageVue(VueChamps):
     def post(self, request, id):
         champ = get_object_or_404(self.get_queryset(), pk=id)
         return Response(s.ChampRapportSerializer(services.archiver_champ(champ)).data)
+
+
+class ChronologieProspectVue(VuePerimetre):
+    """RPT-011 : les rapports d'un prospect que l'on a le droit de lire, du plus récent au
+    plus ancien ; CA1 : un délégué ne voit que les siens."""
+
+    actions = {"GET": LIRE}
+    serializer_class = s.RapportChronologieSerializer
+
+    def selection(self, perimetre):
+        from apps.prospects.services import prospects_visibles
+
+        return prospects_visibles(perimetre)
+
+    @extend_schema(responses=s.RapportChronologieSerializer(many=True),
+                   operation_id="prospect_rapports")  # fmt: skip
+    def get(self, request, id):
+        from .chronologie import chronologie
+
+        prospect = get_object_or_404(self.get_queryset(), pk=id)
+        rapports = chronologie(self.perimetre, prospect)
+        return Response(s.RapportChronologieSerializer(
+            rapports, many=True, context={"lecteur": request.user}).data)  # fmt: skip

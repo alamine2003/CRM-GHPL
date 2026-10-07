@@ -795,8 +795,7 @@
       "identite": "Identity",
       "coordonnees": "Contact details",
       "etablissements": "Places of practice",
-      "visites": "My visits",
-      "visitesTexte": "Your visits and reports on this prospect will come with visits (0.4).",
+      "visites": "Visit reports",
       "creePar": "Created by {{personne}} {{quand}}",
       "valider": "Validate record",
       "validee": "Record validated: it is now shared.",
@@ -2090,5 +2089,15 @@
     "horsLigne": "No network: the file is kept on the phone and will be sent automatically when the network is back.",
     "tropLourde": "This document is over 10 MB.",
     "maximum": "{{n}} attachments at most: remove one to add another."
+  },
+  "chronologie": {
+    "titre": "Previous visits",
+    "aucune": "No visit report yet.",
+    "horsLigne": "No network: the last list read.",
+    "enRetard": "Submitted late",
+    "suite": "Next:",
+    "plus_one": "See the older visit",
+    "plus_other": "See the {{count}} older visits",
+    "moins": "See less"
   }
 }

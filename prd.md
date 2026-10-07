@@ -166,6 +166,7 @@ Tous les types de poste suivent **le même workflow** planning → visite → ra
 | Créer et soumettre un planning | Non | Non | Non | Non | Non | Non | Oui (s'il occupe un poste) | Oui (le sien) |
 | Approuver ou faire réviser un planning | Non | Non | Non | Non | Non | Escalade / remplacement / superviseur-visiteur | Oui (périm.) | Non |
 | Réaliser une visite, rédiger un rapport | Non | Non | Non | Non | Non | Non | Oui (s'il occupe un poste) | Oui |
+| Lire les rapports de visite (RPT-011) [H] | Non | Non | Oui (pays) | Non | Oui (périm.) | Oui (périm.) | Oui (périm.) | Les siens |
 | Valider un rapport ou demander une correction | Non | Non | Non | Non | Non | Escalade / remplacement | Oui (périm.) | Non |
 | Rouvrir un rapport validé | Non | Non | Non | Non | Non | Oui (> 30 jours, périm.) | Oui (≤ 30 jours, périm.) | Non |
 | Désigner un remplaçant de superviseur | Non | Non | Non | Oui | Non | Oui (périm.) | Oui (pour lui-même) | Non |
@@ -703,6 +704,14 @@ Mise en œuvre (0.3.9) :
 - **Échéance** facultative [H] : « Sans échéance », « Dans 1 semaine », « Dans 2 semaines », « Dans 1 mois », comptés depuis le jour de la visite ; jamais avant la visite.
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». En 0.5.4, il est noté et rappelé ; il ne crée pas de visite dans le planning [H].
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
+
+### 14.39 Chronologie des rapports d'un prospect (mise en œuvre 0.5.8)
+
+- **Téléphone** (RPT-011) : sur la fiche d'un prospect, la carte « Visites précédentes » montre ses rapports du plus récent au plus ancien : date, heure, lieu, résultat, produits avec le retour du prescripteur, résumé et « Suite : » (la prochaine action). Trois visites s'affichent, puis « Voir les N visites plus anciennes ». Sans réseau, la dernière liste lue reste visible.
+- **CA1** : un délégué ne voit que ses propres rapports, brouillons compris ; jamais ceux d'un collègue.
+- **Portail** : dans la fiche d'un prospect, la section « Rapports de visite » montre la même chronologie à l'encadrement, avec le nom du délégué.
+- **Qui lit quoi** [H] : le superviseur, les rapports soumis des délégués des postes qui lui sont rattachés ; le DM et le DF, ceux des postes de leurs réseaux ; le responsable pays, tout le pays. Jamais un brouillon d'un autre. L'administration (administrateur pays, siège) ne lit pas les rapports nominatifs : elle n'encadre pas le terrain, et le siège ne voit que des indicateurs agrégés (§6.3).
+- Les 30 derniers rapports au plus [H] ; le superviseur voit les délégués qui occupent **aujourd'hui** un poste de son périmètre [H].
 
 ### 14.38 Soumission et retard du rapport (mise en œuvre 0.5.7)
 
@@ -1370,7 +1379,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | O-09 | Approbateur d'une personne occupant plusieurs postes rattachés à des superviseurs différents (`RG-011`) | Planning | Superviseur du poste principal |
 | O-10 | Durée minimale du pilote et périmètre exact (réseau choisi) | Critères 1.0.0 | 4 semaines, un réseau |
 | O-11 | Comptes : courriel professionnel disponible pour tous les délégués ? | Récupération d'accès, double authentification | Courriel ou téléphone ; réinitialisation par l'administrateur pays sinon |
-| O-12 | Relecture du cahier des charges avec l'utilisateur : certaines exigences ne tiennent pas (exemple : les photos du rapport, retirées par DC-48) | Toutes les versions à venir | Chaque exigence douteuse est signalée et soumise avant d'être livrée |
+| O-12 | Relecture du cahier des charges avec l'utilisateur : certaines exigences ne tiennent pas (exemple : les photos du rapport, retirées par DC-48) | Toutes les versions à venir | Liste de 13 points avec recommandations dans `revue-exigences.md` (7 octobre 2026), en attente de décision |
 
 ## 25. Registre des décisions de cadrage
 
@@ -1423,7 +1432,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | DC-46 | Nettoyage des prospects BirdNotes : NOM en majuscules, titre dans la civilité, types médecin / paramédical / pharmacie / grossiste, fusions de spécialités validées (sage-femme d'État, gynécologue…), noms identiques tranchés par les superviseurs dans la file des doublons du CRM ; on nettoie une fois, puis la saisie verrouille | Proposition de nettoyage du 4 octobre 2026 |
 | DC-45 | L'export réel de BirdNotes sert de point de départ : import JSON tel quel, à l'exécution, jamais versionné ; avancé en 0.1.4 ; types, grades, exercice H/P, localités et paramètres alignés sur la pratique relevée | Échange du 4 octobre 2026 |
 | DC-47 | Faire mieux que l'outil actuel : pages en moins d'une seconde, tableaux de bord prêts à lire, file « À traiter aujourd'hui », tendance de prescription, « Préparer ma visite », résumé automatique appuyé sur les chiffres, position de référence des établissements (§14.35) | Démonstration vidéo de l'outil actuel, échange du 7 octobre 2026 |
-| DC-48 | Pas de photo dans le rapport de visite : aucun usage établi, et le risque d'y voir une ordonnance ou un patient. Seuls des documents PDF peuvent être joints (RPT-007) | Échange du 7 octobre 2026 |
+| DC-48 | Pas de photo dans le rapport de visite : aucun usage établi, et le risque d'y voir une ordonnance ou un patient. Seuls des documents PDF peuvent être joints (RPT-007), confirmé le même jour (choix 15.A) | Échange du 7 octobre 2026 |
 
 ## 26. Glossaire
 

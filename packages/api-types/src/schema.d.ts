@@ -1968,6 +1968,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/prospects/{id}/rapports/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description RPT-011 : les rapports d'un prospect que l'on a le droit de lire, du plus récent au
+     *     plus ancien ; CA1 : un délégué ne voit que les siens.
+     */
+    get: operations['prospect_rapports'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/prospects/{id}/valider/': {
     parameters: {
       query?: never;
@@ -4372,6 +4392,34 @@ export interface components {
       readonly types_action_proposes: components['schemas']['Resume'][];
       readonly action_precedente: components['schemas']['ActionPrecedente'] | null;
       readonly pieces_jointes: components['schemas']['PieceJointe'][];
+    };
+    /** @description RPT-011 : un rapport dans la chronologie d'un prospect, prêt à lire. */
+    RapportChronologie: {
+      /** Format: uuid */
+      readonly id: string;
+      /** Format: uuid */
+      readonly visite: string;
+      /** Format: date */
+      date: string;
+      /** Format: time */
+      heure: string | null;
+      etablissement?: string | null;
+      readonly delegue_nom: string;
+      readonly de_moi: boolean;
+      readonly statut: components['schemas']['StatutRapportEnum'];
+      readonly en_retard: boolean;
+      readonly objectif_prevu: string;
+      resultat?: string | null;
+      readonly resultat_obtenu: string;
+      presentations: components['schemas']['Presentation'][];
+      remises: components['schemas']['Remise'][];
+      readonly resume: string;
+      prochaine_action_type?: string | null;
+      readonly prochaine_action: string;
+      /** Format: date */
+      readonly prochaine_action_echeance: string | null;
+      /** Format: date-time */
+      readonly soumis_le: string | null;
     };
     /**
      * @description * `attendu` - attendu
@@ -8279,6 +8327,27 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ChangementFiche'][];
+        };
+      };
+    };
+  };
+  prospect_rapports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RapportChronologie'][];
         };
       };
     };

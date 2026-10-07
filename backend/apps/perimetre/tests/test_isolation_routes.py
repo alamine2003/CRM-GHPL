@@ -117,6 +117,7 @@ def senegal(monde):
     champ = creer_champ(sn, libelle="Patients par semaine", type="nombre")
     return {
         "prospect-historique": prospect.pk, "etablissement-historique": etab.pk,
+        "prospect-rapports": prospect.pk,
         "doublon-trancher": doublon.pk, "fusion-defaire": fusion.pk,
         "proposition-trancher": proposition.pk,
         "jour-ferie": ferie.pk, "jour-ferie-retirer": ferie.pk,

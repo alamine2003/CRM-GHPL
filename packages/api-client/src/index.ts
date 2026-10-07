@@ -30,6 +30,7 @@ import type {
   Report,
   Imprevue,
   Rapport,
+  RapportChronologie,
   PieceJointe,
   SaisieRapport,
   ChampRapport,
@@ -162,6 +163,7 @@ export type {
   Remise,
   TypeRemise,
   ActionPrecedente,
+  RapportChronologie,
   PieceJointe,
   DefinitionChamp,
   TypeChamp,
@@ -684,6 +686,8 @@ export function creerClient(options: OptionsClient) {
       },
       /** PRP-012 : historique champ par champ. */
       historique: (id: string) => requete<ChangementFiche[]>(`/api/v1/prospects/${id}/historique/`),
+      /** RPT-011 : les rapports que l'on peut lire, du plus récent au plus ancien. */
+      rapports: (id: string) => requete<RapportChronologie[]>(`/api/v1/prospects/${id}/rapports/`),
       modifier: (id: string, champs: Partial<SaisieProspect>) =>
         requete<Prospect>(`/api/v1/prospects/${id}/`, { methode: 'PATCH', corps: champs }),
       valider: (id: string) =>

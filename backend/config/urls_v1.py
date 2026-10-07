@@ -169,6 +169,12 @@ urlpatterns = [
     path("prospects/synthese/", prs.SyntheseProspectsVue.as_view(), name="prospects-synthese"),
     # Doublons, fusions, historique, propositions (PRP-007 à PRP-014)
     path("prospects/ressemblants/", dbl.RessemblantsVue.as_view(), name="prospects-ressemblants"),
+    # RPT-011 : chronologie des rapports d'un prospect
+    path(
+        "prospects/<uuid:id>/rapports/",
+        rap.ChronologieProspectVue.as_view(),
+        name="prospect-rapports",
+    ),
     path(
         "prospects/<uuid:id>/historique/",
         dbl.HistoriqueProspectVue.as_view(),

@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { lire } from './baseLocale';
 import { Alerte, Carte, Etiquette, Ligne, MarquePotentiel, Texte, usePalette } from './composants';
+import { VisitesPrecedentes } from './Chronologie';
 import { ProposerCorrection } from './Proposition';
 import { useSession } from './session';
 
@@ -275,6 +276,8 @@ export function FicheProspect({ id }: { id: string }) {
           ))
         )}
       </Carte>
+
+      <VisitesPrecedentes prospect={id} />
 
       {informations.length > 0 && (
         <Carte style={styles.bloc}>

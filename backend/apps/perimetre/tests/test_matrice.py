@@ -18,6 +18,7 @@ ATTENDU = {
     Action.PLANNINGS_PREPARER: {"superviseur", "delegue"},
     Action.PLANNINGS_VALIDER: {"dm", "superviseur"},
     Action.RAPPORTS_REDIGER: {"superviseur", "delegue"},
+    Action.RAPPORTS_LIRE: {"responsable_pays", "df", "dm", "superviseur", "delegue"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "dm", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",
@@ -189,6 +190,9 @@ REQUETES = {
     # la visite inconnue répond « introuvable ».
     Action.RAPPORTS_REDIGER: (
         "get", "/api/v1/visites/00000000-0000-0000-0000-000000000000/rapport/", None, 404,
+    ),
+    Action.RAPPORTS_LIRE: (
+        "get", "/api/v1/prospects/00000000-0000-0000-0000-000000000000/rapports/", None, 404,
     ),
 }  # fmt: skip
 

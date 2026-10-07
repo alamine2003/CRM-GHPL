@@ -53,6 +53,7 @@ import {
 import DialogueProposition from '../composants/DialogueProposition';
 import { ErreurChargement } from '../composants/Erreurs';
 import Historique from '../composants/Historique';
+import RapportsProspect from '../composants/RapportsProspect';
 import { depuis } from '../composants/formats';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
@@ -360,10 +361,13 @@ function FicheProspect({
   surFermer,
   surModifier,
   proposer,
+  lireRapports,
 }: {
   id: string;
   gerer: boolean;
   proposer: boolean;
+  /** RPT-011 : l'encadrement lit les rapports de visite du prospect. */
+  lireRapports: boolean;
   surFermer: () => void;
   surModifier: (p: Prospect) => void;
 }) {
@@ -530,11 +534,11 @@ function FicheProspect({
           <Section titre={t('prospect.fiche.etablissements')}>
             <LieuxExercice prospect={p} />
           </Section>
-          <Section titre={t('prospect.fiche.visites')}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {t('prospect.fiche.visitesTexte')}
-            </Typography>
-          </Section>
+          {lireRapports && (
+            <Section titre={t('prospect.fiche.visites')}>
+              <RapportsProspect id={p.id} />
+            </Section>
+          )}
           <Historique objet="prospect" id={p.id} />
           {proposition && (
             <DialogueProposition
@@ -1105,6 +1109,7 @@ export default function Prospects({ perimetre }: { perimetre: Perimetre }) {
             id={ouverte}
             gerer={gerer}
             proposer={perimetre.actions.includes('propositions.creer')}
+            lireRapports={perimetre.actions.includes('rapports.lire')}
             surFermer={() => setOuverte(null)}
             surModifier={(p) => setDialogue({ prospect: p })}
           />

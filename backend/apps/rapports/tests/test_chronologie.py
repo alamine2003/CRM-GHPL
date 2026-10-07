@@ -1,0 +1,80 @@
+"""RPT-011 (0.5.8) : chronologie des rapports d'un prospect, dans le périmètre.
+
+CA1 : un délégué ne voit que les siens. Le superviseur voit les rapports soumis des postes qui
+lui sont rattachés, jamais un brouillon ; le responsable pays, ceux du pays [H]."""
+
+import pytest
+from freezegun import freeze_time
+
+from apps.identite.models import Role
+from apps.identite.services import attribuer_role, creer_utilisateur
+from apps.perimetre.tests.conftest import client_de
+
+from .test_rapport import complet, effectuee, portefeuille, type_action, url  # noqa: F401
+
+pytestmark = pytest.mark.django_db
+
+
+def chronologie(compte, prospect):
+    return client_de(compte).get(f"/api/v1/prospects/{prospect.pk}/rapports/")
+
+
+@pytest.fixture
+def soumis(monde, terrain, effectuee, portefeuille):  # noqa: F811
+    with freeze_time("2026-10-13 20:00"):
+        c = client_de(monde["deleg.sn"])
+        c.put(url(effectuee), complet(monde, portefeuille[:1]), format="json")
+        assert c.post(url(effectuee, "soumettre/"), {"soumis_le": "2026-10-13T20:00:00Z"},
+                      format="json").status_code == 200  # fmt: skip
+    return effectuee
+
+
+@freeze_time("2026-10-14 08:00")
+def test_rpt011_le_delegue_lit_ses_rapports_du_plus_recent(monde, terrain, soumis):
+    r = chronologie(monde["deleg.sn"], terrain["medecin"])
+    assert r.status_code == 200, r.content
+    (rapport,) = r.json()
+    assert (rapport["date"], rapport["heure"], rapport["statut"]) == (
+        "2026-10-13",
+        "09:00",
+        "soumis",
+    )
+    assert rapport["presentations"][0]["libelle"] == "Cardiol"
+    assert rapport["resultat"] == "Objectif atteint"
+    assert rapport["prochaine_action_type"] == "Revisiter le prescripteur"
+    assert rapport["etablissement"] == terrain["clinique"].nom
+    assert rapport["de_moi"] is True
+
+
+@freeze_time("2026-10-14 08:00")
+def test_rpt011_ca1_un_autre_delegue_ne_voit_rien(monde, terrain, soumis):
+    autre = creer_utilisateur("binta.fictive", prenom="Binta", nom="FICTIVE", pays=monde["sn"])
+    attribuer_role(autre, Role.DELEGUE, monde["sn"], par=None)
+    r = chronologie(autre, terrain["medecin"])
+    assert (r.status_code, r.json()) == (200, [])
+
+
+@freeze_time("2026-10-13 12:00")
+def test_rpt011_superviseur_jamais_un_brouillon(monde, terrain, effectuee, portefeuille):  # noqa: F811
+    client_de(monde["deleg.sn"]).put(url(effectuee), complet(monde, portefeuille[:1]),
+                                     format="json")  # fmt: skip
+    # Le brouillon : le délégué le voit, son superviseur non.
+    assert len(chronologie(monde["deleg.sn"], terrain["medecin"]).json()) == 1
+    assert chronologie(monde["sup.sn"], terrain["medecin"]).json() == []
+
+
+@freeze_time("2026-10-14 08:00")
+def test_rpt011_superviseur_et_responsable_pays_lisent_le_soumis(monde, terrain, soumis):
+    for compte in ("sup.sn", "resp.sn"):
+        r = chronologie(monde[compte], terrain["medecin"])
+        assert [(x["delegue_nom"], x["de_moi"]) for x in r.json()] == [("Gabriel Sn", False)]
+
+
+@freeze_time("2026-10-14 08:00")
+def test_rpt011_hors_perimetre(monde, terrain, soumis):
+    # L'administration du pays n'encadre pas le terrain : pas de lecture des rapports [H].
+    assert chronologie(monde["admin.sn"], terrain["medecin"]).status_code == 403
+    # Un DM sans réseau dans son périmètre ne voit rien.
+    assert chronologie(monde["dm.sn"], terrain["medecin"]).json() == []
+    # Un autre pays : la fiche n'existe pas.
+    assert chronologie(monde["resp.tg"], terrain["medecin"]).status_code == 404

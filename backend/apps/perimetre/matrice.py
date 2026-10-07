@@ -45,6 +45,7 @@ class Action(StrEnum):
     NOTIFICATIONS_LIRE = "notifications.lire"
     REMPLACEMENTS_GERER = "remplacements.gerer"
     RAPPORTS_REDIGER = "rapports.rediger"
+    RAPPORTS_LIRE = "rapports.lire"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -130,6 +131,13 @@ MATRICE: dict[Action, frozenset[str]] = {
     # « Réaliser une visite, rédiger un rapport » : le délégué, le superviseur s'il occupe un
     # poste ; chacun ses propres visites (RPT-001).
     Action.RAPPORTS_REDIGER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
+    # RPT-011 : lire les rapports soumis de son périmètre [H] : le délégué les siens (CA1), le
+    # superviseur ceux des postes rattachés, DM et DF ceux de leurs réseaux, le responsable
+    # pays tout le pays. Ni l'administration (pays, siège), qui n'encadre pas le terrain, ni
+    # la lecture nominative au siège (indicateurs agrégés, prd.md §6.3).
+    Action.RAPPORTS_LIRE: frozenset(
+        {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
+    ),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}

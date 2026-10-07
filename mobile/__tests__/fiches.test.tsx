@@ -83,7 +83,9 @@ beforeEach(async () => {
   jest
     .mocked(lire)
     .mockReset()
-    .mockResolvedValue({ valeur: [LISTE], maj: '2026-10-04T08:00:00Z' });
+    .mockImplementation(async (cle: string) =>
+      cle === 'ciblage.moi' ? { valeur: [LISTE], maj: '2026-10-04T08:00:00Z' } : null,
+    );
   mockPousser.mockClear();
   jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 });
@@ -91,7 +93,7 @@ beforeEach(async () => {
 test("la fiche réunit métier, appel, courriel et lieux d'exercice (PRP-002, PRP-004)", async () => {
   await rendre(
     {
-      prospects: { detail: jest.fn(async () => PROSPECT) },
+      prospects: { detail: jest.fn(async () => PROSPECT), rapports: jest.fn(async () => []) },
       exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
     } as unknown as Partial<ClientApi>,
     <FicheProspect id="p1" />,
@@ -157,7 +159,7 @@ test('PRP-014 : le délégué propose une correction ; seuls les champs changés
   const creer = jest.fn(async () => ({}));
   await rendre(
     {
-      prospects: { detail: jest.fn(async () => PROSPECT) },
+      prospects: { detail: jest.fn(async () => PROSPECT), rapports: jest.fn(async () => []) },
       exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
       propositions: { creer },
     } as unknown as Partial<ClientApi>,
@@ -181,11 +183,52 @@ test('PRP-014 : le délégué propose une correction ; seuls les champs changés
 test('sans le droit de proposer, la fiche ne montre pas le bouton', async () => {
   await rendre(
     {
-      prospects: { detail: jest.fn(async () => PROSPECT) },
+      prospects: { detail: jest.fn(async () => PROSPECT), rapports: jest.fn(async () => []) },
       exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
     } as unknown as Partial<ClientApi>,
     <FicheProspect id="p1" />,
   );
   expect(await screen.findByText('Dr Aïssatou NDIAYE')).toBeTruthy();
   expect(screen.queryByText('Proposer une correction')).toBeNull();
+});
+
+const RAPPORT = {
+  id: 'r1',
+  visite: 'v1',
+  date: '2026-10-06',
+  heure: '10:30',
+  etablissement: 'Clinique du Cap',
+  delegue_nom: 'Aminata TOURE',
+  de_moi: true,
+  statut: 'soumis',
+  en_retard: true,
+  objectif_prevu: '',
+  resultat: 'Objectif atteint',
+  resultat_obtenu: '',
+  presentations: [{ produit: 'pa', libelle: 'Produit Alpha', retour: 'prescrit' }],
+  remises: [],
+  resume: 'Bon accueil',
+  prochaine_action_type: 'Envoyer de la documentation',
+  prochaine_action: 'La fiche du produit',
+  prochaine_action_echeance: null,
+  soumis_le: '2026-10-07T08:00:00Z',
+};
+
+test('RPT-011 : les visites précédentes, la plus récente d’abord, puis « voir plus »', async () => {
+  const rapports = [1, 2, 3, 4].map((n) => ({ ...RAPPORT, id: `r${n}` }));
+  await rendre(
+    {
+      prospects: { detail: jest.fn(async () => PROSPECT), rapports: jest.fn(async () => rapports) },
+      exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
+    } as unknown as Partial<ClientApi>,
+    <FicheProspect id="p1" />,
+  );
+  expect(await screen.findByText('Visites précédentes')).toBeTruthy();
+  expect(screen.getAllByText('Produit Alpha — Prescrit')).toHaveLength(3);
+  expect(screen.getAllByText('Soumis en retard')).toHaveLength(3);
+  expect(
+    screen.getAllByText(/Suite : Envoyer de la documentation — La fiche du produit/),
+  ).toHaveLength(3);
+  await fireEvent.press(screen.getByText('Voir la visite plus ancienne'));
+  expect(screen.getAllByText('Produit Alpha — Prescrit')).toHaveLength(4);
 });
