@@ -5,7 +5,7 @@ import { Box, Button, Card, Skeleton, Stack, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
-import { texteEcart } from '../composants/Conformite';
+import { texteEcart } from '../composants/conformiteTextes';
 import { BarreChiffres, Chiffre, EnTetePage, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { useSession } from '../contexteSession';
