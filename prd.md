@@ -678,7 +678,15 @@ Mise en œuvre (0.3.9) :
 - **CA1 (RPT-008)** : un rapport garde les champs du pays tels qu'à son ouverture ; un champ ajouté, modifié ou retiré ne vaut que pour les rapports ouverts ensuite.
 - **Résultats de visite** : nouvelle liste de référence du pays, modifiable dans « Référentiels » ; valeurs initiales [H] : objectif atteint, objectif partiellement atteint, objectif non atteint, à relancer.
 - **Hors connexion** [H] : en 0.5.1, le rapport s'ouvre et s'envoie avec du réseau ; sans réseau, l'écran le dit et la visite reste gardée sur le téléphone. Le brouillon gardé sur le téléphone arrive en 0.5.6, la soumission hors connexion et le marquage en retard en 0.5.7 (RPT-010).
-- Hors de 0.5.1 : objectif rappelé en tête (RPT-003, 0.5.2), retour du prescripteur par produit, échantillons et cadeaux (RPT-004, RPT-005, 0.5.3), prochaine action typée avec échéance (RPT-006, 0.5.4).
+- Hors de 0.5.1 : objectif rappelé en tête (RPT-003, livré en 0.5.2, §14.32), retour du prescripteur par produit, échantillons et cadeaux (RPT-004, RPT-005, 0.5.3), prochaine action typée avec échéance (RPT-006, 0.5.4).
+
+### 14.32 Objectif prévu et résultat obtenu (mise en œuvre 0.5.2)
+
+- **CA1 (RPT-003)** : le rapport s'ouvre sur l'**objectif prévu** de la visite, tel que planifié, dans un cadre en tête. Il est relevé à l'ouverture du rapport et ne change plus ensuite, même si la visite est modifiée.
+- Une **visite imprévue** n'a pas d'objectif planifié : sa justification s'affiche à la place. Une visite planifiée sans objectif affiche « Aucun objectif n'était prévu pour cette visite ».
+- **Résultat obtenu**, juste sous l'objectif : le choix de la liste courte (obligatoire, RPT-002) et, en option, une phrase « Précisez ce qui a été obtenu » (1 000 caractères au plus).
+- Ordre du formulaire : objectif prévu, résultat obtenu, produits présentés, résumé, prochaine action, champs du pays. Le rapport soumis se lit dans le même ordre.
+- Hypothèse [H] : la précision du résultat reste facultative, quel que soit le résultat choisi.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

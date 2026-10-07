@@ -4263,9 +4263,13 @@ export interface components {
       /** Format: uuid */
       readonly visite: string;
       readonly statut: components['schemas']['StatutRapportEnum'];
+      readonly objectif_prevu: string;
+      est_imprevue: boolean;
+      justification: string;
       produits: string[];
       /** Format: uuid */
       resultat: string | null;
+      readonly resultat_obtenu: string;
       readonly resume: string;
       readonly prochaine_action: string;
       champs: unknown;
@@ -4541,6 +4545,7 @@ export interface components {
       produits?: string[];
       /** Format: uuid */
       resultat?: string | null;
+      resultat_obtenu?: string;
       resume?: string;
       prochaine_action?: string;
       champs?: unknown;

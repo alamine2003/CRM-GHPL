@@ -15,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Switch, View } from 'react-native';
 import { envoyerAttente, estTransitoire } from './Brouillons';
-import { Alerte, Bouton, Champ, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from './composants';
 import { Pilule } from './Etablissements';
 import { changerVisite, useVisiteDuProgramme } from './Execution';
 import { nomProspect } from './Fiches';
@@ -41,6 +41,7 @@ function saisieDe(rapport: Rapport): Saisie {
   return {
     produits: rapport.produits,
     resultat: rapport.resultat,
+    resultat_obtenu: rapport.resultat_obtenu,
     resume: rapport.resume,
     prochaine_action: rapport.prochaine_action,
     champs: (rapport.champs ?? {}) as ValeursChamps,
@@ -166,6 +167,26 @@ function EnteteVisite({
   );
 }
 
+/** L'objectif planifié, en tête du rapport (RPT-003 CA1) ; la justification d'une imprévue. */
+function ObjectifPrevu({ rapport }: { rapport: Rapport }) {
+  const { t } = useTranslation();
+  const [libelle, texte] = rapport.objectif_prevu
+    ? [t('rapport.objectifPrevu'), rapport.objectif_prevu]
+    : rapport.est_imprevue
+      ? [t('rapport.imprevue'), rapport.justification]
+      : [t('rapport.objectifPrevu'), t('rapport.sansObjectif')];
+  return (
+    <Carte>
+      <View style={{ gap: 2 }}>
+        <Texte variante="libelle">{libelle}</Texte>
+        <Texte variante={rapport.objectif_prevu || rapport.est_imprevue ? 'fort' : 'discret'}>
+          {texte}
+        </Texte>
+      </View>
+    </Carte>
+  );
+}
+
 function Bloc({ libelle, valeur }: { libelle: string; valeur: string }) {
   return (
     <View style={{ gap: 2 }}>
@@ -189,6 +210,13 @@ function RapportLu({ rapport }: { rapport: Rapport }) {
   // Libellé au-dessus de la valeur : les textes longs (résumé) gardent toute la largeur.
   return (
     <View style={{ gap: 14 }}>
+      <ObjectifPrevu rapport={rapport} />
+      <Bloc
+        libelle={t('rapport.resultat')}
+        valeur={[libelleDe(rapport.resultats_proposes, rapport.resultat), rapport.resultat_obtenu]
+          .filter(Boolean)
+          .join('\n')}
+      />
       <Bloc
         libelle={t('rapport.produits')}
         valeur={
@@ -196,10 +224,6 @@ function RapportLu({ rapport }: { rapport: Rapport }) {
             .map((id, i) => `${i + 1}. ${libelleDe(rapport.produits_proposes, id)}`)
             .join('\n') || '—'
         }
-      />
-      <Bloc
-        libelle={t('rapport.resultat')}
-        valeur={libelleDe(rapport.resultats_proposes, rapport.resultat)}
       />
       <Bloc libelle={t('rapport.resume')} valeur={rapport.resume || '—'} />
       <Bloc libelle={t('rapport.prochaineAction')} valeur={rapport.prochaine_action || '—'} />
@@ -324,6 +348,32 @@ export function FormulaireRapport({ id }: { id: string }) {
         <Alerte type="attention">{t('rapport.aCorriger')}</Alerte>
       )}
 
+      <ObjectifPrevu rapport={rapport} />
+      <View style={{ gap: 6 }}>
+        <Texte variante="sousTitre">{t('rapport.resultat')}</Texte>
+        <Texte variante="discret">{t('rapport.resultatAide')}</Texte>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {rapport.resultats_proposes.map((r) => (
+            <Pilule
+              key={r.id}
+              libelle={r.libelle}
+              actif={saisie.resultat === r.id}
+              onPress={() => changer({ resultat: saisie.resultat === r.id ? null : r.id })}
+            />
+          ))}
+        </View>
+        <View style={{ marginTop: 8 }}>
+          <Champ
+            libelle={t('rapport.resultatObtenu')}
+            placeholder={t('rapport.resultatObtenuIndice')}
+            value={saisie.resultat_obtenu}
+            onChangeText={(resultat_obtenu) => changer({ resultat_obtenu })}
+            maxLength={1000}
+            multiline
+          />
+        </View>
+      </View>
+
       <View style={{ gap: 6 }}>
         <Texte variante="sousTitre">{t('rapport.produits')}</Texte>
         <Texte variante="discret">{t('rapport.produitsAide')}</Texte>
@@ -356,20 +406,6 @@ export function FormulaireRapport({ id }: { id: string }) {
         ) : (
           <Alerte type="info">{t('rapport.aucunProduit')}</Alerte>
         )}
-      </View>
-
-      <View style={{ gap: 6 }}>
-        <Texte variante="sousTitre">{t('rapport.resultat')}</Texte>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-          {rapport.resultats_proposes.map((r) => (
-            <Pilule
-              key={r.id}
-              libelle={r.libelle}
-              actif={saisie.resultat === r.id}
-              onPress={() => changer({ resultat: saisie.resultat === r.id ? null : r.id })}
-            />
-          ))}
-        </View>
       </View>
 
       <Champ

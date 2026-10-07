@@ -26,7 +26,11 @@ const BROUILLON: Rapport = {
   id: 'r1',
   visite: 'v1',
   statut: 'brouillon',
+  objectif_prevu: 'Présenter la nouvelle forme sirop',
+  est_imprevue: false,
+  justification: '',
   produits: [],
+  resultat_obtenu: '',
   resultat: null,
   resume: '',
   prochaine_action: '',
@@ -70,6 +74,7 @@ test('RPT-002 CA1 : le calcul local des manquants suit le socle puis les champs 
   const saisie = {
     produits: ['pa'],
     resultat: 'ok',
+    resultat_obtenu: '',
     resume: ' ',
     prochaine_action: 'Relancer',
     champs: {},
@@ -102,6 +107,7 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
     statut: 'soumis',
     produits: ['pb', 'pa'],
     resultat: 'ok',
+    resultat_obtenu: 'Essai sur 5 patients',
     resume: 'Bon accueil',
     prochaine_action: 'Apporter l’étude',
     champs: { patients: 40 },
@@ -113,6 +119,10 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   expect(screen.getByText('1. Produit Beta')).toBeTruthy();
   expect(screen.getByText('2. Produit Alpha')).toBeTruthy();
   await fireEvent.press(screen.getByText('Objectif atteint'));
+  await fireEvent.changeText(
+    screen.getByLabelText('Précisez ce qui a été obtenu (facultatif)'),
+    'Essai sur 5 patients',
+  );
   await fireEvent.changeText(screen.getByLabelText("Résumé de l'échange"), 'Bon accueil');
   await fireEvent.changeText(screen.getByLabelText('Prochaine action'), 'Apporter l’étude');
   await fireEvent.changeText(screen.getByLabelText('Patients par semaine'), '40');
@@ -120,6 +130,7 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   expect(enregistrerRapport).toHaveBeenCalledWith('v1', {
     produits: ['pb', 'pa'],
     resultat: 'ok',
+    resultat_obtenu: 'Essai sur 5 patients',
     resume: 'Bon accueil',
     prochaine_action: 'Apporter l’étude',
     champs: { patients: 40 },
@@ -129,6 +140,26 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   // Soumis, il se lit sans se modifier.
   expect(screen.queryByText('Soumettre le rapport')).toBeNull();
   expect(screen.getByText('1. Produit Beta\n2. Produit Alpha')).toBeTruthy();
+  expect(screen.getByText('Objectif atteint\nEssai sur 5 patients')).toBeTruthy();
+});
+
+test('RPT-003 CA1 : l’objectif prévu en tête du rapport', async () => {
+  await rendre({ rapport: jest.fn(async () => BROUILLON) });
+  expect(await screen.findByText('Objectif prévu')).toBeTruthy();
+  expect(screen.getByText('Présenter la nouvelle forme sirop')).toBeTruthy();
+  expect(screen.getByText("Au regard de l'objectif prévu.")).toBeTruthy();
+});
+
+test('RPT-003 : une visite imprévue rappelle sa justification à la place', async () => {
+  const imprevue = {
+    ...BROUILLON,
+    objectif_prevu: '',
+    est_imprevue: true,
+    justification: 'Croisé à la pharmacie',
+  };
+  await rendre({ rapport: jest.fn(async () => imprevue) });
+  expect(await screen.findByText('Visite imprévue — justification')).toBeTruthy();
+  expect(screen.getByText('Croisé à la pharmacie')).toBeTruthy();
 });
 
 test('Sans réseau, le rapport ne s’ouvre pas et le dit', async () => {

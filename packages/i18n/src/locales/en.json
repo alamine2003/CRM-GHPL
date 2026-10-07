@@ -1963,7 +1963,7 @@
     "produits": "Products presented",
     "produitsAide": "Tap the products in the order you presented them.",
     "aucunProduit": "No product in this network's portfolio: check with your supervisor.",
-    "resultat": "Visit outcome",
+    "resultat": "Outcome",
     "resume": "Summary of the discussion",
     "resumeIndice": "What the prescriber said, their questions, their objections",
     "prochaineAction": "Next action",
@@ -1988,7 +1988,13 @@
     "horsLigne": "For now the report needs a network connection. Your visit is safely kept on the phone: try again when the network is back.",
     "horsLigneEnvoi": "No network: nothing on screen is lost, try again when the network is back.",
     "reessayer": "Try again",
-    "filtrer": "Find a product"
+    "filtrer": "Find a product",
+    "objectifPrevu": "Planned objective",
+    "imprevue": "Unplanned visit — justification",
+    "sansObjectif": "No objective was planned for this visit.",
+    "resultatAide": "Against the planned objective.",
+    "resultatObtenu": "Detail what was achieved (optional)",
+    "resultatObtenuIndice": "For example: agreed to try it on 5 patients"
   },
   "champsRapport": {
     "titre": "Report fields",

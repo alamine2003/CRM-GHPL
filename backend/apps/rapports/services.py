@@ -143,6 +143,7 @@ def rapport_de(visite: Visite) -> Rapport:
         )
     rapport = Rapport.objects.create(
         pays=visite.pays, visite=visite, delegue_id=visite.planning.delegue_id,
+        objectif_prevu=visite.objectif or "",
         definitions=[c.definition() for c in champs_actifs(visite.pays)],
     )  # fmt: skip
     _auditer("rapport.creation", rapport, visite=str(visite.pk))
@@ -204,7 +205,7 @@ def enregistrer(rapport: Rapport, **valeurs) -> Rapport:
         if resultat is not None and not resultats(rapport.pays).filter(pk=resultat).exists():
             raise ErreurMetier("resultat_invalide", _("Résultat inconnu."), champ="resultat")
         rapport.resultat_id = resultat
-    for cle in ("resume", "prochaine_action"):
+    for cle in ("resultat_obtenu", "resume", "prochaine_action"):
         if cle in valeurs:
             setattr(rapport, cle, (valeurs[cle] or "").strip())
     if "champs" in valeurs:

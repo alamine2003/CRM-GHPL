@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.5.1
+  version: 0.5.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -8687,6 +8687,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/StatutRapportEnum'
           readOnly: true
+        objectif_prevu:
+          type: string
+          readOnly: true
+        est_imprevue:
+          type: boolean
+        justification:
+          type: string
         produits:
           type: array
           items:
@@ -8696,6 +8703,9 @@ components:
           type: string
           format: uuid
           nullable: true
+        resultat_obtenu:
+          type: string
+          readOnly: true
         resume:
           type: string
           readOnly: true
@@ -8730,12 +8740,16 @@ components:
       required:
       - champs
       - definitions
+      - est_imprevue
       - id
+      - justification
       - manquants
+      - objectif_prevu
       - prochaine_action
       - produits
       - produits_proposes
       - resultat
+      - resultat_obtenu
       - resultats_proposes
       - resume
       - soumis_le
@@ -9327,6 +9341,9 @@ components:
           type: string
           format: uuid
           nullable: true
+        resultat_obtenu:
+          type: string
+          maxLength: 1000
         resume:
           type: string
           maxLength: 4000

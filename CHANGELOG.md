@@ -2,6 +2,26 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.2] — Objectif prévu et résultat obtenu
+
+Deuxième jalon du cycle 0.5 « Rapports de visite ».
+
+### Ajouté (RPT-003)
+
+- **CA1** : le rapport s'ouvre sur l'objectif prévu de la visite, dans un cadre en tête ; il est relevé à l'ouverture du rapport et ne bouge plus.
+- Visite imprévue : sa justification s'affiche à la place de l'objectif.
+- « Résultat obtenu » juste sous l'objectif : le choix de la liste, et une précision facultative (« Précisez ce qui a été obtenu »).
+- Le rapport soumis se lit dans le même ordre : objectif, résultat, produits, résumé, prochaine action, champs du pays.
+- Démonstration : les rapports passés portent leur objectif et, pour certains, une précision du résultat.
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px clair, 390 px sombre). Seconde revue après correction :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Rapport, résultat obtenu | Le champ « Précisez ce qui a été obtenu » se collait aux choix du résultat. | Un espace le sépare des choix. |
+
 ## [0.5.1] — Rapport de visite : socle et champs par pays
 
 Premier jalon du cycle 0.5 « Rapports de visite ».

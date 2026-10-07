@@ -1963,7 +1963,7 @@
     "produits": "Produits présentés",
     "produitsAide": "Touchez les produits dans l'ordre où vous les avez présentés.",
     "aucunProduit": "Aucun produit au portefeuille de ce réseau : voyez avec votre superviseur.",
-    "resultat": "Résultat de la visite",
+    "resultat": "Résultat obtenu",
     "resume": "Résumé de l'échange",
     "resumeIndice": "Ce que le prescripteur a dit, ses questions, ses objections",
     "prochaineAction": "Prochaine action",
@@ -1988,7 +1988,13 @@
     "horsLigne": "Le rapport s'écrit avec du réseau pour l'instant. Votre visite est bien gardée sur le téléphone : réessayez dès que le réseau revient.",
     "horsLigneEnvoi": "Pas de réseau : rien n'est perdu à l'écran, réessayez dès que le réseau revient.",
     "reessayer": "Réessayer",
-    "filtrer": "Chercher un produit"
+    "filtrer": "Chercher un produit",
+    "objectifPrevu": "Objectif prévu",
+    "imprevue": "Visite imprévue — justification",
+    "sansObjectif": "Aucun objectif n'était prévu pour cette visite.",
+    "resultatAide": "Au regard de l'objectif prévu.",
+    "resultatObtenu": "Précisez ce qui a été obtenu (facultatif)",
+    "resultatObtenuIndice": "Par exemple : accord pour un essai sur 5 patients"
   },
   "champsRapport": {
     "titre": "Champs du rapport",

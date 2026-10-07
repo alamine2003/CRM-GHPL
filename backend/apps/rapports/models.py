@@ -68,6 +68,10 @@ class Rapport(ModeleDePays):
     produits = models.JSONField(default=list, blank=True)
     resultat = models.ForeignKey("referentiel.Valeur", null=True, blank=True,
                                  on_delete=models.PROTECT, related_name="+")  # fmt: skip
+    #: L'objectif planifié, relevé à l'ouverture du rapport (RPT-003 CA1).
+    objectif_prevu = models.CharField(max_length=500, blank=True)
+    #: Ce que la visite a obtenu, en clair, au regard de l'objectif (RPT-003).
+    resultat_obtenu = models.CharField(max_length=1000, blank=True)
     resume = models.TextField(blank=True)
     prochaine_action = models.CharField(max_length=500, blank=True)
     #: Valeurs des champs du pays, par code.

@@ -480,8 +480,13 @@ class Generateur:
             if i == len(effectuees) - 2:
                 rap.enregistrer(rapport, produits=produits, resume=resume)
                 continue
+            obtenu = (
+                "Accord pour un essai sur quelques patients",
+                "",
+                "Rendez-vous obtenu pour une présentation plus longue",
+            )[i % 3]
             rap.enregistrer(rapport, produits=produits, resultat=resultats[i % 3].pk,
-                            resume=resume, prochaine_action=suite,
+                            resultat_obtenu=obtenu, resume=resume, prochaine_action=suite,
                             champs={d["code"]: 5 + (i * 7) % 30 for d in rapport.definitions
                                     if d["type"] == "nombre"})  # fmt: skip
             rap.soumettre(rapport, visite.fin_le + timedelta(minutes=40 + (i * 13) % 80))
