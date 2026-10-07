@@ -6457,6 +6457,8 @@ components:
           type: integer
         tolerees:
           type: integer
+        imprecises:
+          type: integer
         justification:
           type: string
       required:
@@ -6565,6 +6567,11 @@ components:
         a_coordonnees:
           type: boolean
           readOnly: true
+        rayon_pointage_m:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
         telephone:
           type: string
           maxLength: 20
@@ -7793,6 +7800,9 @@ components:
           type: number
           format: double
           nullable: true
+        rayon_pointage_m:
+          type: integer
+          nullable: true
         telephone:
           type: string
           maxLength: 30
@@ -7823,6 +7833,8 @@ components:
         telephone_mobile:
           type: string
           maxLength: 30
+        contact_mobile_accepte:
+          type: boolean
         telephone_pro:
           type: string
           maxLength: 30
@@ -8540,6 +8552,8 @@ components:
         telephone_mobile:
           type: string
           maxLength: 20
+        contact_mobile_accepte:
+          type: boolean
         telephone_pro:
           type: string
           maxLength: 20
@@ -8693,6 +8707,8 @@ components:
         telephone_mobile:
           type: string
           maxLength: 20
+        contact_mobile_accepte:
+          type: boolean
         telephone_pro:
           type: string
           maxLength: 20
@@ -9621,6 +9637,9 @@ components:
           type: number
           format: double
           nullable: true
+        rayon_pointage_m:
+          type: integer
+          nullable: true
         telephone:
           type: string
           maxLength: 30
@@ -9718,6 +9737,8 @@ components:
         telephone_mobile:
           type: string
           maxLength: 30
+        contact_mobile_accepte:
+          type: boolean
         telephone_pro:
           type: string
           maxLength: 30

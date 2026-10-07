@@ -100,6 +100,12 @@ class HistoriqueVue(VuePerimetre):
         lignes = Changement.objects.filter(
             pays=fiche.pays, objet=objet, objet_id=fiche.pk
         ).select_related("auteur")
+        if objet == Changement.Objet.PROSPECT:
+            from .confidentialite import mobile_visible
+
+            # DC-58 : l'historique ne révèle pas un mobile que la fiche masque.
+            if not mobile_visible(fiche):
+                lignes = lignes.exclude(champ="telephone_mobile")
         return Response(s.ChangementFicheSerializer(lignes, many=True).data)
 
 

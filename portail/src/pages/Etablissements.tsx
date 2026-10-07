@@ -90,6 +90,7 @@ function DialogueEtablissement({
     activite: fiche?.activite ?? '',
     latitude: fiche?.latitude ?? null,
     longitude: fiche?.longitude ?? null,
+    rayon_pointage_m: fiche?.rayon_pointage_m ?? null,
     telephone: fiche?.telephone ?? '',
   });
   const [localisation, setLocalisation] = useState<'attente' | 'erreur' | null>(null);
@@ -238,6 +239,20 @@ function DialogueEtablissement({
             fullWidth
           />
         </Stack>
+        {/* DC-55 : grand hôpital, campus : un rayon de pointage propre à l'établissement. */}
+        <TextField
+          size="small"
+          label={t('etablissement.champs.rayon')}
+          helperText={t('etablissement.aides.rayon')}
+          value={f.rayon_pointage_m ?? ''}
+          onChange={(e) => {
+            const n = Number.parseInt(e.target.value, 10);
+            changer('rayon_pointage_m', Number.isNaN(n) ? null : n);
+          }}
+          slotProps={{ htmlInput: { inputMode: 'numeric' } }}
+          sx={{ mt: 1.5 }}
+          fullWidth
+        />
         {precision !== null && (
           <Typography variant="caption" sx={{ color: 'success.main' }}>
             {t('etablissement.aides.precision', { metres: precision })}

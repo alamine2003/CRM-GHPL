@@ -2,6 +2,7 @@ from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from .confidentialite import masquer
 from .models import Activite, Cible, Civilite, Etablissement, Exercice, Potentiel, Prospect
 
 
@@ -37,10 +38,14 @@ class ProspectSerializer(serializers.ModelSerializer):
         model = Prospect
         fields = [
             "id", "pays", "civilite", "nom", "prenom", "type", "type_libelle", "specialite",
-            "specialite_libelle", "numero_ordre", "telephone_mobile", "telephone_pro",
-            "courriel", "potentiel", "activite", "grade", "grade_libelle", "secteur", "localite",
-            "statut", "cree_par", "cree_le", "valide_le", "modifiable", "lieu_principal",
+            "specialite_libelle", "numero_ordre", "telephone_mobile", "contact_mobile_accepte",
+            "telephone_pro", "courriel", "potentiel", "activite", "grade", "grade_libelle",
+            "secteur", "localite", "statut", "cree_par", "cree_le", "valide_le", "modifiable",
+            "lieu_principal",
         ]  # fmt: skip
+
+    def to_representation(self, prospect):
+        return masquer(super().to_representation(prospect), prospect)
 
     def get_modifiable(self, prospect) -> bool:
         decider = self.context.get("peut_modifier")
@@ -77,6 +82,7 @@ class SaisieProspectSerializer(serializers.Serializer):
     specialite = serializers.UUIDField(required=False, allow_null=True)
     numero_ordre = serializers.CharField(max_length=40, required=False, allow_blank=True)
     telephone_mobile = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    contact_mobile_accepte = serializers.BooleanField(required=False)
     telephone_pro = serializers.CharField(max_length=30, required=False, allow_blank=True)
     courriel = serializers.EmailField(required=False, allow_blank=True)
     potentiel = serializers.ChoiceField(choices=Potentiel.choices, required=False)
@@ -127,8 +133,8 @@ class EtablissementSerializer(serializers.ModelSerializer):
         model = Etablissement
         fields = [
             "id", "pays", "nom", "type", "type_code", "type_libelle", "secteur", "adresse",
-            "localite", "activite", "latitude", "longitude", "a_coordonnees", "telephone",
-            "statut",
+            "localite", "activite", "latitude", "longitude", "a_coordonnees",
+            "rayon_pointage_m", "telephone", "statut",
             "cree_par", "cree_le", "valide_le", "modifiable",
         ]  # fmt: skip
 
@@ -155,6 +161,8 @@ class SaisieEtablissementSerializer(serializers.Serializer):
     activite = serializers.ChoiceField(choices=Activite.choices, required=False, allow_blank=True)
     latitude = serializers.FloatField(required=False, allow_null=True)
     longitude = serializers.FloatField(required=False, allow_null=True)
+    #: DC-55 : rayon de pointage propre ; vide, celui du pays.
+    rayon_pointage_m = serializers.IntegerField(required=False, allow_null=True)
     telephone = serializers.CharField(max_length=30, required=False, allow_blank=True)
 
 
@@ -242,6 +250,9 @@ class ProspectCibleSerializer(ProspectResumeSerializer):
     @extend_schema_field(LieuSerializer(allow_null=True))
     def get_lieu_principal(self, prospect):
         return ProspectSerializer.get_lieu_principal(self, prospect)
+
+    def to_representation(self, prospect):
+        return masquer(super().to_representation(prospect), prospect)
 
 
 class CibleSerializer(serializers.ModelSerializer):

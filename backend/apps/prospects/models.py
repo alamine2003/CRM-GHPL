@@ -58,6 +58,9 @@ class Prospect(ModeleDePays):
     )
     numero_ordre = models.CharField(max_length=40, blank=True)
     telephone_mobile = models.CharField(max_length=20, blank=True)
+    #: DC-58 : le prescripteur accepte d'être contacté sur son mobile personnel. Sans cet
+    #: accord, le numéro sert à repérer les doublons mais ne s'affiche qu'à l'administration.
+    contact_mobile_accepte = models.BooleanField(default=False)
     telephone_pro = models.CharField(max_length=20, blank=True)
     courriel = models.EmailField(blank=True)
     potentiel = models.CharField(max_length=1, choices=Potentiel.choices)
@@ -146,6 +149,8 @@ class Etablissement(ModeleDePays):
     activite = models.CharField(max_length=12, choices=Activite.choices, blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    #: DC-55 : rayon de pointage propre (grand hôpital, campus) ; vide, celui du pays.
+    rayon_pointage_m = models.PositiveIntegerField(null=True, blank=True)
     telephone = models.CharField(max_length=20, blank=True)
     statut = models.CharField(
         max_length=10, choices=StatutFiche.choices, default=StatutFiche.A_VALIDER

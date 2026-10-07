@@ -337,6 +337,8 @@ export interface SaisieProspect {
   specialite?: string | null;
   numero_ordre?: string;
   telephone_mobile?: string;
+  /** DC-58 : le prescripteur accepte d'être contacté sur son mobile personnel. */
+  contact_mobile_accepte?: boolean;
   telephone_pro?: string;
   courriel?: string;
   potentiel: Potentiel;
@@ -374,6 +376,8 @@ export interface SaisieEtablissement {
   activite?: ActiviteExercice | '';
   latitude?: number | null;
   longitude?: number | null;
+  /** DC-55 : rayon de pointage propre, en mètres ; vide, celui du pays. */
+  rayon_pointage_m?: number | null;
   telephone?: string;
 }
 

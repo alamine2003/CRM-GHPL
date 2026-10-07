@@ -191,6 +191,7 @@ def _verifier(pays: Pays, champs: dict) -> dict:
         "telephone_mobile": normaliser_telephone(
             champs.get("telephone_mobile"), pays, "telephone_mobile"
         ),
+        "contact_mobile_accepte": bool(champs.get("contact_mobile_accepte")),
         "telephone_pro": normaliser_telephone(champs.get("telephone_pro"), pays, "telephone_pro"),
         "courriel": (champs.get("courriel") or "").strip().lower(),
         "potentiel": potentiel,
@@ -264,8 +265,8 @@ def saisir_prospect(pays: Pays, auteur: Utilisateur, *, actif: bool, **champs):
 
 
 SUIVIS = ["civilite", "nom", "prenom", "type", "specialite", "numero_ordre",
-          "telephone_mobile", "telephone_pro", "courriel", "potentiel", "activite", "grade",
-          "secteur", "localite"]  # fmt: skip
+          "telephone_mobile", "contact_mobile_accepte", "telephone_pro", "courriel", "potentiel",
+          "activite", "grade", "secteur", "localite"]  # fmt: skip
 
 
 def modifier_prospect(
@@ -374,7 +375,26 @@ def rechercher(qs: QuerySet, texte: str) -> QuerySet:
 # --- Établissements (PRP-003) ---------------------------------------------------------------
 
 SUIVIS_ETABLISSEMENT = ["nom", "type", "secteur", "adresse", "localite", "activite",
-                        "latitude", "longitude", "telephone"]  # fmt: skip
+                        "latitude", "longitude", "rayon_pointage_m", "telephone"]  # fmt: skip
+
+#: DC-55 : bornes du rayon de pointage propre à un établissement, en mètres.
+RAYON_MIN, RAYON_MAX = 50, 2000
+
+
+def _rayon(valeur) -> int | None:
+    if valeur in (None, ""):
+        return None
+    if (
+        isinstance(valeur, bool)
+        or not isinstance(valeur, int)
+        or not (RAYON_MIN <= valeur <= RAYON_MAX)
+    ):
+        raise ErreurMetier(
+            "rayon_invalide",
+            _("Le rayon de pointage est compris entre 50 et 2 000 mètres."),
+            champ="rayon_pointage_m",
+        )
+    return valeur
 
 
 def _coordonnee(valeur, minimum: int, maximum: int, champ: str) -> Decimal | None:
@@ -418,6 +438,7 @@ def _verifier_etablissement(pays: Pays, champs: dict) -> dict:
         "adresse": (champs.get("adresse") or "").strip(),
         "latitude": latitude,
         "longitude": longitude,
+        "rayon_pointage_m": _rayon(champs.get("rayon_pointage_m")),
         "telephone": normaliser_telephone(champs.get("telephone"), pays, "telephone"),
     }
 

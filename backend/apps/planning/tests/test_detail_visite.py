@@ -58,7 +58,8 @@ def test_vis002_le_detail_dit_le_prospect_le_lieu_et_les_coordonnees(monde, terr
     with freeze_time("2026-10-13 08:00"):
         d = client_de(monde["deleg.sn"]).get(f"/api/v1/visites/{actuelle.pk}/detail/").json()
     assert (d["visite"]["id"], d["visite"]["objectif"]) == (str(actuelle.pk), "A 1")
-    assert d["prospect"]["telephone_mobile"] == "+221 70 000 00 00"
+    # DC-58 : sans l'accord du médecin ni la liste cible, le mobile personnel reste masqué.
+    assert d["prospect"]["telephone_mobile"] == ""
     assert (d["lieu"]["nom"], d["lieu"]["adresse"]) == ("Clinique du Cap", "Rue fictive 1")
     assert (d["lieu"]["latitude"], d["lieu"]["longitude"]) == ("14.700000", "-17.400000")
 

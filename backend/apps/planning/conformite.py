@@ -7,9 +7,14 @@ durée d'une visite. Tant que la journée n'est pas validée (cycle 0.6), elle e
 chaque lecture, donc avec les paramètres du moment ; validée, elle est figée (CA3).
 
 Écarts relevés, visite par visite : `hors_plage` (début ou fin hors de la plage horaire),
-`distance` (début ou fin plus loin du lieu que la distance de pointage), `duree_courte`,
+`distance` (début ou fin plus loin du lieu que la distance de pointage, ou que le rayon propre
+de l'établissement, DC-55), `duree_courte`,
 `duree_longue`, `imprevue` (VIS-008), `a_justifier` (restée prévue après sa journée, VIS-009) ;
 pour la journée, `sans_gps` quand les visites sans GPS dépassent la tolérance.
+
+DC-55 : une position dont la précision annoncée dépasse le seuil ne prouve ni la présence ni
+l'absence ; elle compte comme une visite sans GPS (dans la tolérance du pays) et n'est jamais
+« loin du lieu ».
 """
 
 from datetime import date, datetime, time
@@ -49,11 +54,12 @@ def ecarts_du_jour(planning: Planning, jour: date, regles: dict) -> list[dict]:
     fin_plage = time.fromisoformat(regles["plage"]["fin"])
     visites = (
         planning.visites.filter(archive_le__isnull=True, date=jour)
-        .select_related("prospect")
+        .select_related("prospect", "etablissement")
         .order_by("heure", "ordre")
     )
     ecarts: list[dict] = []
     sans_gps = 0
+    imprecises = 0
 
     def ecart(code, visite=None, **detail):
         ecarts.append({"code": code, "visite": str(visite.pk) if visite else None,
@@ -76,11 +82,20 @@ def ecarts_du_jour(planning: Planning, jour: date, regles: dict) -> list[dict]:
         if any(h < debut_plage or h > fin_plage for h in heures):
             ecart("hors_plage", v, debut=heures[0].strftime("%H:%M"),
                   fin=heures[1].strftime("%H:%M") if len(heures) > 1 else None)  # fmt: skip
-        if v.sans_gps or (v.fin_le and v.fin_sans_gps):
+        seuil = (v.etablissement.rayon_pointage_m if v.etablissement else None) or regles[
+            "distance_m"
+        ]
+        pointages = [(v.distance_debut_m, v.debut_precision_m)]
+        if v.fin_le:
+            pointages.append((v.distance_fin_m, v.fin_precision_m))
+        # DC-55 : une position plus imprécise que le seuil ne départage rien.
+        imprecis = any(d is not None and p is not None and p > seuil for d, p in pointages)
+        if v.sans_gps or (v.fin_le and v.fin_sans_gps) or imprecis:
             sans_gps += 1
-        distances = [d for d in (v.distance_debut_m, v.distance_fin_m) if d is not None]
-        if distances and max(distances) > regles["distance_m"]:
-            ecart("distance", v, distance_m=max(distances), seuil_m=regles["distance_m"])
+            imprecises += int(imprecis and not (v.sans_gps or (v.fin_le and v.fin_sans_gps)))
+        distances = [d for d, p in pointages if d is not None and (p is None or p <= seuil)]
+        if distances and max(distances) > seuil:
+            ecart("distance", v, distance_m=max(distances), seuil_m=seuil)
         if v.statut == StatutVisite.EFFECTUEE and v.fin_le:
             minutes = round((v.fin_le - v.debut_le).total_seconds() / 60)
             if minutes < regles["duree_min"]["min"]:
@@ -88,7 +103,8 @@ def ecarts_du_jour(planning: Planning, jour: date, regles: dict) -> list[dict]:
             elif minutes > regles["duree_min"]["max"]:
                 ecart("duree_longue", v, minutes=minutes, seuil=regles["duree_min"]["max"])
     if sans_gps > regles["sans_gps_toleres"]:
-        ecart("sans_gps", nombre=sans_gps, tolerees=regles["sans_gps_toleres"])
+        ecart("sans_gps", nombre=sans_gps, tolerees=regles["sans_gps_toleres"],
+              imprecises=imprecises)  # fmt: skip
     return ecarts
 
 

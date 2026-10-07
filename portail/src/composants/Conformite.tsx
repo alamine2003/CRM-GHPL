@@ -32,7 +32,13 @@ function texteEcart(e: Ecart, t: ReturnType<typeof useTranslation>['t']) {
     case 'a_justifier':
       return t('conformite.ecarts.a_justifier', { qui });
     case 'sans_gps':
-      return t('conformite.ecarts.sans_gps', { count: e.nombre, tolerees: e.tolerees });
+      return [
+        t('conformite.ecarts.sans_gps', { count: e.nombre, tolerees: e.tolerees }),
+        // DC-55 : dont les positions trop imprécises pour juger de la distance.
+        e.imprecises ? t('conformite.ecarts.dontImprecises', { count: e.imprecises }) : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
   }
 }
 

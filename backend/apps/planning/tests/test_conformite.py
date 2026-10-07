@@ -153,3 +153,27 @@ def test_vis010_ca1_la_journee_du_jour_n_est_pas_terminee(monde, approuvees):
     assert (j["classement"], j["terminee"]) == ("conforme", False)
     with freeze_time("2026-10-14 08:00"):
         assert journee(monde, v1.planning)["terminee"] is True
+
+
+@freeze_time("2026-10-13 18:00")
+def test_dc55_une_position_imprecise_n_est_pas_loin_du_lieu(monde, approuvees):
+    """Précision annoncée de 250 m pour un seuil de 100 m : rien ne se conclut sur la
+    distance ; la visite compte comme sans GPS, dans la tolérance du pays."""
+    v1, v2 = approuvees
+    faire(v1, utc(9, 2), utc(9, 25), distance=180)
+    type(v1).objects.filter(pk=v1.pk).update(debut_precision_m=250, fin_precision_m=250)
+    faire(v2, utc(11, 0), utc(11, 20))
+    j = journee(monde, v1.planning)
+    assert (j["classement"], j["ecarts"]) == ("conforme", [])
+
+
+@freeze_time("2026-10-13 18:00")
+def test_dc55_le_rayon_propre_de_l_etablissement_remplace_celui_du_pays(monde, terrain, approuvees):
+    v1, v2 = approuvees
+    faire(v1, utc(9, 2), utc(9, 25), distance=350)
+    faire(v2, utc(11, 0), utc(11, 20))
+    assert journee(monde, v1.planning)["classement"] == "a_verifier"
+    clinique = terrain["clinique"]
+    clinique.rayon_pointage_m = 400
+    clinique.save(update_fields=["rayon_pointage_m"])
+    assert journee(monde, v1.planning)["classement"] == "conforme"

@@ -781,7 +781,9 @@
       "potentiel": "Potentiel",
       "grade": "Grade",
       "nomAide": "Enregistré en majuscules ; le titre (Dr, Pr) va dans la civilité.",
-      "statut": "Statut"
+      "statut": "Statut",
+      "contactMobileAccepte": "Le prescripteur accepte d'être contacté sur ce numéro",
+      "contactMobileAccepteCourt": "Contact sur le mobile accepté"
     },
     "aides": {
       "aValider": "À l'enregistrement, le système vérifie les doublons : sans doublon, la fiche devient aussitôt commune ; sinon elle attend la décision de l'administrateur pays.",
@@ -845,7 +847,8 @@
       "telephone": "Téléphone",
       "latitude": "Latitude",
       "longitude": "Longitude",
-      "position": "Position GPS de référence"
+      "position": "Position GPS de référence",
+      "rayon": "Rayon de pointage (mètres)"
     },
     "aides": {
       "aValider": "Votre fiche sera « à valider » : vous pouvez l'utiliser tout de suite ; les autres la verront une fois validée.",
@@ -853,7 +856,8 @@
       "maPosition": "Utiliser ma position",
       "positionEnCours": "Localisation…",
       "positionImpossible": "Position indisponible : autorisez la localisation ou saisissez les coordonnées.",
-      "precision": "Précision : {{metres}} m"
+      "precision": "Précision : {{metres}} m",
+      "rayon": "Facultatif : pour un grand établissement (hôpital, campus). Vide : la distance du pays."
     },
     "fiche": {
       "carte": "Carte",
@@ -1954,7 +1958,9 @@
       "imprevue": "{{qui}} : visite imprévue, « {{justification}} »",
       "a_justifier": "{{qui}} : restée prévue, à justifier",
       "sans_gps_one": "{{count}} visite sans GPS (tolérance : {{tolerees}})",
-      "sans_gps_other": "{{count}} visites sans GPS (tolérance : {{tolerees}})"
+      "sans_gps_other": "{{count}} visites sans GPS (tolérance : {{tolerees}})",
+      "dontImprecises_one": "dont {{count}} à la position trop imprécise",
+      "dontImprecises_other": "dont {{count}} à la position trop imprécise"
     },
     "enCours": "Journée en cours : aucun écart pour l'instant"
   },

@@ -781,7 +781,9 @@
       "potentiel": "Potential",
       "grade": "Title",
       "nomAide": "Saved in capitals; the title (Dr, Pr) goes in the salutation.",
-      "statut": "Status"
+      "statut": "Status",
+      "contactMobileAccepte": "The prescriber agrees to be contacted on this number",
+      "contactMobileAccepteCourt": "Agrees to mobile contact"
     },
     "aides": {
       "aValider": "On saving, the system checks for duplicates: without one, the record becomes shared at once; otherwise it waits for the country administrator’s decision.",
@@ -845,7 +847,8 @@
       "telephone": "Phone",
       "latitude": "Latitude",
       "longitude": "Longitude",
-      "position": "Reference GPS position"
+      "position": "Reference GPS position",
+      "rayon": "Check-in radius (metres)"
     },
     "aides": {
       "aValider": "Your record will be “to validate”: you can use it right away; others will see it once validated.",
@@ -853,7 +856,8 @@
       "maPosition": "Use my position",
       "positionEnCours": "Locating…",
       "positionImpossible": "Position unavailable: allow location access or enter the coordinates.",
-      "precision": "Accuracy: {{metres}} m"
+      "precision": "Accuracy: {{metres}} m",
+      "rayon": "Optional: for a large site (hospital, campus). Empty: the country distance."
     },
     "fiche": {
       "carte": "Map",
@@ -1954,7 +1958,9 @@
       "imprevue": "{{qui}}: unplanned visit, “{{justification}}”",
       "a_justifier": "{{qui}}: still planned, to account for",
       "sans_gps_one": "{{count}} visit without GPS (tolerance: {{tolerees}})",
-      "sans_gps_other": "{{count}} visits without GPS (tolerance: {{tolerees}})"
+      "sans_gps_other": "{{count}} visits without GPS (tolerance: {{tolerees}})",
+      "dontImprecises_one": "including {{count}} with a position too imprecise",
+      "dontImprecises_other": "including {{count}} with positions too imprecise"
     },
     "enCours": "Day in progress: no issue so far"
   },

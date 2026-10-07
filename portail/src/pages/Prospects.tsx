@@ -118,6 +118,7 @@ function DialogueProspect({
     specialite: prospect?.specialite ?? null,
     numero_ordre: prospect?.numero_ordre ?? '',
     telephone_mobile: prospect?.telephone_mobile ?? '',
+    contact_mobile_accepte: prospect?.contact_mobile_accepte ?? false,
     telephone_pro: prospect?.telephone_pro ?? '',
     courriel: prospect?.courriel ?? '',
     potentiel: prospect?.potentiel ?? 'B',
@@ -343,6 +344,16 @@ function DialogueProspect({
           fullWidth
         />
       </Stack>
+      {/* DC-58 : sans cet accord, le mobile personnel ne s'affiche qu'à l'administration. */}
+      <FormControlLabel
+        control={
+          <Switch
+            checked={Boolean(f.contact_mobile_accepte)}
+            onChange={(e) => setF({ ...f, contact_mobile_accepte: e.target.checked })}
+          />
+        }
+        label={t('prospect.champs.contactMobileAccepte')}
+      />
       <TextField
         label={t('prospect.champs.courriel')}
         value={f.courriel}
@@ -514,6 +525,12 @@ function FicheProspect({
               libelle={t('prospect.champs.telephoneMobile')}
               valeur={telephone(p.telephone_mobile)}
             />
+            {p.telephone_mobile && (
+              <Ligne
+                libelle={t('prospect.champs.contactMobileAccepteCourt')}
+                valeur={p.contact_mobile_accepte ? t('commun.oui') : t('commun.non')}
+              />
+            )}
             <Ligne
               libelle={t('prospect.champs.telephonePro')}
               valeur={telephone(p.telephone_pro)}

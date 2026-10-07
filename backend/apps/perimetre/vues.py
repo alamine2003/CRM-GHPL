@@ -43,8 +43,14 @@ class VuePerimetre(GenericAPIView):
     def dispatch(self, request, *args, **kwargs):
         # Une transaction par requête métier : l'isolation fixée dans la base ne vaut
         # que pour elle (couche 2, ADR-003).
-        with transaction.atomic():
-            return super().dispatch(request, *args, **kwargs)
+        from apps.prospects.confidentialite import lecteur
+
+        jeton = lecteur.set(None)
+        try:
+            with transaction.atomic():
+                return super().dispatch(request, *args, **kwargs)
+        finally:
+            lecteur.reset(jeton)
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
@@ -53,6 +59,10 @@ class VuePerimetre(GenericAPIView):
 
         exiger_double_auth(request)
         isolation.appliquer(self.perimetre)
+        # DC-58 : qui lit, pour masquer le mobile personnel des prescripteurs.
+        from apps.prospects.confidentialite import lecteur
+
+        lecteur.set(self.perimetre)
         definir_roles(self.perimetre.roles, self.perimetre.pays_actif)
         journalisation.pays.set(
             self.perimetre.pays_actif.code if self.perimetre.pays_actif else "consolide"

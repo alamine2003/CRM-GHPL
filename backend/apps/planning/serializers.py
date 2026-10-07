@@ -421,6 +421,8 @@ class EcartConformiteSerializer(serializers.Serializer):
     seuil = serializers.IntegerField(required=False)
     nombre = serializers.IntegerField(required=False)
     tolerees = serializers.IntegerField(required=False)
+    #: DC-55 : visites comptées sans GPS parce que leur position était trop imprécise.
+    imprecises = serializers.IntegerField(required=False)
     justification = serializers.CharField(required=False, allow_blank=True)
 
 
@@ -724,6 +726,11 @@ class CoordonneesProspectSerializer(serializers.Serializer):
     telephone_mobile = serializers.CharField(allow_blank=True)
     telephone_pro = serializers.CharField(allow_blank=True)
     courriel = serializers.CharField(allow_blank=True)
+
+    def to_representation(self, prospect):
+        from apps.prospects.confidentialite import masquer
+
+        return masquer(super().to_representation(prospect), prospect)
 
 
 class CoordonneesLieuSerializer(serializers.Serializer):

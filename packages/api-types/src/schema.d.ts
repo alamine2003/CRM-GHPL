@@ -3382,6 +3382,7 @@ export interface components {
       seuil?: number;
       nombre?: number;
       tolerees?: number;
+      imprecises?: number;
       justification?: string;
     };
     /**
@@ -3434,6 +3435,7 @@ export interface components {
       /** Format: double */
       longitude: number | null;
       readonly a_coordonnees: boolean;
+      rayon_pointage_m?: number | null;
       telephone?: string;
       statut?: components['schemas']['StatutFicheEnum'];
       cree_par: components['schemas']['PersonneResume'];
@@ -3975,6 +3977,7 @@ export interface components {
       latitude?: number | null;
       /** Format: double */
       longitude?: number | null;
+      rayon_pointage_m?: number | null;
       telephone?: string;
     };
     PatchedSaisieProspect: {
@@ -3987,6 +3990,7 @@ export interface components {
       specialite?: string | null;
       numero_ordre?: string;
       telephone_mobile?: string;
+      contact_mobile_accepte?: boolean;
       telephone_pro?: string;
       courriel?: string;
       potentiel?: components['schemas']['PotentielEnum'];
@@ -4254,6 +4258,7 @@ export interface components {
       specialite_libelle?: string | null;
       numero_ordre?: string;
       telephone_mobile?: string;
+      contact_mobile_accepte?: boolean;
       telephone_pro?: string;
       courriel?: string;
       potentiel: components['schemas']['PotentielEnum'];
@@ -4306,6 +4311,7 @@ export interface components {
       specialite_libelle?: string | null;
       numero_ordre?: string;
       telephone_mobile?: string;
+      contact_mobile_accepte?: boolean;
       telephone_pro?: string;
       courriel?: string;
       potentiel: components['schemas']['PotentielEnum'];
@@ -4671,6 +4677,7 @@ export interface components {
       latitude?: number | null;
       /** Format: double */
       longitude?: number | null;
+      rayon_pointage_m?: number | null;
       telephone?: string;
     };
     SaisieExercice: {
@@ -4718,6 +4725,7 @@ export interface components {
       specialite?: string | null;
       numero_ordre?: string;
       telephone_mobile?: string;
+      contact_mobile_accepte?: boolean;
       telephone_pro?: string;
       courriel?: string;
       potentiel?: components['schemas']['PotentielEnum'];
