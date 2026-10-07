@@ -122,6 +122,16 @@ ARTICLES_PROMOTIONNELS = [
     ("agenda", "Agenda", "Diary"),
 ]
 
+#: Types de la prochaine action du rapport (RPT-006), proposés par défaut [H].
+TYPES_ACTION = [
+    ("revisiter", "Revisiter le prescripteur", "Visit the prescriber again"),
+    ("documentation", "Envoyer de la documentation", "Send documentation"),
+    ("echantillons", "Apporter des échantillons", "Bring samples"),
+    ("etude", "Présenter une étude", "Present a study"),
+    ("reunion", "Organiser une réunion", "Organise a meeting"),
+    ("autre", "Autre", "Other"),
+]
+
 #: Listes initiales, dans l'ordre de création (un parent avant ses enfants).
 INITIALES = {
     "type_prospect": TYPES_PROSPECT,
@@ -131,6 +141,7 @@ INITIALES = {
     "motif_ecart": MOTIFS_ECART,
     "resultat_visite": RESULTATS_VISITE,
     "article_promotionnel": ARTICLES_PROMOTIONNELS,
+    "type_action": TYPES_ACTION,
 }
 
 

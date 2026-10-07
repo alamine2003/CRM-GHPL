@@ -480,6 +480,7 @@ class Generateur:
             presentations = [{"produit": str(p.pk), "retour": retours[(i + j) % 4]}
                              for j, p in enumerate(portefeuille[: 1 + i % 3])]  # fmt: skip
             cadeaux = list(rap.articles(pays))
+            types = {v.code: v for v in rap.types_action(pays)}
             resume, suite = self.RESUMES[i % len(self.RESUMES)]
             if i == len(effectuees) - 2:
                 rap.enregistrer(rapport, presentations=presentations, resume=resume)
@@ -498,6 +499,12 @@ class Generateur:
             rap.enregistrer(rapport, presentations=presentations, remises=remises,
                             resultat=resultats[i % 3].pk,
                             resultat_obtenu=obtenu, resume=resume, prochaine_action=suite,
+                            # RPT-006 : un type, une échéance de deux semaines, une visite
+                            # proposée une fois sur deux.
+                            prochaine_action_type=types[("etude", "revisiter", "documentation",
+                                                         "revisiter")[i % 4]].pk,
+                            prochaine_action_echeance=visite.date + timedelta(days=14),
+                            visite_proposee=i % 2 == 0,
                             champs={d["code"]: 5 + (i * 7) % 30 for d in rapport.definitions
                                     if d["type"] == "nombre"})  # fmt: skip
             rap.soumettre(rapport, visite.fin_le + timedelta(minutes=40 + (i * 13) % 80))

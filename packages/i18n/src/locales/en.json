@@ -689,7 +689,8 @@
       "motif_ecart": "Deviation reasons",
       "grade": "Titles",
       "resultat_visite": "Visit outcomes",
-      "article_promotionnel": "Promotional items"
+      "article_promotionnel": "Promotional items",
+      "type_action": "Next action types"
     },
     "aides": {
       "type_prospect": "Doctor, pharmacist, midwife… Each prospect record has one.",
@@ -698,7 +699,8 @@
       "classe_therapeutique": "Product classification (Cardio, Diabetes…).",
       "motif_ecart": "Reasons a rep picks when a planned visit does not take place.",
       "resultat_visite": "Short list the representative picks in the visit report.",
-      "article_promotionnel": "Gifts a representative can hand out during a visit (pen, notepad…)."
+      "article_promotionnel": "Gifts a representative can hand out during a visit (pen, notepad…).",
+      "type_action": "What the representative plans to do after a visit (visit again, send documentation…)."
     },
     "valeur": {
       "nouvelle": "New value",
@@ -1980,7 +1982,8 @@
       "resultat": "outcome",
       "resume": "summary",
       "prochaine_action": "next action",
-      "retours": "prescriber feedback on each product"
+      "retours": "prescriber feedback on each product",
+      "prochaine_action_type": "next action type"
     },
     "manque": "To complete before submitting: {{liste}}.",
     "soumettre": "Submit the report",
@@ -2029,7 +2032,19 @@
       "peu": "A little",
       "prescrit": "Prescribes",
       "tres_bien": "A lot"
-    }
+    },
+    "prochaineActionPrecision": "Describe the action",
+    "echeance": "Due date",
+    "sansEcheance": "No due date",
+    "delais": {
+      "7": "In 1 week",
+      "14": "In 2 weeks",
+      "30": "In 1 month"
+    },
+    "echeanceLe": "To do by {{date}}",
+    "visiteProposee": "Suggest a new visit",
+    "visiteProposeeLue": "New visit suggested",
+    "actionPrecedente": "Action planned at the visit of {{date}}"
   },
   "champsRapport": {
     "titre": "Report fields",

@@ -2,6 +2,24 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.4] — Prochaine action
+
+Quatrième jalon du cycle 0.5 « Rapports de visite ».
+
+### Ajouté (RPT-006)
+
+- La prochaine action a un **type** (nouvelle liste « Types de prochaine action » du pays) et une précision, obligatoires pour soumettre ; une **échéance** facultative (1 semaine, 2 semaines, 1 mois après la visite) ; « Proposer une nouvelle visite ».
+- **CA1** : à la visite suivante du même prospect, le délégué retrouve l'action notée la dernière fois, sur le détail de la visite (même sans réseau) et en tête du rapport ; jamais celle d'un collègue, jamais un brouillon.
+- Démonstration : prochaines actions typées, avec échéance, sur les rapports passés.
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px). Seconde revue après correction :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Rapport, prochaine action | « Précisez l'action » et « Échéance » se collaient aux choix au-dessus. | Un espace sépare chaque bloc. |
+
 ## [0.5.3] — Produits présentés, retour du prescripteur, échantillons et cadeaux
 
 Troisième jalon du cycle 0.5 « Rapports de visite ».

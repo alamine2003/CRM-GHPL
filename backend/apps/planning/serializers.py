@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.organisation.serializers import ResumeSerializer
+from apps.rapports.serializers import ActionPrecedenteSerializer
 
 from .controles import CODES, GRAVITES
 from .models import (
@@ -751,6 +752,8 @@ class DetailVisiteSerializer(serializers.Serializer):
     lieu = CoordonneesLieuSerializer(allow_null=True)
     #: Les 3 dernières visites du délégué chez ce prospect, de la plus récente (CA1).
     historique = VisitePasseeSerializer(many=True)
+    #: RPT-006 CA1 : la prochaine action notée à la dernière visite chez ce prospect.
+    action_precedente = ActionPrecedenteSerializer(allow_null=True)
 
 
 class DemarrageSerializer(serializers.Serializer):

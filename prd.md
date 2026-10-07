@@ -678,7 +678,7 @@ Mise en œuvre (0.3.9) :
 - **CA1 (RPT-008)** : un rapport garde les champs du pays tels qu'à son ouverture ; un champ ajouté, modifié ou retiré ne vaut que pour les rapports ouverts ensuite.
 - **Résultats de visite** : nouvelle liste de référence du pays, modifiable dans « Référentiels » ; valeurs initiales [H] : objectif atteint, objectif partiellement atteint, objectif non atteint, à relancer.
 - **Hors connexion** [H] : en 0.5.1, le rapport s'ouvre et s'envoie avec du réseau ; sans réseau, l'écran le dit et la visite reste gardée sur le téléphone. Le brouillon gardé sur le téléphone arrive en 0.5.6, la soumission hors connexion et le marquage en retard en 0.5.7 (RPT-010).
-- Hors de 0.5.1 : objectif rappelé en tête (RPT-003, livré en 0.5.2, §14.32), retour du prescripteur par produit, échantillons et cadeaux (RPT-004, RPT-005, livrés en 0.5.3, §14.33), prochaine action typée avec échéance (RPT-006, 0.5.4).
+- Hors de 0.5.1 : objectif rappelé en tête (RPT-003, livré en 0.5.2, §14.32), retour du prescripteur par produit, échantillons et cadeaux (RPT-004, RPT-005, livrés en 0.5.3, §14.33), prochaine action typée avec échéance (RPT-006, livrée en 0.5.4, §14.34).
 
 ### 14.32 Objectif prévu et résultat obtenu (mise en œuvre 0.5.2)
 
@@ -696,6 +696,13 @@ Mise en œuvre (0.3.9) :
 - **Échantillons et cadeaux remis** (RPT-005, RG-038), facultatifs : « Échantillon » propose les produits du portefeuille déjà présentés à cette visite [H] ; « Cadeau » propose la liste « Articles promotionnels » du pays (stylo, bloc-notes, calendrier, agenda [H], modifiable dans « Référentiels »). Toucher un élément l'ajoute ; « − » et « + » règlent la quantité (1 à 999) ; « − » à 1 le retire.
 - **CA1 (RPT-005)** : aucune notion de solde ni de dotation ; le rapport garde seulement ce qui a été remis.
 - Le rapport soumis se lit : « 1. Produit — Prescrit très bien », puis « Échantillon · Produit × 2 », « Cadeau · Stylo × 1 ».
+
+### 14.34 Prochaine action (mise en œuvre 0.5.4)
+
+- **Prochaine action** (RPT-006) : un **type** choisi dans la liste du pays « Types de prochaine action » (revisiter le prescripteur, envoyer de la documentation, apporter des échantillons, présenter une étude, organiser une réunion, autre [H], modifiable dans « Référentiels ») et une **précision** en clair ; les deux sont obligatoires pour soumettre.
+- **Échéance** facultative [H] : « Sans échéance », « Dans 1 semaine », « Dans 2 semaines », « Dans 1 mois », comptés depuis le jour de la visite ; jamais avant la visite.
+- **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». En 0.5.4, il est noté et rappelé ; il ne crée pas de visite dans le planning [H].
+- **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

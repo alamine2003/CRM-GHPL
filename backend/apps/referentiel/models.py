@@ -28,6 +28,7 @@ class Liste(models.TextChoices):
     MOTIF_ECART = "motif_ecart", "Motifs d'écart"
     RESULTAT_VISITE = "resultat_visite", "Résultats de visite"
     ARTICLE_PROMOTIONNEL = "article_promotionnel", "Articles promotionnels"
+    TYPE_ACTION = "type_action", "Types de prochaine action"
 
 
 def _unique_hors_archives(champs: list[str], nom: str) -> models.UniqueConstraint:

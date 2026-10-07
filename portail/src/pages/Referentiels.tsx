@@ -63,6 +63,7 @@ const LISTES: ListeReferentiel[] = [
   'motif_ecart',
   'resultat_visite',
   'article_promotionnel',
+  'type_action',
 ];
 
 type Onglet = 'produits' | 'portefeuilles' | 'listes';

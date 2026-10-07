@@ -94,6 +94,13 @@ class Rapport(ModeleDePays):
     resultat_obtenu = models.CharField(max_length=1000, blank=True)
     resume = models.TextField(blank=True)
     prochaine_action = models.CharField(max_length=500, blank=True)
+    #: RPT-006 : la prochaine action a un type (liste du pays), une échéance facultative et,
+    #: au besoin, la proposition d'une nouvelle visite.
+    prochaine_action_type = models.ForeignKey(
+        "referentiel.Valeur", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    prochaine_action_echeance = models.DateField(null=True, blank=True)
+    visite_proposee = models.BooleanField(default=False)
     #: Valeurs des champs du pays, par code.
     champs = models.JSONField(default=dict, blank=True)
     #: Les champs du pays tels qu'à la création du rapport (RPT-008 CA1).

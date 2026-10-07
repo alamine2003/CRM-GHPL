@@ -15,15 +15,25 @@ import type {
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Switch, View } from 'react-native';
+import { ActionPrecedente } from './ActionPrecedente';
 import { envoyerAttente, estTransitoire } from './Brouillons';
 import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from './composants';
 import { Pilule } from './Etablissements';
+import i18n from './i18n';
+import { ProchaineAction } from './ProchaineAction';
 import { ProduitsPresentes, Remises } from './RapportProduits';
 import { changerVisite, useVisiteDuProgramme } from './Execution';
 import { nomProspect } from './Fiches';
 import { messageErreur, useSession } from './session';
 
-const SOCLE = ['produits', 'retours', 'resultat', 'resume', 'prochaine_action'] as const;
+const SOCLE = [
+  'produits',
+  'retours',
+  'resultat',
+  'resume',
+  'prochaine_action_type',
+  'prochaine_action',
+] as const;
 const MODIFIABLES = new Set(['brouillon', 'a_corriger', 'rouvert']);
 
 type Saisie = Required<Omit<SaisieRapport, 'champs'>> & { champs: ValeursChamps };
@@ -36,6 +46,9 @@ function saisieDe(rapport: Rapport): Saisie {
     resultat_obtenu: rapport.resultat_obtenu,
     resume: rapport.resume,
     prochaine_action: rapport.prochaine_action,
+    prochaine_action_type: rapport.prochaine_action_type,
+    prochaine_action_echeance: rapport.prochaine_action_echeance,
+    visite_proposee: rapport.visite_proposee,
     champs: (rapport.champs ?? {}) as ValeursChamps,
   };
 }
@@ -47,6 +60,7 @@ export function manquantsDe(saisie: Saisie, definitions: DefinitionChamp[]): str
     retours: saisie.presentations.every((x) => !!x.retour),
     resultat: saisie.resultat != null,
     resume: saisie.resume.trim() !== '',
+    prochaine_action_type: saisie.prochaine_action_type != null,
     prochaine_action: saisie.prochaine_action.trim() !== '',
   };
   return [
@@ -189,6 +203,16 @@ function Bloc({ libelle, valeur }: { libelle: string; valeur: string }) {
   );
 }
 
+/** « mar. 20 oct. » : une date du rapport, lisible. */
+function dateCourte(iso: string) {
+  return new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  }).format(new Date(`${iso}T12:00:00Z`));
+}
+
 /** Le rapport soumis, en lecture : ce qui a été transmis au superviseur. */
 function RapportLu({ rapport }: { rapport: Rapport }) {
   const { t } = useTranslation();
@@ -230,7 +254,21 @@ function RapportLu({ rapport }: { rapport: Rapport }) {
         }
       />
       <Bloc libelle={t('rapport.resume')} valeur={rapport.resume || '—'} />
-      <Bloc libelle={t('rapport.prochaineAction')} valeur={rapport.prochaine_action || '—'} />
+      <Bloc
+        libelle={t('rapport.prochaineAction')}
+        valeur={
+          [
+            libelleDe(rapport.types_action_proposes, rapport.prochaine_action_type),
+            rapport.prochaine_action,
+            rapport.prochaine_action_echeance
+              ? t('rapport.echeanceLe', { date: dateCourte(rapport.prochaine_action_echeance) })
+              : '',
+            rapport.visite_proposee ? t('rapport.visiteProposeeLue') : '',
+          ]
+            .filter((x) => x && x !== '—')
+            .join('\n') || '—'
+        }
+      />
       {rapport.definitions.map((d) => (
         <Bloc key={d.code} libelle={d.libelle} valeur={valeur(d)} />
       ))}
@@ -345,6 +383,7 @@ export function FormulaireRapport({ id }: { id: string }) {
       )}
 
       <ObjectifPrevu rapport={rapport} />
+      <ActionPrecedente action={rapport.action_precedente} />
       <View style={{ gap: 6 }}>
         <Texte variante="sousTitre">{t('rapport.resultat')}</Texte>
         <Texte variante="discret">{t('rapport.resultatAide')}</Texte>
@@ -384,13 +423,11 @@ export function FormulaireRapport({ id }: { id: string }) {
         maxLength={4000}
         multiline
       />
-      <Champ
-        libelle={t('rapport.prochaineAction')}
-        placeholder={t('rapport.prochaineActionIndice')}
-        value={saisie.prochaine_action}
-        onChangeText={(prochaine_action) => changer({ prochaine_action })}
-        maxLength={500}
-        multiline
+      <ProchaineAction
+        rapport={rapport}
+        saisie={saisie}
+        jourVisite={visite?.date ?? new Date().toISOString().slice(0, 10)}
+        surChangement={changer}
       />
 
       <Remises

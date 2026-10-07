@@ -689,7 +689,8 @@
       "motif_ecart": "Motifs d'écart",
       "grade": "Grades",
       "resultat_visite": "Résultats de visite",
-      "article_promotionnel": "Articles promotionnels"
+      "article_promotionnel": "Articles promotionnels",
+      "type_action": "Types de prochaine action"
     },
     "aides": {
       "type_prospect": "Médecin, pharmacien, sage-femme… Chaque fiche prospect en porte un.",
@@ -698,7 +699,8 @@
       "classe_therapeutique": "Classement des produits (Cardio, Diabéto…).",
       "motif_ecart": "Motifs qu'un délégué choisit quand une visite prévue n'a pas lieu.",
       "resultat_visite": "Liste courte que le délégué choisit dans son rapport de visite.",
-      "article_promotionnel": "Cadeaux qu'un délégué peut remettre pendant une visite (stylo, bloc-notes…)."
+      "article_promotionnel": "Cadeaux qu'un délégué peut remettre pendant une visite (stylo, bloc-notes…).",
+      "type_action": "Ce que le délégué prévoit de faire après une visite (revisiter, envoyer de la documentation…)."
     },
     "valeur": {
       "nouvelle": "Nouvelle valeur",
@@ -1980,7 +1982,8 @@
       "resultat": "résultat",
       "resume": "résumé",
       "prochaine_action": "prochaine action",
-      "retours": "retour du prescripteur sur chaque produit"
+      "retours": "retour du prescripteur sur chaque produit",
+      "prochaine_action_type": "type de prochaine action"
     },
     "manque": "À compléter avant de soumettre : {{liste}}.",
     "soumettre": "Soumettre le rapport",
@@ -2029,7 +2032,19 @@
       "peu": "Peu",
       "prescrit": "Prescrit",
       "tres_bien": "Très bien"
-    }
+    },
+    "prochaineActionPrecision": "Précisez l'action",
+    "echeance": "Échéance",
+    "sansEcheance": "Sans échéance",
+    "delais": {
+      "7": "Dans 1 semaine",
+      "14": "Dans 2 semaines",
+      "30": "Dans 1 mois"
+    },
+    "echeanceLe": "À faire d'ici le {{date}}",
+    "visiteProposee": "Proposer une nouvelle visite",
+    "visiteProposeeLue": "Nouvelle visite proposée",
+    "actionPrecedente": "Action prévue à la visite du {{date}}"
   },
   "champsRapport": {
     "titre": "Champs du rapport",

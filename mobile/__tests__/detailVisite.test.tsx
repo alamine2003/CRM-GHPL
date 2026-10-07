@@ -48,6 +48,7 @@ const DETAIL = {
       etablissement: 'Clinique Fictive',
     },
   ],
+  action_precedente: null,
 } satisfies DetailVisite;
 
 async function rendre(detail: jest.Mock) {
@@ -103,4 +104,23 @@ test('sans historique ni coordonnées, le détail le dit', async () => {
   );
   expect(await screen.findByText('Aucune coordonnée enregistrée.')).toBeTruthy();
   expect(screen.getByText('Aucune visite précédente chez ce prospect.')).toBeTruthy();
+});
+
+test('RPT-006 CA1 : la prochaine action notée la dernière fois est rappelée', async () => {
+  await rendre(
+    jest.fn(async () => ({
+      ...DETAIL,
+      action_precedente: {
+        date: '2026-10-01',
+        type: 'Présenter une étude',
+        texte: 'Apporter l’étude pédiatrique',
+        echeance: '2026-10-15',
+        visite_proposee: true,
+      },
+    })),
+  );
+  expect(await screen.findByText(/Action prévue à la visite du/)).toBeTruthy();
+  expect(screen.getByText('Présenter une étude')).toBeTruthy();
+  expect(screen.getByText('Apporter l’étude pédiatrique')).toBeTruthy();
+  expect(screen.getByText(/À faire d'ici le .* · Nouvelle visite proposée/)).toBeTruthy();
 });

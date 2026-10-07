@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.5.3
+  version: 0.5.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3844,6 +3844,7 @@ paths:
           - motif_ecart
           - resultat_visite
           - specialite
+          - type_action
           - type_etablissement
           - type_prospect
       tags:
@@ -4765,6 +4766,30 @@ paths:
           description: ''
 components:
   schemas:
+    ActionPrecedente:
+      type: object
+      description: 'RPT-006 CA1 : la prochaine action notée à la dernière visite chez
+        ce prospect.'
+      properties:
+        date:
+          type: string
+          format: date
+        type:
+          type: string
+        texte:
+          type: string
+        echeance:
+          type: string
+          format: date
+          nullable: true
+        visite_proposee:
+          type: boolean
+      required:
+      - date
+      - echeance
+      - texte
+      - type
+      - visite_proposee
     Activite:
       type: object
       properties:
@@ -6123,7 +6148,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VisitePassee'
+        action_precedente:
+          allOf:
+          - $ref: '#/components/schemas/ActionPrecedente'
+          nullable: true
       required:
+      - action_precedente
       - historique
       - lieu
       - prospect
@@ -6975,6 +7005,7 @@ components:
       - motif_ecart
       - resultat_visite
       - article_promotionnel
+      - type_action
       type: string
       description: |-
         * `type_prospect` - Types de prospect
@@ -6985,6 +7016,7 @@ components:
         * `motif_ecart` - Motifs d'écart
         * `resultat_visite` - Résultats de visite
         * `article_promotionnel` - Articles promotionnels
+        * `type_action` - Types de prochaine action
     ListeEtablissements:
       type: object
       description: Une page de résultats (PRP-005 CA3).
@@ -8731,6 +8763,18 @@ components:
         prochaine_action:
           type: string
           readOnly: true
+        prochaine_action_type:
+          type: string
+          format: uuid
+          nullable: true
+        prochaine_action_echeance:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        visite_proposee:
+          type: boolean
+          readOnly: true
         remises:
           type: array
           items:
@@ -8768,7 +8812,18 @@ components:
           items:
             $ref: '#/components/schemas/Resume'
           readOnly: true
+        types_action_proposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
+          readOnly: true
+        action_precedente:
+          allOf:
+          - $ref: '#/components/schemas/ActionPrecedente'
+          nullable: true
+          readOnly: true
       required:
+      - action_precedente
       - articles_proposes
       - champs
       - definitions
@@ -8779,6 +8834,8 @@ components:
       - objectif_prevu
       - presentations
       - prochaine_action
+      - prochaine_action_echeance
+      - prochaine_action_type
       - produit_autre_autorise
       - produits_proposes
       - remises
@@ -8788,7 +8845,9 @@ components:
       - resume
       - soumis_le
       - statut
+      - types_action_proposes
       - visite
+      - visite_proposee
     RapportStatutEnum:
       enum:
       - attendu
@@ -9425,6 +9484,16 @@ components:
         prochaine_action:
           type: string
           maxLength: 500
+        prochaine_action_type:
+          type: string
+          format: uuid
+          nullable: true
+        prochaine_action_echeance:
+          type: string
+          format: date
+          nullable: true
+        visite_proposee:
+          type: boolean
         champs: {}
     SaisieVisite:
       type: object

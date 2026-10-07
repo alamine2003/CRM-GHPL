@@ -35,6 +35,9 @@ const BROUILLON: Rapport = {
   resultat: null,
   resume: '',
   prochaine_action: '',
+  prochaine_action_type: null,
+  prochaine_action_echeance: null,
+  visite_proposee: false,
   champs: {},
   definitions: [
     {
@@ -49,6 +52,11 @@ const BROUILLON: Rapport = {
   manquants: ['produits', 'resultat', 'resume', 'prochaine_action', 'patients'],
   produit_autre_autorise: false,
   articles_proposes: [{ id: 'stylo', libelle: 'Stylo' }],
+  types_action_proposes: [
+    { id: 'etude', libelle: 'Présenter une étude' },
+    { id: 'autre', libelle: 'Autre' },
+  ],
+  action_precedente: null,
   produits_proposes: [
     { id: 'pa', libelle: 'Produit Alpha' },
     { id: 'pb', libelle: 'Produit Beta' },
@@ -70,6 +78,15 @@ function rendre(visites: Record<string, jest.Mock>) {
 
 beforeEach(async () => {
   mockMemoire.clear();
+  // La visite du rapport, gardée avec le programme : les échéances partent de son jour.
+  mockMemoire.set('programme.courant', {
+    valeur: {
+      fuseau: 'UTC',
+      jours: [{ date: '2026-10-13', visites: [{ id: 'v1', date: '2026-10-13', heure: '09:00' }] }],
+      a_justifier: [],
+    },
+    maj: '2026-10-13T06:30:00.000Z',
+  });
   await i18n.changeLanguage('fr');
 });
 
@@ -81,6 +98,9 @@ test('RPT-002 CA1 : le calcul local des manquants suit le socle puis les champs 
     resultat_obtenu: '',
     resume: ' ',
     prochaine_action: 'Relancer',
+    prochaine_action_type: 'etude',
+    prochaine_action_echeance: null,
+    visite_proposee: false,
     champs: {},
   };
   expect(manquantsDe(saisie, BROUILLON.definitions)).toEqual(['resume', 'patients']);
@@ -97,7 +117,7 @@ test('RPT-002 : incomplet, le rapport ne se soumet pas et dit ce qui manque', as
   await rendre({ rapport: jest.fn(async () => BROUILLON), soumettreRapport });
   expect(
     await screen.findByText(
-      'À compléter avant de soumettre : produits présentés, résultat, résumé, prochaine action, Patients par semaine.',
+      'À compléter avant de soumettre : produits présentés, résultat, résumé, type de prochaine action, prochaine action, Patients par semaine.',
     ),
   ).toBeTruthy();
   await fireEvent.press(screen.getByText('Soumettre le rapport'));
@@ -126,6 +146,9 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
     resultat_obtenu: 'Essai sur 5 patients',
     resume: 'Bon accueil',
     prochaine_action: 'Apporter l’étude',
+    prochaine_action_type: 'etude',
+    prochaine_action_echeance: '2026-10-20',
+    visite_proposee: true,
     champs: { patients: 40 },
   }));
   await rendre({ rapport: jest.fn(async () => BROUILLON), enregistrerRapport, soumettreRapport });
@@ -147,7 +170,11 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
     'Essai sur 5 patients',
   );
   await fireEvent.changeText(screen.getByLabelText("Résumé de l'échange"), 'Bon accueil');
-  await fireEvent.changeText(screen.getByLabelText('Prochaine action'), 'Apporter l’étude');
+  // RPT-006 : type, précision, échéance (une semaine après la visite), nouvelle visite.
+  await fireEvent.press(screen.getByText('Présenter une étude'));
+  await fireEvent.changeText(screen.getByLabelText("Précisez l'action"), 'Apporter l’étude');
+  await fireEvent.press(screen.getByText('Dans 1 semaine'));
+  await fireEvent(screen.getByLabelText('Proposer une nouvelle visite'), 'valueChange', true);
   await fireEvent.changeText(screen.getByLabelText('Patients par semaine'), '40');
   await fireEvent.press(screen.getByText('Soumettre le rapport'));
   expect(enregistrerRapport).toHaveBeenCalledWith('v1', {
@@ -162,6 +189,9 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
     resultat_obtenu: 'Essai sur 5 patients',
     resume: 'Bon accueil',
     prochaine_action: 'Apporter l’étude',
+    prochaine_action_type: 'etude',
+    prochaine_action_echeance: '2026-10-20',
+    visite_proposee: true,
     champs: { patients: 40 },
   });
   expect(soumettreRapport).toHaveBeenCalledWith('v1', expect.any(String));
@@ -265,4 +295,21 @@ test('RPT-005 CA1 : un cadeau se remet sans stock, la quantité se règle et rev
   expect(screen.getByText('Cadeau · Stylo')).toBeTruthy();
   await fireEvent.press(screen.getByLabelText('Une unité de moins pour Stylo'));
   expect(screen.queryByText('Cadeau · Stylo')).toBeNull();
+});
+
+test('RPT-006 CA1 : le rapport rappelle l’action notée à la visite précédente', async () => {
+  await rendre({
+    rapport: jest.fn(async () => ({
+      ...BROUILLON,
+      action_precedente: {
+        date: '2026-10-06',
+        type: 'Revisiter le prescripteur',
+        texte: 'Revenir avec les nouvelles données',
+        echeance: null,
+        visite_proposee: false,
+      },
+    })),
+  });
+  expect(await screen.findByText(/Action prévue à la visite du/)).toBeTruthy();
+  expect(screen.getByText('Revenir avec les nouvelles données')).toBeTruthy();
 });

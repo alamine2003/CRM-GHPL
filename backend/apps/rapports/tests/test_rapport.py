@@ -56,10 +56,15 @@ def resultat(monde, code="objectif_atteint"):
     return Valeur.objects.get(pays=monde["sn"], liste="resultat_visite", code=code)
 
 
+def type_action(monde, code="revisiter"):
+    return Valeur.objects.get(pays=monde["sn"], liste="type_action", code=code)
+
+
 def complet(monde, produits, **autres):
     return {"presentations": [{"produit": str(p.pk), "retour": "prescrit"} for p in produits],
             "resultat": str(resultat(monde).pk),
             "resume": "Intérêt pour la nouvelle forme", "prochaine_action": "Revenir avec l'étude",
+            "prochaine_action_type": str(type_action(monde).pk),
             **autres}  # fmt: skip
 
 
@@ -78,7 +83,13 @@ def test_rpt001_le_rapport_s_ouvre_en_brouillon_une_seule_fois(monde, effectuee,
     # RG-033 : seuls les produits du portefeuille du réseau sont proposés.
     assert [p["libelle"] for p in r1["produits_proposes"]] == ["Cardiol", "Tensio"]
     assert "Objectif atteint" in [r["libelle"] for r in r1["resultats_proposes"]]
-    assert r1["manquants"] == ["produits", "resultat", "resume", "prochaine_action"]
+    assert r1["manquants"] == [
+        "produits",
+        "resultat",
+        "resume",
+        "prochaine_action_type",
+        "prochaine_action",
+    ]
     assert Rapport.objects.count() == 1
 
 
@@ -88,7 +99,12 @@ def test_rpt002_ca1_impossible_de_soumettre_sans_le_socle(monde, effectuee, port
     c.put(url(effectuee), {"resume": "Bonne écoute"}, format="json")
     r = c.post(url(effectuee, "soumettre/"), {"soumis_le": "2026-10-13T09:59:00Z"}, format="json")
     assert (r.status_code, r.json()["code"]) == (400, "rapport_incomplet")
-    assert r.json()["details"]["manquants"] == ["produits", "resultat", "prochaine_action"]
+    assert r.json()["details"]["manquants"] == [
+        "produits",
+        "resultat",
+        "prochaine_action_type",
+        "prochaine_action",
+    ]
     r = c.put(url(effectuee), complet(monde, portefeuille[:2]), format="json")
     assert r.json()["manquants"] == []
     r = c.post(url(effectuee, "soumettre/"), {"soumis_le": "2026-10-13T09:59:00Z"}, format="json")
@@ -144,7 +160,7 @@ def test_rpt008_ca1_un_champ_ajoute_ne_vaut_que_pour_les_nouveaux(monde, effectu
     creer_champ(monde["sn"], libelle="Patients par semaine", type="nombre", obligatoire=True)
     r = c.get(url(effectuee)).json()
     assert r["definitions"] == [] and r["manquants"] == [
-        "produits", "resultat", "resume", "prochaine_action"]  # fmt: skip
+        "produits", "resultat", "resume", "prochaine_action_type", "prochaine_action"]  # fmt: skip
 
 
 @freeze_time("2026-10-13 08:00")

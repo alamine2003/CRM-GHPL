@@ -131,6 +131,8 @@ export type RetourPrescripteur = Schemas['RetourPrescripteurEnum'];
 /** Échantillon ou cadeau remis, avec sa quantité (RPT-005). */
 export type Remise = Schemas['Remise'];
 export type TypeRemise = Schemas['TypeRemiseEnum'];
+/** Prochaine action notée à la dernière visite chez ce prospect, rappelée (RPT-006 CA1). */
+export type ActionPrecedente = Schemas['ActionPrecedente'];
 export type DefinitionChamp = Schemas['DefinitionChamp'];
 export type TypeChamp = Schemas['TypeChampEnum'];
 /** Valeurs saisies des champs du pays, par code de champ. */

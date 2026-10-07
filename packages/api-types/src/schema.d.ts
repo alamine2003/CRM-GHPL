@@ -2668,6 +2668,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** @description RPT-006 CA1 : la prochaine action notée à la dernière visite chez ce prospect. */
+    ActionPrecedente: {
+      /** Format: date */
+      date: string;
+      type: string;
+      texte: string;
+      /** Format: date */
+      echeance: string | null;
+      visite_proposee: boolean;
+    };
     Activite: {
       /** Format: uuid */
       readonly id: string;
@@ -3205,6 +3215,7 @@ export interface components {
       prospect: components['schemas']['CoordonneesProspect'] | null;
       lieu: components['schemas']['CoordonneesLieu'] | null;
       historique: components['schemas']['VisitePassee'][];
+      action_precedente: components['schemas']['ActionPrecedente'] | null;
     };
     Division: {
       /** Format: uuid */
@@ -3583,6 +3594,7 @@ export interface components {
      *     * `motif_ecart` - Motifs d'écart
      *     * `resultat_visite` - Résultats de visite
      *     * `article_promotionnel` - Articles promotionnels
+     *     * `type_action` - Types de prochaine action
      * @enum {string}
      */
     ListeEnum:
@@ -3593,7 +3605,8 @@ export interface components {
       | 'grade'
       | 'motif_ecart'
       | 'resultat_visite'
-      | 'article_promotionnel';
+      | 'article_promotionnel'
+      | 'type_action';
     /** @description Une page de résultats (PRP-005 CA3). */
     ListeEtablissements: {
       total: number;
@@ -4283,6 +4296,11 @@ export interface components {
       readonly resultat_obtenu: string;
       readonly resume: string;
       readonly prochaine_action: string;
+      /** Format: uuid */
+      prochaine_action_type: string | null;
+      /** Format: date */
+      readonly prochaine_action_echeance: string | null;
+      readonly visite_proposee: boolean;
       remises: components['schemas']['Remise'][];
       champs: unknown;
       definitions: components['schemas']['DefinitionChamp'][];
@@ -4293,6 +4311,8 @@ export interface components {
       readonly produit_autre_autorise: boolean;
       readonly resultats_proposes: components['schemas']['Resume'][];
       readonly articles_proposes: components['schemas']['Resume'][];
+      readonly types_action_proposes: components['schemas']['Resume'][];
+      readonly action_precedente: components['schemas']['ActionPrecedente'] | null;
     };
     /**
      * @description * `attendu` - attendu
@@ -4581,6 +4601,11 @@ export interface components {
       resultat_obtenu?: string;
       resume?: string;
       prochaine_action?: string;
+      /** Format: uuid */
+      prochaine_action_type?: string | null;
+      /** Format: date */
+      prochaine_action_echeance?: string | null;
+      visite_proposee?: boolean;
       champs?: unknown;
     };
     SaisieVisite: {
@@ -8558,6 +8583,7 @@ export interface operations {
           | 'motif_ecart'
           | 'resultat_visite'
           | 'specialite'
+          | 'type_action'
           | 'type_etablissement'
           | 'type_prospect';
       };

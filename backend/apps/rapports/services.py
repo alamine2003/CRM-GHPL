@@ -226,6 +226,34 @@ def _presentations(rapport: Rapport, saisies: list[dict]) -> list[dict]:
     return resultat
 
 
+def types_action(pays):
+    return Valeur.objects.filter(pays=pays, liste=Liste.TYPE_ACTION,
+                                 archive_le__isnull=True).order_by("ordre", "libelle")  # fmt: skip
+
+
+def action_precedente(visite: Visite) -> dict | None:
+    """RPT-006 CA1 : la prochaine action notée à la dernière visite du même délégué chez le
+    même prospect, rappelée à la visite suivante ; jamais celle d'un collègue."""
+    if visite.prospect_id is None:
+        return None
+    rapport = (
+        Rapport.objects.filter(delegue_id=visite.planning.delegue_id,
+                               visite__prospect_id=visite.prospect_id,
+                               visite__date__lt=visite.date)
+        .exclude(statut=StatutRapport.BROUILLON)
+        .exclude(prochaine_action="", prochaine_action_type__isnull=True)
+        .select_related("visite", "prochaine_action_type")
+        .order_by("-visite__date", "-visite__heure")
+        .first()
+    )  # fmt: skip
+    if rapport is None:
+        return None
+    return {"date": rapport.visite.date,
+            "type": rapport.prochaine_action_type.libelle if rapport.prochaine_action_type else "",
+            "texte": rapport.prochaine_action, "echeance": rapport.prochaine_action_echeance,
+            "visite_proposee": rapport.visite_proposee}  # fmt: skip
+
+
 def articles(pays):
     return Valeur.objects.filter(pays=pays, liste=Liste.ARTICLE_PROMOTIONNEL,
                                  archive_le__isnull=True).order_by("ordre", "libelle")  # fmt: skip
@@ -276,6 +304,22 @@ def enregistrer(rapport: Rapport, **valeurs) -> Rapport:
         if resultat is not None and not resultats(rapport.pays).filter(pk=resultat).exists():
             raise ErreurMetier("resultat_invalide", _("Résultat inconnu."), champ="resultat")
         rapport.resultat_id = resultat
+    if "prochaine_action_type" in valeurs:
+        type_action = valeurs["prochaine_action_type"]
+        if type_action is not None and not types_action(rapport.pays).filter(
+                pk=type_action).exists():  # fmt: skip
+            raise ErreurMetier("type_action_invalide", _("Type d'action inconnu."),
+                               champ="prochaine_action_type")  # fmt: skip
+        rapport.prochaine_action_type_id = type_action
+    if "prochaine_action_echeance" in valeurs:
+        echeance = valeurs["prochaine_action_echeance"]
+        if echeance is not None and echeance < rapport.visite.date:
+            raise ErreurMetier("echeance_passee",
+                               _("L'échéance ne peut pas précéder la visite."),
+                               champ="prochaine_action_echeance")  # fmt: skip
+        rapport.prochaine_action_echeance = echeance
+    if "visite_proposee" in valeurs:
+        rapport.visite_proposee = bool(valeurs["visite_proposee"])
     for cle in ("resultat_obtenu", "resume", "prochaine_action"):
         if cle in valeurs:
             setattr(rapport, cle, (valeurs[cle] or "").strip())
@@ -304,6 +348,8 @@ def manquants(rapport: Rapport) -> list[str]:
             ("retours", all(p["retour"] for p in rapport.presentations)),
             ("resultat", rapport.resultat_id is not None),
             ("resume", bool(rapport.resume)),
+            # RPT-006 : la prochaine action a un type et se décrit.
+            ("prochaine_action_type", rapport.prochaine_action_type_id is not None),
             ("prochaine_action", bool(rapport.prochaine_action)),
         )
         if not rempli

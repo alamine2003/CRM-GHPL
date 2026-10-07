@@ -58,10 +58,22 @@ class RemiseSerializer(serializers.Serializer):
     quantite = serializers.IntegerField(min_value=1, max_value=999)
 
 
+class ActionPrecedenteSerializer(serializers.Serializer):
+    """RPT-006 CA1 : la prochaine action notée à la dernière visite chez ce prospect."""
+
+    date = serializers.DateField()
+    type = serializers.CharField(allow_blank=True)
+    texte = serializers.CharField(allow_blank=True)
+    echeance = serializers.DateField(allow_null=True)
+    visite_proposee = serializers.BooleanField()
+
+
 class RapportSerializer(serializers.ModelSerializer):
     presentations = PresentationSerializer(many=True)
     remises = RemiseSerializer(many=True)
     resultat = serializers.UUIDField(source="resultat_id", allow_null=True)
+    prochaine_action_type = serializers.UUIDField(source="prochaine_action_type_id",
+                                                  allow_null=True)  # fmt: skip
     champs = serializers.JSONField()
     definitions = DefinitionChampSerializer(many=True)
     #: Visite imprévue : pas d'objectif planifié, la justification en tient lieu (RPT-003).
@@ -76,14 +88,18 @@ class RapportSerializer(serializers.ModelSerializer):
     produit_autre_autorise = serializers.SerializerMethodField()
     #: RPT-005 : les articles que le pays propose en cadeau.
     articles_proposes = serializers.SerializerMethodField()
+    #: RPT-006 : les types de prochaine action du pays, et l'action notée la fois précédente.
+    types_action_proposes = serializers.SerializerMethodField()
+    action_precedente = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
         fields = ["id", "visite", "statut", "objectif_prevu", "est_imprevue", "justification",
                   "presentations", "resultat", "resultat_obtenu", "resume", "prochaine_action",
+                  "prochaine_action_type", "prochaine_action_echeance", "visite_proposee",
                   "remises", "champs", "definitions", "soumis_le", "manquants",
                   "produits_proposes", "produit_autre_autorise", "resultats_proposes",
-                  "articles_proposes"]  # fmt: skip
+                  "articles_proposes", "types_action_proposes", "action_precedente"]  # fmt: skip
         read_only_fields = fields
 
     def get_manquants(self, rapport) -> list[str]:
@@ -107,6 +123,15 @@ class RapportSerializer(serializers.ModelSerializer):
     def get_articles_proposes(self, rapport):
         return [{"id": v.pk, "libelle": v.libelle} for v in services.articles(rapport.pays)]
 
+    @extend_schema_field(ResumeSerializer(many=True))
+    def get_types_action_proposes(self, rapport):
+        return [{"id": v.pk, "libelle": v.libelle} for v in services.types_action(rapport.pays)]
+
+    @extend_schema_field(ActionPrecedenteSerializer(allow_null=True))
+    def get_action_precedente(self, rapport):
+        action = services.action_precedente(rapport.visite)
+        return ActionPrecedenteSerializer(action).data if action else None
+
 
 class SaisieRapportSerializer(serializers.Serializer):
     presentations = PresentationSerializer(many=True, required=False)
@@ -115,6 +140,9 @@ class SaisieRapportSerializer(serializers.Serializer):
     resultat_obtenu = serializers.CharField(required=False, allow_blank=True, max_length=1000)
     resume = serializers.CharField(required=False, allow_blank=True, max_length=4000)
     prochaine_action = serializers.CharField(required=False, allow_blank=True, max_length=500)
+    prochaine_action_type = serializers.UUIDField(required=False, allow_null=True)
+    prochaine_action_echeance = serializers.DateField(required=False, allow_null=True)
+    visite_proposee = serializers.BooleanField(required=False)
     champs = serializers.JSONField(required=False)
 
     def validate_champs(self, valeur):

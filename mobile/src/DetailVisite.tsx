@@ -1,6 +1,7 @@
 /**
  * Détail d'une visite (VIS-002, 0.4.2) : les coordonnées du prospect et du lieu, et les trois
- * dernières visites du délégué chez ce prospect (CA1 : jamais celles d'un collègue). Gardé sur
+ * dernières visites du délégué chez ce prospect (CA1 : jamais celles d'un collègue), et la
+ * prochaine action notée la dernière fois (RPT-006 CA1). Gardé sur
  * le téléphone : le programme du jour le prépare pour chaque visite, et il se lit sans réseau.
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -8,6 +9,7 @@ import type { ClientApi, DetailVisite } from '@innov/api-client';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActionPrecedente } from './ActionPrecedente';
 import { ecrire, lire } from './baseLocale';
 import { estTransitoire } from './Brouillons';
 import { Alerte, Carte, Etiquette, Texte, usePalette } from './composants';
@@ -93,6 +95,7 @@ export function CoordonneesEtHistorique({
           })}
         </Alerte>
       )}
+      <ActionPrecedente action={detail.action_precedente} />
       <Carte style={{ gap: 10 }}>
         <Texte variante="sousTitre">{t('detailVisite.coordonnees')}</Texte>
         {telephones.length === 0 && !adresse && !prospect?.courriel ? (

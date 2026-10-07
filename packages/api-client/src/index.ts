@@ -160,6 +160,7 @@ export type {
   RetourPrescripteur,
   Remise,
   TypeRemise,
+  ActionPrecedente,
   DefinitionChamp,
   TypeChamp,
   ValeursChamps,
