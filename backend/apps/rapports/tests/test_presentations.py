@@ -85,12 +85,7 @@ def test_rpt005_echantillons_et_cadeaux_remis(monde, effectuee, portefeuille):  
     assert (r["remises"], r["manquants"]) == ([], [])
 
 
-def test_rg033_le_portefeuille_est_celui_du_jour_de_la_visite(
-    monde,
-    terrain,
-    effectuee,
-    portefeuille,  # noqa: F811
-):
+def test_rg033_portefeuille_du_jour_de_la_visite(monde, terrain, effectuee, portefeuille):  # noqa: F811
     from apps.referentiel import services as ref
 
     cardiol, tensio, _ = portefeuille
