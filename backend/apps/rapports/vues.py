@@ -9,7 +9,7 @@
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -22,7 +22,7 @@ from apps.planning.models import Visite
 from . import serializers as s
 from . import serializers_file as sf
 from . import services
-from .models import ChampRapport, PieceJointe, Rapport
+from .models import ChampRapport, PieceJointe, Rapport, StatutRapport
 
 REDIGER = Action.RAPPORTS_REDIGER
 LIRE = Action.RAPPORTS_LIRE
@@ -225,3 +225,53 @@ class ATraiterVue(VuePerimetre):
             "plannings_a_valider": len(plannings_a_valider(request.user, pays)),
         }
         return Response(sf.ATraiterSerializer(donnees).data)
+
+
+class JourneeVue(VuePerimetre):
+    """0.6.2 : une journée d'un délégué, ses visites et leurs rapports, pour le responsable du
+    poste ou son remplaçant (`?delegue=<id>&date=AAAA-MM-JJ`)."""
+
+    actions = {"GET": VALIDER}
+    serializer_class = sf.JourneeSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.none())
+
+    @extend_schema(
+        parameters=[OpenApiParameter("delegue", OpenApiTypes.UUID, required=True),
+                    OpenApiParameter("date", OpenApiTypes.DATE, required=True)],
+        responses=sf.JourneeSerializer, operation_id="rapports_journee",
+    )  # fmt: skip
+    def get(self, request):
+        from .journee import journee
+
+        choix = sf.ChoixJourneeSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        v = choix.validated_data
+        pays = pays_requis(self.perimetre)
+        donnees = journee(request.user, pays, v["delegue"], v["date"])
+        return Response(sf.JourneeSerializer(donnees).data)
+
+
+class PieceLueVue(VuePerimetre):
+    """RPT-007 CA2 : une pièce jointe se lit par qui voit le rapport (`rapports.lire`, dans le
+    périmètre : le superviseur, le DM, le DF, le responsable pays) ; jamais d'un brouillon."""
+
+    actions = {"GET": LIRE}
+
+    def selection(self, perimetre):
+        from .chronologie import rapports_visibles
+
+        return PieceJointe.objects.filter(
+            rapport__in=rapports_visibles(perimetre), archive_le__isnull=True
+        ).exclude(rapport__statut=StatutRapport.BROUILLON)
+
+    @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY},
+                   operation_id="piece_jointe_consulter")  # fmt: skip
+    def get(self, request, id):
+        p = get_object_or_404(self.get_queryset(), pk=id)
+        reponse = FileResponse(p.fichier.open("rb"), content_type=p.type_mime,
+                               as_attachment=False, filename=p.nom)  # fmt: skip
+        reponse["Cache-Control"] = "private, no-store"
+        reponse["X-Content-Type-Options"] = "nosniff"
+        return reponse

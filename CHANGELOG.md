@@ -2,6 +2,29 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.2] — Consultation d'une journée
+
+Deuxième jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté
+
+- Portail : depuis « À traiter », « Ouvrir la journée » montre les contrôles de la journée, ses activités, puis chaque visite : heures, durée, distance, motif d'un écart, écarts de conformité qui la concernent, et son rapport soumis en entier.
+- **RPT-007 CA2** : le superviseur (et l'encadrement de son périmètre) ouvre la pièce jointe d'un rapport soumis ; jamais celle d'un brouillon.
+- **RPT-010 CA1** : « Soumis en retard » et « Horodatage douteux » visibles du superviseur, avec l'heure du téléphone et l'heure de réception.
+- **RG-037** : le nombre de versions d'un rapport s'affiche.
+- Un brouillon reste au délégué : le superviseur n'en voit que l'état.
+- Décision 20.A : la file « À traiter » remonte sur 4 semaines.
+
+### Design
+
+Revue sur le rendu réel (bureau 1 440 px, téléphone 390 px, mode sombre). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Journée, rapport | Les textes longs (résumé, prochaine action) étaient alignés à droite sur toute la largeur : difficiles à lire. | Libellé dans une colonne à gauche, texte aligné à gauche à côté ; l'un sous l'autre sur téléphone. |
+| Journée, prochaine action | « …concurrents. · d'ici le 6 octobre » : ponctuation collée et échéance noyée. | L'échéance et la visite proposée passent sur une seconde ligne, discrète (« À faire d'ici le 6 octobre »). |
+| Journée, visite | L'écart de distance n'apparaissait qu'en tête de page, pas sur la visite concernée. | Chaque visite rappelle ses écarts, en orange, sous son déroulement. |
+
 ## [0.6.1] — File « À traiter » du superviseur
 
 Premier jalon du cycle 0.6 « Validation des rapports ».

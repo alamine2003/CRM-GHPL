@@ -153,7 +153,7 @@ function CarteDelegue({ ligne }: { ligne: DelegueATraiter }) {
                 key={j.date}
                 sx={{ borderTop: i ? 1 : 0, borderColor: 'divider', px: 2, py: 1.5 }}
               >
-                <LigneJournee journee={j} />
+                <LigneJournee journee={j} delegue={ligne.delegue.id} />
               </Box>
             ))}
           </Stack>
@@ -163,7 +163,7 @@ function CarteDelegue({ ligne }: { ligne: DelegueATraiter }) {
   );
 }
 
-function LigneJournee({ journee: j }: { journee: JourneeATraiter }) {
+function LigneJournee({ journee: j, delegue }: { journee: JourneeATraiter; delegue: string }) {
   const { t, i18n } = useTranslation();
   const conforme = j.classement === 'conforme';
   const date = new Intl.DateTimeFormat(i18n.language, {
@@ -227,8 +227,8 @@ function LigneJournee({ journee: j }: { journee: JourneeATraiter }) {
           pl: { xs: 2.5, sm: 0 },
         }}
       >
-        <Button size="small" component={LienRouteur} to={`/validation/${j.planning}`}>
-          {t('aTraiter.consulter')}
+        <Button size="small" component={LienRouteur} to={`/a-traiter/${delegue}/${j.date}`}>
+          {t('journee.ouvrir')}
         </Button>
       </Box>
     </Stack>

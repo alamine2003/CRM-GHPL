@@ -236,6 +236,9 @@ urlpatterns = [
     path("rapports/champs/", rap.ChampsRapportVue.as_view(), name="champs-rapport"),
     # RPT-012 : file de travail du superviseur (journées à traiter par délégué)
     path("rapports/a-traiter/", rap.ATraiterVue.as_view(), name="rapports-a-traiter"),
+    # 0.6.2 : une journée à consulter ; RPT-007 CA2 : une pièce jointe lue par l'encadrement
+    path("rapports/journee/", rap.JourneeVue.as_view(), name="rapports-journee"),
+    path("rapports/pieces/<uuid:id>/", rap.PieceLueVue.as_view(), name="rapport-piece-lue"),
     # DC-61 : visites proposées dans les rapports, reprises à la préparation de la semaine
     path(
         "rapports/visites-proposees/",

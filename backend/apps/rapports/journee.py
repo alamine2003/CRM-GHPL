@@ -1,0 +1,69 @@
+"""Consultation d'une journée par le superviseur (0.6.2 ; RPT-012, RPT-013 à venir).
+
+Depuis « À traiter », le superviseur ouvre une journée d'un délégué : son classement de
+conformité et ses écarts, ses activités (indisponibilité, accompagnement…), puis chaque
+visite dans l'ordre, avec ce qui s'est passé (heures, distances, motif d'un écart) et son
+rapport tel que soumis : produits et retours, remises, résultat, prochaine action, champs du
+pays, pièces jointes (RPT-007 CA2), retard et horodatage douteux (RPT-010 CA1), nombre de
+versions (RG-037). Un brouillon reste au délégué : seul son état se voit.
+
+Qui : le responsable du poste cette semaine-là ou son remplaçant (`supervise`) ; ailleurs, la
+journée n'existe pas (404).
+"""
+
+from datetime import date
+
+from django.http import Http404
+
+from apps.planning import conformite
+from apps.planning.calendrier import lundi
+from apps.planning.etats import StatutVisite
+from apps.planning.models import Planning
+from apps.planning.services import supervise
+
+from .models import StatutRapport
+
+
+def journee(superviseur, pays, delegue_id, jour: date) -> dict:
+    planning = (
+        Planning.objects.filter(pays=pays, delegue_id=delegue_id, semaine=lundi(jour))
+        .select_related("delegue", "pays")
+        .first()
+    )
+    if planning is None or not supervise(superviseur, planning):
+        raise Http404
+    visites = list(
+        planning.visites.filter(archive_le__isnull=True, date=jour)
+        .select_related(
+            "prospect",
+            "etablissement",
+            "motif_ecart",
+            "rapport__resultat",
+            "rapport__prochaine_action_type",
+        )  # fmt: skip
+        .prefetch_related("rapport__pieces_jointes", "rapport__versions")
+        .order_by("heure", "ordre")
+    )
+    if not visites:
+        raise Http404
+    calcul = conformite.recalculer(planning, jour)
+    for v in visites:
+        rapport = getattr(v, "rapport", None)
+        if v.statut != StatutVisite.EFFECTUEE:
+            v.rapport_statut = None
+        else:
+            v.rapport_statut = rapport.statut if rapport is not None else "attendu"
+        # Le brouillon reste au délégué ; le superviseur n'en voit que l'état.
+        v.rapport_lu = (
+            rapport if rapport is not None and rapport.statut != StatutRapport.BROUILLON else None
+        )  # fmt: skip
+    return {
+        "delegue": planning.delegue,
+        "date": jour,
+        "planning": planning.pk,
+        "classement": calcul.classement,
+        "ecarts": calcul.ecarts,
+        "fige": calcul.fige_le is not None,
+        "activites": list(planning.activites.filter(archive_le__isnull=True, date=jour)),
+        "visites": visites,
+    }

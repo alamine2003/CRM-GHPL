@@ -704,13 +704,25 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.43 Consultation d'une journée (mise en œuvre 0.6.2)
+
+- **Écran** : depuis « À traiter », « Ouvrir la journée » montre une journée d'un délégué. En tête, ses contrôles (« Conforme » ou « À vérifier » et chaque écart) et ses activités (indisponibilité, accompagnement…) ; « Consulter la semaine » ouvre le planning.
+- **Chaque visite**, dans l'ordre de la journée : prospect, lieu, état ; heures de début et de fin, durée, distance au lieu (ou « sans GPS ») ; le motif et le commentaire d'un écart ; la justification d'une visite imprévue ; les écarts de conformité qui la concernent, en évidence.
+- **Le rapport soumis, en entier** : objectif prévu, produits présentés et retour du prescripteur, échantillons et cadeaux, résultat, résumé, prochaine action avec son échéance et la visite proposée, champs du pays, pièces jointes.
+- **RPT-007 CA2** : une pièce jointe s'ouvre pour qui voit le rapport soumis (superviseur, DM, DF, responsable pays, dans leur périmètre) ; jamais celle d'un brouillon.
+- **RPT-010 CA1** : « Soumis en retard » et « Horodatage douteux » s'affichent, avec l'heure du téléphone et l'heure de réception retenue.
+- **RG-037** : le nombre de versions du rapport s'affiche quand il y en a plus d'une.
+- **Brouillon** : il reste au délégué ; le superviseur lit seulement « Rapport en brouillon ». Une visite effectuée sans rapport dit « Rapport pas encore rédigé ».
+- Qui : le responsable du poste cette semaine-là ou son remplaçant ; sinon, la journée n'existe pas.
+- [D, 7 octobre 2026, 20.A] La file « À traiter » remonte sur 4 semaines ; au-delà, une journée non validée relève des retards (RPT-017, 0.6.7).
+
 ### 14.42 File « À traiter » du superviseur (mise en œuvre 0.6.1)
 
 - **Écran** (RPT-012 ; DC-47, engagement 3) : au portail, « À traiter » dans le menu du superviseur (et du DM pour un superviseur-visiteur). En tête, quatre chiffres : journées à vérifier, rapports à valider, rapports attendus, plannings à valider ; quand un planning attend sa décision, un lien mène à « Plannings à valider ».
 - **Les journées** : par délégué (celui qui attend depuis le plus longtemps d'abord), ses journées **terminées** et **non validées**, de la plus ancienne, regroupées par semaine. La journée du jour n'y est pas : elle n'est pas finie.
 - **CA1** : chaque journée affiche « Conforme » ou « À vérifier · n écarts » et le détail de chaque écart, avec les mêmes textes que la carte « Conformité des journées » (§14.30). Elle dit aussi le nombre de visites et d'effectuées, les rapports à valider (soumis), les rapports attendus (visite effectuée sans rapport soumis), ceux en retard et ceux à l'horodatage douteux (RPT-010). « Consulter la semaine » ouvre le planning de la semaine.
 - **Qui voit quoi** : le responsable du poste cette semaine-là (superviseur, ou DM pour un superviseur-visiteur, RG-023) et le superviseur qui le remplace (ORG-013). Jamais ses propres journées. Nouveau droit « valider les rapports » (superviseur, DM) ; la matrice des droits n'en change pas.
-- [H] La file remonte sur **4 semaines** ; au-delà, une journée non validée relève des retards (RPT-017, 0.6.7).
+- [D, 7 octobre 2026, 20.A] La file remonte sur **4 semaines** ; au-delà, une journée non validée relève des retards (RPT-017, 0.6.7).
 - **Plus tard** : la consultation du rapport depuis la journée (0.6.2), puis la validation unitaire, par journée et par lot (0.6.3) qui fait sortir la journée de la file.
 
 ### 14.41 Stabilisation et décisions appliquées (mise en œuvre 0.5.9)

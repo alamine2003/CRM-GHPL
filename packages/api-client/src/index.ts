@@ -33,6 +33,7 @@ import type {
   RapportChronologie,
   VisiteProposee,
   ATraiter,
+  Journee,
   PieceJointe,
   SaisieRapport,
   ChampRapport,
@@ -172,6 +173,9 @@ export type {
   ATraiter,
   DelegueATraiter,
   JourneeATraiter,
+  Journee,
+  VisiteJournee,
+  RapportLu,
   PieceJointe,
   DefinitionChamp,
   TypeChamp,
@@ -426,6 +430,8 @@ interface OptionsRequete {
   corps?: unknown;
   /** Réponse lue comme texte brut (rapport CSV). */
   texte?: boolean;
+  /** Réponse lue comme fichier (pièce jointe). */
+  binaire?: boolean;
   authentifiee?: boolean;
 }
 
@@ -466,6 +472,7 @@ export function creerClient(options: OptionsClient) {
       credentials: portail ? 'include' : 'omit',
     });
     if (reponse.status === 204) return undefined as T;
+    if (opts.binaire && reponse.ok) return (await reponse.blob()) as T;
     const texte = await reponse.text();
     if (opts.texte && reponse.ok) return texte as T;
     const donnees = texte ? JSON.parse(texte) : {};
@@ -887,6 +894,13 @@ export function creerClient(options: OptionsClient) {
     rapports: {
       /** RPT-012 : la file de travail du superviseur, ses journées à traiter par délégué. */
       aTraiter: () => requete<ATraiter>('/api/v1/rapports/a-traiter/'),
+      /** 0.6.2 : une journée d'un délégué, ses visites et leurs rapports soumis. */
+      journee: (delegue: string, date: string) =>
+        requete<Journee>(
+          `/api/v1/rapports/journee/?delegue=${encodeURIComponent(delegue)}&date=${date}`,
+        ),
+      /** RPT-007 CA2 : une pièce jointe d'un rapport soumis, lue par l'encadrement. */
+      piece: (id: string) => requete<Blob>(`/api/v1/rapports/pieces/${id}/`, { binaire: true }),
       /** DC-61 : les visites proposées dans ses rapports, pas encore replanifiées. */
       visitesProposees: () => requete<VisiteProposee[]>('/api/v1/rapports/visites-proposees/'),
       champs: () => requete<ChampRapport[]>('/api/v1/rapports/champs/'),

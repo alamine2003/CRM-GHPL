@@ -2167,5 +2167,26 @@
     "effectuees_zero": "aucune effectuée",
     "effectuees_one": "{{count}} effectuée",
     "effectuees_other": "{{count}} effectuées"
+  },
+  "journee": {
+    "controles": "Contrôles de la journée",
+    "deroulement": "Démarrée à {{debut}}, terminée à {{fin}} · {{minutes}} min",
+    "sansGps": "sans GPS",
+    "distance": "à {{distance}} m du lieu",
+    "motif": "Motif : {{motif}}",
+    "imprevue": "Visite imprévue : « {{justification}} »",
+    "brouillon": "Rapport en brouillon : il reste au délégué tant qu'il n'est pas soumis.",
+    "attendu": "Rapport pas encore rédigé.",
+    "rapport": "Rapport",
+    "soumisLe": "soumis le {{date}}",
+    "horodatageDouteux": "Horodatage douteux",
+    "horodatageDetail": "Heure du téléphone : {{telephone}} ; reçu par le serveur à {{recu}}. L'heure de réception a été retenue.",
+    "versions_one": "{{count}} version",
+    "versions_other": "{{count}} versions",
+    "remise": "{{type}} : {{libelle}} × {{quantite}}",
+    "resultat": "Résultat",
+    "echeance": "À faire d'ici le {{date}}",
+    "pieces": "Pièces jointes",
+    "ouvrir": "Ouvrir la journée"
   }
 }

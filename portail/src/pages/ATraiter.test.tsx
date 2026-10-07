@@ -86,9 +86,9 @@ describe('RPT-012 : file « À traiter » du superviseur', () => {
       within(lignes[1]!).getByText('10:30 · Awa NDIAYE : pointée à 350 m du lieu (seuil 100 m)'),
     ).toBeInTheDocument();
     expect(within(lignes[1]!).getByText(/1 en retard/)).toBeInTheDocument();
-    expect(within(lignes[1]!).getByRole('link', { name: 'Consulter la semaine' })).toHaveAttribute(
+    expect(within(lignes[1]!).getByRole('link', { name: 'Ouvrir la journée' })).toHaveAttribute(
       'href',
-      `/validation/${JOURNEE.planning}`,
+      '/a-traiter/d1/2026-10-06',
     );
   });
 

@@ -2145,6 +2145,46 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/rapports/journee/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description 0.6.2 : une journée d'un délégué, ses visites et leurs rapports, pour le responsable du
+     *     poste ou son remplaçant (`?delegue=<id>&date=AAAA-MM-JJ`).
+     */
+    get: operations['rapports_journee'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/rapports/pieces/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description RPT-007 CA2 : une pièce jointe se lit par qui voit le rapport (`rapports.lire`, dans le
+     *     périmètre : le superviseur, le DM, le DF, le responsable pays) ; jamais d'un brouillon.
+     */
+    get: operations['piece_jointe_consulter'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/rapports/visites-proposees/': {
     parameters: {
       query?: never;
@@ -2913,6 +2953,12 @@ export interface components {
       superviseurs: components['schemas']['Personne'][];
       remplacants: components['schemas']['Personne'][];
     };
+    /** @description Un champ du pays (RPT-008) tel que rempli, avec son libellé du jour du rapport. */
+    ChampLu: {
+      libelle: string;
+      type: string;
+      valeur: unknown;
+    };
     ChampRapport: {
       /** Format: uuid */
       readonly id: string;
@@ -2968,6 +3014,12 @@ export interface components {
      * @enum {string}
      */
     CiviliteEnum: 'dr' | 'pr' | 'm' | 'mme';
+    /**
+     * @description * `conforme` - Conforme
+     *     * `a_verifier` - À vérifier
+     * @enum {string}
+     */
+    ClassementEnum: 'conforme' | 'a_verifier';
     /**
      * @description * `portail` - Portail web
      *     * `mobile` - Application mobile
@@ -3044,17 +3096,11 @@ export interface components {
     ConformiteJournee: {
       /** Format: date */
       date: string;
-      classement: components['schemas']['ConformiteJourneeClassementEnum'];
+      classement: components['schemas']['ClassementEnum'];
       ecarts: components['schemas']['EcartConformite'][];
       readonly fige: boolean;
       readonly terminee: boolean;
     };
-    /**
-     * @description * `conforme` - Conforme
-     *     * `a_verifier` - À vérifier
-     * @enum {string}
-     */
-    ConformiteJourneeClassementEnum: 'conforme' | 'a_verifier';
     Connexion: {
       identifiant: string;
       mot_de_passe: string;
@@ -3699,6 +3745,19 @@ export interface components {
       ferie: string | null;
       planifiable: boolean;
     };
+    /** @description 0.6.2 : une journée d'un délégué, à consulter avant de la valider (RPT-013, 0.6.3). */
+    Journee: {
+      delegue: components['schemas']['Delegue'];
+      /** Format: date */
+      date: string;
+      /** Format: uuid */
+      planning: string;
+      classement: components['schemas']['ClassementEnum'];
+      ecarts: components['schemas']['EcartConformite'][];
+      fige: boolean;
+      activites: components['schemas']['Activite'][];
+      visites: components['schemas']['VisiteJournee'][];
+    };
     /**
      * @description RPT-012 CA1 : une journée terminée et non validée, son classement et ses écarts, et
      *     l'état de ses rapports.
@@ -3708,7 +3767,7 @@ export interface components {
       date: string;
       /** Format: uuid */
       planning: string;
-      classement: components['schemas']['JourneeATraiterClassementEnum'];
+      classement: components['schemas']['ClassementEnum'];
       ecarts: components['schemas']['EcartConformite'][];
       visites: number;
       effectuees: number;
@@ -3717,12 +3776,6 @@ export interface components {
       rapports_en_retard: number;
       horodatages_douteux: number;
     };
-    /**
-     * @description * `conforme` - conforme
-     *     * `a_verifier` - a_verifier
-     * @enum {string}
-     */
-    JourneeATraiterClassementEnum: 'conforme' | 'a_verifier';
     /** @description Kilométrage estimé à vol d'oiseau, sans montant (PLN-010). */
     Kilometrage: {
       /** Format: double */
@@ -4538,6 +4591,37 @@ export interface components {
       readonly soumis_le: string | null;
     };
     /**
+     * @description 0.6.2 : le rapport soumis, à lire par le superviseur : tout son contenu, ses pièces
+     *     jointes (RPT-007 CA2), son retard et son horodatage (RPT-010 CA1), ses versions (RG-037).
+     */
+    RapportLu: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly statut: components['schemas']['StatutRapportEnum'];
+      /** Format: date-time */
+      readonly soumis_le: string | null;
+      readonly en_retard: boolean;
+      readonly horodatage_douteux: boolean;
+      /** Format: date-time */
+      readonly heure_telephone: string | null;
+      /** Format: date-time */
+      readonly recu_le: string | null;
+      readonly versions: number;
+      readonly objectif_prevu: string;
+      resultat?: string | null;
+      readonly resultat_obtenu: string;
+      presentations: components['schemas']['Presentation'][];
+      remises: components['schemas']['Remise'][];
+      readonly resume: string;
+      prochaine_action_type?: string | null;
+      readonly prochaine_action: string;
+      /** Format: date */
+      readonly prochaine_action_echeance: string | null;
+      readonly visite_proposee: boolean;
+      readonly champs: components['schemas']['ChampLu'][];
+      readonly pieces_jointes: components['schemas']['PieceJointe'][];
+    };
+    /**
      * @description * `attendu` - attendu
      *     * `brouillon` - brouillon
      *     * `soumis` - soumis
@@ -5226,6 +5310,31 @@ export interface components {
       /** Format: date */
       date: string;
       raison: components['schemas']['RaisonRepriseEnum'];
+    };
+    /** @description Une visite de la journée, ce qui s'est passé et son rapport. */
+    VisiteJournee: {
+      /** Format: uuid */
+      id: string;
+      /** Format: time */
+      heure: string | null;
+      readonly prospect: string | null;
+      etablissement?: string | null;
+      statut: string;
+      objectif: string;
+      est_imprevue: boolean;
+      justification: string;
+      motif_ecart?: string | null;
+      commentaire_ecart: string;
+      /** Format: date-time */
+      debut_le: string | null;
+      /** Format: date-time */
+      fin_le: string | null;
+      distance_debut_m: number | null;
+      distance_fin_m: number | null;
+      sans_gps: boolean;
+      rapport_statut:
+        (components['schemas']['RapportStatutEnum'] | components['schemas']['NullEnum']) | null;
+      rapport: components['schemas']['RapportLu'] | null;
     };
     VisitePassee: {
       /** Format: uuid */
@@ -8706,6 +8815,49 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ChampRapport'];
+        };
+      };
+    };
+  };
+  rapports_journee: {
+    parameters: {
+      query: {
+        date: string;
+        delegue: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Journee'];
+        };
+      };
+    };
+  };
+  piece_jointe_consulter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/octet-stream': string;
         };
       };
     };

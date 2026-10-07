@@ -32,6 +32,7 @@ const Propositions = lazy(() => import('./pages/Propositions'));
 const Planning = lazy(() => import('./pages/Planning'));
 const Validation = lazy(() => import('./pages/Validation'));
 const ATraiter = lazy(() => import('./pages/ATraiter'));
+const JourneeRapports = lazy(() => import('./pages/JourneeRapports'));
 const ConsultationPlanning = lazy(() => import('./pages/ConsultationPlanning'));
 const Remplacements = lazy(() => import('./pages/Remplacements'));
 const Notifications = lazy(() => import('./pages/Notifications'));
@@ -86,6 +87,13 @@ const PAGES_OBJET: {
   titre: string;
   rendu: (id: string) => ReactNode;
 }[] = [
+  {
+    // 0.6.2 : une journée d'un délégué, `/a-traiter/<délégué>/<date>`.
+    motif: /^\/a-traiter\/([0-9a-f-]{36}\/\d{4}-\d{2}-\d{2})$/,
+    parent: '/a-traiter',
+    titre: 'navigation.aTraiter',
+    rendu: (cle) => <JourneeRapports cle={cle} />,
+  },
   {
     motif: /^\/validation\/([0-9a-f-]{36})$/,
     parent: '/validation',

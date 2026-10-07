@@ -2167,5 +2167,26 @@
     "effectuees_zero": "none done",
     "effectuees_one": "{{count}} done",
     "effectuees_other": "{{count}} done"
+  },
+  "journee": {
+    "controles": "Day checks",
+    "deroulement": "Started at {{debut}}, ended at {{fin}} · {{minutes}} min",
+    "sansGps": "no GPS",
+    "distance": "{{distance}} m from the site",
+    "motif": "Reason: {{motif}}",
+    "imprevue": "Unplanned visit: “{{justification}}”",
+    "brouillon": "Draft report: it stays with the rep until it is submitted.",
+    "attendu": "Report not written yet.",
+    "rapport": "Report",
+    "soumisLe": "submitted on {{date}}",
+    "horodatageDouteux": "Doubtful timestamp",
+    "horodatageDetail": "Phone time: {{telephone}}; received by the server at {{recu}}. The reception time was kept.",
+    "versions_one": "{{count}} version",
+    "versions_other": "{{count}} versions",
+    "remise": "{{type}}: {{libelle}} × {{quantite}}",
+    "resultat": "Result",
+    "echeance": "To do by {{date}}",
+    "pieces": "Attachments",
+    "ouvrir": "Open the day"
   }
 }

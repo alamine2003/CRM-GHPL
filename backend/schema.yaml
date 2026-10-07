@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.6.1
+  version: 0.6.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3699,6 +3699,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChampRapport'
           description: ''
+  /api/v1/rapports/journee/:
+    get:
+      operationId: rapports_journee
+      description: |-
+        0.6.2 : une journée d'un délégué, ses visites et leurs rapports, pour le responsable du
+        poste ou son remplaçant (`?delegue=<id>&date=AAAA-MM-JJ`).
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+          format: date
+        required: true
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - rapports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journee'
+          description: ''
+  /api/v1/rapports/pieces/{id}/:
+    get:
+      operationId: piece_jointe_consulter
+      description: |-
+        RPT-007 CA2 : une pièce jointe se lit par qui voit le rapport (`rapports.lire`, dans le
+        périmètre : le superviseur, le DM, le DF, le responsable pays) ; jamais d'un brouillon.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - rapports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/v1/rapports/visites-proposees/:
     get:
       operationId: visites_proposees
@@ -5234,6 +5289,21 @@ components:
       required:
       - remplacants
       - superviseurs
+    ChampLu:
+      type: object
+      description: Un champ du pays (RPT-008) tel que rempli, avec son libellé du
+        jour du rapport.
+      properties:
+        libelle:
+          type: string
+        type:
+          type: string
+        valeur:
+          nullable: true
+      required:
+      - libelle
+      - type
+      - valeur
     ChampRapport:
       type: object
       properties:
@@ -5369,6 +5439,14 @@ components:
         * `pr` - Pr
         * `m` - M.
         * `mme` - Mme
+    ClassementEnum:
+      enum:
+      - conforme
+      - a_verifier
+      type: string
+      description: |-
+        * `conforme` - Conforme
+        * `a_verifier` - À vérifier
     ClientEnum:
       enum:
       - portail
@@ -5530,7 +5608,7 @@ components:
           type: string
           format: date
         classement:
-          $ref: '#/components/schemas/ConformiteJourneeClassementEnum'
+          $ref: '#/components/schemas/ClassementEnum'
         ecarts:
           type: array
           items:
@@ -5547,14 +5625,6 @@ components:
       - ecarts
       - fige
       - terminee
-    ConformiteJourneeClassementEnum:
-      enum:
-      - conforme
-      - a_verifier
-      type: string
-      description: |-
-        * `conforme` - Conforme
-        * `a_verifier` - À vérifier
     Connexion:
       type: object
       properties:
@@ -7153,6 +7223,44 @@ components:
       - date
       - ferie
       - planifiable
+    Journee:
+      type: object
+      description: '0.6.2 : une journée d''un délégué, à consulter avant de la valider
+        (RPT-013, 0.6.3).'
+      properties:
+        delegue:
+          $ref: '#/components/schemas/Delegue'
+        date:
+          type: string
+          format: date
+        planning:
+          type: string
+          format: uuid
+        classement:
+          $ref: '#/components/schemas/ClassementEnum'
+        ecarts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EcartConformite'
+        fige:
+          type: boolean
+        activites:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activite'
+        visites:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisiteJournee'
+      required:
+      - activites
+      - classement
+      - date
+      - delegue
+      - ecarts
+      - fige
+      - planning
+      - visites
     JourneeATraiter:
       type: object
       description: |-
@@ -7166,7 +7274,7 @@ components:
           type: string
           format: uuid
         classement:
-          $ref: '#/components/schemas/JourneeATraiterClassementEnum'
+          $ref: '#/components/schemas/ClassementEnum'
         ecarts:
           type: array
           items:
@@ -7194,14 +7302,6 @@ components:
       - rapports_attendus
       - rapports_en_retard
       - visites
-    JourneeATraiterClassementEnum:
-      enum:
-      - conforme
-      - a_verifier
-      type: string
-      description: |-
-        * `conforme` - conforme
-        * `a_verifier` - a_verifier
     Kilometrage:
       type: object
       description: Kilométrage estimé à vol d'oiseau, sans montant (PLN-010).
@@ -9292,6 +9392,107 @@ components:
       - soumis_le
       - statut
       - visite
+    RapportLu:
+      type: object
+      description: |-
+        0.6.2 : le rapport soumis, à lire par le superviseur : tout son contenu, ses pièces
+        jointes (RPT-007 CA2), son retard et son horodatage (RPT-010 CA1), ses versions (RG-037).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        statut:
+          allOf:
+          - $ref: '#/components/schemas/StatutRapportEnum'
+          readOnly: true
+        soumis_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        en_retard:
+          type: boolean
+          readOnly: true
+        horodatage_douteux:
+          type: boolean
+          readOnly: true
+        heure_telephone:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        recu_le:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        versions:
+          type: integer
+          readOnly: true
+        objectif_prevu:
+          type: string
+          readOnly: true
+        resultat:
+          type: string
+          nullable: true
+        resultat_obtenu:
+          type: string
+          readOnly: true
+        presentations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Presentation'
+        remises:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remise'
+        resume:
+          type: string
+          readOnly: true
+        prochaine_action_type:
+          type: string
+          nullable: true
+        prochaine_action:
+          type: string
+          readOnly: true
+        prochaine_action_echeance:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        visite_proposee:
+          type: boolean
+          readOnly: true
+        champs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChampLu'
+          readOnly: true
+        pieces_jointes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieceJointe'
+          readOnly: true
+      required:
+      - champs
+      - en_retard
+      - heure_telephone
+      - horodatage_douteux
+      - id
+      - objectif_prevu
+      - pieces_jointes
+      - presentations
+      - prochaine_action
+      - prochaine_action_echeance
+      - recu_le
+      - remises
+      - resultat_obtenu
+      - resume
+      - soumis_le
+      - statut
+      - versions
+      - visite_proposee
     RapportStatutEnum:
       enum:
       - attendu
@@ -10893,6 +11094,78 @@ components:
       - date
       - raison
       - visite
+    VisiteJournee:
+      type: object
+      description: Une visite de la journée, ce qui s'est passé et son rapport.
+      properties:
+        id:
+          type: string
+          format: uuid
+        heure:
+          type: string
+          format: time
+          nullable: true
+        prospect:
+          type: string
+          nullable: true
+          readOnly: true
+        etablissement:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        objectif:
+          type: string
+        est_imprevue:
+          type: boolean
+        justification:
+          type: string
+        motif_ecart:
+          type: string
+          nullable: true
+        commentaire_ecart:
+          type: string
+        debut_le:
+          type: string
+          format: date-time
+          nullable: true
+        fin_le:
+          type: string
+          format: date-time
+          nullable: true
+        distance_debut_m:
+          type: integer
+          nullable: true
+        distance_fin_m:
+          type: integer
+          nullable: true
+        sans_gps:
+          type: boolean
+        rapport_statut:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RapportStatutEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        rapport:
+          allOf:
+          - $ref: '#/components/schemas/RapportLu'
+          nullable: true
+      required:
+      - commentaire_ecart
+      - debut_le
+      - distance_debut_m
+      - distance_fin_m
+      - est_imprevue
+      - fin_le
+      - heure
+      - id
+      - justification
+      - objectif
+      - prospect
+      - rapport
+      - rapport_statut
+      - sans_gps
+      - statut
     VisitePassee:
       type: object
       properties:
