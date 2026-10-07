@@ -1693,7 +1693,8 @@
     "cloche_zero": "Notifications",
     "cloche_one": "Notifications, {{count}} unread",
     "cloche_other": "Notifications, {{count}} unread",
-    "toutVoir": "See all"
+    "toutVoir": "See all",
+    "correction_demandee": "{{nom}} requests a correction of your report of {{jour}}"
   },
   "revision": {
     "demander": "Request a revision",
@@ -1976,7 +1977,8 @@
     "voir": "View the report",
     "statuts": {
       "attendu": "Report to write",
-      "brouillon": "Report in draft"
+      "brouillon": "Report in draft",
+      "a_corriger": "Report to correct"
     },
     "produits": "Products presented",
     "produitsAide": "Tap the products in the order you presented them.",
@@ -2166,7 +2168,9 @@
     "semaine": "Week of {{date}}",
     "effectuees_zero": "none done",
     "effectuees_one": "{{count}} done",
-    "effectuees_other": "{{count}} done"
+    "effectuees_other": "{{count}} done",
+    "aCorriger_one": "{{count}} sent back for correction",
+    "aCorriger_other": "{{count}} sent back for correction"
   },
   "journee": {
     "controles": "Day checks",
@@ -2224,5 +2228,26 @@
     "rapportsN_one": "{{count}} report",
     "rapportsN_other": "{{count}} reports",
     "rapportsN_zero": "no report"
+  },
+  "correction": {
+    "demander": "Request a correction",
+    "titre": "Request a correction",
+    "aide": "The report goes back to the rep with your comment. The day's other reports can still be approved; the day will wait for the corrected report.",
+    "commentaire": "What needs correcting",
+    "champs": "Parts to review (optional)",
+    "envoyer": "Send back to the rep",
+    "envoyee": "Correction requested: the report went back to the rep.",
+    "demandee": "Correction requested on {{date}} by {{par}}",
+    "aRevoir": "To review: {{champs}}",
+    "parties": {
+      "presentations": "Products presented",
+      "remises": "Samples and gifts",
+      "resultat": "Result",
+      "resume": "Summary of the discussion",
+      "prochaine_action": "Next action",
+      "pieces_jointes": "Attachments"
+    },
+    "listeTitre": "Reports to correct",
+    "listeNote": "Your supervisor asks you to review them, then submit them again."
   }
 }

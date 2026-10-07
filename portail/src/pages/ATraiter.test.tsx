@@ -17,6 +17,7 @@ const JOURNEE = {
   rapports_attendus: 1,
   rapports_en_retard: 0,
   horodatages_douteux: 0,
+  rapports_a_corriger: 0,
   escalade: false,
   eligible_lot: false,
 };

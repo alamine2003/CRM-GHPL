@@ -188,3 +188,50 @@ def valider_lot(par, pays, journees: list[tuple]) -> dict:
         rapports += valider_journee(planning, jour, par, titre, ModeValidation.LOT)
         validees += 1
     return {"journees": validees, "rapports": rapports}
+
+
+#: RPT-014 : les parties du socle qu'une correction peut viser ; s'y ajoutent les champs du
+#: pays du rapport, par leur code.
+PARTIES_SOCLE = ("presentations", "remises", "resultat", "resume", "prochaine_action",
+                 "pieces_jointes")  # fmt: skip
+
+
+@transaction.atomic
+def demander_correction(rapport: Rapport, par, commentaire: str, champs: list[str]) -> Rapport:
+    """RPT-014 : le superviseur renvoie un rapport soumis au délégué, avec un commentaire
+    obligatoire (CA1) et les champs à revoir ; sans échéance (DC-60). Les autres rapports de la
+    journée restent validables (CA2) ; la journée, elle, attend la nouvelle soumission (22.A)."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+
+    visite = rapport.visite
+    planning_du_jour(par, rapport.pays, visite.planning.delegue_id, visite.date)
+    if rapport.statut != StatutRapport.SOUMIS:
+        raise ErreurMetier("rapport_non_soumis",
+                           _("Seul un rapport soumis peut être renvoyé pour correction."),
+                           status.HTTP_409_CONFLICT)  # fmt: skip
+    texte = (commentaire or "").strip()
+    if not texte:
+        raise ErreurMetier("commentaire_requis",
+                           _("Dites au délégué ce qu'il doit corriger."),
+                           champ="commentaire")  # fmt: skip
+    permis = set(PARTIES_SOCLE) | {d["code"] for d in rapport.definitions}
+    inconnus = [c for c in champs if c not in permis]
+    if inconnus:
+        raise ErreurMetier("champ_inconnu", _("Champ du rapport inconnu."),
+                           champ="champs", inconnus=inconnus)  # fmt: skip
+    rapport.statut = StatutRapport.A_CORRIGER
+    rapport.correction_le = timezone.now()
+    rapport.correction_par = par
+    rapport.correction_commentaire = texte
+    rapport.correction_champs = list(dict.fromkeys(champs))
+    rapport.save(update_fields=["statut", "correction_le", "correction_par",
+                                "correction_commentaire", "correction_champs",
+                                "modifie_le"])  # fmt: skip
+    _auditer("rapport.correction_demandee", rapport, visite=str(visite.pk),
+             champs=rapport.correction_champs)  # fmt: skip
+    # Sans nom de prospect ni contenu médical dans le texte de la notification (NOT-002 CA2).
+    notifier(rapport.delegue, TypeNotification.CORRECTION_DEMANDEE, rapport.pays,
+             visite=str(visite.pk), date=visite.date.isoformat(),
+             nom=f"{par.first_name} {par.last_name}".strip())  # fmt: skip
+    return rapport

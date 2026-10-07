@@ -165,6 +165,27 @@ class SaisiePieceSerializer(serializers.Serializer):
     prise_le = serializers.DateTimeField()
 
 
+class CorrectionSerializer(serializers.Serializer):
+    """RPT-014 : la demande de correction en cours : qui, quand, pourquoi, sur quels champs."""
+
+    le = serializers.DateTimeField(source="correction_le")
+    par = serializers.SerializerMethodField()
+    commentaire = serializers.CharField(source="correction_commentaire")
+    #: Parties du socle (`presentations`, `resultat`…) ou codes des champs du pays.
+    champs = serializers.ListField(child=serializers.CharField(), source="correction_champs")
+
+    def get_par(self, rapport) -> str:
+        p = rapport.correction_par
+        return f"{p.first_name} {p.last_name}".strip() if p else ""
+
+
+def correction_de(rapport) -> dict | None:
+    """La demande en cours tant que le rapport attend sa correction ; sinon rien."""
+    if rapport.statut != StatutRapport.A_CORRIGER or rapport.correction_le is None:
+        return None
+    return CorrectionSerializer(rapport).data
+
+
 class RapportSerializer(serializers.ModelSerializer):
     presentations = PresentationSerializer(many=True)
     remises = RemiseSerializer(many=True)
@@ -192,10 +213,13 @@ class RapportSerializer(serializers.ModelSerializer):
     #: RG-032 : attendu avant cette heure (minuit du jour de la visite, heure du pays).
     echeance = serializers.SerializerMethodField()
     en_retard = serializers.SerializerMethodField()
+    #: RPT-014 : ce que le superviseur demande de corriger.
+    correction = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
-        fields = ["id", "visite", "statut", "objectif_prevu", "est_imprevue", "justification",
+        fields = ["id", "visite", "statut", "correction", "objectif_prevu", "est_imprevue",
+                  "justification",
                   "presentations", "resultat", "resultat_obtenu", "resume", "prochaine_action",
                   "prochaine_action_type", "prochaine_action_echeance", "visite_proposee",
                   "remises", "champs", "definitions", "soumis_le", "echeance", "en_retard",
@@ -207,6 +231,10 @@ class RapportSerializer(serializers.ModelSerializer):
 
     def get_echeance(self, rapport) -> datetime:
         return services.echeance(rapport)
+
+    @extend_schema_field(CorrectionSerializer(allow_null=True))
+    def get_correction(self, rapport):
+        return correction_de(rapport)
 
     def get_en_retard(self, rapport) -> bool:
         return services.en_retard(rapport)

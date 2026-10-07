@@ -104,51 +104,54 @@ export function ProgrammeDuJour() {
   // Restées prévues après leur journée : à justifier (VIS-009 CA1).
   const aJustifier = (programme.a_justifier ?? []).filter((v) => v.statut === 'prevue');
   // RG-032 : passé minuit, un rapport non soumis d'un jour précédent de la semaine est en
-  // retard ; il reste à portée de main, en tête de la Tournée.
-  const rapportsEnRetard = programme.jours
-    .filter((j) => j.date < programme.aujourdhui)
-    .flatMap((j) =>
-      j.visites
-        .filter(
-          (v) =>
-            v.statut === 'effectuee' &&
-            ['attendu', 'brouillon', 'a_corriger'].includes(v.rapport_statut ?? 'attendu'),
-        )
-        .map((v) => ({ v, j })),
+  // retard ; il reste à portée de main, en tête de la Tournée. Un rapport renvoyé pour
+  // correction (RPT-014) a sa propre liste : il n'est pas en retard, il est à revoir.
+  const rapportsDe = (statuts: string[]) =>
+    programme.jours
+      .filter((j) => j.date < programme.aujourdhui)
+      .flatMap((j) =>
+        j.visites
+          .filter(
+            (v) => v.statut === 'effectuee' && statuts.includes(v.rapport_statut ?? 'attendu'),
+          )
+          .map((v) => ({ v, j })),
+      );
+  const rapportsACorriger = rapportsDe(['a_corriger']);
+  const rapportsEnRetard = rapportsDe(['attendu', 'brouillon']);
+  const listeRapports = (titre: string, note: string, liste: typeof rapportsEnRetard) =>
+    liste.length > 0 && (
+      <Carte style={{ gap: 4 }}>
+        <Texte variante="sousTitre">{`${titre} (${liste.length})`}</Texte>
+        <Texte variante="discret">{note}</Texte>
+        {liste.map(({ v, j }, i) => (
+          <Pressable
+            key={v.id}
+            accessibilityRole="button"
+            onPress={() => routeur.push({ pathname: '/rapport/[id]', params: { id: v.id } })}
+            style={({ pressed }) => [
+              styles.ligne,
+              { borderTopColor: p.ligne },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <View style={{ gap: 2 }}>
+              {/* La date une fois par jour : les rapports d'un même jour se suivent. */}
+              {liste[i - 1]?.j.date !== j.date && (
+                <Text style={[styles.surTitre, { color: p.attention }]}>
+                  {jour(v.date, { weekday: 'long', day: 'numeric', month: 'long' })}
+                </Text>
+              )}
+              <LigneVisite visite={v} jour={j} rapportSeul />
+            </View>
+          </Pressable>
+        ))}
+      </Carte>
     );
 
   return (
     <>
-      {rapportsEnRetard.length > 0 && (
-        <Carte style={{ gap: 4 }}>
-          <Texte variante="sousTitre">
-            {`${t('rapport.enRetardTitre')} (${rapportsEnRetard.length})`}
-          </Texte>
-          <Texte variante="discret">{t('rapport.enRetardNote')}</Texte>
-          {rapportsEnRetard.map(({ v, j }, i) => (
-            <Pressable
-              key={v.id}
-              accessibilityRole="button"
-              onPress={() => routeur.push({ pathname: '/rapport/[id]', params: { id: v.id } })}
-              style={({ pressed }) => [
-                styles.ligne,
-                { borderTopColor: p.ligne },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <View style={{ gap: 2 }}>
-                {/* La date une fois par jour : les rapports d'un même jour se suivent. */}
-                {rapportsEnRetard[i - 1]?.j.date !== j.date && (
-                  <Text style={[styles.surTitre, { color: p.attention }]}>
-                    {jour(v.date, { weekday: 'long', day: 'numeric', month: 'long' })}
-                  </Text>
-                )}
-                <LigneVisite visite={v} jour={j} rapportSeul />
-              </View>
-            </Pressable>
-          ))}
-        </Carte>
-      )}
+      {listeRapports(t('correction.listeTitre'), t('correction.listeNote'), rapportsACorriger)}
+      {listeRapports(t('rapport.enRetardTitre'), t('rapport.enRetardNote'), rapportsEnRetard)}
       {aJustifier.length > 0 && (
         <Carte style={{ gap: 4 }}>
           <Texte variante="sousTitre">
@@ -410,7 +413,9 @@ function LigneVisite({
             )}
           {visite.modification_en_attente && <Etiquette>{t('programme.enAttente')}</Etiquette>}
           {visite.est_imprevue && <Etiquette ton="neutre">{t('visites.imprevue')}</Etiquette>}
-          {(visite.rapport_statut === 'attendu' || visite.rapport_statut === 'brouillon') && (
+          {(visite.rapport_statut === 'attendu' ||
+            visite.rapport_statut === 'brouillon' ||
+            visite.rapport_statut === 'a_corriger') && (
             <Etiquette>{t(`rapport.statuts.${visite.rapport_statut}`)}</Etiquette>
           )}
         </View>

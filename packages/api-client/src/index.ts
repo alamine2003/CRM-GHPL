@@ -179,6 +179,7 @@ export type {
   VisiteJournee,
   RapportLu,
   ResultatValidation,
+  Correction,
   PieceJointe,
   DefinitionChamp,
   TypeChamp,
@@ -907,6 +908,12 @@ export function creerClient(options: OptionsClient) {
       /** RPT-013 : valider un rapport soumis, seul. */
       valider: (id: string) =>
         requete<RapportLu>(`/api/v1/rapports/${id}/valider/`, { methode: 'POST' }),
+      /** RPT-014 : renvoyer un rapport soumis au délégué, commentaire obligatoire (CA1). */
+      demanderCorrection: (id: string, commentaire: string, champs: string[]) =>
+        requete<RapportLu>(`/api/v1/rapports/${id}/correction/`, {
+          methode: 'POST',
+          corps: { commentaire, champs },
+        }),
       /** RPT-013 ; 22.A : la journée se valide quand tous ses rapports sont soumis. */
       validerJournee: (delegue: string, date: string) =>
         requete<ResultatValidation>('/api/v1/rapports/journee/valider/', {

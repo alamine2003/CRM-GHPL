@@ -11,7 +11,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Alerte, Bouton, Carte, Texte, usePalette } from './composants';
 import { police } from './polices';
 import { messageErreur, useSession } from './session';
-import { iconeNotification, semaineDeNotification, texteNotification } from './textesNotifications';
+import {
+  iconeNotification,
+  semaineDeNotification,
+  texteNotification,
+  visiteDeNotification,
+} from './textesNotifications';
 
 export function CentreNotifications() {
   const { t, i18n } = useTranslation();
@@ -62,7 +67,9 @@ export function CentreNotifications() {
       void client.notifications.lue(n.id).catch(() => undefined);
     }
     const semaine = semaineDeNotification(n);
-    if (semaine) routeur.push({ pathname: '/semaine', params: { jour: semaine } });
+    const visite = visiteDeNotification(n);
+    if (visite) routeur.push({ pathname: '/rapport/[id]', params: { id: visite } });
+    else if (semaine) routeur.push({ pathname: '/semaine', params: { jour: semaine } });
   }
 
   if (erreur) return <Alerte type="erreur">{erreur}</Alerte>;
@@ -91,7 +98,11 @@ export function CentreNotifications() {
               key={n.id}
               accessibilityRole="button"
               accessibilityState={{ selected: !n.lue_le }}
-              accessibilityHint={semaineDeNotification(n) ? t('notifications.voir') : undefined}
+              accessibilityHint={
+                semaineDeNotification(n) || visiteDeNotification(n)
+                  ? t('notifications.voir')
+                  : undefined
+              }
               onPress={() => ouvrir(n)}
               style={({ pressed }) => [
                 styles.ligne,

@@ -2,6 +2,27 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.4] — Demande de correction
+
+Quatrième jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté (RPT-014, DC-60)
+
+- « Demander une correction » sous chaque rapport soumis : un commentaire et, au choix, les parties à revoir ; le rapport revient au délégué, « à corriger ». **CA1** : impossible sans commentaire.
+- **CA2** : les autres rapports de la journée se valident toujours ; la journée attend le rapport corrigé (22.A). « À traiter » compte les rapports renvoyés.
+- Sans échéance (DC-60) : le rapport renvoyé n'est pas « en retard ».
+- Le délégué reçoit une notification qui ouvre le rapport ; le rapport affiche la demande en tête ; la Tournée liste les rapports à corriger de la semaine. Resoumis, le rapport revient en version 2.
+- Décision 25.A : l'escalade des rapports au DM garde 24 heures ouvrées, le délai des plannings.
+
+### Design
+
+Revue sur le rendu réel (bureau, téléphone). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Rapport à corriger (téléphone) | « En retard : ce rapport était attendu avant minuit… » s'affichait sous la demande, alors que le rapport avait été soumis à l'heure. | Un rapport déjà soumis une fois n'est en retard que si sa première soumission l'était ; le rappel du délai disparaît aussi. |
+| Tournée (téléphone) | Les rapports renvoyés pour correction tombaient dans « Rapports en retard ». | Liste à part, « Rapports à corriger », avant les rapports en retard. |
+
 ## [0.6.3] — Validation des rapports
 
 Troisième jalon du cycle 0.6 « Validation des rapports ».

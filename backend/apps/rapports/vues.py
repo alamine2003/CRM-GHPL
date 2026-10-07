@@ -335,3 +335,23 @@ class ValidationLotVue(VuePerimetre):
         resultat = valider_lot(request.user, pays,
                                [(j["delegue"], j["date"]) for j in v["journees"]])  # fmt: skip
         return Response(sf.ResultatValidationSerializer(resultat).data)
+
+
+class CorrectionRapportVue(VuePerimetre):
+    """RPT-014 : renvoyer un rapport soumis au délégué, avec un commentaire (CA1) et les
+    champs à revoir ; sans échéance (DC-60)."""
+
+    actions = {"POST": VALIDER}
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.select_related("visite__planning"))
+
+    @extend_schema(request=sf.DemandeCorrectionSerializer, responses=sf.RapportLuSerializer,
+                   operation_id="rapport_correction")  # fmt: skip
+    def post(self, request, id):
+        from .validation import demander_correction
+
+        rapport = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(sf.DemandeCorrectionSerializer, request)
+        rapport = demander_correction(rapport, request.user, v["commentaire"], v["champs"])
+        return Response(sf.RapportLuSerializer(rapport).data)

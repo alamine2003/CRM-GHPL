@@ -1693,7 +1693,8 @@
     "cloche_zero": "Notifications",
     "cloche_one": "Notifications, {{count}} non lue",
     "cloche_other": "Notifications, {{count}} non lues",
-    "toutVoir": "Tout voir"
+    "toutVoir": "Tout voir",
+    "correction_demandee": "{{nom}} demande une correction de votre rapport du {{jour}}"
   },
   "revision": {
     "demander": "Demander une révision",
@@ -1976,7 +1977,8 @@
     "voir": "Voir le rapport",
     "statuts": {
       "attendu": "Rapport à rédiger",
-      "brouillon": "Rapport en brouillon"
+      "brouillon": "Rapport en brouillon",
+      "a_corriger": "Rapport à corriger"
     },
     "produits": "Produits présentés",
     "produitsAide": "Touchez les produits dans l'ordre où vous les avez présentés.",
@@ -2166,7 +2168,9 @@
     "semaine": "Semaine du {{date}}",
     "effectuees_zero": "aucune effectuée",
     "effectuees_one": "{{count}} effectuée",
-    "effectuees_other": "{{count}} effectuées"
+    "effectuees_other": "{{count}} effectuées",
+    "aCorriger_one": "{{count}} renvoyé pour correction",
+    "aCorriger_other": "{{count}} renvoyés pour correction"
   },
   "journee": {
     "controles": "Contrôles de la journée",
@@ -2224,5 +2228,26 @@
     "rapportsN_one": "{{count}} rapport",
     "rapportsN_other": "{{count}} rapports",
     "rapportsN_zero": "aucun rapport"
+  },
+  "correction": {
+    "demander": "Demander une correction",
+    "titre": "Demander une correction",
+    "aide": "Le rapport revient au délégué, avec votre commentaire. Les autres rapports de la journée restent validables ; la journée attendra le rapport corrigé.",
+    "commentaire": "Ce qu'il faut corriger",
+    "champs": "Parties à revoir (facultatif)",
+    "envoyer": "Renvoyer au délégué",
+    "envoyee": "Correction demandée : le rapport est revenu au délégué.",
+    "demandee": "Correction demandée le {{date}} par {{par}}",
+    "aRevoir": "À revoir : {{champs}}",
+    "parties": {
+      "presentations": "Produits présentés",
+      "remises": "Échantillons et cadeaux",
+      "resultat": "Résultat",
+      "resume": "Résumé de l'échange",
+      "prochaine_action": "Prochaine action",
+      "pieces_jointes": "Pièces jointes"
+    },
+    "listeTitre": "Rapports à corriger",
+    "listeNote": "Votre superviseur vous demande de les revoir, puis de les soumettre à nouveau."
   }
 }

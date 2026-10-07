@@ -12,6 +12,7 @@ import JourneeRapports from './JourneeRapports';
 const RAPPORT = {
   id: 'r1',
   statut: 'soumis',
+  correction: null,
   valide_le: null,
   valide_par: null,
   mode_validation: '',
@@ -31,7 +32,9 @@ const RAPPORT = {
   prochaine_action: 'Revenir avec l’étude',
   prochaine_action_echeance: '2026-10-27',
   visite_proposee: true,
-  champs: [{ libelle: 'Patients concernés par semaine', type: 'nombre', valeur: 12 }],
+  champs: [
+    { code: 'patients', libelle: 'Patients concernés par semaine', type: 'nombre', valeur: 12 },
+  ],
   pieces_jointes: [
     {
       id: 'pj1',
@@ -116,10 +119,17 @@ function rendre(journee: Journee = JOURNEE) {
   const piece = vi.fn(async () => new Blob(['%PDF'], { type: 'application/pdf' }));
   const valider = vi.fn(async () => ({ ...RAPPORT, statut: 'valide' }));
   const validerJournee = vi.fn(async () => ({ journees: 1, rapports: 1 }));
+  const demanderCorrection = vi.fn(async () => ({ ...RAPPORT, statut: 'a_corriger' }));
   const session = {
     etat: { statut: 'chargement' },
     client: {
-      rapports: { journee: vi.fn(async () => journee), piece, valider, validerJournee },
+      rapports: {
+        journee: vi.fn(async () => journee),
+        piece,
+        valider,
+        validerJournee,
+        demanderCorrection,
+      },
     } as unknown as ClientApi,
   } as unknown as Session;
   render(
@@ -133,7 +143,7 @@ function rendre(journee: Journee = JOURNEE) {
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { piece, valider, validerJournee };
+  return { piece, valider, validerJournee, demanderCorrection };
 }
 
 beforeEach(async () => {
@@ -236,5 +246,52 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
       await screen.findByText(/Validé en remplacement le .* par Awa FICTIVE/),
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Valider ce rapport' })).toBeNull();
+  });
+
+  it('RPT-014 CA1 : sans commentaire, la correction ne part pas ; avec, elle vise ses champs', async () => {
+    const { demanderCorrection } = rendre();
+    fireEvent.click(await screen.findByRole('button', { name: 'Demander une correction' }));
+    const dialogue = await screen.findByRole('dialog');
+    const envoyer = within(dialogue).getByRole('button', { name: 'Renvoyer au délégué' });
+    expect(envoyer).toBeDisabled();
+    fireEvent.change(within(dialogue).getByLabelText(/Ce qu.il faut corriger/), {
+      target: { value: 'Précisez le résumé.' },
+    });
+    fireEvent.click(within(dialogue).getByLabelText(/Résumé de l.échange/));
+    fireEvent.click(within(dialogue).getByLabelText('Patients concernés par semaine'));
+    fireEvent.click(envoyer);
+    await waitFor(() =>
+      expect(demanderCorrection).toHaveBeenCalledWith('r1', 'Précisez le résumé.', [
+        'resume',
+        'patients',
+      ]),
+    );
+  });
+
+  it('RPT-014 : la correction en attente s’affiche sur le rapport', async () => {
+    const visites = JOURNEE.visites.map((v, i) =>
+      i === 0
+        ? {
+            ...v,
+            rapport_statut: 'a_corriger',
+            rapport: {
+              ...RAPPORT,
+              statut: 'a_corriger',
+              correction: {
+                le: '2026-10-14T08:00:00Z',
+                par: 'Kossi GUEYE',
+                commentaire: 'Précisez le résumé.',
+                champs: ['resume'],
+              },
+            },
+          }
+        : v,
+    );
+    rendre({ ...JOURNEE, visites } as unknown as Journee);
+    expect(
+      await screen.findByText(/Correction demandée le .* par Kossi GUEYE/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('« Précisez le résumé. »')).toBeInTheDocument();
+    expect(screen.getByText(/À revoir : Résumé de l.échange/)).toBeInTheDocument();
   });
 });

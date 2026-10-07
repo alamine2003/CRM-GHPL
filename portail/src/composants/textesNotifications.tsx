@@ -22,6 +22,7 @@ export const ICONES: Record<Notification['type'], ReactNode> = {
   plannings_non_approuves: <EventBusyRounded color="warning" fontSize="small" />,
   reouverture_demandee: <LockOpenRounded color="warning" fontSize="small" />,
   redaction_rouverte: <LockOpenRounded color="primary" fontSize="small" />,
+  correction_demandee: <RateReviewOutlined color="warning" fontSize="small" />,
 };
 
 /** Texte d'une notification, composé dans la langue de l'utilisateur (prd.md §18). */
@@ -47,6 +48,7 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
     nom: n.donnees.nom,
     debut: jour(n.donnees.debut),
     fin: jour(n.donnees.fin),
+    jour: jour(n.donnees.date),
     heures: n.donnees.heures,
     count: n.donnees.nombre ?? 0,
     echeance,

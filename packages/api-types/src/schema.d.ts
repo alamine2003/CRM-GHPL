@@ -2077,6 +2077,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/rapports/{id}/correction/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description RPT-014 : renvoyer un rapport soumis au délégué, avec un commentaire (CA1) et les
+     *     champs à revoir ; sans échéance (DC-60).
+     */
+    post: operations['rapport_correction'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/rapports/{id}/valider/': {
     parameters: {
       query?: never;
@@ -3012,6 +3032,7 @@ export interface components {
     };
     /** @description Un champ du pays (RPT-008) tel que rempli, avec son libellé du jour du rapport. */
     ChampLu: {
+      code: string;
       libelle: string;
       type: string;
       valeur: unknown;
@@ -3245,6 +3266,14 @@ export interface components {
       /** Format: date */
       date: string;
     };
+    /** @description RPT-014 : la demande de correction en cours : qui, quand, pourquoi, sur quels champs. */
+    Correction: {
+      /** Format: date-time */
+      le: string;
+      readonly par: string;
+      commentaire: string;
+      champs: string[];
+    };
     CreationDivision: {
       libelle: string;
       code: string;
@@ -3374,6 +3403,11 @@ export interface components {
       delegue: components['schemas']['Delegue'];
       journees: components['schemas']['JourneeATraiter'][];
     };
+    /** @description RPT-014 CA1 : commentaire obligatoire ; champs concernés facultatifs. */
+    DemandeCorrection: {
+      commentaire: string;
+      champs?: string[];
+    };
     DemandeReouverture: {
       destinataires: number;
     };
@@ -3483,6 +3517,10 @@ export interface components {
       /** Format: date */
       fin?: string;
       nom?: string;
+      /** Format: uuid */
+      visite?: string;
+      /** Format: date */
+      date?: string;
     };
     /**
      * @description * `soumission` - soumission
@@ -3834,6 +3872,7 @@ export interface components {
       rapports_attendus: number;
       rapports_en_retard: number;
       horodatages_douteux: number;
+      rapports_a_corriger: number;
       escalade: boolean;
       eligible_lot: boolean;
     };
@@ -4033,6 +4072,7 @@ export interface components {
      *     * `plannings_non_approuves` - Plannings non approuvés
      *     * `reouverture_demandee` - Réouverture demandée
      *     * `redaction_rouverte` - Rédaction rouverte
+     *     * `correction_demandee` - Correction demandée
      * @enum {string}
      */
     NotificationTypeEnum:
@@ -4044,7 +4084,8 @@ export interface components {
       | 'escalade'
       | 'plannings_non_approuves'
       | 'reouverture_demandee'
-      | 'redaction_rouverte';
+      | 'redaction_rouverte'
+      | 'correction_demandee';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
@@ -4606,6 +4647,7 @@ export interface components {
       /** Format: uuid */
       readonly visite: string;
       readonly statut: components['schemas']['StatutRapportEnum'];
+      readonly correction: components['schemas']['Correction'] | null;
       readonly objectif_prevu: string;
       est_imprevue: boolean;
       justification: string;
@@ -4674,6 +4716,7 @@ export interface components {
       /** Format: uuid */
       readonly id: string;
       readonly statut: components['schemas']['StatutRapportEnum'];
+      readonly correction: components['schemas']['Correction'] | null;
       /** Format: date-time */
       readonly valide_le: string | null;
       readonly valide_par: string | null;
@@ -8792,6 +8835,33 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Qualite'];
+        };
+      };
+    };
+  };
+  rapport_correction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DemandeCorrection'];
+        'application/x-www-form-urlencoded': components['schemas']['DemandeCorrection'];
+        'multipart/form-data': components['schemas']['DemandeCorrection'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RapportLu'];
         };
       };
     };

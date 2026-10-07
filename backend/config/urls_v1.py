@@ -243,6 +243,12 @@ urlpatterns = [
     path("rapports/<uuid:id>/valider/", rap.ValidationRapportVue.as_view(), name="rapport-valider"),
     path("rapports/journee/valider/", rap.ValidationJourneeVue.as_view(), name="journee-valider"),
     path("rapports/lot/valider/", rap.ValidationLotVue.as_view(), name="lot-valider"),
+    # RPT-014 : demande de correction motivée
+    path(
+        "rapports/<uuid:id>/correction/",
+        rap.CorrectionRapportVue.as_view(),
+        name="rapport-correction",
+    ),
     # DC-61 : visites proposées dans les rapports, reprises à la préparation de la semaine
     path(
         "rapports/visites-proposees/",

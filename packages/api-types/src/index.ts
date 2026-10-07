@@ -146,6 +146,7 @@ export type Journee = Schemas['Journee'];
 export type VisiteJournee = Schemas['VisiteJournee'];
 export type RapportLu = Schemas['RapportLu'];
 export type ResultatValidation = Schemas['ResultatValidation'];
+export type Correction = Schemas['Correction'];
 /** Photo ou document joint au rapport (RPT-007). */
 export type PieceJointe = Schemas['PieceJointe'];
 export type DefinitionChamp = Schemas['DefinitionChamp'];

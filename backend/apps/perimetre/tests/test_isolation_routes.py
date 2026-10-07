@@ -139,6 +139,7 @@ def senegal(monde):
         # La visite est cherchée dans le périmètre avant la pièce jointe (RPT-007 CA2).
         "visite-rapport-pieces": visite.pk, "visite-rapport-piece": visite.pk,
         "rapport-piece-lue": visite.pk, "rapport-valider": visite.pk,
+        "rapport-correction": visite.pk,
         "champ-rapport": champ.pk, "champ-rapport-archiver": champ.pk,
         "visite-non-realisee": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,

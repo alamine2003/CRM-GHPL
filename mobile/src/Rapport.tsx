@@ -6,7 +6,13 @@
  * le réseau le permet ; déjà ouvert une fois, il se complète sans réseau. La soumission hors
  * connexion arrive en 0.5.7.
  */
-import type { DefinitionChamp, Rapport, ValeursChamps, VisiteProgramme } from '@innov/api-client';
+import type {
+  Correction,
+  DefinitionChamp,
+  Rapport,
+  ValeursChamps,
+  VisiteProgramme,
+} from '@innov/api-client';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Switch, View } from 'react-native';
@@ -462,8 +468,10 @@ export function FormulaireRapport({
 
   const manquants = manquantsDe(saisie, rapport.definitions);
   // RG-032 : attendu avant minuit, heure du pays, le jour de la visite.
+  // Déjà soumis une fois (correction demandée) : seul le retard de la première soumission compte.
   const enRetard =
-    rapport.en_retard || (!!rapport.echeance && ouvertLe >= Date.parse(rapport.echeance));
+    rapport.en_retard ||
+    (!rapport.soumis_le && !!rapport.echeance && ouvertLe >= Date.parse(rapport.echeance));
   const libelleManquant = (code: string) =>
     (SOCLE as readonly string[]).includes(code)
       ? t(`rapport.socle.${code}`)
@@ -514,10 +522,14 @@ export function FormulaireRapport({
     <View style={{ gap: 20 }}>
       <View style={{ gap: 8 }}>
         <EnteteVisite visite={visite} fuseau={programme?.fuseau} />
-        {!enRetard && <Texte variante="discret">{t('rapport.delai')}</Texte>}
+        {!enRetard && !rapport.soumis_le && <Texte variante="discret">{t('rapport.delai')}</Texte>}
       </View>
       {rapport.statut === 'a_corriger' && (
-        <Alerte type="attention">{t('rapport.aCorriger')}</Alerte>
+        <Alerte type="attention">
+          {rapport.correction
+            ? texteCorrection(rapport.correction, rapport.definitions, t, i18n.language)
+            : t('rapport.aCorriger')}
+        </Alerte>
       )}
       {enRetard && <Alerte type="attention">{t('rapport.retard')}</Alerte>}
       {horsLigne && <Alerte type="attention">{t('rapport.horsLigneLocal')}</Alerte>}
@@ -623,3 +635,39 @@ export function FormulaireRapport({
     </View>
   );
 }
+
+/** RPT-014 : qui demande quoi, quand, et les parties à revoir. */
+function texteCorrection(
+  c: Correction,
+  definitions: Rapport['definitions'],
+  t: ReturnType<typeof useTranslation>['t'],
+  langue: string,
+): string {
+  const le = new Intl.DateTimeFormat(langue, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(c.le));
+  const parties = c.champs.map((code) =>
+    PARTIES_SOCLE.includes(code)
+      ? t(`correction.parties.${code}`)
+      : (definitions.find((d) => d.code === code)?.libelle ?? code),
+  );
+  return [
+    t('correction.demandee', { date: le, par: c.par }),
+    `« ${c.commentaire} »`,
+    parties.length ? t('correction.aRevoir', { champs: parties.join(', ') }) : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+const PARTIES_SOCLE = [
+  'presentations',
+  'remises',
+  'resultat',
+  'resume',
+  'prochaine_action',
+  'pieces_jointes',
+];

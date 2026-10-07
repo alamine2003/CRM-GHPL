@@ -23,6 +23,8 @@ class TypeNotification(models.TextChoices):
     #: Fermeture de la semaine (décision du 6 octobre 2026, 0.3.9).
     REOUVERTURE_DEMANDEE = "reouverture_demandee", "Réouverture demandée"
     REDACTION_ROUVERTE = "redaction_rouverte", "Rédaction rouverte"
+    #: RPT-014 (0.6.4) : le superviseur demande une correction d'un rapport.
+    CORRECTION_DEMANDEE = "correction_demandee", "Correction demandée"
 
 
 class Notification(ModeleDePays):

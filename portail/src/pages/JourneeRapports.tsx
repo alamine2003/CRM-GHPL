@@ -13,6 +13,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
+  TextField,
   Skeleton,
   Stack,
   Typography,
@@ -320,6 +324,14 @@ function Rapport({
   const { client } = useSession();
   const notifier = useNotifier();
   const [enCours, setEnCours] = useState(false);
+  const [correction, setCorrection] = useState(false);
+  const dateCourte = (iso: string) =>
+    new Intl.DateTimeFormat(i18n.language, {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(iso));
   async function valider() {
     setEnCours(true);
     try {
@@ -371,17 +383,46 @@ function Rapport({
         )}
         {r.versions > 1 && <Etiquette>{t('journee.versions', { count: r.versions })}</Etiquette>}
         {r.statut === 'soumis' && !fige && (
-          <Button
-            size="small"
-            variant="outlined"
-            disabled={enCours}
-            onClick={() => void valider()}
-            sx={{ ml: 'auto' }}
-          >
-            {t('validationRapports.rapport')}
-          </Button>
+          <Stack direction="row" spacing={1} sx={{ ml: 'auto' }}>
+            <Button size="small" disabled={enCours} onClick={() => setCorrection(true)}>
+              {t('correction.demander')}
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              disabled={enCours}
+              onClick={() => void valider()}
+            >
+              {t('validationRapports.rapport')}
+            </Button>
+          </Stack>
         )}
       </Stack>
+      {r.correction && (
+        <Alert severity="warning" sx={{ mt: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {t('correction.demandee', {
+              date: dateCourte(r.correction.le),
+              par: r.correction.par,
+            })}
+          </Typography>
+          <Typography variant="body2">« {r.correction.commentaire} »</Typography>
+          {r.correction.champs.length > 0 && (
+            <Typography variant="body2">
+              {t('correction.aRevoir', {
+                champs: r.correction.champs.map((c) => libellePartie(c, r, t)).join(', '),
+              })}
+            </Typography>
+          )}
+        </Alert>
+      )}
+      {correction && (
+        <DialogueCorrection
+          rapport={r}
+          surFermer={() => setCorrection(false)}
+          surEnvoye={surValide}
+        />
+      )}
       {r.statut === 'valide' && valideLe && (
         <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 600, pt: 0.5 }}>
           {t('validationRapports.valideLe', {
@@ -499,6 +540,106 @@ function Ligne({ libelle, valeur }: { libelle: string; valeur: ReactNode }) {
         {valeur}
       </Typography>
     </Box>
+  );
+}
+
+/** RPT-014 : les parties du socle qu'une correction peut viser, puis les champs du pays. */
+const PARTIES = [
+  'presentations',
+  'remises',
+  'resultat',
+  'resume',
+  'prochaine_action',
+  'pieces_jointes',
+] as const;
+
+function libellePartie(code: string, r: RapportLu, t: Traduire): string {
+  if ((PARTIES as readonly string[]).includes(code)) return t(`correction.parties.${code}`);
+  return r.champs.find((c) => c.code === code)?.libelle ?? code;
+}
+
+/** RPT-014 : commentaire obligatoire (CA1), champs à revoir facultatifs, sans échéance. */
+function DialogueCorrection({
+  rapport: r,
+  surFermer,
+  surEnvoye,
+}: {
+  rapport: RapportLu;
+  surFermer: () => void;
+  surEnvoye: () => Promise<unknown>;
+}) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const notifier = useNotifier();
+  const [commentaire, setCommentaire] = useState('');
+  const [champs, setChamps] = useState<string[]>([]);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+  const codes = [...PARTIES, ...r.champs.map((c) => c.code)];
+  async function envoyer() {
+    setEnvoi(true);
+    setErreur(null);
+    try {
+      await client.rapports.demanderCorrection(r.id, commentaire, champs);
+      notifier(t('correction.envoyee'));
+      surFermer();
+      await surEnvoye();
+    } catch (e) {
+      setErreur(messageErreur(e, t('erreurs.reseau')));
+    } finally {
+      setEnvoi(false);
+    }
+  }
+  return (
+    <Dialog open onClose={surFermer} fullWidth maxWidth="sm">
+      <DialogTitle>{t('correction.titre')}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 0.5 }}>
+          <DialogContentText>{t('correction.aide')}</DialogContentText>
+          {erreur && <Alert severity="error">{erreur}</Alert>}
+          <TextField
+            label={t('correction.commentaire')}
+            value={commentaire}
+            onChange={(e) => setCommentaire(e.target.value)}
+            multiline
+            minRows={3}
+            required
+            autoFocus
+          />
+          <FormGroup aria-label={t('correction.champs')}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', pb: 0.5 }}>
+              {t('correction.champs')}
+            </Typography>
+            {codes.map((code) => (
+              <FormControlLabel
+                key={code}
+                control={
+                  <Checkbox
+                    checked={champs.includes(code)}
+                    onChange={(e) =>
+                      setChamps((l) =>
+                        e.target.checked ? [...l, code] : l.filter((x) => x !== code),
+                      )
+                    }
+                  />
+                }
+                label={libellePartie(code, r, t)}
+              />
+            ))}
+          </FormGroup>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={surFermer}>{t('commun.annuler')}</Button>
+        <Button
+          variant="contained"
+          disabled={envoi || !commentaire.trim()}
+          onClick={() => void envoyer()}
+        >
+          {t('correction.envoyer')}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 

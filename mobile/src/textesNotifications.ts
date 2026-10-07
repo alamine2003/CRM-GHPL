@@ -33,6 +33,7 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
     nom: n.donnees.nom,
     debut: jour(n.donnees.debut),
     fin: jour(n.donnees.fin),
+    jour: jour(n.donnees.date),
     heures: n.donnees.heures,
     count: n.donnees.nombre ?? 0,
     echeance,
@@ -51,6 +52,7 @@ export function iconeNotification(
 ): { nom: ComponentProps<typeof MaterialIcons>['name']; couleur: string } {
   switch (n.type) {
     case 'revision_demandee':
+    case 'correction_demandee':
       return { nom: 'rate-review', couleur: p.attention };
     case 'remplacement_attribue':
       return { nom: 'swap-horiz', couleur: p.info };
@@ -83,4 +85,9 @@ export function semaineDeNotification(n: Notification): string | undefined {
     'reouverture_demandee',
   ];
   return n.donnees.semaine && !auPortail.includes(n.type) ? n.donnees.semaine : undefined;
+}
+
+/** RPT-014 : une correction demandée ouvre le rapport de la visite, à corriger. */
+export function visiteDeNotification(n: Notification): string | undefined {
+  return n.type === 'correction_demandee' ? n.donnees.visite : undefined;
 }

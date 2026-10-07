@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.6.3
+  version: 0.6.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3588,6 +3588,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/Qualite'
           description: ''
+  /api/v1/rapports/{id}/correction/:
+    post:
+      operationId: rapport_correction
+      description: |-
+        RPT-014 : renvoyer un rapport soumis au délégué, avec un commentaire (CA1) et les
+        champs à revoir ; sans échéance (DC-60).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - rapports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemandeCorrection'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DemandeCorrection'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DemandeCorrection'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RapportLu'
+          description: ''
   /api/v1/rapports/{id}/valider/:
     post:
       operationId: rapport_valider
@@ -5375,6 +5411,8 @@ components:
       description: Un champ du pays (RPT-008) tel que rempli, avec son libellé du
         jour du rapport.
       properties:
+        code:
+          type: string
         libelle:
           type: string
         type:
@@ -5382,6 +5420,7 @@ components:
         valeur:
           nullable: true
       required:
+      - code
       - libelle
       - type
       - valeur
@@ -5969,6 +6008,28 @@ components:
           format: date
       required:
       - date
+    Correction:
+      type: object
+      description: 'RPT-014 : la demande de correction en cours : qui, quand, pourquoi,
+        sur quels champs.'
+      properties:
+        le:
+          type: string
+          format: date-time
+        par:
+          type: string
+          readOnly: true
+        commentaire:
+          type: string
+        champs:
+          type: array
+          items:
+            type: string
+      required:
+      - champs
+      - commentaire
+      - le
+      - par
     CreationDivision:
       type: object
       properties:
@@ -6280,6 +6341,20 @@ components:
       required:
       - delegue
       - journees
+    DemandeCorrection:
+      type: object
+      description: 'RPT-014 CA1 : commentaire obligatoire ; champs concernés facultatifs.'
+      properties:
+        commentaire:
+          type: string
+          maxLength: 2000
+        champs:
+          type: array
+          items:
+            type: string
+            maxLength: 40
+      required:
+      - commentaire
     DemandeReouverture:
       type: object
       properties:
@@ -6573,6 +6648,12 @@ components:
           format: date
         nom:
           type: string
+        visite:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
     DonneesNotificationMotifEnum:
       enum:
       - soumission
@@ -7378,6 +7459,8 @@ components:
           type: integer
         horodatages_douteux:
           type: integer
+        rapports_a_corriger:
+          type: integer
         escalade:
           type: boolean
         eligible_lot:
@@ -7391,6 +7474,7 @@ components:
       - escalade
       - horodatages_douteux
       - planning
+      - rapports_a_corriger
       - rapports_a_valider
       - rapports_attendus
       - rapports_en_retard
@@ -7826,6 +7910,7 @@ components:
       - plannings_non_approuves
       - reouverture_demandee
       - redaction_rouverte
+      - correction_demandee
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
@@ -7837,6 +7922,7 @@ components:
         * `plannings_non_approuves` - Plannings non approuvés
         * `reouverture_demandee` - Réouverture demandée
         * `redaction_rouverte` - Rédaction rouverte
+        * `correction_demandee` - Correction demandée
     NullEnum:
       enum:
       - null
@@ -9294,6 +9380,11 @@ components:
           allOf:
           - $ref: '#/components/schemas/StatutRapportEnum'
           readOnly: true
+        correction:
+          allOf:
+          - $ref: '#/components/schemas/Correction'
+          nullable: true
+          readOnly: true
         objectif_prevu:
           type: string
           readOnly: true
@@ -9396,6 +9487,7 @@ components:
       - action_precedente
       - articles_proposes
       - champs
+      - correction
       - definitions
       - echeance
       - en_retard
@@ -9525,6 +9617,11 @@ components:
           allOf:
           - $ref: '#/components/schemas/StatutRapportEnum'
           readOnly: true
+        correction:
+          allOf:
+          - $ref: '#/components/schemas/Correction'
+          nullable: true
+          readOnly: true
         valide_le:
           type: string
           format: date-time
@@ -9608,6 +9705,7 @@ components:
           readOnly: true
       required:
       - champs
+      - correction
       - en_retard
       - heure_telephone
       - horodatage_douteux

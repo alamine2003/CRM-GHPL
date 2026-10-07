@@ -14,7 +14,13 @@ from apps.planning.serializers import (
 )
 
 from .models import Rapport
-from .serializers import PieceJointeSerializer, PresentationSerializer, RemiseSerializer
+from .serializers import (
+    CorrectionSerializer,
+    PieceJointeSerializer,
+    PresentationSerializer,
+    RemiseSerializer,
+    correction_de,
+)
 
 
 class JourneeATraiterSerializer(serializers.Serializer):
@@ -33,6 +39,8 @@ class JourneeATraiterSerializer(serializers.Serializer):
     rapports_attendus = serializers.IntegerField()
     rapports_en_retard = serializers.IntegerField()
     horodatages_douteux = serializers.IntegerField()
+    #: RPT-014 : rapports renvoyés au délégué pour correction.
+    rapports_a_corriger = serializers.IntegerField()
     #: [H] Ouverte au DM du périmètre par escalade (0.6.3).
     escalade = serializers.BooleanField()
     #: 23.A : conforme, complète et sans horodatage douteux ; validable avec le lot.
@@ -55,6 +63,7 @@ class ATraiterSerializer(serializers.Serializer):
 class ChampLuSerializer(serializers.Serializer):
     """Un champ du pays (RPT-008) tel que rempli, avec son libellé du jour du rapport."""
 
+    code = serializers.CharField()
     libelle = serializers.CharField()
     type = serializers.CharField()
     valeur = serializers.JSONField(allow_null=True)
@@ -77,10 +86,12 @@ class RapportLuSerializer(serializers.ModelSerializer):
     versions = serializers.SerializerMethodField()
     #: RPT-013 CA2, RG-034 : validateur, date et mode.
     valide_par = serializers.SerializerMethodField()
+    #: RPT-014 : la correction demandée, tant qu'elle attend.
+    correction = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
-        fields = ["id", "statut", "valide_le", "valide_par", "mode_validation",
+        fields = ["id", "statut", "correction", "valide_le", "valide_par", "mode_validation",
                   "soumis_le", "en_retard", "horodatage_douteux",
                   "heure_telephone", "recu_le", "versions", "objectif_prevu", "resultat",
                   "resultat_obtenu", "presentations", "remises", "resume",
@@ -95,7 +106,7 @@ class RapportLuSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(ChampLuSerializer(many=True))
     def get_champs(self, rapport):
-        return [{"libelle": d["libelle"], "type": d["type"],
+        return [{"code": d["code"], "libelle": d["libelle"], "type": d["type"],
                  "valeur": rapport.champs.get(d["code"])}
                 for d in rapport.definitions]  # fmt: skip
 
@@ -111,6 +122,10 @@ class RapportLuSerializer(serializers.ModelSerializer):
     def get_recu_le(self, rapport) -> datetime | None:
         derniere = self._derniere(rapport)
         return derniere.recu_le if derniere else None
+
+    @extend_schema_field(CorrectionSerializer(allow_null=True))
+    def get_correction(self, rapport):
+        return correction_de(rapport)
 
     def get_valide_par(self, rapport) -> str | None:
         p = rapport.valide_par
@@ -188,3 +203,11 @@ class ValidationLotSerializer(serializers.Serializer):
 class ResultatValidationSerializer(serializers.Serializer):
     journees = serializers.IntegerField()
     rapports = serializers.IntegerField()
+
+
+class DemandeCorrectionSerializer(serializers.Serializer):
+    """RPT-014 CA1 : commentaire obligatoire ; champs concernés facultatifs."""
+
+    commentaire = serializers.CharField(max_length=2000, allow_blank=True)
+    champs = serializers.ListField(child=serializers.CharField(max_length=40), required=False,
+                                   default=list)  # fmt: skip

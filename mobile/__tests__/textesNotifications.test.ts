@@ -1,6 +1,10 @@
 import type { Notification } from '@innov/api-client';
 import i18n from '../src/i18n';
-import { semaineDeNotification, texteNotification } from '../src/textesNotifications';
+import {
+  semaineDeNotification,
+  texteNotification,
+  visiteDeNotification,
+} from '../src/textesNotifications';
 
 // NOT-001 CA1 au téléphone : la semaine qu'ouvre une notification ; ce qui se décide au
 // portail ne s'ouvre pas ici.
@@ -35,4 +39,19 @@ test('0.3.9 : la réouverture se dit au délégué', () => {
   expect(texteNotification(notif('redaction_rouverte'), i18n.t.bind(i18n), 'fr')).toBe(
     'Awa FICTIVE a rouvert la rédaction de votre planning de la semaine 42',
   );
+});
+
+test('RPT-014 : la correction demandée ouvre le rapport, sans nom de prospect', () => {
+  const n = {
+    id: 'n2',
+    type: 'correction_demandee',
+    donnees: { visite: 'v1', date: '2026-10-13', nom: 'Kossi GUEYE' },
+    cree_le: '2026-10-14T08:00:00Z',
+    lue_le: null,
+  } as Notification;
+  expect(texteNotification(n, i18n.t, 'fr')).toBe(
+    'Kossi GUEYE demande une correction de votre rapport du 13 octobre',
+  );
+  expect(visiteDeNotification(n)).toBe('v1');
+  expect(semaineDeNotification(n)).toBeUndefined();
 });

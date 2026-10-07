@@ -69,6 +69,7 @@ def _rapports(planning: Planning, jour) -> dict:
         "rapports_attendus": effectuees.count() - transmis.count(),
         "rapports_en_retard": transmis.filter(en_retard=True).count(),
         "horodatages_douteux": transmis.filter(horodatage_douteux=True).count(),
+        "rapports_a_corriger": rapports.filter(statut=StatutRapport.A_CORRIGER).count(),
     }
 
 

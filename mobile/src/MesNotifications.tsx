@@ -12,7 +12,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Carte, Texte, usePalette } from './composants';
 import { police } from './polices';
 import { useSession } from './session';
-import { iconeNotification, semaineDeNotification, texteNotification } from './textesNotifications';
+import {
+  iconeNotification,
+  semaineDeNotification,
+  texteNotification,
+  visiteDeNotification,
+} from './textesNotifications';
 
 export function MesNotifications() {
   const { t, i18n } = useTranslation();
@@ -44,14 +49,18 @@ export function MesNotifications() {
     setNonLues((liste) => liste.filter((x) => x.id !== n.id));
     void client.notifications.lue(n.id).catch(() => undefined);
     const semaine = semaineDeNotification(n);
-    if (semaine) routeur.push({ pathname: '/semaine', params: { jour: semaine } });
+    const visite = visiteDeNotification(n);
+    if (visite) routeur.push({ pathname: '/rapport/[id]', params: { id: visite } });
+    else if (semaine) routeur.push({ pathname: '/semaine', params: { jour: semaine } });
   }
 
   return (
     <Carte
       style={{
         borderLeftWidth: 3,
-        borderLeftColor: non_lues.some((n) => n.type === 'revision_demandee')
+        borderLeftColor: non_lues.some(
+          (n) => n.type === 'revision_demandee' || n.type === 'correction_demandee',
+        )
           ? p.attention
           : p.succes,
       }}
@@ -74,7 +83,11 @@ export function MesNotifications() {
         <Pressable
           key={n.id}
           accessibilityRole="button"
-          accessibilityHint={semaineDeNotification(n) ? t('notifications.voir') : undefined}
+          accessibilityHint={
+            semaineDeNotification(n) || visiteDeNotification(n)
+              ? t('notifications.voir')
+              : undefined
+          }
           onPress={() => ouvrir(n)}
           style={({ pressed }) => [
             styles.ligne,

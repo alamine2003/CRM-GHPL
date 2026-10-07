@@ -183,11 +183,18 @@ test('RG-032 : un rapport de la veille non soumis remonte en tête, « en retard
     rapport_statut: 'brouillon' as const,
   };
   const soumis = { ...hier, id: 'v00', rapport_statut: 'soumis' as const };
+  // RPT-014 : renvoyé pour correction, il n'est pas « en retard » mais « à corriger ».
+  const aCorriger = {
+    ...visite('v01', '16:00', 'REVOIR', '2026-10-12'),
+    statut: 'effectuee' as const,
+    rapport_statut: 'a_corriger' as const,
+  };
   const jours = PROGRAMME.jours.map((j) =>
-    j.date === '2026-10-12' ? { ...j, visites: [hier, soumis] } : j,
+    j.date === '2026-10-12' ? { ...j, visites: [hier, soumis, aCorriger] } : j,
   );
   await rendre(jest.fn(async () => ({ ...PROGRAMME, jours })));
   expect(await screen.findByText('Rapports en retard (1)')).toBeTruthy();
+  expect(screen.getByText('Rapports à corriger (1)')).toBeTruthy();
   await fireEvent.press(screen.getByText(/VEILLE/));
   expect(mockPousser).toHaveBeenCalledWith({ pathname: '/rapport/[id]', params: { id: 'v0' } });
 });

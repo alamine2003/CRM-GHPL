@@ -129,6 +129,13 @@ class Rapport(ModeleDePays):
                                    on_delete=models.PROTECT, related_name="+")  # fmt: skip
     mode_validation = models.CharField(max_length=12, choices=ModeValidation.choices,
                                        blank=True)  # fmt: skip
+    #: RPT-014 : la dernière demande de correction, motivée, sur des champs précis ; sans
+    #: échéance (DC-60). Chaque demande est aussi au journal d'audit.
+    correction_le = models.DateTimeField(null=True, blank=True)
+    correction_par = models.ForeignKey("identite.Utilisateur", null=True, blank=True,
+                                       on_delete=models.PROTECT, related_name="+")  # fmt: skip
+    correction_commentaire = models.TextField(blank=True)
+    correction_champs = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["-cree_le"]

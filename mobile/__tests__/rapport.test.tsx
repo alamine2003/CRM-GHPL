@@ -27,6 +27,7 @@ const BROUILLON: Rapport = {
   id: 'r1',
   visite: 'v1',
   statut: 'brouillon',
+  correction: null,
   objectif_prevu: 'Présenter la nouvelle forme sirop',
   est_imprevue: false,
   justification: '',
@@ -472,4 +473,25 @@ describe('RPT-010 : soumission et retard', () => {
     expect(await screen.findByText(/Soumis sur le téléphone à/)).toBeTruthy();
     expect(screen.queryByText('Soumettre le rapport')).toBeNull();
   });
+});
+
+test('RPT-014 : le rapport à corriger dit qui demande quoi et les parties à revoir', async () => {
+  const aCorriger = {
+    ...BROUILLON,
+    statut: 'a_corriger' as const,
+    soumis_le: '2026-10-13T18:00:00Z',
+    echeance: '2026-10-13T23:59:59Z',
+    correction: {
+      le: '2026-10-14T08:00:00Z',
+      par: 'Kossi GUEYE',
+      commentaire: 'Précisez le résumé.',
+      champs: ['resume', 'presentations'],
+    },
+  };
+  await rendre({ rapport: jest.fn(async () => aCorriger) });
+  expect(await screen.findByText(/Correction demandée le .* par Kossi GUEYE/)).toBeTruthy();
+  expect(screen.getByText(/« Précisez le résumé. »/)).toBeTruthy();
+  expect(screen.getByText(/À revoir : Résumé de l'échange, Produits présentés/)).toBeTruthy();
+  // Soumis à l'heure la première fois : l'échéance passée ne le rend pas « en retard ».
+  expect(screen.queryByText(/En retard : ce rapport/)).toBeNull();
 });
