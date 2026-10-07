@@ -57,7 +57,8 @@ def resultat(monde, code="objectif_atteint"):
 
 
 def complet(monde, produits, **autres):
-    return {"produits": [str(p.pk) for p in produits], "resultat": str(resultat(monde).pk),
+    return {"presentations": [{"produit": str(p.pk), "retour": "prescrit"} for p in produits],
+            "resultat": str(resultat(monde).pk),
             "resume": "Intérêt pour la nouvelle forme", "prochaine_action": "Revenir avec l'étude",
             **autres}  # fmt: skip
 
@@ -93,7 +94,8 @@ def test_rpt002_ca1_impossible_de_soumettre_sans_le_socle(monde, effectuee, port
     r = c.post(url(effectuee, "soumettre/"), {"soumis_le": "2026-10-13T09:59:00Z"}, format="json")
     assert (r.status_code, r.json()["statut"]) == (200, "soumis")
     # L'ordre de présentation est gardé.
-    assert r.json()["produits"] == [str(portefeuille[0].pk), str(portefeuille[1].pk)]
+    assert [p["produit"] for p in r.json()["presentations"]] == [
+        str(portefeuille[0].pk), str(portefeuille[1].pk)]  # fmt: skip
     assert EvenementAudit.objects.filter(action="rapport.soumission").count() == 1
     p = c.get("/api/v1/programme/").json()
     (v,) = next(j for j in p["jours"] if j["date"] == "2026-10-13")["visites"]
@@ -105,8 +107,8 @@ def test_rpt002_ca1_impossible_de_soumettre_sans_le_socle(monde, effectuee, port
 
 @freeze_time("2026-10-13 10:00")
 def test_rg033_un_produit_hors_portefeuille_est_refuse(monde, effectuee, portefeuille):
-    r = client_de(monde["deleg.sn"]).put(url(effectuee), {"produits": [str(portefeuille[2].pk)]},
-                                         format="json")  # fmt: skip
+    saisie = {"presentations": [{"produit": str(portefeuille[2].pk)}]}
+    r = client_de(monde["deleg.sn"]).put(url(effectuee), saisie, format="json")
     assert (r.status_code, r.json()["code"]) == (400, "produit_hors_portefeuille")
 
 

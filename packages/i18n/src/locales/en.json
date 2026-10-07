@@ -460,7 +460,8 @@
       "delai_escalade_heures_ouvrees": "Delay before escalation to the DM (working hours)",
       "conservation": "Retention periods",
       "attente_gps_secondes": "Position wait (seconds)",
-      "duree_visite_minutes": "Visit duration (minutes)"
+      "duree_visite_minutes": "Visit duration (minutes)",
+      "produit_autre_autorise": "Other product presented (outside the portfolio)"
     },
     "jours": {
       "1": "Mon",
@@ -687,7 +688,8 @@
       "classe_therapeutique": "Therapeutic classes",
       "motif_ecart": "Deviation reasons",
       "grade": "Titles",
-      "resultat_visite": "Visit outcomes"
+      "resultat_visite": "Visit outcomes",
+      "article_promotionnel": "Promotional items"
     },
     "aides": {
       "type_prospect": "Doctor, pharmacist, midwife… Each prospect record has one.",
@@ -695,7 +697,8 @@
       "type_etablissement": "Practice, hospital, pharmacy… Each institution has one.",
       "classe_therapeutique": "Product classification (Cardio, Diabetes…).",
       "motif_ecart": "Reasons a rep picks when a planned visit does not take place.",
-      "resultat_visite": "Short list the representative picks in the visit report."
+      "resultat_visite": "Short list the representative picks in the visit report.",
+      "article_promotionnel": "Gifts a representative can hand out during a visit (pen, notepad…)."
     },
     "valeur": {
       "nouvelle": "New value",
@@ -1976,7 +1979,8 @@
       "produits": "products presented",
       "resultat": "outcome",
       "resume": "summary",
-      "prochaine_action": "next action"
+      "prochaine_action": "next action",
+      "retours": "prescriber feedback on each product"
     },
     "manque": "To complete before submitting: {{liste}}.",
     "soumettre": "Submit the report",
@@ -1994,7 +1998,38 @@
     "sansObjectif": "No objective was planned for this visit.",
     "resultatAide": "Against the planned objective.",
     "resultatObtenu": "Detail what was achieved (optional)",
-    "resultatObtenuIndice": "For example: agreed to try it on 5 patients"
+    "resultatObtenuIndice": "For example: agreed to try it on 5 patients",
+    "retourTitre": "Prescriber feedback",
+    "retourDe": "Prescriber feedback on {{libelle}}",
+    "retours": {
+      "non_prescrit": "Does not prescribe",
+      "peu": "Prescribes a little",
+      "prescrit": "Prescribes",
+      "tres_bien": "Prescribes a lot"
+    },
+    "autreProduit": "Other product presented",
+    "autreProduitIndice": "Product name",
+    "ajouter": "Add",
+    "retirer": "Remove",
+    "retirerProduit": "Remove {{libelle}}",
+    "remises": "Samples and gifts handed out",
+    "remisesAide": "Optional. Tap a product or an item to add it, then set the quantity.",
+    "typesRemise": {
+      "echantillon": "Sample",
+      "cadeau": "Gift"
+    },
+    "presenterDabord": "First tap the products presented: their samples will show here.",
+    "aucunArticle": "No item in the country's list.",
+    "aucuneRemise": "No sample or gift handed out.",
+    "moins": "One less {{libelle}}",
+    "plus": "One more {{libelle}}",
+    "quantite": "Quantity: {{n}}",
+    "retoursCourts": {
+      "non_prescrit": "Does not",
+      "peu": "A little",
+      "prescrit": "Prescribes",
+      "tres_bien": "A lot"
+    }
   },
   "champsRapport": {
     "titre": "Report fields",

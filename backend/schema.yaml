@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.5.2
+  version: 0.5.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3838,6 +3838,7 @@ paths:
         schema:
           type: string
           enum:
+          - article_promotionnel
           - classe_therapeutique
           - grade
           - motif_ecart
@@ -6973,6 +6974,7 @@ components:
       - grade
       - motif_ecart
       - resultat_visite
+      - article_promotionnel
       type: string
       description: |-
         * `type_prospect` - Types de prospect
@@ -6982,6 +6984,7 @@ components:
         * `grade` - Grades
         * `motif_ecart` - Motifs d'écart
         * `resultat_visite` - Résultats de visite
+        * `article_promotionnel` - Articles promotionnels
     ListeEtablissements:
       type: object
       description: Une page de résultats (PRP-005 CA3).
@@ -8105,6 +8108,23 @@ components:
         * `A` - A
         * `B` - B
         * `C` - C
+    Presentation:
+      type: object
+      description: Un produit présenté, à son rang, avec le retour du prescripteur
+        (RPT-004).
+      properties:
+        produit:
+          type: string
+          format: uuid
+          nullable: true
+        libelle:
+          type: string
+          maxLength: 120
+        retour:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/RetourPrescripteurEnum'
+          - $ref: '#/components/schemas/NullEnum'
     Produit:
       type: object
       properties:
@@ -8694,11 +8714,10 @@ components:
           type: boolean
         justification:
           type: string
-        produits:
+        presentations:
           type: array
           items:
-            type: string
-            format: uuid
+            $ref: '#/components/schemas/Presentation'
         resultat:
           type: string
           format: uuid
@@ -8712,6 +8731,10 @@ components:
         prochaine_action:
           type: string
           readOnly: true
+        remises:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remise'
         champs: {}
         definitions:
           type: array
@@ -8732,12 +8755,21 @@ components:
           items:
             $ref: '#/components/schemas/Resume'
           readOnly: true
+        produit_autre_autorise:
+          type: boolean
+          readOnly: true
         resultats_proposes:
           type: array
           items:
             $ref: '#/components/schemas/Resume'
           readOnly: true
+        articles_proposes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resume'
+          readOnly: true
       required:
+      - articles_proposes
       - champs
       - definitions
       - est_imprevue
@@ -8745,9 +8777,11 @@ components:
       - justification
       - manquants
       - objectif_prevu
+      - presentations
       - prochaine_action
-      - produits
+      - produit_autre_autorise
       - produits_proposes
+      - remises
       - resultat
       - resultat_obtenu
       - resultats_proposes
@@ -8854,6 +8888,32 @@ components:
       required:
       - commentaire
       - visite
+    Remise:
+      type: object
+      description: Un échantillon (produit) ou un cadeau (article) remis, avec sa
+        quantité (RPT-005).
+      properties:
+        type:
+          $ref: '#/components/schemas/TypeRemiseEnum'
+        produit:
+          type: string
+          format: uuid
+          nullable: true
+        article:
+          type: string
+          format: uuid
+          nullable: true
+        libelle:
+          type: string
+          readOnly: true
+        quantite:
+          type: integer
+          maximum: 999
+          minimum: 1
+      required:
+      - libelle
+      - quantite
+      - type
     Remplacement:
       type: object
       description: Remplaçant daté d'un superviseur (ORG-013).
@@ -9072,6 +9132,18 @@ components:
       required:
       - non_lues
       - notifications
+    RetourPrescripteurEnum:
+      enum:
+      - non_prescrit
+      - peu
+      - prescrit
+      - tres_bien
+      type: string
+      description: |-
+        * `non_prescrit` - Ne prescrit pas
+        * `peu` - Prescrit peu
+        * `prescrit` - Prescrit
+        * `tres_bien` - Prescrit très bien
     RetraitCible:
       type: object
       properties:
@@ -9332,11 +9404,14 @@ components:
     SaisieRapport:
       type: object
       properties:
-        produits:
+        presentations:
           type: array
           items:
-            type: string
-            format: uuid
+            $ref: '#/components/schemas/Presentation'
+        remises:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remise'
         resultat:
           type: string
           format: uuid
@@ -9919,6 +9994,14 @@ components:
         * `vm_otc` - Visiteur médical OTC
         * `kam` - Key Account Manager
         * `dermo` - Dermo-conseillère
+    TypeRemiseEnum:
+      enum:
+      - echantillon
+      - cadeau
+      type: string
+      description: |-
+        * `echantillon` - Échantillon
+        * `cadeau` - Cadeau
     Utilisateur:
       type: object
       properties:

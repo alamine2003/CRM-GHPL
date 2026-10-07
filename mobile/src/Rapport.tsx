@@ -1,6 +1,7 @@
 /**
- * Rapport de la visite effectuée (RPT-001, RPT-002, RPT-008) : le socle commun — produits
- * présentés dans l'ordre, résultat, résumé, prochaine action — puis les champs propres au pays.
+ * Rapport de la visite effectuée (RPT-001 à RPT-005, RPT-008) : l'objectif prévu, le résultat
+ * obtenu, les produits présentés dans l'ordre avec le retour du prescripteur, le résumé, la
+ * prochaine action, les échantillons et cadeaux remis, puis les champs propres au pays.
  * Il s'enregistre en brouillon et se soumet une fois complet. En 0.5.1 il s'écrit avec du
  * réseau ; la saisie hors connexion arrive avec la synchronisation des rapports (0.5.6).
  */
@@ -17,29 +18,20 @@ import { ActivityIndicator, Switch, View } from 'react-native';
 import { envoyerAttente, estTransitoire } from './Brouillons';
 import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from './composants';
 import { Pilule } from './Etablissements';
+import { ProduitsPresentes, Remises } from './RapportProduits';
 import { changerVisite, useVisiteDuProgramme } from './Execution';
 import { nomProspect } from './Fiches';
 import { messageErreur, useSession } from './session';
 
-/** Au-delà, un champ filtre le portefeuille (6 à 25 produits selon le réseau). */
-const SEUIL_FILTRE = 8;
-
-const sansAccents = (texte: string) =>
-  texte
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase();
-const correspond = (libelle: string, filtre: string) =>
-  sansAccents(libelle).includes(sansAccents(filtre.trim()));
-
-const SOCLE = ['produits', 'resultat', 'resume', 'prochaine_action'] as const;
+const SOCLE = ['produits', 'retours', 'resultat', 'resume', 'prochaine_action'] as const;
 const MODIFIABLES = new Set(['brouillon', 'a_corriger', 'rouvert']);
 
 type Saisie = Required<Omit<SaisieRapport, 'champs'>> & { champs: ValeursChamps };
 
 function saisieDe(rapport: Rapport): Saisie {
   return {
-    produits: rapport.produits,
+    presentations: rapport.presentations,
+    remises: rapport.remises,
     resultat: rapport.resultat,
     resultat_obtenu: rapport.resultat_obtenu,
     resume: rapport.resume,
@@ -51,7 +43,8 @@ function saisieDe(rapport: Rapport): Saisie {
 /** Ce qui manque avant de soumettre, comme le serveur le calcule (RPT-002 CA1). */
 export function manquantsDe(saisie: Saisie, definitions: DefinitionChamp[]): string[] {
   const rempli = {
-    produits: saisie.produits.length > 0,
+    produits: saisie.presentations.length > 0,
+    retours: saisie.presentations.every((x) => !!x.retour),
     resultat: saisie.resultat != null,
     resume: saisie.resume.trim() !== '',
     prochaine_action: saisie.prochaine_action.trim() !== '',
@@ -220,9 +213,20 @@ function RapportLu({ rapport }: { rapport: Rapport }) {
       <Bloc
         libelle={t('rapport.produits')}
         valeur={
-          rapport.produits
-            .map((id, i) => `${i + 1}. ${libelleDe(rapport.produits_proposes, id)}`)
+          rapport.presentations
+            .map(
+              (x, i) =>
+                `${i + 1}. ${x.libelle}${x.retour ? ` — ${t(`rapport.retours.${x.retour}`)}` : ''}`,
+            )
             .join('\n') || '—'
+        }
+      />
+      <Bloc
+        libelle={t('rapport.remises')}
+        valeur={
+          rapport.remises
+            .map((r) => `${t(`rapport.typesRemise.${r.type}`)} · ${r.libelle} × ${r.quantite}`)
+            .join('\n') || t('rapport.aucuneRemise')
         }
       />
       <Bloc libelle={t('rapport.resume')} valeur={rapport.resume || '—'} />
@@ -245,7 +249,6 @@ export function FormulaireRapport({ id }: { id: string }) {
   const [message, setMessage] = useState<{ texte: string; ton: 'erreur' | 'succes' } | null>(null);
 
   const [tentative, setTentative] = useState(0);
-  const [filtre, setFiltre] = useState('');
 
   useEffect(() => {
     let actif = true;
@@ -307,13 +310,6 @@ export function FormulaireRapport({ id }: { id: string }) {
     setMessage(null);
     setSaisie({ ...saisie, ...champs });
   };
-  const basculerProduit = (produit: string) =>
-    changer({
-      produits: saisie.produits.includes(produit)
-        ? saisie.produits.filter((x) => x !== produit)
-        : [...saisie.produits, produit],
-    });
-
   async function agir(action: 'enregistrer' | 'soumettre') {
     if (!saisie) return;
     setEnvoi(action);
@@ -374,39 +370,11 @@ export function FormulaireRapport({ id }: { id: string }) {
         </View>
       </View>
 
-      <View style={{ gap: 6 }}>
-        <Texte variante="sousTitre">{t('rapport.produits')}</Texte>
-        <Texte variante="discret">{t('rapport.produitsAide')}</Texte>
-        {rapport.produits_proposes.length > SEUIL_FILTRE && (
-          <Champ
-            libelle={t('rapport.filtrer')}
-            libelleMasque
-            placeholder={t('rapport.filtrer')}
-            value={filtre}
-            onChangeText={setFiltre}
-          />
-        )}
-        {rapport.produits_proposes.length ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {rapport.produits_proposes
-              // Les produits déjà choisis restent visibles quel que soit le filtre.
-              .filter((pr) => saisie.produits.includes(pr.id) || correspond(pr.libelle, filtre))
-              .map((pr) => {
-                const rang = saisie.produits.indexOf(pr.id);
-                return (
-                  <Pilule
-                    key={pr.id}
-                    libelle={rang >= 0 ? `${rang + 1}. ${pr.libelle}` : pr.libelle}
-                    actif={rang >= 0}
-                    onPress={() => basculerProduit(pr.id)}
-                  />
-                );
-              })}
-          </View>
-        ) : (
-          <Alerte type="info">{t('rapport.aucunProduit')}</Alerte>
-        )}
-      </View>
+      <ProduitsPresentes
+        rapport={rapport}
+        presentations={saisie.presentations}
+        surChangement={(presentations) => changer({ presentations })}
+      />
 
       <Champ
         libelle={t('rapport.resume')}
@@ -423,6 +391,13 @@ export function FormulaireRapport({ id }: { id: string }) {
         onChangeText={(prochaine_action) => changer({ prochaine_action })}
         maxLength={500}
         multiline
+      />
+
+      <Remises
+        rapport={rapport}
+        presentations={saisie.presentations}
+        remises={saisie.remises}
+        surChangement={(remises) => changer({ remises })}
       />
 
       {rapport.definitions.length > 0 && (

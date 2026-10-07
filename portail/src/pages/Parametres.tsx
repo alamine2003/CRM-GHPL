@@ -54,7 +54,7 @@ const GROUPES: { cle: string; parametres: string[] }[] = [
       'attente_gps_secondes',
     ],
   },
-  { cle: 'rapports', parametres: ['heure_limite_rapport'] },
+  { cle: 'rapports', parametres: ['heure_limite_rapport', 'produit_autre_autorise'] },
   { cle: 'conservation', parametres: ['conservation'] },
 ];
 const TYPES_POSTE = ['vm', 'vm_otc', 'kam', 'dermo'];
@@ -90,6 +90,7 @@ function Apercu({ cle, valeur }: { cle: string; valeur: Valeur }) {
     case 'duree_visite_minutes':
       return <>{t('parametres.minutes', { min: v.min, max: v.max })}</>;
     case 'geolocalisation_active':
+    case 'produit_autre_autorise':
       return <>{valeur ? t('commun.oui') : t('commun.non')}</>;
     case 'seuils_visites_jour':
       return (
@@ -215,6 +216,7 @@ function Editeur({
         </Stack>
       );
     case 'geolocalisation_active':
+    case 'produit_autre_autorise':
       return (
         <FormControlLabel
           control={<Switch checked={Boolean(valeur)} onChange={(e) => changer(e.target.checked)} />}

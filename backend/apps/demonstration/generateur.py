@@ -475,17 +475,28 @@ class Generateur:
             return
         for i, visite in enumerate(effectuees[:-1]):
             rapport = rap.rapport_de(visite)
-            produits = [str(p.pk) for p in rap.produits_proposes(visite)[: 1 + i % 3]]
+            portefeuille = list(rap.produits_proposes(visite))
+            retours = ("prescrit", "peu", "tres_bien", "non_prescrit")
+            presentations = [{"produit": str(p.pk), "retour": retours[(i + j) % 4]}
+                             for j, p in enumerate(portefeuille[: 1 + i % 3])]  # fmt: skip
+            cadeaux = list(rap.articles(pays))
             resume, suite = self.RESUMES[i % len(self.RESUMES)]
             if i == len(effectuees) - 2:
-                rap.enregistrer(rapport, produits=produits, resume=resume)
+                rap.enregistrer(rapport, presentations=presentations, resume=resume)
                 continue
             obtenu = (
                 "Accord pour un essai sur quelques patients",
                 "",
                 "Rendez-vous obtenu pour une présentation plus longue",
             )[i % 3]
-            rap.enregistrer(rapport, produits=produits, resultat=resultats[i % 3].pk,
+            # RPT-005 : des échantillons une visite sur deux, un cadeau de temps en temps.
+            remises = [{"type": "echantillon", "produit": presentations[0]["produit"],
+                        "quantite": 2 + i % 3}] if i % 2 == 0 and presentations else []  # fmt: skip
+            if cadeaux and i % 3 == 1:
+                remises.append({"type": "cadeau", "article": str(cadeaux[i % len(cadeaux)].pk),
+                                "quantite": 1})  # fmt: skip
+            rap.enregistrer(rapport, presentations=presentations, remises=remises,
+                            resultat=resultats[i % 3].pk,
                             resultat_obtenu=obtenu, resume=resume, prochaine_action=suite,
                             champs={d["code"]: 5 + (i * 7) % 30 for d in rapport.definitions
                                     if d["type"] == "nombre"})  # fmt: skip

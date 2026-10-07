@@ -2,6 +2,34 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.3] — Produits présentés, retour du prescripteur, échantillons et cadeaux
+
+Troisième jalon du cycle 0.5 « Rapports de visite ».
+
+### Ajouté — produits présentés et retour du prescripteur (RPT-004)
+
+- Chaque produit présenté reçoit le retour du prescripteur : « Ne prescrit pas », « Peu », « Prescrit », « Très bien ». Il est obligatoire pour soumettre.
+- **CA1** : l'ordre de présentation est conservé jusque dans le rapport soumis ; un produit ne se présente qu'une fois.
+- **CA2** : seuls les produits du portefeuille du réseau sont proposés ; un produit « autre », saisi en clair, si le pays l'autorise (nouveau paramètre, désactivé par défaut).
+
+### Ajouté — échantillons et cadeaux remis (RPT-005, RG-038)
+
+- Section facultative : échantillons des produits présentés, cadeaux de la nouvelle liste « Articles promotionnels » du pays ; quantité réglée par « − » et « + ».
+- **CA1** : aucune notion de stock, de solde ni de dotation.
+
+### Modifié
+
+- API : `produits` du rapport devient `presentations` (avec le retour) ; les rapports existants sont repris sans retour.
+- Démonstration : retours variés et remises sur les rapports passés.
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px). Seconde revue après correction :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Rapport, retour du prescripteur | Les quatre choix passaient sur deux lignes pour chaque produit : trois produits occupaient un écran entier. | Une rangée de quatre cases de même largeur, libellés courts (le libellé complet reste lu par le lecteur d'écran). |
+
 ## [0.5.2] — Objectif prévu et résultat obtenu
 
 Deuxième jalon du cycle 0.5 « Rapports de visite ».

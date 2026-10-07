@@ -19,7 +19,7 @@ from apps.planning.models import Visite
 from apps.referentiel.models import Liste, Valeur
 from apps.socle.erreurs import ErreurMetier
 
-from .models import ChampRapport, Rapport, StatutRapport, TypeChamp
+from .models import ChampRapport, Rapport, RetourPrescripteur, StatutRapport, TypeChamp, TypeRemise
 
 #: Statuts où le délégué écrit encore son rapport.
 MODIFIABLES = (StatutRapport.BROUILLON, StatutRapport.A_CORRIGER, StatutRapport.ROUVERT)
@@ -184,22 +184,93 @@ def _valeur_champ(definition: dict, valeur):
     return texte or None
 
 
+def _hors_portefeuille() -> ErreurMetier:
+    return ErreurMetier(
+        "produit_hors_portefeuille",
+        _("Seuls les produits du portefeuille du réseau de la visite se présentent."),
+        champ="presentations",
+    )
+
+
+def _presentations(rapport: Rapport, saisies: list[dict]) -> list[dict]:
+    """RPT-004 : les produits dans l'ordre de présentation, chacun avec le retour du
+    prescripteur ; un produit « autre », saisi en clair, si le pays l'autorise (CA2)."""
+    from apps.socle.services import valeur_parametre
+
+    proposes = {str(p.pk): p.libelle for p in produits_proposes(rapport.visite)}
+    autre_autorise = valeur_parametre(rapport.pays, "produit_autre_autorise")
+    vues, resultat = set(), []
+    for saisie in saisies:
+        retour = saisie.get("retour") or None
+        if retour is not None and retour not in RetourPrescripteur.values:
+            raise ErreurMetier("retour_invalide", _("Retour du prescripteur inconnu."),
+                               champ="presentations")  # fmt: skip
+        produit = str(saisie["produit"]) if saisie.get("produit") else None
+        if produit is not None:
+            if produit not in proposes:
+                raise _hors_portefeuille()
+            libelle = proposes[produit]
+        else:
+            libelle = (saisie.get("libelle") or "").strip()[:120]
+            if not autre_autorise:
+                raise _hors_portefeuille()
+            if not libelle:
+                raise ErreurMetier("produit_autre_vide", _("Nommez le produit présenté."),
+                                   champ="presentations")  # fmt: skip
+        cle = produit or libelle.casefold()
+        if cle in vues:
+            raise ErreurMetier("produit_en_double", _("Un produit se présente une seule fois."),
+                               champ="presentations")  # fmt: skip
+        vues.add(cle)
+        resultat.append({"produit": produit, "libelle": libelle, "retour": retour})
+    return resultat
+
+
+def articles(pays):
+    return Valeur.objects.filter(pays=pays, liste=Liste.ARTICLE_PROMOTIONNEL,
+                                 archive_le__isnull=True).order_by("ordre", "libelle")  # fmt: skip
+
+
+def _remises(rapport: Rapport, saisies: list[dict]) -> list[dict]:
+    """RPT-005 : échantillons (produits du portefeuille) et cadeaux (articles du pays) remis,
+    avec leur quantité ; aucune notion de solde ni de dotation (CA1, RG-038)."""
+    proposes = {str(p.pk): p.libelle for p in produits_proposes(rapport.visite)}
+    cadeaux = {str(v.pk): v.libelle for v in articles(rapport.pays)}
+    resultat = []
+    for saisie in saisies:
+        quantite = saisie.get("quantite")
+        if isinstance(quantite, bool) or not isinstance(quantite, int) or not 1 <= quantite <= 999:
+            raise ErreurMetier("quantite_invalide", _("Quantité attendue entre 1 et 999."),
+                               champ="remises")  # fmt: skip
+        if saisie.get("type") == TypeRemise.ECHANTILLON:
+            produit = str(saisie.get("produit") or "")
+            if produit not in proposes:
+                raise _hors_portefeuille()
+            resultat.append({"type": TypeRemise.ECHANTILLON.value, "produit": produit,
+                             "article": None, "libelle": proposes[produit],
+                             "quantite": quantite})  # fmt: skip
+        elif saisie.get("type") == TypeRemise.CADEAU:
+            article = str(saisie.get("article") or "")
+            if article not in cadeaux:
+                raise ErreurMetier("article_invalide", _("Article inconnu."), champ="remises")
+            resultat.append({"type": TypeRemise.CADEAU.value, "produit": None,
+                             "article": article, "libelle": cadeaux[article],
+                             "quantite": quantite})  # fmt: skip
+        else:
+            raise ErreurMetier("remise_invalide", _("Échantillon ou cadeau attendu."),
+                               champ="remises")  # fmt: skip
+    return resultat
+
+
 @transaction.atomic
 def enregistrer(rapport: Rapport, **valeurs) -> Rapport:
     """Le brouillon : chaque envoi reprend tout ce que le délégué a saisi."""
     rapport = Rapport.objects.select_for_update().get(pk=rapport.pk)
     _exiger_modifiable(rapport)
-    if "produits" in valeurs:
-        ids = produits_proposes(rapport.visite).values_list("pk", flat=True)
-        proposes = {str(p) for p in ids}
-        produits = [str(p) for p in valeurs["produits"] or []]
-        if any(p not in proposes for p in produits) or len(set(produits)) != len(produits):
-            raise ErreurMetier(
-                "produit_hors_portefeuille",
-                _("Seuls les produits du portefeuille du réseau de la visite se présentent."),
-                champ="produits",
-            )
-        rapport.produits = produits
+    if "presentations" in valeurs:
+        rapport.presentations = _presentations(rapport, valeurs["presentations"] or [])
+    if "remises" in valeurs:
+        rapport.remises = _remises(rapport, valeurs["remises"] or [])
     if "resultat" in valeurs:
         resultat = valeurs["resultat"]
         if resultat is not None and not resultats(rapport.pays).filter(pk=resultat).exists():
@@ -228,7 +299,9 @@ def manquants(rapport: Rapport) -> list[str]:
     socle = [
         champ
         for champ, rempli in (
-            ("produits", bool(rapport.produits)),
+            ("produits", bool(rapport.presentations)),
+            # RPT-004 : le retour du prescripteur sur chaque produit présenté.
+            ("retours", all(p["retour"] for p in rapport.presentations)),
             ("resultat", rapport.resultat_id is not None),
             ("resume", bool(rapport.resume)),
             ("prochaine_action", bool(rapport.prochaine_action)),

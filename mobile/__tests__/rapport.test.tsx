@@ -29,7 +29,8 @@ const BROUILLON: Rapport = {
   objectif_prevu: 'Présenter la nouvelle forme sirop',
   est_imprevue: false,
   justification: '',
-  produits: [],
+  presentations: [],
+  remises: [],
   resultat_obtenu: '',
   resultat: null,
   resume: '',
@@ -46,6 +47,8 @@ const BROUILLON: Rapport = {
   ],
   soumis_le: null,
   manquants: ['produits', 'resultat', 'resume', 'prochaine_action', 'patients'],
+  produit_autre_autorise: false,
+  articles_proposes: [{ id: 'stylo', libelle: 'Stylo' }],
   produits_proposes: [
     { id: 'pa', libelle: 'Produit Alpha' },
     { id: 'pb', libelle: 'Produit Beta' },
@@ -72,7 +75,8 @@ beforeEach(async () => {
 
 test('RPT-002 CA1 : le calcul local des manquants suit le socle puis les champs du pays', () => {
   const saisie = {
-    produits: ['pa'],
+    presentations: [{ produit: 'pa', libelle: 'Produit Alpha', retour: 'peu' as const }],
+    remises: [],
     resultat: 'ok',
     resultat_obtenu: '',
     resume: ' ',
@@ -105,7 +109,19 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   const soumettreRapport = jest.fn(async () => ({
     ...BROUILLON,
     statut: 'soumis',
-    produits: ['pb', 'pa'],
+    presentations: [
+      { produit: 'pb', libelle: 'Produit Beta', retour: 'tres_bien' as const },
+      { produit: 'pa', libelle: 'Produit Alpha', retour: 'peu' as const },
+    ],
+    remises: [
+      {
+        type: 'echantillon' as const,
+        produit: 'pb',
+        article: null,
+        libelle: 'Produit Beta',
+        quantite: 2,
+      },
+    ],
     resultat: 'ok',
     resultat_obtenu: 'Essai sur 5 patients',
     resume: 'Bon accueil',
@@ -116,8 +132,15 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   await fireEvent.press(await screen.findByText('Produit Beta'));
   await fireEvent.press(screen.getByText('Produit Alpha'));
   // Le rang de présentation s'affiche sur la pastille.
-  expect(screen.getByText('1. Produit Beta')).toBeTruthy();
-  expect(screen.getByText('2. Produit Alpha')).toBeTruthy();
+  expect(screen.getAllByText('1. Produit Beta')).toHaveLength(2);
+  expect(screen.getAllByText('2. Produit Alpha')).toHaveLength(2);
+  // RPT-004 : le retour du prescripteur, produit par produit ; sans lui, pas de soumission.
+  expect(screen.getByText(/retour du prescripteur sur chaque produit/)).toBeTruthy();
+  await fireEvent.press(screen.getAllByLabelText('Prescrit très bien')[0]!);
+  await fireEvent.press(screen.getAllByLabelText('Prescrit peu')[1]!);
+  // RPT-005 : deux échantillons du premier produit présenté.
+  await fireEvent.press(screen.getByText('+ Produit Beta'));
+  await fireEvent.press(screen.getByLabelText('Une unité de plus pour Produit Beta'));
   await fireEvent.press(screen.getByText('Objectif atteint'));
   await fireEvent.changeText(
     screen.getByLabelText('Précisez ce qui a été obtenu (facultatif)'),
@@ -128,7 +151,13 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   await fireEvent.changeText(screen.getByLabelText('Patients par semaine'), '40');
   await fireEvent.press(screen.getByText('Soumettre le rapport'));
   expect(enregistrerRapport).toHaveBeenCalledWith('v1', {
-    produits: ['pb', 'pa'],
+    presentations: [
+      { produit: 'pb', libelle: 'Produit Beta', retour: 'tres_bien' },
+      { produit: 'pa', libelle: 'Produit Alpha', retour: 'peu' },
+    ],
+    remises: [
+      { type: 'echantillon', produit: 'pb', article: null, libelle: 'Produit Beta', quantite: 2 },
+    ],
     resultat: 'ok',
     resultat_obtenu: 'Essai sur 5 patients',
     resume: 'Bon accueil',
@@ -139,7 +168,10 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   expect(await screen.findByText('Rapport soumis à votre superviseur.')).toBeTruthy();
   // Soumis, il se lit sans se modifier.
   expect(screen.queryByText('Soumettre le rapport')).toBeNull();
-  expect(screen.getByText('1. Produit Beta\n2. Produit Alpha')).toBeTruthy();
+  expect(
+    screen.getByText('1. Produit Beta — Prescrit très bien\n2. Produit Alpha — Prescrit peu'),
+  ).toBeTruthy();
+  expect(screen.getByText('Échantillon · Produit Beta × 2')).toBeTruthy();
   expect(screen.getByText('Objectif atteint\nEssai sur 5 patients')).toBeTruthy();
 });
 
@@ -204,4 +236,33 @@ test.each([
   );
   await fireEvent.press(screen.getByText(libelle));
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/rapport/[id]', params: { id: 'v1' } });
+});
+
+test('RPT-004 CA2 : sans autorisation du pays, pas de produit « autre »', async () => {
+  await rendre({ rapport: jest.fn(async () => BROUILLON) });
+  await screen.findByText('Produit Alpha');
+  expect(screen.queryByLabelText('Autre produit présenté')).toBeNull();
+});
+
+test('RPT-004 CA2 : un produit « autre » si le pays l’autorise', async () => {
+  await rendre({ rapport: jest.fn(async () => ({ ...BROUILLON, produit_autre_autorise: true })) });
+  await fireEvent.changeText(
+    await screen.findByLabelText('Autre produit présenté'),
+    'Concurrent X',
+  );
+  await fireEvent.press(screen.getByText('Ajouter'));
+  expect(screen.getByText('1. Concurrent X')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('Retirer Concurrent X'));
+  expect(screen.queryByText('1. Concurrent X')).toBeNull();
+});
+
+test('RPT-005 CA1 : un cadeau se remet sans stock, la quantité se règle et revient à zéro', async () => {
+  await rendre({ rapport: jest.fn(async () => BROUILLON) });
+  // Pas d'échantillon sans produit présenté.
+  expect(await screen.findByText(/leurs échantillons apparaîtront ici/)).toBeTruthy();
+  await fireEvent.press(screen.getByText('Cadeau'));
+  await fireEvent.press(screen.getByText('+ Stylo'));
+  expect(screen.getByText('Cadeau · Stylo')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText('Une unité de moins pour Stylo'));
+  expect(screen.queryByText('Cadeau · Stylo')).toBeNull();
 });

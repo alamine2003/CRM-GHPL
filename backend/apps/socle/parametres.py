@@ -146,6 +146,12 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             _heure,
         ),
         DefinitionParametre(
+            "produit_autre_autorise",
+            "Produit présenté hors portefeuille, saisi en clair (« autre », RPT-004 CA2)",
+            False,
+            _booleen,
+        ),
+        DefinitionParametre(
             "seuils_visites_jour",
             "Visites par jour et par type de poste (RG-016)",
             {

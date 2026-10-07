@@ -125,6 +125,12 @@ export type StatutRapport = Schemas['StatutRapportEnum'];
 /** Statut du rapport vu depuis la visite : « attendu » tant qu'il n'est pas ouvert. */
 export type StatutRapportVisite = Schemas['RapportStatutEnum'];
 export type SaisieRapport = Schemas['SaisieRapport'];
+/** Produit présenté, à son rang, avec le retour du prescripteur (RPT-004). */
+export type Presentation = Schemas['Presentation'];
+export type RetourPrescripteur = Schemas['RetourPrescripteurEnum'];
+/** Échantillon ou cadeau remis, avec sa quantité (RPT-005). */
+export type Remise = Schemas['Remise'];
+export type TypeRemise = Schemas['TypeRemiseEnum'];
 export type DefinitionChamp = Schemas['DefinitionChamp'];
 export type TypeChamp = Schemas['TypeChampEnum'];
 /** Valeurs saisies des champs du pays, par code de champ. */

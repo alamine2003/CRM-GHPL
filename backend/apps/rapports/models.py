@@ -57,6 +57,22 @@ class StatutRapport(models.TextChoices):
     ROUVERT = "rouvert", "Rouvert"
 
 
+class RetourPrescripteur(models.TextChoices):
+    """Retour du prescripteur sur un produit présenté (RPT-004)."""
+
+    NON_PRESCRIT = "non_prescrit", "Ne prescrit pas"
+    PEU = "peu", "Prescrit peu"
+    PRESCRIT = "prescrit", "Prescrit"
+    TRES_BIEN = "tres_bien", "Prescrit très bien"
+
+
+class TypeRemise(models.TextChoices):
+    """Ce qui est remis pendant la visite, sans gestion de stock (RPT-005, RG-038)."""
+
+    ECHANTILLON = "echantillon", "Échantillon"
+    CADEAU = "cadeau", "Cadeau"
+
+
 class Rapport(ModeleDePays):
     visite = models.OneToOneField("planning.Visite", on_delete=models.PROTECT,
                                   related_name="rapport")  # fmt: skip
@@ -64,8 +80,12 @@ class Rapport(ModeleDePays):
                                 related_name="rapports")  # fmt: skip
     statut = models.CharField(max_length=12, choices=StatutRapport.choices,
                               default=StatutRapport.BROUILLON)  # fmt: skip
-    #: Produits présentés, dans l'ordre de présentation (identifiants de produits).
-    produits = models.JSONField(default=list, blank=True)
+    #: Produits présentés, dans l'ordre de présentation (RPT-004 CA1) :
+    #: [{"produit": id ou null pour un « autre », "libelle", "retour"}].
+    presentations = models.JSONField(default=list, blank=True)
+    #: Échantillons et cadeaux remis (RPT-005) :
+    #: [{"type", "produit" (échantillon), "article" (cadeau), "libelle", "quantite"}].
+    remises = models.JSONField(default=list, blank=True)
     resultat = models.ForeignKey("referentiel.Valeur", null=True, blank=True,
                                  on_delete=models.PROTECT, related_name="+")  # fmt: skip
     #: L'objectif planifié, relevé à l'ouverture du rapport (RPT-003 CA1).

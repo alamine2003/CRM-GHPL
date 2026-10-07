@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-06 22:55+0000\n"
+"POT-Creation-Date: 2026-10-07 01:12+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -875,6 +875,24 @@ msgstr "Invalid value for “%(libelle)s”."
 msgid ""
 "Seuls les produits du portefeuille du réseau de la visite se présentent."
 msgstr "Only products of the visit network's portfolio can be presented."
+
+msgid "Retour du prescripteur inconnu."
+msgstr "Unknown prescriber feedback."
+
+msgid "Nommez le produit présenté."
+msgstr "Name the product presented."
+
+msgid "Un produit se présente une seule fois."
+msgstr "A product is presented only once."
+
+msgid "Quantité attendue entre 1 et 999."
+msgstr "Quantity expected between 1 and 999."
+
+msgid "Article inconnu."
+msgstr "Unknown item."
+
+msgid "Échantillon ou cadeau attendu."
+msgstr "Sample or gift expected."
 
 msgid "Résultat inconnu."
 msgstr "Unknown result."

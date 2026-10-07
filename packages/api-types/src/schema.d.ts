@@ -3582,6 +3582,7 @@ export interface components {
      *     * `grade` - Grades
      *     * `motif_ecart` - Motifs d'écart
      *     * `resultat_visite` - Résultats de visite
+     *     * `article_promotionnel` - Articles promotionnels
      * @enum {string}
      */
     ListeEnum:
@@ -3591,7 +3592,8 @@ export interface components {
       | 'classe_therapeutique'
       | 'grade'
       | 'motif_ecart'
-      | 'resultat_visite';
+      | 'resultat_visite'
+      | 'article_promotionnel';
     /** @description Une page de résultats (PRP-005 CA3). */
     ListeEtablissements: {
       total: number;
@@ -4057,6 +4059,15 @@ export interface components {
      * @enum {string}
      */
     PotentielEnum: 'A' | 'B' | 'C';
+    /** @description Un produit présenté, à son rang, avec le retour du prescripteur (RPT-004). */
+    Presentation: {
+      /** Format: uuid */
+      produit?: string | null;
+      libelle?: string;
+      retour?:
+        | (components['schemas']['RetourPrescripteurEnum'] | components['schemas']['NullEnum'])
+        | null;
+    };
     Produit: {
       /** Format: uuid */
       readonly id: string;
@@ -4266,19 +4277,22 @@ export interface components {
       readonly objectif_prevu: string;
       est_imprevue: boolean;
       justification: string;
-      produits: string[];
+      presentations: components['schemas']['Presentation'][];
       /** Format: uuid */
       resultat: string | null;
       readonly resultat_obtenu: string;
       readonly resume: string;
       readonly prochaine_action: string;
+      remises: components['schemas']['Remise'][];
       champs: unknown;
       definitions: components['schemas']['DefinitionChamp'][];
       /** Format: date-time */
       readonly soumis_le: string | null;
       readonly manquants: string[];
       readonly produits_proposes: components['schemas']['Resume'][];
+      readonly produit_autre_autorise: boolean;
       readonly resultats_proposes: components['schemas']['Resume'][];
+      readonly articles_proposes: components['schemas']['Resume'][];
     };
     /**
      * @description * `attendu` - attendu
@@ -4323,6 +4337,16 @@ export interface components {
       /** Format: uuid */
       visite: string;
       commentaire: string;
+    };
+    /** @description Un échantillon (produit) ou un cadeau (article) remis, avec sa quantité (RPT-005). */
+    Remise: {
+      type: components['schemas']['TypeRemiseEnum'];
+      /** Format: uuid */
+      produit?: string | null;
+      /** Format: uuid */
+      article?: string | null;
+      readonly libelle: string;
+      quantite: number;
     };
     /** @description Remplaçant daté d'un superviseur (ORG-013). */
     Remplacement: {
@@ -4414,6 +4438,14 @@ export interface components {
       non_lues: number;
       notifications: components['schemas']['Notification'][];
     };
+    /**
+     * @description * `non_prescrit` - Ne prescrit pas
+     *     * `peu` - Prescrit peu
+     *     * `prescrit` - Prescrit
+     *     * `tres_bien` - Prescrit très bien
+     * @enum {string}
+     */
+    RetourPrescripteurEnum: 'non_prescrit' | 'peu' | 'prescrit' | 'tres_bien';
     RetraitCible: {
       motif?: string;
     };
@@ -4542,7 +4574,8 @@ export interface components {
       localite?: string | null;
     };
     SaisieRapport: {
-      produits?: string[];
+      presentations?: components['schemas']['Presentation'][];
+      remises?: components['schemas']['Remise'][];
       /** Format: uuid */
       resultat?: string | null;
       resultat_obtenu?: string;
@@ -4806,6 +4839,12 @@ export interface components {
      * @enum {string}
      */
     TypePosteEnum: 'vm' | 'vm_otc' | 'kam' | 'dermo';
+    /**
+     * @description * `echantillon` - Échantillon
+     *     * `cadeau` - Cadeau
+     * @enum {string}
+     */
+    TypeRemiseEnum: 'echantillon' | 'cadeau';
     Utilisateur: {
       /** Format: uuid */
       readonly id: string;
@@ -8513,6 +8552,7 @@ export interface operations {
         /** @description 1 : sans les archivées */
         actifs?: string;
         liste?:
+          | 'article_promotionnel'
           | 'classe_therapeutique'
           | 'grade'
           | 'motif_ecart'

@@ -114,6 +114,14 @@ RESULTATS_VISITE = [
     ("a_relancer", "À relancer", "Follow-up needed"),
 ]
 
+#: Cadeaux qu'un délégué peut remettre (RPT-005), proposés par défaut [H].
+ARTICLES_PROMOTIONNELS = [
+    ("stylo", "Stylo", "Pen"),
+    ("bloc_notes", "Bloc-notes", "Notepad"),
+    ("calendrier", "Calendrier", "Calendar"),
+    ("agenda", "Agenda", "Diary"),
+]
+
 #: Listes initiales, dans l'ordre de création (un parent avant ses enfants).
 INITIALES = {
     "type_prospect": TYPES_PROSPECT,
@@ -122,6 +130,7 @@ INITIALES = {
     "grade": GRADES,
     "motif_ecart": MOTIFS_ECART,
     "resultat_visite": RESULTATS_VISITE,
+    "article_promotionnel": ARTICLES_PROMOTIONNELS,
 }
 
 

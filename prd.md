@@ -678,7 +678,7 @@ Mise en œuvre (0.3.9) :
 - **CA1 (RPT-008)** : un rapport garde les champs du pays tels qu'à son ouverture ; un champ ajouté, modifié ou retiré ne vaut que pour les rapports ouverts ensuite.
 - **Résultats de visite** : nouvelle liste de référence du pays, modifiable dans « Référentiels » ; valeurs initiales [H] : objectif atteint, objectif partiellement atteint, objectif non atteint, à relancer.
 - **Hors connexion** [H] : en 0.5.1, le rapport s'ouvre et s'envoie avec du réseau ; sans réseau, l'écran le dit et la visite reste gardée sur le téléphone. Le brouillon gardé sur le téléphone arrive en 0.5.6, la soumission hors connexion et le marquage en retard en 0.5.7 (RPT-010).
-- Hors de 0.5.1 : objectif rappelé en tête (RPT-003, livré en 0.5.2, §14.32), retour du prescripteur par produit, échantillons et cadeaux (RPT-004, RPT-005, 0.5.3), prochaine action typée avec échéance (RPT-006, 0.5.4).
+- Hors de 0.5.1 : objectif rappelé en tête (RPT-003, livré en 0.5.2, §14.32), retour du prescripteur par produit, échantillons et cadeaux (RPT-004, RPT-005, livrés en 0.5.3, §14.33), prochaine action typée avec échéance (RPT-006, 0.5.4).
 
 ### 14.32 Objectif prévu et résultat obtenu (mise en œuvre 0.5.2)
 
@@ -687,6 +687,15 @@ Mise en œuvre (0.3.9) :
 - **Résultat obtenu**, juste sous l'objectif : le choix de la liste courte (obligatoire, RPT-002) et, en option, une phrase « Précisez ce qui a été obtenu » (1 000 caractères au plus).
 - Ordre du formulaire : objectif prévu, résultat obtenu, produits présentés, résumé, prochaine action, champs du pays. Le rapport soumis se lit dans le même ordre.
 - Hypothèse [H] : la précision du résultat reste facultative, quel que soit le résultat choisi.
+
+### 14.33 Produits présentés, retour du prescripteur, échantillons et cadeaux (mise en œuvre 0.5.3)
+
+- **Produits présentés** (RPT-004) : le délégué touche les produits du portefeuille dans l'ordre où il les a présentés ; le rang s'affiche sur chacun. **CA1** : l'ordre saisi est conservé, jusque dans le rapport soumis. Un produit ne se présente qu'une fois par visite.
+- **Retour du prescripteur**, produit par produit, sur une rangée de quatre cases : « Ne prescrit pas », « Peu », « Prescrit », « Très bien ». Il est **obligatoire pour chaque produit présenté** : sans lui, le rapport ne se soumet pas (« retour du prescripteur sur chaque produit »).
+- **CA2** : seuls les produits du portefeuille du réseau sont proposés. Un produit « autre », saisi en clair, n'est possible que si le pays l'autorise : paramètre « Autre produit présenté (hors portefeuille) », désactivé par défaut [H].
+- **Échantillons et cadeaux remis** (RPT-005, RG-038), facultatifs : « Échantillon » propose les produits du portefeuille déjà présentés à cette visite [H] ; « Cadeau » propose la liste « Articles promotionnels » du pays (stylo, bloc-notes, calendrier, agenda [H], modifiable dans « Référentiels »). Toucher un élément l'ajoute ; « − » et « + » règlent la quantité (1 à 999) ; « − » à 1 le retire.
+- **CA1 (RPT-005)** : aucune notion de solde ni de dotation ; le rapport garde seulement ce qui a été remis.
+- Le rapport soumis se lit : « 1. Produit — Prescrit très bien », puis « Échantillon · Produit × 2 », « Cadeau · Stylo × 1 ».
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 

@@ -460,7 +460,8 @@
       "delai_escalade_heures_ouvrees": "Délai avant escalade au DM (heures ouvrées)",
       "conservation": "Durées de conservation",
       "attente_gps_secondes": "Attente de la position (secondes)",
-      "duree_visite_minutes": "Durée d'une visite (minutes)"
+      "duree_visite_minutes": "Durée d'une visite (minutes)",
+      "produit_autre_autorise": "Autre produit présenté (hors portefeuille)"
     },
     "jours": {
       "1": "Lun",
@@ -687,7 +688,8 @@
       "classe_therapeutique": "Classes thérapeutiques",
       "motif_ecart": "Motifs d'écart",
       "grade": "Grades",
-      "resultat_visite": "Résultats de visite"
+      "resultat_visite": "Résultats de visite",
+      "article_promotionnel": "Articles promotionnels"
     },
     "aides": {
       "type_prospect": "Médecin, pharmacien, sage-femme… Chaque fiche prospect en porte un.",
@@ -695,7 +697,8 @@
       "type_etablissement": "Cabinet, hôpital, pharmacie… Chaque établissement en porte un.",
       "classe_therapeutique": "Classement des produits (Cardio, Diabéto…).",
       "motif_ecart": "Motifs qu'un délégué choisit quand une visite prévue n'a pas lieu.",
-      "resultat_visite": "Liste courte que le délégué choisit dans son rapport de visite."
+      "resultat_visite": "Liste courte que le délégué choisit dans son rapport de visite.",
+      "article_promotionnel": "Cadeaux qu'un délégué peut remettre pendant une visite (stylo, bloc-notes…)."
     },
     "valeur": {
       "nouvelle": "Nouvelle valeur",
@@ -1976,7 +1979,8 @@
       "produits": "produits présentés",
       "resultat": "résultat",
       "resume": "résumé",
-      "prochaine_action": "prochaine action"
+      "prochaine_action": "prochaine action",
+      "retours": "retour du prescripteur sur chaque produit"
     },
     "manque": "À compléter avant de soumettre : {{liste}}.",
     "soumettre": "Soumettre le rapport",
@@ -1994,7 +1998,38 @@
     "sansObjectif": "Aucun objectif n'était prévu pour cette visite.",
     "resultatAide": "Au regard de l'objectif prévu.",
     "resultatObtenu": "Précisez ce qui a été obtenu (facultatif)",
-    "resultatObtenuIndice": "Par exemple : accord pour un essai sur 5 patients"
+    "resultatObtenuIndice": "Par exemple : accord pour un essai sur 5 patients",
+    "retourTitre": "Retour du prescripteur",
+    "retourDe": "Retour du prescripteur sur {{libelle}}",
+    "retours": {
+      "non_prescrit": "Ne prescrit pas",
+      "peu": "Prescrit peu",
+      "prescrit": "Prescrit",
+      "tres_bien": "Prescrit très bien"
+    },
+    "autreProduit": "Autre produit présenté",
+    "autreProduitIndice": "Nom du produit",
+    "ajouter": "Ajouter",
+    "retirer": "Retirer",
+    "retirerProduit": "Retirer {{libelle}}",
+    "remises": "Échantillons et cadeaux remis",
+    "remisesAide": "Facultatif. Touchez un produit ou un article pour l'ajouter, puis réglez la quantité.",
+    "typesRemise": {
+      "echantillon": "Échantillon",
+      "cadeau": "Cadeau"
+    },
+    "presenterDabord": "Touchez d'abord les produits présentés : leurs échantillons apparaîtront ici.",
+    "aucunArticle": "Aucun article dans la liste du pays.",
+    "aucuneRemise": "Aucun échantillon ni cadeau remis.",
+    "moins": "Une unité de moins pour {{libelle}}",
+    "plus": "Une unité de plus pour {{libelle}}",
+    "quantite": "Quantité : {{n}}",
+    "retoursCourts": {
+      "non_prescrit": "Ne prescrit pas",
+      "peu": "Peu",
+      "prescrit": "Prescrit",
+      "tres_bien": "Très bien"
+    }
   },
   "champsRapport": {
     "titre": "Champs du rapport",

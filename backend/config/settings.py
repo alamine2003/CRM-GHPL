@@ -255,6 +255,8 @@ SPECTACULAR_SETTINGS = {
         "StatutEnum": "apps.socle.models.Pays.Statut",
         "StatutRapportEnum": "apps.rapports.models.StatutRapport",
         "TypeChampEnum": "apps.rapports.models.TypeChamp",
+        "RetourPrescripteurEnum": "apps.rapports.models.RetourPrescripteur",
+        "TypeRemiseEnum": "apps.rapports.models.TypeRemise",
         "StatutFicheEnum": "apps.prospects.models.StatutFiche",
         "StatutLotEnum": "apps.imports.models.LotImport.Statut",
         "TypeActiviteEnum": "apps.planning.models.TypeActivite",

@@ -4,7 +4,7 @@ from rest_framework import serializers
 from apps.organisation.serializers import ResumeSerializer
 
 from . import services
-from .models import ChampRapport, Rapport, StatutRapport, TypeChamp
+from .models import ChampRapport, Rapport, RetourPrescripteur, StatutRapport, TypeChamp, TypeRemise
 
 
 class ChampRapportSerializer(serializers.ModelSerializer):
@@ -38,8 +38,29 @@ class DefinitionChampSerializer(serializers.Serializer):
     obligatoire = serializers.BooleanField()
 
 
+class PresentationSerializer(serializers.Serializer):
+    """Un produit présenté, à son rang, avec le retour du prescripteur (RPT-004)."""
+
+    #: Produit du portefeuille ; vide pour un produit « autre » saisi en clair (CA2).
+    produit = serializers.UUIDField(allow_null=True, required=False)
+    libelle = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    retour = serializers.ChoiceField(choices=RetourPrescripteur.choices, allow_null=True,
+                                     required=False)  # fmt: skip
+
+
+class RemiseSerializer(serializers.Serializer):
+    """Un échantillon (produit) ou un cadeau (article) remis, avec sa quantité (RPT-005)."""
+
+    type = serializers.ChoiceField(choices=TypeRemise.choices)
+    produit = serializers.UUIDField(allow_null=True, required=False)
+    article = serializers.UUIDField(allow_null=True, required=False)
+    libelle = serializers.CharField(read_only=True)
+    quantite = serializers.IntegerField(min_value=1, max_value=999)
+
+
 class RapportSerializer(serializers.ModelSerializer):
-    produits = serializers.ListField(child=serializers.UUIDField())
+    presentations = PresentationSerializer(many=True)
+    remises = RemiseSerializer(many=True)
     resultat = serializers.UUIDField(source="resultat_id", allow_null=True)
     champs = serializers.JSONField()
     definitions = DefinitionChampSerializer(many=True)
@@ -51,13 +72,18 @@ class RapportSerializer(serializers.ModelSerializer):
     #: Le portefeuille du réseau de la visite (RG-033) et la liste courte des résultats.
     produits_proposes = serializers.SerializerMethodField()
     resultats_proposes = serializers.SerializerMethodField()
+    #: RPT-004 CA2 : un produit « autre », saisi en clair, si le pays l'autorise.
+    produit_autre_autorise = serializers.SerializerMethodField()
+    #: RPT-005 : les articles que le pays propose en cadeau.
+    articles_proposes = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
         fields = ["id", "visite", "statut", "objectif_prevu", "est_imprevue", "justification",
-                  "produits", "resultat", "resultat_obtenu", "resume", "prochaine_action",
-                  "champs", "definitions", "soumis_le", "manquants", "produits_proposes",
-                  "resultats_proposes"]  # fmt: skip
+                  "presentations", "resultat", "resultat_obtenu", "resume", "prochaine_action",
+                  "remises", "champs", "definitions", "soumis_le", "manquants",
+                  "produits_proposes", "produit_autre_autorise", "resultats_proposes",
+                  "articles_proposes"]  # fmt: skip
         read_only_fields = fields
 
     def get_manquants(self, rapport) -> list[str]:
@@ -72,9 +98,19 @@ class RapportSerializer(serializers.ModelSerializer):
     def get_resultats_proposes(self, rapport):
         return [{"id": v.pk, "libelle": v.libelle} for v in services.resultats(rapport.pays)]
 
+    def get_produit_autre_autorise(self, rapport) -> bool:
+        from apps.socle.services import valeur_parametre
+
+        return bool(valeur_parametre(rapport.pays, "produit_autre_autorise"))
+
+    @extend_schema_field(ResumeSerializer(many=True))
+    def get_articles_proposes(self, rapport):
+        return [{"id": v.pk, "libelle": v.libelle} for v in services.articles(rapport.pays)]
+
 
 class SaisieRapportSerializer(serializers.Serializer):
-    produits = serializers.ListField(child=serializers.UUIDField(), required=False)
+    presentations = PresentationSerializer(many=True, required=False)
+    remises = RemiseSerializer(many=True, required=False)
     resultat = serializers.UUIDField(required=False, allow_null=True)
     resultat_obtenu = serializers.CharField(required=False, allow_blank=True, max_length=1000)
     resume = serializers.CharField(required=False, allow_blank=True, max_length=4000)
