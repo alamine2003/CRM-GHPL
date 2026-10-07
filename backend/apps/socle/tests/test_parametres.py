@@ -31,7 +31,9 @@ def test_valeurs_par_defaut_du_cadrage():
     # Fermeture de la semaine le lundi 0 h (RG-013, décision du 6 octobre 2026).
     assert valeurs["echeance_soumission_planning"] == {"jour": 1, "heure": "00:00"}
     assert valeurs["rappel_planning_non_soumis"] == {"jour": 5, "heure": "09:00"}
-    assert valeurs["echeance_approbation_planning"] == {"jour": 5, "heure": "18:00"}
+    # DC-61 : l'échéance d'approbation, sans effet depuis la fermeture du lundi, est retirée.
+    assert "echeance_approbation_planning" not in valeurs
+    assert valeurs["verrouillage_minutes"] == 15
     assert valeurs["heure_limite_rapport"] == "23:59"
     assert valeurs["distance_pointage_m"] == 100
     assert valeurs["delai_escalade_heures_ouvrees"] == 24

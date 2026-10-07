@@ -42,3 +42,28 @@ def chronologie(perimetre: Perimetre, prospect) -> QuerySet:
         .select_related("visite", "delegue", "resultat", "prochaine_action_type")
         .order_by("-visite__date", "-visite__heure")[:LIMITE]
     )
+
+
+def visites_proposees(delegue) -> QuerySet:
+    """DC-61 : les rapports soumis du délégué qui proposent une nouvelle visite, tant que ce
+    prospect n'a pas reçu de visite planifiée après celle du rapport. Un rapport par prospect :
+    le plus récent."""
+    from django.db.models import Exists, OuterRef
+
+    from apps.planning.models import Visite
+
+    replanifiee = Visite.objects.filter(
+        planning__delegue=delegue, prospect=OuterRef("visite__prospect"),
+        date__gt=OuterRef("visite__date"), archive_le__isnull=True,
+    )  # fmt: skip
+    rapports = (
+        Rapport.objects.filter(delegue=delegue, visite_proposee=True)
+        .exclude(statut=StatutRapport.BROUILLON)
+        .filter(~Exists(replanifiee))
+        .select_related(
+            "visite__prospect__specialite", "visite__prospect__type", "prochaine_action_type"
+        )  # fmt: skip
+        .order_by("visite__prospect_id", "-visite__date")
+        .distinct("visite__prospect_id")
+    )
+    return sorted(rapports, key=lambda r: r.visite.date, reverse=True)

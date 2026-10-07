@@ -193,6 +193,41 @@ describe('mobile — session', () => {
     expect(authentifier).toHaveBeenCalledTimes(2);
   });
 
+  it('DC-59 : le pays règle le délai ; 20 minutes dehors ne verrouillent pas à 30', async () => {
+    const abonnes: ((statut: AppStateStatus) => void)[] = [];
+    const surChangement = (statut: AppStateStatus) => abonnes.forEach((f) => f(statut));
+    jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, f) => {
+      abonnes.push(f as (statut: AppStateStatus) => void);
+      return { remove: jest.fn() } as unknown as ReturnType<typeof AppState.addEventListener>;
+    });
+    jest.mocked(lire).mockImplementation(async (cle: string) =>
+      cle === 'programme.courant'
+        ? {
+            valeur: {
+              etat: 'sans_poste',
+              jours: [],
+              aujourdhui: '2026-10-13',
+              verrouillage_minutes: 30,
+            },
+            maj: '',
+          }
+        : null,
+    );
+    const maintenant = jest.spyOn(horloge, 'maintenant').mockReturnValue(1_000_000);
+    await rendre(
+      <Verrou>
+        <Accueil />
+      </Verrou>,
+      fauxClient({ reprendre: jest.fn(async () => JETONS) }),
+    );
+    expect(await screen.findByText('Bonjour Awa')).toBeTruthy();
+    await act(async () => surChangement('background'));
+    maintenant.mockReturnValue(1_000_000 + 20 * 60 * 1000);
+    await act(async () => surChangement('active'));
+    expect(screen.queryByText('Application verrouillée')).toBeNull();
+    jest.mocked(lire).mockImplementation(async () => null);
+  });
+
   it('signale une instance de démonstration dès l’écran de connexion (DEM-001)', async () => {
     await rendre(
       <Connexion />,

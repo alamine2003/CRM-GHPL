@@ -134,12 +134,6 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             _echeance,
         ),
         DefinitionParametre(
-            "echeance_approbation_planning",
-            "Échéance d'approbation du planning, semaine précédente (RG-013)",
-            {"jour": 5, "heure": "18:00"},
-            _echeance,
-        ),
-        DefinitionParametre(
             "heure_limite_rapport",
             "Heure limite du rapport le jour de la visite (RG-032)",
             "23:59",
@@ -221,6 +215,13 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             "visite continue « sans GPS » (VIS-003, décision du 6 octobre 2026)",
             60,
             _entier(10, 300),
+        ),
+        DefinitionParametre(
+            "verrouillage_minutes",
+            "Verrouillage du téléphone après ce délai en arrière-plan, en minutes (SEC-004, "
+            "décision DC-59 du 7 octobre 2026)",
+            15,
+            _entier(5, 30),
         ),
         DefinitionParametre(
             "rappel_planning_non_soumis",

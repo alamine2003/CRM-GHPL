@@ -714,6 +714,8 @@ class ProgrammeSerializer(serializers.Serializer):
     geolocalisation = serializers.BooleanField()
     #: Attente de la position avant de continuer « sans GPS » (paramètre du pays).
     attente_gps_secondes = serializers.IntegerField()
+    #: SEC-004 (DC-59) : le téléphone se verrouille après ce délai en arrière-plan.
+    verrouillage_minutes = serializers.IntegerField()
     #: Motifs d'écart du pays, gardés par le téléphone pour déclarer sans réseau (prd.md §12).
     motifs_ecart = ResumeSerializer(many=True)
 

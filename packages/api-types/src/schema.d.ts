@@ -2105,6 +2105,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/rapports/visites-proposees/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description DC-61 : à la préparation de la semaine, les visites proposées dans ses rapports et pas
+     *     encore replanifiées.
+     */
+    get: operations['visites_proposees'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/referentiel/mon-portefeuille/': {
     parameters: {
       query?: never;
@@ -4190,6 +4210,7 @@ export interface components {
       prochaine: string | null;
       geolocalisation: boolean;
       attente_gps_secondes: number;
+      verrouillage_minutes: number;
       motifs_ecart: components['schemas']['Resume'][];
     };
     Proposition: {
@@ -5146,6 +5167,15 @@ export interface components {
       readonly rapport_statut:
         (components['schemas']['RapportStatutEnum'] | components['schemas']['NullEnum']) | null;
       modification_en_attente: boolean;
+    };
+    /** @description DC-61 : un prospect pour qui la dernière visite a proposé d'y revenir. */
+    VisiteProposee: {
+      readonly prospect: components['schemas']['ProspectResume'];
+      /** Format: date */
+      date: string;
+      action?: string | null;
+      /** Format: date */
+      echeance: string | null;
     };
     /**
      * @description * `prevue` - Prévue
@@ -8523,6 +8553,25 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ChampRapport'];
+        };
+      };
+    };
+  };
+  visites_proposees: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VisiteProposee'][];
         };
       };
     };

@@ -149,6 +149,7 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         "prochaine": prochaine.pk if prochaine else None,
         "geolocalisation": valeur_parametre(pays, "geolocalisation_active"),
         "attente_gps_secondes": valeur_parametre(pays, "attente_gps_secondes"),
+        "verrouillage_minutes": valeur_parametre(pays, "verrouillage_minutes"),
         "motifs_ecart": _motifs(pays),
         "a_justifier": a_justifier(pays, delegue, today),
     }

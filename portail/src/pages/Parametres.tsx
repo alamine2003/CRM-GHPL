@@ -38,7 +38,6 @@ const GROUPES: { cle: string; parametres: string[] }[] = [
     cle: 'planning',
     parametres: [
       'echeance_soumission_planning',
-      'echeance_approbation_planning',
       'delai_escalade_heures_ouvrees',
     ],
   },
@@ -55,6 +54,7 @@ const GROUPES: { cle: string; parametres: string[] }[] = [
     ],
   },
   { cle: 'rapports', parametres: ['heure_limite_rapport', 'produit_autre_autorise'] },
+  { cle: 'telephone', parametres: ['verrouillage_minutes'] },
   { cle: 'conservation', parametres: ['conservation'] },
 ];
 const TYPES_POSTE = ['vm', 'vm_otc', 'kam', 'dermo'];
@@ -79,10 +79,8 @@ function Apercu({ cle, valeur }: { cle: string; valeur: Valeur }) {
       return (
         <>{t('parametres.semaineDuPlanning', { jour: jour(v.jour as number), heure: v.heure })}</>
       );
-    case 'echeance_approbation_planning':
-      return (
-        <>{t('parametres.semainePrecedente', { jour: jour(v.jour as number), heure: v.heure })}</>
-      );
+    case 'verrouillage_minutes':
+      return <>{t('parametres.minutesN', { n: valeur })}</>;
     case 'attente_gps_secondes':
       return <>{t('parametres.secondes', { n: valeur })}</>;
     case 'plage_horaire_visites':
@@ -176,7 +174,6 @@ function Editeur({
         </ToggleButtonGroup>
       );
     case 'echeance_soumission_planning':
-    case 'echeance_approbation_planning':
       return (
         <Stack direction="row" spacing={1.5}>
           <TextField

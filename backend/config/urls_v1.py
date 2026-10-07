@@ -228,6 +228,12 @@ urlpatterns = [
         name="visite-rapport-piece",
     ),  # fmt: skip
     path("rapports/champs/", rap.ChampsRapportVue.as_view(), name="champs-rapport"),
+    # DC-61 : visites proposées dans les rapports, reprises à la préparation de la semaine
+    path(
+        "rapports/visites-proposees/",
+        rap.VisitesProposeesVue.as_view(),
+        name="visites-proposees",
+    ),
     path("rapports/champs/<uuid:id>/", rap.ChampRapportVue.as_view(), name="champ-rapport"),
     path(
         "rapports/champs/<uuid:id>/archiver/",

@@ -4,11 +4,18 @@
  * (CA1) : les champs manquants s'affichent « À compléter » et la soumission (0.2.8) les exigera.
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { ClientApi, JourSemaine, ListeCible, Semaine, Visite } from '@innov/api-client';
+import type {
+  ClientApi,
+  JourSemaine,
+  ListeCible,
+  Semaine,
+  Visite,
+  VisiteProposee,
+} from '@innov/api-client';
 import { type ComponentProps, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { lire } from './baseLocale';
+import { ecrire, lire } from './baseLocale';
 import {
   type ChampsVisite,
   estTransitoire,
@@ -33,6 +40,8 @@ import { nomProspect } from './Fiches';
 import { police } from './polices';
 import { messageErreur, useSession } from './session';
 import { jourIso } from './semaineLocale';
+
+const CLE_PROPOSEES = 'visites.proposees';
 
 /** Prospect proposé au choix : de la liste cible, ou trouvé dans toutes les fiches. */
 export type Choix = {
@@ -558,11 +567,53 @@ export function ChoixProspect({
   client: ClientApi;
   surChoix: (c: Choix) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [cibles, setCibles] = useState<Choix[] | null>(null);
   const [saisie, setSaisie] = useState('');
   const [partout, setPartout] = useState<Choix[] | null>(null);
   const [recherche, setRecherche] = useState(false);
+  // DC-61 : les prospects pour qui la dernière visite a proposé d'y revenir, gardés hors ligne.
+  const [proposees, setProposees] = useState<{ choix: Choix; note: string }[]>([]);
+
+  useEffect(() => {
+    let actif = true;
+    void Promise.resolve()
+      .then(() => client.rapports.visitesProposees())
+      .then(async (v) => {
+        await ecrire(CLE_PROPOSEES, v).catch(() => undefined);
+        return v;
+      })
+      .catch(
+        async () => (await lire<VisiteProposee[]>(CLE_PROPOSEES).catch(() => null))?.valeur ?? [],
+      )
+      .then((v) => {
+        if (!actif) return;
+        const date = (iso: string) =>
+          new Intl.DateTimeFormat(i18n.language, {
+            day: 'numeric',
+            month: 'short',
+            timeZone: 'UTC',
+          }).format(new Date(`${iso}T12:00:00Z`));
+        setProposees(
+          v.map((x) => ({
+            choix: {
+              id: x.prospect.id,
+              civilite: x.prospect.civilite,
+              prenom: x.prospect.prenom,
+              nom: x.prospect.nom,
+              potentiel: x.prospect.potentiel,
+              detail: x.prospect.specialite_libelle || x.prospect.type_libelle,
+            },
+            note: [t('visites.proposeeLe', { date: date(x.date) }), x.action]
+              .filter(Boolean)
+              .join(' · '),
+          })),
+        );
+      });
+    return () => {
+      actif = false;
+    };
+  }, [client, i18n.language, t]);
 
   useEffect(() => {
     let actif = true;
@@ -622,6 +673,19 @@ export function ChoixProspect({
         <Texte variante="discret">{t('session.chargement')}</Texte>
       ) : (
         <>
+          {partout === null && !filtre && proposees.length > 0 && (
+            <>
+              <Texte variante="discret">{t('visites.proposees')}</Texte>
+              {proposees.map((x) => (
+                <LigneChoix
+                  key={`proposee-${x.choix.id}`}
+                  choix={x.choix}
+                  note={x.note}
+                  onPress={() => surChoix(x.choix)}
+                />
+              ))}
+            </>
+          )}
           {partout === null && liste.length > 0 && (
             <Texte variante="discret">{t('visites.depuisMaListe')}</Texte>
           )}

@@ -2,7 +2,9 @@
 
 Relecture du 7 octobre 2026 (question O-12, choix 16.A). Elle porte sur environ 190 éléments de `prd.md` : 118 exigences fonctionnelles, 48 règles de gestion, 15 exigences non fonctionnelles et 9 indicateurs. Seules les exigences douteuses sont listées, les plus importantes d'abord.
 
-Pour chaque point : le problème, les choix possibles et une recommandation. **Rien n'est changé tant que tu n'as pas tranché.** Une réponse courte suffit, par exemple « R1.B, R2.B, R3.C… ».
+Pour chaque point : le problème, les choix possibles et une recommandation.
+
+> **Tranché le 7 octobre 2026 : toutes les recommandations sont retenues** (décisions DC-49 à DC-61, `prd.md` §14.40).
 
 | N° | Exigence | Où en est-elle |
 |---|---|---|

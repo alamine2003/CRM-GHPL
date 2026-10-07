@@ -78,3 +78,33 @@ def test_rpt011_hors_perimetre(monde, terrain, soumis):
     assert chronologie(monde["dm.sn"], terrain["medecin"]).json() == []
     # Un autre pays : la fiche n'existe pas.
     assert chronologie(monde["resp.tg"], terrain["medecin"]).status_code == 404
+
+
+def test_dc61_la_visite_proposee_revient_a_la_preparation(monde, terrain, effectuee, portefeuille):  # noqa: F811
+    from datetime import date, time
+
+    from apps.planning import services
+
+    with freeze_time("2026-10-13 20:00"):
+        c = client_de(monde["deleg.sn"])
+        r = c.put(url(effectuee), complet(monde, portefeuille[:1], visite_proposee=True),
+                  format="json")  # fmt: skip
+        assert r.status_code == 200, r.content
+        r = c.post(url(effectuee, "soumettre/"), {"soumis_le": "2026-10-13T20:00:00Z"},
+                   format="json")  # fmt: skip
+        assert r.json()["visite_proposee"] is True
+    with freeze_time("2026-10-15 09:00"):
+        c = client_de(monde["deleg.sn"])
+        r = c.get("/api/v1/rapports/visites-proposees/")
+        assert r.status_code == 200, r.content
+        (proposee,) = r.json()
+        assert proposee["prospect"]["nom"] == "NDIAYE"
+        assert (proposee["date"], proposee["action"]) == ("2026-10-13", "Revisiter le prescripteur")
+        # Le superviseur n'a pas de visites proposées à lui.
+        assert client_de(monde["sup.sn"]).get("/api/v1/rapports/visites-proposees/").json() == []
+        # Replanifiée la semaine suivante : elle ne se propose plus.
+        suivante = services.creer_planning(monde["sn"], monde["deleg.sn"], date(2026, 10, 19))
+        services.ajouter_visite(suivante, date=date(2026, 10, 20), heure=time(9, 0),
+                                prospect=terrain["medecin"],
+                                etablissement=terrain["clinique"])  # fmt: skip
+        assert c.get("/api/v1/rapports/visites-proposees/").json() == []

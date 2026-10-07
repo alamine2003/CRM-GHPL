@@ -105,7 +105,7 @@ Mesurés pendant le pilote au Sénégal (version `0.9.7` à `0.9.9`), puis chaqu
 |---|---|---|---|
 | KPI-01 | Plannings soumis à l'heure | Plannings soumis avant l'échéance (jeudi 18 h par défaut) / plannings attendus | ≥ 90 % |
 | KPI-02 | Délai de validation des plannings | Médiane entre soumission et décision du superviseur, en heures ouvrées | < 1 jour ouvré |
-| KPI-03 | Taux de réalisation | Visites approuvées au statut `effectuee` ou justifiées (`annulee`, `reportee`, `prospect_absent`, `non_realisee` avec motif) / visites approuvées | ≥ 85 % |
+| KPI-03 | Taux de réalisation (DC-50) | Visites approuvées au statut `effectuee` / visites approuvées ; publié avec un second chiffre, la part des écarts justifiés (`annulee`, `reportee`, `prospect_absent`, `non_realisee` avec motif) | ≥ 85 % |
 | KPI-04 | Rapports dans le délai | Rapports soumis le jour de la visite avant 23 h 59 (heure du pays) / visites effectuées | ≥ 90 % |
 | KPI-05 | Adoption | Délégués du pilote ayant synchronisé au moins 3 jours dans la semaine / délégués du pilote | ≥ 80 % |
 | KPI-06 | Isolation | Données exposées hors périmètre (pays, réseau, délégué) lors des tests d'isolation automatisés et de recette | 0 |
@@ -243,10 +243,9 @@ Voir `ORG-001` à `ORG-014` (section 15.1).
 | Jours ouvrés | Lundi à vendredi |
 | Jours fériés | Calendrier annuel tenu par l'administrateur pays, fêtes religieuses à date variable comprises |
 | Échéance de soumission du planning | Jeudi 18 h de la semaine précédente |
-| Échéance d'approbation du planning | Vendredi 18 h de la semaine précédente |
 | Délai de rapport | Jour de la visite, 23 h 59 |
 | Seuils de visites par jour | Par type de poste (ex. `vm` 6 à 10, `kam` 3 à 6) [H] |
-| Contrôles de conformité | Plage horaire 8 h–20 h ; visites sans GPS tolérées par journée : 3 [H] ; distance de pointage 100 m (pratique relevée dans BirdNotes, 4 octobre 2026) |
+| Contrôles de conformité | Plage horaire 8 h–20 h ; visites sans GPS tolérées par journée : 3 [H] ; distance de pointage 100 m (pratique relevée dans BirdNotes, 4 octobre 2026), au-delà de laquelle une position imprécise est « imprécise » et non « loin du lieu » ; rayon propre possible par établissement (DC-55) |
 | Cycle de visite | 4 semaines (pratique relevée dans BirdNotes) |
 | Géolocalisation | Activée ou désactivée par pays |
 | Champs supplémentaires du rapport | Aucun |
@@ -398,7 +397,7 @@ stateDiagram-v2
 | Exercice | Non | `hospitalier` ou `prive` (H/P) |
 | Secteur, localité | Non | La localité appartient à un secteur ; elle en donne le secteur |
 | Numéro d'ordre professionnel | Non | Identifiant fort pour la fusion automatique |
-| Téléphone mobile personnel, téléphone professionnel, courriel | Non | Normalisés au format international |
+| Téléphone mobile personnel, téléphone professionnel, courriel | Non | Normalisés au format international ; le mobile personnel ne s'affiche qu'aux délégués qui ont le prospect dans leur liste cible, et seulement si « accepte d'être contacté sur ce numéro » est coché (DC-58) |
 | Potentiel | Oui | `A`, `B`, `C` |
 | Pays | Oui | Ne change jamais (`RG-001`) |
 | Statut | Oui | `a_valider`, `actif`, `archive`, `fusionne` |
@@ -586,7 +585,7 @@ Mise en œuvre (0.3.9) :
 - **Démonstration** : la semaine en cours du premier délégué est validée, la suivante en préparation ; un second délégué a sa semaine suivante soumise et sa semaine en cours fermée, avec une demande de réouverture.
 - Décisions [D] du 6 octobre 2026, après la livraison :
   - une semaine passée ne se rouvre pas : elle s'analyse telle quelle, et une semaine sans rien de fait reste une semaine où rien n'a été fait ;
-  - le paramètre `echeance_approbation_planning` (vendredi 18 h) est conservé dans les paramètres du pays, bien que l'approbation se fasse désormais avant la fermeture.
+  - le paramètre `echeance_approbation_planning` est retiré en 0.5.9 (DC-61) : il n'agissait plus depuis la fermeture du lundi.
 
 ### 14.22 Programme du jour (mise en œuvre 0.4.1)
 
@@ -702,15 +701,36 @@ Mise en œuvre (0.3.9) :
 
 - **Prochaine action** (RPT-006) : un **type** choisi dans la liste du pays « Types de prochaine action » (revisiter le prescripteur, envoyer de la documentation, apporter des échantillons, présenter une étude, organiser une réunion, autre [H], modifiable dans « Référentiels ») et une **précision** en clair ; les deux sont obligatoires pour soumettre.
 - **Échéance** facultative [H] : « Sans échéance », « Dans 1 semaine », « Dans 2 semaines », « Dans 1 mois », comptés depuis le jour de la visite ; jamais avant la visite.
-- **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». En 0.5.4, il est noté et rappelé ; il ne crée pas de visite dans le planning [H].
+- **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
+
+### 14.40 Décisions de la relecture du cahier des charges (7 octobre 2026)
+
+La relecture (`revue-exigences.md`, question O-12) a relevé 13 exigences douteuses ; toutes les recommandations sont retenues [D, 7 octobre 2026]. Elles remplacent les textes d'origine.
+
+| Décision | Point | Ce qui change | Quand |
+|---|---|---|---|
+| DC-49 | R1 | Pas de score composite, d'appréciation ni de classement des délégués ; taux corrigés côte à côte (§14.18, DSH-012) | Cycle 0.7 |
+| DC-50 | R2 | Deux chiffres distincts : réalisation (visites faites / prévues) et part des écarts justifiés (KPI-03, DSH-006) | Cycle 0.7 |
+| DC-51 | R3 | « Maladie » retirée ; « indisponibilité imprévue », sans motif médical, déclarable le jour même, même semaine fermée, et qui justifie les visites du jour (PLN-009) | 0.5.9 |
+| DC-52 | R4 | Position de référence proposée seulement à partir de pointages d'au moins deux personnes différentes, validée sur une carte (§14.18, §14.35) | Cycle 0.7 ou 0.8 |
+| DC-53 | R5 | Tendance de prescription agrégée (produit, secteur, réseau) ; détail par prescripteur visible du seul délégué (§14.35) | Cycle 0.7 |
+| DC-54 | R6 | Délai sans synchronisation réglable par pays, 7 jours par défaut (OFF-007, RG-054) | 0.8.3 |
+| DC-55 | R7 | Pointage : une position dont la précision annoncée dépasse le seuil est « imprécise », pas « loin du lieu » ; rayon de pointage propre possible par établissement (VIS-010, §7.5) | 0.5.9 ; valeurs à mesurer au pilote |
+| DC-56 | R8 | Performance : 1 s pour le portail sur une bonne connexion, 2 s perçues sur le téléphone en 3G, mesurées (NFR-002, §14.35) | Tous cycles, contrôle en 0.9 |
+| DC-57 | R9 | Le « résumé automatique » devient une liste de points d'attention calculés par des règles, reliés à leurs visites ; aucune donnée envoyée à un service extérieur (§14.35) | Cycle 0.7 |
+| DC-58 | R10 | Le mobile personnel d'un médecin ne s'affiche qu'aux délégués qui l'ont dans leur liste cible, et seulement s'il accepte d'être contacté sur ce numéro ; il sert toujours à repérer les doublons (§14.1) | 0.5.9 |
+| DC-59 | R11 | Verrouillage du téléphone après un délai réglable par pays, 15 minutes par défaut, de 5 à 30 (SEC-004) | 0.5.9 |
+| DC-60 | R12 | Pas d'échéance sur une demande de correction (RPT-014) | 0.6.4 |
+| DC-61 | R13 | Paramètre `echeance_approbation_planning` retiré ; la visite proposée apparaît dans la préparation de la semaine suivante | 0.5.9 |
+| DC-62 | 17 | Lecture des rapports : le délégué les siens, l'encadrement dans son périmètre (superviseur, DM, DF, responsable pays) ; ni l'administration ni le siège (§14.39) | Livré en 0.5.8 |
 
 ### 14.39 Chronologie des rapports d'un prospect (mise en œuvre 0.5.8)
 
 - **Téléphone** (RPT-011) : sur la fiche d'un prospect, la carte « Visites précédentes » montre ses rapports du plus récent au plus ancien : date, heure, lieu, résultat, produits avec le retour du prescripteur, résumé et « Suite : » (la prochaine action). Trois visites s'affichent, puis « Voir les N visites plus anciennes ». Sans réseau, la dernière liste lue reste visible.
 - **CA1** : un délégué ne voit que ses propres rapports, brouillons compris ; jamais ceux d'un collègue.
 - **Portail** : dans la fiche d'un prospect, la section « Rapports de visite » montre la même chronologie à l'encadrement, avec le nom du délégué.
-- **Qui lit quoi** [H] : le superviseur, les rapports soumis des délégués des postes qui lui sont rattachés ; le DM et le DF, ceux des postes de leurs réseaux ; le responsable pays, tout le pays. Jamais un brouillon d'un autre. L'administration (administrateur pays, siège) ne lit pas les rapports nominatifs : elle n'encadre pas le terrain, et le siège ne voit que des indicateurs agrégés (§6.3).
+- **Qui lit quoi** [D, 7 octobre 2026, DC-62] : le superviseur, les rapports soumis des délégués des postes qui lui sont rattachés ; le DM et le DF, ceux des postes de leurs réseaux ; le responsable pays, tout le pays. Jamais un brouillon d'un autre. L'administration (administrateur pays, siège) ne lit pas les rapports nominatifs : elle n'encadre pas le terrain, et le siège ne voit que des indicateurs agrégés (§6.3).
 - Les 30 derniers rapports au plus [H] ; le superviseur voit les délégués qui occupent **aujourd'hui** un poste de son périmètre [H].
 
 ### 14.38 Soumission et retard du rapport (mise en œuvre 0.5.7)
@@ -753,15 +773,17 @@ L'outil en place (BirdNotes, version web observée sur une démonstration vidéo
 
 Engagements [D, 7 octobre 2026] (le contenu détaillé de chacun reste à préciser dans son cycle [H]) :
 
-1. **Aucune attente** : chaque page s'affiche en moins d'une seconde au 95e centile, mesuré en continu (NFR, tous cycles ; contrôle en 0.9).
+1. **Aucune attente** : 1 s pour le portail sur une bonne connexion, 2 s perçues sur le téléphone en 3G, au 95e centile, mesurées en continu (NFR-002, DC-56 ; contrôle en 0.9).
 2. **Tableaux de bord prêts à lire** à la place du formulaire de recherche : chaque rôle ouvre son écran et voit ses chiffres, avec la période précédente (cycle 0.7).
 3. **File « À traiter aujourd'hui » du superviseur** : journées à vérifier, rapports en attente, plannings à valider, en un seul écran (cycle 0.6, 0.6.1).
-4. **Tendance de prescription** par produit et par prescripteur, calculée à partir des retours du prescripteur (RPT-004) (cycle 0.7).
+4. **Tendance de prescription**, agrégée par produit, secteur et réseau ; le détail par prescripteur n'est visible que du délégué, dans « Préparer ma visite » (DC-53, cycle 0.7).
 5. **« Préparer ma visite »** sur le téléphone, lisible en 10 secondes : derniers retours par produit, échantillons déjà remis, action promise (cycle 0.5, avant 0.5.9, ou 0.8).
 6. **Résumé automatique utile** : appuyé sur les chiffres de la période (« 3 prescripteurs passés à prescrit sur tel produit, 2 actions promises en retard »), chaque phrase reliée aux visites qui la fondent ; sans donnée nominative envoyée hors du système tant que l'hébergement n'est pas décidé [H] (cycle 0.7).
 7. **Position de référence des établissements** proposée à partir des visites pointées, validée par l'administrateur pays (décision du 5 octobre 2026, §14.18) : le pointage manquant disparaît peu à peu (cycle 0.7 ou 0.8).
 
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
+
+> **Modifiée le 7 octobre 2026 (DC-49, DC-52, §14.40).** Ni score sur 100, ni appréciation, ni classement, ni « meilleur délégué » : les taux s'affichent côte à côte. Les formules sont corrigées pour rester bornées à 100 % : géolocalisation = visites géolocalisées / visites faites ; le « respect du plan » devient une information (part des visites planifiées), qui ne pénalise pas une visite imprévue ; le volume se rapporte à l'objectif du poste et non au meilleur de l'équipe. La position de référence proposée exige des pointages d'au moins deux personnes différentes et se valide sur une carte (DC-52). Le modèle ci-dessous reste comme trace de l'outil actuel.
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :
 
@@ -865,7 +887,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | PLN-006 | Vues mobile semaine, jour, détail ; vue portail semaine. | 0.2.6 | CA1 : la vue semaine affiche le nombre de visites par jour et le statut du planning. |
 | PLN-007 | Sauvegarde automatique du brouillon et reprise. | 0.2.7 | CA1 : fermer l'application en cours de saisie ne perd aucune visite. |
 | PLN-008 | Soumission avec contrôle final ; marquage `en_retard` après l'échéance. | 0.2.8, 0.3.5, 0.3.9 | CA1 (0.3.9, décision du 6 octobre 2026) : après le lundi 0 h de la semaine (heure du pays), le planning est fermé ; une fois sa rédaction rouverte par le superviseur, sa soumission est acceptée et marquée « en retard ». CA2 (0.3.5, décision du 5 octobre 2026) : une nouvelle soumission après révision n'est jamais en retard ; seul compte le retard de la première soumission. |
-| PLN-009 | Absences déclarées (`conge`, `formation`, `reunion`, `maladie`, `autre`) par jour ou demi-journée. | 0.2.3 | CA1 : une demi-journée d'absence réduit de moitié les seuils du jour. CA2 : l'absence est validée avec le planning. |
+| PLN-009 | Absences déclarées (`conge`, `formation`, `reunion`, `autre`) par jour ou demi-journée ; l'**indisponibilité imprévue**, sans motif médical, se déclare le jour même et justifie les visites du jour (DC-51). | 0.2.3 | CA1 : une demi-journée d'absence réduit de moitié les seuils du jour. CA2 : l'absence est validée avec le planning. |
 | PLN-010 | Kilométrage estimé de la semaine (sans montant). | 0.2.6 | CA1 : le kilométrage est calculé à partir des coordonnées des établissements, à vol d'oiseau ou par itinéraire [H]. CA2 : aucun montant de frais n'est affiché. |
 | PLN-011 | Le superviseur dispose d'une file des plannings en attente et consulte chacun en détail. | 0.3.1, 0.3.2 | CA1 : la file est triée par ancienneté de soumission et affiche les alertes. CA2 (0.3.2) : il ouvre un planning de la file et voit la semaine, ses activités, ses contrôles, le kilométrage et le détail de chaque visite avec ses alertes, sans rien pouvoir modifier ; un planning en préparation ou d'un délégué qu'il ne supervise pas lui est introuvable. |
 | PLN-012 | Le superviseur approuve un planning complet. | 0.3.3 | CA1 : l'approbation fige la version. CA2 : le délégué reçoit une notification. |
@@ -889,7 +911,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | VIS-007 | `reportee` avec motif ; crée une nouvelle visite liée à l'originale. | 0.4.7 | CA1 : la nouvelle visite référence la visite d'origine. CA2 : si elle tombe dans une semaine déjà approuvée, c'est une modification majeure. |
 | VIS-008 | Visite imprévue justifiée, rattachée au jour réel. | 0.4.8 | CA1 : impossible sans justification. CA2 : marquée « imprévue » dans toutes les vues. |
 | VIS-009 | `non_realisee` avec motif pour une visite prévue non faite. | 0.4.6 | CA1 : une visite encore `prevue` après la fin de sa journée apparaît « à justifier » au délégué. |
-| VIS-010 | Contrôles de conformité serveur (hors plage, sans GPS, distance, durée, imprévue) et classement de la journée `conforme` / `a_verifier`. | 0.4.9 | CA1 : une journée sans aucun écart est `conforme`. CA2 : les seuils viennent des paramètres du pays. CA3 : le résultat est recalculé si les paramètres changent avant validation, jamais après. |
+| VIS-010 | Contrôles de conformité serveur (hors plage, sans GPS, distance compte tenu de la précision annoncée et du rayon propre à l'établissement, DC-55, durée, imprévue) et classement de la journée `conforme` / `a_verifier`. | 0.4.9 | CA1 : une journée sans aucun écart est `conforme`. CA2 : les seuils viennent des paramètres du pays. CA3 : le résultat est recalculé si les paramètres changent avant validation, jamais après. |
 
 ### 15.6 Rapports — RPT
 
@@ -908,7 +930,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | RPT-011 | Chronologie des rapports autorisés d'un prospect. | 0.5.8 | CA1 : un délégué ne voit que les siens. |
 | RPT-012 | File de travail du superviseur : rapports et journées en attente par délégué et date, avec contrôles. | 0.6.1 | CA1 : chaque journée affiche « conforme » ou « à vérifier » et le détail des écarts. |
 | RPT-013 | Validation unitaire, **par journée**, ou **par lot** des journées conformes. | 0.6.3 | CA1 : « Valider les n conformes » ne valide que les journées classées `conforme`. CA2 : chaque rapport validé porte validateur, date et mode. |
-| RPT-014 | Demande de correction motivée sur une visite précise, avec champs concernés et échéance. | 0.6.4 | CA1 : impossible sans commentaire. CA2 : les autres rapports de la journée peuvent être validés. |
+| RPT-014 | Demande de correction motivée sur une visite précise, avec champs concernés (sans échéance, DC-60). | 0.6.4 | CA1 : impossible sans commentaire. CA2 : les autres rapports de la journée peuvent être validés. |
 | RPT-015 | Correction et nouvelle soumission par le délégué. | 0.6.5 | CA1 : la version précédente reste consultable. |
 | RPT-016 | Réouverture d'un rapport validé : superviseur ≤ 30 jours, DM au-delà ; motif obligatoire. | 0.6.6 | CA1 : un superviseur ne peut pas rouvrir un rapport validé il y a 31 jours. CA2 : la réouverture est auditée et notifiée. |
 | RPT-017 | Identification des rapports en retard et alerte au superviseur à 48 h. | 0.6.7 | CA1 : la liste des retards est filtrable par délégué. |
@@ -935,13 +957,13 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | DSH-003 | Indicateurs pays par zone, secteur, réseau ; vue DM/DF par réseau. | 0.7.3 | CA1 : les totaux d'un réseau égalent la somme de ses délégués. |
 | DSH-004 | Consolidation siège : comparaison et total par pays, agrégés ; descente nominative auditée. | 0.7.4 | CA1 : chaque consultation nominative par le siège crée un événement d'audit. |
 | DSH-005 | Filtres : période, pays, zone, secteur, division, réseau, superviseur, délégué, statut. | 0.7.5 | CA1 : les filtres proposés sont limités au périmètre. |
-| DSH-006 | Taux de réalisation et d'écarts (KPI-03). | 0.7.6 | CA1 : la définition est celle de la section 5. |
+| DSH-006 | Taux de réalisation et part des écarts justifiés, deux chiffres distincts (KPI-03, DC-50). | 0.7.6 | CA1 : la définition est celle de la section 5. |
 | DSH-007 | Délais de validation des plannings et rapports (KPI-02, KPI-09). | 0.7.7 | CA1 : calculés en heures ouvrées du pays. |
 | DSH-008 | Exports contrôlés et audités. | 0.7.8 | Voir RPT-019. |
 | DSH-009 | Objectifs par réseau et par période (visites, couverture A/B, présentations d'un produit), saisis par le DM ou l'administrateur pays ; suivi réalisé / objectif. | 0.7.6 | CA1 : un objectif a une période, un réseau, un indicateur et une cible. CA2 : le tableau de bord affiche l'avance ou le retard. |
 | DSH-010 | Grafana : tableaux de bord sur des vues de pilotage en lecture seule, isolées par pays. | 0.7.9 | CA1 : un compte Grafana d'un pays ne lit que les vues de ce pays. CA2 : le siège lit des agrégats. CA3 : aucune donnée de rapport en texte libre n'est exposée à Grafana. |
 | DSH-011 | Fraîcheur : tableaux de bord du portail à jour à moins de 5 minutes ; Grafana à moins de 1 heure [H]. | 0.7.9 | CA1 : l'heure de dernière mise à jour est affichée. |
-| DSH-012 | Classement hebdomadaire des délégués d'une équipe par un score composite sur 100 (§14.18). | 0.7.2 | CA1 : le score est la somme pondérée des cinq taux ; les pondérations sont des paramètres du pays dont le total vaut 100 %. CA2 : chaque délégué a une appréciation selon son score ; sans aucune visite, « Aucune activité ». |
+| DSH-012 | Tableau hebdomadaire de l'équipe : les taux de chaque délégué côte à côte, **sans note composite ni classement** (DC-49, §14.18). | 0.7.2 | CA1 : chaque taux a une formule bornée à 100 % ; une visite imprévue n'abaisse aucun taux. CA2 : sans aucune visite, « Aucune activité ». |
 
 ### 15.9 Hors connexion et synchronisation — OFF
 
@@ -953,7 +975,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | OFF-004 | Détection et résolution des conflits sans perte silencieuse (`RG-050` à `RG-054`). | 0.8.4 | CA1 : une décision du superviseur n'est jamais écrasée par une donnée locale. CA2 : un conflit est présenté au délégué avec les deux versions. |
 | OFF-005 | Téléversement différé des pièces jointes. | 0.8.7 | CA1 : un rapport synchronisé sans sa pièce jointe l'indique « pièce en attente ». |
 | OFF-006 | Optimisation réseau faible : envois par petits lots, compression, reprise. | 0.8.8 | CA1 : une synchronisation quotidienne typique transfère moins de 500 Ko hors pièces jointes [H]. |
-| OFF-007 | Au-delà de 7 jours sans synchronisation, les données locales deviennent inaccessibles jusqu'à la prochaine connexion réussie. | 0.8.3 | CA1 : au 8ᵉ jour, l'application demande une connexion et n'affiche plus les données. CA2 : les éléments en attente ne sont pas effacés et partent à la connexion. |
+| OFF-007 | Au-delà du délai sans synchronisation fixé par le pays (7 jours par défaut, plus long pour les zones isolées, DC-54), les données locales deviennent inaccessibles jusqu'à la prochaine connexion réussie. | 0.8.3 | CA1 : au 8ᵉ jour, l'application demande une connexion et n'affiche plus les données. CA2 : les éléments en attente ne sont pas effacés et partent à la connexion. |
 
 ### 15.10 Sécurité — SEC
 
@@ -962,7 +984,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | SEC-001 | Mot de passe : 12 caractères minimum, refus des mots de passe courants ou compromis, hachage fort. | 0.0.3 | CA1 : un mot de passe de 11 caractères est refusé. |
 | SEC-002 | Verrouillage temporaire après 5 échecs consécutifs (15 minutes), alerte à l'utilisateur. | 0.0.3 | CA1 : le 6ᵉ essai est refusé même avec le bon mot de passe pendant 15 minutes. |
 | SEC-003 | Double authentification (code à usage unique par application) **obligatoire** pour `admin_siege`, `direction_siege`, `responsable_pays`, `admin_pays`, `df`, `dm` ; facultative pour les autres. | 0.0.8 | CA1 : un compte de ces rôles ne peut pas accéder aux données sans l'avoir activée. |
-| SEC-004 | Sessions : expiration après inactivité (portail : 30 minutes ; mobile : verrouillage local par code ou biométrie après 5 minutes) ; révocation à distance. | 0.0.8 | CA1 : une session révoquée échoue à l'appel suivant. |
+| SEC-004 | Sessions : expiration après inactivité (portail : 30 minutes ; mobile : verrouillage local par code ou biométrie après le délai du pays, 15 minutes par défaut, de 5 à 30, DC-59) ; révocation à distance. | 0.0.8 | CA1 : une session révoquée échoue à l'appel suivant. |
 | SEC-005 | Données mobiles chiffrées au repos ; clé protégée par le magasin sécurisé du téléphone. | 0.8.1 | CA1 : la base locale extraite du téléphone est illisible sans la clé. |
 | SEC-006 | Effacement à distance : un compte ou appareil désactivé efface les données locales à la connexion suivante. | 0.8.3 | CA1 : après révocation, l'application efface ses données et revient à l'écran de connexion. |
 | SEC-007 | Communications chiffrées (TLS 1.2+) ; aucun secret dans le code. | 0.0.1 | CA1 : l'analyse de secrets de la CI ne trouve rien. |
@@ -1030,7 +1052,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | RG-051 | Un objet soumis ne peut plus être modifié hors connexion tant qu'il n'est pas renvoyé au délégué (`a_reviser`, `a_corriger`, `rouvert`). | [D] |
 | RG-052 | Chaque enregistrement porte un identifiant unique global généré par son créateur et un numéro de version ; une écriture sur une version périmée est un conflit. | [D] |
 | RG-053 | Un conflit est présenté au délégué avec les deux versions ; il choisit ; rien n'est fusionné en silence. | [D] |
-| RG-054 | Au-delà de 7 jours sans synchronisation, les données locales deviennent inaccessibles ; les éléments en attente sont conservés et envoyés à la connexion suivante. | [D] |
+| RG-054 | Au-delà du délai du pays (7 jours par défaut, DC-54) sans synchronisation, les données locales deviennent inaccessibles ; les éléments en attente sont conservés et envoyés à la connexion suivante. | [D] |
 | RG-060 | Conservation : activité et audit 5 ans puis anonymisation ; positions GPS 12 mois ; pièces jointes 3 ans ; paramétrable par pays. | [D] |
 | RG-061 | Toute consultation nominative par le siège et tout export sont audités. | [D] |
 | RG-062 | Aucune donnée de santé ni nom de prospect dans le texte d'une notification push. | [D] |
@@ -1122,7 +1144,7 @@ Exports : CSV et Excel, limités au périmètre, audités ; les rapports en text
 | ID | Domaine | Exigence | Cible |
 |---|---|---|---|
 | NFR-001 | Capacité | Dimensionnement minimal | 500 délégués actifs par pays, 17 pays à terme (≈ 8 500 délégués), ≈ 70 000 visites par jour au total [H] |
-| NFR-002 | Performance API | Temps de réponse des écrans courants | p95 < 500 ms côté serveur ; p95 < 2 s perçu sur réseau 3G |
+| NFR-002 | Performance API | Temps de réponse des écrans courants | p95 < 500 ms côté serveur ; p95 < 1 s pour le portail sur une bonne connexion ; p95 < 2 s perçu sur le téléphone en 3G, mesurés tous les deux (DC-56) |
 | NFR-003 | Performance mobile | Démarrage à froid, ouverture du programme du jour | < 3 s sur un téléphone Android économique récent [H] |
 | NFR-004 | Synchronisation | Volume et durée | Synchronisation initiale < 10 Mo ; synchronisation quotidienne < 500 Ko hors pièces jointes [H] |
 | NFR-005 | Disponibilité | Service | 99,5 % mesuré de 6 h à 22 h, heure du pays, du lundi au samedi [H] |
@@ -1379,7 +1401,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | O-09 | Approbateur d'une personne occupant plusieurs postes rattachés à des superviseurs différents (`RG-011`) | Planning | Superviseur du poste principal |
 | O-10 | Durée minimale du pilote et périmètre exact (réseau choisi) | Critères 1.0.0 | 4 semaines, un réseau |
 | O-11 | Comptes : courriel professionnel disponible pour tous les délégués ? | Récupération d'accès, double authentification | Courriel ou téléphone ; réinitialisation par l'administrateur pays sinon |
-| O-12 | Relecture du cahier des charges avec l'utilisateur : certaines exigences ne tiennent pas (exemple : les photos du rapport, retirées par DC-48) | Toutes les versions à venir | Liste de 13 points avec recommandations dans `revue-exigences.md` (7 octobre 2026), en attente de décision |
+| O-12 | Relecture du cahier des charges avec l'utilisateur : certaines exigences ne tiennent pas (exemple : les photos du rapport, retirées par DC-48) | Toutes les versions à venir | Tranché le 7 octobre 2026 : toutes les recommandations retenues (DC-49 à DC-61, §14.40) |
 
 ## 25. Registre des décisions de cadrage
 
@@ -1433,6 +1455,20 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | DC-45 | L'export réel de BirdNotes sert de point de départ : import JSON tel quel, à l'exécution, jamais versionné ; avancé en 0.1.4 ; types, grades, exercice H/P, localités et paramètres alignés sur la pratique relevée | Échange du 4 octobre 2026 |
 | DC-47 | Faire mieux que l'outil actuel : pages en moins d'une seconde, tableaux de bord prêts à lire, file « À traiter aujourd'hui », tendance de prescription, « Préparer ma visite », résumé automatique appuyé sur les chiffres, position de référence des établissements (§14.35) | Démonstration vidéo de l'outil actuel, échange du 7 octobre 2026 |
 | DC-48 | Pas de photo dans le rapport de visite : aucun usage établi, et le risque d'y voir une ordonnance ou un patient. Seuls des documents PDF peuvent être joints (RPT-007), confirmé le même jour (choix 15.A) | Échange du 7 octobre 2026 |
+| DC-49 | Pas de score, d'appréciation ni de classement des délégués ; taux corrigés côte à côte (§14.40) | Relecture du cahier des charges, 7 octobre 2026 |
+| DC-50 | Réalisation et part des écarts justifiés, deux chiffres distincts | Relecture, 7 octobre 2026 |
+| DC-51 | « Indisponibilité imprévue » à la place de « maladie », déclarable le jour même | Relecture, 7 octobre 2026 |
+| DC-52 | Position de référence : pointages d'au moins deux personnes, validation sur carte | Relecture, 7 octobre 2026 |
+| DC-53 | Tendance de prescription agrégée ; détail par prescripteur au seul délégué | Relecture, 7 octobre 2026 |
+| DC-54 | Délai sans synchronisation réglable par pays (7 jours par défaut) | Relecture, 7 octobre 2026 |
+| DC-55 | Pointage : précision annoncée prise en compte, rayon propre par établissement | Relecture, 7 octobre 2026 |
+| DC-56 | Performance : 1 s au portail, 2 s en 3G sur le téléphone, mesurées | Relecture, 7 octobre 2026 |
+| DC-57 | Points d'attention calculés par règles à la place du résumé automatique | Relecture, 7 octobre 2026 |
+| DC-58 | Mobile personnel du médecin : liste cible et accord du médecin | Relecture, 7 octobre 2026 |
+| DC-59 | Verrouillage du téléphone réglable par pays (15 minutes par défaut) | Relecture, 7 octobre 2026 |
+| DC-60 | Pas d'échéance sur une demande de correction | Relecture, 7 octobre 2026 |
+| DC-61 | Paramètre d'échéance d'approbation retiré ; visite proposée reprise à la préparation | Relecture, 7 octobre 2026 |
+| DC-62 | Lecture des rapports par le délégué et son encadrement, sans l'administration ni le siège | Échange du 7 octobre 2026 (question 17) |
 
 ## 26. Glossaire
 

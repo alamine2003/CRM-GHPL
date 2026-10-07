@@ -31,6 +31,7 @@ import type {
   Imprevue,
   Rapport,
   RapportChronologie,
+  VisiteProposee,
   PieceJointe,
   SaisieRapport,
   ChampRapport,
@@ -164,6 +165,7 @@ export type {
   TypeRemise,
   ActionPrecedente,
   RapportChronologie,
+  VisiteProposee,
   PieceJointe,
   DefinitionChamp,
   TypeChamp,
@@ -867,6 +869,8 @@ export function creerClient(options: OptionsClient) {
     },
     /** Champs supplémentaires du rapport, par pays (RPT-008). */
     rapports: {
+      /** DC-61 : les visites proposées dans ses rapports, pas encore replanifiées. */
+      visitesProposees: () => requete<VisiteProposee[]>('/api/v1/rapports/visites-proposees/'),
       champs: () => requete<ChampRapport[]>('/api/v1/rapports/champs/'),
       creerChamp: (saisie: SaisieChamp) =>
         requete<ChampRapport>('/api/v1/rapports/champs/', { methode: 'POST', corps: saisie }),

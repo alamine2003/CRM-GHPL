@@ -444,13 +444,13 @@
       "planning": "Planning",
       "visites": "Visites",
       "rapports": "Rapports",
-      "conservation": "Conservation des données"
+      "conservation": "Conservation des données",
+      "telephone": "Téléphone"
     },
     "cles": {
       "format_date": "Format d'affichage des dates",
       "jours_ouvres": "Jours ouvrés",
       "echeance_soumission_planning": "Fermeture de la semaine (soumettre avant)",
-      "echeance_approbation_planning": "Échéance d'approbation du planning",
       "heure_limite_rapport": "Heure limite du rapport",
       "seuils_visites_jour": "Visites par jour et par type de poste",
       "plage_horaire_visites": "Plage horaire des visites",
@@ -461,7 +461,8 @@
       "conservation": "Durées de conservation",
       "attente_gps_secondes": "Attente de la position (secondes)",
       "duree_visite_minutes": "Durée d'une visite (minutes)",
-      "produit_autre_autorise": "Autre produit présenté (hors portefeuille)"
+      "produit_autre_autorise": "Autre produit présenté (hors portefeuille)",
+      "verrouillage_minutes": "Verrouillage du téléphone (minutes)"
     },
     "jours": {
       "1": "Lun",
@@ -472,7 +473,6 @@
       "6": "Sam",
       "7": "Dim"
     },
-    "semainePrecedente": "{{jour}} {{heure}}, semaine précédente",
     "de": "de {{debut}} à {{fin}}",
     "activite": "Activité et audit : {{n}} ans",
     "gps": "Positions GPS : {{n}} mois",
@@ -491,7 +491,8 @@
     },
     "semaineDuPlanning": "{{jour}} {{heure}}, semaine du planning",
     "secondes": "{{n}} secondes",
-    "minutes": "de {{min}} à {{max}} minutes"
+    "minutes": "de {{min}} à {{max}} minutes",
+    "minutesN": "{{n}} minutes"
   },
   "paysPage": {
     "titre": "Pays",
@@ -1374,7 +1375,9 @@
       "prospect_absent": "Prospect absent",
       "non_realisee": "Non réalisée"
     },
-    "imprevue": "Imprévue"
+    "imprevue": "Imprévue",
+    "proposees": "Proposées à votre dernière visite",
+    "proposeeLe": "Proposée le {{date}}"
   },
   "passages": {
     "ligne_one": "{{lieu}} · {{count}} prescripteur",

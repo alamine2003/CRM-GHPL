@@ -135,6 +135,8 @@ export type TypeRemise = Schemas['TypeRemiseEnum'];
 export type ActionPrecedente = Schemas['ActionPrecedente'];
 /** RPT-011 : un rapport dans la chronologie d'un prospect. */
 export type RapportChronologie = Schemas['RapportChronologie'];
+/** DC-61 : une visite proposée dans un rapport, à replanifier. */
+export type VisiteProposee = Schemas['VisiteProposee'];
 /** Photo ou document joint au rapport (RPT-007). */
 export type PieceJointe = Schemas['PieceJointe'];
 export type DefinitionChamp = Schemas['DefinitionChamp'];

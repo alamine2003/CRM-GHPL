@@ -3654,6 +3654,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChampRapport'
           description: ''
+  /api/v1/rapports/visites-proposees/:
+    get:
+      operationId: visites_proposees
+      description: |-
+        DC-61 : à la préparation de la semaine, les visites proposées dans ses rapports et pas
+        encore replanifiées.
+      tags:
+      - rapports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VisiteProposee'
+          description: ''
   /api/v1/referentiel/mon-portefeuille/:
     get:
       operationId: mon_portefeuille
@@ -8393,6 +8412,8 @@ components:
           type: boolean
         attente_gps_secondes:
           type: integer
+        verrouillage_minutes:
+          type: integer
         motifs_ecart:
           type: array
           items:
@@ -8409,6 +8430,7 @@ components:
       - planning
       - prochaine
       - semaine
+      - verrouillage_minutes
       - version
     Proposition:
       type: object
@@ -10825,6 +10847,29 @@ components:
       - reportee_de
       - reseau
       - sans_gps
+    VisiteProposee:
+      type: object
+      description: 'DC-61 : un prospect pour qui la dernière visite a proposé d''y
+        revenir.'
+      properties:
+        prospect:
+          allOf:
+          - $ref: '#/components/schemas/ProspectResume'
+          readOnly: true
+        date:
+          type: string
+          format: date
+        action:
+          type: string
+          nullable: true
+        echeance:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - date
+      - echeance
+      - prospect
     VisiteStatutEnum:
       enum:
       - prevue

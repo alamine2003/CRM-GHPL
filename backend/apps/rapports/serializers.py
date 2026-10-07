@@ -4,6 +4,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.organisation.serializers import ResumeSerializer
+from apps.prospects.serializers import ProspectResumeSerializer
 
 from . import services
 from .models import (
@@ -112,6 +113,20 @@ class RapportChronologieSerializer(serializers.ModelSerializer):
 
     def get_en_retard(self, rapport) -> bool:
         return services.en_retard(rapport)
+
+
+class VisiteProposeeSerializer(serializers.Serializer):
+    """DC-61 : un prospect pour qui la dernière visite a proposé d'y revenir."""
+
+    prospect = serializers.SerializerMethodField()
+    date = serializers.DateField(source="visite.date")
+    action = serializers.CharField(source="prochaine_action_type.libelle", allow_null=True,
+                                   default=None)  # fmt: skip
+    echeance = serializers.DateField(source="prochaine_action_echeance", allow_null=True)
+
+    @extend_schema_field(ProspectResumeSerializer)
+    def get_prospect(self, rapport):
+        return ProspectResumeSerializer(rapport.visite.prospect).data
 
 
 class PieceJointeSerializer(serializers.ModelSerializer):

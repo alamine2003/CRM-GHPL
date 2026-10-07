@@ -444,13 +444,13 @@
       "planning": "Planning",
       "visites": "Visits",
       "rapports": "Reports",
-      "conservation": "Data retention"
+      "conservation": "Data retention",
+      "telephone": "Phone"
     },
     "cles": {
       "format_date": "Date display format",
       "jours_ouvres": "Working days",
       "echeance_soumission_planning": "Week closing (submit before)",
-      "echeance_approbation_planning": "Plan approval deadline",
       "heure_limite_rapport": "Report deadline",
       "seuils_visites_jour": "Visits per day by position type",
       "plage_horaire_visites": "Visit time window",
@@ -461,7 +461,8 @@
       "conservation": "Retention periods",
       "attente_gps_secondes": "Position wait (seconds)",
       "duree_visite_minutes": "Visit duration (minutes)",
-      "produit_autre_autorise": "Other product presented (outside the portfolio)"
+      "produit_autre_autorise": "Other product presented (outside the portfolio)",
+      "verrouillage_minutes": "Phone lock (minutes)"
     },
     "jours": {
       "1": "Mon",
@@ -472,7 +473,6 @@
       "6": "Sat",
       "7": "Sun"
     },
-    "semainePrecedente": "{{jour}} {{heure}}, previous week",
     "de": "from {{debut}} to {{fin}}",
     "activite": "Activity and audit: {{n}} years",
     "gps": "GPS positions: {{n}} months",
@@ -491,7 +491,8 @@
     },
     "semaineDuPlanning": "{{jour}} {{heure}}, week of the planning",
     "secondes": "{{n}} seconds",
-    "minutes": "{{min}} to {{max}} minutes"
+    "minutes": "{{min}} to {{max}} minutes",
+    "minutesN": "{{n}} minutes"
   },
   "paysPage": {
     "titre": "Countries",
@@ -1374,7 +1375,9 @@
       "prospect_absent": "Prospect absent",
       "non_realisee": "Not done"
     },
-    "imprevue": "Unplanned"
+    "imprevue": "Unplanned",
+    "proposees": "Proposed at your last visit",
+    "proposeeLe": "Proposed on {{date}}"
   },
   "passages": {
     "ligne_one": "{{lieu}} · {{count}} prescriber",

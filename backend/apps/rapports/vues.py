@@ -21,7 +21,7 @@ from apps.planning.models import Visite
 
 from . import serializers as s
 from . import services
-from .models import ChampRapport, PieceJointe
+from .models import ChampRapport, PieceJointe, Rapport
 
 REDIGER = Action.RAPPORTS_REDIGER
 LIRE = Action.RAPPORTS_LIRE
@@ -179,3 +179,23 @@ class ChronologieProspectVue(VuePerimetre):
         rapports = chronologie(self.perimetre, prospect)
         return Response(s.RapportChronologieSerializer(
             rapports, many=True, context={"lecteur": request.user}).data)  # fmt: skip
+
+
+class VisitesProposeesVue(VuePerimetre):
+    """DC-61 : à la préparation de la semaine, les visites proposées dans ses rapports et pas
+    encore replanifiées."""
+
+    actions = {"GET": REDIGER}
+    serializer_class = s.VisiteProposeeSerializer
+
+    def selection(self, perimetre):
+        return Rapport.objects.none()
+
+    @extend_schema(responses=s.VisiteProposeeSerializer(many=True),
+                   operation_id="visites_proposees")  # fmt: skip
+    def get(self, request):
+        from .chronologie import visites_proposees
+
+        rapports = [r for r in visites_proposees(request.user)
+                    if r.pays_id == getattr(self.perimetre.pays_actif, "pk", None)]  # fmt: skip
+        return Response(s.VisiteProposeeSerializer(rapports, many=True).data)

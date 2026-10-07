@@ -67,6 +67,7 @@ const PROGRAMME: Programme = {
   prochaine: 'v1',
   geolocalisation: true,
   attente_gps_secondes: 60,
+  verrouillage_minutes: 15,
   motifs_ecart: [{ id: 'm-absent', libelle: 'Absent du cabinet' }],
   a_justifier: [],
   jours: [

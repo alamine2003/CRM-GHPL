@@ -4,18 +4,28 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import { AppState, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { Programme } from '@innov/api-client';
+import { lire } from './baseLocale';
 import { Alerte, Bouton, Logo } from './composants';
+import { CLE_PROGRAMME } from './Execution';
 import { police } from './polices';
 import { useSession } from './session';
 
-/** Délai en arrière-plan au-delà duquel l'application se verrouille (SEC-004). */
-export const DELAI_VERROU_MS = 5 * 60 * 1000;
+/** Délai par défaut en arrière-plan au-delà duquel l'application se verrouille (SEC-004) ;
+ * le pays le règle de 5 à 30 minutes (DC-59), lu avec le programme gardé sur le téléphone. */
+export const DELAI_VERROU_MS = 15 * 60 * 1000;
+
+async function delaiDuPays(): Promise<number> {
+  const programme = await lire<Partial<Programme>>(CLE_PROGRAMME).catch(() => null);
+  const minutes = programme?.valeur?.verrouillage_minutes;
+  return typeof minutes === 'number' && minutes > 0 ? minutes * 60 * 1000 : DELAI_VERROU_MS;
+}
 
 /** Horloge remplaçable dans les tests (figer Date.now bloquerait React). */
 export const horloge = { maintenant: () => Date.now() };
 
 /**
- * Verrouillage local : après 5 minutes en arrière-plan, la session reste ouverte mais
+ * Verrouillage local : après le délai du pays en arrière-plan (15 minutes par défaut), la session reste ouverte mais
  * l'écran demande la biométrie ou le code du téléphone. Un téléphone sans aucune
  * protection ne peut pas déverrouiller : il faut se reconnecter.
  */
@@ -49,11 +59,13 @@ export function Verrou({ children }: { children: ReactNode }) {
     const abonnement = AppState.addEventListener('change', (statut) => {
       if (statut === 'background') quitteeLe.current = horloge.maintenant();
       else if (statut === 'active' && quitteeLe.current !== null) {
-        if (horloge.maintenant() - quitteeLe.current >= DELAI_VERROU_MS) {
+        const absence = horloge.maintenant() - quitteeLe.current;
+        quitteeLe.current = null;
+        void delaiDuPays().then((delai) => {
+          if (absence < delai) return;
           setVerrouille(true);
           void demanderDeverrouillage.current();
-        }
-        quitteeLe.current = null;
+        });
       }
     });
     return () => abonnement.remove();

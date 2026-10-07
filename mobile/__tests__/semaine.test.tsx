@@ -274,6 +274,40 @@ test('PLN-002 : le délégué ajoute une visite depuis sa liste cible', async ()
   expect(await screen.findByText('Visite ajoutée.')).toBeTruthy();
 });
 
+test('DC-61 : la visite proposée au dernier rapport se place d’un appui', async () => {
+  const visitesProposees = jest.fn(async () => [
+    {
+      prospect: {
+        id: 'p9',
+        civilite: 'dr',
+        prenom: 'Fatou',
+        nom: 'EXEMPLE',
+        type_libelle: 'Médecin',
+        specialite_libelle: 'Pédiatrie',
+        potentiel: 'B',
+        statut: 'actif',
+      },
+      date: '2026-10-13',
+      action: 'Revisiter le prescripteur',
+      echeance: null,
+    },
+  ]);
+  await rendre(
+    { semaine: jest.fn(async () => ({ ...EN_PREPARATION, visites: [] })) } as unknown as Partial<
+      ClientApi['plannings']
+    >,
+    {
+      ciblage: { mesListes: jest.fn(async () => []) },
+      rapports: { visitesProposees },
+      exercices: { duProspect: jest.fn(async () => []) },
+    },
+  );
+  await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[1]!);
+  expect(await screen.findByText('Proposées à votre dernière visite')).toBeTruthy();
+  expect(screen.getByText(/Proposée le 13 oct\. · Revisiter le prescripteur/)).toBeTruthy();
+  await fireEvent.press(screen.getByText('Dr Fatou EXEMPLE'));
+});
+
 test('PLN-002 : une visite se retire tant que le planning est en préparation', async () => {
   const retirer = jest.fn(async () => VISITE);
   await rendre(
