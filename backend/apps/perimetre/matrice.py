@@ -46,6 +46,7 @@ class Action(StrEnum):
     REMPLACEMENTS_GERER = "remplacements.gerer"
     RAPPORTS_REDIGER = "rapports.rediger"
     RAPPORTS_LIRE = "rapports.lire"
+    RAPPORTS_VALIDER = "rapports.valider"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -138,6 +139,10 @@ MATRICE: dict[Action, frozenset[str]] = {
     Action.RAPPORTS_LIRE: frozenset(
         {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
     ),
+    # « Valider un rapport ou demander une correction » (RPT-012 à RPT-014) : le superviseur
+    # sur les postes rattachés, le DM pour un superviseur-visiteur (RG-023), en escalade ou en
+    # remplacement ; le périmètre est vérifié par le service.
+    Action.RAPPORTS_VALIDER: frozenset({Role.DM, Role.SUPERVISEUR}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}

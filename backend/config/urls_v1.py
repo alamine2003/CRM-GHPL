@@ -234,6 +234,8 @@ urlpatterns = [
         name="visite-rapport-piece",
     ),  # fmt: skip
     path("rapports/champs/", rap.ChampsRapportVue.as_view(), name="champs-rapport"),
+    # RPT-012 : file de travail du superviseur (journées à traiter par délégué)
+    path("rapports/a-traiter/", rap.ATraiterVue.as_view(), name="rapports-a-traiter"),
     # DC-61 : visites proposées dans les rapports, reprises à la préparation de la semaine
     path(
         "rapports/visites-proposees/",

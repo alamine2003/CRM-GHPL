@@ -137,7 +137,8 @@
     "propositions": "Propositions",
     "validation": "Plannings à valider",
     "remplacements": "Remplaçants",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "aTraiter": "À traiter"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -2132,5 +2133,39 @@
     "visites_other": "{{count}} visites rapportées, la dernière le {{date}}",
     "retours": "Derniers retours du prescripteur",
     "echantillons": "Échantillons déjà remis"
+  },
+  "aTraiter": {
+    "sousTitre_one": "{{count}} journée à traiter, de la plus ancienne",
+    "sousTitre_other": "{{count}} journées à traiter, de la plus ancienne",
+    "chiffres": {
+      "aVerifier": "Journées à vérifier",
+      "rapports": "Rapports à valider",
+      "attendus": "Rapports attendus",
+      "plannings": "Plannings à valider"
+    },
+    "planningsEnAttente_one": "{{count}} planning attend votre décision.",
+    "planningsEnAttente_other": "{{count}} plannings attendent votre décision.",
+    "voirPlannings": "Voir les plannings",
+    "aucun": "Rien à traiter",
+    "aucunTexte": "Toutes les journées terminées de votre équipe sont traitées.",
+    "journees_one": "{{count}} journée",
+    "journees_other": "{{count}} journées",
+    "dontAVerifier_one": "dont {{count}} à vérifier",
+    "dontAVerifier_other": "dont {{count}} à vérifier",
+    "visites_one": "{{count}} visite",
+    "visites_other": "{{count}} visites",
+    "aValider_one": "{{count}} rapport à valider",
+    "aValider_other": "{{count}} rapports à valider",
+    "attendus_one": "{{count}} rapport attendu",
+    "attendus_other": "{{count}} rapports attendus",
+    "enRetard_one": "{{count}} en retard",
+    "enRetard_other": "{{count}} en retard",
+    "douteux_one": "{{count}} horodatage douteux",
+    "douteux_other": "{{count}} horodatages douteux",
+    "consulter": "Consulter la semaine",
+    "semaine": "Semaine du {{date}}",
+    "effectuees_zero": "aucune effectuée",
+    "effectuees_one": "{{count}} effectuée",
+    "effectuees_other": "{{count}} effectuées"
   }
 }

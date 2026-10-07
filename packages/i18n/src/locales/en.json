@@ -137,7 +137,8 @@
     "propositions": "Proposals",
     "validation": "Plans to approve",
     "remplacements": "Replacements",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "aTraiter": "To review"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -2132,5 +2133,39 @@
     "visites_other": "{{count}} visits reported, the last on {{date}}",
     "retours": "Latest prescriber feedback",
     "echantillons": "Samples already given"
+  },
+  "aTraiter": {
+    "sousTitre_one": "{{count}} day to review, oldest first",
+    "sousTitre_other": "{{count}} days to review, oldest first",
+    "chiffres": {
+      "aVerifier": "Days to check",
+      "rapports": "Reports to approve",
+      "attendus": "Reports expected",
+      "plannings": "Plans to approve"
+    },
+    "planningsEnAttente_one": "{{count}} plan is waiting for your decision.",
+    "planningsEnAttente_other": "{{count}} plans are waiting for your decision.",
+    "voirPlannings": "See the plans",
+    "aucun": "Nothing to review",
+    "aucunTexte": "All finished days of your team have been reviewed.",
+    "journees_one": "{{count}} day",
+    "journees_other": "{{count}} days",
+    "dontAVerifier_one": "{{count}} to check",
+    "dontAVerifier_other": "{{count}} to check",
+    "visites_one": "{{count}} visit",
+    "visites_other": "{{count}} visits",
+    "aValider_one": "{{count}} report to approve",
+    "aValider_other": "{{count}} reports to approve",
+    "attendus_one": "{{count}} report expected",
+    "attendus_other": "{{count}} reports expected",
+    "enRetard_one": "{{count}} late",
+    "enRetard_other": "{{count}} late",
+    "douteux_one": "{{count}} doubtful timestamp",
+    "douteux_other": "{{count}} doubtful timestamps",
+    "consulter": "View the week",
+    "semaine": "Week of {{date}}",
+    "effectuees_zero": "none done",
+    "effectuees_one": "{{count}} done",
+    "effectuees_other": "{{count}} done"
   }
 }

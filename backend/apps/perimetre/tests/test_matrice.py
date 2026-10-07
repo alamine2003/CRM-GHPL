@@ -19,6 +19,7 @@ ATTENDU = {
     Action.PLANNINGS_VALIDER: {"dm", "superviseur"},
     Action.RAPPORTS_REDIGER: {"superviseur", "delegue"},
     Action.RAPPORTS_LIRE: {"responsable_pays", "df", "dm", "superviseur", "delegue"},
+    Action.RAPPORTS_VALIDER: {"dm", "superviseur"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "dm", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",
@@ -194,6 +195,7 @@ REQUETES = {
     Action.RAPPORTS_LIRE: (
         "get", "/api/v1/prospects/00000000-0000-0000-0000-000000000000/rapports/", None, 404,
     ),
+    Action.RAPPORTS_VALIDER: ("get", "/api/v1/rapports/a-traiter/", None, 200),
 }  # fmt: skip
 
 

@@ -20,11 +20,13 @@ from apps.perimetre.vues import VuePerimetre
 from apps.planning.models import Visite
 
 from . import serializers as s
+from . import serializers_file as sf
 from . import services
 from .models import ChampRapport, PieceJointe, Rapport
 
 REDIGER = Action.RAPPORTS_REDIGER
 LIRE = Action.RAPPORTS_LIRE
+VALIDER = Action.RAPPORTS_VALIDER
 
 
 class VueVisitesDuDelegue(VuePerimetre):
@@ -199,3 +201,27 @@ class VisitesProposeesVue(VuePerimetre):
         rapports = [r for r in visites_proposees(request.user)
                     if r.pays_id == getattr(self.perimetre.pays_actif, "pk", None)]  # fmt: skip
         return Response(s.VisiteProposeeSerializer(rapports, many=True).data)
+
+
+class ATraiterVue(VuePerimetre):
+    """RPT-012 : la file de travail du superviseur, ses journées à traiter par délégué (CA1),
+    et le nombre de plannings qui attendent sa décision (DC-47, engagement 3)."""
+
+    actions = {"GET": VALIDER}
+    serializer_class = sf.ATraiterSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.none())
+
+    @extend_schema(responses=sf.ATraiterSerializer, operation_id="rapports_a_traiter")
+    def get(self, request):
+        from apps.planning.services import plannings_a_valider
+
+        from .file import journees_a_traiter
+
+        pays = pays_requis(self.perimetre)
+        donnees = {
+            "delegues": journees_a_traiter(request.user, pays),
+            "plannings_a_valider": len(plannings_a_valider(request.user, pays)),
+        }
+        return Response(sf.ATraiterSerializer(donnees).data)

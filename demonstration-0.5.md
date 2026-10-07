@@ -9,7 +9,8 @@ Scénario d'environ 30 minutes pour le référent métier (prd.md §22, RSK-12).
    - les **rapports** des visites effectuées des semaines passées, soumis le jour même, avec produits présentés, retour du prescripteur, échantillons une fois sur deux, un cadeau de temps en temps, un résultat, une prochaine action typée avec son échéance, et une visite proposée une fois sur deux ;
    - un rapport **soumis le lendemain** (« en retard »), un rapport avec un **document PDF** joint (fictif), l'avant-dernier rapport resté **en brouillon** et le dernier encore **à rédiger** ;
    - un champ propre au pays, « Patients concernés par semaine » (un nombre) ;
-   - pour les hôpitaux, un **rayon de pointage** de 300 m.
+   - pour les hôpitaux, un **rayon de pointage** de 300 m ;
+   - dans la semaine suivante, le prospect du dernier rapport soumis, qui proposait une nouvelle visite, n'est pas encore replanifié (étape 8).
 3. **Choisir le jour** : comme au cycle 0.4, le scénario suppose un **mardi**. Un autre jour, adapter le nombre de visites du programme.
 4. Activer à l'avance la double authentification des comptes marqués `*`, dont l'administrateur pays (étape 12).
 5. Ouvrir le portail sur un ordinateur. Sur l'iPhone : `make telephone`, même Wi-Fi, puis scanner le QR code (README, « Sur un iPhone »). Accepter l'autorisation de position.
@@ -25,7 +26,7 @@ Scénario d'environ 30 minutes pour le référent métier (prd.md §22, RSK-12).
 | 5 | Premier délégué | Passer en **mode avion** au milieu de la saisie, quitter l'écran, revenir : tout est là (« Brouillon repris : vos dernières saisies, gardées sur le téléphone, ont été retrouvées. »). « Soumettre » : l'en-tête dit « Soumission en attente du réseau ». Repasser en ligne : le rapport part une seule fois, avec l'**heure du geste** | RPT-009, RPT-010 |
 | 6 | Premier délégué | Rouvrir le rapport soumis : il est figé, en lecture seule. Ouvrir le rapport de la veille resté en brouillon et le soumettre : « **en retard** » (après l'heure limite du pays, 23 h 59) | RPT-010, RG-030, RG-032 |
 | 7 | Premier délégué | « Je suis **indisponible** aujourd'hui » : la matinée, sans motif à donner. Les visites du matin sont justifiées d'un coup, la prochaine visite devient celle de l'après-midi. Le planning ne propose plus « maladie » | DC-51 |
-| 8 | Premier délégué | Semaine suivante (en préparation) : retirer la visite d'un prospect pour qui une nouvelle visite a été proposée. Dans « Nouvelle visite », ce prospect remonte sous « **Proposées à votre dernière visite** » ; le poser d'un appui | DC-61 |
+| 8 | Premier délégué | Semaine suivante (en préparation) : « Nouvelle visite ». Le prospect du dernier rapport soumis, qui proposait une nouvelle visite et n'est pas encore replanifié, remonte sous « **Proposées à votre dernière visite** » ; le poser d'un appui | DC-61 |
 | 9 | Premier délégué | Laisser l'application en arrière-plan plus de 15 minutes (ou le délai réglé à l'étape 12) : elle demande le déverrouillage | DC-59 |
 | 10 | Superviseur (portail) | Fiche d'un prospect du délégué, section « **Rapports de visite** » : les rapports soumis, avec le nom du délégué ; jamais un brouillon. Un DM ou un DF lit ceux des postes de ses réseaux | RPT-011, DC-62 |
 | 11 | Superviseur (portail) | Planning de la semaine en cours, carte « Conformité des journées » : la matinée d'indisponibilité n'y laisse **aucun écart**. Une visite pointée avec une position trop imprécise compte « sans GPS » (« dont n à la position trop imprécise »), jamais « loin du lieu » ; dans un hôpital, le seuil est son rayon de 300 m | DC-51, DC-55, VIS-010 |

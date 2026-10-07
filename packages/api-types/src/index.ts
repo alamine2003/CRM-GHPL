@@ -139,6 +139,9 @@ export type Preparation = Schemas['Preparation'];
 export type RapportChronologie = Schemas['RapportChronologie'];
 /** DC-61 : une visite proposée dans un rapport, à replanifier. */
 export type VisiteProposee = Schemas['VisiteProposee'];
+export type ATraiter = Schemas['ATraiter'];
+export type DelegueATraiter = Schemas['DelegueATraiter'];
+export type JourneeATraiter = Schemas['JourneeATraiter'];
 /** Photo ou document joint au rapport (RPT-007). */
 export type PieceJointe = Schemas['PieceJointe'];
 export type DefinitionChamp = Schemas['DefinitionChamp'];

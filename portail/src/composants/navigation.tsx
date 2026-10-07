@@ -11,6 +11,7 @@ import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRou
 import SwapHorizRounded from '@mui/icons-material/SwapHorizRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import HomeRounded from '@mui/icons-material/HomeRounded';
+import InboxRounded from '@mui/icons-material/InboxRounded';
 import MedicationRounded from '@mui/icons-material/MedicationRounded';
 import MonitorHeartRounded from '@mui/icons-material/MonitorHeartRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
@@ -38,6 +39,14 @@ export const estSiege = (p: Perimetre) =>
 /** Entrées de navigation ; celles d'une version future sont regroupées sous « À venir », inactives. */
 export const ENTREES: Entree[] = [
   { cle: 'accueil', icone: <HomeRounded />, section: 'activite', chemin: '/' },
+  {
+    // RPT-012 : file de travail du superviseur, ses journées à traiter par délégué.
+    cle: 'aTraiter',
+    icone: <InboxRounded />,
+    section: 'activite',
+    chemin: '/a-traiter',
+    visible: peut('rapports.valider'),
+  },
   { cle: 'visites', icone: <FactCheckRounded />, section: 'activite' },
   {
     // PLN-006 : vue semaine du délégué (et du superviseur qui occupe un poste).

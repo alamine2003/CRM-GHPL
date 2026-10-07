@@ -2,6 +2,29 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.1] — File « À traiter » du superviseur
+
+Premier jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté (RPT-012)
+
+- Portail : page « À traiter » du superviseur. En tête, les journées à vérifier, les rapports à valider, les rapports attendus et les plannings à valider, avec un lien vers ces derniers.
+- Par délégué, ses journées terminées et non validées des quatre dernières semaines [H], de la plus ancienne, regroupées par semaine.
+- **CA1** : chaque journée affiche « Conforme » ou « À vérifier » et le détail de ses écarts, ainsi que l'état de ses rapports (à valider, attendus, en retard, horodatage douteux). « Consulter la semaine » ouvre le planning.
+- Le remplaçant d'un superviseur voit les journées de l'équipe qu'il remplace ; le DM, celles d'un superviseur-visiteur.
+- Nouveau droit « valider les rapports » (superviseur, DM).
+- Démonstration (18.A) : le prospect du dernier rapport soumis, qui proposait une nouvelle visite, n'est pas replanifié la semaine suivante ; il apparaît sous « Proposées à votre dernière visite ».
+
+### Design
+
+Revue sur le rendu réel (bureau 1 440 px, téléphone 390 px, mode sombre). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| À traiter, journée sans visite faite | « 1 visite » seulement : rien ne disait qu'il n'y avait aucun rapport à attendre. | « 1 visite, aucune effectuée » ; « 3 visites, 2 effectuées » quand une partie seulement a été faite. |
+| À traiter, liste des journées | Dix journées à la suite sur trois semaines, difficiles à situer. | Un intertitre par semaine (« Semaine du 21 septembre »). |
+| À traiter, téléphone | « Consulter la semaine » partait du bord de la carte, décalé du texte de la journée. | Le bouton s'aligne sur le texte, sous l'icône. |
+
 ## [0.5.9] — Stabilisation et démonstration du cycle 0.5 ; décisions de la relecture
 
 Dernier jalon du cycle 0.5 « Rapports de visite ». Toutes les recommandations de la relecture du cahier des charges sont retenues (DC-49 à DC-62, `prd.md` §14.40) ; celles qui touchent les cycles déjà livrés sont appliquées ici.

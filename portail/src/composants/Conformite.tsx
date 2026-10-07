@@ -14,7 +14,7 @@ import { EnTeteCarte } from './Elements';
 type Journee = Semaine['conformite'][number];
 type Ecart = Journee['ecarts'][number];
 
-function texteEcart(e: Ecart, t: ReturnType<typeof useTranslation>['t']) {
+export function texteEcart(e: Ecart, t: ReturnType<typeof useTranslation>['t']) {
   const qui = [e.heure, e.prospect].filter(Boolean).join(' · ');
   switch (e.code) {
     case 'hors_plage':

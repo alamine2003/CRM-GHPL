@@ -415,6 +415,7 @@ class Generateur:
         self.passe_execute(pays, delegues[0])
         self.rapports(pays, delegues[0])
         nombre += self.semaine_en_preparation(pays, delegues[0], suivante)
+        self.liberer_une_proposee(delegues[0], suivante)
         if len(delegues) > 1:
             nombre += self.semaine_soumise(pays, delegues[1], suivante)
             self.semaine_fermee(pays, delegues[1], courante)
@@ -515,7 +516,8 @@ class Generateur:
                             prochaine_action_type=types[("etude", "revisiter", "documentation",
                                                          "revisiter")[i % 4]].pk,
                             prochaine_action_echeance=visite.date + timedelta(days=14),
-                            visite_proposee=i % 2 == 0,
+                            # Le dernier rapport soumis en propose une aussi (DC-61, 18.A).
+                            visite_proposee=i % 2 == 0 or i == len(effectuees) - 3,
                             champs={d["code"]: 5 + (i * 7) % 30 for d in rapport.definitions
                                     if d["type"] == "nombre"})  # fmt: skip
             if i == 1:
@@ -619,6 +621,37 @@ class Generateur:
             return 0
         nombre = self._visites(planning, jours, reseau, cibles, a_completer=True)
         return nombre + self._passage_et_absence(planning, jours, reseau, cibles)
+
+    @staticmethod
+    def liberer_une_proposee(delegue, semaine) -> None:
+        """DC-61 : la semaine suivante ne reprend pas l'un des prospects pour qui le dernier
+        rapport a proposé une nouvelle visite ; il remonte dans « Proposées à votre dernière
+        visite » à la préparation (choix 18.A)."""
+        from apps.planning import services as pln
+        from apps.planning.models import Visite
+        from apps.rapports.models import Rapport, StatutRapport
+
+        visites = Visite.objects.filter(planning__delegue=delegue, archive_le__isnull=True)
+        vus = set()
+        rapports = (
+            Rapport.objects.filter(delegue=delegue)
+            .exclude(statut=StatutRapport.BROUILLON)
+            .select_related("visite")
+            .order_by("-visite__date")
+        )
+        for rapport in rapports:
+            prospect = rapport.visite.prospect_id
+            if prospect in vus:
+                continue
+            vus.add(prospect)
+            if not rapport.visite_proposee:
+                continue
+            apres = visites.filter(prospect_id=prospect, date__gt=rapport.visite.date)
+            suivante = apres.filter(planning__semaine=semaine)
+            if suivante.exists() and not apres.exclude(planning__semaine=semaine).exists():
+                for visite in suivante:
+                    pln.retirer_visite(visite)
+                return
 
     @staticmethod
     def _planning(pays, delegue, semaine):

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.5.9
+  version: 0.6.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3588,6 +3588,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Qualite'
           description: ''
+  /api/v1/rapports/a-traiter/:
+    get:
+      operationId: rapports_a_traiter
+      description: |-
+        RPT-012 : la file de travail du superviseur, ses journées à traiter par délégué (CA1),
+        et le nombre de plannings qui attendent sa décision (DC-47, engagement 3).
+      tags:
+      - rapports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ATraiter'
+          description: ''
   /api/v1/rapports/champs/:
     get:
       operationId: champs_rapport
@@ -4924,6 +4941,21 @@ paths:
           description: ''
 components:
   schemas:
+    ATraiter:
+      type: object
+      description: |-
+        « À traiter aujourd'hui » (DC-47, engagement 3) : les journées par délégué, et le
+        nombre de plannings qui attendent une décision.
+      properties:
+        delegues:
+          type: array
+          items:
+            $ref: '#/components/schemas/DelegueATraiter'
+        plannings_a_valider:
+          type: integer
+      required:
+      - delegues
+      - plannings_a_valider
     ActionPrecedente:
       type: object
       description: 'RPT-006 CA1 : la prochaine action notée à la dernière visite chez
@@ -5337,14 +5369,6 @@ components:
         * `pr` - Pr
         * `m` - M.
         * `mme` - Mme
-    ClassementEnum:
-      enum:
-      - conforme
-      - a_verifier
-      type: string
-      description: |-
-        * `conforme` - Conforme
-        * `a_verifier` - À vérifier
     ClientEnum:
       enum:
       - portail
@@ -5506,7 +5530,7 @@ components:
           type: string
           format: date
         classement:
-          $ref: '#/components/schemas/ClassementEnum'
+          $ref: '#/components/schemas/ConformiteJourneeClassementEnum'
         ecarts:
           type: array
           items:
@@ -5523,6 +5547,14 @@ components:
       - ecarts
       - fige
       - terminee
+    ConformiteJourneeClassementEnum:
+      enum:
+      - conforme
+      - a_verifier
+      type: string
+      description: |-
+        * `conforme` - Conforme
+        * `a_verifier` - À vérifier
     Connexion:
       type: object
       properties:
@@ -6085,6 +6117,18 @@ components:
       - id
       - nom
       - prenom
+    DelegueATraiter:
+      type: object
+      properties:
+        delegue:
+          $ref: '#/components/schemas/Delegue'
+        journees:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourneeATraiter'
+      required:
+      - delegue
+      - journees
     DemandeReouverture:
       type: object
       properties:
@@ -7109,6 +7153,55 @@ components:
       - date
       - ferie
       - planifiable
+    JourneeATraiter:
+      type: object
+      description: |-
+        RPT-012 CA1 : une journée terminée et non validée, son classement et ses écarts, et
+        l'état de ses rapports.
+      properties:
+        date:
+          type: string
+          format: date
+        planning:
+          type: string
+          format: uuid
+        classement:
+          $ref: '#/components/schemas/JourneeATraiterClassementEnum'
+        ecarts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EcartConformite'
+        visites:
+          type: integer
+        effectuees:
+          type: integer
+        rapports_a_valider:
+          type: integer
+        rapports_attendus:
+          type: integer
+        rapports_en_retard:
+          type: integer
+        horodatages_douteux:
+          type: integer
+      required:
+      - classement
+      - date
+      - ecarts
+      - effectuees
+      - horodatages_douteux
+      - planning
+      - rapports_a_valider
+      - rapports_attendus
+      - rapports_en_retard
+      - visites
+    JourneeATraiterClassementEnum:
+      enum:
+      - conforme
+      - a_verifier
+      type: string
+      description: |-
+        * `conforme` - conforme
+        * `a_verifier` - a_verifier
     Kilometrage:
       type: object
       description: Kilométrage estimé à vol d'oiseau, sans montant (PLN-010).

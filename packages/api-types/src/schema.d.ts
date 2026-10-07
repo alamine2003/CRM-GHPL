@@ -2077,6 +2077,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/rapports/a-traiter/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description RPT-012 : la file de travail du superviseur, ses journées à traiter par délégué (CA1),
+     *     et le nombre de plannings qui attendent sa décision (DC-47, engagement 3).
+     */
+    get: operations['rapports_a_traiter'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/rapports/champs/': {
     parameters: {
       query?: never;
@@ -2772,6 +2792,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /**
+     * @description « À traiter aujourd'hui » (DC-47, engagement 3) : les journées par délégué, et le
+     *     nombre de plannings qui attendent une décision.
+     */
+    ATraiter: {
+      delegues: components['schemas']['DelegueATraiter'][];
+      plannings_a_valider: number;
+    };
     /** @description RPT-006 CA1 : la prochaine action notée à la dernière visite chez ce prospect. */
     ActionPrecedente: {
       /** Format: date */
@@ -2941,12 +2969,6 @@ export interface components {
      */
     CiviliteEnum: 'dr' | 'pr' | 'm' | 'mme';
     /**
-     * @description * `conforme` - Conforme
-     *     * `a_verifier` - À vérifier
-     * @enum {string}
-     */
-    ClassementEnum: 'conforme' | 'a_verifier';
-    /**
      * @description * `portail` - Portail web
      *     * `mobile` - Application mobile
      * @enum {string}
@@ -3022,11 +3044,17 @@ export interface components {
     ConformiteJournee: {
       /** Format: date */
       date: string;
-      classement: components['schemas']['ClassementEnum'];
+      classement: components['schemas']['ConformiteJourneeClassementEnum'];
       ecarts: components['schemas']['EcartConformite'][];
       readonly fige: boolean;
       readonly terminee: boolean;
     };
+    /**
+     * @description * `conforme` - Conforme
+     *     * `a_verifier` - À vérifier
+     * @enum {string}
+     */
+    ConformiteJourneeClassementEnum: 'conforme' | 'a_verifier';
     Connexion: {
       identifiant: string;
       mot_de_passe: string;
@@ -3238,6 +3266,10 @@ export interface components {
       id: string;
       prenom: string;
       nom: string;
+    };
+    DelegueATraiter: {
+      delegue: components['schemas']['Delegue'];
+      journees: components['schemas']['JourneeATraiter'][];
     };
     DemandeReouverture: {
       destinataires: number;
@@ -3667,6 +3699,30 @@ export interface components {
       ferie: string | null;
       planifiable: boolean;
     };
+    /**
+     * @description RPT-012 CA1 : une journée terminée et non validée, son classement et ses écarts, et
+     *     l'état de ses rapports.
+     */
+    JourneeATraiter: {
+      /** Format: date */
+      date: string;
+      /** Format: uuid */
+      planning: string;
+      classement: components['schemas']['JourneeATraiterClassementEnum'];
+      ecarts: components['schemas']['EcartConformite'][];
+      visites: number;
+      effectuees: number;
+      rapports_a_valider: number;
+      rapports_attendus: number;
+      rapports_en_retard: number;
+      horodatages_douteux: number;
+    };
+    /**
+     * @description * `conforme` - conforme
+     *     * `a_verifier` - a_verifier
+     * @enum {string}
+     */
+    JourneeATraiterClassementEnum: 'conforme' | 'a_verifier';
     /** @description Kilométrage estimé à vol d'oiseau, sans montant (PLN-010). */
     Kilometrage: {
       /** Format: double */
@@ -8539,6 +8595,25 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Qualite'];
+        };
+      };
+    };
+  };
+  rapports_a_traiter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ATraiter'];
         };
       };
     };

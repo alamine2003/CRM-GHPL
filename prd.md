@@ -704,6 +704,15 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.42 File « À traiter » du superviseur (mise en œuvre 0.6.1)
+
+- **Écran** (RPT-012 ; DC-47, engagement 3) : au portail, « À traiter » dans le menu du superviseur (et du DM pour un superviseur-visiteur). En tête, quatre chiffres : journées à vérifier, rapports à valider, rapports attendus, plannings à valider ; quand un planning attend sa décision, un lien mène à « Plannings à valider ».
+- **Les journées** : par délégué (celui qui attend depuis le plus longtemps d'abord), ses journées **terminées** et **non validées**, de la plus ancienne, regroupées par semaine. La journée du jour n'y est pas : elle n'est pas finie.
+- **CA1** : chaque journée affiche « Conforme » ou « À vérifier · n écarts » et le détail de chaque écart, avec les mêmes textes que la carte « Conformité des journées » (§14.30). Elle dit aussi le nombre de visites et d'effectuées, les rapports à valider (soumis), les rapports attendus (visite effectuée sans rapport soumis), ceux en retard et ceux à l'horodatage douteux (RPT-010). « Consulter la semaine » ouvre le planning de la semaine.
+- **Qui voit quoi** : le responsable du poste cette semaine-là (superviseur, ou DM pour un superviseur-visiteur, RG-023) et le superviseur qui le remplace (ORG-013). Jamais ses propres journées. Nouveau droit « valider les rapports » (superviseur, DM) ; la matrice des droits n'en change pas.
+- [H] La file remonte sur **4 semaines** ; au-delà, une journée non validée relève des retards (RPT-017, 0.6.7).
+- **Plus tard** : la consultation du rapport depuis la journée (0.6.2), puis la validation unitaire, par journée et par lot (0.6.3) qui fait sortir la journée de la file.
+
 ### 14.41 Stabilisation et décisions appliquées (mise en œuvre 0.5.9)
 
 - **Indisponibilité imprévue** (DC-51) : « Je suis indisponible aujourd'hui », sous le programme du jour. Le délégué choisit la journée, le matin ou l'après-midi, sans motif. Une seule déclaration par période ; elle se fait même semaine fermée, et sans réseau elle attend dans la file du téléphone. Les visites prévues de la période ne sont plus « à justifier » ni « restées prévues » dans la conformité ; le superviseur voit l'activité « Indisponibilité imprévue » dans la journée. Elle ne se pose plus à l'avance dans le planning ; les « maladies » déjà saisies deviennent des indisponibilités.

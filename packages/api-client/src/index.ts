@@ -32,6 +32,7 @@ import type {
   Rapport,
   RapportChronologie,
   VisiteProposee,
+  ATraiter,
   PieceJointe,
   SaisieRapport,
   ChampRapport,
@@ -168,6 +169,9 @@ export type {
   Preparation,
   RapportChronologie,
   VisiteProposee,
+  ATraiter,
+  DelegueATraiter,
+  JourneeATraiter,
   PieceJointe,
   DefinitionChamp,
   TypeChamp,
@@ -881,6 +885,8 @@ export function creerClient(options: OptionsClient) {
     },
     /** Champs supplémentaires du rapport, par pays (RPT-008). */
     rapports: {
+      /** RPT-012 : la file de travail du superviseur, ses journées à traiter par délégué. */
+      aTraiter: () => requete<ATraiter>('/api/v1/rapports/a-traiter/'),
       /** DC-61 : les visites proposées dans ses rapports, pas encore replanifiées. */
       visitesProposees: () => requete<VisiteProposee[]>('/api/v1/rapports/visites-proposees/'),
       champs: () => requete<ChampRapport[]>('/api/v1/rapports/champs/'),

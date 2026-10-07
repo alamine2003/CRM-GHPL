@@ -31,6 +31,7 @@ const Doublons = lazy(() => import('./pages/Doublons'));
 const Propositions = lazy(() => import('./pages/Propositions'));
 const Planning = lazy(() => import('./pages/Planning'));
 const Validation = lazy(() => import('./pages/Validation'));
+const ATraiter = lazy(() => import('./pages/ATraiter'));
 const ConsultationPlanning = lazy(() => import('./pages/ConsultationPlanning'));
 const Remplacements = lazy(() => import('./pages/Remplacements'));
 const Notifications = lazy(() => import('./pages/Notifications'));
@@ -56,6 +57,7 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
     rendu: (_, p) => <Referentiels perimetre={p} />,
   },
   '/planning': { titre: 'navigation.planning', rendu: () => <Planning /> },
+  '/a-traiter': { titre: 'navigation.aTraiter', rendu: () => <ATraiter /> },
   '/validation': { titre: 'navigation.validation', rendu: () => <Validation /> },
   '/remplacements': { titre: 'navigation.remplacements', rendu: () => <Remplacements /> },
   '/notifications': {
