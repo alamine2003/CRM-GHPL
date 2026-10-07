@@ -704,6 +704,16 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.41 Stabilisation et décisions appliquées (mise en œuvre 0.5.9)
+
+- **Indisponibilité imprévue** (DC-51) : « Je suis indisponible aujourd'hui », sous le programme du jour. Le délégué choisit la journée, le matin ou l'après-midi, sans motif. Une seule déclaration par période ; elle se fait même semaine fermée, et sans réseau elle attend dans la file du téléphone. Les visites prévues de la période ne sont plus « à justifier » ni « restées prévues » dans la conformité ; le superviseur voit l'activité « Indisponibilité imprévue » dans la journée. Elle ne se pose plus à l'avance dans le planning ; les « maladies » déjà saisies deviennent des indisponibilités.
+- **Précision du GPS** (DC-55) : une position dont la précision annoncée dépasse le seuil compte comme « sans GPS » (dans la tolérance du pays), jamais comme « loin du lieu » ; la conformité l'indique (« dont n à la position trop imprécise »). Chaque établissement peut avoir un **rayon de pointage** propre, de 50 à 2 000 m, saisi au portail ; vide, la distance du pays s'applique.
+- **Mobile personnel d'un médecin** (DC-58) : la fiche porte « Le prescripteur accepte d'être contacté sur ce numéro ». Le numéro reste visible de l'administration du pays et du siège ; ailleurs (fiche, liste cible, coordonnées du planning, historique), il ne s'affiche qu'au délégué qui a ce médecin dans sa liste cible, et seulement avec l'accord.
+- **Verrouillage du téléphone** (DC-59) : paramètre du pays « Verrouillage du téléphone (minutes) », de 5 à 30, 15 par défaut, dans la carte « Téléphone » des paramètres. Le téléphone garde le délai reçu avec le programme.
+- **Visite proposée** (DC-61) : dans « Nouvelle visite », les prospects pour qui le dernier rapport soumis a proposé une nouvelle visite remontent sous « Proposées à votre dernière visite », tant qu'ils n'ont pas été replanifiés après ce rapport. Le paramètre « échéance d'approbation du planning » disparaît.
+- **Préparer ma visite** (DC-47, engagement 5 de §14.35) : sur le détail d'une visite, le nombre de visites rapportées, la date de la dernière, le dernier retour du prescripteur par produit et les échantillons déjà remis. Construit à partir des seuls rapports soumis du délégué.
+- **Recette** : `recette-0.5.md` relie chaque critère du cycle à son test ; les écarts relevés ont été comblés, sauf ceux qui dépendent du cycle 0.6 (lecture et validation des rapports par le superviseur). Scénario de démonstration : `demonstration-0.5.md`.
+
 ### 14.40 Décisions de la relecture du cahier des charges (7 octobre 2026)
 
 La relecture (`revue-exigences.md`, question O-12) a relevé 13 exigences douteuses ; toutes les recommandations sont retenues [D, 7 octobre 2026]. Elles remplacent les textes d'origine.

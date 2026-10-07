@@ -175,3 +175,17 @@ def test_aucune_route_ne_supprime_un_etablissement(monde, secteurs):
     assert Etablissement.objects.filter(pk=cree["id"]).exists()
     with pytest.raises(TypeError):
         Etablissement.objects.get(pk=cree["id"]).delete()
+
+
+def test_dc55_le_rayon_de_pointage_s_ecrit_par_l_api(monde, secteurs):
+    admin = client_de(monde["admin.sn"])
+    cree = admin.post(URL, fiche(monde, secteurs, rayon_pointage_m=300), format="json")
+    assert (cree.status_code, cree.json()["rayon_pointage_m"]) == (201, 300), cree.content
+    ident = cree.json()["id"]
+    # Hors des bornes (50 à 2 000 m) : refusé.
+    for valeur in (20, 5000):
+        r = admin.patch(f"{URL}{ident}/", {"rayon_pointage_m": valeur}, format="json")
+        assert r.status_code == 400, (valeur, r.content)
+    # Vidé : l'établissement reprend la distance du pays.
+    r = admin.patch(f"{URL}{ident}/", {"rayon_pointage_m": None}, format="json")
+    assert (r.status_code, r.json()["rayon_pointage_m"]) == (200, None)

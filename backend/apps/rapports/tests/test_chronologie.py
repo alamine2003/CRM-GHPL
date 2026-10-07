@@ -108,3 +108,39 @@ def test_dc61_la_visite_proposee_revient_a_la_preparation(monde, terrain, effect
                                 prospect=terrain["medecin"],
                                 etablissement=terrain["clinique"])  # fmt: skip
         assert c.get("/api/v1/rapports/visites-proposees/").json() == []
+
+
+def test_rpt011_du_plus_recent_au_plus_ancien(monde, terrain, effectuee, portefeuille):  # noqa: F811
+    from datetime import UTC, datetime
+
+    from apps.planning import execution
+
+    with freeze_time("2026-10-13 20:00"):
+        c = client_de(monde["deleg.sn"])
+        c.put(url(effectuee), complet(monde, portefeuille[:1]), format="json")
+        c.post(url(effectuee, "soumettre/"), {"soumis_le": "2026-10-13T20:00:00Z"}, format="json")
+    with freeze_time("2026-10-15 11:00"):
+        seconde = execution.visite_imprevue(
+            monde["deleg.sn"], monde["sn"], le=datetime(2026, 10, 15, 10, 0, tzinfo=UTC),
+            prospect=terrain["medecin"], etablissement=terrain["clinique"],
+            justification="Rappel du prescripteur",
+        )  # fmt: skip
+        execution.terminer(seconde, datetime(2026, 10, 15, 10, 30, tzinfo=UTC))
+        c = client_de(monde["deleg.sn"])
+        assert c.put(url(seconde), complet(monde, portefeuille[:1]),
+                     format="json").status_code == 200  # fmt: skip
+        dates = [r["date"] for r in chronologie(monde["deleg.sn"], terrain["medecin"]).json()]
+    assert dates == ["2026-10-15", "2026-10-13"]
+
+
+@freeze_time("2026-10-14 08:00")
+def test_dc62_dm_et_df_lisent_les_rapports_soumis_de_leurs_reseaux(monde, terrain, soumis):
+    from datetime import date
+
+    from apps.organisation import services as org
+
+    for compte in ("dm.sn", "df.sn"):
+        assert chronologie(monde[compte], terrain["medecin"]).json() == []
+        org.ajouter_reseau_au_perimetre(monde[compte], terrain["cardio"], date(2026, 1, 1))
+        r = chronologie(monde[compte], terrain["medecin"])
+        assert [(x["delegue_nom"], x["statut"]) for x in r.json()] == [("Gabriel Sn", "soumis")]

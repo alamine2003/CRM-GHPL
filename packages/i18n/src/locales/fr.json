@@ -862,6 +862,9 @@
     "fiche": {
       "carte": "Carte",
       "sansPosition": "Position non renseignée",
+      "rayon": "Rayon de pointage",
+      "rayonMetres": "{{n}} m",
+      "rayonPays": "Distance du pays",
       "sansPositionTexte": "Le contrôle de distance des visites ne pourra pas se faire tant que l'établissement n'est pas positionné.",
       "positionner": "Positionner",
       "ouvrirCarte": "Ouvrir dans OpenStreetMap",

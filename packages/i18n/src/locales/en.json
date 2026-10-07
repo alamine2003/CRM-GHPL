@@ -862,6 +862,9 @@
     "fiche": {
       "carte": "Map",
       "sansPosition": "No position",
+      "rayon": "Check-in radius",
+      "rayonMetres": "{{n}} m",
+      "rayonPays": "Country distance",
       "sansPositionTexte": "The visit distance check cannot be performed until the institution is positioned.",
       "positionner": "Set position",
       "ouvrirCarte": "Open in OpenStreetMap",

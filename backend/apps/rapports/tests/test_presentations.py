@@ -83,3 +83,22 @@ def test_rpt005_echantillons_et_cadeaux_remis(monde, effectuee, portefeuille):  
     # CA1 : les remises ne sont pas obligatoires et ne touchent à aucun stock.
     r = c.put(url(effectuee), complet(monde, [cardiol], remises=[]), format="json").json()
     assert (r["remises"], r["manquants"]) == ([], [])
+
+
+def test_rg033_le_portefeuille_est_celui_du_jour_de_la_visite(
+    monde,
+    terrain,
+    effectuee,
+    portefeuille,  # noqa: F811
+):
+    from apps.referentiel import services as ref
+
+    cardiol, tensio, _ = portefeuille
+    with freeze_time("2026-10-14 08:00"):
+        # Cardiol quitte le portefeuille le lendemain de la visite.
+        ref.definir_portefeuille(terrain["cardio"], [tensio])
+        c = client_de(monde["deleg.sn"])
+        r = c.get(url(effectuee)).json()
+        assert [p["libelle"] for p in r["produits_proposes"]] == ["Cardiol", "Tensio"]
+        r = c.put(url(effectuee), complet(monde, [cardiol]), format="json")
+        assert r.status_code == 200, r.content

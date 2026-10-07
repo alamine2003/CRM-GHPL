@@ -78,3 +78,15 @@ def test_dc51_une_seule_fois_par_periode(monde, approuve):
         assert c.post(URL, {}, format="json").status_code == 201
         r = c.post(URL, {"periode": "apres_midi"}, format="json")
         assert r.json()["code"] == "deja_declaree"
+
+
+def test_dc51_une_visite_couverte_n_est_pas_un_ecart_de_conformite(monde, approuve):
+    matin, soir = approuve
+    with freeze_time("2026-10-13 08:00"):
+        client_de(monde["deleg.sn"]).post(URL, {"periode": "matin"}, format="json")
+    with freeze_time("2026-10-14 08:00"):
+        r = client_de(monde["sup.sn"]).get(f"/api/v1/plannings/{matin.planning_id}/consultation/")
+        assert r.status_code == 200, r.content
+        (jour,) = [j for j in r.json()["conformite"] if j["date"] == MARDI.isoformat()]
+        # Seule la visite de l'après-midi, non couverte, reste à justifier.
+        assert [(e["code"], e["visite"]) for e in jour["ecarts"]] == [("a_justifier", str(soir.pk))]

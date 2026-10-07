@@ -41,3 +41,14 @@ def test_dc58_le_mobile_suit_la_liste_cible_et_l_accord(monde, terrain):
     assert liste["cibles"][0]["prospect"]["telephone_mobile"] == numero
     # Son superviseur, qui ne l'a dans aucune liste qu'il occupe, ne le voit pas.
     assert fiche(monde["sup.sn"], medecin)["telephone_mobile"] == ""
+
+
+def test_dc58_l_accord_s_ecrit_par_l_api(monde, terrain):
+    medecin = terrain["medecin"]
+    admin = client_de(monde["admin.sn"])
+    r = admin.patch(f"/api/v1/prospects/{medecin.pk}/",
+                    {"telephone_mobile": MOBILE, "contact_mobile_accepte": True},
+                    format="json")  # fmt: skip
+    assert (r.status_code, r.json()["contact_mobile_accepte"]) == (200, True), r.content
+    medecin.refresh_from_db()
+    assert medecin.contact_mobile_accepte is True

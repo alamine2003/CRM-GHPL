@@ -834,6 +834,8 @@ class Generateur:
                     activite="hospitalier" if public else "prive",
                     latitude=round(lat0 + a.uniform(-0.25, 0.25), 6) if gps else None,
                     longitude=round(lon0 + a.uniform(-0.25, 0.25), 6) if gps else None,
+                    # DC-55 : un hôpital s'étend ; son rayon de pointage est plus large.
+                    rayon_pointage_m=300 if code == "hopital" else None,
                 )  # fmt: skip
                 nombre += 1
         return nombre

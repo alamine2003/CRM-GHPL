@@ -37,3 +37,20 @@ def test_rpt003_le_resultat_obtenu_se_saisit_et_se_soumet(monde, effectuee, port
         200,
         "Accord pour un essai sur 5 patients",
     )
+
+
+def test_rpt003_une_visite_imprevue_rend_sa_justification(monde, terrain, effectuee):  # noqa: F811
+    from datetime import UTC, datetime
+
+    from apps.planning import execution
+
+    with freeze_time("2026-10-15 11:00"):
+        imprevue = execution.visite_imprevue(
+            monde["deleg.sn"], monde["sn"], le=datetime(2026, 10, 15, 10, 0, tzinfo=UTC),
+            prospect=terrain["medecin"], etablissement=terrain["clinique"],
+            justification="Rappel du prescripteur",
+        )  # fmt: skip
+        execution.terminer(imprevue, datetime(2026, 10, 15, 10, 30, tzinfo=UTC))
+        r = client_de(monde["deleg.sn"]).get(url(imprevue)).json()
+    assert (r["objectif_prevu"], r["est_imprevue"], r["justification"]) == (
+        "", True, "Rappel du prescripteur")  # fmt: skip

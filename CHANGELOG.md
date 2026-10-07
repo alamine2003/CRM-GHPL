@@ -2,6 +2,37 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.9] — Stabilisation et démonstration du cycle 0.5 ; décisions de la relecture
+
+Dernier jalon du cycle 0.5 « Rapports de visite ». Toutes les recommandations de la relecture du cahier des charges sont retenues (DC-49 à DC-62, `prd.md` §14.40) ; celles qui touchent les cycles déjà livrés sont appliquées ici.
+
+### Ajouté
+
+- **Indisponibilité imprévue** (DC-51) : « Je suis indisponible aujourd'hui » sous le programme du jour, pour la journée, le matin ou l'après-midi, sans motif, même semaine fermée et sans réseau. Les visites de la période sont justifiées d'un coup et ne comptent plus comme écart.
+- **Précision du GPS et rayon de pointage** (DC-55) : une position trop imprécise compte « sans GPS », jamais « loin du lieu » (« dont n à la position trop imprécise ») ; un rayon propre par établissement, de 50 à 2 000 m, saisi et affiché au portail. Démonstration : 300 m pour les hôpitaux.
+- **Mobile personnel protégé** (DC-58) : « Le prescripteur accepte d'être contacté sur ce numéro » ; le numéro ne s'affiche qu'à l'administration, et au délégué qui a ce médecin dans sa liste cible, avec l'accord.
+- **Verrouillage réglable** (DC-59) : de 5 à 30 minutes, 15 par défaut, dans la carte « Téléphone » des paramètres.
+- **Visite proposée reprise** (DC-61) : « Proposées à votre dernière visite » dans « Nouvelle visite », tant que le prospect n'est pas replanifié.
+- **Préparer ma visite** (DC-47) : sur le détail d'une visite, les derniers retours du prescripteur par produit, les échantillons déjà remis et le nombre de visites rapportées.
+- Recette du cycle (`recette-0.5.md`) : chaque critère relié à son test ; les écarts relevés sont comblés par de nouveaux tests (ordre de la chronologie, DM et DF, portefeuille au jour de la visite, visite imprévue, conformité d'une journée d'indisponibilité, bornes du verrouillage, rayon et accord écrits par l'API, file du téléphone, écrans du portail).
+- Démonstration de fin de cycle (`demonstration-0.5.md`).
+
+### Modifié
+
+- PRD : KPI-03, PLN-009, DSH-006, DSH-012, OFF-007, RG-054, VIS-010, SEC-004, RPT-014, NFR-002, §7.5, §14.1, §14.18 et §14.35 réécrits selon les décisions ; O-12 tranchée (17.A : la lecture des rapports reste celle de 0.5.8).
+
+### Retiré
+
+- « Maladie » dans le planning (devenue « indisponibilité imprévue ») et le paramètre « échéance d'approbation du planning », qui n'agissait plus (DC-51, DC-61).
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px, portail). Seconde revue après correction :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Fiche d'un établissement (portail) | Le rayon de pointage ne se voyait que dans le formulaire de modification ; la fiche ne disait pas quel seuil s'appliquait. | Ligne « Rayon de pointage » dans les coordonnées : « 300 m » ou « Distance du pays ». |
+
 ## [0.5.8] — Chronologie des rapports d'un prospect
 
 Huitième jalon du cycle 0.5 « Rapports de visite ».

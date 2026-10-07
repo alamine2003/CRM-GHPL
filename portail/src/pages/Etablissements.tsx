@@ -454,6 +454,14 @@ function FicheEtablissement({
                 )
               }
             />
+            <Ligne
+              libelle={t('etablissement.fiche.rayon')}
+              valeur={
+                e.rayon_pointage_m
+                  ? t('etablissement.fiche.rayonMetres', { n: e.rayon_pointage_m })
+                  : t('etablissement.fiche.rayonPays')
+              }
+            />
           </Section>
           <Section titre={t('etablissement.fiche.prospects')}>
             <ProspectsExercant etablissement={e.id} />

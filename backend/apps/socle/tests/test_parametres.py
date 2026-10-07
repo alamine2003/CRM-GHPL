@@ -87,6 +87,9 @@ def test_les_valeurs_successives_sont_conservees():
         ("distance_pointage_m", True),
         ("geolocalisation_active", "oui"),
         ("conservation", {"activite_annees": 5}),
+        # DC-59 : le verrouillage du téléphone se règle de 5 à 30 minutes.
+        ("verrouillage_minutes", 4),
+        ("verrouillage_minutes", 31),
     ],
 )
 def test_valeurs_invalides_refusees(cle, valeur):
