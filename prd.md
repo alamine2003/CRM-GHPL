@@ -704,6 +704,28 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». En 0.5.4, il est noté et rappelé ; il ne crée pas de visite dans le planning [H].
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.35 Faire mieux que l'outil actuel (décision du 7 octobre 2026)
+
+L'outil en place (BirdNotes, version web observée sur une démonstration vidéo) sert de point de comparaison : INNOV CRM reprend ses usages utiles et doit le dépasser sur chacun [D, 7 octobre 2026].
+
+| Écran de l'outil actuel | Constat | Réponse d'INNOV CRM |
+|---|---|---|
+| Statistiques | Un grand formulaire de filtres à remplir avant de voir un chiffre | Tableaux de bord prêts à lire par rôle, quelques filtres, comparaison à la période précédente |
+| Chargements | Attentes longues et répétées | Chaque page en moins d'une seconde, mesurée |
+| Rapports | Pointage souvent absent (« position n'existe pas ») | Distance à chaque visite, conformité de la journée, position de référence des établissements |
+| Résumé « IA » des commentaires | Phrase générale, sans prise pour agir | Résumé appuyé sur les chiffres, chaque affirmation reliée à ses visites |
+| Planning, carte, demandes de mise à jour | Listes à consulter | Files de travail à traiter, avec décision et historique |
+
+Engagements [D, 7 octobre 2026] (le contenu détaillé de chacun reste à préciser dans son cycle [H]) :
+
+1. **Aucune attente** : chaque page s'affiche en moins d'une seconde au 95e centile, mesuré en continu (NFR, tous cycles ; contrôle en 0.9).
+2. **Tableaux de bord prêts à lire** à la place du formulaire de recherche : chaque rôle ouvre son écran et voit ses chiffres, avec la période précédente (cycle 0.7).
+3. **File « À traiter aujourd'hui » du superviseur** : journées à vérifier, rapports en attente, plannings à valider, en un seul écran (cycle 0.6, 0.6.1).
+4. **Tendance de prescription** par produit et par prescripteur, calculée à partir des retours du prescripteur (RPT-004) (cycle 0.7).
+5. **« Préparer ma visite »** sur le téléphone, lisible en 10 secondes : derniers retours par produit, échantillons déjà remis, action promise (cycle 0.5, avant 0.5.9, ou 0.8).
+6. **Résumé automatique utile** : appuyé sur les chiffres de la période (« 3 prescripteurs passés à prescrit sur tel produit, 2 actions promises en retard »), chaque phrase reliée aux visites qui la fondent ; sans donnée nominative envoyée hors du système tant que l'hébergement n'est pas décidé [H] (cycle 0.7).
+7. **Position de référence des établissements** proposée à partir des visites pointées, validée par l'administrateur pays (décision du 5 octobre 2026, §14.18) : le pointage manquant disparaît peu à peu (cycle 0.7 ou 0.8).
+
 ### 14.18 Évaluation hebdomadaire des délégués (DSH-012, cycle 0.7)
 
 Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, formules vérifiées sur ses chiffres) :
@@ -1373,6 +1395,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | DC-44 | Nom INNOV CRM, identité visuelle de la maquette | Maquette |
 | DC-46 | Nettoyage des prospects BirdNotes : NOM en majuscules, titre dans la civilité, types médecin / paramédical / pharmacie / grossiste, fusions de spécialités validées (sage-femme d'État, gynécologue…), noms identiques tranchés par les superviseurs dans la file des doublons du CRM ; on nettoie une fois, puis la saisie verrouille | Proposition de nettoyage du 4 octobre 2026 |
 | DC-45 | L'export réel de BirdNotes sert de point de départ : import JSON tel quel, à l'exécution, jamais versionné ; avancé en 0.1.4 ; types, grades, exercice H/P, localités et paramètres alignés sur la pratique relevée | Échange du 4 octobre 2026 |
+| DC-47 | Faire mieux que l'outil actuel : pages en moins d'une seconde, tableaux de bord prêts à lire, file « À traiter aujourd'hui », tendance de prescription, « Préparer ma visite », résumé automatique appuyé sur les chiffres, position de référence des établissements (§14.35) | Démonstration vidéo de l'outil actuel, échange du 7 octobre 2026 |
 
 ## 26. Glossaire
 
