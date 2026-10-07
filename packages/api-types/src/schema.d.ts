@@ -2077,6 +2077,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/rapports/{id}/valider/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description RPT-013 : valider un rapport soumis, seul (mode `unitaire`, ou `remplacement`,
+     *     `escalade`, RPT-018).
+     */
+    post: operations['rapport_valider'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/rapports/a-traiter/': {
     parameters: {
       query?: never;
@@ -2159,6 +2179,43 @@ export interface paths {
     get: operations['rapports_journee'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/rapports/journee/valider/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description RPT-013 : valider une journée ; 22.A : tous ses rapports doivent être soumis. */
+    post: operations['journee_valider'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/rapports/lot/valider/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description RPT-013 CA1, RG-035 : « Valider les n conformes » ; 23.A : seules les journées
+     *     conformes, complètes et sans horodatage douteux.
+     */
+    post: operations['lot_valider'];
     delete?: never;
     options?: never;
     head?: never;
@@ -3755,6 +3812,8 @@ export interface components {
       classement: components['schemas']['ClassementEnum'];
       ecarts: components['schemas']['EcartConformite'][];
       fige: boolean;
+      mode: components['schemas']['ModeDecisionEnum'];
+      rapports_manquants: number;
       activites: components['schemas']['Activite'][];
       visites: components['schemas']['VisiteJournee'][];
     };
@@ -3775,6 +3834,14 @@ export interface components {
       rapports_attendus: number;
       rapports_en_retard: number;
       horodatages_douteux: number;
+      escalade: boolean;
+      eligible_lot: boolean;
+    };
+    JourneeChoisie: {
+      /** Format: uuid */
+      delegue: string;
+      /** Format: date */
+      date: string;
     };
     /** @description Kilométrage estimé à vol d'oiseau, sans montant (PLN-010). */
     Kilometrage: {
@@ -3878,6 +3945,15 @@ export interface components {
      * @enum {string}
      */
     ModeDecisionEnum: 'direct' | 'remplacement' | 'escalade';
+    /**
+     * @description * `unitaire` - Validé seul
+     *     * `journee` - Validé avec sa journée
+     *     * `lot` - Validé avec les journées conformes
+     *     * `escalade` - Validé par escalade
+     *     * `remplacement` - Validé par le remplaçant
+     * @enum {string}
+     */
+    ModeValidationEnum: 'unitaire' | 'journee' | 'lot' | 'escalade' | 'remplacement';
     Modification: {
       visite: components['schemas']['VisiteFigee'];
       champs: components['schemas']['ChampsEnum'][];
@@ -4599,6 +4675,10 @@ export interface components {
       readonly id: string;
       readonly statut: components['schemas']['StatutRapportEnum'];
       /** Format: date-time */
+      readonly valide_le: string | null;
+      readonly valide_par: string | null;
+      readonly mode_validation: components['schemas']['ModeValidationEnum'];
+      /** Format: date-time */
       readonly soumis_le: string | null;
       readonly en_retard: boolean;
       readonly horodatage_douteux: boolean;
@@ -4749,6 +4829,10 @@ export interface components {
     ResultatAjout: {
       ajoutes: number;
       deja_presents: number;
+    };
+    ResultatValidation: {
+      journees: number;
+      rapports: number;
     };
     Resume: {
       /** Format: uuid */
@@ -5232,6 +5316,10 @@ export interface components {
       readonly archive: boolean;
       /** @default 0 */
       readonly utilisations: number;
+    };
+    /** @description RPT-013 CA1 : les journées affichées ; seules les éligibles sont validées. */
+    ValidationLot: {
+      journees: components['schemas']['JourneeChoisie'][];
     };
     /** @description Une version figée et sa décision, avec le résumé de ce qui a changé (PLN-014). */
     Version: {
@@ -8708,6 +8796,27 @@ export interface operations {
       };
     };
   };
+  rapport_valider: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RapportLu'];
+        };
+      };
+    };
+  };
   rapports_a_traiter: {
     parameters: {
       query?: never;
@@ -8837,6 +8946,56 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Journee'];
+        };
+      };
+    };
+  };
+  journee_valider: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JourneeChoisie'];
+        'application/x-www-form-urlencoded': components['schemas']['JourneeChoisie'];
+        'multipart/form-data': components['schemas']['JourneeChoisie'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ResultatValidation'];
+        };
+      };
+    };
+  };
+  lot_valider: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ValidationLot'];
+        'application/x-www-form-urlencoded': components['schemas']['ValidationLot'];
+        'multipart/form-data': components['schemas']['ValidationLot'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ResultatValidation'];
         };
       };
     };

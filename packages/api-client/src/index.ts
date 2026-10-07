@@ -34,6 +34,8 @@ import type {
   VisiteProposee,
   ATraiter,
   Journee,
+  RapportLu,
+  ResultatValidation,
   PieceJointe,
   SaisieRapport,
   ChampRapport,
@@ -176,6 +178,7 @@ export type {
   Journee,
   VisiteJournee,
   RapportLu,
+  ResultatValidation,
   PieceJointe,
   DefinitionChamp,
   TypeChamp,
@@ -901,6 +904,21 @@ export function creerClient(options: OptionsClient) {
         ),
       /** RPT-007 CA2 : une pièce jointe d'un rapport soumis, lue par l'encadrement. */
       piece: (id: string) => requete<Blob>(`/api/v1/rapports/pieces/${id}/`, { binaire: true }),
+      /** RPT-013 : valider un rapport soumis, seul. */
+      valider: (id: string) =>
+        requete<RapportLu>(`/api/v1/rapports/${id}/valider/`, { methode: 'POST' }),
+      /** RPT-013 ; 22.A : la journée se valide quand tous ses rapports sont soumis. */
+      validerJournee: (delegue: string, date: string) =>
+        requete<ResultatValidation>('/api/v1/rapports/journee/valider/', {
+          methode: 'POST',
+          corps: { delegue, date },
+        }),
+      /** RPT-013 CA1 ; 23.A : seules les journées éligibles parmi celles données. */
+      validerLot: (journees: { delegue: string; date: string }[]) =>
+        requete<ResultatValidation>('/api/v1/rapports/lot/valider/', {
+          methode: 'POST',
+          corps: { journees },
+        }),
       /** DC-61 : les visites proposées dans ses rapports, pas encore replanifiées. */
       visitesProposees: () => requete<VisiteProposee[]>('/api/v1/rapports/visites-proposees/'),
       champs: () => requete<ChampRapport[]>('/api/v1/rapports/champs/'),

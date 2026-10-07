@@ -275,3 +275,63 @@ class PieceLueVue(VuePerimetre):
         reponse["Cache-Control"] = "private, no-store"
         reponse["X-Content-Type-Options"] = "nosniff"
         return reponse
+
+
+class ValidationRapportVue(VuePerimetre):
+    """RPT-013 : valider un rapport soumis, seul (mode `unitaire`, ou `remplacement`,
+    `escalade`, RPT-018)."""
+
+    actions = {"POST": VALIDER}
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.select_related("visite__planning"))
+
+    @extend_schema(request=None, responses=sf.RapportLuSerializer,
+                   operation_id="rapport_valider")  # fmt: skip
+    def post(self, request, id):
+        from .validation import valider_rapport
+
+        rapport = get_object_or_404(self.get_queryset(), pk=id)
+        rapport = valider_rapport(rapport, request.user)
+        return Response(sf.RapportLuSerializer(rapport).data)
+
+
+class ValidationJourneeVue(VuePerimetre):
+    """RPT-013 : valider une journée ; 22.A : tous ses rapports doivent être soumis."""
+
+    actions = {"POST": VALIDER}
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.none())
+
+    @extend_schema(request=sf.JourneeChoisieSerializer, responses=sf.ResultatValidationSerializer,
+                   operation_id="journee_valider")  # fmt: skip
+    def post(self, request):
+        from .validation import planning_du_jour, valider_journee
+
+        v = _lire(sf.JourneeChoisieSerializer, request)
+        pays = pays_requis(self.perimetre)
+        planning, titre = planning_du_jour(request.user, pays, v["delegue"], v["date"])
+        n = valider_journee(planning, v["date"], request.user, titre)
+        return Response(sf.ResultatValidationSerializer({"journees": 1, "rapports": n}).data)
+
+
+class ValidationLotVue(VuePerimetre):
+    """RPT-013 CA1, RG-035 : « Valider les n conformes » ; 23.A : seules les journées
+    conformes, complètes et sans horodatage douteux."""
+
+    actions = {"POST": VALIDER}
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.none())
+
+    @extend_schema(request=sf.ValidationLotSerializer, responses=sf.ResultatValidationSerializer,
+                   operation_id="lot_valider")  # fmt: skip
+    def post(self, request):
+        from .validation import valider_lot
+
+        v = _lire(sf.ValidationLotSerializer, request)
+        pays = pays_requis(self.perimetre)
+        resultat = valider_lot(request.user, pays,
+                               [(j["delegue"], j["date"]) for j in v["journees"]])  # fmt: skip
+        return Response(sf.ResultatValidationSerializer(resultat).data)

@@ -239,6 +239,10 @@ urlpatterns = [
     # 0.6.2 : une journée à consulter ; RPT-007 CA2 : une pièce jointe lue par l'encadrement
     path("rapports/journee/", rap.JourneeVue.as_view(), name="rapports-journee"),
     path("rapports/pieces/<uuid:id>/", rap.PieceLueVue.as_view(), name="rapport-piece-lue"),
+    # RPT-013, RPT-018 : valider un rapport, une journée, les journées conformes
+    path("rapports/<uuid:id>/valider/", rap.ValidationRapportVue.as_view(), name="rapport-valider"),
+    path("rapports/journee/valider/", rap.ValidationJourneeVue.as_view(), name="journee-valider"),
+    path("rapports/lot/valider/", rap.ValidationLotVue.as_view(), name="lot-valider"),
     # DC-61 : visites proposées dans les rapports, reprises à la préparation de la semaine
     path(
         "rapports/visites-proposees/",

@@ -9,23 +9,25 @@ douteux.
 
 Qui voit quoi : les délégués dont il est le responsable cette semaine-là (superviseur du
 poste, DM pour un superviseur-visiteur, RG-023), et ceux du superviseur qu'il remplace
-(ORG-013). Jamais ses propres journées.
+(ORG-013) ; le DM du périmètre, les journées en escalade (0.6.3). Jamais ses propres journées.
 
-[H] La file remonte sur quatre semaines (`SEMAINES`) : au-delà, une journée non validée relève
-des retards (RPT-017, 0.6.7).
+[D, 20.A] La file remonte sur quatre semaines (`SEMAINES`) : au-delà, une journée non validée
+relève des retards (RPT-017, 0.6.7).
 """
 
 from collections import defaultdict
 from datetime import timedelta
 
+from django.db import models
+
 from apps.planning import conformite
 from apps.planning.calendrier import lundi
 from apps.planning.etats import StatutPlanning, StatutVisite
-from apps.planning.models import Planning
-from apps.planning.services import supervise
+from apps.planning.models import ModeDecision, Planning
 from apps.socle.services import aujourdhui
 
 from .models import Rapport, StatutRapport
+from .validation import eligible_au_lot, mode_pour
 
 SEMAINES = 4
 #: Plannings dont les visites s'exécutent : approuvés, en cours ou terminés.
@@ -34,19 +36,25 @@ EXECUTES = (StatutPlanning.APPROUVE, StatutPlanning.EN_COURS, StatutPlanning.TER
 TRANSMIS = (StatutRapport.SOUMIS, StatutRapport.VALIDE)
 
 
-def _plannings(superviseur, pays) -> list[Planning]:
+def _plannings(utilisateur, pays) -> list[Planning]:
+    from apps.organisation.models import PerimetreReseau, actif_le
     from apps.organisation.services import remplaces_par
 
-    titulaires = [superviseur.pk, *(r.pk for r in remplaces_par(superviseur, pays))]
+    titulaires = [utilisateur.pk, *(r.pk for r in remplaces_par(utilisateur, pays))]
     debut = lundi(aujourdhui(pays)) - timedelta(weeks=SEMAINES - 1)
+    executes = Planning.objects.filter(pays=pays, statut__in=EXECUTES, semaine__gte=debut)
+    # Les postes rattachés (ou remplacés), et, pour l'escalade, ceux des réseaux du DM.
+    reseaux = PerimetreReseau.objects.filter(actif_le(aujourdhui(pays)), utilisateur=utilisateur)
     candidats = (
-        Planning.objects.filter(pays=pays, statut__in=EXECUTES, semaine__gte=debut,
-                                delegue__occupations__poste__rattachements__superviseur__in=titulaires)
-        .exclude(delegue=superviseur)
+        executes.filter(
+            models.Q(delegue__occupations__poste__rattachements__superviseur__in=titulaires)
+            | models.Q(delegue__occupations__poste__reseaux__in=reseaux.values("reseau_id"))
+        )
+        .exclude(delegue=utilisateur)
         .select_related("delegue", "pays")
         .distinct()
-    )  # fmt: skip
-    return [p for p in candidats if supervise(superviseur, p)]
+    )
+    return list(candidats)
 
 
 def _rapports(planning: Planning, jour) -> dict:
@@ -64,17 +72,20 @@ def _rapports(planning: Planning, jour) -> dict:
     }
 
 
-def journees_a_traiter(superviseur, pays) -> list[dict]:
+def journees_a_traiter(utilisateur, pays) -> list[dict]:
     """Par délégué, ses journées terminées et non validées, de la plus ancienne (CA1)."""
     today = aujourdhui(pays)
     par_delegue: dict = defaultdict(list)
     delegues = {}
-    for planning in _plannings(superviseur, pays):
+    for planning in _plannings(utilisateur, pays):
         jours = sorted(set(
             planning.visites.filter(archive_le__isnull=True, date__lt=today)
             .values_list("date", flat=True)
         ))  # fmt: skip
         for jour in jours:
+            mode = mode_pour(utilisateur, planning, jour)
+            if mode is None:
+                continue  # ni responsable, ni remplaçant, ni DM d'une journée en escalade
             journee = conformite.recalculer(planning, jour)
             if journee.fige_le is not None:
                 continue  # validée (0.6.3) : elle a quitté la file
@@ -85,6 +96,8 @@ def journees_a_traiter(superviseur, pays) -> list[dict]:
                     "planning": planning.pk,
                     "classement": journee.classement,
                     "ecarts": journee.ecarts,
+                    "escalade": mode == ModeDecision.ESCALADE,
+                    "eligible_lot": eligible_au_lot(planning, jour),
                     **_rapports(planning, jour),
                 }  # fmt: skip
             )

@@ -57,6 +57,16 @@ class StatutRapport(models.TextChoices):
     ROUVERT = "rouvert", "Rouvert"
 
 
+class ModeValidation(models.TextChoices):
+    """RG-034 : comment un rapport a été validé."""
+
+    UNITAIRE = "unitaire", "Validé seul"
+    JOURNEE = "journee", "Validé avec sa journée"
+    LOT = "lot", "Validé avec les journées conformes"
+    ESCALADE = "escalade", "Validé par escalade"
+    REMPLACEMENT = "remplacement", "Validé par le remplaçant"
+
+
 class RetourPrescripteur(models.TextChoices):
     """Retour du prescripteur sur un produit présenté (RPT-004)."""
 
@@ -113,6 +123,12 @@ class Rapport(ModeleDePays):
     #: RPT-010 CA1 [H] : l'heure du téléphone s'écartait de plus de 15 min de celle du serveur ;
     #: l'heure de réception a alors servi, et le superviseur le voit.
     horodatage_douteux = models.BooleanField(default=False)
+    #: RPT-013 CA2, RG-034 : qui a validé, quand, et comment.
+    valide_le = models.DateTimeField(null=True, blank=True)
+    valide_par = models.ForeignKey("identite.Utilisateur", null=True, blank=True,
+                                   on_delete=models.PROTECT, related_name="+")  # fmt: skip
+    mode_validation = models.CharField(max_length=12, choices=ModeValidation.choices,
+                                       blank=True)  # fmt: skip
 
     class Meta:
         ordering = ["-cree_le"]

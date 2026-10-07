@@ -6,7 +6,7 @@ from datetime import datetime
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.planning.models import Classement
+from apps.planning.models import Classement, ModeDecision
 from apps.planning.serializers import (
     ActiviteSerializer,
     DelegueSerializer,
@@ -33,6 +33,10 @@ class JourneeATraiterSerializer(serializers.Serializer):
     rapports_attendus = serializers.IntegerField()
     rapports_en_retard = serializers.IntegerField()
     horodatages_douteux = serializers.IntegerField()
+    #: [H] Ouverte au DM du périmètre par escalade (0.6.3).
+    escalade = serializers.BooleanField()
+    #: 23.A : conforme, complète et sans horodatage douteux ; validable avec le lot.
+    eligible_lot = serializers.BooleanField()
 
 
 class DelegueATraiterSerializer(serializers.Serializer):
@@ -71,10 +75,13 @@ class RapportLuSerializer(serializers.ModelSerializer):
     heure_telephone = serializers.SerializerMethodField()
     recu_le = serializers.SerializerMethodField()
     versions = serializers.SerializerMethodField()
+    #: RPT-013 CA2, RG-034 : validateur, date et mode.
+    valide_par = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
-        fields = ["id", "statut", "soumis_le", "en_retard", "horodatage_douteux",
+        fields = ["id", "statut", "valide_le", "valide_par", "mode_validation",
+                  "soumis_le", "en_retard", "horodatage_douteux",
                   "heure_telephone", "recu_le", "versions", "objectif_prevu", "resultat",
                   "resultat_obtenu", "presentations", "remises", "resume",
                   "prochaine_action_type", "prochaine_action", "prochaine_action_echeance",
@@ -104,6 +111,10 @@ class RapportLuSerializer(serializers.ModelSerializer):
     def get_recu_le(self, rapport) -> datetime | None:
         derniere = self._derniere(rapport)
         return derniere.recu_le if derniere else None
+
+    def get_valide_par(self, rapport) -> str | None:
+        p = rapport.valide_par
+        return f"{p.first_name} {p.last_name}".strip() if p else None
 
     def get_versions(self, rapport) -> int:
         return len(rapport.versions.all())
@@ -150,6 +161,10 @@ class JourneeSerializer(serializers.Serializer):
     ecarts = EcartConformiteSerializer(many=True)
     #: Validée : le classement ne bouge plus (VIS-010 CA3).
     fige = serializers.BooleanField()
+    #: À quel titre l'utilisateur valide : `direct`, `remplacement` ou `escalade`.
+    mode = serializers.ChoiceField(choices=ModeDecision.choices)
+    #: 22.A : visites effectuées dont le rapport n'est pas soumis ; la journée attend.
+    rapports_manquants = serializers.IntegerField()
     activites = ActiviteSerializer(many=True)
     visites = VisiteJourneeSerializer(many=True)
 
@@ -157,3 +172,19 @@ class JourneeSerializer(serializers.Serializer):
 class ChoixJourneeSerializer(serializers.Serializer):
     delegue = serializers.UUIDField()
     date = serializers.DateField()
+
+
+class JourneeChoisieSerializer(serializers.Serializer):
+    delegue = serializers.UUIDField()
+    date = serializers.DateField()
+
+
+class ValidationLotSerializer(serializers.Serializer):
+    """RPT-013 CA1 : les journées affichées ; seules les éligibles sont validées."""
+
+    journees = JourneeChoisieSerializer(many=True)
+
+
+class ResultatValidationSerializer(serializers.Serializer):
+    journees = serializers.IntegerField()
+    rapports = serializers.IntegerField()

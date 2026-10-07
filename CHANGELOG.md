@@ -2,6 +2,28 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.3] — Validation des rapports
+
+Troisième jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté (RPT-013, RPT-018, RG-034, RG-035)
+
+- « Valider ce rapport » sous chaque rapport soumis (mode `unitaire`).
+- « Valider la journée », après confirmation (mode `journee`). Décision 22.A : la journée se valide quand tous ses rapports sont soumis ; sinon le bouton est inactif et la page dit combien il en manque.
+- « Valider les n journées conformes » sur « À traiter » (mode `lot`). **CA1** : seules les journées conformes. Décision 23.A : et seulement si tous leurs rapports sont soumis, sans horodatage douteux.
+- **CA2** : chaque rapport validé porte son validateur, la date et le mode, affichés sous le rapport ; chaque validation est inscrite au journal d'audit.
+- Une journée dont tous les rapports sont validés est validée : son classement est figé et elle quitte « À traiter ».
+- **RPT-018** : le remplaçant valide en mode `remplacement` ; le DM du périmètre valide en mode `escalade` une journée dont un rapport attend depuis plus de 24 heures ouvrées [H], marquée « Escaladée » dans sa file.
+
+### Design
+
+Revue sur le rendu réel (bureau, téléphone). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Journée, rapport validé | « Validé le … par … · seul » : le mode, isolé en fin de ligne, se lisait mal. | « Validé seul le 7 oct., 21:28 par … » ; « Validé en remplacement… », « par escalade… ». |
+| À traiter, après le lot | « 4 journées validées (2 rapports) » : l'accord de « rapport » ne suivait pas le nombre. | « 4 journées validées, 2 rapports. », « 1 rapport », « aucun rapport ». |
+
 ## [0.6.2] — Consultation d'une journée
 
 Deuxième jalon du cycle 0.6 « Validation des rapports ».

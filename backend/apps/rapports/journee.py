@@ -16,22 +16,15 @@ from datetime import date
 from django.http import Http404
 
 from apps.planning import conformite
-from apps.planning.calendrier import lundi
 from apps.planning.etats import StatutVisite
-from apps.planning.models import Planning
-from apps.planning.services import supervise
 
 from .models import StatutRapport
 
 
 def journee(superviseur, pays, delegue_id, jour: date) -> dict:
-    planning = (
-        Planning.objects.filter(pays=pays, delegue_id=delegue_id, semaine=lundi(jour))
-        .select_related("delegue", "pays")
-        .first()
-    )
-    if planning is None or not supervise(superviseur, planning):
-        raise Http404
+    from .validation import manquants, planning_du_jour
+
+    planning, mode = planning_du_jour(superviseur, pays, delegue_id, jour)
     visites = list(
         planning.visites.filter(archive_le__isnull=True, date=jour)
         .select_related(
@@ -40,6 +33,7 @@ def journee(superviseur, pays, delegue_id, jour: date) -> dict:
             "motif_ecart",
             "rapport__resultat",
             "rapport__prochaine_action_type",
+            "rapport__valide_par",
         )  # fmt: skip
         .prefetch_related("rapport__pieces_jointes", "rapport__versions")
         .order_by("heure", "ordre")
@@ -64,6 +58,10 @@ def journee(superviseur, pays, delegue_id, jour: date) -> dict:
         "classement": calcul.classement,
         "ecarts": calcul.ecarts,
         "fige": calcul.fige_le is not None,
+        #: À quel titre l'utilisateur valide : responsable, remplaçant, ou DM par escalade.
+        "mode": mode,
+        #: 22.A : la journée se valide quand tous ses rapports sont soumis.
+        "rapports_manquants": manquants(planning, jour),
         "activites": list(planning.activites.filter(archive_le__isnull=True, date=jour)),
         "visites": visites,
     }

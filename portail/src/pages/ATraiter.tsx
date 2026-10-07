@@ -1,14 +1,28 @@
 import type { DelegueATraiter, JourneeATraiter } from '@innov/api-client';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
-import { Box, Button, Card, Skeleton, Stack, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
+import {
+  Box,
+  Button,
+  Card,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Skeleton,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
 import { texteEcart } from '../composants/conformiteTextes';
-import { BarreChiffres, Chiffre, EnTetePage, EtatVide } from '../composants/Elements';
+import { BarreChiffres, Chiffre, EnTetePage, Etiquette, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
-import { useSession } from '../contexteSession';
+import { useNotifier } from '../contexteNotifications';
+import { messageErreur, useSession } from '../contexteSession';
 
 /**
  * « À traiter » du superviseur (RPT-012, 0.6.1 ; DC-47, engagement 3) : les journées terminées
@@ -20,6 +34,9 @@ export default function ATraiter() {
   const { t } = useTranslation();
   const { client } = useSession();
   const file = useQuery({ queryKey: ['rapports-a-traiter'], queryFn: client.rapports.aTraiter });
+  const requetes = useQueryClient();
+  const notifier = useNotifier();
+  const [confirmation, setConfirmation] = useState(false);
 
   if (file.isError) {
     return (
@@ -43,6 +60,25 @@ export default function ATraiter() {
   const rapports = journees.reduce((n, j) => n + j.rapports_a_valider, 0);
   const attendus = journees.reduce((n, j) => n + j.rapports_attendus, 0);
   const plannings = file.data.plannings_a_valider;
+  // RPT-013 CA1, 23.A : le lot ne prend que les journées que le serveur dit éligibles.
+  const eligibles = file.data.delegues.flatMap((d) =>
+    d.journees.filter((j) => j.eligible_lot).map((j) => ({ delegue: d.delegue.id, date: j.date })),
+  );
+  async function validerLot() {
+    setConfirmation(false);
+    try {
+      const r = await client.rapports.validerLot(eligibles);
+      notifier(
+        t('validationRapports.lotFait', {
+          count: r.journees,
+          rapports: t('validationRapports.rapportsN', { count: r.rapports }),
+        }),
+      );
+      await requetes.invalidateQueries({ queryKey: ['rapports-a-traiter'] });
+    } catch (erreur) {
+      notifier(messageErreur(erreur, t('erreurs.reseau')), 'error');
+    }
+  }
 
   return (
     <Stack spacing={2.5}>
@@ -51,7 +87,28 @@ export default function ATraiter() {
         sousTitre={
           journees.length ? t('aTraiter.sousTitre', { count: journees.length }) : undefined
         }
+        actions={
+          eligibles.length > 0 ? (
+            <Button variant="contained" onClick={() => setConfirmation(true)}>
+              {t('validationRapports.lot', { count: eligibles.length })}
+            </Button>
+          ) : undefined
+        }
       />
+      <Dialog open={confirmation} onClose={() => setConfirmation(false)}>
+        <DialogTitle>
+          {t('validationRapports.confirmerLot', { count: eligibles.length })}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>{t('validationRapports.confirmerLotTexte')}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmation(false)}>{t('commun.annuler')}</Button>
+          <Button variant="contained" onClick={() => void validerLot()}>
+            {t('validationRapports.lot', { count: eligibles.length })}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <BarreChiffres>
         <Chiffre libelle={t('aTraiter.chiffres.aVerifier')} valeur={aVerifier} ton="warning" />
         <Chiffre libelle={t('aTraiter.chiffres.rapports')} valeur={rapports} />
@@ -204,6 +261,7 @@ function LigneJournee({ journee: j, delegue }: { journee: JourneeATraiter; deleg
               ? t('conformite.conforme')
               : t('conformite.aVerifier', { count: j.ecarts.length })}
           </Typography>
+          {j.escalade && <Etiquette ton="info">{t('validationRapports.escalade')}</Etiquette>}
         </Stack>
         <Typography variant="body2" sx={{ pl: 3.5, color: 'text.secondary' }}>
           {etat.join(' · ')}

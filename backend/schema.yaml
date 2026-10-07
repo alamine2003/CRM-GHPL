@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.6.2
+  version: 0.6.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3588,6 +3588,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Qualite'
           description: ''
+  /api/v1/rapports/{id}/valider/:
+    post:
+      operationId: rapport_valider
+      description: |-
+        RPT-013 : valider un rapport soumis, seul (mode `unitaire`, ou `remplacement`,
+        `escalade`, RPT-018).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - rapports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RapportLu'
+          description: ''
   /api/v1/rapports/a-traiter/:
     get:
       operationId: rapports_a_traiter
@@ -3728,6 +3752,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Journee'
+          description: ''
+  /api/v1/rapports/journee/valider/:
+    post:
+      operationId: journee_valider
+      description: 'RPT-013 : valider une journée ; 22.A : tous ses rapports doivent
+        être soumis.'
+      tags:
+      - rapports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JourneeChoisie'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/JourneeChoisie'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JourneeChoisie'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultatValidation'
+          description: ''
+  /api/v1/rapports/lot/valider/:
+    post:
+      operationId: lot_valider
+      description: |-
+        RPT-013 CA1, RG-035 : « Valider les n conformes » ; 23.A : seules les journées
+        conformes, complètes et sans horodatage douteux.
+      tags:
+      - rapports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationLot'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ValidationLot'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ValidationLot'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultatValidation'
           description: ''
   /api/v1/rapports/pieces/{id}/:
     get:
@@ -7244,6 +7325,10 @@ components:
             $ref: '#/components/schemas/EcartConformite'
         fige:
           type: boolean
+        mode:
+          $ref: '#/components/schemas/ModeDecisionEnum'
+        rapports_manquants:
+          type: integer
         activites:
           type: array
           items:
@@ -7259,7 +7344,9 @@ components:
       - delegue
       - ecarts
       - fige
+      - mode
       - planning
+      - rapports_manquants
       - visites
     JourneeATraiter:
       type: object
@@ -7291,17 +7378,35 @@ components:
           type: integer
         horodatages_douteux:
           type: integer
+        escalade:
+          type: boolean
+        eligible_lot:
+          type: boolean
       required:
       - classement
       - date
       - ecarts
       - effectuees
+      - eligible_lot
+      - escalade
       - horodatages_douteux
       - planning
       - rapports_a_valider
       - rapports_attendus
       - rapports_en_retard
       - visites
+    JourneeChoisie:
+      type: object
+      properties:
+        delegue:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - delegue
     Kilometrage:
       type: object
       description: Kilométrage estimé à vol d'oiseau, sans montant (PLN-010).
@@ -7515,6 +7620,20 @@ components:
         * `direct` - Décision du responsable du poste
         * `remplacement` - Décision du remplaçant
         * `escalade` - Décision par escalade
+    ModeValidationEnum:
+      enum:
+      - unitaire
+      - journee
+      - lot
+      - escalade
+      - remplacement
+      type: string
+      description: |-
+        * `unitaire` - Validé seul
+        * `journee` - Validé avec sa journée
+        * `lot` - Validé avec les journées conformes
+        * `escalade` - Validé par escalade
+        * `remplacement` - Validé par le remplaçant
     Modification:
       type: object
       properties:
@@ -9406,6 +9525,19 @@ components:
           allOf:
           - $ref: '#/components/schemas/StatutRapportEnum'
           readOnly: true
+        valide_le:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        valide_par:
+          type: string
+          nullable: true
+          readOnly: true
+        mode_validation:
+          allOf:
+          - $ref: '#/components/schemas/ModeValidationEnum'
+          readOnly: true
         soumis_le:
           type: string
           format: date-time
@@ -9480,6 +9612,7 @@ components:
       - heure_telephone
       - horodatage_douteux
       - id
+      - mode_validation
       - objectif_prevu
       - pieces_jointes
       - presentations
@@ -9491,6 +9624,8 @@ components:
       - resume
       - soumis_le
       - statut
+      - valide_le
+      - valide_par
       - versions
       - visite_proposee
     RapportStatutEnum:
@@ -9797,6 +9932,16 @@ components:
       required:
       - ajoutes
       - deja_presents
+    ResultatValidation:
+      type: object
+      properties:
+        journees:
+          type: integer
+        rapports:
+          type: integer
+      required:
+      - journees
+      - rapports
     Resume:
       type: object
       properties:
@@ -10851,6 +10996,17 @@ components:
       - parent
       - pays
       - utilisations
+    ValidationLot:
+      type: object
+      description: 'RPT-013 CA1 : les journées affichées ; seules les éligibles sont
+        validées.'
+      properties:
+        journees:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourneeChoisie'
+      required:
+      - journees
     Version:
       type: object
       description: Une version figée et sa décision, avec le résumé de ce qui a changé

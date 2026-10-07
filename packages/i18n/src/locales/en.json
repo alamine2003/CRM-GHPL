@@ -2188,5 +2188,41 @@
     "echeance": "To do by {{date}}",
     "pieces": "Attachments",
     "ouvrir": "Open the day"
+  },
+  "validationRapports": {
+    "journee": "Approve the day",
+    "rapport": "Approve this report",
+    "journeeValidee": "Day approved: its classification no longer changes and it has left “To review”.",
+    "manquants_one": "{{count}} report has not been submitted yet: the day can be approved once it is. Submitted reports can already be approved one by one.",
+    "manquants_other": "{{count}} reports have not been submitted yet: the day can be approved once they are. Submitted reports can already be approved one by one.",
+    "confirmerJournee": "Approve the day?",
+    "confirmerJourneeTexte_one": "The day's submitted report will be approved and the day locked.",
+    "confirmerJourneeTexte_other": "The day's {{count}} submitted reports will be approved and the day locked.",
+    "journeeFaite_one": "Day approved ({{count}} report).",
+    "journeeFaite_other": "Day approved ({{count}} reports).",
+    "rapportFait": "Report approved.",
+    "valideLe": "Approved {{mode}} on {{date}} by {{par}}",
+    "modes": {
+      "unitaire": "on its own",
+      "journee": "with its day",
+      "lot": "with the compliant days",
+      "escalade": "by escalation",
+      "remplacement": "as a deputy"
+    },
+    "titres": {
+      "remplacement": "You are approving as the deputy of this rep's supervisor.",
+      "escalade": "Escalated day: its reports have been waiting longer than the country delay. You approve it by escalation; the supervisor keeps control."
+    },
+    "lot_one": "Approve the compliant day",
+    "lot_other": "Approve the {{count}} compliant days",
+    "confirmerLot_one": "Approve the compliant day?",
+    "confirmerLot_other": "Approve the {{count}} compliant days?",
+    "confirmerLotTexte": "Only compliant days whose reports are all submitted and without a doubtful timestamp are approved. The others stay here, to open one by one.",
+    "lotFait_one": "{{count}} day approved, {{rapports}}.",
+    "lotFait_other": "{{count}} days approved, {{rapports}}.",
+    "escalade": "Escalated",
+    "rapportsN_one": "{{count}} report",
+    "rapportsN_other": "{{count}} reports",
+    "rapportsN_zero": "no report"
   }
 }

@@ -3,8 +3,22 @@ import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import PictureAsPdfRounded from '@mui/icons-material/PictureAsPdfRounded';
-import { Box, Button, Card, Skeleton, Stack, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Skeleton,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as LienRouteur } from 'react-router';
@@ -30,6 +44,14 @@ export default function JourneeRapports({ cle }: { cle: string }) {
     queryKey: ['rapports-journee', delegue, date],
     queryFn: () => client.rapports.journee(delegue, date),
   });
+  const requetes = useQueryClient();
+  const notifier = useNotifier();
+  const [confirmation, setConfirmation] = useState(false);
+  const rafraichir = () =>
+    Promise.all([
+      requetes.invalidateQueries({ queryKey: ['rapports-journee', delegue, date] }),
+      requetes.invalidateQueries({ queryKey: ['rapports-a-traiter'] }),
+    ]);
   const jour = new Intl.DateTimeFormat(i18n.language, {
     weekday: 'long',
     day: 'numeric',
@@ -60,6 +82,16 @@ export default function JourneeRapports({ cle }: { cle: string }) {
   }
   const j = journee.data;
   const conforme = j.classement === 'conforme';
+  async function validerJournee() {
+    setConfirmation(false);
+    try {
+      const r = await client.rapports.validerJournee(delegue, date);
+      notifier(t('validationRapports.journeeFaite', { count: r.rapports }));
+      await rafraichir();
+    } catch (erreur) {
+      notifier(messageErreur(erreur, t('erreurs.reseau')), 'error');
+    }
+  }
   return (
     <Stack spacing={2.5}>
       <Box sx={{ ml: -1 }}>{retour}</Box>
@@ -77,10 +109,47 @@ export default function JourneeRapports({ cle }: { cle: string }) {
             {jour}
           </Typography>
         </Box>
-        <Button variant="outlined" component={LienRouteur} to={`/validation/${j.planning}`}>
-          {t('aTraiter.consulter')}
-        </Button>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+          <Button variant="outlined" component={LienRouteur} to={`/validation/${j.planning}`}>
+            {t('aTraiter.consulter')}
+          </Button>
+          {!j.fige && (
+            <Button
+              variant="contained"
+              disabled={j.rapports_manquants > 0}
+              onClick={() => setConfirmation(true)}
+            >
+              {t('validationRapports.journee')}
+            </Button>
+          )}
+        </Stack>
       </Stack>
+      {j.fige ? (
+        <Alert severity="success">{t('validationRapports.journeeValidee')}</Alert>
+      ) : j.rapports_manquants > 0 ? (
+        <Alert severity="info">
+          {t('validationRapports.manquants', { count: j.rapports_manquants })}
+        </Alert>
+      ) : null}
+      {j.mode !== 'direct' && (
+        <Alert severity="info">{t(`validationRapports.titres.${j.mode}`)}</Alert>
+      )}
+      <Dialog open={confirmation} onClose={() => setConfirmation(false)}>
+        <DialogTitle>{t('validationRapports.confirmerJournee')}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {t('validationRapports.confirmerJourneeTexte', {
+              count: j.visites.filter((v) => v.rapport?.statut === 'soumis').length,
+            })}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmation(false)}>{t('commun.annuler')}</Button>
+          <Button variant="contained" onClick={() => void validerJournee()}>
+            {t('validationRapports.journee')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Card component="section" aria-labelledby="controles-journee">
         <Box sx={{ px: 2, py: 1.5 }}>
@@ -129,7 +198,12 @@ export default function JourneeRapports({ cle }: { cle: string }) {
       <Stack spacing={1.5} component="ol" sx={{ listStyle: 'none', p: 0, m: 0 }}>
         {j.visites.map((v) => (
           <Box component="li" key={v.id}>
-            <CarteVisite visite={v} ecarts={j.ecarts.filter((e) => e.visite === v.id)} />
+            <CarteVisite
+              visite={v}
+              ecarts={j.ecarts.filter((e) => e.visite === v.id)}
+              fige={j.fige}
+              surValide={rafraichir}
+            />
           </Box>
         ))}
       </Stack>
@@ -177,7 +251,17 @@ function deroulement(v: VisiteJournee, t: Traduire, langue: string): string[] {
   return lignes;
 }
 
-function CarteVisite({ visite: v, ecarts }: { visite: VisiteJournee; ecarts: Journee['ecarts'] }) {
+function CarteVisite({
+  visite: v,
+  ecarts,
+  fige,
+  surValide,
+}: {
+  visite: VisiteJournee;
+  ecarts: Journee['ecarts'];
+  fige: boolean;
+  surValide: () => Promise<unknown>;
+}) {
   const { t, i18n } = useTranslation();
   return (
     <Card component="article" aria-label={[v.heure, v.prospect].filter(Boolean).join(' · ')}>
@@ -212,7 +296,7 @@ function CarteVisite({ visite: v, ecarts }: { visite: VisiteJournee; ecarts: Jou
           </Stack>
         ))}
         {v.rapport ? (
-          <Rapport rapport={v.rapport} />
+          <Rapport rapport={v.rapport} fige={fige} surValide={surValide} />
         ) : v.rapport_statut ? (
           <Typography variant="body2" sx={{ pt: 1, color: 'warning.main', fontWeight: 600 }}>
             {v.rapport_statut === 'brouillon' ? t('journee.brouillon') : t('journee.attendu')}
@@ -223,8 +307,39 @@ function CarteVisite({ visite: v, ecarts }: { visite: VisiteJournee; ecarts: Jou
   );
 }
 
-function Rapport({ rapport: r }: { rapport: RapportLu }) {
+function Rapport({
+  rapport: r,
+  fige,
+  surValide,
+}: {
+  rapport: RapportLu;
+  fige: boolean;
+  surValide: () => Promise<unknown>;
+}) {
   const { t, i18n } = useTranslation();
+  const { client } = useSession();
+  const notifier = useNotifier();
+  const [enCours, setEnCours] = useState(false);
+  async function valider() {
+    setEnCours(true);
+    try {
+      await client.rapports.valider(r.id);
+      notifier(t('validationRapports.rapportFait'));
+      await surValide();
+    } catch (erreur) {
+      notifier(messageErreur(erreur, t('erreurs.reseau')), 'error');
+    } finally {
+      setEnCours(false);
+    }
+  }
+  const valideLe = r.valide_le
+    ? new Intl.DateTimeFormat(i18n.language, {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(r.valide_le))
+    : null;
   const soumis = r.soumis_le
     ? new Intl.DateTimeFormat(i18n.language, {
         day: 'numeric',
@@ -255,7 +370,27 @@ function Rapport({ rapport: r }: { rapport: RapportLu }) {
           <Etiquette ton="warning">{t('journee.horodatageDouteux')}</Etiquette>
         )}
         {r.versions > 1 && <Etiquette>{t('journee.versions', { count: r.versions })}</Etiquette>}
+        {r.statut === 'soumis' && !fige && (
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={enCours}
+            onClick={() => void valider()}
+            sx={{ ml: 'auto' }}
+          >
+            {t('validationRapports.rapport')}
+          </Button>
+        )}
       </Stack>
+      {r.statut === 'valide' && valideLe && (
+        <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 600, pt: 0.5 }}>
+          {t('validationRapports.valideLe', {
+            date: valideLe,
+            par: r.valide_par ?? '—',
+            mode: t(`validationRapports.modes.${r.mode_validation || 'unitaire'}`),
+          })}
+        </Typography>
+      )}
       {r.horodatage_douteux && (
         <Typography variant="body2" sx={{ color: 'text.secondary', pt: 0.5 }}>
           {t('journee.horodatageDetail', {

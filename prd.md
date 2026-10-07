@@ -704,6 +704,16 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.44 Validation des rapports (mise en œuvre 0.6.3)
+
+- **Valider un rapport** (RPT-013, mode `unitaire`) : sur la journée, « Valider ce rapport » sous chaque rapport soumis.
+- **Valider une journée** (mode `journee`) : « Valider la journée », après confirmation, valide tous ses rapports soumis. [D, 7 octobre 2026, 22.A] Une journée se valide quand **tous** ses rapports sont soumis : tant qu'une visite effectuée n'a pas son rapport soumis, le bouton est inactif et la page dit combien il en manque ; les rapports soumis se valident déjà un par un.
+- **Valider le lot** (mode `lot`) : sur « À traiter », « Valider les n journées conformes », après confirmation. **CA1** : seules les journées « conformes » sont validées (RG-035). [D, 7 octobre 2026, 23.A] Il faut aussi que tous leurs rapports soient soumis et qu'aucun n'ait un horodatage douteux ; les autres restent dans la file, à ouvrir une par une.
+- **CA2** (RG-034) : chaque rapport validé porte son validateur, la date et le mode ; la journée l'affiche (« Validé seul le 7 oct., 21:28 par … »). Chaque validation est inscrite au journal d'audit.
+- **Journée validée** : quand tous ses rapports sont validés (par l'un des trois gestes), la journée est validée : son classement de conformité est figé (VIS-010 CA3) et elle quitte « À traiter ». Une journée sans visite effectuée se valide aussi, avec le lot ou d'un geste.
+- **Remplacement et escalade** (RPT-018) : le remplaçant d'un superviseur valide en mode `remplacement`. [H] Quand un rapport soumis attend depuis plus que le délai d'escalade du pays (24 heures ouvrées, le paramètre des plannings, PLN-016), sa journée s'ouvre au DM du périmètre, qui la voit dans « À traiter » marquée « Escaladée » et valide en mode `escalade` ; le superviseur garde la main. **CA1** : le mode se lit sous chaque rapport validé. Les notifications de l'escalade arrivent en 0.6.8.
+- Aucune validation automatique (RG-035). Rouvrir un rapport validé arrive en 0.6.6.
+
 ### 14.43 Consultation d'une journée (mise en œuvre 0.6.2)
 
 - **Écran** : depuis « À traiter », « Ouvrir la journée » montre une journée d'un délégué. En tête, ses contrôles (« Conforme » ou « À vérifier » et chaque écart) et ses activités (indisponibilité, accompagnement…) ; « Consulter la semaine » ouvre le planning.

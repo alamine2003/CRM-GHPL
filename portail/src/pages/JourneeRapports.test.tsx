@@ -12,6 +12,9 @@ import JourneeRapports from './JourneeRapports';
 const RAPPORT = {
   id: 'r1',
   statut: 'soumis',
+  valide_le: null,
+  valide_par: null,
+  mode_validation: '',
   soumis_le: '2026-10-13T20:00:00Z',
   en_retard: true,
   horodatage_douteux: true,
@@ -61,6 +64,8 @@ const JOURNEE = {
   planning: 'pl1',
   classement: 'a_verifier',
   fige: false,
+  mode: 'direct',
+  rapports_manquants: 1,
   ecarts: [
     {
       code: 'distance',
@@ -107,12 +112,14 @@ const JOURNEE = {
   ],
 } as unknown as Journee;
 
-function rendre() {
+function rendre(journee: Journee = JOURNEE) {
   const piece = vi.fn(async () => new Blob(['%PDF'], { type: 'application/pdf' }));
+  const valider = vi.fn(async () => ({ ...RAPPORT, statut: 'valide' }));
+  const validerJournee = vi.fn(async () => ({ journees: 1, rapports: 1 }));
   const session = {
     etat: { statut: 'chargement' },
     client: {
-      rapports: { journee: vi.fn(async () => JOURNEE), piece },
+      rapports: { journee: vi.fn(async () => journee), piece, valider, validerJournee },
     } as unknown as ClientApi,
   } as unknown as Session;
   render(
@@ -126,7 +133,7 @@ function rendre() {
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { piece };
+  return { piece, valider, validerJournee };
 }
 
 beforeEach(async () => {
@@ -188,5 +195,46 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
     const absent = screen.getByRole('article', { name: '15:00 · Malick BA' });
     expect(within(absent).getByText('Prospect absent')).toBeInTheDocument();
     expect(within(absent).getByText('Motif : Cabinet fermé — Revenir jeudi')).toBeInTheDocument();
+  });
+
+  it('22.A : la journée ne se valide pas tant qu’un rapport n’est pas soumis', async () => {
+    const { valider } = rendre();
+    const bouton = await screen.findByRole('button', { name: 'Valider la journée' });
+    expect(bouton).toBeDisabled();
+    expect(screen.getByText(/1 rapport n.est pas encore soumis/)).toBeInTheDocument();
+    // RPT-013 : le rapport soumis se valide déjà seul.
+    fireEvent.click(screen.getByRole('button', { name: 'Valider ce rapport' }));
+    await waitFor(() => expect(valider).toHaveBeenCalledWith('r1'));
+  });
+
+  it('RPT-013 : la journée complète se valide après confirmation', async () => {
+    const { validerJournee } = rendre({ ...JOURNEE, rapports_manquants: 0 });
+    fireEvent.click(await screen.findByRole('button', { name: 'Valider la journée' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Valider la journée' }));
+    await waitFor(() => expect(validerJournee).toHaveBeenCalledWith('d1', '2026-10-13'));
+  });
+
+  it('RPT-013 CA2, RPT-018 CA1 : un rapport validé dit par qui, quand et comment', async () => {
+    const visites = JOURNEE.visites.map((v, i) =>
+      i === 0
+        ? {
+            ...v,
+            rapport_statut: 'valide',
+            rapport: {
+              ...RAPPORT,
+              statut: 'valide',
+              valide_le: '2026-10-14T08:00:00Z',
+              valide_par: 'Awa FICTIVE',
+              mode_validation: 'remplacement',
+            },
+          }
+        : v,
+    );
+    rendre({ ...JOURNEE, visites } as unknown as Journee);
+    expect(
+      await screen.findByText(/Validé en remplacement le .* par Awa FICTIVE/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Valider ce rapport' })).toBeNull();
   });
 });

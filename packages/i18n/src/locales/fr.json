@@ -2188,5 +2188,41 @@
     "echeance": "À faire d'ici le {{date}}",
     "pieces": "Pièces jointes",
     "ouvrir": "Ouvrir la journée"
+  },
+  "validationRapports": {
+    "journee": "Valider la journée",
+    "rapport": "Valider ce rapport",
+    "journeeValidee": "Journée validée : son classement ne bouge plus et elle a quitté « À traiter ».",
+    "manquants_one": "{{count}} rapport n'est pas encore soumis : la journée se validera quand il le sera. Les rapports soumis se valident déjà un par un.",
+    "manquants_other": "{{count}} rapports ne sont pas encore soumis : la journée se validera quand ils le seront. Les rapports soumis se valident déjà un par un.",
+    "confirmerJournee": "Valider la journée ?",
+    "confirmerJourneeTexte_one": "Le rapport soumis de la journée sera validé, et la journée figée.",
+    "confirmerJourneeTexte_other": "Les {{count}} rapports soumis de la journée seront validés, et la journée figée.",
+    "journeeFaite_one": "Journée validée ({{count}} rapport).",
+    "journeeFaite_other": "Journée validée ({{count}} rapports).",
+    "rapportFait": "Rapport validé.",
+    "valideLe": "Validé {{mode}} le {{date}} par {{par}}",
+    "modes": {
+      "unitaire": "seul",
+      "journee": "avec sa journée",
+      "lot": "avec les journées conformes",
+      "escalade": "par escalade",
+      "remplacement": "en remplacement"
+    },
+    "titres": {
+      "remplacement": "Vous validez en remplacement du superviseur de ce délégué.",
+      "escalade": "Journée escaladée : ses rapports attendent depuis plus que le délai du pays. Vous la validez par escalade ; le superviseur garde la main."
+    },
+    "lot_one": "Valider la journée conforme",
+    "lot_other": "Valider les {{count}} journées conformes",
+    "confirmerLot_one": "Valider la journée conforme ?",
+    "confirmerLot_other": "Valider les {{count}} journées conformes ?",
+    "confirmerLotTexte": "Seules les journées conformes, dont tous les rapports sont soumis et sans horodatage douteux, sont validées. Les autres restent ici, à ouvrir une par une.",
+    "lotFait_one": "{{count}} journée validée, {{rapports}}.",
+    "lotFait_other": "{{count}} journées validées, {{rapports}}.",
+    "escalade": "Escaladée",
+    "rapportsN_one": "{{count}} rapport",
+    "rapportsN_other": "{{count}} rapports",
+    "rapportsN_zero": "aucun rapport"
   }
 }
