@@ -18,6 +18,7 @@ jest.mock('../src/baseLocale', () => ({
 }));
 const mockPousser = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPousser }) }));
+jest.mock('expo-crypto', () => ({ randomUUID: () => 'indispo-1' }));
 
 const visite = (id: string, heure: string, nom: string, date = '2026-10-13'): VisiteProgramme => ({
   id,
@@ -226,4 +227,85 @@ test('DC-51 : « Je suis indisponible aujourd’hui » justifie la journée sans
   );
   expect(await screen.findByText(/Indisponibilité déclarée/)).toBeTruthy();
   expect(screen.queryByText('Prochaine visite')).toBeNull();
+});
+
+test.each([
+  ['attendu', 'Rapport à rédiger', 'Rapport en brouillon'],
+  ['brouillon', 'Rapport en brouillon', 'Rapport à rédiger'],
+] as const)(
+  'RPT-001 CA1 : sous une visite effectuée du jour, rapport %s → « %s »',
+  async (statut, libelle, absent) => {
+    const faite = { ...visite('v1', '09:00', 'PREMIER'), statut: 'effectuee' as const };
+    const jours = PROGRAMME.jours.map((j) =>
+      j.date === '2026-10-13'
+        ? { ...j, visites: [{ ...faite, rapport_statut: statut }, visite('v2', '11:00', 'SECOND')] }
+        : j,
+    );
+    await rendre(jest.fn(async () => ({ ...PROGRAMME, prochaine: 'v2', jours })));
+    expect(await screen.findByText(libelle)).toBeTruthy();
+    expect(screen.queryByText(absent)).toBeNull();
+  },
+);
+
+test('RPT-001 CA1 : soumis, le rapport ne s’affiche plus sous la visite effectuée', async () => {
+  const faite = {
+    ...visite('v1', '09:00', 'PREMIER'),
+    statut: 'effectuee' as const,
+    rapport_statut: 'soumis' as const,
+  };
+  const jours = PROGRAMME.jours.map((j) =>
+    j.date === '2026-10-13' ? { ...j, visites: [faite, visite('v2', '11:00', 'SECOND')] } : j,
+  );
+  await rendre(jest.fn(async () => ({ ...PROGRAMME, prochaine: 'v2', jours })));
+  expect(await screen.findByText('Dr Awa PREMIER')).toBeTruthy();
+  expect(screen.queryByText('Rapport à rédiger')).toBeNull();
+  expect(screen.queryByText('Rapport en brouillon')).toBeNull();
+});
+
+test('DC-51 : sans réseau, l’indisponibilité déclarée attend dans la file', async () => {
+  const declarerIndisponibilite = jest.fn(async () => {
+    throw new TypeError('Network request failed');
+  });
+  // Une visite le matin, une l'après-midi.
+  const jours = PROGRAMME.jours.map((j) =>
+    j.date === '2026-10-13'
+      ? { ...j, visites: [visite('v1', '09:00', 'PREMIER'), visite('v2', '15:00', 'SECOND')] }
+      : j,
+  );
+  const programme = { ...PROGRAMME, jours };
+  mockMemoire.set('programme.courant', { valeur: programme, maj: '2026-10-13T06:30:00.000Z' });
+  const session = {
+    etat: { statut: 'connecte' },
+    client: {
+      plannings: {
+        programme: jest.fn(async () => programme),
+        semaine: jest.fn(async () => ({})),
+        declarerIndisponibilite,
+      },
+    } as unknown as ClientApi,
+  } as unknown as Session;
+  await render(
+    <ContexteSession.Provider value={session}>
+      <ProgrammeDuJour />
+    </ContexteSession.Provider>,
+  );
+  expect(await screen.findByText('Prochaine visite')).toBeTruthy();
+  expect(screen.getByLabelText(/^Prochaine visite : .*PREMIER/)).toBeTruthy();
+  await fireEvent.press(screen.getByText(/Je suis indisponible aujourd.hui/));
+  await fireEvent.press(screen.getByText('Le matin'));
+  await fireEvent.press(screen.getByText(/Déclarer l.indisponibilité/));
+  expect(await screen.findByText(/l'indisponibilité est gardée sur le téléphone/)).toBeTruthy();
+  const file = mockMemoire.get('planning.attente')?.valeur as {
+    type: string;
+    saisie: { id: string; periode: string };
+  }[];
+  expect(file).toEqual([
+    expect.objectContaining({
+      type: 'indisponibilite',
+      saisie: { id: 'indispo-1', periode: 'matin' },
+    }),
+  ]);
+  // La visite du matin est justifiée sur le téléphone : la prochaine passe à celle de l'après-midi.
+  expect(screen.getByLabelText(/^Prochaine visite : .*SECOND/)).toBeTruthy();
+  expect(screen.queryByLabelText(/^Prochaine visite : .*PREMIER/)).toBeNull();
 });

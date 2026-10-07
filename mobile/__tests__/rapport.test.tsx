@@ -242,6 +242,13 @@ test('RPT-003 : une visite imprévue rappelle sa justification à la place', asy
   expect(screen.getByText('Croisé à la pharmacie')).toBeTruthy();
 });
 
+test('RPT-003 : une visite planifiée sans objectif le dit en tête du rapport', async () => {
+  await rendre({ rapport: jest.fn(async () => ({ ...BROUILLON, objectif_prevu: '' })) });
+  expect(await screen.findByText('Objectif prévu')).toBeTruthy();
+  expect(screen.getByText("Aucun objectif n'était prévu pour cette visite.")).toBeTruthy();
+  expect(screen.queryByText('Visite imprévue — justification')).toBeNull();
+});
+
 test('Sans réseau, le rapport ne s’ouvre pas et le dit', async () => {
   await rendre({
     rapport: jest.fn(async () => {

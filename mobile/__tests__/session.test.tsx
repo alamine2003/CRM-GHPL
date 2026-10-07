@@ -166,7 +166,7 @@ describe('mobile — session', () => {
     expect(client.perimetre).not.toHaveBeenCalled();
   });
 
-  it('se verrouille après 5 minutes en arrière-plan et se déverrouille par biométrie', async () => {
+  it('DC-59 : se verrouille après 15 minutes en arrière-plan (délai par défaut) et se déverrouille par biométrie', async () => {
     const abonnes: ((statut: AppStateStatus) => void)[] = [];
     const surChangement = (statut: AppStateStatus) => abonnes.forEach((f) => f(statut));
     jest.spyOn(AppState, 'addEventListener').mockImplementation((_type, f) => {

@@ -1,7 +1,8 @@
 import type { ClientApi, Etablissement, Exercice, ListeCible, Prospect } from '@innov/api-client';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Linking } from 'react-native';
-import { lire } from '../src/baseLocale';
+import { ecrire, lire } from '../src/baseLocale';
+import { VisitesPrecedentes } from '../src/Chronologie';
 import { FicheEtablissement, FicheProspect } from '../src/Fiches';
 import i18n from '../src/i18n';
 import { ContexteSession, type Session } from '../src/session';
@@ -86,6 +87,7 @@ beforeEach(async () => {
     .mockImplementation(async (cle: string) =>
       cle === 'ciblage.moi' ? { valeur: [LISTE], maj: '2026-10-04T08:00:00Z' } : null,
     );
+  jest.mocked(ecrire).mockReset().mockResolvedValue(undefined);
   mockPousser.mockClear();
   jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 });
@@ -231,4 +233,42 @@ test('RPT-011 : les visites précédentes, la plus récente d’abord, puis « v
   ).toHaveLength(3);
   await fireEvent.press(screen.getByText('Voir la visite plus ancienne'));
   expect(screen.getAllByText('Produit Alpha — Prescrit')).toHaveLength(4);
+});
+
+test('RPT-011 : sans réseau, la dernière liste lue s’affiche, la plus récente d’abord', async () => {
+  // Rendu par le serveur du plus récent au plus ancien : l'écran garde cet ordre.
+  const rapports = [
+    { ...RAPPORT, id: 'r2', date: '2026-10-13', resume: 'Échantillons laissés' },
+    { ...RAPPORT, id: 'r1', date: '2026-10-06', resume: 'Bon accueil' },
+  ];
+  const memoire = new Map<string, { valeur: unknown; maj: string }>();
+  jest.mocked(ecrire).mockImplementation(async (cle: string, valeur: unknown) => {
+    memoire.set(cle, { valeur, maj: '2026-10-14T08:00:00Z' });
+  });
+  jest.mocked(lire).mockImplementation(async (cle: string) => (memoire.get(cle) as never) ?? null);
+  const resumes = () =>
+    screen.getAllByText(/^(Échantillons laissés|Bon accueil)$/).map((n) => n.props.children);
+
+  // Avec du réseau : la liste est lue, puis gardée sur le téléphone.
+  const enLigne = await rendre(
+    { prospects: { rapports: jest.fn(async () => rapports) } } as unknown as Partial<ClientApi>,
+    <VisitesPrecedentes prospect="p1" />,
+  );
+  expect(await screen.findByText('Visites précédentes')).toBeTruthy();
+  expect(resumes()).toEqual(['Échantillons laissés', 'Bon accueil']);
+  expect(screen.getByText(/13 oct\. 2026/)).toBeTruthy();
+  expect(memoire.get('chronologie.p1')?.valeur).toEqual(rapports);
+  await enLigne.unmount();
+
+  // Sans réseau : la même liste, dans le même ordre, et l'écran le dit.
+  const horsReseau = jest.fn(async () => {
+    throw new TypeError('Network request failed');
+  });
+  await rendre(
+    { prospects: { rapports: horsReseau } } as unknown as Partial<ClientApi>,
+    <VisitesPrecedentes prospect="p1" />,
+  );
+  expect(await screen.findByText('Sans réseau : la dernière liste lue.')).toBeTruthy();
+  expect(horsReseau).toHaveBeenCalledWith('p1');
+  expect(resumes()).toEqual(['Échantillons laissés', 'Bon accueil']);
 });

@@ -1,6 +1,6 @@
 import type { ClientApi, Programme, VisiteProgramme } from '@innov/api-client';
 import { ErreurApi } from '@innov/api-client';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as Location from 'expo-location';
 import { lireAttente } from '../src/Brouillons';
 import { distanceKm } from '../src/Execution';
@@ -215,6 +215,8 @@ test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', asyn
     justification: '',
   }));
   const demarrer = jest.fn();
+  const rapportOuvert = { id: 'r1', visite: 'v1', statut: 'brouillon', objectif_prevu: '' };
+  const rapport = jest.fn(async () => rapportOuvert);
   const session = {
     etat: { statut: 'connecte' },
     client: {
@@ -228,6 +230,7 @@ test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', asyn
       visites: {
         demarrer,
         terminer,
+        rapport,
         detail: jest.fn(async () => Promise.reject(new TypeError('x'))),
       },
     } as unknown as ClientApi,
@@ -252,6 +255,14 @@ test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', asyn
   expect(screen.getByText("Plus de visite à faire aujourd'hui.")).toBeTruthy();
   expect(screen.getByText('Effectuée')).toBeTruthy();
   expect(screen.queryByText('Terminer la visite')).toBeNull();
+  // Sous l'annonce, le rapport s'ouvre d'un appui ; il est déjà gardé sur le téléphone (RPT-009).
+  expect(screen.getByText('Rédiger le rapport')).toBeTruthy();
+  await waitFor(() =>
+    expect(mockMemoire.get('rapport.v1')?.valeur).toEqual(
+      expect.objectContaining({ rapport: rapportOuvert, saisie: null, envoye: true }),
+    ),
+  );
+  expect(rapport).toHaveBeenCalledWith('v1');
   jest.useRealTimers();
 });
 

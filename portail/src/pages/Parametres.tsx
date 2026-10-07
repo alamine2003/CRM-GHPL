@@ -36,10 +36,7 @@ const GROUPES: { cle: string; parametres: string[] }[] = [
   },
   {
     cle: 'planning',
-    parametres: [
-      'echeance_soumission_planning',
-      'delai_escalade_heures_ouvrees',
-    ],
+    parametres: ['echeance_soumission_planning', 'delai_escalade_heures_ouvrees'],
   },
   {
     cle: 'visites',

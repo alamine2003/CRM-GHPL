@@ -292,20 +292,34 @@ test('DC-61 : la visite proposée au dernier rapport se place d’un appui', asy
       echeance: null,
     },
   ]);
+  const ajouterVisite = jest.fn(async () => VISITE);
+  const duProspect = jest.fn(async () => [
+    { id: 'x9', actif: true, principal: true, etablissement: { id: 'e9', nom: 'Cabinet Exemple' } },
+  ]);
   await rendre(
-    { semaine: jest.fn(async () => ({ ...EN_PREPARATION, visites: [] })) } as unknown as Partial<
-      ClientApi['plannings']
-    >,
+    {
+      semaine: jest.fn(async () => ({ ...EN_PREPARATION, visites: [] })),
+      ajouterVisite,
+    } as unknown as Partial<ClientApi['plannings']>,
     {
       ciblage: { mesListes: jest.fn(async () => []) },
       rapports: { visitesProposees },
-      exercices: { duProspect: jest.fn(async () => []) },
+      exercices: { duProspect },
     },
   );
   await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[1]!);
   expect(await screen.findByText('Proposées à votre dernière visite')).toBeTruthy();
   expect(screen.getByText(/Proposée le 13 oct\. · Revisiter le prescripteur/)).toBeTruthy();
   await fireEvent.press(screen.getByText('Dr Fatou EXEMPLE'));
+  // Le prospect proposé est retenu, avec son lieu d'exercice : la visite se pose.
+  expect(await screen.findByText('Cabinet Exemple')).toBeTruthy();
+  expect(duProspect).toHaveBeenCalledWith('p9');
+  await fireEvent.press(screen.getByText('Enregistrer'));
+  expect(ajouterVisite).toHaveBeenCalledWith(
+    'pl1',
+    expect.objectContaining({ prospect: 'p9', etablissement: 'e9', date: '2026-10-27' }),
+  );
+  expect(await screen.findByText('Visite ajoutée.')).toBeTruthy();
 });
 
 test('PLN-002 : une visite se retire tant que le planning est en préparation', async () => {
