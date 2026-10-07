@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -77,7 +79,7 @@ class ActionPrecedenteSerializer(serializers.Serializer):
 
 
 class PieceJointeSerializer(serializers.ModelSerializer):
-    """Une photo ou un document joint (RPT-007) ; le fichier se lit par sa propre adresse."""
+    """Un document PDF joint (RPT-007) ; le fichier se lit par sa propre adresse."""
 
     class Meta:
         model = PieceJointe
@@ -116,17 +118,27 @@ class RapportSerializer(serializers.ModelSerializer):
     #: RPT-006 : les types de prochaine action du pays, et l'action notée la fois précédente.
     types_action_proposes = serializers.SerializerMethodField()
     action_precedente = serializers.SerializerMethodField()
+    #: RG-032 : attendu avant cette heure (minuit du jour de la visite, heure du pays).
+    echeance = serializers.SerializerMethodField()
+    en_retard = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
         fields = ["id", "visite", "statut", "objectif_prevu", "est_imprevue", "justification",
                   "presentations", "resultat", "resultat_obtenu", "resume", "prochaine_action",
                   "prochaine_action_type", "prochaine_action_echeance", "visite_proposee",
-                  "remises", "champs", "definitions", "soumis_le", "manquants",
+                  "remises", "champs", "definitions", "soumis_le", "echeance", "en_retard",
+                  "horodatage_douteux", "manquants",
                   "produits_proposes", "produit_autre_autorise", "resultats_proposes",
                   "articles_proposes", "types_action_proposes", "action_precedente",
                   "pieces_jointes"]  # fmt: skip
         read_only_fields = fields
+
+    def get_echeance(self, rapport) -> datetime:
+        return services.echeance(rapport)
+
+    def get_en_retard(self, rapport) -> bool:
+        return services.en_retard(rapport)
 
     @extend_schema_field(PieceJointeSerializer(many=True))
     def get_pieces_jointes(self, rapport):
@@ -183,7 +195,10 @@ class SaisieRapportSerializer(serializers.Serializer):
 
 
 class SoumissionRapportSerializer(serializers.Serializer):
+    #: Le moment où le délégué a soumis, sur le téléphone (peut-être hors connexion).
     soumis_le = serializers.DateTimeField()
+    #: L'heure du téléphone au moment de l'envoi : un écart avec le serveur se voit (RPT-010).
+    envoye_le = serializers.DateTimeField(required=False, allow_null=True)
 
 
 STATUTS_RAPPORT_VISITE = [("attendu", "Rapport attendu"), *StatutRapport.choices]

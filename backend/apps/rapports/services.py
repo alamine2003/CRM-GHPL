@@ -2,15 +2,19 @@
 
 0.5.1 : un rapport par visite effectuée (RG-030, RPT-001), son socle obligatoire (RPT-002) et
 les champs du pays (RPT-008). Le délégué l'écrit en brouillon, puis le soumet : sans le socle
-ni les champs obligatoires de son pays, la soumission est refusée (RPT-002 CA1). La version
-figée, l'heure limite et le retard arrivent avec la soumission complète (0.5.7).
+ni les champs obligatoires de son pays, la soumission est refusée (RPT-002 CA1).
+
+0.5.7 (RPT-010) : chaque soumission fige une version (RG-037) ; après 23 h 59, heure du pays,
+le jour de la visite, le rapport est en retard (RG-032). L'heure du téléphone fait foi, sauf
+incohérence de plus de 15 minutes avec celle du serveur [H].
 """
 
 import re
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import status
 
@@ -27,6 +31,7 @@ from .models import (
     StatutRapport,
     TypeChamp,
     TypeRemise,
+    VersionRapport,
 )
 
 #: Statuts où le délégué écrit encore son rapport.
@@ -367,11 +372,70 @@ def manquants(rapport: Rapport) -> list[str]:
     return socle + pays
 
 
+#: RPT-010 CA1 [H] : au-delà, l'heure du téléphone n'est plus crue.
+TOLERANCE_HORLOGE = timedelta(minutes=15)
+
+
+def echeance(rapport: Rapport) -> datetime:
+    """RG-032 : le rapport est attendu le jour de la visite avant minuit, heure du pays."""
+    from apps.socle.services import debut_du_jour
+
+    return debut_du_jour(rapport.pays, rapport.visite.date + timedelta(days=1))
+
+
+def en_retard(rapport: Rapport) -> bool:
+    """Soumis : tel que marqué à la première soumission. Sinon : l'échéance est passée."""
+    if rapport.soumis_le is not None:
+        return rapport.en_retard
+    return timezone.now() >= echeance(rapport)
+
+
+def contenu_fige(rapport: Rapport) -> dict:
+    """Le rapport tel que soumis (RG-037)."""
+    echeance_action = rapport.prochaine_action_echeance
+    return {
+        "objectif_prevu": rapport.objectif_prevu,
+        "presentations": rapport.presentations,
+        "resultat": str(rapport.resultat_id) if rapport.resultat_id else None,
+        "resultat_obtenu": rapport.resultat_obtenu,
+        "resume": rapport.resume,
+        "prochaine_action": rapport.prochaine_action,
+        "prochaine_action_type": (
+            str(rapport.prochaine_action_type_id) if rapport.prochaine_action_type_id else None
+        ),  # fmt: skip
+        "prochaine_action_echeance": echeance_action.isoformat() if echeance_action else None,
+        "visite_proposee": rapport.visite_proposee,
+        "remises": rapport.remises,
+        "champs": rapport.champs,
+        "definitions": rapport.definitions,
+        "pieces_jointes": [
+            str(p.pk) for p in rapport.pieces_jointes.filter(archive_le__isnull=True)
+        ],  # fmt: skip
+    }
+
+
+def _horodatage(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None,
+                recu_le: datetime) -> tuple[datetime, bool]:  # fmt: skip
+    """RPT-010 CA1 [H] : l'heure de soumission du téléphone, si elle est cohérente ; sinon
+    l'heure de réception, et l'écart est signalé. Incohérente : dans le futur, avant la fin
+    de la visite, ou envoyée par un téléphone dont l'horloge s'écarte de celle du serveur."""
+    douteux = (
+        soumis_le > recu_le + TOLERANCE_HORLOGE
+        or (envoye_le is not None and abs(envoye_le - recu_le) > TOLERANCE_HORLOGE)
+        or (rapport.visite.fin_le is not None
+            and soumis_le < rapport.visite.fin_le - TOLERANCE_HORLOGE)
+    )  # fmt: skip
+    return (recu_le, True) if douteux else (soumis_le, False)
+
+
 @transaction.atomic
-def soumettre(rapport: Rapport, soumis_le: datetime) -> Rapport:
-    """RPT-002 CA1 : impossible sans le socle et les champs obligatoires du pays."""
-    rapport = Rapport.objects.select_for_update().get(pk=rapport.pk)
-    if rapport.statut == StatutRapport.SOUMIS and rapport.soumis_le == soumis_le:
+def soumettre(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None = None) -> Rapport:
+    """RPT-002 CA1 : impossible sans le socle et les champs obligatoires du pays. RPT-010 :
+    version figée, marquage en retard, horodatage du téléphone contrôlé."""
+    rapport = Rapport.objects.select_for_update().select_related("visite").get(pk=rapport.pk)
+    derniere = rapport.versions.order_by("-numero").first()
+    if (rapport.statut == StatutRapport.SOUMIS and derniere is not None
+            and derniere.heure_telephone == soumis_le):  # fmt: skip
         return rapport  # rejeu du même envoi (OFF-003)
     _exiger_modifiable(rapport)
     if manque := manquants(rapport):
@@ -380,11 +444,26 @@ def soumettre(rapport: Rapport, soumis_le: datetime) -> Rapport:
             _("Complétez le rapport avant de le soumettre."),
             manquants=manque,
         )
+    recu_le = timezone.now()
+    moment, douteux = _horodatage(rapport, soumis_le, envoye_le, recu_le)
+    premiere = derniere is None
     rapport.statut = StatutRapport.SOUMIS
-    rapport.soumis_le = soumis_le
-    rapport.save(update_fields=["statut", "soumis_le", "modifie_le"])
+    rapport.soumis_le = moment
+    # RG-032 : seule la première soumission peut être en retard (comme le planning).
+    if premiere:
+        rapport.en_retard = moment >= echeance(rapport)
+        rapport.horodatage_douteux = douteux
+    rapport.save(update_fields=["statut", "soumis_le", "en_retard", "horodatage_douteux",
+                                "modifie_le"])  # fmt: skip
+    VersionRapport.objects.create(
+        pays=rapport.pays, rapport=rapport, numero=(derniere.numero + 1) if derniere else 1,
+        contenu=contenu_fige(rapport), soumis_le=moment, heure_telephone=soumis_le,
+        recu_le=recu_le, en_retard=premiere and rapport.en_retard,
+        horodatage_douteux=douteux,
+    )  # fmt: skip
     _auditer("rapport.soumission", rapport, visite=str(rapport.visite_id),
-             soumis_le=soumis_le.isoformat())  # fmt: skip
+             soumis_le=moment.isoformat(), en_retard=rapport.en_retard,
+             horodatage_douteux=douteux)  # fmt: skip
     return rapport
 
 
@@ -394,22 +473,13 @@ def soumettre(rapport: Rapport, soumis_le: datetime) -> Rapport:
 TAILLE_MAX_PIECE = 10 * 1024 * 1024
 PIECES_MAX = 3
 
-#: Types acceptés, reconnus par les premiers octets du fichier et non par son nom.
-SIGNATURES = (
-    (b"\xff\xd8\xff", "image/jpeg", "jpg"),
-    (b"\x89PNG\r\n\x1a\n", "image/png", "png"),
-    (b"%PDF-", "application/pdf", "pdf"),
-)
+#: DC-48 : seuls les PDF, reconnus par leurs premiers octets et non par leur nom. Pas de photo :
+#: aucun usage établi, et le risque d'y voir une ordonnance ou un patient.
+SIGNATURE_PDF = b"%PDF-"
 
 
 def _type_du_contenu(entete: bytes) -> tuple[str, str] | None:
-    for signature, mime, extension in SIGNATURES:
-        if entete.startswith(signature):
-            return mime, extension
-    # HEIC (photos d'iPhone) : « ftyp » suivi d'une marque heic, heix, mif1…
-    if entete[4:8] == b"ftyp" and entete[8:12] in (b"heic", b"heix", b"mif1", b"msf1"):
-        return "image/heic", "heic"
-    return None
+    return ("application/pdf", "pdf") if entete.startswith(SIGNATURE_PDF) else None
 
 
 def _exiger_ajout_possible(rapport: Rapport, prise_le: datetime) -> None:
@@ -424,7 +494,7 @@ def _exiger_ajout_possible(rapport: Rapport, prise_le: datetime) -> None:
 
 @transaction.atomic
 def joindre(rapport: Rapport, *, id, fichier, prise_le: datetime) -> PieceJointe:
-    """RPT-007 : ajoute une photo ou un document ; rejouer le même envoi ne crée rien de plus."""
+    """RPT-007 : ajoute un document PDF ; rejouer le même envoi ne crée rien de plus."""
     from django.core.files.base import ContentFile
 
     rapport = Rapport.objects.select_for_update().get(pk=rapport.pk)
@@ -448,7 +518,7 @@ def joindre(rapport: Rapport, *, id, fichier, prise_le: datetime) -> PieceJointe
     reconnu = _type_du_contenu(contenu[:16])
     if reconnu is None:
         raise ErreurMetier("type_de_fichier",
-                           _("Seules les photos (JPEG, PNG, HEIC) et les PDF sont acceptés."),
+                           _("Seuls les documents PDF sont acceptés."),
                            champ="fichier")  # fmt: skip
     mime, extension = reconnu
     nom = (getattr(fichier, "name", "") or "").rsplit("/", 1)[-1][:200] or f"piece.{extension}"

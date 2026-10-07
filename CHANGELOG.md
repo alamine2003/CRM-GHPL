@@ -2,6 +2,33 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.7] — Soumission et retard du rapport ; pas de photo
+
+Septième jalon du cycle 0.5 « Rapports de visite ».
+
+### Ajouté (RPT-010, RG-032, RG-037)
+
+- Délai rappelé sur le rapport : « À soumettre aujourd'hui avant minuit » ; passé minuit, « En retard » en orange.
+- Carte « Rapports en retard » en tête de la Tournée : les rapports non soumis des jours précédents de la semaine, ouverts d'un appui.
+- Soumettre sans réseau : le rapport passe en lecture (« Soumis sur le téléphone à … »), l'en-tête indique « Soumission en attente du réseau », et l'envoi part seul au retour du réseau.
+- **CA1** : soumis le jour J sans réseau, reçu le jour J+1, le rapport est à l'heure. L'heure du téléphone fait foi, sauf incohérence (futur, avant la fin de la visite, horloge décalée de plus de 15 minutes) : l'heure de réception est alors retenue et l'horodatage est signalé douteux [H].
+- Chaque soumission fige une version du rapport ; un envoi rejoué n'en crée pas d'autre.
+- Démonstration : un rapport soumis le lendemain, en retard.
+
+### Retiré (DC-48)
+
+- Les photos du rapport : « Prendre une photo » et « Galerie » disparaissent ; seul « Joindre un PDF » reste, et le serveur refuse les images. Raison : aucun usage établi, et le risque d'y voir une ordonnance ou un patient.
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Tournée, rapports en retard | Chaque ligne répétait « Effectuée » et la date, même pour deux rapports du même jour. | Seul l'état du rapport s'affiche ; la date n'apparaît qu'une fois par jour. |
+| Rapport, délai | « À soumettre aujourd'hui avant minuit » flottait seul entre l'en-tête et l'objectif. | Placé juste sous le nom du prospect et le lieu. |
+| Rapport soumis sans réseau | L'en-tête disait encore « Enregistré à … », comme si tout était parti. | « Soumission en attente du réseau ». |
+
 ## [0.5.6] — Brouillon automatique du rapport
 
 Sixième jalon du cycle 0.5 « Rapports de visite ».

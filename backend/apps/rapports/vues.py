@@ -54,7 +54,8 @@ class RapportVisiteVue(VueVisitesDuDelegue):
 
 
 class SoumissionRapportVue(VueVisitesDuDelegue):
-    """RPT-002 CA1 : la soumission exige le socle et les champs obligatoires du pays."""
+    """RPT-002 CA1 : la soumission exige le socle et les champs obligatoires du pays. RPT-010 :
+    version figée, retard après 23 h 59 le jour de la visite, heure du téléphone contrôlée."""
 
     actions = {"POST": REDIGER}
 
@@ -63,12 +64,13 @@ class SoumissionRapportVue(VueVisitesDuDelegue):
     def post(self, request, id):
         visite = get_object_or_404(self.get_queryset(), pk=id)
         v = _lire(s.SoumissionRapportSerializer, request)
-        rapport = services.soumettre(services.rapport_de(visite), v["soumis_le"])
+        rapport = services.soumettre(services.rapport_de(visite), v["soumis_le"],
+                                     v.get("envoye_le"))  # fmt: skip
         return Response(s.RapportSerializer(rapport).data)
 
 
 class PiecesRapportVue(VueVisitesDuDelegue):
-    """RPT-007 : joindre une photo ou un document au rapport de sa visite."""
+    """RPT-007 : joindre un document PDF au rapport de sa visite."""
 
     actions = {"POST": REDIGER}
     parser_classes = [MultiPartParser]

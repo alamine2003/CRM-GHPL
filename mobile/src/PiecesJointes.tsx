@@ -1,15 +1,14 @@
 /**
- * Photos et documents du rapport (RPT-007) : prendre une photo, en choisir une, joindre un
- * PDF. Trois au plus, 10 Mo chacun (CA1). Sans réseau, la pièce attend dans la file et part
+ * Documents du rapport (RPT-007) : un PDF, trois au plus, 10 Mo chacun (CA1). Pas de photo
+ * (décision DC-48 : risque de données de patient, aucun usage établi). Sans réseau, la pièce attend dans la file et part
  * au retour du réseau, même après la soumission du rapport (téléversement différé).
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { ClientApi, PieceJointe, Rapport } from '@innov/api-client';
 import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import {
   estTransitoire,
   fichierAEnvoyer,
@@ -50,7 +49,7 @@ export async function joindrePiece(
     return { issue: 'parti', piece };
   } catch (e) {
     if (!estTransitoire(e)) throw e;
-    // RPT-009 : la photo quitte le cache du téléphone pour un dossier durable.
+    // RPT-009 : le document quitte le cache du téléphone pour un dossier durable.
     saisie.uri = await garderFichier(saisie.uri, saisie.id);
     await mettreEnAttente({
       id: nouvelIdentifiant(),
@@ -72,49 +71,32 @@ function taille(octets: number, langue: string) {
 
 function Ligne({
   nom,
-  type_mime,
   octets,
-  apercu,
   note,
   surRetrait,
 }: {
   nom: string;
-  type_mime: string;
   octets: number;
-  apercu?: string;
   note?: string;
   surRetrait?: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const p = usePalette();
   const lien = useLien();
-  const image = type_mime.startsWith('image/');
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 }}>
-      {apercu && image ? (
-        <Image
-          source={{ uri: apercu }}
-          style={{ width: 48, height: 48, borderRadius: 6 }}
-          accessibilityIgnoresInvertColors
-        />
-      ) : (
-        <View
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: 6,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: p.surface2,
-          }}
-        >
-          <MaterialIcons
-            name={image ? 'image' : 'picture-as-pdf'}
-            size={24}
-            color={p.texteSecondaire}
-          />
-        </View>
-      )}
+      <View
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 6,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: p.surface2,
+        }}
+      >
+        <MaterialIcons name="picture-as-pdf" size={24} color={p.texteSecondaire} />
+      </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Texte numberOfLines={1}>{nom}</Texte>
         <Texte variante="discret">
@@ -152,8 +134,6 @@ export function PiecesJointes({
   const { t } = useTranslation();
   const { client } = useSession();
   const [enAttente, setEnAttente] = useState<PieceEnAttente[]>([]);
-  // Aperçus des photos prises sur ce téléphone, par identifiant de pièce.
-  const [apercus, setApercus] = useState<Record<string, string>>({});
   const [envoi, setEnvoi] = useState(false);
   const [message, setMessage] = useState<{ texte: string; ton: 'erreur' | 'info' } | null>(null);
 
@@ -200,7 +180,6 @@ export function PiecesJointes({
     setEnvoi(true);
     try {
       const resultat = await joindrePiece(client, visite, choisie);
-      setApercus((a) => ({ ...a, [resultat.piece.id]: choisie.uri }));
       if (resultat.issue === 'parti') surRapport([...rapport.pieces_jointes, resultat.piece]);
       else {
         setMessage({ texte: t('pieces.horsLigne'), ton: 'info' });
@@ -211,33 +190,6 @@ export function PiecesJointes({
     } finally {
       setEnvoi(false);
     }
-  }
-
-  async function photo(source: 'camera' | 'galerie') {
-    const permission =
-      source === 'camera'
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setMessage({ texte: t('pieces.permission'), ton: 'erreur' });
-      return;
-    }
-    const options = { mediaTypes: ['images' as const], quality: 0.6 };
-    const choix =
-      source === 'camera'
-        ? await ImagePicker.launchCameraAsync(options)
-        : await ImagePicker.launchImageLibraryAsync(options);
-    const a = choix.canceled ? null : choix.assets[0];
-    await ajouter(
-      a
-        ? {
-            uri: a.uri,
-            nom: a.fileName ?? `photo-${Date.now()}.jpg`,
-            type_mime: a.mimeType ?? 'image/jpeg',
-            taille: a.fileSize ?? 0,
-          }
-        : null,
-    );
   }
 
   async function document() {
@@ -277,50 +229,21 @@ export function PiecesJointes({
         <Ligne
           key={x.id}
           nom={x.nom}
-          type_mime={x.type_mime}
           octets={x.taille}
-          apercu={apercus[x.id]}
           surRetrait={modifiable ? () => void retirer(x) : undefined}
         />
       ))}
       {enAttente.map((x) => (
-        <Ligne
-          key={x.id}
-          nom={x.nom}
-          type_mime={x.type_mime}
-          octets={x.taille}
-          apercu={x.uri}
-          note={t('pieces.enAttente')}
-        />
+        <Ligne key={x.id} nom={x.nom} octets={x.taille} note={t('pieces.enAttente')} />
       ))}
       {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
       {modifiable && total < PIECES_MAX && (
-        <View style={{ gap: 8 }}>
-          <Bouton
-            secondaire
-            libelle={t('pieces.prendrePhoto')}
-            chargement={envoi}
-            onPress={() => void photo('camera')}
-          />
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}>
-              <Bouton
-                secondaire
-                libelle={t('pieces.galerie')}
-                desactive={envoi}
-                onPress={() => void photo('galerie')}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Bouton
-                secondaire
-                libelle={t('pieces.pdf')}
-                desactive={envoi}
-                onPress={() => void document()}
-              />
-            </View>
-          </View>
-        </View>
+        <Bouton
+          secondaire
+          libelle={t('pieces.pdf')}
+          chargement={envoi}
+          onPress={() => void document()}
+        />
       )}
       {modifiable && total >= PIECES_MAX && (
         <Texte variante="discret">{t('pieces.maximum', { n: PIECES_MAX })}</Texte>

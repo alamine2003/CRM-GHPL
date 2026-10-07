@@ -704,6 +704,15 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». En 0.5.4, il est noté et rappelé ; il ne crée pas de visite dans le planning [H].
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.38 Soumission et retard du rapport (mise en œuvre 0.5.7)
+
+- **Délai** (RG-032) : le rapport est attendu le jour de la visite avant minuit, heure du pays. Le formulaire le rappelle (« À soumettre aujourd'hui avant minuit ») ; passé minuit, il le signale en orange (« En retard : … »).
+- **Rapports en retard** : en tête de la Tournée, une carte liste les rapports non soumis des jours précédents de la semaine (« Rapport à rédiger », « Rapport en brouillon ») ; un appui ouvre le rapport.
+- **Soumettre sans réseau** (RPT-010) : la soumission est acceptée sur le téléphone, qui garde **l'heure du geste** ; le rapport passe en lecture, « Soumis sur le téléphone à 21 h 52 », et part tout seul au retour du réseau, avec sa saisie.
+- **CA1** : un rapport soumis le jour J sans réseau et reçu le jour J+1 est **à l'heure**. L'heure du téléphone fait foi, sauf incohérence [H] : heure dans le futur, avant la fin de la visite, ou horloge du téléphone qui s'écarte de plus de 15 minutes de celle du serveur au moment de l'envoi. Dans ce cas, l'heure de réception est retenue et le rapport porte la mention « horodatage douteux », visible du superviseur (cycle 0.6).
+- **Version figée** (RG-037) : chaque soumission fige le contenu du rapport, avec son heure retenue, l'heure du téléphone, l'heure de réception et le retard. Rejouer le même envoi ne crée rien de plus. Seule la première soumission peut être en retard.
+- **Plus tard** : l'alerte au superviseur à 48 h (RG-032) et la lecture des rapports par le superviseur arrivent avec le cycle 0.6 ; un rapport en retard d'une semaine passée sera repris dans la liste « À traiter aujourd'hui » (DC-47).
+
 ### 14.37 Brouillon automatique du rapport (mise en œuvre 0.5.6)
 
 - **Plus de bouton « Enregistrer »** (RPT-009) : chaque saisie est gardée aussitôt sur le téléphone, puis envoyée au serveur dès que la frappe s'arrête (moins d'une seconde). L'en-tête de l'écran dit en permanence où en est le rapport : « Enregistré à 10 h 42 » ou « Gardé sur le téléphone à 10 h 42 ».
@@ -714,8 +723,8 @@ Mise en œuvre (0.3.9) :
 
 ### 14.36 Pièces jointes du rapport (mise en œuvre 0.5.5)
 
-- **Joindre** (RPT-007) : « Prendre une photo », « Galerie » ou « Document PDF », dans la section « Photos et documents » du rapport ; facultatif.
-- **CA1** [H] : 10 Mo au plus par fichier (vérifié sur le téléphone puis par le serveur), 3 pièces au plus par rapport. Les photos sont compressées à la prise. Seuls les JPEG, PNG, HEIC et PDF sont acceptés, **reconnus à leur contenu** et non à leur nom.
+- **Joindre** (RPT-007) : « Joindre un PDF », dans la section « Documents » du rapport ; facultatif. Depuis 0.5.7, **pas de photo** (DC-48) : en 0.5.5, « Prendre une photo » et « Galerie » existaient ; ils sont retirés, et le serveur refuse toute image.
+- **CA1** [H] : 10 Mo au plus par fichier (vérifié sur le téléphone puis par le serveur), 3 pièces au plus par rapport. Les photos sont compressées à la prise. Seuls les PDF sont acceptés, **reconnus à leur contenu** et non à leur nom.
 - **CA2** : une pièce jointe ne se lit que par qui voit le rapport ; elle n'a pas d'adresse publique et se lit par une adresse contrôlée, jamais gardée en cache. En 0.5.5, seul le délégué voit son rapport ; le superviseur le verra en 0.6.
 - **Sans réseau** : la pièce reste sur le téléphone, marquée « En attente du réseau », et part toute seule au retour du réseau. Une pièce prise **avant** la soumission du rapport peut arriver après ; une pièce prise après ne rejoint plus un rapport soumis.
 - **Retirer** : possible tant que le rapport n'est pas soumis. La pièce retirée est archivée, jamais effacée (RG-005), et suit la durée de conservation des pièces jointes du pays (3 ans par défaut, RG-060).
@@ -883,7 +892,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | RPT-004 | Produits présentés **dans l'ordre**, avec **retour du prescripteur** par produit : `non_prescrit`, `peu`, `prescrit`, `tres_bien`. | 0.5.3 | CA1 : l'ordre saisi est conservé. CA2 : seuls les produits du portefeuille du réseau sont proposés, plus « autre » libre si le pays l'autorise. |
 | RPT-005 | Échantillons et cadeaux **remis** (produit ou article, quantité), sans stock. | 0.5.3 | CA1 : aucune notion de solde ni de dotation. |
 | RPT-006 | Prochaine action : type, échéance, éventuellement visite proposée. | 0.5.4 | CA1 : la prochaine action est rappelée lors de la visite suivante du même prospect par le même délégué. |
-| RPT-007 | Pièces jointes (photo, document) avec contrôle d'accès ; téléversement différé hors connexion. | 0.5.5 | CA1 : taille maximale 10 Mo par fichier, 3 par rapport [H]. CA2 : une pièce jointe n'est accessible qu'aux personnes qui voient le rapport. |
+| RPT-007 | Pièces jointes (documents PDF ; pas de photo, DC-48) avec contrôle d'accès ; téléversement différé hors connexion. | 0.5.5 | CA1 : taille maximale 10 Mo par fichier, 3 par rapport [H]. CA2 : une pièce jointe n'est accessible qu'aux personnes qui voient le rapport. |
 | RPT-008 | Champs supplémentaires configurables par pays (texte, nombre, liste, case à cocher ; obligatoire ou non). | 0.5.1 | CA1 : un champ ajouté s'applique aux nouveaux rapports seulement. |
 | RPT-009 | Brouillon sauvegardé automatiquement, hors connexion. | 0.5.6 | CA1 : un brouillon survit à la fermeture de l'application et au redémarrage du téléphone. |
 | RPT-010 | Soumission avec contrôles ; marquage `en_retard` après 23 h 59 le jour de la visite. | 0.5.7 | CA1 : un rapport rédigé hors connexion le jour J et synchronisé le jour J+1 est **à l'heure** si son horodatage de soumission local est du jour J [H : l'horodatage local est accepté sauf incohérence avec l'horloge serveur de plus de 15 min, auquel cas il est signalé]. |
@@ -1361,6 +1370,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | O-09 | Approbateur d'une personne occupant plusieurs postes rattachés à des superviseurs différents (`RG-011`) | Planning | Superviseur du poste principal |
 | O-10 | Durée minimale du pilote et périmètre exact (réseau choisi) | Critères 1.0.0 | 4 semaines, un réseau |
 | O-11 | Comptes : courriel professionnel disponible pour tous les délégués ? | Récupération d'accès, double authentification | Courriel ou téléphone ; réinitialisation par l'administrateur pays sinon |
+| O-12 | Relecture du cahier des charges avec l'utilisateur : certaines exigences ne tiennent pas (exemple : les photos du rapport, retirées par DC-48) | Toutes les versions à venir | Chaque exigence douteuse est signalée et soumise avant d'être livrée |
 
 ## 25. Registre des décisions de cadrage
 
@@ -1413,6 +1423,7 @@ Regroupe tout le périmètre de la section 8 ; déployée après réussite des c
 | DC-46 | Nettoyage des prospects BirdNotes : NOM en majuscules, titre dans la civilité, types médecin / paramédical / pharmacie / grossiste, fusions de spécialités validées (sage-femme d'État, gynécologue…), noms identiques tranchés par les superviseurs dans la file des doublons du CRM ; on nettoie une fois, puis la saisie verrouille | Proposition de nettoyage du 4 octobre 2026 |
 | DC-45 | L'export réel de BirdNotes sert de point de départ : import JSON tel quel, à l'exécution, jamais versionné ; avancé en 0.1.4 ; types, grades, exercice H/P, localités et paramètres alignés sur la pratique relevée | Échange du 4 octobre 2026 |
 | DC-47 | Faire mieux que l'outil actuel : pages en moins d'une seconde, tableaux de bord prêts à lire, file « À traiter aujourd'hui », tendance de prescription, « Préparer ma visite », résumé automatique appuyé sur les chiffres, position de référence des établissements (§14.35) | Démonstration vidéo de l'outil actuel, échange du 7 octobre 2026 |
+| DC-48 | Pas de photo dans le rapport de visite : aucun usage établi, et le risque d'y voir une ordonnance ou un patient. Seuls des documents PDF peuvent être joints (RPT-007) | Échange du 7 octobre 2026 |
 
 ## 26. Glossaire
 

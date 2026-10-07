@@ -1991,7 +1991,6 @@
     "soumisLe": "Rapport soumis : il ne se modifie plus.",
     "aCorriger": "Votre superviseur demande une correction.",
     "horsLigne": "Le rapport s'écrit avec du réseau pour l'instant. Votre visite est bien gardée sur le téléphone : réessayez dès que le réseau revient.",
-    "horsLigneEnvoi": "Pas de réseau : rien n'est perdu à l'écran, réessayez dès que le réseau revient.",
     "reessayer": "Réessayer",
     "filtrer": "Chercher un produit",
     "objectifPrevu": "Objectif prévu",
@@ -2048,7 +2047,14 @@
     "gardeServeur": "Enregistré automatiquement à {{heure}}.",
     "gardeTelephone": "Gardé sur le téléphone à {{heure}} : il sera enregistré au retour du réseau.",
     "horsLigneLocal": "Sans réseau : vous complétez le rapport gardé sur le téléphone. Il s'enregistrera tout seul au retour du réseau ; la soumission attend le réseau.",
-    "repris": "Brouillon repris : vos dernières saisies, gardées sur le téléphone, ont été retrouvées."
+    "repris": "Brouillon repris : vos dernières saisies, gardées sur le téléphone, ont été retrouvées.",
+    "soumisTelephone": "Soumis sur le téléphone à {{heure}}. Il partira tout seul au retour du réseau ; c'est cette heure-là qui compte.",
+    "soumisEnRetard": "Rapport soumis en retard : il ne se modifie plus.",
+    "delai": "À soumettre aujourd'hui avant minuit.",
+    "retard": "En retard : ce rapport était attendu avant minuit le jour de la visite. Soumettez-le dès que possible.",
+    "enRetardTitre": "Rapports en retard",
+    "enRetardNote": "Attendus avant minuit le jour de la visite : soumettez-les dès que possible.",
+    "soumissionEnAttente": "Soumission en attente du réseau"
   },
   "champsRapport": {
     "titre": "Champs du rapport",
@@ -2075,17 +2081,14 @@
     "obligatoireAvant": "Obligatoire pour soumettre"
   },
   "pieces": {
-    "titre": "Photos et documents",
-    "aide": "Facultatif. Jusqu'à {{n}} fichiers de 10 Mo : photo ou PDF.",
-    "prendrePhoto": "Prendre une photo",
-    "galerie": "Galerie",
-    "pdf": "Document PDF",
+    "titre": "Documents",
+    "aide": "Facultatif. Jusqu'à {{n}} documents PDF de 10 Mo. Jamais de donnée de patient.",
+    "pdf": "Joindre un PDF",
     "retirer": "Retirer {{nom}}",
     "retirerCourt": "Retirer",
     "enAttente": "En attente du réseau",
     "horsLigne": "Pas de réseau : la pièce est gardée sur le téléphone et partira toute seule au retour du réseau.",
-    "tropLourde": "Ce fichier dépasse 10 Mo : prenez une photo plus légère.",
-    "permission": "Autorisez l'accès à l'appareil photo ou aux photos dans les réglages du téléphone.",
+    "tropLourde": "Ce document dépasse 10 Mo.",
     "maximum": "{{n}} pièces jointes au plus : retirez-en une pour en ajouter une autre."
   }
 }

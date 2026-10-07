@@ -1991,7 +1991,6 @@
     "soumisLe": "Report submitted: it can no longer be changed.",
     "aCorriger": "Your supervisor asks for a correction.",
     "horsLigne": "For now the report needs a network connection. Your visit is safely kept on the phone: try again when the network is back.",
-    "horsLigneEnvoi": "No network: nothing on screen is lost, try again when the network is back.",
     "reessayer": "Try again",
     "filtrer": "Find a product",
     "objectifPrevu": "Planned objective",
@@ -2048,7 +2047,14 @@
     "gardeServeur": "Saved automatically at {{heure}}.",
     "gardeTelephone": "Kept on the phone at {{heure}}: it will be saved when the network is back.",
     "horsLigneLocal": "No network: you are completing the report kept on the phone. It will save itself when the network is back; submitting waits for the network.",
-    "repris": "Draft restored: your latest entries, kept on the phone, have been recovered."
+    "repris": "Draft restored: your latest entries, kept on the phone, have been recovered.",
+    "soumisTelephone": "Submitted on the phone at {{heure}}. It will be sent automatically when the network is back; that time is the one that counts.",
+    "soumisEnRetard": "Report submitted late: it can no longer be changed.",
+    "delai": "To submit today before midnight.",
+    "retard": "Late: this report was due before midnight on the day of the visit. Submit it as soon as possible.",
+    "enRetardTitre": "Late reports",
+    "enRetardNote": "Due before midnight on the day of the visit: submit them as soon as possible.",
+    "soumissionEnAttente": "Submission waiting for network"
   },
   "champsRapport": {
     "titre": "Report fields",
@@ -2075,17 +2081,14 @@
     "obligatoireAvant": "Required to submit"
   },
   "pieces": {
-    "titre": "Photos and documents",
-    "aide": "Optional. Up to {{n}} files of 10 MB: photo or PDF.",
-    "prendrePhoto": "Take a photo",
-    "galerie": "Gallery",
-    "pdf": "PDF document",
+    "titre": "Documents",
+    "aide": "Optional. Up to {{n}} PDF documents of 10 MB. Never any patient data.",
+    "pdf": "Attach a PDF",
     "retirer": "Remove {{nom}}",
     "retirerCourt": "Remove",
     "enAttente": "Waiting for network",
     "horsLigne": "No network: the file is kept on the phone and will be sent automatically when the network is back.",
-    "tropLourde": "This file is over 10 MB: take a lighter photo.",
-    "permission": "Allow access to the camera or photos in the phone settings.",
+    "tropLourde": "This document is over 10 MB.",
     "maximum": "{{n}} attachments at most: remove one to add another."
   }
 }

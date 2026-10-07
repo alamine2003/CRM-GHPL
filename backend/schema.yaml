@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.5.6
+  version: 0.5.7
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4612,7 +4612,7 @@ paths:
   /api/v1/visites/{id}/rapport/pieces/:
     post:
       operationId: piece_jointe_ajouter
-      description: 'RPT-007 : joindre une photo ou un document au rapport de sa visite.'
+      description: 'RPT-007 : joindre un document PDF au rapport de sa visite.'
       parameters:
       - in: path
         name: id
@@ -4696,8 +4696,9 @@ paths:
   /api/v1/visites/{id}/rapport/soumettre/:
     post:
       operationId: rapport_soumettre
-      description: 'RPT-002 CA1 : la soumission exige le socle et les champs obligatoires
-        du pays.'
+      description: |-
+        RPT-002 CA1 : la soumission exige le socle et les champs obligatoires du pays. RPT-010 :
+        version figée, retard après 23 h 59 le jour de la visite, heure du téléphone contrôlée.
       parameters:
       - in: path
         name: id
@@ -7960,8 +7961,8 @@ components:
       - prenom
     PieceJointe:
       type: object
-      description: Une photo ou un document joint (RPT-007) ; le fichier se lit par
-        sa propre adresse.
+      description: Un document PDF joint (RPT-007) ; le fichier se lit par sa propre
+        adresse.
       properties:
         id:
           type: string
@@ -8901,6 +8902,16 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        echeance:
+          type: string
+          format: date-time
+          readOnly: true
+        en_retard:
+          type: boolean
+          readOnly: true
+        horodatage_douteux:
+          type: boolean
+          readOnly: true
         manquants:
           type: array
           items:
@@ -8944,7 +8955,10 @@ components:
       - articles_proposes
       - champs
       - definitions
+      - echeance
+      - en_retard
       - est_imprevue
+      - horodatage_douteux
       - id
       - justification
       - manquants
@@ -9897,6 +9911,10 @@ components:
         soumis_le:
           type: string
           format: date-time
+        envoye_le:
+          type: string
+          format: date-time
+          nullable: true
       required:
       - soumis_le
     SourceEnum:

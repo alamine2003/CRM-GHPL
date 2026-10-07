@@ -101,9 +101,52 @@ export function ProgrammeDuJour() {
   const autresJours = programme.jours.filter((j) => j.date > programme.aujourdhui);
   // Restées prévues après leur journée : à justifier (VIS-009 CA1).
   const aJustifier = (programme.a_justifier ?? []).filter((v) => v.statut === 'prevue');
+  // RG-032 : passé minuit, un rapport non soumis d'un jour précédent de la semaine est en
+  // retard ; il reste à portée de main, en tête de la Tournée.
+  const rapportsEnRetard = programme.jours
+    .filter((j) => j.date < programme.aujourdhui)
+    .flatMap((j) =>
+      j.visites
+        .filter(
+          (v) =>
+            v.statut === 'effectuee' &&
+            ['attendu', 'brouillon', 'a_corriger'].includes(v.rapport_statut ?? 'attendu'),
+        )
+        .map((v) => ({ v, j })),
+    );
 
   return (
     <>
+      {rapportsEnRetard.length > 0 && (
+        <Carte style={{ gap: 4 }}>
+          <Texte variante="sousTitre">
+            {`${t('rapport.enRetardTitre')} (${rapportsEnRetard.length})`}
+          </Texte>
+          <Texte variante="discret">{t('rapport.enRetardNote')}</Texte>
+          {rapportsEnRetard.map(({ v, j }, i) => (
+            <Pressable
+              key={v.id}
+              accessibilityRole="button"
+              onPress={() => routeur.push({ pathname: '/rapport/[id]', params: { id: v.id } })}
+              style={({ pressed }) => [
+                styles.ligne,
+                { borderTopColor: p.ligne },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <View style={{ gap: 2 }}>
+                {/* La date une fois par jour : les rapports d'un même jour se suivent. */}
+                {rapportsEnRetard[i - 1]?.j.date !== j.date && (
+                  <Text style={[styles.surTitre, { color: p.attention }]}>
+                    {jour(v.date, { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </Text>
+                )}
+                <LigneVisite visite={v} jour={j} rapportSeul />
+              </View>
+            </Pressable>
+          ))}
+        </Carte>
+      )}
       {aJustifier.length > 0 && (
         <Carte style={{ gap: 4 }}>
           <Texte variante="sousTitre">
@@ -295,10 +338,13 @@ function LigneVisite({
   visite,
   jour,
   grande,
+  rapportSeul,
 }: {
   visite: VisiteProgramme;
   jour: JourProgramme;
   grande?: boolean;
+  /** Liste des rapports en retard : seul l'état du rapport compte, la visite est faite. */
+  rapportSeul?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const p = usePalette();
@@ -331,30 +377,32 @@ function LigneVisite({
         {grande && visite.objectif ? <Texte>{visite.objectif}</Texte> : null}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {/* En tête, « En cours depuis … » le dit déjà sous la carte. */}
-          {visite.statut !== 'prevue' && !(grande && visite.statut === 'en_cours') && (
-            <Etiquette ton={visite.statut === 'effectuee' ? 'succes' : 'attention'}>
-              {visite.statut === 'reportee' && visite.report
-                ? t('execution.reporteeAu', {
-                    jour: [
-                      new Intl.DateTimeFormat(i18n.language, {
-                        weekday: 'short',
-                        day: 'numeric',
-                        month: 'short',
-                        timeZone: 'UTC',
-                      }).format(new Date(`${visite.report.date}T12:00:00Z`)),
-                      visite.report.heure,
-                    ]
-                      .filter(Boolean)
-                      .join(' · '),
-                  })
-                : visite.motif_ecart
-                  ? t('execution.ecartLu', {
-                      statut: t(`visites.statuts.${visite.statut}`),
-                      motif: visite.motif_ecart.libelle,
+          {!rapportSeul &&
+            visite.statut !== 'prevue' &&
+            !(grande && visite.statut === 'en_cours') && (
+              <Etiquette ton={visite.statut === 'effectuee' ? 'succes' : 'attention'}>
+                {visite.statut === 'reportee' && visite.report
+                  ? t('execution.reporteeAu', {
+                      jour: [
+                        new Intl.DateTimeFormat(i18n.language, {
+                          weekday: 'short',
+                          day: 'numeric',
+                          month: 'short',
+                          timeZone: 'UTC',
+                        }).format(new Date(`${visite.report.date}T12:00:00Z`)),
+                        visite.report.heure,
+                      ]
+                        .filter(Boolean)
+                        .join(' · '),
                     })
-                  : t(`visites.statuts.${visite.statut}`)}
-            </Etiquette>
-          )}
+                  : visite.motif_ecart
+                    ? t('execution.ecartLu', {
+                        statut: t(`visites.statuts.${visite.statut}`),
+                        motif: visite.motif_ecart.libelle,
+                      })
+                    : t(`visites.statuts.${visite.statut}`)}
+              </Etiquette>
+            )}
           {visite.modification_en_attente && <Etiquette>{t('programme.enAttente')}</Etiquette>}
           {visite.est_imprevue && <Etiquette ton="neutre">{t('visites.imprevue')}</Etiquette>}
           {(visite.rapport_statut === 'attendu' || visite.rapport_statut === 'brouillon') && (

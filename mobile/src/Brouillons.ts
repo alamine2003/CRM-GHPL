@@ -24,7 +24,12 @@ import { Platform } from 'react-native';
 import { ErreurApi } from '@innov/api-client';
 import * as Crypto from 'expo-crypto';
 import { ecrire, lire, oublier } from './baseLocale';
-import { lireBrouillonRapport, marquerEnvoye, oublierFichier } from './BrouillonRapport';
+import {
+  lireBrouillonRapport,
+  marquerEnvoye,
+  oublierBrouillon as oublierBrouillonRapport,
+  oublierFichier,
+} from './BrouillonRapport';
 
 const CLE_BROUILLON = 'planning.brouillon';
 const CLE_ATTENTE = 'planning.attente';
@@ -142,7 +147,17 @@ export type Envoi =
     }
   | {
       id: string;
-      /** Photo ou document du rapport pris sans réseau (RPT-007) : le fichier reste sur le
+      /** Rapport soumis sans réseau (RPT-010) : l'heure du téléphone part avec lui ; la
+       * saisie, gardée dans la base locale, est envoyée d'abord si elle ne l'est pas. */
+      type: 'soumission_rapport';
+      visite: string;
+      soumis_le: string;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Document du rapport choisi sans réseau (RPT-007) : le fichier reste sur le
        * téléphone, à son adresse locale, jusqu'à l'envoi. */
       type: 'piece_jointe';
       visite: string;
@@ -264,6 +279,12 @@ async function rejouer(client: ClientApi): Promise<number> {
           const rapport = await client.visites.enregistrerRapport(envoi.visite, brouillon.saisie);
           await marquerEnvoye(envoi.visite, rapport);
         }
+      } else if (envoi.type === 'soumission_rapport') {
+        const brouillon = await lireBrouillonRapport(envoi.visite);
+        if (brouillon?.saisie && !brouillon.envoye)
+          await client.visites.enregistrerRapport(envoi.visite, brouillon.saisie);
+        await client.visites.soumettreRapport(envoi.visite, envoi.soumis_le);
+        await oublierBrouillonRapport(envoi.visite);
       } else if (envoi.type === 'ajout_activite') {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       } else {

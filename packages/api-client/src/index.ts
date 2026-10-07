@@ -853,10 +853,12 @@ export function creerClient(options: OptionsClient) {
       retirerPiece: (id: string, piece: string) =>
         requete<void>(`/api/v1/visites/${id}/rapport/pieces/${piece}/`, { methode: 'DELETE' }),
       /** Soumission (RPT-002) : refusée tant que le socle ou un champ obligatoire manque. */
+      /** RPT-010 : `soumisLe`, l'heure où le délégué a soumis sur le téléphone (peut-être sans
+       * réseau) ; `envoye_le`, l'heure du téléphone à l'envoi, pour contrôler son horloge. */
       soumettreRapport: (id: string, soumisLe: string) =>
         requete<Rapport>(`/api/v1/visites/${id}/rapport/soumettre/`, {
           methode: 'POST',
-          corps: { soumis_le: soumisLe },
+          corps: { soumis_le: soumisLe, envoye_le: new Date().toISOString() },
         }),
     },
     /** Champs supplémentaires du rapport, par pays (RPT-008). */

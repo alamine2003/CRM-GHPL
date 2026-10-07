@@ -1,4 +1,4 @@
-"""0.5.5 : RPT-007, pièces jointes du rapport (photo, document).
+"""0.5.5 : RPT-007, pièces jointes du rapport ; PDF seul depuis 0.5.7 (DC-48).
 
 CA1 : 10 Mo au plus par fichier, 3 par rapport [H]. CA2 : une pièce jointe n'est accessible
 qu'aux personnes qui voient le rapport. Téléversement différé : une pièce prise avant la
@@ -27,9 +27,10 @@ def fichiers(settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
 
 
-def envoi(contenu=JPEG, nom="photo.jpg", prise_le="2026-10-13T09:45:00Z", ident=None):
+def envoi(contenu=PDF, nom="fiche.pdf", prise_le="2026-10-13T09:45:00Z", ident=None):
     return {"id": str(ident or uuid.uuid4()), "prise_le": prise_le,
-            "fichier": SimpleUploadedFile(nom, contenu, content_type="image/jpeg")}  # fmt: skip
+            "fichier": SimpleUploadedFile(nom, contenu,
+                                          content_type="application/pdf")}  # fmt: skip
 
 
 @freeze_time("2026-10-13 10:00")
@@ -38,13 +39,13 @@ def test_rpt007_joindre_relire_et_rejouer_sans_doublon(monde, effectuee):  # noq
     ident = uuid.uuid4()
     r = c.post(url(effectuee, "pieces/"), envoi(ident=ident), format="multipart")
     assert r.status_code == 201, r.content
-    assert (r.json()["type_mime"], r.json()["taille"]) == ("image/jpeg", len(JPEG))
+    assert (r.json()["type_mime"], r.json()["taille"]) == ("application/pdf", len(PDF))
     # Rejouée depuis la file d'attente, la même pièce ne se crée pas deux fois.
     r = c.post(url(effectuee, "pieces/"), envoi(ident=ident), format="multipart")
     assert r.status_code == 201 and PieceJointe.objects.count() == 1
     assert [p["id"] for p in c.get(url(effectuee)).json()["pieces_jointes"]] == [str(ident)]
     lu = c.get(url(effectuee, f"pieces/{ident}/"))
-    assert lu.status_code == 200 and b"".join(lu.streaming_content) == JPEG
+    assert lu.status_code == 200 and b"".join(lu.streaming_content) == PDF
     assert lu["Cache-Control"] == "private, no-store"
     assert EvenementAudit.objects.filter(action="rapport.piece_jointe_ajout").count() == 1
 
@@ -52,13 +53,15 @@ def test_rpt007_joindre_relire_et_rejouer_sans_doublon(monde, effectuee):  # noq
 @freeze_time("2026-10-13 10:00")
 def test_rpt007_ca1_type_taille_et_nombre(monde, effectuee):  # noqa: F811
     c = client_de(monde["deleg.sn"])
-    # Le type se lit dans le contenu, pas dans le nom : un texte nommé .jpg est refusé.
-    r = c.post(url(effectuee, "pieces/"), envoi(b"bonjour", "faux.jpg"), format="multipart")
-    assert (r.status_code, r.json()["code"]) == (400, "type_de_fichier")
-    lourd = JPEG + b"\x00" * (10 * 1024 * 1024)
+    # Le type se lit dans le contenu, pas dans le nom : un texte nommé .pdf est refusé ;
+    # une photo aussi (DC-48 : PDF seul).
+    for contenu, nom in ((b"bonjour", "faux.pdf"), (JPEG, "photo.jpg")):
+        r = c.post(url(effectuee, "pieces/"), envoi(contenu, nom), format="multipart")
+        assert (r.status_code, r.json()["code"]) == (400, "type_de_fichier")
+    lourd = PDF + b"\x00" * (10 * 1024 * 1024)
     r = c.post(url(effectuee, "pieces/"), envoi(lourd), format="multipart")
     assert r.json()["code"] == "piece_trop_lourde"
-    for contenu, nom in ((JPEG, "a.jpg"), (PDF, "ordonnance.pdf"), (JPEG, "b.jpg")):
+    for contenu, nom in ((PDF, "a.pdf"), (PDF, "b.pdf"), (PDF, "c.pdf")):
         assert c.post(url(effectuee, "pieces/"), envoi(contenu, nom),
                       format="multipart").status_code == 201  # fmt: skip
     r = c.post(url(effectuee, "pieces/"), envoi(), format="multipart")

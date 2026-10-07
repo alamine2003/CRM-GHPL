@@ -105,11 +105,40 @@ class Rapport(ModeleDePays):
     champs = models.JSONField(default=dict, blank=True)
     #: Les champs du pays tels qu'à la création du rapport (RPT-008 CA1).
     definitions = models.JSONField(default=list, blank=True)
+    #: Heure de soumission retenue : celle du téléphone, sauf horodatage douteux (RPT-010).
     soumis_le = models.DateTimeField(null=True, blank=True)
+    #: RG-032 : soumis après 23 h 59, heure du pays, le jour de la visite. Seule compte la
+    #: première soumission.
+    en_retard = models.BooleanField(default=False)
+    #: RPT-010 CA1 [H] : l'heure du téléphone s'écartait de plus de 15 min de celle du serveur ;
+    #: l'heure de réception a alors servi, et le superviseur le voit.
+    horodatage_douteux = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["-cree_le"]
         indexes = [models.Index(fields=["delegue", "statut"])]
+
+
+class VersionRapport(ModeleDePays):
+    """État figé d'un rapport à une soumission (RG-037) : son contenu ne change plus."""
+
+    rapport = models.ForeignKey(Rapport, on_delete=models.PROTECT, related_name="versions")
+    numero = models.PositiveSmallIntegerField()
+    contenu = models.JSONField()
+    #: Heure retenue (celle du téléphone, ou de réception si elle était douteuse).
+    soumis_le = models.DateTimeField()
+    #: Heure de soumission donnée par le téléphone : reconnaît un envoi rejoué (OFF-003).
+    heure_telephone = models.DateTimeField()
+    #: Heure de réception par le serveur.
+    recu_le = models.DateTimeField()
+    en_retard = models.BooleanField(default=False)
+    horodatage_douteux = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["rapport", "numero"]
+        constraints = [
+            models.UniqueConstraint(fields=["rapport", "numero"], name="version_rapport_unique")
+        ]
 
 
 def _chemin_piece(piece, nom: str) -> str:
@@ -127,7 +156,7 @@ class PieceJointe(ModeleDePays):
     nom = models.CharField(max_length=200)
     type_mime = models.CharField(max_length=60)
     taille = models.PositiveIntegerField()
-    #: Moment où le délégué a pris la photo ou choisi le document, sur le téléphone : une
+    #: Moment où le délégué a choisi le document, sur le téléphone : une
     #: pièce prise avant la soumission peut arriver après, faute de réseau.
     prise_le = models.DateTimeField()
 

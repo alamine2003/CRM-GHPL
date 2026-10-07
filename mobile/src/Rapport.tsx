@@ -21,6 +21,7 @@ import {
 import {
   garderRapport,
   garderSaisie,
+  garderSoumission,
   lireBrouillonRapport,
   marquerEnvoye,
   oublierBrouillon,
@@ -308,17 +309,26 @@ export function FormulaireRapport({
   const [garde, setGarde] = useState<{ ou: 'telephone' | 'serveur'; le: Date } | null>(null);
   const [repris, setRepris] = useState(false);
   const [horsLigne, setHorsLigne] = useState(false);
+  // RPT-010 : soumis sur le téléphone sans réseau, à cette heure ; en attente d'envoi.
+  const [soumisLocal, setSoumisLocal] = useState<string | null>(null);
   const modifie = useRef(false);
+  // L'heure d'ouverture de l'écran suffit pour dire si l'échéance est passée.
+  const [ouvertLe] = useState(() => Date.now());
 
   useEffect(() => {
     surGarde?.(
-      garde
-        ? t(garde.ou === 'serveur' ? 'rapport.gardeServeurCourt' : 'rapport.gardeTelephoneCourt', {
-            heure: garde.le.toTimeString().slice(0, 5),
-          })
-        : undefined,
+      soumisLocal
+        ? t('rapport.soumissionEnAttente')
+        : garde
+          ? t(
+              garde.ou === 'serveur' ? 'rapport.gardeServeurCourt' : 'rapport.gardeTelephoneCourt',
+              {
+                heure: garde.le.toTimeString().slice(0, 5),
+              },
+            )
+          : undefined,
     );
-  }, [garde, surGarde, t]);
+  }, [garde, soumisLocal, surGarde, t]);
 
   useEffect(() => {
     let actif = true;
@@ -336,6 +346,7 @@ export function FormulaireRapport({
         setSaisie(enCours ? local.saisie : saisieDe(r));
         setRepris(!!enCours);
         setHorsLigne(false);
+        setSoumisLocal(local?.soumis_le && MODIFIABLES.has(r.statut) ? local.soumis_le : null);
         // Repris : il sera renvoyé à la prochaine saisie ou depuis la file.
         if (enCours && local.modifie_le)
           setGarde({ ou: 'telephone', le: new Date(local.modifie_le) });
@@ -346,6 +357,7 @@ export function FormulaireRapport({
           setRapport(local.rapport);
           setSaisie(local.saisie ?? saisieDe(local.rapport));
           setHorsLigne(true);
+          setSoumisLocal(local.soumis_le ?? null);
           if (local.saisie && !local.envoye && local.modifie_le)
             setGarde({ ou: 'telephone', le: new Date(local.modifie_le) });
           return;
@@ -364,6 +376,7 @@ export function FormulaireRapport({
   // se pose ; sans réseau, l'envoi attend dans la file.
   useEffect(() => {
     if (!rapport || !saisie || !modifie.current || !MODIFIABLES.has(rapport.statut)) return;
+    if (soumisLocal) return;
     const minuteur = setTimeout(() => {
       void (async () => {
         await garderSaisie(id, rapport, saisie);
@@ -414,12 +427,29 @@ export function FormulaireRapport({
   if (!rapport || !saisie)
     return <ActivityIndicator accessibilityLabel={t('session.chargement')} />;
 
+  if (soumisLocal)
+    return (
+      <View style={{ gap: 12 }}>
+        <EnteteVisite visite={visite} fuseau={programme?.fuseau} />
+        <Alerte type="info">
+          {t('rapport.soumisTelephone', {
+            heure: new Date(soumisLocal).toTimeString().slice(0, 5),
+          })}
+        </Alerte>
+        <RapportLu rapport={{ ...rapport, ...saisie }} />
+      </View>
+    );
+
   if (!MODIFIABLES.has(rapport.statut))
     return (
       <View style={{ gap: 12 }}>
         <EnteteVisite visite={visite} fuseau={programme?.fuseau} />
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
-        {!message && <Alerte type="succes">{t('rapport.soumisLe')}</Alerte>}
+        {!message && (
+          <Alerte type={rapport.en_retard ? 'attention' : 'succes'}>
+            {t(rapport.en_retard ? 'rapport.soumisEnRetard' : 'rapport.soumisLe')}
+          </Alerte>
+        )}
         <RapportLu rapport={rapport} />
         <PiecesJointes
           rapport={rapport}
@@ -431,6 +461,9 @@ export function FormulaireRapport({
     );
 
   const manquants = manquantsDe(saisie, rapport.definitions);
+  // RG-032 : attendu avant minuit, heure du pays, le jour de la visite.
+  const enRetard =
+    rapport.en_retard || (!!rapport.echeance && ouvertLe >= Date.parse(rapport.echeance));
   const libelleManquant = (code: string) =>
     (SOCLE as readonly string[]).includes(code)
       ? t(`rapport.socle.${code}`)
@@ -444,9 +477,11 @@ export function FormulaireRapport({
     if (!saisie) return;
     setEnvoi(action);
     setMessage(null);
+    // RPT-010 CA1 : l'heure du geste, sur le téléphone, fait foi même si l'envoi attend.
+    const soumisLe = new Date().toISOString();
     try {
       await client.visites.enregistrerRapport(id, saisie);
-      const r = await client.visites.soumettreRapport(id, new Date().toISOString());
+      const r = await client.visites.soumettreRapport(id, soumisLe);
       modifie.current = false;
       setRapport(r);
       setSaisie(saisieDe(r));
@@ -454,12 +489,22 @@ export function FormulaireRapport({
       await changerVisite(id, { rapport_statut: r.statut });
       setMessage({ texte: t('rapport.soumis'), ton: 'succes' });
     } catch (e) {
-      setMessage({
-        texte: estTransitoire(e)
-          ? t('rapport.horsLigneEnvoi')
-          : messageErreur(e, t('erreurs.reseau')),
-        ton: 'erreur',
+      if (!estTransitoire(e) || !rapport) {
+        setMessage({ texte: messageErreur(e, t('erreurs.reseau')), ton: 'erreur' });
+        return;
+      }
+      // Sans réseau : la soumission attend dans la file et partira seule (RPT-010).
+      modifie.current = false;
+      await garderSoumission(id, rapport, saisie, soumisLe);
+      await mettreEnAttente({
+        id: nouvelIdentifiant(),
+        type: 'soumission_rapport',
+        visite: id,
+        soumis_le: soumisLe,
+        resume: t('rapport.titre'),
       });
+      await changerVisite(id, { rapport_statut: 'soumis' });
+      setSoumisLocal(soumisLe);
     } finally {
       setEnvoi(null);
     }
@@ -467,10 +512,14 @@ export function FormulaireRapport({
 
   return (
     <View style={{ gap: 20 }}>
-      <EnteteVisite visite={visite} fuseau={programme?.fuseau} />
+      <View style={{ gap: 8 }}>
+        <EnteteVisite visite={visite} fuseau={programme?.fuseau} />
+        {!enRetard && <Texte variante="discret">{t('rapport.delai')}</Texte>}
+      </View>
       {rapport.statut === 'a_corriger' && (
         <Alerte type="attention">{t('rapport.aCorriger')}</Alerte>
       )}
+      {enRetard && <Alerte type="attention">{t('rapport.retard')}</Alerte>}
       {horsLigne && <Alerte type="attention">{t('rapport.horsLigneLocal')}</Alerte>}
       {repris && !horsLigne && <Alerte type="info">{t('rapport.repris')}</Alerte>}
 

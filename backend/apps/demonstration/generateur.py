@@ -469,7 +469,8 @@ class Generateur:
     def rapports(self, pays, delegue) -> None:
         """Les rapports des visites passées (cycle 0.5) : un champ propre au pays (RPT-008),
         les visites effectuées rapportées et soumises le jour même (RPT-001, RPT-002), sauf
-        l'avant-dernière, en brouillon, et la dernière, au rapport encore attendu."""
+        une, soumise le lendemain (en retard, RG-032), l'avant-dernière, en brouillon, et la
+        dernière, au rapport encore attendu."""
         from apps.planning.etats import StatutVisite
         from apps.planning.models import Visite
         from apps.rapports import services as rap
@@ -524,7 +525,11 @@ class Generateur:
                 rap.joindre(rapport, id=uuid.uuid4(), prise_le=visite.fin_le,
                             fichier=SimpleUploadedFile("fiche-produit-exemple.pdf",
                                                        PDF_EXEMPLE))  # fmt: skip
-            rap.soumettre(rapport, visite.fin_le + timedelta(minutes=40 + (i * 13) % 80))
+            soumis_le = visite.fin_le + timedelta(minutes=40 + (i * 13) % 80)
+            if i == 2:
+                # RG-032 : un rapport soumis le lendemain matin, donc en retard.
+                soumis_le = visite.fin_le + timedelta(days=1)
+            rap.soumettre(rapport, soumis_le)
 
     def _semaine_complete(self, pays, delegue, semaine):
         """Visites complètes, un passage, une matinée d'accompagnement et une visite hors liste

@@ -2586,7 +2586,7 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** @description RPT-007 : joindre une photo ou un document au rapport de sa visite. */
+    /** @description RPT-007 : joindre un document PDF au rapport de sa visite. */
     post: operations['piece_jointe_ajouter'];
     delete?: never;
     options?: never;
@@ -2627,7 +2627,10 @@ export interface paths {
     };
     get?: never;
     put?: never;
-    /** @description RPT-002 CA1 : la soumission exige le socle et les champs obligatoires du pays. */
+    /**
+     * @description RPT-002 CA1 : la soumission exige le socle et les champs obligatoires du pays. RPT-010 :
+     *     version figée, retard après 23 h 59 le jour de la visite, heure du téléphone contrôlée.
+     */
     post: operations['rapport_soumettre'];
     delete?: never;
     options?: never;
@@ -4014,7 +4017,7 @@ export interface components {
       prenom: string;
       nom: string;
     };
-    /** @description Une photo ou un document joint (RPT-007) ; le fichier se lit par sa propre adresse. */
+    /** @description Un document PDF joint (RPT-007) ; le fichier se lit par sa propre adresse. */
     PieceJointe: {
       /** Format: uuid */
       readonly id: string;
@@ -4357,6 +4360,10 @@ export interface components {
       definitions: components['schemas']['DefinitionChamp'][];
       /** Format: date-time */
       readonly soumis_le: string | null;
+      /** Format: date-time */
+      readonly echeance: string;
+      readonly en_retard: boolean;
+      readonly horodatage_douteux: boolean;
       readonly manquants: string[];
       readonly produits_proposes: components['schemas']['Resume'][];
       readonly produit_autre_autorise: boolean;
@@ -4769,6 +4776,8 @@ export interface components {
     SoumissionRapport: {
       /** Format: date-time */
       soumis_le: string;
+      /** Format: date-time */
+      envoye_le?: string | null;
     };
     /**
      * @description * `birdnotes` - BirdNotes

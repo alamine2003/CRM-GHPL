@@ -173,3 +173,19 @@ test('toutes les visites du jour faites : plus de prochaine', async () => {
   expect(await screen.findByText("Plus de visite à faire aujourd'hui.")).toBeTruthy();
   expect(screen.getAllByText('Effectuée')).toHaveLength(2);
 });
+
+test('RG-032 : un rapport de la veille non soumis remonte en tête, « en retard »', async () => {
+  const hier = {
+    ...visite('v0', '15:00', 'VEILLE', '2026-10-12'),
+    statut: 'effectuee' as const,
+    rapport_statut: 'brouillon' as const,
+  };
+  const soumis = { ...hier, id: 'v00', rapport_statut: 'soumis' as const };
+  const jours = PROGRAMME.jours.map((j) =>
+    j.date === '2026-10-12' ? { ...j, visites: [hier, soumis] } : j,
+  );
+  await rendre(jest.fn(async () => ({ ...PROGRAMME, jours })));
+  expect(await screen.findByText('Rapports en retard (1)')).toBeTruthy();
+  await fireEvent.press(screen.getByText(/VEILLE/));
+  expect(mockPousser).toHaveBeenCalledWith({ pathname: '/rapport/[id]', params: { id: 'v0' } });
+});

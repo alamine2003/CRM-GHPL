@@ -19,6 +19,8 @@ export type BrouillonRapport = {
   modifie_le: string | null;
   /** La saisie a-t-elle été reçue par le serveur ? */
   envoye: boolean;
+  /** RPT-010 : soumis sur le téléphone, sans réseau, à cette heure ; en attente d'envoi. */
+  soumis_le?: string | null;
 };
 
 const cle = (visite: string) => `rapport.${visite}`;
@@ -37,6 +39,7 @@ export async function garderRapport(visite: string, rapport: Rapport) {
     saisie: enCours?.saisie ?? null,
     modifie_le: enCours?.modifie_le ?? null,
     envoye: !enCours,
+    soumis_le: actuel?.soumis_le ?? null,
   } satisfies BrouillonRapport).catch(() => undefined);
 }
 
@@ -56,6 +59,25 @@ export async function marquerEnvoye(visite: string, rapport: Rapport) {
     saisie: actuel?.saisie ?? null,
     modifie_le: actuel?.modifie_le ?? null,
     envoye: true,
+    soumis_le: actuel?.soumis_le ?? null,
+  } satisfies BrouillonRapport).catch(() => undefined);
+}
+
+/** RPT-010 : la soumission faite sans réseau ; l'heure du téléphone comptera. */
+export async function garderSoumission(
+  visite: string,
+  rapport: Rapport,
+  saisie: SaisieLocale,
+  soumis_le: string,
+) {
+  const actuel = await lireBrouillonRapport(visite);
+  await ecrire(cle(visite), {
+    rapport,
+    saisie,
+    modifie_le: actuel?.modifie_le ?? soumis_le,
+    // Renvoyée avant la soumission : le serveur vérifie le rapport tel que soumis.
+    envoye: false,
+    soumis_le,
   } satisfies BrouillonRapport).catch(() => undefined);
 }
 
@@ -65,7 +87,7 @@ export async function oublierBrouillon(visite: string) {
 
 const DOSSIER = FS.documentDirectory ? `${FS.documentDirectory}pieces-en-attente/` : null;
 
-/** Une photo en attente quitte le cache, que le téléphone peut vider, pour un dossier durable
+/** Un document en attente quitte le cache, que le téléphone peut vider, pour un dossier durable
  * de l'application ; dans un navigateur, l'adresse reste telle quelle. */
 export async function garderFichier(uri: string, id: string): Promise<string> {
   if (Platform.OS === 'web' || !DOSSIER) return uri;

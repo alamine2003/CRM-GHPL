@@ -50,6 +50,9 @@ const BROUILLON: Rapport = {
     },
   ],
   soumis_le: null,
+  echeance: '2099-01-01T00:00:00Z',
+  en_retard: false,
+  horodatage_douteux: false,
   manquants: ['produits', 'resultat', 'resume', 'prochaine_action', 'patients'],
   produit_autre_autorise: false,
   articles_proposes: [{ id: 'stylo', libelle: 'Stylo' }],
@@ -388,5 +391,78 @@ describe('RPT-009 : brouillon gardé automatiquement', () => {
       await screen.findByText(/vous complétez le rapport gardé sur le téléphone/),
     ).toBeTruthy();
     expect(screen.getByText('Objectif prévu')).toBeTruthy();
+  });
+});
+
+const COMPLET: Rapport = {
+  ...BROUILLON,
+  presentations: [{ produit: 'pa', libelle: 'Produit Alpha', retour: 'prescrit' }],
+  resultat: 'ok',
+  resume: 'Bon accueil',
+  prochaine_action: 'Revenir avec l’étude',
+  prochaine_action_type: 'etude',
+  champs: { patients: 4 },
+  manquants: [],
+};
+
+describe('RPT-010 : soumission et retard', () => {
+  test('à l’heure, le délai du jour s’affiche', async () => {
+    await rendre({ rapport: jest.fn(async () => COMPLET) });
+    expect(await screen.findByText(/À soumettre aujourd.hui avant minuit/)).toBeTruthy();
+  });
+
+  test('RG-032 : passé minuit, le rapport non soumis est signalé en retard', async () => {
+    await rendre({
+      rapport: jest.fn(async () => ({ ...COMPLET, echeance: '2020-01-01T00:00:00Z' })),
+    });
+    expect(await screen.findByText(/En retard : ce rapport était attendu/)).toBeTruthy();
+  });
+
+  test('soumis en retard, il le dit', async () => {
+    await rendre({
+      rapport: jest.fn(async () => ({
+        ...COMPLET,
+        statut: 'soumis' as const,
+        soumis_le: '2026-10-14T08:00:00Z',
+        en_retard: true,
+      })),
+    });
+    expect(
+      await screen.findByText('Rapport soumis en retard : il ne se modifie plus.'),
+    ).toBeTruthy();
+  });
+
+  test('CA1 : sans réseau, la soumission attend dans la file avec l’heure du geste', async () => {
+    const horsReseau = jest.fn(async () => {
+      throw new TypeError('Network request failed');
+    });
+    await rendre({
+      rapport: jest.fn(async () => COMPLET),
+      enregistrerRapport: horsReseau,
+      soumettreRapport: horsReseau,
+    });
+    await fireEvent.press(await screen.findByText('Soumettre le rapport'));
+    expect(await screen.findByText(/Soumis sur le téléphone à/)).toBeTruthy();
+    expect(screen.queryByText('Soumettre le rapport')).toBeNull();
+    const [envoi] = await lireAttente();
+    expect(envoi).toMatchObject({ type: 'soumission_rapport', visite: 'v1' });
+    const soumisLe = (envoi as { soumis_le: string }).soumis_le;
+    expect(mockMemoire.get('rapport.v1')?.valeur).toMatchObject({ soumis_le: soumisLe });
+  });
+
+  test('CA1 : rouvert avant l’envoi, le rapport reste soumis sur le téléphone', async () => {
+    mockMemoire.set('rapport.v1', {
+      valeur: {
+        rapport: COMPLET,
+        saisie: { ...saisieVide, resume: 'Bon accueil' },
+        modifie_le: '2026-10-13T21:50:00Z',
+        envoye: false,
+        soumis_le: '2026-10-13T22:00:00Z',
+      },
+      maj: '2026-10-13T22:00:00Z',
+    });
+    await rendre({ rapport: jest.fn(async () => COMPLET) });
+    expect(await screen.findByText(/Soumis sur le téléphone à/)).toBeTruthy();
+    expect(screen.queryByText('Soumettre le rapport')).toBeNull();
   });
 });
