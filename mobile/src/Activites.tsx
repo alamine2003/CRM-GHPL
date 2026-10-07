@@ -1,6 +1,6 @@
 /**
  * Activités connexes déclarées dans le planning, sur la journée ou une demi-journée :
- * - absences (PLN-009) : congé, formation, réunion, maladie ou autre ; une demi-journée réduit de
+ * - absences (PLN-009) : congé, formation, réunion ou autre ; une demi-journée réduit de
  *   moitié les seuils du jour (CA1) ;
  * - activités avec visites (PLN-018, 0.3.1) : commando, déplacement (justifié ou demandé par le
  *   superviseur), accompagnement du superviseur ; elles s'expliquent et gardent leurs visites.
@@ -23,7 +23,8 @@ import { Pilule } from './Etablissements';
 import { police } from './polices';
 import { messageErreur, useSession } from './session';
 
-const SANS_VISITE: TypeActivite[] = ['conge', 'maladie', 'formation', 'reunion', 'autre'];
+// DC-51 : l'indisponibilité imprévue ne se planifie pas ; elle se déclare le jour même.
+const SANS_VISITE: TypeActivite[] = ['conge', 'formation', 'reunion', 'autre'];
 const AVEC_VISITES: TypeActivite[] = ['commando', 'deplacement', 'accompagnement'];
 
 export const avecVisites = (type: TypeActivite | null) => !!type && AVEC_VISITES.includes(type);

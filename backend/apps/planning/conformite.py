@@ -26,6 +26,7 @@ from django.utils import timezone
 from apps.socle.services import aujourdhui, valeur_parametre
 
 from .etats import StatutVisite
+from .indisponibilite import couverte, du_planning
 from .models import Classement, ConformiteJournee, Planning, Visite
 
 
@@ -60,6 +61,7 @@ def ecarts_du_jour(planning: Planning, jour: date, regles: dict) -> list[dict]:
     ecarts: list[dict] = []
     sans_gps = 0
     imprecises = 0
+    indisponibles = du_planning(planning)
 
     def ecart(code, visite=None, **detail):
         ecarts.append({"code": code, "visite": str(visite.pk) if visite else None,
@@ -71,7 +73,7 @@ def ecarts_du_jour(planning: Planning, jour: date, regles: dict) -> list[dict]:
         if v.est_imprevue:
             ecart("imprevue", v, justification=v.justification)
         if v.statut == StatutVisite.PREVUE:
-            if jour < aujourdhui(planning.pays):
+            if jour < aujourdhui(planning.pays) and not couverte(v, indisponibles):
                 ecart("a_justifier", v)
             continue
         if v.debut_le is None:

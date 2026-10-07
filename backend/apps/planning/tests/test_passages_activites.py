@@ -192,7 +192,7 @@ def test_pln009_ca1_une_demi_journee_reduit_de_moitie_les_seuils(monde, terrain)
 def test_une_journee_d_absence_ne_recoit_pas_de_visite(monde, terrain):
     deleg = client_de(monde["deleg.sn"])
     visite = poser(deleg, terrain, date="2026-10-14")
-    corps = {"date": "2026-10-14", "type": "maladie"}
+    corps = {"date": "2026-10-14", "type": "conge"}
     r = deleg.post(absences(terrain), corps, format="json")
     assert r.status_code == 409 and r.json()["code"] == "activite_avec_visites"
     deleg.post(f"/api/v1/visites/{visite['id']}/retirer/")

@@ -15,6 +15,7 @@ import type {
   Ecart,
   Imprevue,
   ModificationVisite,
+  PeriodeActivite,
   Report,
   Terminaison,
   SaisieActivite,
@@ -79,6 +80,14 @@ export type Envoi =
       type: 'modif_visite';
       visite: string;
       saisie: ModificationVisite;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** DC-51 : indisponibilité imprévue déclarée sans réseau, avec l'identifiant du téléphone. */
+      type: 'indisponibilite';
+      saisie: { id: string; periode: PeriodeActivite };
       resume: string;
       erreur?: string;
     }
@@ -285,6 +294,8 @@ async function rejouer(client: ClientApi): Promise<number> {
           await client.visites.enregistrerRapport(envoi.visite, brouillon.saisie);
         await client.visites.soumettreRapport(envoi.visite, envoi.soumis_le);
         await oublierBrouillonRapport(envoi.visite);
+      } else if (envoi.type === 'indisponibilite') {
+        await client.plannings.declarerIndisponibilite(envoi.saisie);
       } else if (envoi.type === 'ajout_activite') {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       } else {

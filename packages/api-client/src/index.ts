@@ -41,6 +41,7 @@ import type {
   Semaine,
   Reprise,
   Activite,
+  PeriodeActivite,
   ModificationActivite,
   Passage,
   SaisieActivite,
@@ -781,6 +782,12 @@ export function creerClient(options: OptionsClient) {
         requete<Passage>(`/api/v1/plannings/${planning}/passages/`, {
           methode: 'POST',
           corps: { visites },
+        }),
+      /** DC-51 : « Je suis indisponible aujourd'hui », sans motif ; rejouable (`id`). */
+      declarerIndisponibilite: (saisie: { id: string; periode: PeriodeActivite }) =>
+        requete<Activite>('/api/v1/programme/indisponibilite/', {
+          methode: 'POST',
+          corps: saisie,
         }),
       declarerActivite: (planning: string, saisie: SaisieActivite) =>
         requete<Activite>(`/api/v1/plannings/${planning}/activites/`, {

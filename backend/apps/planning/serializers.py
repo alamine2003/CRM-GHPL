@@ -272,6 +272,13 @@ class ActiviteSerializer(serializers.ModelSerializer):
     avec_visites = serializers.BooleanField(read_only=True)
 
 
+class SaisieIndisponibiliteSerializer(serializers.Serializer):
+    """DC-51 : la période d'aujourd'hui ; l'identifiant vient du téléphone (rejeu sans doublon)."""
+
+    id = serializers.UUIDField(required=False)
+    periode = serializers.ChoiceField(choices=Periode.choices, required=False)
+
+
 class SaisieActiviteSerializer(serializers.Serializer):
     id = serializers.UUIDField(required=False)
     date = serializers.DateField()

@@ -3046,6 +3046,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/Programme'
           description: ''
+  /api/v1/programme/indisponibilite/:
+    post:
+      operationId: indisponibilite_declarer
+      description: |-
+        DC-51 : « Je suis indisponible aujourd'hui » ; sans motif médical, le jour même, même
+        semaine fermée ; les visites de la période sont justifiées d'un coup.
+      tags:
+      - programme
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieIndisponibilite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieIndisponibilite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieIndisponibilite'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activite'
+          description: ''
   /api/v1/propositions/:
     get:
       operationId: propositions_liste
@@ -9660,6 +9688,16 @@ components:
           maxLength: 120
       required:
       - etablissement
+    SaisieIndisponibilite:
+      type: object
+      description: 'DC-51 : la période d''aujourd''hui ; l''identifiant vient du téléphone
+        (rejeu sans doublon).'
+      properties:
+        id:
+          type: string
+          format: uuid
+        periode:
+          $ref: '#/components/schemas/PeriodeActiviteEnum'
     SaisieJourFerie:
       type: object
       properties:
@@ -10334,7 +10372,7 @@ components:
       - conge
       - formation
       - reunion
-      - maladie
+      - indisponibilite
       - autre
       - commando
       - deplacement
@@ -10344,7 +10382,7 @@ components:
         * `conge` - Congé
         * `formation` - Formation
         * `reunion` - Réunion
-        * `maladie` - Maladie
+        * `indisponibilite` - Indisponibilité imprévue
         * `autre` - Autre
         * `commando` - Commando
         * `deplacement` - Déplacement

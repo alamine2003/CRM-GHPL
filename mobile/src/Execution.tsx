@@ -6,7 +6,13 @@
  * aussitôt, ou attend dans la file et part au retour du réseau. Sans position, la visite démarre
  * quand même, « sans GPS » (CA2) ; avec une position, la distance au lieu s'affiche (CA3).
  */
-import type { ClientApi, DetailVisite, Programme, VisiteProgramme } from '@innov/api-client';
+import type {
+  Activite,
+  ClientApi,
+  DetailVisite,
+  Programme,
+  VisiteProgramme,
+} from '@innov/api-client';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
@@ -51,6 +57,22 @@ export async function changerVisite(id: string, champs: Partial<VisiteProgramme>
     })),
     a_justifier: (memoire.valeur.a_justifier ?? []).map((v) =>
       v.id === id ? { ...v, ...champs } : v,
+    ),
+  };
+  await ecrire(CLE_PROGRAMME, programme).catch(() => undefined);
+  ecouteurs.forEach((e) => e(programme));
+}
+
+/** DC-51 : ajoute une indisponibilité imprévue au programme gardé, à son jour, et prévient. */
+export async function ajouterActiviteAuProgramme(activite: Activite) {
+  const memoire = await lire<Programme>(CLE_PROGRAMME).catch(() => null);
+  if (!memoire) return;
+  const programme: Programme = {
+    ...memoire.valeur,
+    jours: memoire.valeur.jours.map((j) =>
+      j.date === activite.date && !j.activites.some((a) => a.id === activite.id)
+        ? { ...j, activites: [...j.activites, activite] }
+        : j,
     ),
   };
   await ecrire(CLE_PROGRAMME, programme).catch(() => undefined);

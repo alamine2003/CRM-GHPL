@@ -698,6 +698,23 @@ class ProgrammeVue(VuePlannings):
         return Response(s.ProgrammeSerializer(programme(pays, request.user, jour)).data)
 
 
+class IndisponibiliteVue(VuePlannings):
+    """DC-51 : « Je suis indisponible aujourd'hui » ; sans motif médical, le jour même, même
+    semaine fermée ; les visites de la période sont justifiées d'un coup."""
+
+    actions = {"POST": PREPARER}
+
+    @extend_schema(request=s.SaisieIndisponibiliteSerializer, responses=s.ActiviteSerializer,
+                   operation_id="indisponibilite_declarer")  # fmt: skip
+    def post(self, request):
+        from . import indisponibilite
+
+        v = _lire(s.SaisieIndisponibiliteSerializer, request)
+        activite = indisponibilite.declarer(request.user, pays_requis(self.perimetre),
+                                            v.get("periode", "journee"), v.get("id"))  # fmt: skip
+        return Response(s.ActiviteSerializer(activite).data, status=status.HTTP_201_CREATED)
+
+
 class VisiteDetailVue(VuePerimetre):
     """VIS-002 : détail d'une visite du délégué, avec les coordonnées et son historique récent.
     Une visite retirée par une modification encore en attente reste au programme : elle se lit

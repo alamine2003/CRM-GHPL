@@ -1210,6 +1210,9 @@ def declarer_activite(planning: Planning, *, date: date, type: str, periode: str
     _verrouiller(planning)
     if existante := _deja_envoye(Activite, planning, id):
         return existante
+    from .indisponibilite import exiger_pas_au_planning
+
+    exiger_pas_au_planning(type)
     approuve = _exiger_modifiable(planning, apres_approbation=True)
     _exiger_jour_ouvert(planning, date)
     activite = Activite(pays=planning.pays, planning=planning, date=date, type=type,

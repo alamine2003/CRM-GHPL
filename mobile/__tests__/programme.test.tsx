@@ -190,3 +190,40 @@ test('RG-032 : un rapport de la veille non soumis remonte en tête, « en retard
   await fireEvent.press(screen.getByText(/VEILLE/));
   expect(mockPousser).toHaveBeenCalledWith({ pathname: '/rapport/[id]', params: { id: 'v0' } });
 });
+
+test('DC-51 : « Je suis indisponible aujourd’hui » justifie la journée sans motif', async () => {
+  const declarerIndisponibilite = jest.fn(async (s: { id: string; periode: string }) => ({
+    id: s.id,
+    date: '2026-10-13',
+    periode: s.periode,
+    type: 'indisponibilite',
+    commentaire: '',
+    demande_superviseur: false,
+    avec_visites: false,
+  }));
+  mockMemoire.set('programme.courant', { valeur: PROGRAMME, maj: '2026-10-13T06:30:00.000Z' });
+  const session = {
+    etat: { statut: 'connecte' },
+    client: {
+      plannings: {
+        programme: jest.fn(async () => PROGRAMME),
+        semaine: jest.fn(async () => ({})),
+        declarerIndisponibilite,
+      },
+    } as unknown as ClientApi,
+  } as unknown as Session;
+  await render(
+    <ContexteSession.Provider value={session}>
+      <ProgrammeDuJour />
+    </ContexteSession.Provider>,
+  );
+  expect(await screen.findByText('Prochaine visite')).toBeTruthy();
+  await fireEvent.press(screen.getByText(/Je suis indisponible aujourd.hui/));
+  expect(screen.getByText(/Aucun motif n'est demandé/)).toBeTruthy();
+  await fireEvent.press(screen.getByText(/Déclarer l.indisponibilité/));
+  expect(declarerIndisponibilite).toHaveBeenCalledWith(
+    expect.objectContaining({ periode: 'journee' }),
+  );
+  expect(await screen.findByText(/Indisponibilité déclarée/)).toBeTruthy();
+  expect(screen.queryByText('Prochaine visite')).toBeNull();
+});

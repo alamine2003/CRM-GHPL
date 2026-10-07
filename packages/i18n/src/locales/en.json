@@ -1412,11 +1412,12 @@
       "conge": "Leave",
       "formation": "Training",
       "reunion": "Meeting",
-      "maladie": "Sick",
+      "maladie": "Unforeseen unavailability",
       "autre": "Other",
       "commando": "Commando",
       "deplacement": "Trip",
-      "accompagnement": "Joint visit with supervisor"
+      "accompagnement": "Joint visit with supervisor",
+      "indisponibilite": "Unforeseen unavailability"
     },
     "periodes": {
       "journee": "Full day",
@@ -2108,5 +2109,18 @@
     "plus_one": "See the older visit",
     "plus_other": "See the {{count}} older visits",
     "moins": "See less"
+  },
+  "indisponibilite": {
+    "ouvrir": "I am unavailable today",
+    "titre": "Unforeseen unavailability",
+    "aide": "No reason is asked. The visits of the period are justified at once; your supervisor sees it.",
+    "confirmer": "Declare unavailability",
+    "declaree": "Unavailability declared: the visits of the period are justified.",
+    "enAttente": "No network: the unavailability is kept on the phone and will be sent automatically.",
+    "periodes": {
+      "journee": "The whole day",
+      "matin": "The morning",
+      "apres_midi": "The afternoon"
+    }
   }
 }

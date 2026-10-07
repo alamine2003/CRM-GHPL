@@ -4,7 +4,7 @@ accompagnement du superviseur se déclarent dans le planning, avec leur explicat
 
 CA1 : une activité avec visites exige une explication ; ses visites hors secteur ou hors liste
 cible ne sont pas signalées comme anomalies.
-CA2 : elle ne réduit pas l'objectif du jour ; une absence (congé, maladie…) le réduit toujours.
+CA2 : elle ne réduit pas l'objectif du jour ; une absence (congé, formation…) le réduit toujours.
 """
 
 from datetime import date, time

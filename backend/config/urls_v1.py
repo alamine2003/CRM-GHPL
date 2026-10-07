@@ -197,6 +197,12 @@ urlpatterns = [
     path("plannings/", pln.PlanningsVue.as_view(), name="plannings"),
     path("plannings/semaine/", pln.SemaineVue.as_view(), name="planning-semaine"),
     path("programme/", pln.ProgrammeVue.as_view(), name="programme"),
+    # DC-51 : indisponibilité imprévue, déclarée le jour même
+    path(
+        "programme/indisponibilite/",
+        pln.IndisponibiliteVue.as_view(),
+        name="programme-indisponibilite",
+    ),
     path("plannings/a-valider/", pln.FileValidationVue.as_view(), name="plannings-a-valider"),
     path("plannings/fermes/", pln.SemainesFermeesVue.as_view(), name="plannings-fermes"),
     path("plannings/fermes/rouvrir/", pln.ReouvertureVue.as_view(), name="plannings-rouvrir"),

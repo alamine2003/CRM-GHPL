@@ -8,7 +8,7 @@
 - `Passage` (PLN-003) : plusieurs visites d'un même établissement le même jour, à une même heure.
 - `VersionPlanning` (RG-037, PLN-012) : état figé à chaque soumission, porteur de la décision.
 - `Activite` (PLN-009, PLN-018) : activité connexe sur une journée ou une demi-journée, sans
-  visite (congé, formation, réunion, maladie…) ou avec visites (commando, déplacement…).
+  visite (congé, formation, réunion, indisponibilité…) ou avec visites (commando, déplacement…).
 """
 
 from django.conf import settings
@@ -108,7 +108,8 @@ class TypeActivite(models.TextChoices):
     CONGE = "conge", "Congé"
     FORMATION = "formation", "Formation"
     REUNION = "reunion", "Réunion"
-    MALADIE = "maladie", "Maladie"
+    #: DC-51 : remplace « maladie » ; sans motif médical, déclarée le jour même (Tournée).
+    INDISPONIBILITE = "indisponibilite", "Indisponibilité imprévue"
     AUTRE = "autre", "Autre"
     COMMANDO = "commando", "Commando"
     DEPLACEMENT = "deplacement", "Déplacement"
@@ -124,10 +125,10 @@ AVEC_VISITES = frozenset({TypeActivite.COMMANDO, TypeActivite.DEPLACEMENT,
 
 class Activite(ModeleDePays):
     """Activité connexe déclarée dans le planning (PLN-009, PLN-018). Sans visite (congé,
-    maladie, formation, réunion, autre), elle réduit les seuils du jour au prorata (CA1,
-    RG-022) ; avec visites (commando, déplacement, accompagnement du superviseur), elle
-    s'explique et justifie les visites hors secteur de sa journée. Elle se valide avec le
-    planning (cycle 0.3)."""
+    formation, réunion, indisponibilité imprévue, autre), elle réduit les seuils du jour au
+    prorata (CA1, RG-022) ; avec visites (commando, déplacement, accompagnement du
+    superviseur), elle s'explique et justifie les visites hors secteur de sa journée. Elle se
+    valide avec le planning (cycle 0.3)."""
 
     planning = models.ForeignKey(Planning, on_delete=models.PROTECT, related_name="activites")
     date = models.DateField()

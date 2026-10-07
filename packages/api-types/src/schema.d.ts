@@ -1826,6 +1826,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/programme/indisponibilite/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description DC-51 : « Je suis indisponible aujourd'hui » ; sans motif médical, le jour même, même
+     *     semaine fermée ; les visites de la période sont justifiées d'un coup.
+     */
+    post: operations['indisponibilite_declarer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/propositions/': {
     parameters: {
       query?: never;
@@ -4688,6 +4708,12 @@ export interface components {
       principal?: boolean | null;
       presence?: string;
     };
+    /** @description DC-51 : la période d'aujourd'hui ; l'identifiant vient du téléphone (rejeu sans doublon). */
+    SaisieIndisponibilite: {
+      /** Format: uuid */
+      id?: string;
+      periode?: components['schemas']['PeriodeActiviteEnum'];
+    };
     SaisieJourFerie: {
       /** Format: date */
       date: string;
@@ -4978,7 +5004,7 @@ export interface components {
      * @description * `conge` - Congé
      *     * `formation` - Formation
      *     * `reunion` - Réunion
-     *     * `maladie` - Maladie
+     *     * `indisponibilite` - Indisponibilité imprévue
      *     * `autre` - Autre
      *     * `commando` - Commando
      *     * `deplacement` - Déplacement
@@ -4989,7 +5015,7 @@ export interface components {
       | 'conge'
       | 'formation'
       | 'reunion'
-      | 'maladie'
+      | 'indisponibilite'
       | 'autre'
       | 'commando'
       | 'deplacement'
@@ -8061,6 +8087,31 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Programme'];
+        };
+      };
+    };
+  };
+  indisponibilite_declarer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['SaisieIndisponibilite'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieIndisponibilite'];
+        'multipart/form-data': components['schemas']['SaisieIndisponibilite'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Activite'];
         };
       };
     };

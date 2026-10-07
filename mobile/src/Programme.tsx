@@ -23,6 +23,7 @@ import { Alerte, Bouton, Carte, Etiquette, MarquePotentiel, Texte, usePalette } 
 import { nomProspect } from './Fiches';
 import { police } from './polices';
 import { VisiteImprevue } from './Imprevue';
+import { couverte, Indisponibilite } from './Indisponibilite';
 import { useSession } from './session';
 import { garderSemaine } from './semaineLocale';
 
@@ -91,7 +92,8 @@ export function ProgrammeDuJour() {
     aujourdhui?.visites
       .filter((v) => v.statut === 'en_cours')
       .sort((a, b) => (b.debut_le ?? '').localeCompare(a.debut_le ?? ''))[0] ??
-    aujourdhui?.visites.find((v) => v.statut === 'prevue') ??
+    // DC-51 : une visite couverte par une indisponibilité déclarée n'est plus proposée.
+    aujourdhui?.visites.find((v) => v.statut === 'prevue' && !couverte(v, aujourdhui.activites)) ??
     null;
   // Le bouton de l'annonce disparaît une fois le rapport soumis (RPT-001).
   const rapportARediger = (id: string) =>
@@ -274,6 +276,9 @@ export function ProgrammeDuJour() {
         )}
         {programme.etat === 'approuve' && aujourdhui && (
           <VisiteImprevue programme={programme} surAnnonce={setAnnonce} />
+        )}
+        {programme.etat === 'approuve' && aujourdhui && (
+          <Indisponibilite programme={programme} surAnnonce={setAnnonce} />
         )}
       </Carte>
       {programme.etat === 'approuve' && autresJours.length > 0 && (

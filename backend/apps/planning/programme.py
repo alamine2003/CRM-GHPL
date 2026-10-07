@@ -20,7 +20,8 @@ from apps.socle.services import aujourdhui, valeur_parametre
 
 from .calendrier import jours_de_la_semaine, lundi
 from .etats import StatutVisite
-from .models import Activite, Decision, Planning, Visite
+from .indisponibilite import couverte, du_planning
+from .models import Activite, Decision, Planning, TypeActivite, Visite
 
 
 class Etat:
@@ -90,8 +91,11 @@ def a_justifier(pays: Pays, delegue: Utilisateur, today: date) -> list[Visite]:
     return [
         v
         for p in plannings
+        for indisponibles in [du_planning(p)]
         for v in _visites_approuvees(p, services.reference(p))
-        if v.date < today and v.statut == StatutVisite.PREVUE
+        if v.date < today
+        and v.statut == StatutVisite.PREVUE
+        and not couverte(v, indisponibles)  # DC-51 : justifiées d'un coup
     ]
 
 
@@ -116,7 +120,12 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
     activites = []
     if ref:
         ids = [a["id"] for a in services.contenu_effectif(ref).get("activites", [])]
-        activites = list(Activite.objects.filter(pk__in=ids).order_by("date"))
+        # DC-51 : l'indisponibilité imprévue, déclarée le jour même, hors approbation.
+        activites = list(
+            Activite.objects.filter(Q(pk__in=ids) | Q(planning=planning, archive_le__isnull=True,
+                                                      type=TypeActivite.INDISPONIBILITE))
+            .order_by("date")
+        )  # fmt: skip
 
     jours = [
         {"date": j.date, "ferie": j.ferie.libelle if j.ferie else None,
@@ -126,7 +135,8 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
     ]  # fmt: skip
     # La visite en cours la plus récemment démarrée d'abord (une imprévue, par exemple), sinon
     # la première prévue.
-    du_jour = [v for v in visites if v.date == today and v.statut in A_FAIRE]
+    du_jour = [v for v in visites if v.date == today and v.statut in A_FAIRE
+              and not couverte(v, activites)]  # fmt: skip
     en_cours = [v for v in du_jour if v.statut == StatutVisite.EN_COURS and v.debut_le]
     prochaine = max(en_cours, key=lambda v: v.debut_le, default=None) or next(iter(du_jour), None)
 

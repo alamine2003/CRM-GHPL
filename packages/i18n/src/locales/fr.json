@@ -1412,11 +1412,12 @@
       "conge": "Congé",
       "formation": "Formation",
       "reunion": "Réunion",
-      "maladie": "Maladie",
+      "maladie": "Indisponibilité imprévue",
       "autre": "Autre",
       "commando": "Commando",
       "deplacement": "Déplacement",
-      "accompagnement": "Accompagnement du superviseur"
+      "accompagnement": "Accompagnement du superviseur",
+      "indisponibilite": "Indisponibilité imprévue"
     },
     "periodes": {
       "journee": "Journée",
@@ -2108,5 +2109,18 @@
     "plus_one": "Voir la visite plus ancienne",
     "plus_other": "Voir les {{count}} visites plus anciennes",
     "moins": "Voir moins"
+  },
+  "indisponibilite": {
+    "ouvrir": "Je suis indisponible aujourd'hui",
+    "titre": "Indisponibilité imprévue",
+    "aide": "Aucun motif n'est demandé. Les visites de la période sont justifiées d'un coup ; votre superviseur le voit.",
+    "confirmer": "Déclarer l'indisponibilité",
+    "declaree": "Indisponibilité déclarée : les visites de la période sont justifiées.",
+    "enAttente": "Pas de réseau : l'indisponibilité est gardée sur le téléphone et partira toute seule.",
+    "periodes": {
+      "journee": "Toute la journée",
+      "matin": "Le matin",
+      "apres_midi": "L'après-midi"
+    }
   }
 }
