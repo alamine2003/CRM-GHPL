@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-07 12:53+0000\n"
+"POT-Creation-Date: 2026-10-07 15:55+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -541,6 +541,18 @@ msgstr ""
 "Your planning for this week is not approved: an unplanned visit can be added "
 "once it is."
 
+msgid "Aucun planning cette semaine."
+msgstr "No plan this week."
+
+msgid "Période inconnue."
+msgstr "Unknown period."
+
+msgid "Une indisponibilité est déjà déclarée pour cette période."
+msgstr "An unavailability is already declared for this period."
+
+msgid "L'indisponibilité imprévue se déclare le jour même, depuis la Tournée."
+msgstr "An unforeseen unavailability is declared on the day itself, from the Round screen."
+
 msgid ""
 "Un jour férié ne se modifie plus à partir de son jour : seule une date à "
 "venir peut changer."
@@ -834,6 +846,9 @@ msgstr "This record is not awaiting validation."
 
 msgid "Fiche archivée"
 msgstr "Record archived"
+
+msgid "Le rayon de pointage est compris entre 50 et 2 000 mètres."
+msgstr "The check-in radius is between 50 and 2,000 metres."
 
 msgid "Coordonnées GPS invalides."
 msgstr "Invalid GPS coordinates."
