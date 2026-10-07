@@ -2577,6 +2577,47 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/{id}/rapport/pieces/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description RPT-007 : joindre une photo ou un document au rapport de sa visite. */
+    post: operations['piece_jointe_ajouter'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/visites/{id}/rapport/pieces/{piece}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description RPT-007 CA2 : la pièce jointe ne se lit que par qui voit le rapport ; elle se retire
+     *     tant que le rapport n'est pas soumis.
+     */
+    get: operations['piece_jointe_lire'];
+    put?: never;
+    post?: never;
+    /**
+     * @description RPT-007 CA2 : la pièce jointe ne se lit que par qui voit le rapport ; elle se retire
+     *     tant que le rapport n'est pas soumis.
+     */
+    delete: operations['piece_jointe_retirer'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/rapport/soumettre/': {
     parameters: {
       query?: never;
@@ -3973,6 +4014,16 @@ export interface components {
       prenom: string;
       nom: string;
     };
+    /** @description Une photo ou un document joint (RPT-007) ; le fichier se lit par sa propre adresse. */
+    PieceJointe: {
+      /** Format: uuid */
+      readonly id: string;
+      readonly nom: string;
+      readonly type_mime: string;
+      readonly taille: number;
+      /** Format: date-time */
+      readonly prise_le: string;
+    };
     Planning: {
       /** Format: uuid */
       readonly id: string;
@@ -4313,6 +4364,7 @@ export interface components {
       readonly articles_proposes: components['schemas']['Resume'][];
       readonly types_action_proposes: components['schemas']['Resume'][];
       readonly action_precedente: components['schemas']['ActionPrecedente'] | null;
+      readonly pieces_jointes: components['schemas']['PieceJointe'][];
     };
     /**
      * @description * `attendu` - attendu
@@ -4559,6 +4611,14 @@ export interface components {
       libelle: string;
       /** @default false */
       variable: boolean;
+    };
+    SaisiePiece: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uri */
+      fichier: string;
+      /** Format: date-time */
+      prise_le: string;
     };
     SaisieProposition: {
       /** Format: uuid */
@@ -9261,6 +9321,74 @@ export interface operations {
         content: {
           'application/json': components['schemas']['Rapport'];
         };
+      };
+    };
+  };
+  piece_jointe_ajouter: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['SaisiePiece'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PieceJointe'];
+        };
+      };
+    };
+  };
+  piece_jointe_lire: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        piece: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/octet-stream': string;
+        };
+      };
+    };
+  };
+  piece_jointe_retirer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        piece: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

@@ -133,6 +133,8 @@ export type Remise = Schemas['Remise'];
 export type TypeRemise = Schemas['TypeRemiseEnum'];
 /** Prochaine action notée à la dernière visite chez ce prospect, rappelée (RPT-006 CA1). */
 export type ActionPrecedente = Schemas['ActionPrecedente'];
+/** Photo ou document joint au rapport (RPT-007). */
+export type PieceJointe = Schemas['PieceJointe'];
 export type DefinitionChamp = Schemas['DefinitionChamp'];
 export type TypeChamp = Schemas['TypeChampEnum'];
 /** Valeurs saisies des champs du pays, par code de champ. */

@@ -20,6 +20,7 @@ import { envoyerAttente, estTransitoire } from './Brouillons';
 import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from './composants';
 import { Pilule } from './Etablissements';
 import i18n from './i18n';
+import { PiecesJointes } from './PiecesJointes';
 import { ProchaineAction } from './ProchaineAction';
 import { ProduitsPresentes, Remises } from './RapportProduits';
 import { changerVisite, useVisiteDuProgramme } from './Execution';
@@ -336,6 +337,12 @@ export function FormulaireRapport({ id }: { id: string }) {
         {message && <Alerte type={message.ton}>{message.texte}</Alerte>}
         {!message && <Alerte type="succes">{t('rapport.soumisLe')}</Alerte>}
         <RapportLu rapport={rapport} />
+        <PiecesJointes
+          rapport={rapport}
+          visite={id}
+          modifiable={false}
+          surRapport={(pieces_jointes) => setRapport({ ...rapport, pieces_jointes })}
+        />
       </View>
     );
 
@@ -435,6 +442,13 @@ export function FormulaireRapport({ id }: { id: string }) {
         presentations={saisie.presentations}
         remises={saisie.remises}
         surChangement={(remises) => changer({ remises })}
+      />
+
+      <PiecesJointes
+        rapport={rapport}
+        visite={id}
+        modifiable
+        surRapport={(pieces_jointes) => setRapport({ ...rapport, pieces_jointes })}
       />
 
       {rapport.definitions.length > 0 && (

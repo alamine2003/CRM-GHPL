@@ -704,6 +704,15 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». En 0.5.4, il est noté et rappelé ; il ne crée pas de visite dans le planning [H].
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.36 Pièces jointes du rapport (mise en œuvre 0.5.5)
+
+- **Joindre** (RPT-007) : « Prendre une photo », « Galerie » ou « Document PDF », dans la section « Photos et documents » du rapport ; facultatif.
+- **CA1** [H] : 10 Mo au plus par fichier (vérifié sur le téléphone puis par le serveur), 3 pièces au plus par rapport. Les photos sont compressées à la prise. Seuls les JPEG, PNG, HEIC et PDF sont acceptés, **reconnus à leur contenu** et non à leur nom.
+- **CA2** : une pièce jointe ne se lit que par qui voit le rapport ; elle n'a pas d'adresse publique et se lit par une adresse contrôlée, jamais gardée en cache. En 0.5.5, seul le délégué voit son rapport ; le superviseur le verra en 0.6.
+- **Sans réseau** : la pièce reste sur le téléphone, marquée « En attente du réseau », et part toute seule au retour du réseau. Une pièce prise **avant** la soumission du rapport peut arriver après ; une pièce prise après ne rejoint plus un rapport soumis.
+- **Retirer** : possible tant que le rapport n'est pas soumis. La pièce retirée est archivée, jamais effacée (RG-005), et suit la durée de conservation des pièces jointes du pays (3 ans par défaut, RG-060).
+- Hypothèses [H] : le fichier en attente est gardé dans le cache du téléphone jusqu'à la brouillon local (0.5.6) ; les pièces jointes sont stockées sur le disque du serveur en développement et dans le stockage objet (R2) au déploiement.
+
 ### 14.35 Faire mieux que l'outil actuel (décision du 7 octobre 2026)
 
 L'outil en place (BirdNotes, version web observée sur une démonstration vidéo) sert de point de comparaison : INNOV CRM reprend ses usages utiles et doit le dépasser sur chacun [D, 7 octobre 2026].

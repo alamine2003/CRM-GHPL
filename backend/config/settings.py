@@ -195,6 +195,11 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Pièces jointes des rapports (RPT-007) : jamais servies telles quelles, toujours par une vue
+# qui vérifie le droit de voir le rapport. Disque local en développement ; le stockage objet
+# (Cloudflare R2, architecture §5) se branche au déploiement.
+MEDIA_ROOT = Path(os.environ.get("INNOV_FICHIERS", BASE_DIR / "fichiers"))
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["apps.identite.authentification.AuthentificationSession"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],

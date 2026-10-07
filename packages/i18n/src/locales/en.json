@@ -2069,5 +2069,19 @@
     "options": "Choices offered",
     "optionsAide": "One choice per line, at least two.",
     "obligatoireAvant": "Required to submit"
+  },
+  "pieces": {
+    "titre": "Photos and documents",
+    "aide": "Optional. Up to {{n}} files of 10 MB: photo or PDF.",
+    "prendrePhoto": "Take a photo",
+    "galerie": "Gallery",
+    "pdf": "PDF document",
+    "retirer": "Remove {{nom}}",
+    "retirerCourt": "Remove",
+    "enAttente": "Waiting for network",
+    "horsLigne": "No network: the file is kept on the phone and will be sent automatically when the network is back.",
+    "tropLourde": "This file is over 10 MB: take a lighter photo.",
+    "permission": "Allow access to the camera or photos in the phone settings.",
+    "maximum": "{{n}} attachments at most: remove one to add another."
   }
 }

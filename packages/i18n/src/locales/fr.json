@@ -2069,5 +2069,19 @@
     "options": "Choix proposés",
     "optionsAide": "Un choix par ligne, au moins deux.",
     "obligatoireAvant": "Obligatoire pour soumettre"
+  },
+  "pieces": {
+    "titre": "Photos et documents",
+    "aide": "Facultatif. Jusqu'à {{n}} fichiers de 10 Mo : photo ou PDF.",
+    "prendrePhoto": "Prendre une photo",
+    "galerie": "Galerie",
+    "pdf": "Document PDF",
+    "retirer": "Retirer {{nom}}",
+    "retirerCourt": "Retirer",
+    "enAttente": "En attente du réseau",
+    "horsLigne": "Pas de réseau : la pièce est gardée sur le téléphone et partira toute seule au retour du réseau.",
+    "tropLourde": "Ce fichier dépasse 10 Mo : prenez une photo plus légère.",
+    "permission": "Autorisez l'accès à l'appareil photo ou aux photos dans les réglages du téléphone.",
+    "maximum": "{{n}} pièces jointes au plus : retirez-en une pour en ajouter une autre."
   }
 }

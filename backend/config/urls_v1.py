@@ -211,6 +211,16 @@ urlpatterns = [
         rap.SoumissionRapportVue.as_view(),
         name="visite-rapport-soumettre",
     ),
+    path(
+        "visites/<uuid:id>/rapport/pieces/",
+        rap.PiecesRapportVue.as_view(),
+        name="visite-rapport-pieces",
+    ),  # fmt: skip
+    path(
+        "visites/<uuid:id>/rapport/pieces/<uuid:piece>/",
+        rap.PieceRapportVue.as_view(),
+        name="visite-rapport-piece",
+    ),  # fmt: skip
     path("rapports/champs/", rap.ChampsRapportVue.as_view(), name="champs-rapport"),
     path("rapports/champs/<uuid:id>/", rap.ChampRapportVue.as_view(), name="champ-rapport"),
     path(

@@ -19,7 +19,15 @@ from apps.planning.models import Visite
 from apps.referentiel.models import Liste, Valeur
 from apps.socle.erreurs import ErreurMetier
 
-from .models import ChampRapport, Rapport, RetourPrescripteur, StatutRapport, TypeChamp, TypeRemise
+from .models import (
+    ChampRapport,
+    PieceJointe,
+    Rapport,
+    RetourPrescripteur,
+    StatutRapport,
+    TypeChamp,
+    TypeRemise,
+)
 
 #: Statuts où le délégué écrit encore son rapport.
 MODIFIABLES = (StatutRapport.BROUILLON, StatutRapport.A_CORRIGER, StatutRapport.ROUVERT)
@@ -378,3 +386,85 @@ def soumettre(rapport: Rapport, soumis_le: datetime) -> Rapport:
     _auditer("rapport.soumission", rapport, visite=str(rapport.visite_id),
              soumis_le=soumis_le.isoformat())  # fmt: skip
     return rapport
+
+
+# --- Pièces jointes (RPT-007) -----------------------------------------------------------------
+
+#: CA1 [H] : 10 Mo par fichier, 3 par rapport.
+TAILLE_MAX_PIECE = 10 * 1024 * 1024
+PIECES_MAX = 3
+
+#: Types acceptés, reconnus par les premiers octets du fichier et non par son nom.
+SIGNATURES = (
+    (b"\xff\xd8\xff", "image/jpeg", "jpg"),
+    (b"\x89PNG\r\n\x1a\n", "image/png", "png"),
+    (b"%PDF-", "application/pdf", "pdf"),
+)
+
+
+def _type_du_contenu(entete: bytes) -> tuple[str, str] | None:
+    for signature, mime, extension in SIGNATURES:
+        if entete.startswith(signature):
+            return mime, extension
+    # HEIC (photos d'iPhone) : « ftyp » suivi d'une marque heic, heix, mif1…
+    if entete[4:8] == b"ftyp" and entete[8:12] in (b"heic", b"heix", b"mif1", b"msf1"):
+        return "image/heic", "heic"
+    return None
+
+
+def _exiger_ajout_possible(rapport: Rapport, prise_le: datetime) -> None:
+    """Pendant la rédaction ; ou après la soumission si la pièce a été prise avant, et n'a pu
+    partir qu'au retour du réseau (téléversement différé)."""
+    if rapport.statut in MODIFIABLES:
+        return
+    if rapport.soumis_le and prise_le <= rapport.soumis_le:
+        return
+    _exiger_modifiable(rapport)
+
+
+@transaction.atomic
+def joindre(rapport: Rapport, *, id, fichier, prise_le: datetime) -> PieceJointe:
+    """RPT-007 : ajoute une photo ou un document ; rejouer le même envoi ne crée rien de plus."""
+    from django.core.files.base import ContentFile
+
+    rapport = Rapport.objects.select_for_update().get(pk=rapport.pk)
+    # Rejeu : la pièce déjà reçue (même retirée depuis) est rendue telle quelle.
+    existante = PieceJointe.objects.filter(pk=id).first()
+    if existante is not None:
+        if existante.rapport_id != rapport.pk:
+            raise ErreurMetier("identifiant_pris", _("Cet identifiant est déjà utilisé."),
+                               status.HTTP_409_CONFLICT)  # fmt: skip
+        return existante
+    _exiger_ajout_possible(rapport, prise_le)
+    if fichier.size > TAILLE_MAX_PIECE:
+        raise ErreurMetier("piece_trop_lourde",
+                           _("Un fichier ne dépasse pas 10 Mo."), champ="fichier")  # fmt: skip
+    if rapport.pieces_jointes.filter(archive_le__isnull=True).count() >= PIECES_MAX:
+        raise ErreurMetier(
+            "pieces_trop_nombreuses", _("Trois pièces jointes au plus par rapport."),
+            champ="fichier",
+        )  # fmt: skip
+    contenu = fichier.read()
+    reconnu = _type_du_contenu(contenu[:16])
+    if reconnu is None:
+        raise ErreurMetier("type_de_fichier",
+                           _("Seules les photos (JPEG, PNG, HEIC) et les PDF sont acceptés."),
+                           champ="fichier")  # fmt: skip
+    mime, extension = reconnu
+    nom = (getattr(fichier, "name", "") or "").rsplit("/", 1)[-1][:200] or f"piece.{extension}"
+    piece = PieceJointe(pk=id, pays=rapport.pays, rapport=rapport, nom=nom, type_mime=mime,
+                        taille=len(contenu), prise_le=prise_le)  # fmt: skip
+    piece.fichier.save(f"{id}.{extension}", ContentFile(contenu), save=False)
+    piece.save()
+    _auditer("rapport.piece_jointe_ajout", rapport, piece=str(piece.pk), taille=piece.taille,
+             type=mime)  # fmt: skip
+    return piece
+
+
+@transaction.atomic
+def retirer_piece(piece: PieceJointe) -> None:
+    rapport = Rapport.objects.select_for_update().get(pk=piece.rapport_id)
+    _exiger_modifiable(rapport)
+    # RG-005 : retirée du rapport, la pièce reste archivée (conservation, RG-060).
+    piece.archiver()
+    _auditer("rapport.piece_jointe_retrait", rapport, piece=str(piece.pk))

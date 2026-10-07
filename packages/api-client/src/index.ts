@@ -30,6 +30,7 @@ import type {
   Report,
   Imprevue,
   Rapport,
+  PieceJointe,
   SaisieRapport,
   ChampRapport,
   SaisieChamp,
@@ -161,6 +162,7 @@ export type {
   Remise,
   TypeRemise,
   ActionPrecedente,
+  PieceJointe,
   DefinitionChamp,
   TypeChamp,
   ValeursChamps,
@@ -405,7 +407,7 @@ export interface OptionsClient {
 }
 
 interface OptionsRequete {
-  methode?: 'GET' | 'POST' | 'PATCH' | 'PUT';
+  methode?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   /** Objet envoyé en JSON, ou formulaire multipart (téléversement de fichier). */
   corps?: unknown;
   /** Réponse lue comme texte brut (rapport CSV). */
@@ -826,6 +828,30 @@ export function creerClient(options: OptionsClient) {
       rapport: (id: string) => requete<Rapport>(`/api/v1/visites/${id}/rapport/`),
       enregistrerRapport: (id: string, saisie: SaisieRapport) =>
         requete<Rapport>(`/api/v1/visites/${id}/rapport/`, { methode: 'PUT', corps: saisie }),
+      /** Pièce jointe (RPT-007) : photo ou PDF ; l'identifiant vient du téléphone, l'envoi se
+       * rejoue sans doublon. Sur le téléphone, le fichier est donné par son adresse locale. */
+      joindrePiece: (
+        id: string,
+        piece: {
+          id: string;
+          fichier: Blob | { uri: string; name: string; type: string };
+          nom: string;
+          prise_le: string;
+        },
+      ) => {
+        const formulaire = new FormData();
+        formulaire.append('id', piece.id);
+        formulaire.append('prise_le', piece.prise_le);
+        if (piece.fichier instanceof Blob) formulaire.append('fichier', piece.fichier, piece.nom);
+        // React Native lit le fichier lui-même à partir de { uri, name, type }.
+        else formulaire.append('fichier', piece.fichier as unknown as Blob);
+        return requete<PieceJointe>(`/api/v1/visites/${id}/rapport/pieces/`, {
+          methode: 'POST',
+          corps: formulaire,
+        });
+      },
+      retirerPiece: (id: string, piece: string) =>
+        requete<void>(`/api/v1/visites/${id}/rapport/pieces/${piece}/`, { methode: 'DELETE' }),
       /** Soumission (RPT-002) : refusée tant que le socle ou un champ obligatoire manque. */
       soumettreRapport: (id: string, soumisLe: string) =>
         requete<Rapport>(`/api/v1/visites/${id}/rapport/soumettre/`, {

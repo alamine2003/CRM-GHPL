@@ -57,6 +57,7 @@ const BROUILLON: Rapport = {
     { id: 'autre', libelle: 'Autre' },
   ],
   action_precedente: null,
+  pieces_jointes: [],
   produits_proposes: [
     { id: 'pa', libelle: 'Produit Alpha' },
     { id: 'pb', libelle: 'Produit Beta' },

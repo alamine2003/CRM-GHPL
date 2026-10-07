@@ -2,6 +2,29 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.5.5] — Pièces jointes du rapport
+
+Cinquième jalon du cycle 0.5 « Rapports de visite ».
+
+### Ajouté (RPT-007)
+
+- Section « Photos et documents » du rapport : « Prendre une photo », « Galerie », « Document PDF » ; aperçu des photos, taille, « Retirer ».
+- **CA1** : 10 Mo au plus par fichier, 3 par rapport [H] ; photos compressées à la prise ; type reconnu au contenu (JPEG, PNG, HEIC, PDF), pas au nom.
+- **CA2** : la pièce ne se lit que par qui voit le rapport, par une adresse contrôlée, jamais mise en cache.
+- Sans réseau : la pièce attend sur le téléphone (« En attente du réseau ») et part seule au retour du réseau, même si le rapport a été soumis entre-temps, dès lors qu'elle a été prise avant.
+- Une pièce retirée est archivée, jamais effacée (RG-005).
+- Décision DC-47 inscrite au PRD (§14.35) : faire mieux que l'outil actuel.
+- Démonstration : une fiche PDF fictive jointe à un rapport passé.
+
+### Design
+
+Revue sur le rendu réel (téléphone 360 px). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Rapport, photos (version web) | La photo choisie partait dans un format que le serveur refusait (« Données invalides »). | Le fichier est lu avant l'envoi dans un navigateur ; sur le téléphone, son adresse locale suffit. |
+| Rapport, photos | « Choisir une photo » passait sur deux lignes à côté du bouton PDF. | Libellés courts : « Galerie », « Document PDF ». |
+
 ## [0.5.4] — Prochaine action
 
 Quatrième jalon du cycle 0.5 « Rapports de visite ».

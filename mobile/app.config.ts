@@ -37,6 +37,16 @@ const config: ExpoConfig = {
           "INNOV CRM enregistre la position d'un établissement quand vous le demandez.",
       },
     ],
+    // RPT-007 : photo prise pendant la visite, ou choisie dans la galerie, jointe au rapport.
+    [
+      'expo-image-picker',
+      {
+        cameraPermission: 'INNOV CRM prend une photo à joindre au rapport de visite.',
+        photosPermission: 'INNOV CRM joint une photo de la galerie au rapport de visite.',
+        microphonePermission: false,
+      },
+    ],
+    'expo-document-picker',
     [
       'expo-local-authentication',
       {

@@ -8,6 +8,7 @@ aucun téléphone, aucun courriel joignable (CA2).
 """
 
 import random
+import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date, time, timedelta
@@ -113,6 +114,15 @@ DOSAGES = ["5 mg", "10 mg", "20 mg", "50 mg", "100 mg", "250 mg", "500 mg", "1 g
 
 # Centres approximatifs des zones de démonstration, pour des coordonnées plausibles.
 CENTRES = {"SN": [(14.6928, -17.4467), (14.7910, -16.9359)], "TG": [(6.1319, 1.2228)]}
+
+
+#: Une page PDF vide, fictive : la pièce jointe d'exemple de la démonstration (RPT-007).
+PDF_EXEMPLE = (
+    b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
+    b"2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
+    b"3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]>>endobj\n"
+    b"trailer<</Root 1 0 R>>\n%%EOF\n"
+)
 
 
 @dataclass
@@ -507,6 +517,13 @@ class Generateur:
                             visite_proposee=i % 2 == 0,
                             champs={d["code"]: 5 + (i * 7) % 30 for d in rapport.definitions
                                     if d["type"] == "nombre"})  # fmt: skip
+            if i == 1:
+                # RPT-007 : un document joint, fictif, sur un rapport passé.
+                from django.core.files.uploadedfile import SimpleUploadedFile
+
+                rap.joindre(rapport, id=uuid.uuid4(), prise_le=visite.fin_le,
+                            fichier=SimpleUploadedFile("fiche-produit-exemple.pdf",
+                                                       PDF_EXEMPLE))  # fmt: skip
             rap.soumettre(rapport, visite.fin_le + timedelta(minutes=40 + (i * 13) % 80))
 
     def _semaine_complete(self, pays, delegue, semaine):

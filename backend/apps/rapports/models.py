@@ -110,3 +110,26 @@ class Rapport(ModeleDePays):
     class Meta:
         ordering = ["-cree_le"]
         indexes = [models.Index(fields=["delegue", "statut"])]
+
+
+def _chemin_piece(piece, nom: str) -> str:
+    """Rangement par pays et par rapport ; le nom d'origine ne sert pas au chemin."""
+    extension = nom.rsplit(".", 1)[-1].lower() if "." in nom else "bin"
+    return f"pieces-jointes/{piece.pays_id}/{piece.rapport_id}/{piece.pk}.{extension}"
+
+
+class PieceJointe(ModeleDePays):
+    """Photo ou document joint au rapport (RPT-007). L'identifiant vient du téléphone : un
+    envoi rejoué depuis la file d'attente ne crée pas de doublon."""
+
+    rapport = models.ForeignKey(Rapport, on_delete=models.CASCADE, related_name="pieces_jointes")
+    fichier = models.FileField(upload_to=_chemin_piece, max_length=300)
+    nom = models.CharField(max_length=200)
+    type_mime = models.CharField(max_length=60)
+    taille = models.PositiveIntegerField()
+    #: Moment où le délégué a pris la photo ou choisi le document, sur le téléphone : une
+    #: pièce prise avant la soumission peut arriver après, faute de réseau.
+    prise_le = models.DateTimeField()
+
+    class Meta:
+        ordering = ["prise_le"]

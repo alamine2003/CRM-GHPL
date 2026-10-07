@@ -4,7 +4,15 @@ from rest_framework import serializers
 from apps.organisation.serializers import ResumeSerializer
 
 from . import services
-from .models import ChampRapport, Rapport, RetourPrescripteur, StatutRapport, TypeChamp, TypeRemise
+from .models import (
+    ChampRapport,
+    PieceJointe,
+    Rapport,
+    RetourPrescripteur,
+    StatutRapport,
+    TypeChamp,
+    TypeRemise,
+)
 
 
 class ChampRapportSerializer(serializers.ModelSerializer):
@@ -68,9 +76,26 @@ class ActionPrecedenteSerializer(serializers.Serializer):
     visite_proposee = serializers.BooleanField()
 
 
+class PieceJointeSerializer(serializers.ModelSerializer):
+    """Une photo ou un document joint (RPT-007) ; le fichier se lit par sa propre adresse."""
+
+    class Meta:
+        model = PieceJointe
+        fields = ["id", "nom", "type_mime", "taille", "prise_le"]
+        read_only_fields = fields
+
+
+class SaisiePieceSerializer(serializers.Serializer):
+    #: Identifiant tiré par le téléphone : l'envoi se rejoue sans doublon.
+    id = serializers.UUIDField()
+    fichier = serializers.FileField()
+    prise_le = serializers.DateTimeField()
+
+
 class RapportSerializer(serializers.ModelSerializer):
     presentations = PresentationSerializer(many=True)
     remises = RemiseSerializer(many=True)
+    pieces_jointes = serializers.SerializerMethodField()
     resultat = serializers.UUIDField(source="resultat_id", allow_null=True)
     prochaine_action_type = serializers.UUIDField(source="prochaine_action_type_id",
                                                   allow_null=True)  # fmt: skip
@@ -99,8 +124,14 @@ class RapportSerializer(serializers.ModelSerializer):
                   "prochaine_action_type", "prochaine_action_echeance", "visite_proposee",
                   "remises", "champs", "definitions", "soumis_le", "manquants",
                   "produits_proposes", "produit_autre_autorise", "resultats_proposes",
-                  "articles_proposes", "types_action_proposes", "action_precedente"]  # fmt: skip
+                  "articles_proposes", "types_action_proposes", "action_precedente",
+                  "pieces_jointes"]  # fmt: skip
         read_only_fields = fields
+
+    @extend_schema_field(PieceJointeSerializer(many=True))
+    def get_pieces_jointes(self, rapport):
+        pieces = rapport.pieces_jointes.filter(archive_le__isnull=True)
+        return PieceJointeSerializer(pieces, many=True).data
 
     def get_manquants(self, rapport) -> list[str]:
         return services.manquants(rapport)

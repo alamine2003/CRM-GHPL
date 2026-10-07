@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.5.4
+  version: 0.5.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4609,6 +4609,90 @@ paths:
               schema:
                 $ref: '#/components/schemas/Rapport'
           description: ''
+  /api/v1/visites/{id}/rapport/pieces/:
+    post:
+      operationId: piece_jointe_ajouter
+      description: 'RPT-007 : joindre une photo ou un document au rapport de sa visite.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisiePiece'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PieceJointe'
+          description: ''
+  /api/v1/visites/{id}/rapport/pieces/{piece}/:
+    get:
+      operationId: piece_jointe_lire
+      description: |-
+        RPT-007 CA2 : la pièce jointe ne se lit que par qui voit le rapport ; elle se retire
+        tant que le rapport n'est pas soumis.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: piece
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+    delete:
+      operationId: piece_jointe_retirer
+      description: |-
+        RPT-007 CA2 : la pièce jointe ne se lit que par qui voit le rapport ; elle se retire
+        tant que le rapport n'est pas soumis.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: piece
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/visites/{id}/rapport/soumettre/:
     post:
       operationId: rapport_soumettre
@@ -7874,6 +7958,34 @@ components:
       - identifiant
       - nom
       - prenom
+    PieceJointe:
+      type: object
+      description: Une photo ou un document joint (RPT-007) ; le fichier se lit par
+        sa propre adresse.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        nom:
+          type: string
+          readOnly: true
+        type_mime:
+          type: string
+          readOnly: true
+        taille:
+          type: integer
+          readOnly: true
+        prise_le:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - id
+      - nom
+      - prise_le
+      - taille
+      - type_mime
     Planning:
       type: object
       properties:
@@ -8822,6 +8934,11 @@ components:
           - $ref: '#/components/schemas/ActionPrecedente'
           nullable: true
           readOnly: true
+        pieces_jointes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieceJointe'
+          readOnly: true
       required:
       - action_precedente
       - articles_proposes
@@ -8832,6 +8949,7 @@ components:
       - justification
       - manquants
       - objectif_prevu
+      - pieces_jointes
       - presentations
       - prochaine_action
       - prochaine_action_echeance
@@ -9387,6 +9505,22 @@ components:
       required:
       - date
       - libelle
+    SaisiePiece:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fichier:
+          type: string
+          format: uri
+        prise_le:
+          type: string
+          format: date-time
+      required:
+      - fichier
+      - id
+      - prise_le
     SaisieProposition:
       type: object
       properties:

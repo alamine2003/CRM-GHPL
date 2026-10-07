@@ -5,9 +5,12 @@
   modifie (administrateur pays, siège).
 """
 
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 
 from apps.organisation.vues import _lire, pays_requis
@@ -17,7 +20,7 @@ from apps.planning.models import Visite
 
 from . import serializers as s
 from . import services
-from .models import ChampRapport
+from .models import ChampRapport, PieceJointe
 
 REDIGER = Action.RAPPORTS_REDIGER
 
@@ -62,6 +65,49 @@ class SoumissionRapportVue(VueVisitesDuDelegue):
         v = _lire(s.SoumissionRapportSerializer, request)
         rapport = services.soumettre(services.rapport_de(visite), v["soumis_le"])
         return Response(s.RapportSerializer(rapport).data)
+
+
+class PiecesRapportVue(VueVisitesDuDelegue):
+    """RPT-007 : joindre une photo ou un document au rapport de sa visite."""
+
+    actions = {"POST": REDIGER}
+    parser_classes = [MultiPartParser]
+
+    @extend_schema(request={"multipart/form-data": s.SaisiePieceSerializer},
+                   responses={201: s.PieceJointeSerializer},
+                   operation_id="piece_jointe_ajouter")  # fmt: skip
+    def post(self, request, id):
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.SaisiePieceSerializer, request)
+        piece = services.joindre(services.rapport_de(visite), **v)
+        return Response(s.PieceJointeSerializer(piece).data, status=status.HTTP_201_CREATED)
+
+
+class PieceRapportVue(VueVisitesDuDelegue):
+    """RPT-007 CA2 : la pièce jointe ne se lit que par qui voit le rapport ; elle se retire
+    tant que le rapport n'est pas soumis."""
+
+    actions = {"GET": REDIGER, "DELETE": REDIGER}
+
+    def _piece(self, id, piece):
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        return get_object_or_404(PieceJointe, pk=piece, rapport__visite=visite,
+                                 archive_le__isnull=True)  # fmt: skip
+
+    @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY},
+                   operation_id="piece_jointe_lire")  # fmt: skip
+    def get(self, request, id, piece):
+        p = self._piece(id, piece)
+        reponse = FileResponse(p.fichier.open("rb"), content_type=p.type_mime,
+                               as_attachment=False, filename=p.nom)  # fmt: skip
+        reponse["Cache-Control"] = "private, no-store"
+        reponse["X-Content-Type-Options"] = "nosniff"
+        return reponse
+
+    @extend_schema(responses={204: None}, operation_id="piece_jointe_retirer")
+    def delete(self, request, id, piece):
+        services.retirer_piece(self._piece(id, piece))
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class VueChamps(VuePerimetre):

@@ -20,6 +20,7 @@ import type {
   SaisieActivite,
   SaisieVisite,
 } from '@innov/api-client';
+import { Platform } from 'react-native';
 import { ErreurApi } from '@innov/api-client';
 import * as Crypto from 'expo-crypto';
 import { ecrire, lire, oublier } from './baseLocale';
@@ -128,7 +129,33 @@ export type Envoi =
       saisie: Report;
       resume: string;
       erreur?: string;
+    }
+  | {
+      id: string;
+      /** Photo ou document du rapport pris sans réseau (RPT-007) : le fichier reste sur le
+       * téléphone, à son adresse locale, jusqu'à l'envoi. */
+      type: 'piece_jointe';
+      visite: string;
+      saisie: PieceEnAttente;
+      resume: string;
+      erreur?: string;
     };
+
+/** Le fichier tel que l'envoi l'attend : sur le téléphone, son adresse locale ({ uri, name,
+ * type }) que React Native lit lui-même ; dans un navigateur, son contenu (Blob). */
+export async function fichierAEnvoyer(uri: string, nom: string, type: string) {
+  if (Platform.OS === 'web') return (await fetch(uri)).blob();
+  return { uri, name: nom, type };
+}
+
+export type PieceEnAttente = {
+  id: string;
+  uri: string;
+  nom: string;
+  type_mime: string;
+  taille: number;
+  prise_le: string;
+};
 
 /** Panne de réseau ou serveur indisponible : la saisie attend ; un refus métier, non. */
 export function estTransitoire(erreur: unknown) {
@@ -212,6 +239,14 @@ async function rejouer(client: ClientApi): Promise<number> {
         await client.visites.imprevue(envoi.saisie);
       } else if (envoi.type === 'reporter_visite') {
         await client.visites.reporter(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'piece_jointe') {
+        const { id, uri, nom, type_mime, prise_le } = envoi.saisie;
+        await client.visites.joindrePiece(envoi.visite, {
+          id,
+          nom,
+          prise_le,
+          fichier: await fichierAEnvoyer(uri, nom, type_mime),
+        });
       } else if (envoi.type === 'ajout_activite') {
         await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
       } else {

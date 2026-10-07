@@ -135,6 +135,8 @@ def senegal(monde):
         "visite-reporter": visite.pk,
         "visite-rapport": visite.pk,
         "visite-rapport-soumettre": visite.pk,
+        # La visite est cherchée dans le périmètre avant la pièce jointe (RPT-007 CA2).
+        "visite-rapport-pieces": visite.pk, "visite-rapport-piece": visite.pk,
         "champ-rapport": champ.pk, "champ-rapport-archiver": champ.pk,
         "visite-non-realisee": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,
@@ -179,6 +181,7 @@ ROUTES_PAR_CODE = {"pays-detail", "pays-statut", "parametres", "parametre", "des
 def _url(chemin: str, identifiant) -> str:
     url = "/" + chemin.replace("<uuid:id>", str(identifiant)).replace("<str:code>", "SN")
     url = url.replace("<str:cle>", "distance_pointage_m").replace("<str:operation>", "suspendre")
+    url = url.replace("<uuid:piece>", "00000000-0000-0000-0000-000000000001")
     return url.replace("<int:numero>", "1")
 
 
