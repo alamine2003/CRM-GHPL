@@ -51,6 +51,17 @@ const periode = (
   taux: { ...TAUX_VIDES, ...taux },
 });
 
+const DELAIS: TableauEquipe['delais'] = {
+  cible_heures: 24,
+  plannings: { decisions: 12, mediane: 5.4, dans_cible: 11 },
+  rapports: { decisions: 3, mediane: 36, dans_cible: 1 },
+};
+const SANS_DELAI: TableauEquipe['delais'] = {
+  cible_heures: 24,
+  plannings: { decisions: 0, mediane: null, dans_cible: 0 },
+  rapports: { decisions: 0, mediane: null, dans_cible: 0 },
+};
+
 const TABLEAU: TableauEquipe = {
   aujourdhui: '2026-10-08',
   calcule_le: '2026-10-08T12:00:00Z',
@@ -73,6 +84,7 @@ const TABLEAU: TableauEquipe = {
       { id: 'd2', libelle: 'Moussa SARR' },
     ],
   },
+  delais: DELAIS,
   groupes: [],
   delegues: [
     {
@@ -167,6 +179,15 @@ describe('Pilotage', () => {
     expect(screen.getAllByText('Semaine du 5 octobre au 11 octobre').length).toBeGreaterThan(0);
   });
 
+  it("DSH-007 : délais de validation, médiane en heures ouvrées, part en moins d'un jour", async () => {
+    rendre();
+    const delais = await screen.findByRole('region', { name: 'Délais de validation' });
+    expect(within(delais).getByText('5 h ouvrées')).toBeTruthy();
+    expect(within(delais).getByText("11 sur 12 décisions en moins d'un jour ouvré")).toBeTruthy();
+    expect(within(delais).getByText('1,5 jour ouvré')).toBeTruthy();
+    expect(within(delais).getByText("1 sur 3 décisions en moins d'un jour ouvré")).toBeTruthy();
+  });
+
   it('une semaine passée, puis le retour à la semaine en cours', async () => {
     const { equipe } = rendre();
     await screen.findByRole('table');
@@ -218,10 +239,18 @@ describe('Pilotage', () => {
           delegues: 2,
           cycle_semaines: 4,
           total: TABLEAU.total,
+          delais: DELAIS,
         },
-        { pays: { code: 'TG', nom: 'Togo' }, delegues: 0, cycle_semaines: 4, total: TABLEAU.total },
+        {
+          pays: { code: 'TG', nom: 'Togo' },
+          delegues: 0,
+          cycle_semaines: 4,
+          total: TABLEAU.total,
+          delais: SANS_DELAI,
+        },
       ],
       total: TABLEAU.total,
+      delais: DELAIS,
     };
     const consolide: Perimetre = {
       pays_actif: null,
@@ -241,6 +270,12 @@ describe('Pilotage', () => {
     expect(within(tableau).getAllByRole('button', { name: 'Voir les délégués' })).toHaveLength(1);
     fireEvent.click(within(tableau).getByRole('button', { name: 'Voir les délégués' }));
     expect(choisirPays).toHaveBeenCalledWith('SN');
+    // DSH-007 : les délais par pays, puis tous les pays.
+    const delais = screen.getByRole('table', { name: 'Délais de validation' });
+    const [, senegal, togo, tous] = within(delais).getAllByRole('row') as HTMLElement[];
+    expect(within(senegal!).getByText('5 h ouvrées')).toBeTruthy();
+    expect(within(togo!).getAllByText('Aucune décision sur la période')).toHaveLength(2);
+    expect(within(tous!).getByText('Tous les pays')).toBeTruthy();
   });
 
   it("DSH-004 CA1 : en descente nominative, le siège est prévenu de l'audit", async () => {

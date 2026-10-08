@@ -182,6 +182,24 @@ class OptionsPilotageSerializer(serializers.Serializer):
     delegues = OptionSerializer(many=True)
 
 
+class DelaiSerializer(serializers.Serializer):
+    """DSH-007 : médiane en heures ouvrées, nombre de décisions, celles en moins d'un jour
+    ouvré."""
+
+    decisions = serializers.IntegerField()
+    mediane = serializers.FloatField(allow_null=True)
+    dans_cible = serializers.IntegerField()
+
+
+class DelaisValidationSerializer(serializers.Serializer):
+    """DSH-007 CA1 : délais de validation des plannings (KPI-02) et des rapports (KPI-09),
+    en heures ouvrées du pays."""
+
+    cible_heures = serializers.IntegerField()
+    plannings = DelaiSerializer()
+    rapports = DelaiSerializer()
+
+
 class TableauEquipeSerializer(serializers.Serializer):
     """DSH-002, DSH-003, DSH-012 : les délégués pilotés côte à côte, par ordre alphabétique,
     regroupés au besoin, et les totaux tirés des sommes (DC-49 : aucun classement)."""
@@ -197,6 +215,7 @@ class TableauEquipeSerializer(serializers.Serializer):
     delegues = LigneEquipeSerializer(many=True)
     groupes = GroupeEquipeSerializer(many=True)
     total = TotalEquipeSerializer()
+    delais = DelaisValidationSerializer()
 
 
 class PaysPilotageSerializer(serializers.Serializer):
@@ -211,6 +230,7 @@ class LignePaysSerializer(serializers.Serializer):
     delegues = serializers.IntegerField()
     cycle_semaines = serializers.IntegerField()
     total = TotalEquipeSerializer()
+    delais = DelaisValidationSerializer()
 
 
 class TableauSiegeSerializer(serializers.Serializer):
@@ -223,6 +243,7 @@ class TableauSiegeSerializer(serializers.Serializer):
     pays = LignePaysSerializer(many=True)
     delegues = serializers.IntegerField()
     total = TotalEquipeSerializer()
+    delais = DelaisValidationSerializer()
 
 
 class SuiviObjectifReseauSerializer(serializers.Serializer):

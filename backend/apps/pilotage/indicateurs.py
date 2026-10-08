@@ -41,6 +41,8 @@ from apps.planning.indisponibilite import couverte
 from apps.planning.models import Decision, Planning, Visite
 from apps.socle.services import aujourdhui, valeur_parametre
 
+from .delais import delais, durees
+
 #: Écarts déclarés avec un motif (VIS-005 à VIS-007) : justifiés quand le motif est donné.
 ECARTS = (StatutVisite.ANNULEE, StatutVisite.REPORTEE, StatutVisite.PROSPECT_ABSENT,
           StatutVisite.NON_REALISEE)  # fmt: skip
@@ -485,6 +487,7 @@ def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue",
             for g in sorted(groupes.values(), key=lambda g: g["libelle"])
         ],
         "total": _total(lignes),
+        "delais": delais(list(durees(pays, [x["delegue"] for x in lignes], debut, fin).values())),
     }  # fmt: skip
 
 
@@ -511,7 +514,7 @@ def tableau_siege(perimetre, jour: date | None = None, periode: str = "semaine",
         debut, fin = semaine(reference)
     else:
         debut, fin = reference - timedelta(days=PERIODES[periode] - 1), reference
-    lignes, toutes = [], []
+    lignes, toutes, tous_delais = [], [], []
     for pays in perimetre.pays_accessibles:
         cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
         debut_cycle = min(debut, fin - timedelta(weeks=cycle) + timedelta(days=1))
@@ -520,11 +523,14 @@ def tableau_siege(perimetre, jour: date | None = None, periode: str = "semaine",
         semaines = [lot.calculer(d, debut, fin) for d, _ in pilotes]
         cycles = [lot.calculer(d, debut_cycle, fin) for d, _ in pilotes]
         toutes.append((semaines, cycles))
+        du_pays = list(durees(pays, [d for d, _ in pilotes], debut, fin).values())
+        tous_delais += du_pays
         lignes.append({
             "pays": pays,
             "delegues": len(pilotes),
             "cycle_semaines": cycle,
             "total": {"semaine": somme(semaines), "cycle": somme(cycles)},
+            "delais": delais(du_pays),
         })  # fmt: skip
     return {
         "calcule_le": timezone.now(),
@@ -537,4 +543,5 @@ def tableau_siege(perimetre, jour: date | None = None, periode: str = "semaine",
             "semaine": somme([s for semaines, _ in toutes for s in semaines]),
             "cycle": somme([c for _, cycles in toutes for c in cycles]),
         },
+        "delais": delais(tous_delais),
     }

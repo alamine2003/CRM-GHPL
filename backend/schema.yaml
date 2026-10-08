@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.6
+  version: 0.7.7
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -6797,6 +6797,40 @@ components:
             format: uuid
       required:
       - produits
+    Delai:
+      type: object
+      description: |-
+        DSH-007 : médiane en heures ouvrées, nombre de décisions, celles en moins d'un jour
+        ouvré.
+      properties:
+        decisions:
+          type: integer
+        mediane:
+          type: number
+          format: double
+          nullable: true
+        dans_cible:
+          type: integer
+      required:
+      - dans_cible
+      - decisions
+      - mediane
+    DelaisValidation:
+      type: object
+      description: |-
+        DSH-007 CA1 : délais de validation des plannings (KPI-02) et des rapports (KPI-09),
+        en heures ouvrées du pays.
+      properties:
+        cible_heures:
+          type: integer
+        plannings:
+          $ref: '#/components/schemas/Delai'
+        rapports:
+          $ref: '#/components/schemas/Delai'
+      required:
+      - cible_heures
+      - plannings
+      - rapports
     Delegue:
       type: object
       properties:
@@ -8224,8 +8258,11 @@ components:
           type: integer
         total:
           $ref: '#/components/schemas/TotalEquipe'
+        delais:
+          $ref: '#/components/schemas/DelaisValidation'
       required:
       - cycle_semaines
+      - delais
       - delegues
       - pays
       - total
@@ -12036,11 +12073,14 @@ components:
             $ref: '#/components/schemas/GroupeEquipe'
         total:
           $ref: '#/components/schemas/TotalEquipe'
+        delais:
+          $ref: '#/components/schemas/DelaisValidation'
       required:
       - aujourdhui
       - calcule_le
       - cycle
       - debut
+      - delais
       - delegues
       - fin
       - groupes
@@ -12072,9 +12112,12 @@ components:
           type: integer
         total:
           $ref: '#/components/schemas/TotalEquipe'
+        delais:
+          $ref: '#/components/schemas/DelaisValidation'
       required:
       - calcule_le
       - debut
+      - delais
       - delegues
       - fin
       - pays

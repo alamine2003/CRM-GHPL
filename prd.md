@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.57 Délais de validation (mise en œuvre 0.7.7)
+
+- **Délais** (DSH-007, KPI-02, KPI-09) : « Pilotage » montre, sous les chiffres clés, le délai médian de validation des plannings et celui des rapports, le nombre de décisions et combien ont été prises en moins d'un jour ouvré (la cible des deux indicateurs) ; une médiane au-delà d'un jour ouvré ressort en orange. Le siège les lit par pays et pour tous les pays.
+- **CA1** : le délai court de la soumission d'une version à la décision qui la tranche, en heures ouvrées du pays : un jour ouvré compte pour 24 heures, un week-end ou un jour férié pour rien, comme l'escalade (RG-019). Un planning soumis le vendredi à 18 h et approuvé le lundi à 10 h a attendu 16 heures ouvrées.
+- [D, 8 octobre 2026, délégation] Les décisions comptées : pour un planning, l'approbation ou la demande de révision de chaque version ; pour un rapport, chaque validation et chaque demande de correction (une réouverture n'en est pas une). Une décision compte dans la période où elle est prise, pour les délégués retenus par les filtres. On publie la médiane, jamais une moyenne ni un classement des superviseurs (DC-49).
+- Moins d'une heure s'affiche « Moins d'une heure » ; au-delà d'un jour ouvré, le délai se lit en jours ouvrés (« 1,5 jour ouvré »).
+
 ### 14.56 Objectifs par réseau et taux de réalisation (mise en œuvre 0.7.6)
 
 - **Objectifs** (DSH-009) : la page « Objectifs » liste, par réseau, des objectifs datés (du … au …) sur l'un de trois indicateurs : visites faites, couverture des potentiels A et B (en %, 100 au plus), présentations d'un produit du portefeuille du réseau. Le DM du réseau et l'administrateur pays les fixent, les modifient (période et cible) et les archivent, chaque fois avec un événement d'audit ; le siège, le responsable pays, le DF et le DM les lisent pour leurs réseaux, le superviseur pour les réseaux des postes de son équipe.
@@ -1101,7 +1108,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | DSH-004 | Consolidation siège : comparaison et total par pays, agrégés ; descente nominative auditée. | 0.7.4 | CA1 : chaque consultation nominative par le siège crée un événement d'audit. Livré en 0.7.4 (§14.54). |
 | DSH-005 | Filtres : période, pays, zone, secteur, division, réseau, superviseur, délégué, statut. | 0.7.5 | CA1 : les filtres proposés sont limités au périmètre. Livré en 0.7.5 (§14.55). |
 | DSH-006 | Taux de réalisation et part des écarts justifiés, deux chiffres distincts (KPI-03, DC-50). | 0.7.6 | CA1 : la définition est celle de la section 5. Livré en 0.7.6 (§14.56). |
-| DSH-007 | Délais de validation des plannings et rapports (KPI-02, KPI-09). | 0.7.7 | CA1 : calculés en heures ouvrées du pays. |
+| DSH-007 | Délais de validation des plannings et rapports (KPI-02, KPI-09). | 0.7.7 | CA1 : calculés en heures ouvrées du pays. Livré en 0.7.7 (§14.57). |
 | DSH-008 | Exports contrôlés et audités. | 0.7.8 | Voir RPT-019. |
 | DSH-009 | Objectifs par réseau et par période (visites, couverture A/B, présentations d'un produit), saisis par le DM ou l'administrateur pays ; suivi réalisé / objectif. | 0.7.6 | CA1 : un objectif a une période, un réseau, un indicateur et une cible. CA2 : le tableau de bord affiche l'avance ou le retard. Livré en 0.7.6 (§14.56). |
 | DSH-010 | Grafana : tableaux de bord sur des vues de pilotage en lecture seule, isolées par pays. | 0.7.9 | CA1 : un compte Grafana d'un pays ne lit que les vues de ce pays. CA2 : le siège lit des agrégats. CA3 : aucune donnée de rapport en texte libre n'est exposée à Grafana. |

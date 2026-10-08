@@ -2443,7 +2443,21 @@
       "boutonN_one": "Filtres ({{count}})",
       "boutonN_other": "Filtres ({{count}})"
     },
-    "notePeriode": "Taux bornés à 100 %, sans note ni classement ; délégués par ordre alphabétique. Les jours à venir ne comptent pas encore. La période dépasse un cycle de visites : la couverture se lit sur toute la période."
+    "notePeriode": "Taux bornés à 100 %, sans note ni classement ; délégués par ordre alphabétique. Les jours à venir ne comptent pas encore. La période dépasse un cycle de visites : la couverture se lit sur toute la période.",
+    "delais": {
+      "titre": "Délais de validation",
+      "plannings": "Plannings, délai médian",
+      "rapports": "Rapports, délai médian",
+      "heures_one": "{{count}} h ouvrée",
+      "heures_other": "{{count}} h ouvrées",
+      "jours_one": "{{valeur}} jour ouvré",
+      "jours_other": "{{valeur}} jours ouvrés",
+      "moinsDUneHeure": "Moins d'une heure",
+      "dansCible_one": "{{n}} sur {{count}} décision en moins d'un jour ouvré",
+      "dansCible_other": "{{n}} sur {{count}} décisions en moins d'un jour ouvré",
+      "aucuneDecision": "Aucune décision sur la période",
+      "note": "Délai entre la soumission et la décision (approbation, révision, validation ou demande de correction) prise sur la période, en heures ouvrées du pays, sans les week-ends ni les jours fériés. Cible : moins d'un jour ouvré."
+    }
   },
   "objectifs": {
     "sousTitre": "Par réseau, avec l'avance ou le retard à ce jour",

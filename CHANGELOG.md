@@ -2,6 +2,26 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.7] — Délais de validation
+
+Septième jalon du cycle 0.7 « Indicateurs de pilotage ».
+
+### Ajouté (DSH-007, KPI-02, KPI-09, prd.md §14.57)
+
+- « Pilotage » : délai médian de validation des plannings et des rapports, nombre de décisions, part prise en moins d'un jour ouvré ; au siège, par pays et pour tous les pays.
+- Délais comptés en heures ouvrées du pays, sans week-ends ni jours fériés (CA1).
+- Décision par délégation : approbations, révisions, validations et demandes de correction prises sur la période ; médiane seulement, sans classement.
+
+### Design
+
+Revue sur le rendu réel (responsable pays et direction du siège de la démonstration, bureau et téléphone) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Pilotage du pays | Les délais venaient après les 207 délégués : invisibles sans défiler toute la page | Placés sous les chiffres clés |
+| Libellés | « Plannings : médiane », en majuscules dans l'en-tête du siège | « Plannings, délai médian » |
+| Cible | Une médiane hors cible ressemblait à une médiane tenue | Au-delà d'un jour ouvré, elle ressort en orange |
+
 ## [0.7.6] — Objectifs par réseau
 
 Sixième jalon du cycle 0.7 « Indicateurs de pilotage ».

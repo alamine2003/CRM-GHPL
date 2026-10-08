@@ -2443,7 +2443,21 @@
       "boutonN_one": "Filters ({{count}})",
       "boutonN_other": "Filters ({{count}})"
     },
-    "notePeriode": "Rates capped at 100%, with no score or ranking; representatives in alphabetical order. Days ahead do not count yet. The period is longer than a visit cycle: coverage is read over the whole period."
+    "notePeriode": "Rates capped at 100%, with no score or ranking; representatives in alphabetical order. Days ahead do not count yet. The period is longer than a visit cycle: coverage is read over the whole period.",
+    "delais": {
+      "titre": "Approval times",
+      "plannings": "Plans, median time",
+      "rapports": "Reports, median time",
+      "heures_one": "{{count}} working hour",
+      "heures_other": "{{count}} working hours",
+      "jours_one": "{{valeur}} working day",
+      "jours_other": "{{valeur}} working days",
+      "moinsDUneHeure": "Under an hour",
+      "dansCible_one": "{{n}} of {{count}} decision within one working day",
+      "dansCible_other": "{{n}} of {{count}} decisions within one working day",
+      "aucuneDecision": "No decision in this period",
+      "note": "Time from submission to the decision (approval, revision, validation or correction request) made in the period, in the country's working hours, excluding weekends and public holidays. Target: under one working day."
+    }
   },
   "objectifs": {
     "sousTitre": "By network, ahead or behind as of today",

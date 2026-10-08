@@ -46,15 +46,20 @@ def _aujourdhui(pays: Pays, maintenant: datetime) -> date:
     return maintenant.astimezone(ZoneInfo(pays.fuseau)).date()
 
 
-def heures_ouvrees(pays: Pays, debut: datetime, fin: datetime) -> float:
+def heures_ouvrees(pays: Pays, debut: datetime, fin: datetime,
+                   calendrier: tuple[set, set] | None = None) -> float:  # fmt: skip
     """Heures écoulées entre deux instants, sur les seuls jours ouvrés du pays (RG-014), jours
-    fériés exclus : un vendredi soir suivi d'un week-end n'escalade pas le samedi [H]."""
+    fériés exclus : un vendredi soir suivi d'un week-end n'escalade pas le samedi [H].
+    `calendrier` (jours ouvrés, jours fériés) évite de le relire pour chaque calcul (DSH-007)."""
     if fin <= debut:
         return 0.0
     fuseau = ZoneInfo(pays.fuseau)
     debut, fin = debut.astimezone(fuseau), fin.astimezone(fuseau)
-    ouvres = set(valeur_parametre(pays, "jours_ouvres"))
-    exclus = feries(pays, debut.date(), fin.date())
+    if calendrier is None:
+        ouvres = set(valeur_parametre(pays, "jours_ouvres"))
+        exclus = set(feries(pays, debut.date(), fin.date()))
+    else:
+        ouvres, exclus = calendrier
     total = 0.0
     jour = debut.date()
     while jour <= fin.date():

@@ -198,6 +198,7 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
               detail={sur(t, d.total.cycle.couverture.visitees, d.total.cycle.couverture.cibles)}
             />
           </BarreChiffres>
+          <DelaisValidation delais={d.delais} />
           {d.par !== 'delegue' && d.groupes.length === 0 ? (
             <Card>
               <EtatVide titre={t(`pilotage.sansGroupe.${d.par}`)} />
@@ -628,6 +629,113 @@ function PilotageSiege() {
           </Table>
         </TableContainer>
       </Card>
+      <DelaisValidation
+        delais={d.delais}
+        pays={d.pays.map((x) => ({ code: x.pays.code, nom: x.pays.nom, delais: x.delais }))}
+      />
+    </Stack>
+  );
+}
+
+type Delais = TableauEquipe['delais'];
+
+/** Une médiane en heures ouvrées : en heures sous un jour ouvré, en jours au-delà. */
+function duree(t: TFunction, langue: string, heures: number | null) {
+  if (heures === null) return '—';
+  if (heures < 1) return t('pilotage.delais.moinsDUneHeure');
+  if (heures < 24) return t('pilotage.delais.heures', { count: Math.round(heures) });
+  const jours = Math.round((heures / 24) * 10) / 10;
+  return t('pilotage.delais.jours', {
+    count: jours,
+    valeur: new Intl.NumberFormat(langue).format(jours),
+  });
+}
+
+/** Une médiane au-delà d'un jour ouvré manque la cible de KPI-02 et KPI-09. */
+function horsCible(x: Delais['plannings']) {
+  return x.mediane !== null && x.mediane > 24;
+}
+
+function detailDelai(t: TFunction, x: Delais['plannings']) {
+  return x.decisions
+    ? t('pilotage.delais.dansCible', { n: x.dans_cible, count: x.decisions })
+    : t('pilotage.delais.aucuneDecision');
+}
+
+/**
+ * DSH-007 (0.7.7) : délais de validation des plannings (KPI-02) et des rapports (KPI-09),
+ * médiane en heures ouvrées du pays, avec la part des décisions prises en moins d'un jour ouvré.
+ * Au siège, un pays par ligne.
+ */
+function DelaisValidation({
+  delais,
+  pays,
+}: {
+  delais: Delais;
+  pays?: { code: string; nom: string; delais: Delais }[];
+}) {
+  const { t, i18n } = useTranslation();
+  const lire = (h: number | null) => duree(t, i18n.language, h);
+  return (
+    <Stack spacing={1.25} component="section" aria-labelledby="titre-delais">
+      <Typography id="titre-delais" variant="h6" component="h2">
+        {t('pilotage.delais.titre')}
+      </Typography>
+      {pays ? (
+        <Card>
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table size="small" aria-labelledby="titre-delais">
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t('pilotage.colonnes.pays')}</TableCell>
+                  <TableCell align="right">{t('pilotage.delais.plannings')}</TableCell>
+                  <TableCell align="right">{t('pilotage.delais.rapports')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {[...pays, { code: 'total', nom: t('pilotage.tousPays'), delais }].map((x) => (
+                  <TableRow key={x.code}>
+                    <TableCell sx={{ fontWeight: x.code === 'total' ? 600 : undefined }}>
+                      {x.nom}
+                    </TableCell>
+                    {(['plannings', 'rapports'] as const).map((k) => (
+                      <TableCell key={k} align="right">
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color: horsCible(x.delais[k]) ? 'warning.main' : undefined,
+                          }}
+                        >
+                          {lire(x.delais[k].mediane)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          {detailDelai(t, x.delais[k])}
+                        </Typography>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
+      ) : (
+        <BarreChiffres>
+          {(['plannings', 'rapports'] as const).map((k) => (
+            <Chiffre
+              key={k}
+              libelle={t(`pilotage.delais.${k}`)}
+              valeur={lire(delais[k].mediane)}
+              ton={horsCible(delais[k]) ? 'warning' : 'neutre'}
+              detail={detailDelai(t, delais[k])}
+            />
+          ))}
+        </BarreChiffres>
+      )}
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        {t('pilotage.delais.note')}
+      </Typography>
     </Stack>
   );
 }

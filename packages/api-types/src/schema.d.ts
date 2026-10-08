@@ -3609,6 +3609,25 @@ export interface components {
     DefinitionPortefeuille: {
       produits: string[];
     };
+    /**
+     * @description DSH-007 : médiane en heures ouvrées, nombre de décisions, celles en moins d'un jour
+     *     ouvré.
+     */
+    Delai: {
+      decisions: number;
+      /** Format: double */
+      mediane: number | null;
+      dans_cible: number;
+    };
+    /**
+     * @description DSH-007 CA1 : délais de validation des plannings (KPI-02) et des rapports (KPI-09),
+     *     en heures ouvrées du pays.
+     */
+    DelaisValidation: {
+      cible_heures: number;
+      plannings: components['schemas']['Delai'];
+      rapports: components['schemas']['Delai'];
+    };
     Delegue: {
       /** Format: uuid */
       id: string;
@@ -4208,6 +4227,7 @@ export interface components {
       delegues: number;
       cycle_semaines: number;
       total: components['schemas']['TotalEquipe'];
+      delais: components['schemas']['DelaisValidation'];
     };
     ListeCible: {
       poste: components['schemas']['PosteCible'];
@@ -5766,6 +5786,7 @@ export interface components {
       delegues: components['schemas']['LigneEquipe'][];
       groupes: components['schemas']['GroupeEquipe'][];
       total: components['schemas']['TotalEquipe'];
+      delais: components['schemas']['DelaisValidation'];
     };
     /** @description DSH-004 : la consolidation du siège, par pays, et le total de tous les pays. */
     TableauSiege: {
@@ -5779,6 +5800,7 @@ export interface components {
       pays: components['schemas']['LignePays'][];
       delegues: number;
       total: components['schemas']['TotalEquipe'];
+      delais: components['schemas']['DelaisValidation'];
     };
     /** @description Chaque taux entre 0 et 1, vide quand rien ne le fonde. */
     Taux: {
