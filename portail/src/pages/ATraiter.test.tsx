@@ -183,6 +183,15 @@ describe('RPT-012 : file « À traiter » du superviseur', () => {
     ).toBeInTheDocument();
   });
 
+  it('RPT-018, 25.A : une journée passée au DM est marquée « Escaladée »', async () => {
+    const [premier] = FILE.delegues;
+    rendre({
+      ...FILE,
+      delegues: [{ ...premier!, journees: [{ ...premier!.journees[0]!, escalade: true }] }],
+    });
+    expect(await screen.findByText('Escaladée')).toBeInTheDocument();
+  });
+
   it('23.A : sans journée éligible, pas de bouton de lot', async () => {
     rendre(FILE);
     await screen.findByText('Journées à vérifier');

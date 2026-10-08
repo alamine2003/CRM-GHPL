@@ -190,6 +190,9 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
       within(visite).getByText(/Revisiter le prescripteur — Revenir avec l’étude/),
     ).toBeInTheDocument();
     expect(within(visite).getByText(/Nouvelle visite proposée/)).toBeInTheDocument();
+    // RPT-010 CA1 : « Soumis en retard », et les deux heures d'un horodatage douteux.
+    expect(within(visite).getByText('Soumis en retard')).toBeInTheDocument();
+    expect(within(visite).getByText(/Heure du téléphone/)).toBeInTheDocument();
   });
 
   it('RPT-007 CA2 : la pièce jointe du rapport soumis s’ouvre pour le superviseur', async () => {
@@ -429,5 +432,41 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
     expect(within(v1).getByText('fiche-produit.pdf')).toBeInTheDocument();
     // L'étiquette « Modifié » reste sur la version actuelle.
     expect(within(v1).queryByText('Modifié')).toBeNull();
+  });
+
+  it('RPT-016 : la version resoumise après une réouverture le dit et rappelle le motif', async () => {
+    const visites = JOURNEE.visites.map((v, i) =>
+      i === 0
+        ? {
+            ...v,
+            rapport: {
+              ...RAPPORT,
+              versions: 2,
+              historique: [
+                { numero: 1, soumis_le: '2026-10-13T20:00:00Z', correction: null },
+                {
+                  numero: 2,
+                  soumis_le: '2026-10-21T09:00:00Z',
+                  correction: {
+                    le: '2026-10-20T08:00:00Z',
+                    par: 'Kossi GUEYE',
+                    commentaire: 'Échantillons à recompter.',
+                    champs: [],
+                    reouverture: true,
+                  },
+                },
+              ],
+              modifies: ['remises'],
+            },
+          }
+        : v,
+    );
+    rendre({ ...JOURNEE, visites } as unknown as Journee);
+    expect(
+      await screen.findByText(/Version 2, soumise le .* après réouverture/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Rouvert par Kossi GUEYE le .* : « Échantillons à recompter. »/),
+    ).toBeInTheDocument();
   });
 });

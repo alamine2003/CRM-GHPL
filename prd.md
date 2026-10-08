@@ -704,6 +704,12 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.50 Recette et démonstration du cycle 0.6 (mise en œuvre 0.6.9)
+
+- **Recette** : `recette-0.6.md` relie chaque critère du cycle (RPT-012 à RPT-018, RG-032 à RG-037, décisions 18.A à 38.A, notifications §18) au test qui le prouve. Les écarts relevés sont comblés par de nouveaux tests, dont le scénario **REC-08 de bout en bout** (correction sur une visite, validation du reste de la journée, resoumission en version 2, validation du rapport corrigé), l'audit des validations par journée et par lot, l'absence de validation automatique, le refus de modifier un rapport validé, la lecture de la pièce jointe par le DM, le DF et le responsable pays, et la tâche périodique qui déclenche rappels, alertes et escalades.
+- **Démonstration** : `demonstration-0.6.md`, environ 30 minutes, du superviseur au DM en passant par le délégué.
+- [D, 8 octobre 2026, délégation] À partir de cette version et jusqu'à 1.0.0, le responsable produit a demandé de retenir à chaque fois l'option recommandée : chaque décision ainsi prise est marquée « délégation » et reste révisable.
+
 ### 14.49 Notifications du workflow de rapport (mise en œuvre 0.6.8)
 
 - **Rapports soumis** (§18) : le superviseur responsable reçoit « n rapports à valider » ; les soumissions d'un même jour s'ajoutent à la notification tant qu'elle n'est pas lue (NOT-003, au centre ; le push arrive en 0.8.5). Elle ouvre « À traiter ».
@@ -739,7 +745,7 @@ Mise en œuvre (0.3.9) :
 - **Le superviseur est prévenu** : [D, 8 octobre 2026, 28.A] qui a demandé la correction reçoit « Aminata Touré a corrigé son rapport du 21 septembre » ; la notification ouvre la journée.
 - **CA1 : la version précédente reste consultable.** Sur la journée, au-dessus du rapport : « Version 2, soumise le … après correction », la demande à laquelle elle répond, et ce qui a changé (« Modifié : Résumé de l'échange », ou « Rien n'a changé par rapport à la version précédente »). Chaque partie modifiée porte l'étiquette « Modifié ». « Voir la version 1 » déplie la version précédente telle que soumise.
 - Chaque version garde la demande de correction à laquelle elle répond : l'historique des allers-retours ne se perd pas si une nouvelle correction est demandée.
-- La journée attend le rapport corrigé (22.A) ; la page le dit (« 1 rapport est renvoyé pour correction : la journée se validera quand il sera soumis à nouveau »). Une fois soumis, il se valide comme les autres (REC-08).
+- La journée attend le rapport corrigé (22.A) ; la page le dit (« 1 rapport est renvoyé au délégué : la journée se validera quand il sera soumis à nouveau », formule qui vaut aussi pour un rapport rouvert depuis 0.6.6). Une fois soumis, il se valide comme les autres (REC-08).
 - Le rapport resoumis n'est jamais « en retard » : seule la première soumission compte (RG-032).
 
 ### 14.45 Demande de correction (mise en œuvre 0.6.4)

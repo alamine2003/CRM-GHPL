@@ -2,6 +2,16 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.9] — Recette et démonstration du cycle 0.6
+
+Dernier jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté
+
+- Recette du cycle (`recette-0.6.md`) : chaque critère relié à son test. Nouveaux tests pour les écarts relevés : REC-08 de bout en bout, audit des validations par journée et par lot (RG-034), aucune validation automatique (RG-035), rapport validé non modifiable (RG-036), lot refusé à une journée incomplète (23.A), retards lus par le remplaçant et le DM, pièce jointe lue par le DM, le DF et le responsable pays (RPT-007 CA2), le superviseur qui garde la main après l'escalade (25.A), la journée rouverte au-delà de 4 semaines (32.A), la tâche périodique ; au portail, « Soumis en retard » et « Escaladée ».
+- Démonstration de fin de cycle (`demonstration-0.6.md`).
+- Décision du 8 octobre 2026 : jusqu'à 1.0.0, l'option recommandée est retenue à chaque choix, par délégation du responsable produit (`prd.md` §14.50).
+
 ## [0.6.8] — Notifications du workflow de rapport
 
 Huitième jalon du cycle 0.6 « Validation des rapports ».

@@ -58,9 +58,22 @@ describe('RPT-016 : la journée terminée s’ouvre depuis la conformité', () =
         />
       </MemoryRouter>,
     );
+    expect(screen.queryByText('Classement figé')).toBeNull();
     expect(screen.getByRole('link', { name: 'Ouvrir la journée' })).toHaveAttribute(
       'href',
       '/a-traiter/d1/2026-10-13',
     );
+  });
+});
+
+describe('32.A : une journée figée le dit sans se dire « validée »', () => {
+  it('32.A : « Classement figé »', () => {
+    const base = journee(0);
+    const semaine = {
+      ...base,
+      conformite: base.conformite.map((j) => ({ ...j, fige: true })),
+    } as unknown as Semaine;
+    render(<CarteConformite semaine={semaine} jourLong={(iso) => iso} />);
+    expect(screen.getByText('Classement figé')).toBeInTheDocument();
   });
 });
