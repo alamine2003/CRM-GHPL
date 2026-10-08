@@ -150,6 +150,10 @@ export type Indicateurs = Schemas['Indicateurs'];
 export type TauxIndicateurs = Schemas['Taux'];
 /** DSH-001 : les chiffres du délégué, la semaine, la précédente et le cycle. */
 export type MesChiffres = Schemas['MesChiffres'];
+/** DSH-002, DSH-012 : le tableau de l'équipe du superviseur. */
+export type TableauEquipe = Schemas['TableauEquipe'];
+export type LigneEquipe = Schemas['LigneEquipe'];
+export type IndicateursPeriode = Schemas['IndicateursPeriode'];
 export type Journee = Schemas['Journee'];
 export type VisiteJournee = Schemas['VisiteJournee'];
 export type RapportLu = Schemas['RapportLu'];

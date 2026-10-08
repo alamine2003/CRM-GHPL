@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.1
+  version: 0.7.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2532,6 +2532,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pays'
+          description: ''
+  /api/v1/pilotage/equipe/:
+    get:
+      operationId: pilotage_equipe
+      description: |-
+        DSH-002, DSH-012 : le tableau hebdomadaire de l'équipe du superviseur ; un délégué d'un
+        poste qui ne lui est pas rattaché n'y apparaît jamais (CA1).
+      parameters:
+      - in: query
+        name: semaine
+        schema:
+          type: string
+          format: date
+        description: Un jour de la semaine ; par défaut, celle-ci
+      tags:
+      - pilotage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableauEquipe'
           description: ''
   /api/v1/pilotage/mes-chiffres/:
     get:
@@ -6435,6 +6459,21 @@ components:
       required:
       - libelle
       - liste
+    CyclePeriode:
+      type: object
+      properties:
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        semaines:
+          type: integer
+      required:
+      - debut
+      - fin
+      - semaines
     Decision:
       type: object
       description: |-
@@ -7533,6 +7572,27 @@ components:
       - semaines
       - taux
       - visites
+    IndicateursPeriode:
+      type: object
+      description: Les indicateurs d'une période dont les dates sont portées par le
+        tableau.
+      properties:
+        activite:
+          type: boolean
+        visites:
+          $ref: '#/components/schemas/ComptesVisites'
+        rapports:
+          $ref: '#/components/schemas/ComptesRapports'
+        couverture:
+          $ref: '#/components/schemas/ComptesCouverture'
+        taux:
+          $ref: '#/components/schemas/Taux'
+      required:
+      - activite
+      - couverture
+      - rapports
+      - taux
+      - visites
     Informations:
       type: object
       properties:
@@ -7890,6 +7950,23 @@ components:
       required:
       - id
       - libelle
+    LigneEquipe:
+      type: object
+      description: 'Un délégué de l''équipe : sa semaine et sa couverture sur le cycle.'
+      properties:
+        delegue:
+          $ref: '#/components/schemas/Delegue'
+        poste:
+          $ref: '#/components/schemas/PosteEquipe'
+        semaine:
+          $ref: '#/components/schemas/IndicateursPeriode'
+        cycle:
+          $ref: '#/components/schemas/IndicateursPeriode'
+      required:
+      - cycle
+      - delegue
+      - poste
+      - semaine
     ListeCible:
       type: object
       properties:
@@ -9129,6 +9206,17 @@ components:
       - secteurs
       - synthese
       - type_poste
+    PosteEquipe:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+      required:
+      - id
+      - libelle
     PotentielEnum:
       enum:
       - A
@@ -11416,6 +11504,40 @@ components:
       - mes_a_valider
       - potentiels
       - sans_lieu
+    TableauEquipe:
+      type: object
+      description: |-
+        DSH-002, DSH-012 : les délégués de l'équipe côte à côte, par ordre alphabétique, et le
+        total de l'équipe tiré des sommes (DC-49 : aucun classement).
+      properties:
+        aujourdhui:
+          type: string
+          format: date
+        calcule_le:
+          type: string
+          format: date-time
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        cycle:
+          $ref: '#/components/schemas/CyclePeriode'
+        delegues:
+          type: array
+          items:
+            $ref: '#/components/schemas/LigneEquipe'
+        total:
+          $ref: '#/components/schemas/TotalEquipe'
+      required:
+      - aujourdhui
+      - calcule_le
+      - cycle
+      - debut
+      - delegues
+      - fin
+      - total
     Taux:
       type: object
       description: Chaque taux entre 0 et 1, vide quand rien ne le fonde.
@@ -11488,6 +11610,16 @@ components:
           nullable: true
       required:
       - fin_le
+    TotalEquipe:
+      type: object
+      properties:
+        semaine:
+          $ref: '#/components/schemas/IndicateursPeriode'
+        cycle:
+          $ref: '#/components/schemas/IndicateursPeriode'
+      required:
+      - cycle
+      - semaine
     Transfert:
       type: object
       properties:

@@ -21,6 +21,7 @@ ATTENDU = {
     Action.RAPPORTS_LIRE: {"responsable_pays", "df", "dm", "superviseur", "delegue"},
     Action.RAPPORTS_VALIDER: {"dm", "superviseur"},
     Action.INDICATEURS_LIRE: {"superviseur", "delegue"},
+    Action.PILOTAGE_LIRE: {"superviseur"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "dm", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",
@@ -198,6 +199,7 @@ REQUETES = {
     ),
     Action.RAPPORTS_VALIDER: ("get", "/api/v1/rapports/a-traiter/", None, 200),
     Action.INDICATEURS_LIRE: ("get", "/api/v1/pilotage/mes-chiffres/", None, 200),
+    Action.PILOTAGE_LIRE: ("get", "/api/v1/pilotage/equipe/", None, 200),
 }  # fmt: skip
 
 

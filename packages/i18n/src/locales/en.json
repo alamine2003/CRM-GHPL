@@ -2356,5 +2356,39 @@
     "ecartPoints_other": "{{signe}}{{count}} pts",
     "note": "Your figures, with no score or ranking. Point changes compare with the previous week.",
     "revenir": "Back to the current week"
+  },
+  "pilotage": {
+    "semaine": "Week of {{debut}} to {{fin}}",
+    "precedente": "Previous week",
+    "suivante": "Next week",
+    "cetteSemaine": "Current week",
+    "sansEquipe": "No representative assigned this week",
+    "sansEquipeDetail": "Representatives of the positions assigned to you appear here.",
+    "visitesFaites": "Visits made",
+    "dontImprevues_one": "including {{count}} unplanned",
+    "dontImprevues_other": "including {{count}} unplanned",
+    "sur": "{{n}} of {{total}}",
+    "couvertureCycle": "Cycle coverage",
+    "tableau": "Weekly figures by representative",
+    "equipe": "Team",
+    "delegues_one": "{{count}} representative",
+    "delegues_other": "{{count}} representatives",
+    "aucuneActivite": "No activity this week",
+    "aJustifier_one": "{{count}} visit to justify",
+    "aJustifier_other": "{{count}} visits to justify",
+    "enRetard_one": "{{count}} late report",
+    "enRetard_other": "{{count}} late reports",
+    "note_one": "Rates capped at 100%, with no score or ranking; representatives in alphabetical order. Days ahead do not count yet. Coverage is read over {{count}} week, {{debut}} to {{fin}}.",
+    "note_other": "Rates capped at 100%, with no score or ranking; representatives in alphabetical order. Days ahead do not count yet. Coverage is read over the {{count}}-week cycle, {{debut}} to {{fin}}.",
+    "colonnes": {
+      "delegue": "Representative",
+      "visites": "Visits made",
+      "realisation": "Completion",
+      "ecarts": "Justified deviations",
+      "geolocalisation": "Geolocated",
+      "rapports": "Reports on time",
+      "couverture": "Cycle coverage",
+      "aSuivre": "To follow up"
+    }
   }
 }

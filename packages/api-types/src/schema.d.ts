@@ -1491,6 +1491,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/pilotage/equipe/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description DSH-002, DSH-012 : le tableau hebdomadaire de l'équipe du superviseur ; un délégué d'un
+     *     poste qui ne lui est pas rattaché n'y apparaît jamais (CA1).
+     */
+    get: operations['pilotage_equipe'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/pilotage/mes-chiffres/': {
     parameters: {
       query?: never;
@@ -3451,6 +3471,13 @@ export interface components {
       /** Format: uuid */
       parent?: string | null;
     };
+    CyclePeriode: {
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      semaines: number;
+    };
     /**
      * @description Dernière décision sur le planning (PLN-012, PLN-013) : version, sens, auteur, date,
      *     mode, commentaire et remarques par visite.
@@ -3918,6 +3945,14 @@ export interface components {
       taux: components['schemas']['Taux'];
       semaines: number;
     };
+    /** @description Les indicateurs d'une période dont les dates sont portées par le tableau. */
+    IndicateursPeriode: {
+      activite: boolean;
+      visites: components['schemas']['ComptesVisites'];
+      rapports: components['schemas']['ComptesRapports'];
+      couverture: components['schemas']['ComptesCouverture'];
+      taux: components['schemas']['Taux'];
+    };
     Informations: {
       produit: string;
       version: string;
@@ -4066,6 +4101,13 @@ export interface components {
       /** Format: uuid */
       id: string;
       libelle: string;
+    };
+    /** @description Un délégué de l'équipe : sa semaine et sa couverture sur le cycle. */
+    LigneEquipe: {
+      delegue: components['schemas']['Delegue'];
+      poste: components['schemas']['PosteEquipe'];
+      semaine: components['schemas']['IndicateursPeriode'];
+      cycle: components['schemas']['IndicateursPeriode'];
     };
     ListeCible: {
       poste: components['schemas']['PosteCible'];
@@ -4601,6 +4643,11 @@ export interface components {
       secteurs: components['schemas']['Lieu'][];
       gerable: boolean;
       synthese: components['schemas']['SyntheseCible'];
+    };
+    PosteEquipe: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
     };
     /**
      * @description * `A` - A
@@ -5498,6 +5545,23 @@ export interface components {
       /** @description Fiches actives sans lieu d'exercice en cours. */
       sans_lieu: number;
     };
+    /**
+     * @description DSH-002, DSH-012 : les délégués de l'équipe côte à côte, par ordre alphabétique, et le
+     *     total de l'équipe tiré des sommes (DC-49 : aucun classement).
+     */
+    TableauEquipe: {
+      /** Format: date */
+      aujourdhui: string;
+      /** Format: date-time */
+      calcule_le: string;
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      cycle: components['schemas']['CyclePeriode'];
+      delegues: components['schemas']['LigneEquipe'][];
+      total: components['schemas']['TotalEquipe'];
+    };
     /** @description Chaque taux entre 0 et 1, vide quand rien ne le fonde. */
     Taux: {
       /** Format: double */
@@ -5527,6 +5591,10 @@ export interface components {
       longitude?: number | null;
       /** Format: double */
       precision_m?: number | null;
+    };
+    TotalEquipe: {
+      semaine: components['schemas']['IndicateursPeriode'];
+      cycle: components['schemas']['IndicateursPeriode'];
     };
     Transfert: {
       /** Format: uuid */
@@ -8220,6 +8288,28 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Pays'];
+        };
+      };
+    };
+  };
+  pilotage_equipe: {
+    parameters: {
+      query?: {
+        /** @description Un jour de la semaine ; par défaut, celle-ci */
+        semaine?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TableauEquipe'];
         };
       };
     };

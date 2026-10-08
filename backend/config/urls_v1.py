@@ -394,5 +394,7 @@ urlpatterns = [
     path("imports/<uuid:id>/rapport/", imp.RapportLotVue.as_view(), name="import-rapport"),
     # DSH-001 : les indicateurs du délégué (cycle 0.7)
     path("pilotage/mes-chiffres/", pil.MesChiffresVue.as_view(), name="mes-chiffres"),
+    # DSH-002, DSH-012 : le tableau de l'équipe du superviseur
+    path("pilotage/equipe/", pil.EquipeVue.as_view(), name="pilotage-equipe"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

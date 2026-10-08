@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.52 Tableau de l'équipe du superviseur (mise en œuvre 0.7.2)
+
+- **Pilotage** (DSH-002, DSH-012) : une page du portail, la semaine choisie (la semaine en cours par défaut, flèches vers les précédentes) ; un délégué par ligne, côte à côte : visites faites (dont imprévues), réalisation, écarts justifiés, géolocalisées, rapports dans le délai, couverture du cycle, et « à suivre » (visites à justifier, rapports en retard). Chaque taux dit ce qu'il compte (« 4 sur 5 »). Les formules sont celles de « Mes chiffres » (§14.51).
+- **CA1** : seuls les délégués des postes rattachés au superviseur pendant la semaine y figurent ; un rattachement terminé avant la semaine ne compte plus. [D, 8 octobre 2026, délégation] Le remplaçant d'un superviseur (ORG-013) ne voit pas encore l'équipe qu'il remplace : la page reste celle du titulaire ; les filtres de 0.7.5 l'élargiront si besoin.
+- **DC-49** : délégués par ordre alphabétique, ni rang ni note. Une ligne « Équipe » totalise : ses taux viennent des sommes des comptages, jamais d'une moyenne de taux. Sans visite, la ligne dit « Aucune activité cette semaine » (DSH-012 CA2), la couverture du cycle restant affichée.
+- Droit `pilotage.lire` : le superviseur en 0.7.2 ; DM, DF, responsable pays et siège s'ajoutent avec leurs vues (0.7.3, 0.7.4).
+
 ### 14.51 Mes chiffres, moteur des indicateurs (mise en œuvre 0.7.1)
 
 - **Moteur commun** du cycle 0.7 : chaque indicateur se recalcule à partir des visites, pour un délégué et une période ; les vues du superviseur, du pays et du siège (0.7.2 à 0.7.4) reprendront les mêmes formules.
@@ -1060,7 +1067,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | ID | Exigence | Version | Critères d'acceptation |
 |---|---|---|---|
 | DSH-001 | Indicateurs du délégué : visites prévues/réalisées, couverture, rapports validés, retards. | 0.7.1 | CA1 : disponibles hors connexion pour la semaine en cours (dernière synchronisation affichée). Livré en 0.7.1 (§14.51). |
-| DSH-002 | Indicateurs du superviseur par délégué rattaché. | 0.7.2 | CA1 : un délégué non rattaché n'apparaît jamais. |
+| DSH-002 | Indicateurs du superviseur par délégué rattaché. | 0.7.2 | CA1 : un délégué non rattaché n'apparaît jamais. Livré en 0.7.2 (§14.52). |
 | DSH-003 | Indicateurs pays par zone, secteur, réseau ; vue DM/DF par réseau. | 0.7.3 | CA1 : les totaux d'un réseau égalent la somme de ses délégués. |
 | DSH-004 | Consolidation siège : comparaison et total par pays, agrégés ; descente nominative auditée. | 0.7.4 | CA1 : chaque consultation nominative par le siège crée un événement d'audit. |
 | DSH-005 | Filtres : période, pays, zone, secteur, division, réseau, superviseur, délégué, statut. | 0.7.5 | CA1 : les filtres proposés sont limités au périmètre. |
@@ -1070,7 +1077,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | DSH-009 | Objectifs par réseau et par période (visites, couverture A/B, présentations d'un produit), saisis par le DM ou l'administrateur pays ; suivi réalisé / objectif. | 0.7.6 | CA1 : un objectif a une période, un réseau, un indicateur et une cible. CA2 : le tableau de bord affiche l'avance ou le retard. |
 | DSH-010 | Grafana : tableaux de bord sur des vues de pilotage en lecture seule, isolées par pays. | 0.7.9 | CA1 : un compte Grafana d'un pays ne lit que les vues de ce pays. CA2 : le siège lit des agrégats. CA3 : aucune donnée de rapport en texte libre n'est exposée à Grafana. |
 | DSH-011 | Fraîcheur : tableaux de bord du portail à jour à moins de 5 minutes ; Grafana à moins de 1 heure [H]. | 0.7.9 | CA1 : l'heure de dernière mise à jour est affichée. |
-| DSH-012 | Tableau hebdomadaire de l'équipe : les taux de chaque délégué côte à côte, **sans note composite ni classement** (DC-49, §14.18). | 0.7.2 | CA1 : chaque taux a une formule bornée à 100 % ; une visite imprévue n'abaisse aucun taux. CA2 : sans aucune visite, « Aucune activité ». |
+| DSH-012 | Tableau hebdomadaire de l'équipe : les taux de chaque délégué côte à côte, **sans note composite ni classement** (DC-49, §14.18). | 0.7.2 | CA1 : chaque taux a une formule bornée à 100 % ; une visite imprévue n'abaisse aucun taux. CA2 : sans aucune visite, « Aucune activité ». Livré en 0.7.2 (§14.52). |
 
 ### 15.9 Hors connexion et synchronisation — OFF
 

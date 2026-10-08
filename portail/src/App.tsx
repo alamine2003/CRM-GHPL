@@ -32,6 +32,7 @@ const Propositions = lazy(() => import('./pages/Propositions'));
 const Planning = lazy(() => import('./pages/Planning'));
 const Validation = lazy(() => import('./pages/Validation'));
 const ATraiter = lazy(() => import('./pages/ATraiter'));
+const Pilotage = lazy(() => import('./pages/Pilotage'));
 const JourneeRapports = lazy(() => import('./pages/JourneeRapports'));
 const ConsultationPlanning = lazy(() => import('./pages/ConsultationPlanning'));
 const Remplacements = lazy(() => import('./pages/Remplacements'));
@@ -59,6 +60,7 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
   },
   '/planning': { titre: 'navigation.planning', rendu: () => <Planning /> },
   '/a-traiter': { titre: 'navigation.aTraiter', rendu: () => <ATraiter /> },
+  '/pilotage': { titre: 'navigation.pilotage', rendu: () => <Pilotage /> },
   '/validation': { titre: 'navigation.validation', rendu: () => <Validation /> },
   '/remplacements': { titre: 'navigation.remplacements', rendu: () => <Remplacements /> },
   '/notifications': {

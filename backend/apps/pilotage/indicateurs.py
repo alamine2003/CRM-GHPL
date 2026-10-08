@@ -164,7 +164,6 @@ def calculer(pays, delegue, debut: date, fin: date) -> dict:
         else:
             attendus += 1
             en_retard += int(v.date < today)
-    rapports_echus = soumis + en_retard
 
     liste = _cibles(pays, delegue, debut, fin)
     visites_par_prospect = Counter(v.prospect_id for v in faites if v.prospect_id)
@@ -178,15 +177,14 @@ def calculer(pays, delegue, debut: date, fin: date) -> dict:
         if visites_par_prospect[p] >= max(1, math.ceil(f * semaines / cycle))
     )  # fmt: skip
 
-    ecarts = len(echues) - effectuees_prevues
-    return {
+    comptes = {
         "activite": bool(approuvees or imprevues),
         "visites": {
             "prevues": len(approuvees),
             "echues": len(echues),
             "a_venir": a_venir,
             "effectuees_prevues": effectuees_prevues,
-            "ecarts": ecarts,
+            "ecarts": len(echues) - effectuees_prevues,
             "ecarts_justifies": justifies,
             "a_justifier": a_justifier,
             "imprevues": imprevues_faites,
@@ -207,17 +205,45 @@ def calculer(pays, delegue, debut: date, fin: date) -> dict:
             "visitees_ab": ab_vus,
             "frequence_ab": ab_frequence,
         },
-        "taux": {
-            "realisation": taux(effectuees_prevues, len(echues)),
-            "ecarts_justifies": taux(justifies, ecarts),
-            "geolocalisation": taux(geo, len(faites)),
-            "rapports_dans_delai": taux(dans_delai, rapports_echus),
-            "couverture": taux(vus, len(liste)),
-            "couverture_ab": taux(ab_vus, len(ab)),
-            "frequence_ab": taux(ab_frequence, len(ab)),
-            "part_planifiee": taux(effectuees_prevues, len(faites)),
-        },
     }
+    return {**comptes, "taux": taux_de(comptes)}
+
+
+def taux_de(comptes: dict) -> dict:
+    """Les taux, toujours déduits des comptages : ceux d'une équipe viennent de ses sommes, jamais
+    d'une moyenne de taux."""
+    v, r, c = comptes["visites"], comptes["rapports"], comptes["couverture"]
+    return {
+        "realisation": taux(v["effectuees_prevues"], v["echues"]),
+        "ecarts_justifies": taux(v["ecarts_justifies"], v["ecarts"]),
+        "geolocalisation": taux(v["geolocalisees"], v["effectuees"]),
+        "rapports_dans_delai": taux(r["dans_delai"], r["soumis"] + r["en_retard"]),
+        "couverture": taux(c["visitees"], c["cibles"]),
+        "couverture_ab": taux(c["visitees_ab"], c["cibles_ab"]),
+        "frequence_ab": taux(c["frequence_ab"], c["cibles_ab"]),
+        "part_planifiee": taux(v["effectuees_prevues"], v["effectuees"]),
+    }
+
+
+def somme(liste: list[dict]) -> dict:
+    """Les comptages additionnés (une équipe, un réseau) et leurs taux."""
+    base = liste or [calculer_vide()]
+    comptes = {"activite": any(x["activite"] for x in base)}
+    for bloc in ("visites", "rapports", "couverture"):
+        comptes[bloc] = {k: sum(x[bloc][k] for x in base) for k in base[0][bloc]}
+    return {**comptes, "taux": taux_de(comptes)}
+
+
+def calculer_vide() -> dict:
+    zero = lambda *cles: dict.fromkeys(cles, 0)  # noqa: E731
+    return {
+        "activite": False,
+        "visites": zero("prevues", "echues", "a_venir", "effectuees_prevues", "ecarts",
+                        "ecarts_justifies", "a_justifier", "imprevues", "effectuees",
+                        "geolocalisees"),
+        "rapports": zero("soumis", "dans_delai", "valides", "a_soumettre", "en_retard"),
+        "couverture": zero("cibles", "visitees", "cibles_ab", "visitees_ab", "frequence_ab"),
+    }  # fmt: skip
 
 
 def jours(pays, delegue, debut: date, fin: date) -> list[dict]:
@@ -252,3 +278,57 @@ def mes_chiffres(pays, delegue, jour: date | None = None) -> dict:
                   **calculer(pays, delegue, debut_cycle, fin)},
         "jours": jours(pays, delegue, debut, fin),
     }  # fmt: skip
+
+
+def equipe_du_superviseur(pays, superviseur, debut: date, fin: date) -> list:
+    """DSH-002 CA1 : les délégués des postes rattachés au superviseur pendant la période, avec
+    leur poste ; jamais un délégué d'un poste qui ne lui est pas rattaché."""
+    from apps.organisation.models import Rattachement
+
+    pendant = Q(fin__isnull=True) | Q(fin__gt=debut)
+    postes = Rattachement.objects.filter(pendant, superviseur=superviseur, poste__pays=pays,
+                                         debut__lte=fin).values("poste_id")  # fmt: skip
+    occupations = (
+        Occupation.objects.filter(pendant, poste_id__in=postes, debut__lte=fin)
+        .exclude(utilisateur=superviseur)
+        .select_related("utilisateur", "poste")
+        .order_by("utilisateur__last_name", "utilisateur__first_name", "-debut")
+    )
+    vus, equipe = set(), []
+    for o in occupations:
+        if o.utilisateur_id not in vus:
+            vus.add(o.utilisateur_id)
+            equipe.append((o.utilisateur, o.poste))
+    return equipe
+
+
+def tableau_equipe(pays, superviseur, jour: date | None = None) -> dict:
+    """DSH-002, DSH-012 : la semaine de chaque délégué de l'équipe, côte à côte, dans l'ordre
+    alphabétique (DC-49 : aucun classement), la couverture sur le cycle, et le total de l'équipe
+    tiré des sommes."""
+    from django.utils import timezone
+
+    today = aujourdhui(pays)
+    debut, fin = semaine(jour or today)
+    cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
+    debut_cycle = debut - timedelta(weeks=cycle - 1)
+    lignes = []
+    for delegue, poste in equipe_du_superviseur(pays, superviseur, debut, fin):
+        lignes.append({
+            "delegue": delegue,
+            "poste": poste,
+            "semaine": calculer(pays, delegue, debut, fin),
+            "cycle": calculer(pays, delegue, debut_cycle, fin),
+        })  # fmt: skip
+    return {
+        "aujourdhui": today,
+        "calcule_le": timezone.now(),
+        "debut": debut,
+        "fin": fin,
+        "cycle": {"debut": debut_cycle, "fin": fin, "semaines": cycle},
+        "delegues": lignes,
+        "total": {
+            "semaine": somme([x["semaine"] for x in lignes]),
+            "cycle": somme([x["cycle"] for x in lignes]),
+        },
+    }

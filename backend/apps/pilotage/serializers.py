@@ -2,6 +2,8 @@
 
 from rest_framework import serializers
 
+from apps.planning.serializers import DelegueSerializer
+
 
 class ComptesVisitesSerializer(serializers.Serializer):
     prevues = serializers.IntegerField()
@@ -81,3 +83,51 @@ class MesChiffresSerializer(serializers.Serializer):
 
 class ChoixSemaineSerializer(serializers.Serializer):
     semaine = serializers.DateField(required=False)
+
+
+class IndicateursPeriodeSerializer(serializers.Serializer):
+    """Les indicateurs d'une période dont les dates sont portées par le tableau."""
+
+    activite = serializers.BooleanField()
+    visites = ComptesVisitesSerializer()
+    rapports = ComptesRapportsSerializer()
+    couverture = ComptesCouvertureSerializer()
+    taux = TauxSerializer()
+
+
+class PosteEquipeSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    libelle = serializers.CharField()
+
+
+class LigneEquipeSerializer(serializers.Serializer):
+    """Un délégué de l'équipe : sa semaine et sa couverture sur le cycle."""
+
+    delegue = DelegueSerializer()
+    poste = PosteEquipeSerializer()
+    semaine = IndicateursPeriodeSerializer()
+    cycle = IndicateursPeriodeSerializer()
+
+
+class TotalEquipeSerializer(serializers.Serializer):
+    semaine = IndicateursPeriodeSerializer()
+    cycle = IndicateursPeriodeSerializer()
+
+
+class CyclePeriodeSerializer(serializers.Serializer):
+    debut = serializers.DateField()
+    fin = serializers.DateField()
+    semaines = serializers.IntegerField()
+
+
+class TableauEquipeSerializer(serializers.Serializer):
+    """DSH-002, DSH-012 : les délégués de l'équipe côte à côte, par ordre alphabétique, et le
+    total de l'équipe tiré des sommes (DC-49 : aucun classement)."""
+
+    aujourdhui = serializers.DateField()
+    calcule_le = serializers.DateTimeField()
+    debut = serializers.DateField()
+    fin = serializers.DateField()
+    cycle = CyclePeriodeSerializer()
+    delegues = LigneEquipeSerializer(many=True)
+    total = TotalEquipeSerializer()

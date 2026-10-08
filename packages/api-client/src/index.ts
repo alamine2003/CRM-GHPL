@@ -34,6 +34,7 @@ import type {
   VisiteProposee,
   ATraiter,
   MesChiffres,
+  TableauEquipe,
   Retards,
   Journee,
   RapportLu,
@@ -178,7 +179,10 @@ export type {
   DelegueATraiter,
   JourneeATraiter,
   Indicateurs,
+  IndicateursPeriode,
+  LigneEquipe,
   MesChiffres,
+  TableauEquipe,
   TauxIndicateurs,
   Retards,
   RapportEnRetard,
@@ -907,6 +911,9 @@ export function creerClient(options: OptionsClient) {
       /** DSH-001 : les chiffres du délégué connecté, pour la semaine d'un jour donné. */
       mesChiffres: (jour?: string) =>
         requete<MesChiffres>(`/api/v1/pilotage/mes-chiffres/${jour ? `?semaine=${jour}` : ''}`),
+      /** DSH-002, DSH-012 : le tableau de l'équipe du superviseur, pour la semaine d'un jour. */
+      equipe: (jour?: string) =>
+        requete<TableauEquipe>(`/api/v1/pilotage/equipe/${jour ? `?semaine=${jour}` : ''}`),
     },
     /** Champs supplémentaires du rapport, par pays (RPT-008). */
     rapports: {

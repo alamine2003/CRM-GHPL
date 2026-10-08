@@ -48,6 +48,7 @@ class Action(StrEnum):
     RAPPORTS_LIRE = "rapports.lire"
     RAPPORTS_VALIDER = "rapports.valider"
     INDICATEURS_LIRE = "indicateurs.lire"
+    PILOTAGE_LIRE = "pilotage.lire"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -148,6 +149,9 @@ MATRICE: dict[Action, frozenset[str]] = {
     # et le superviseur qui occupe un poste ; l'encadrement s'ajoute avec ses vues (0.7.2 à
     # 0.7.4).
     Action.INDICATEURS_LIRE: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
+    # « Pilotage » au portail (DSH-002, DSH-012) : en 0.7.2, le superviseur pour les délégués
+    # des postes qui lui sont rattachés ; DM, DF, pays et siège s'ajoutent en 0.7.3 et 0.7.4.
+    Action.PILOTAGE_LIRE: frozenset({Role.SUPERVISEUR}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}

@@ -35,3 +35,28 @@ class MesChiffresVue(VuePerimetre):
         pays = pays_requis(self.perimetre)
         donnees = mes_chiffres(pays, request.user, choix.validated_data.get("semaine"))
         return Response(s.MesChiffresSerializer(donnees).data)
+
+
+class EquipeVue(VuePerimetre):
+    """DSH-002, DSH-012 : le tableau hebdomadaire de l'équipe du superviseur ; un délégué d'un
+    poste qui ne lui est pas rattaché n'y apparaît jamais (CA1)."""
+
+    actions = {"GET": Action.PILOTAGE_LIRE}
+    serializer_class = s.TableauEquipeSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Visite.objects.none())
+
+    @extend_schema(
+        parameters=[OpenApiParameter("semaine", OpenApiTypes.DATE, required=False,
+                                     description="Un jour de la semaine ; par défaut, celle-ci")],
+        responses=s.TableauEquipeSerializer, operation_id="pilotage_equipe",
+    )  # fmt: skip
+    def get(self, request):
+        from .indicateurs import tableau_equipe
+
+        choix = s.ChoixSemaineSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        pays = pays_requis(self.perimetre)
+        donnees = tableau_equipe(pays, request.user, choix.validated_data.get("semaine"))
+        return Response(s.TableauEquipeSerializer(donnees).data)

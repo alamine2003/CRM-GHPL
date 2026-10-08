@@ -101,7 +101,13 @@ export const ENTREES: Entree[] = [
     chemin: '/propositions',
     visible: (p) => peut('propositions.creer')(p) || peut('propositions.trancher')(p),
   },
-  { cle: 'pilotage', icone: <BarChartRounded />, section: 'activite' },
+  {
+    cle: 'pilotage',
+    icone: <BarChartRounded />,
+    section: 'activite',
+    chemin: '/pilotage',
+    visible: peut('pilotage.lire'),
+  },
   {
     cle: 'organisation',
     icone: <AccountTreeRounded />,

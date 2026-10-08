@@ -2356,5 +2356,39 @@
     "ecartPoints_other": "{{signe}}{{count}} pts",
     "note": "Vos chiffres, sans note ni classement. Les écarts en points comparent à la semaine précédente.",
     "revenir": "Revenir à la semaine en cours"
+  },
+  "pilotage": {
+    "semaine": "Semaine du {{debut}} au {{fin}}",
+    "precedente": "Semaine précédente",
+    "suivante": "Semaine suivante",
+    "cetteSemaine": "Semaine en cours",
+    "sansEquipe": "Aucun délégué rattaché cette semaine",
+    "sansEquipeDetail": "Les délégués des postes qui vous sont rattachés apparaissent ici.",
+    "visitesFaites": "Visites faites",
+    "dontImprevues_one": "dont {{count}} imprévue",
+    "dontImprevues_other": "dont {{count}} imprévues",
+    "sur": "{{n}} sur {{total}}",
+    "couvertureCycle": "Couverture du cycle",
+    "tableau": "Indicateurs de la semaine par délégué",
+    "equipe": "Équipe",
+    "delegues_one": "{{count}} délégué",
+    "delegues_other": "{{count}} délégués",
+    "aucuneActivite": "Aucune activité cette semaine",
+    "aJustifier_one": "{{count}} visite à justifier",
+    "aJustifier_other": "{{count}} visites à justifier",
+    "enRetard_one": "{{count}} rapport en retard",
+    "enRetard_other": "{{count}} rapports en retard",
+    "note_one": "Taux bornés à 100 %, sans note ni classement ; délégués par ordre alphabétique. Les jours à venir ne comptent pas encore. La couverture se lit sur {{count}} semaine, du {{debut}} au {{fin}}.",
+    "note_other": "Taux bornés à 100 %, sans note ni classement ; délégués par ordre alphabétique. Les jours à venir ne comptent pas encore. La couverture se lit sur le cycle de {{count}} semaines, du {{debut}} au {{fin}}.",
+    "colonnes": {
+      "delegue": "Délégué",
+      "visites": "Visites faites",
+      "realisation": "Réalisation",
+      "ecarts": "Écarts justifiés",
+      "geolocalisation": "Géolocalisées",
+      "rapports": "Rapports dans le délai",
+      "couverture": "Couverture du cycle",
+      "aSuivre": "À suivre"
+    }
   }
 }

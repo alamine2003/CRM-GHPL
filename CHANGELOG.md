@@ -2,6 +2,28 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.2] — Tableau de l'équipe du superviseur
+
+Deuxième jalon du cycle 0.7 « Indicateurs de pilotage ».
+
+### Ajouté (DSH-002, DSH-012, prd.md §14.52)
+
+- Page « Pilotage » du portail : les délégués de l'équipe côte à côte, semaine par semaine (visites faites, réalisation, écarts justifiés, géolocalisées, rapports dans le délai, couverture du cycle, à suivre), par ordre alphabétique, sans note ni classement (DC-49) ; ligne « Équipe » tirée des sommes ; « Aucune activité cette semaine » sans visite.
+- Seuls les délégués des postes rattachés au superviseur pendant la semaine y figurent (DSH-002 CA1).
+- Droit `pilotage.lire` (superviseur).
+
+### Design
+
+Revue sur le rendu réel (bureau 1440 px, tablette 834 px, téléphone 390 px, thème sombre, données de démonstration) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Barre de chiffres | « dont 0 imprévue » | Précision affichée seulement s'il y a des imprévues |
+| Téléphone | Le sous-titre masqué ne disait plus quelle semaine était affichée ; « Cette semaine » se lisait comme l'état et non comme une action | La semaine se redit sous le titre ; bouton « Semaine en cours » |
+| Tableau | En-têtes sur deux lignes très espacées | Interligne resserré, alignés en bas |
+| Tableau | « — » suivi de « 0 sur 0 » à chaque ligne sans liste cible | Détail masqué quand il n'y a pas de base |
+| Téléphone | Colonne des noms trop large | 140 px au lieu de 180 |
+
 ## [0.7.1] — Mes chiffres du délégué
 
 Premier jalon du cycle 0.7 « Indicateurs de pilotage ».

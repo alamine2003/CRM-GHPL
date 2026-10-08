@@ -1,0 +1,139 @@
+import type { ClientApi, IndicateursPeriode, TableauEquipe } from '@innov/api-client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ContexteSession, type Session } from '../contexteSession';
+import i18n from '../i18n';
+import Pilotage from './Pilotage';
+
+// DSH-002, DSH-012 (0.7.2) : les délégués de l'équipe côte à côte, sans classement ; sans
+// visite, « Aucune activité ».
+
+const TAUX_VIDES = {
+  realisation: null,
+  ecarts_justifies: null,
+  geolocalisation: null,
+  rapports_dans_delai: null,
+  couverture: null,
+  couverture_ab: null,
+  frequence_ab: null,
+  part_planifiee: null,
+};
+
+const periode = (
+  visites: Partial<IndicateursPeriode['visites']>,
+  taux: Partial<IndicateursPeriode['taux']>,
+  activite = true,
+): IndicateursPeriode => ({
+  activite,
+  visites: {
+    prevues: 0,
+    echues: 0,
+    a_venir: 0,
+    effectuees_prevues: 0,
+    ecarts: 0,
+    ecarts_justifies: 0,
+    a_justifier: 0,
+    imprevues: 0,
+    effectuees: 0,
+    geolocalisees: 0,
+    ...visites,
+  },
+  rapports: { soumis: 1, dans_delai: 1, valides: 0, a_soumettre: 1, en_retard: 1 },
+  couverture: { cibles: 50, visitees: 6, cibles_ab: 44, visitees_ab: 2, frequence_ab: 2 },
+  taux: { ...TAUX_VIDES, ...taux },
+});
+
+const TABLEAU: TableauEquipe = {
+  aujourdhui: '2026-10-08',
+  calcule_le: '2026-10-08T12:00:00Z',
+  debut: '2026-10-05',
+  fin: '2026-10-11',
+  cycle: { debut: '2026-09-14', fin: '2026-10-11', semaines: 4 },
+  delegues: [
+    {
+      delegue: { id: 'd1', prenom: 'Aminata', nom: 'TOURE' },
+      poste: { id: 'p1', libelle: 'VM Plateau' },
+      semaine: periode(
+        { echues: 5, effectuees_prevues: 4, effectuees: 5, imprevues: 1, a_justifier: 1 },
+        { realisation: 0.8, rapports_dans_delai: 0.5 },
+      ),
+      cycle: periode({}, { couverture: 0.12 }),
+    },
+    {
+      delegue: { id: 'd2', prenom: 'Moussa', nom: 'SARR' },
+      poste: { id: 'p2', libelle: 'VM Médina' },
+      semaine: periode({}, {}, false),
+      cycle: periode({}, { couverture: 0 }),
+    },
+  ],
+  total: {
+    semaine: periode({ echues: 5, effectuees_prevues: 4, effectuees: 5 }, { realisation: 0.8 }),
+    cycle: periode({}, { couverture: 0.06 }),
+  },
+};
+
+function rendre(adresse = '/pilotage') {
+  const equipe = vi.fn(async () => TABLEAU);
+  const session = {
+    etat: { statut: 'chargement' },
+    client: { pilotage: { equipe } } as unknown as ClientApi,
+  } as unknown as Session;
+  render(
+    <MemoryRouter initialEntries={[adresse]}>
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <ContexteSession.Provider value={session}>
+          <Pilotage />
+        </ContexteSession.Provider>
+      </QueryClientProvider>
+    </MemoryRouter>,
+  );
+  return { equipe };
+}
+
+describe('Pilotage', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  it("DSH-012 : les délégués côte à côte, le total de l'équipe, sans classement", async () => {
+    rendre();
+    const tableau = await screen.findByRole('table', {
+      name: 'Indicateurs de la semaine par délégué',
+    });
+    const lignes = within(tableau).getAllByRole('row');
+    // En-tête, deux délégués dans l'ordre reçu (alphabétique), le total.
+    expect(lignes).toHaveLength(4);
+    const [, aminata, moussa, equipe] = lignes as [
+      HTMLElement,
+      HTMLElement,
+      HTMLElement,
+      HTMLElement,
+    ];
+    expect(within(aminata).getByText('Aminata TOURE')).toBeTruthy();
+    expect(within(aminata).getByText('80 %')).toBeTruthy();
+    expect(within(aminata).getByText('4 sur 5')).toBeTruthy();
+    expect(within(aminata).getByText('dont 1 imprévue')).toBeTruthy();
+    expect(within(aminata).getByText('1 visite à justifier')).toBeTruthy();
+    // DSH-012 CA2 : sans visite, « Aucune activité ».
+    expect(within(moussa).getByText('Aucune activité cette semaine')).toBeTruthy();
+    expect(within(equipe).getByText('Équipe')).toBeTruthy();
+    expect(within(equipe).getByText('2 délégués')).toBeTruthy();
+    expect(screen.queryByText(/rang|score|meilleur/i)).toBeNull();
+    expect(screen.getAllByText('Semaine du 5 octobre au 11 octobre').length).toBeGreaterThan(0);
+  });
+
+  it('une semaine passée, puis le retour à la semaine en cours', async () => {
+    const { equipe } = rendre();
+    await screen.findByRole('table');
+    expect(screen.getByRole('button', { name: 'Semaine suivante' })).toHaveProperty(
+      'disabled',
+      true,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Semaine précédente' }));
+    expect(equipe).toHaveBeenLastCalledWith('2026-09-28');
+  });
+});
