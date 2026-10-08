@@ -145,6 +145,11 @@ export type JourneeATraiter = Schemas['JourneeATraiter'];
 export type Retards = Schemas['Retards'];
 export type RapportEnRetard = Schemas['RapportEnRetard'];
 export type JourneeEnRetard = Schemas['JourneeEnRetard'];
+/** Indicateurs de pilotage d'une période (cycle 0.7) : comptages et taux bornés à 100 %. */
+export type Indicateurs = Schemas['Indicateurs'];
+export type TauxIndicateurs = Schemas['Taux'];
+/** DSH-001 : les chiffres du délégué, la semaine, la précédente et le cycle. */
+export type MesChiffres = Schemas['MesChiffres'];
 export type Journee = Schemas['Journee'];
 export type VisiteJournee = Schemas['VisiteJournee'];
 export type RapportLu = Schemas['RapportLu'];

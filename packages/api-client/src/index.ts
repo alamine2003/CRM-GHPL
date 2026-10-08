@@ -33,6 +33,7 @@ import type {
   RapportChronologie,
   VisiteProposee,
   ATraiter,
+  MesChiffres,
   Retards,
   Journee,
   RapportLu,
@@ -176,6 +177,9 @@ export type {
   ATraiter,
   DelegueATraiter,
   JourneeATraiter,
+  Indicateurs,
+  MesChiffres,
+  TauxIndicateurs,
   Retards,
   RapportEnRetard,
   JourneeEnRetard,
@@ -897,6 +901,12 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { soumis_le: soumisLe, envoye_le: new Date().toISOString() },
         }),
+    },
+    /** Indicateurs de pilotage (cycle 0.7). */
+    pilotage: {
+      /** DSH-001 : les chiffres du délégué connecté, pour la semaine d'un jour donné. */
+      mesChiffres: (jour?: string) =>
+        requete<MesChiffres>(`/api/v1/pilotage/mes-chiffres/${jour ? `?semaine=${jour}` : ''}`),
     },
     /** Champs supplémentaires du rapport, par pays (RPT-008). */
     rapports: {

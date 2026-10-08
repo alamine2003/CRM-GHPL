@@ -2,6 +2,31 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.1] — Mes chiffres du délégué
+
+Premier jalon du cycle 0.7 « Indicateurs de pilotage ».
+
+### Ajouté (DSH-001, prd.md §14.51)
+
+- Moteur commun des indicateurs (`apps/pilotage`) : visites prévues (version approuvée), échues, à venir, faites, imprévues, écarts justifiés, à justifier, géolocalisées ; rapports dans le délai, validés, en retard ; couverture de la liste cible et des potentiels A et B, à leur fréquence. Taux bornés à 100 %, vides sans base, « Aucune activité » sans visite ; ni score ni classement (DC-49, DC-50).
+- Onglet « Mes chiffres » du téléphone : la semaine, sa courbe jour par jour, la variation en points par rapport à la semaine précédente, la couverture sur le cycle de visites, les semaines passées ; gardé sur le téléphone et lisible sans réseau avec l'heure de calcul (CA1).
+- Décisions par délégation : une visite prévue ne compte qu'une fois échue ; la couverture se lit sur le cycle de visites ; l'API est ouverte au délégué et au superviseur qui occupe un poste, chacun pour ses visites.
+
+### Retiré
+
+- L'écran « Disponible en 0.7.1 » de l'onglet Chiffres.
+
+### Design
+
+Revue sur le rendu réel (application web du téléphone, 360 et 414 px, thème clair et sombre, données de démonstration) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Mes chiffres | « 0 sur 1 visites prévues non faites » : accord sur le total faux | Textes au singulier et au pluriel selon le total |
+| Courbe des jours | Un trait gris sous les jours sans visite, lu comme une petite barre | Barre absente à zéro, ligne de base discrète |
+| Hors connexion | Revenir à la semaine en cours cherchait une autre copie locale et laissait l'ancienne semaine affichée | La semaine en cours se relit sous sa clé ; sans copie, l'écran le dit et propose « Revenir à la semaine en cours » |
+| Hors connexion | Heure de calcul répétée sous le titre et dans le bandeau | Une seule fois, dans le bandeau |
+
 ## [0.6.9] — Recette et démonstration du cycle 0.6
 
 Dernier jalon du cycle 0.6 « Validation des rapports ».

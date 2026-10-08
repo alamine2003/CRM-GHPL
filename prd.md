@@ -704,6 +704,19 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.51 Mes chiffres, moteur des indicateurs (mise en œuvre 0.7.1)
+
+- **Moteur commun** du cycle 0.7 : chaque indicateur se recalcule à partir des visites, pour un délégué et une période ; les vues du superviseur, du pays et du siège (0.7.2 à 0.7.4) reprendront les mêmes formules.
+- **Visites prévues** : celles de la version approuvée du planning (RG-018), à leur date approuvée. [D, 8 octobre 2026, délégation] Une visite prévue ne compte qu'une fois **échue** : sa journée est passée, ou elle est déjà faite ou déclarée en écart. Les jours à venir n'abaissent aucun taux ; ils sont annoncés à part (« 1 visite prévue reste à venir »).
+- **Réalisation** (KPI-03, DC-50) : prévues effectuées / prévues échues ; **écarts justifiés** à côté, en second chiffre : écarts avec motif (annulée, reportée, prospect absent, non réalisée) et visites couvertes par une indisponibilité (DC-51), sur les prévues échues non faites. Les visites restées « prévues » sans justification sont rappelées (« à justifier »).
+- **Visites imprévues** : comptées dans les visites faites, elles n'abaissent aucun taux (DSH-012 CA1) ; la part planifiée n'est qu'une information.
+- **Géolocalisation** (§14.18, DC-49) : visites faites dont le pointage du démarrage est dans la distance du pays (ou le rayon de l'établissement, DC-55), avec une précision suffisante / visites faites.
+- **Rapports dans le délai** (KPI-04) : soumis avant l'échéance / rapports dus (échéance passée ou déjà soumis) ; rapports validés et rapports en retard comptés à part.
+- **Couverture** (§14.18, KPI-08) : prospects de la liste cible des postes occupés sur la période, visités au moins une fois / liste cible ; pour les potentiels A et B, la part visitée et la part vue **à leur fréquence**. [D, 8 octobre 2026, délégation] La couverture se lit sur le **cycle de visites** (`cycle_visite_semaines`, 4 semaines au Sénégal) qui se termine avec la semaine affichée : une liste cible se couvre sur un cycle, pas en une semaine ; la fréquence attendue est ramenée à la durée de la période.
+- Chaque taux est borné à 100 % et reste vide quand rien ne le fonde ; sans visite approuvée ni faite, « **Aucune activité** » (DSH-012 CA2). Ni score, ni appréciation, ni classement (DC-49).
+- **Mes chiffres** (DSH-001), onglet du téléphone : la semaine (visites faites, dont imprévues ; courbe des visites prévues et faites jour par jour ; réalisation, écarts justifiés, géolocalisation ; rapports), la variation en points par rapport à la semaine précédente, la couverture de la liste cible sur le cycle. Les flèches parcourent les semaines passées. **CA1** : les derniers chiffres lus restent sur le téléphone (base chiffrée) et s'affichent sans réseau avec l'heure de leur calcul.
+- [D, 8 octobre 2026, délégation] En 0.7.1, l'API (`indicateurs.lire`) est ouverte au délégué et au superviseur qui occupe un poste, chacun pour ses propres visites ; l'encadrement s'y ajoute avec ses vues.
+
 ### 14.50 Recette et démonstration du cycle 0.6 (mise en œuvre 0.6.9)
 
 - **Recette** : `recette-0.6.md` relie chaque critère du cycle (RPT-012 à RPT-018, RG-032 à RG-037, décisions 18.A à 38.A, notifications §18) au test qui le prouve. Les écarts relevés sont comblés par de nouveaux tests, dont le scénario **REC-08 de bout en bout** (correction sur une visite, validation du reste de la journée, resoumission en version 2, validation du rapport corrigé), l'audit des validations par journée et par lot, l'absence de validation automatique, le refus de modifier un rapport validé, la lecture de la pièce jointe par le DM, le DF et le responsable pays, et la tâche périodique qui déclenche rappels, alertes et escalades.
@@ -1046,7 +1059,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 
 | ID | Exigence | Version | Critères d'acceptation |
 |---|---|---|---|
-| DSH-001 | Indicateurs du délégué : visites prévues/réalisées, couverture, rapports validés, retards. | 0.7.1 | CA1 : disponibles hors connexion pour la semaine en cours (dernière synchronisation affichée). |
+| DSH-001 | Indicateurs du délégué : visites prévues/réalisées, couverture, rapports validés, retards. | 0.7.1 | CA1 : disponibles hors connexion pour la semaine en cours (dernière synchronisation affichée). Livré en 0.7.1 (§14.51). |
 | DSH-002 | Indicateurs du superviseur par délégué rattaché. | 0.7.2 | CA1 : un délégué non rattaché n'apparaît jamais. |
 | DSH-003 | Indicateurs pays par zone, secteur, réseau ; vue DM/DF par réseau. | 0.7.3 | CA1 : les totaux d'un réseau égalent la somme de ses délégués. |
 | DSH-004 | Consolidation siège : comparaison et total par pays, agrégés ; descente nominative auditée. | 0.7.4 | CA1 : chaque consultation nominative par le siège crée un événement d'audit. |

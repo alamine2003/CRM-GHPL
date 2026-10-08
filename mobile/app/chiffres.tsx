@@ -1,5 +1,12 @@
-import { AVenir } from '../src/AVenir';
+import { useTranslation } from 'react-i18next';
+import { Ecran } from '../src/Ecran';
+import { EcranMesChiffres } from '../src/MesChiffres';
 
 export default function EcranChiffres() {
-  return <AVenir cle="chiffres" version="0.7.1" />;
+  const { t } = useTranslation();
+  return (
+    <Ecran titre={t('mobile.onglets.chiffres')}>
+      <EcranMesChiffres />
+    </Ecran>
+  );
 }

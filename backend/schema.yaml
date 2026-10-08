@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.6.9
+  version: 0.7.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2532,6 +2532,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pays'
+          description: ''
+  /api/v1/pilotage/mes-chiffres/:
+    get:
+      operationId: mes_chiffres
+      description: |-
+        DSH-001 : les indicateurs du délégué connecté, sur ses propres visites ; le téléphone les
+        garde pour les afficher sans réseau (CA1).
+      parameters:
+      - in: query
+        name: semaine
+        schema:
+          type: string
+          format: date
+        description: Un jour de la semaine ; par défaut, celle-ci
+      tags:
+      - pilotage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MesChiffres'
           description: ''
   /api/v1/plannings/:
     post:
@@ -5778,6 +5802,78 @@ components:
       - deplacees
       - modifiees
       - retirees
+    ComptesCouverture:
+      type: object
+      properties:
+        cibles:
+          type: integer
+        visitees:
+          type: integer
+        cibles_ab:
+          type: integer
+        visitees_ab:
+          type: integer
+        frequence_ab:
+          type: integer
+      required:
+      - cibles
+      - cibles_ab
+      - frequence_ab
+      - visitees
+      - visitees_ab
+    ComptesRapports:
+      type: object
+      properties:
+        soumis:
+          type: integer
+        dans_delai:
+          type: integer
+        valides:
+          type: integer
+        a_soumettre:
+          type: integer
+        en_retard:
+          type: integer
+      required:
+      - a_soumettre
+      - dans_delai
+      - en_retard
+      - soumis
+      - valides
+    ComptesVisites:
+      type: object
+      properties:
+        prevues:
+          type: integer
+        echues:
+          type: integer
+        a_venir:
+          type: integer
+        effectuees_prevues:
+          type: integer
+        ecarts:
+          type: integer
+        ecarts_justifies:
+          type: integer
+        a_justifier:
+          type: integer
+        imprevues:
+          type: integer
+        effectuees:
+          type: integer
+        geolocalisees:
+          type: integer
+      required:
+      - a_justifier
+      - a_venir
+      - ecarts
+      - ecarts_justifies
+      - echues
+      - effectuees
+      - effectuees_prevues
+      - geolocalisees
+      - imprevues
+      - prevues
     ConformiteJournee:
       type: object
       description: 'VIS-010 : une journée « conforme » ou « à vérifier », avec ses
@@ -7376,6 +7472,67 @@ components:
       required:
       - le
       - prospect
+    Indicateurs:
+      type: object
+      description: 'Les indicateurs d''une période ; `activite` faux : « Aucune activité
+        » (DSH-012 CA2).'
+      properties:
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        activite:
+          type: boolean
+        visites:
+          $ref: '#/components/schemas/ComptesVisites'
+        rapports:
+          $ref: '#/components/schemas/ComptesRapports'
+        couverture:
+          $ref: '#/components/schemas/ComptesCouverture'
+        taux:
+          $ref: '#/components/schemas/Taux'
+      required:
+      - activite
+      - couverture
+      - debut
+      - fin
+      - rapports
+      - taux
+      - visites
+    IndicateursCycle:
+      type: object
+      description: 'Les indicateurs d''une période ; `activite` faux : « Aucune activité
+        » (DSH-012 CA2).'
+      properties:
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        activite:
+          type: boolean
+        visites:
+          $ref: '#/components/schemas/ComptesVisites'
+        rapports:
+          $ref: '#/components/schemas/ComptesRapports'
+        couverture:
+          $ref: '#/components/schemas/ComptesCouverture'
+        taux:
+          $ref: '#/components/schemas/Taux'
+        semaines:
+          type: integer
+      required:
+      - activite
+      - couverture
+      - debut
+      - fin
+      - rapports
+      - semaines
+      - taux
+      - visites
     Informations:
       type: object
       properties:
@@ -7462,6 +7619,20 @@ components:
       - id
       - libelle
       - modifiable
+    JourIndicateurs:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        prevues:
+          type: integer
+        effectuees:
+          type: integer
+      required:
+      - date
+      - effectuees
+      - prevues
     JourKm:
       type: object
       properties:
@@ -7868,6 +8039,35 @@ components:
       - simulation
       - source
       - statut
+    MesChiffres:
+      type: object
+      description: |-
+        DSH-001 : la semaine, la précédente, le cycle, et la courbe des jours ; `calcule_le`
+        s'affiche avec les chiffres gardés sans réseau (CA1).
+      properties:
+        aujourdhui:
+          type: string
+          format: date
+        calcule_le:
+          type: string
+          format: date-time
+        semaine:
+          $ref: '#/components/schemas/Indicateurs'
+        precedente:
+          $ref: '#/components/schemas/Indicateurs'
+        cycle:
+          $ref: '#/components/schemas/IndicateursCycle'
+        jours:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourIndicateurs'
+      required:
+      - aujourdhui
+      - calcule_le
+      - cycle
+      - jours
+      - precedente
+      - semaine
     ModeDecisionEnum:
       enum:
       - direct
@@ -11216,6 +11416,51 @@ components:
       - mes_a_valider
       - potentiels
       - sans_lieu
+    Taux:
+      type: object
+      description: Chaque taux entre 0 et 1, vide quand rien ne le fonde.
+      properties:
+        realisation:
+          type: number
+          format: double
+          nullable: true
+        ecarts_justifies:
+          type: number
+          format: double
+          nullable: true
+        geolocalisation:
+          type: number
+          format: double
+          nullable: true
+        rapports_dans_delai:
+          type: number
+          format: double
+          nullable: true
+        couverture:
+          type: number
+          format: double
+          nullable: true
+        couverture_ab:
+          type: number
+          format: double
+          nullable: true
+        frequence_ab:
+          type: number
+          format: double
+          nullable: true
+        part_planifiee:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - couverture
+      - couverture_ab
+      - ecarts_justifies
+      - frequence_ab
+      - geolocalisation
+      - part_planifiee
+      - rapports_dans_delai
+      - realisation
     Terminaison:
       type: object
       description: 'VIS-004 : l''heure réelle de fin et la position, prises par le

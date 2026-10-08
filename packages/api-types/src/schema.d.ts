@@ -1491,6 +1491,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/pilotage/mes-chiffres/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description DSH-001 : les indicateurs du délégué connecté, sur ses propres visites ; le téléphone les
+     *     garde pour les afficher sans réseau (CA1).
+     */
+    get: operations['mes_chiffres'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/': {
     parameters: {
       query?: never;
@@ -3210,6 +3230,32 @@ export interface components {
       deplacees: components['schemas']['Deplacement'][];
       modifiees: components['schemas']['Modification'][];
     };
+    ComptesCouverture: {
+      cibles: number;
+      visitees: number;
+      cibles_ab: number;
+      visitees_ab: number;
+      frequence_ab: number;
+    };
+    ComptesRapports: {
+      soumis: number;
+      dans_delai: number;
+      valides: number;
+      a_soumettre: number;
+      en_retard: number;
+    };
+    ComptesVisites: {
+      prevues: number;
+      echues: number;
+      a_venir: number;
+      effectuees_prevues: number;
+      ecarts: number;
+      ecarts_justifies: number;
+      a_justifier: number;
+      imprevues: number;
+      effectuees: number;
+      geolocalisees: number;
+    };
     /** @description VIS-010 : une journée « conforme » ou « à vérifier », avec ses écarts. */
     ConformiteJournee: {
       /** Format: date */
@@ -3847,6 +3893,31 @@ export interface components {
       /** Format: double */
       precision_m?: number | null;
     };
+    /** @description Les indicateurs d'une période ; `activite` faux : « Aucune activité » (DSH-012 CA2). */
+    Indicateurs: {
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      activite: boolean;
+      visites: components['schemas']['ComptesVisites'];
+      rapports: components['schemas']['ComptesRapports'];
+      couverture: components['schemas']['ComptesCouverture'];
+      taux: components['schemas']['Taux'];
+    };
+    /** @description Les indicateurs d'une période ; `activite` faux : « Aucune activité » (DSH-012 CA2). */
+    IndicateursCycle: {
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      activite: boolean;
+      visites: components['schemas']['ComptesVisites'];
+      rapports: components['schemas']['ComptesRapports'];
+      couverture: components['schemas']['ComptesCouverture'];
+      taux: components['schemas']['Taux'];
+      semaines: number;
+    };
     Informations: {
       produit: string;
       version: string;
@@ -3881,6 +3952,12 @@ export interface components {
       libelle: string;
       variable?: boolean;
       readonly modifiable: boolean;
+    };
+    JourIndicateurs: {
+      /** Format: date */
+      date: string;
+      prevues: number;
+      effectuees: number;
     };
     JourKm: {
       /** Format: date */
@@ -4059,6 +4136,20 @@ export interface components {
       };
       readonly nb_anomalies: number;
       readonly rejets: number;
+    };
+    /**
+     * @description DSH-001 : la semaine, la précédente, le cycle, et la courbe des jours ; `calcule_le`
+     *     s'affiche avec les chiffres gardés sans réseau (CA1).
+     */
+    MesChiffres: {
+      /** Format: date */
+      aujourdhui: string;
+      /** Format: date-time */
+      calcule_le: string;
+      semaine: components['schemas']['Indicateurs'];
+      precedente: components['schemas']['Indicateurs'];
+      cycle: components['schemas']['IndicateursCycle'];
+      jours: components['schemas']['JourIndicateurs'][];
     };
     /**
      * @description * `direct` - Décision du responsable du poste
@@ -5406,6 +5497,25 @@ export interface components {
       };
       /** @description Fiches actives sans lieu d'exercice en cours. */
       sans_lieu: number;
+    };
+    /** @description Chaque taux entre 0 et 1, vide quand rien ne le fonde. */
+    Taux: {
+      /** Format: double */
+      realisation: number | null;
+      /** Format: double */
+      ecarts_justifies: number | null;
+      /** Format: double */
+      geolocalisation: number | null;
+      /** Format: double */
+      rapports_dans_delai: number | null;
+      /** Format: double */
+      couverture: number | null;
+      /** Format: double */
+      couverture_ab: number | null;
+      /** Format: double */
+      frequence_ab: number | null;
+      /** Format: double */
+      part_planifiee: number | null;
     };
     /** @description VIS-004 : l'heure réelle de fin et la position, prises par le téléphone. */
     Terminaison: {
@@ -8110,6 +8220,28 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Pays'];
+        };
+      };
+    };
+  };
+  mes_chiffres: {
+    parameters: {
+      query?: {
+        /** @description Un jour de la semaine ; par défaut, celle-ci */
+        semaine?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MesChiffres'];
         };
       };
     };

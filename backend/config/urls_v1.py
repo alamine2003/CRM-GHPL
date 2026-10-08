@@ -9,6 +9,7 @@ from apps.identite import vues_comptes as comptes
 from apps.imports import vues as imp
 from apps.notifications import vues as ntf
 from apps.organisation import vues as org
+from apps.pilotage import vues as pil
 from apps.planning import vues as pln
 from apps.prospects import vues as prs
 from apps.prospects import vues_ciblage as cib
@@ -391,5 +392,7 @@ urlpatterns = [
     path("imports/organisation/", imp.ImportOrganisationVue.as_view(), name="import-organisation"),
     path("imports/<uuid:id>/", imp.LotVue.as_view(), name="import"),
     path("imports/<uuid:id>/rapport/", imp.RapportLotVue.as_view(), name="import-rapport"),
+    # DSH-001 : les indicateurs du délégué (cycle 0.7)
+    path("pilotage/mes-chiffres/", pil.MesChiffresVue.as_view(), name="mes-chiffres"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

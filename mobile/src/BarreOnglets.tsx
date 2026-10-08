@@ -7,12 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePalette } from './composants';
 import { police } from './polices';
 
-/** Onglets ; ceux d'une version future mènent à un écran « bientôt ». */
+/** Onglets de l'application du délégué. */
 export const ONGLETS = [
   { cle: 'tournee', icone: 'home', chemin: '/' },
   { cle: 'semaine', icone: 'calendar-month', chemin: '/semaine' },
   { cle: 'prospects', icone: 'people', chemin: '/prospects' },
-  { cle: 'chiffres', icone: 'bar-chart', chemin: '/chiffres', version: '0.7.1' },
+  { cle: 'chiffres', icone: 'bar-chart', chemin: '/chiffres' },
   { cle: 'profil', icone: 'person', chemin: '/profil' },
 ] as const;
 
@@ -38,7 +38,6 @@ export function BarreOnglets() {
           (onglet.cle === 'prospects' && /^\/(fiche|lieu)\//.test(chemin)) ||
           (onglet.cle === 'semaine' && /^\/(jour|visite)\//.test(chemin));
         const couleur = actif ? p.texte : p.texteDiscret;
-        const futur = 'version' in onglet;
         return (
           <Pressable
             key={onglet.cle}
@@ -50,7 +49,7 @@ export function BarreOnglets() {
           >
             <View style={[styles.repere, actif && { backgroundColor: marque.orange }]} />
             <MaterialIcons name={onglet.icone} size={22} color={couleur} />
-            <Text style={[styles.libelle, { color: couleur }, futur && !actif && { opacity: 0.7 }]}>
+            <Text style={[styles.libelle, { color: couleur }]}>
               {t(`mobile.onglets.${onglet.cle}`)}
             </Text>
           </Pressable>

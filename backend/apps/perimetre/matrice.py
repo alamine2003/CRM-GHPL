@@ -47,6 +47,7 @@ class Action(StrEnum):
     RAPPORTS_REDIGER = "rapports.rediger"
     RAPPORTS_LIRE = "rapports.lire"
     RAPPORTS_VALIDER = "rapports.valider"
+    INDICATEURS_LIRE = "indicateurs.lire"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -143,6 +144,10 @@ MATRICE: dict[Action, frozenset[str]] = {
     # sur les postes rattachés, le DM pour un superviseur-visiteur (RG-023), en escalade ou en
     # remplacement ; le périmètre est vérifié par le service.
     Action.RAPPORTS_VALIDER: frozenset({Role.DM, Role.SUPERVISEUR}),
+    # Indicateurs de pilotage (cycle 0.7) : en 0.7.1, chacun les siens (DSH-001), le délégué
+    # et le superviseur qui occupe un poste ; l'encadrement s'ajoute avec ses vues (0.7.2 à
+    # 0.7.4).
+    Action.INDICATEURS_LIRE: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
