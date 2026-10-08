@@ -100,11 +100,11 @@ def a_justifier(pays: Pays, delegue: Utilisateur, today: date) -> list[Visite]:
 
 
 def a_corriger(pays: Pays, delegue: Utilisateur) -> list[Visite]:
-    """RPT-014, 29.A : les visites dont le rapport est renvoyé pour correction, quelle que soit
-    leur semaine, les plus anciennes d'abord."""
+    """RPT-014, 29.A : les visites dont le rapport est renvoyé pour correction (ou rouvert,
+    RPT-016), quelle que soit leur semaine, les plus anciennes d'abord."""
     visites = list(
         Visite.objects.filter(pays=pays, planning__delegue=delegue, archive_le__isnull=True,
-                              rapport__statut="a_corriger")
+                              rapport__statut__in=("a_corriger", "rouvert"))
         .select_related("prospect__type", "prospect__specialite", "etablissement", "reseau",
                         "motif_ecart", "rapport")
         .order_by("date", "heure", "ordre")

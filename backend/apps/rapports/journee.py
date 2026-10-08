@@ -22,9 +22,9 @@ from .models import StatutRapport
 
 
 def journee(superviseur, pays, delegue_id, jour: date) -> dict:
-    from .validation import manquants, planning_du_jour
+    from .validation import journee_validee, manquants, peut_rouvrir, planning_du_jour
 
-    planning, mode = planning_du_jour(superviseur, pays, delegue_id, jour)
+    planning, mode = planning_du_jour(superviseur, pays, delegue_id, jour, consultation=True)
     visites = list(
         planning.visites.filter(archive_le__isnull=True, date=jour)
         .select_related(
@@ -34,6 +34,8 @@ def journee(superviseur, pays, delegue_id, jour: date) -> dict:
             "rapport__resultat",
             "rapport__prochaine_action_type",
             "rapport__valide_par",
+            "rapport__rouvert_par",
+            "rapport__correction_par",
         )  # fmt: skip
         .prefetch_related("rapport__pieces_jointes", "rapport__versions")
         .order_by("heure", "ordre")
@@ -51,13 +53,16 @@ def journee(superviseur, pays, delegue_id, jour: date) -> dict:
         v.rapport_lu = (
             rapport if rapport is not None and rapport.statut != StatutRapport.BROUILLON else None
         )  # fmt: skip
+        if v.rapport_lu is not None:
+            v.rapport_lu.rouvrable = peut_rouvrir(superviseur, rapport, mode)
     return {
         "delegue": planning.delegue,
         "date": jour,
         "planning": planning.pk,
         "classement": calcul.classement,
         "ecarts": calcul.ecarts,
-        "fige": calcul.fige_le is not None,
+        #: Validée (32.A : un rapport rouvert la fait revenir, son classement reste figé).
+        "fige": journee_validee(planning, jour, calcul),
         #: À quel titre l'utilisateur valide : responsable, remplaçant, ou DM par escalade.
         "mode": mode,
         #: 22.A : la journée se valide quand tous ses rapports sont soumis.

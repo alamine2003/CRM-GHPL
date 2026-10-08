@@ -18,6 +18,7 @@ const JOURNEE = {
   rapports_en_retard: 0,
   horodatages_douteux: 0,
   rapports_a_corriger: 0,
+  rapports_rouverts: 0,
   escalade: false,
   eligible_lot: false,
 };
@@ -133,6 +134,23 @@ describe('RPT-012 : file « À traiter » du superviseur', () => {
     await waitFor(() =>
       expect(validerLot).toHaveBeenCalledWith([{ delegue: 'd1', date: '2026-10-05' }]),
     );
+  });
+
+  it('RPT-016 : un rapport rouvert se compte à part des rapports attendus', async () => {
+    const [premier] = FILE.delegues;
+    const file = {
+      ...FILE,
+      delegues: [
+        {
+          ...premier!,
+          journees: [{ ...premier!.journees[0]!, rapports_attendus: 1, rapports_rouverts: 1 }],
+        },
+      ],
+    };
+    rendre(file);
+    expect(
+      await screen.findByText('3 visites · 2 rapports à valider · 1 rapport rouvert'),
+    ).toBeInTheDocument();
   });
 
   it('23.A : sans journée éligible, pas de bouton de lot', async () => {

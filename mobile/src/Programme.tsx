@@ -116,10 +116,10 @@ export function ProgrammeDuJour() {
         )
         .map((v) => ({ v, j })),
     );
-  // RPT-014, 29.A : un rapport renvoyé pour correction a sa propre liste, toutes semaines
+  // RPT-014, 29.A : un rapport renvoyé pour correction (ou rouvert, RPT-016) a sa propre liste, toutes semaines
   // confondues : il n'est pas en retard, il est à revoir. Resoumis, il en sort aussitôt.
   const rapportsACorriger = (programme.a_corriger ?? [])
-    .filter((v) => v.rapport_statut === 'a_corriger')
+    .filter((v) => v.rapport_statut === 'a_corriger' || v.rapport_statut === 'rouvert')
     .map((v) => ({
       v,
       j: programme.jours.find((j) => j.date === v.date) ?? {
@@ -426,7 +426,8 @@ function LigneVisite({
           {visite.est_imprevue && <Etiquette ton="neutre">{t('visites.imprevue')}</Etiquette>}
           {(visite.rapport_statut === 'attendu' ||
             visite.rapport_statut === 'brouillon' ||
-            visite.rapport_statut === 'a_corriger') && (
+            visite.rapport_statut === 'a_corriger' ||
+            visite.rapport_statut === 'rouvert') && (
             <Etiquette>{t(`rapport.statuts.${visite.rapport_statut}`)}</Etiquette>
           )}
         </View>

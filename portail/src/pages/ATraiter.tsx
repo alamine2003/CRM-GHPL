@@ -234,8 +234,11 @@ function LigneJournee({ journee: j, delegue }: { journee: JourneeATraiter; deleg
       : `${t('aTraiter.visites', { count: j.visites })}, ${t('aTraiter.effectuees', { count: j.effectuees })}`,
     j.rapports_a_valider ? t('aTraiter.aValider', { count: j.rapports_a_valider }) : null,
     j.rapports_a_corriger ? t('aTraiter.aCorriger', { count: j.rapports_a_corriger }) : null,
-    j.rapports_attendus > j.rapports_a_corriger
-      ? t('aTraiter.attendus', { count: j.rapports_attendus - j.rapports_a_corriger })
+    j.rapports_rouverts ? t('aTraiter.rouverts', { count: j.rapports_rouverts }) : null,
+    j.rapports_attendus > j.rapports_a_corriger + j.rapports_rouverts
+      ? t('aTraiter.attendus', {
+          count: j.rapports_attendus - j.rapports_a_corriger - j.rapports_rouverts,
+        })
       : null,
     j.rapports_en_retard ? t('aTraiter.enRetard', { count: j.rapports_en_retard }) : null,
     j.horodatages_douteux ? t('aTraiter.douteux', { count: j.horodatages_douteux }) : null,

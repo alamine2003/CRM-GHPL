@@ -2097,6 +2097,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/rapports/{id}/rouvrir/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * @description RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
+     *     après la validation, le DM du périmètre au-delà (CA1).
+     */
+    post: operations['rapport_rouvrir'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/rapports/{id}/valider/': {
     parameters: {
       query?: never;
@@ -3296,6 +3316,8 @@ export interface components {
       par: string;
       commentaire: string;
       champs: string[];
+      /** @default false */
+      reouverture: boolean;
     };
     CreationDivision: {
       libelle: string;
@@ -3433,6 +3455,10 @@ export interface components {
     };
     DemandeReouverture: {
       destinataires: number;
+    };
+    /** @description RPT-016 : motif obligatoire. */
+    DemandeReouvertureRapport: {
+      motif: string;
     };
     /**
      * @description VIS-003 : l'heure réelle et la position, prises par le téléphone au démarrage, même
@@ -3875,7 +3901,7 @@ export interface components {
       classement: components['schemas']['ClassementEnum'];
       ecarts: components['schemas']['EcartConformite'][];
       fige: boolean;
-      mode: components['schemas']['ModeDecisionEnum'];
+      mode: components['schemas']['JourneeModeEnum'];
       rapports_manquants: number;
       activites: components['schemas']['Activite'][];
       visites: components['schemas']['VisiteJournee'][];
@@ -3898,6 +3924,7 @@ export interface components {
       rapports_en_retard: number;
       horodatages_douteux: number;
       rapports_a_corriger: number;
+      rapports_rouverts: number;
       escalade: boolean;
       eligible_lot: boolean;
     };
@@ -3907,6 +3934,14 @@ export interface components {
       /** Format: date */
       date: string;
     };
+    /**
+     * @description * `direct` - Décision du responsable du poste
+     *     * `remplacement` - Décision du remplaçant
+     *     * `escalade` - Décision par escalade
+     *     * `consultation` - Consultation
+     * @enum {string}
+     */
+    JourneeModeEnum: 'direct' | 'remplacement' | 'escalade' | 'consultation';
     /** @description Kilométrage estimé à vol d'oiseau, sans montant (PLN-010). */
     Kilometrage: {
       /** Format: double */
@@ -4099,6 +4134,7 @@ export interface components {
      *     * `redaction_rouverte` - Rédaction rouverte
      *     * `correction_demandee` - Correction demandée
      *     * `rapport_corrige` - Rapport corrigé
+     *     * `rapport_rouvert` - Rapport rouvert
      * @enum {string}
      */
     NotificationTypeEnum:
@@ -4112,7 +4148,8 @@ export interface components {
       | 'reouverture_demandee'
       | 'redaction_rouverte'
       | 'correction_demandee'
-      | 'rapport_corrige';
+      | 'rapport_corrige'
+      | 'rapport_rouvert';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
@@ -4676,6 +4713,7 @@ export interface components {
       readonly visite: string;
       readonly statut: components['schemas']['StatutRapportEnum'];
       readonly correction: components['schemas']['Correction'] | null;
+      readonly reouverture: components['schemas']['ReouvertureRapport'] | null;
       readonly objectif_prevu: string;
       est_imprevue: boolean;
       justification: string;
@@ -4719,6 +4757,8 @@ export interface components {
       /** Format: time */
       heure: string | null;
       etablissement?: string | null;
+      /** Format: uuid */
+      readonly delegue: string;
       readonly delegue_nom: string;
       readonly de_moi: boolean;
       readonly statut: components['schemas']['StatutRapportEnum'];
@@ -4745,6 +4785,8 @@ export interface components {
       readonly id: string;
       readonly statut: components['schemas']['StatutRapportEnum'];
       readonly correction: components['schemas']['Correction'] | null;
+      readonly reouverture: components['schemas']['ReouvertureRapport'] | null;
+      readonly rouvrable: boolean;
       readonly historique: components['schemas']['VersionLue'][];
       readonly precedente: components['schemas']['ContenuLu'] | null;
       readonly modifies: string[];
@@ -4848,6 +4890,13 @@ export interface components {
       delegue: string;
       /** Format: date */
       semaine: string;
+    };
+    /** @description RPT-016 : la réouverture en cours d'un rapport validé : qui, quand, pourquoi. */
+    ReouvertureRapport: {
+      /** Format: date-time */
+      le: string;
+      readonly par: string;
+      motif: string;
     };
     /**
      * @description VIS-007 : un report, comme un écart, plus le jour et l'heure de la nouvelle visite ;
@@ -8891,6 +8940,33 @@ export interface operations {
         'application/json': components['schemas']['DemandeCorrection'];
         'application/x-www-form-urlencoded': components['schemas']['DemandeCorrection'];
         'multipart/form-data': components['schemas']['DemandeCorrection'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RapportLu'];
+        };
+      };
+    };
+  };
+  rapport_rouvrir: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['DemandeReouvertureRapport'];
+        'application/x-www-form-urlencoded': components['schemas']['DemandeReouvertureRapport'];
+        'multipart/form-data': components['schemas']['DemandeReouvertureRapport'];
       };
     };
     responses: {

@@ -13,6 +13,8 @@ const RAPPORT = {
   id: 'r1',
   statut: 'soumis',
   correction: null,
+  reouverture: null,
+  rouvrable: false,
   historique: [{ numero: 1, soumis_le: '2026-10-13T20:00:00Z', correction: null }],
   precedente: null,
   modifies: [],
@@ -123,6 +125,7 @@ function rendre(journee: Journee = JOURNEE) {
   const valider = vi.fn(async () => ({ ...RAPPORT, statut: 'valide' }));
   const validerJournee = vi.fn(async () => ({ journees: 1, rapports: 1 }));
   const demanderCorrection = vi.fn(async () => ({ ...RAPPORT, statut: 'a_corriger' }));
+  const rouvrir = vi.fn(async () => ({ ...RAPPORT, statut: 'rouvert' }));
   const session = {
     etat: { statut: 'chargement' },
     client: {
@@ -132,6 +135,7 @@ function rendre(journee: Journee = JOURNEE) {
         valider,
         validerJournee,
         demanderCorrection,
+        rouvrir,
       },
     } as unknown as ClientApi,
   } as unknown as Session;
@@ -146,7 +150,7 @@ function rendre(journee: Journee = JOURNEE) {
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { piece, valider, validerJournee, demanderCorrection };
+  return { piece, valider, validerJournee, demanderCorrection, rouvrir };
 }
 
 beforeEach(async () => {
@@ -249,6 +253,65 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
       await screen.findByText(/Validé en remplacement le .* par Awa FICTIVE/),
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Valider ce rapport' })).toBeNull();
+    // RPT-016 CA1 : passé le délai, le serveur ne le dit plus rouvrable.
+    expect(screen.queryByRole('button', { name: 'Rouvrir le rapport' })).toBeNull();
+  });
+
+  it('RPT-016 : un rapport validé se rouvre, avec un motif obligatoire', async () => {
+    const visites = JOURNEE.visites.map((v, i) =>
+      i === 0
+        ? {
+            ...v,
+            rapport_statut: 'valide',
+            rapport: {
+              ...RAPPORT,
+              statut: 'valide',
+              valide_le: '2026-10-14T08:00:00Z',
+              valide_par: 'Kossi GUEYE',
+              mode_validation: 'unitaire',
+              rouvrable: true,
+            },
+          }
+        : v,
+    );
+    const { rouvrir } = rendre({ ...JOURNEE, visites } as unknown as Journee);
+    fireEvent.click(await screen.findByRole('button', { name: 'Rouvrir le rapport' }));
+    const dialogue = await screen.findByRole('dialog');
+    const envoyer = within(dialogue).getByRole('button', { name: 'Rouvrir' });
+    expect(envoyer).toBeDisabled();
+    fireEvent.change(within(dialogue).getByLabelText(/Pourquoi rouvrir ce rapport/), {
+      target: { value: 'Le résultat ne correspond pas.' },
+    });
+    fireEvent.click(envoyer);
+    await waitFor(() =>
+      expect(rouvrir).toHaveBeenCalledWith('r1', 'Le résultat ne correspond pas.'),
+    );
+  });
+
+  it('RPT-016 : le rapport rouvert affiche le motif ; le DM consulte sans valider', async () => {
+    const visites = JOURNEE.visites.map((v, i) =>
+      i === 0
+        ? {
+            ...v,
+            rapport_statut: 'rouvert',
+            rapport: {
+              ...RAPPORT,
+              statut: 'rouvert',
+              reouverture: {
+                le: '2026-11-20T08:00:00Z',
+                par: 'Awa FICTIVE',
+                motif: 'Échantillons à recompter.',
+              },
+            },
+          }
+        : v,
+    );
+    rendre({ ...JOURNEE, mode: 'consultation', visites } as unknown as Journee);
+    expect(await screen.findByText(/Rouvert le .* par Awa FICTIVE/)).toBeInTheDocument();
+    expect(screen.getByText('« Échantillons à recompter. »')).toBeInTheDocument();
+    expect(screen.getByText(/Vous consultez cette journée en tant que DM/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Valider la journée' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Consulter la semaine' })).toBeNull();
   });
 
   it('RPT-014 CA1 : sans commentaire, la correction ne part pas ; avec, elle vise ses champs', async () => {
@@ -277,7 +340,7 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
     );
     rendre({ ...JOURNEE, visites } as unknown as Journee);
     expect(
-      await screen.findByText(/1 rapport est renvoyé pour correction : la journée se validera/),
+      await screen.findByText(/1 rapport est renvoyé au délégué : la journée se validera/),
     ).toBeInTheDocument();
   });
 

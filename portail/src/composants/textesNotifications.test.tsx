@@ -49,3 +49,14 @@ describe('RPT-015, 28.A : rapport corrigé', () => {
     expect(destination(n)).toBe('/a-traiter/d1/2026-09-21');
   });
 });
+
+describe('RPT-016, 31.A : rapport rouvert par le DM', () => {
+  it('le superviseur l’apprend, et la notification ouvre la journée', () => {
+    const t = i18n.t.bind(i18n);
+    const n = notif('rapport_rouvert', { delegue: 'd1', date: '2026-09-21', nom: 'Awa FICTIVE' });
+    expect(texteNotification(n, t, 'fr')).toBe(
+      'Awa FICTIVE a rouvert un rapport validé du 21 septembre',
+    );
+    expect(destination(n)).toBe('/a-traiter/d1/2026-09-21');
+  });
+});

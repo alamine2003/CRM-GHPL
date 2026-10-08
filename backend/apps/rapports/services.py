@@ -470,7 +470,7 @@ def soumettre(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None 
     version figée, marquage en retard, horodatage du téléphone contrôlé."""
     rapport = (
         Rapport.objects.select_for_update(of=("self",))
-        .select_related("visite__planning__delegue", "correction_par")
+        .select_related("visite__planning__delegue", "correction_par", "rouvert_par")
         .get(pk=rapport.pk)
     )
     derniere = rapport.versions.order_by("-numero").first()
@@ -488,7 +488,11 @@ def soumettre(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None 
     moment, douteux = _horodatage(rapport, soumis_le, envoye_le, recu_le)
     premiere = derniere is None
     # RPT-015 : la version garde la demande à laquelle elle répond.
-    repond_a = _correction_figee(rapport) if rapport.statut == StatutRapport.A_CORRIGER else None
+    repond_a = (_correction_figee(rapport) if rapport.statut == StatutRapport.A_CORRIGER
+                else _reouverture_figee(rapport) if rapport.statut == StatutRapport.ROUVERT
+                else None)  # fmt: skip
+    demandeur = (rapport.correction_par if rapport.statut == StatutRapport.A_CORRIGER
+                 else rapport.rouvert_par)  # fmt: skip
     rapport.statut = StatutRapport.SOUMIS
     rapport.soumis_le = moment
     # RG-032 : seule la première soumission peut être en retard (comme le planning).
@@ -506,8 +510,8 @@ def soumettre(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None 
     _auditer("rapport.soumission", rapport, visite=str(rapport.visite_id),
              soumis_le=moment.isoformat(), en_retard=rapport.en_retard,
              horodatage_douteux=douteux)  # fmt: skip
-    if repond_a and rapport.correction_par_id:
-        _prevenir_correction_faite(rapport)
+    if repond_a and demandeur is not None:
+        _prevenir_correction_faite(rapport, demandeur)
     return rapport
 
 
@@ -523,14 +527,28 @@ def _correction_figee(rapport: Rapport) -> dict | None:
     }
 
 
-def _prevenir_correction_faite(rapport: Rapport) -> None:
-    """28.A : qui a demandé la correction apprend que le rapport corrigé est revenu."""
+def _reouverture_figee(rapport: Rapport) -> dict | None:
+    if rapport.rouvert_le is None:
+        return None
+    par = rapport.rouvert_par
+    return {
+        "le": rapport.rouvert_le.isoformat(),
+        "par": f"{par.first_name} {par.last_name}".strip() if par else "",
+        "commentaire": rapport.rouvert_motif,
+        "champs": [],
+        "reouverture": True,
+    }
+
+
+def _prevenir_correction_faite(rapport: Rapport, demandeur) -> None:
+    """28.A : qui a demandé la correction (ou rouvert le rapport, RPT-016) apprend que le
+    rapport corrigé est revenu."""
     from apps.notifications.models import TypeNotification
     from apps.notifications.services import notifier
 
     visite = rapport.visite
     delegue = visite.planning.delegue
-    notifier(rapport.correction_par, TypeNotification.RAPPORT_CORRIGE, rapport.pays,
+    notifier(demandeur, TypeNotification.RAPPORT_CORRIGE, rapport.pays,
              delegue=str(delegue.pk), date=visite.date.isoformat(), visite=str(visite.pk),
              nom=f"{delegue.first_name} {delegue.last_name}".strip())  # fmt: skip
 

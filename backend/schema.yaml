@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.6.5
+  version: 0.6.6
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3624,6 +3624,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/RapportLu'
           description: ''
+  /api/v1/rapports/{id}/rouvrir/:
+    post:
+      operationId: rapport_rouvrir
+      description: |-
+        RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
+        après la validation, le DM du périmètre au-delà (CA1).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - rapports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemandeReouvertureRapport'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DemandeReouvertureRapport'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DemandeReouvertureRapport'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RapportLu'
+          description: ''
   /api/v1/rapports/{id}/valider/:
     post:
       operationId: rapport_valider
@@ -6097,6 +6133,9 @@ components:
           type: array
           items:
             type: string
+        reouverture:
+          type: boolean
+          default: false
       required:
       - champs
       - commentaire
@@ -6434,6 +6473,15 @@ components:
           type: integer
       required:
       - destinataires
+    DemandeReouvertureRapport:
+      type: object
+      description: 'RPT-016 : motif obligatoire.'
+      properties:
+        motif:
+          type: string
+          maxLength: 2000
+      required:
+      - motif
     Demarrage:
       type: object
       description: |-
@@ -7482,7 +7530,7 @@ components:
         fige:
           type: boolean
         mode:
-          $ref: '#/components/schemas/ModeDecisionEnum'
+          $ref: '#/components/schemas/JourneeModeEnum'
         rapports_manquants:
           type: integer
         activites:
@@ -7536,6 +7584,8 @@ components:
           type: integer
         rapports_a_corriger:
           type: integer
+        rapports_rouverts:
+          type: integer
         escalade:
           type: boolean
         eligible_lot:
@@ -7553,6 +7603,7 @@ components:
       - rapports_a_valider
       - rapports_attendus
       - rapports_en_retard
+      - rapports_rouverts
       - visites
     JourneeChoisie:
       type: object
@@ -7566,6 +7617,18 @@ components:
       required:
       - date
       - delegue
+    JourneeModeEnum:
+      enum:
+      - direct
+      - remplacement
+      - escalade
+      - consultation
+      type: string
+      description: |-
+        * `direct` - Décision du responsable du poste
+        * `remplacement` - Décision du remplaçant
+        * `escalade` - Décision par escalade
+        * `consultation` - Consultation
     Kilometrage:
       type: object
       description: Kilométrage estimé à vol d'oiseau, sans montant (PLN-010).
@@ -7987,6 +8050,7 @@ components:
       - redaction_rouverte
       - correction_demandee
       - rapport_corrige
+      - rapport_rouvert
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
@@ -8000,6 +8064,7 @@ components:
         * `redaction_rouverte` - Rédaction rouverte
         * `correction_demandee` - Correction demandée
         * `rapport_corrige` - Rapport corrigé
+        * `rapport_rouvert` - Rapport rouvert
     NullEnum:
       enum:
       - null
@@ -9467,6 +9532,11 @@ components:
           - $ref: '#/components/schemas/Correction'
           nullable: true
           readOnly: true
+        reouverture:
+          allOf:
+          - $ref: '#/components/schemas/ReouvertureRapport'
+          nullable: true
+          readOnly: true
         objectif_prevu:
           type: string
           readOnly: true
@@ -9587,6 +9657,7 @@ components:
       - produit_autre_autorise
       - produits_proposes
       - remises
+      - reouverture
       - resultat
       - resultat_obtenu
       - resultats_proposes
@@ -9619,6 +9690,10 @@ components:
         etablissement:
           type: string
           nullable: true
+        delegue:
+          type: string
+          format: uuid
+          readOnly: true
         delegue_nom:
           type: string
           readOnly: true
@@ -9671,6 +9746,7 @@ components:
       required:
       - date
       - de_moi
+      - delegue
       - delegue_nom
       - en_retard
       - heure
@@ -9703,6 +9779,14 @@ components:
           allOf:
           - $ref: '#/components/schemas/Correction'
           nullable: true
+          readOnly: true
+        reouverture:
+          allOf:
+          - $ref: '#/components/schemas/ReouvertureRapport'
+          nullable: true
+          readOnly: true
+        rouvrable:
+          type: boolean
           readOnly: true
         historique:
           type: array
@@ -9818,8 +9902,10 @@ components:
       - prochaine_action_echeance
       - recu_le
       - remises
+      - reouverture
       - resultat_obtenu
       - resume
+      - rouvrable
       - soumis_le
       - statut
       - valide_le
@@ -9999,6 +10085,23 @@ components:
       required:
       - delegue
       - semaine
+    ReouvertureRapport:
+      type: object
+      description: 'RPT-016 : la réouverture en cours d''un rapport validé : qui,
+        quand, pourquoi.'
+      properties:
+        le:
+          type: string
+          format: date-time
+        par:
+          type: string
+          readOnly: true
+        motif:
+          type: string
+      required:
+      - le
+      - motif
+      - par
     Report:
       type: object
       description: |-

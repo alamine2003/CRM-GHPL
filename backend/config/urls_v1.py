@@ -249,6 +249,10 @@ urlpatterns = [
         rap.CorrectionRapportVue.as_view(),
         name="rapport-correction",
     ),
+    # RPT-016 : réouverture d'un rapport validé, avec un motif
+    path(
+        "rapports/<uuid:id>/rouvrir/", rap.ReouvertureRapportVue.as_view(), name="rapport-rouvrir"
+    ),
     # DC-61 : visites proposées dans les rapports, reprises à la préparation de la semaine
     path(
         "rapports/visites-proposees/",

@@ -16,9 +16,14 @@ Règles retenues :
 
 Une journée validée est figée : son classement de conformité ne bouge plus (VIS-010 CA3) et
 elle quitte « À traiter ». Valider le dernier rapport d'une journée complète la valide aussi.
+
+Réouverture (RPT-016, 0.6.6) : un rapport validé se rouvre avec un motif ; par le responsable
+(ou son remplaçant) jusqu'à 30 jours après la validation, par le DM du périmètre au-delà
+(CA1). [D, 8 octobre 2026, 32.A] Sa journée revient dans « À traiter » jusqu'à la nouvelle
+validation ; son classement de conformité, lui, reste figé : seules les visites le fondent.
 """
 
-from datetime import date
+from datetime import date, timedelta
 
 from django.db import models, transaction
 from django.http import Http404
@@ -41,6 +46,21 @@ def _auditer(action: str, objet, **details) -> None:
     from apps.audit.services import enregistrer
 
     enregistrer(action, objet=objet, pays=objet.pays, details=details)
+
+
+#: Rapports d'une journée validée qui la font revenir dans la file : rouverts (RPT-016), puis
+#: resoumis ou renvoyés pour correction.
+EN_REPRISE = (StatutRapport.ROUVERT, StatutRapport.SOUMIS, StatutRapport.A_CORRIGER)
+
+
+def journee_validee(planning: Planning, jour: date, journee=None) -> bool:
+    """Figée et sans rapport repris depuis : la journée est validée (32.A)."""
+    journee = journee or conformite.recalculer(planning, jour)
+    if journee.fige_le is None:
+        return False
+    return not Rapport.objects.filter(visite__planning=planning, visite__date=jour,
+                                      visite__archive_le__isnull=True,
+                                      statut__in=EN_REPRISE).exists()  # fmt: skip
 
 
 def _en_attente(planning: Planning, jour: date):
@@ -73,15 +93,25 @@ def mode_pour(utilisateur, planning: Planning, jour: date) -> str | None:
     return None
 
 
-def planning_du_jour(utilisateur, pays, delegue_id, jour: date) -> tuple[Planning, str]:
+#: RPT-016 : le DM du périmètre lit une journée hors escalade, pour en rouvrir un rapport.
+CONSULTATION = "consultation"
+
+
+def planning_du_jour(utilisateur, pays, delegue_id, jour: date,
+                     consultation: bool = False) -> tuple[Planning, str]:  # fmt: skip
     """Le planning de la journée et le titre de l'utilisateur ; ailleurs, la journée n'existe
-    pas pour lui (404)."""
+    pas pour lui (404). En `consultation`, le DM du périmètre la lit aussi."""
+    from apps.planning.echeances import dms_du_planning
+
     planning = (
         Planning.objects.filter(pays=pays, delegue_id=delegue_id, semaine=lundi(jour))
         .select_related("delegue", "pays")
         .first()
     )
     mode = mode_pour(utilisateur, planning, jour) if planning is not None else None
+    if mode is None and consultation and planning is not None:
+        if utilisateur.pk in dms_du_planning(planning):
+            mode = CONSULTATION
     if mode is None:
         raise Http404
     return planning, mode
@@ -145,7 +175,7 @@ def valider_journee(planning: Planning, jour: date, par, titre: str,
                     geste: str = ModeValidation.JOURNEE) -> int:  # fmt: skip
     """RPT-013 : tous les rapports soumis de la journée ; 22.A : impossible tant qu'une visite
     effectuée n'a pas son rapport soumis. Renvoie le nombre de rapports validés."""
-    if conformite.recalculer(planning, jour).fige_le is not None:
+    if journee_validee(planning, jour):
         raise ErreurMetier("journee_validee", _("Cette journée est déjà validée."),
                            status.HTTP_409_CONFLICT)  # fmt: skip
     if n := manquants(planning, jour):
@@ -166,7 +196,7 @@ def valider_journee(planning: Planning, jour: date, par, titre: str,
 def eligible_au_lot(planning: Planning, jour: date) -> bool:
     """23.A, RG-035 : conforme, aucun rapport attendu, aucun horodatage douteux."""
     journee = conformite.recalculer(planning, jour)
-    if journee.fige_le is not None or journee.classement != "conforme":
+    if journee_validee(planning, jour, journee) or journee.classement != "conforme":
         return False
     if manquants(planning, jour):
         return False
@@ -234,4 +264,65 @@ def demander_correction(rapport: Rapport, par, commentaire: str, champs: list[st
     notifier(rapport.delegue, TypeNotification.CORRECTION_DEMANDEE, rapport.pays,
              visite=str(visite.pk), date=visite.date.isoformat(),
              nom=f"{par.first_name} {par.last_name}".strip())  # fmt: skip
+    return rapport
+
+
+#: RPT-016 CA1 : au-delà, seul le DM du périmètre rouvre un rapport validé.
+DELAI_REOUVERTURE = timedelta(days=30)
+
+
+def peut_rouvrir(utilisateur, rapport: Rapport, titre: str) -> bool:
+    """Le responsable (ou son remplaçant) jusqu'à 30 jours après la validation ; le DM du
+    périmètre, toujours."""
+    from apps.planning.echeances import dms_du_planning
+
+    if rapport.statut != StatutRapport.VALIDE or rapport.valide_le is None:
+        return False
+    if utilisateur.pk in dms_du_planning(rapport.visite.planning):
+        return True
+    recent = timezone.now() - rapport.valide_le <= DELAI_REOUVERTURE
+    return titre in (ModeDecision.DIRECT, ModeDecision.REMPLACEMENT) and recent
+
+
+@transaction.atomic
+def rouvrir(rapport: Rapport, par, motif: str) -> Rapport:
+    """RPT-016 : rouvre un rapport validé, avec un motif obligatoire ; audité et notifié
+    (CA2). Le délégué le corrige et le soumet à nouveau ; sa journée revient dans la file."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+    from apps.planning.services import responsables
+
+    visite = rapport.visite
+    titre = planning_du_jour(par, rapport.pays, visite.planning.delegue_id, visite.date,
+                             consultation=True)[1]  # fmt: skip
+    if rapport.statut != StatutRapport.VALIDE:
+        raise ErreurMetier("rapport_non_valide", _("Seul un rapport validé se rouvre."),
+                           status.HTTP_409_CONFLICT)  # fmt: skip
+    if not peut_rouvrir(par, rapport, titre):
+        raise ErreurMetier("delai_reouverture",
+                           _("Validé il y a plus de 30 jours : seul le DM peut le rouvrir."),
+                           status.HTTP_403_FORBIDDEN)  # fmt: skip
+    texte = (motif or "").strip()
+    if not texte:
+        raise ErreurMetier("motif_requis", _("Dites pourquoi vous rouvrez ce rapport."),
+                           champ="motif")  # fmt: skip
+    rapport.statut = StatutRapport.ROUVERT
+    rapport.rouvert_le = timezone.now()
+    rapport.rouvert_par = par
+    rapport.rouvert_motif = texte
+    rapport.save(update_fields=["statut", "rouvert_le", "rouvert_par", "rouvert_motif",
+                                "modifie_le"])  # fmt: skip
+    _auditer("rapport.reouverture", rapport, visite=str(visite.pk), motif=texte,
+             valide_le=rapport.valide_le.isoformat())  # fmt: skip
+    nom = f"{par.first_name} {par.last_name}".strip()
+    donnees = {"visite": str(visite.pk), "date": visite.date.isoformat(), "nom": nom}
+    notifier(rapport.delegue, TypeNotification.RAPPORT_ROUVERT, rapport.pays, **donnees)
+    # 31.A : quand le DM rouvre, le superviseur du délégué l'apprend aussi.
+    from apps.identite.models import Utilisateur
+
+    autres = responsables(visite.planning) - {par.pk, rapport.delegue_id}
+    if titre not in (ModeDecision.DIRECT, ModeDecision.REMPLACEMENT):
+        for sup in Utilisateur.objects.filter(pk__in=autres):
+            notifier(sup, TypeNotification.RAPPORT_ROUVERT, rapport.pays,
+                     delegue=str(visite.planning.delegue_id), **donnees)  # fmt: skip
     return rapport

@@ -118,7 +118,8 @@ class RapportChronologieSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rapport
-        fields = ["id", "visite", "date", "heure", "etablissement", "delegue_nom", "de_moi",
+        fields = ["id", "visite", "date", "heure", "etablissement", "delegue", "delegue_nom",
+                  "de_moi",
                   "statut", "en_retard", "objectif_prevu", "resultat", "resultat_obtenu",
                   "presentations", "remises", "resume", "prochaine_action_type", "prochaine_action",
                   "prochaine_action_echeance", "soumis_le"]  # fmt: skip
@@ -186,6 +187,25 @@ def correction_de(rapport) -> dict | None:
     return CorrectionSerializer(rapport).data
 
 
+class ReouvertureRapportSerializer(serializers.Serializer):
+    """RPT-016 : la réouverture en cours d'un rapport validé : qui, quand, pourquoi."""
+
+    le = serializers.DateTimeField(source="rouvert_le")
+    par = serializers.SerializerMethodField()
+    motif = serializers.CharField(source="rouvert_motif")
+
+    def get_par(self, rapport) -> str:
+        p = rapport.rouvert_par
+        return f"{p.first_name} {p.last_name}".strip() if p else ""
+
+
+def reouverture_de(rapport) -> dict | None:
+    """La réouverture tant que le rapport attend sa nouvelle soumission ; sinon rien."""
+    if rapport.statut != StatutRapport.ROUVERT or rapport.rouvert_le is None:
+        return None
+    return ReouvertureRapportSerializer(rapport).data
+
+
 class RapportSerializer(serializers.ModelSerializer):
     presentations = PresentationSerializer(many=True)
     remises = RemiseSerializer(many=True)
@@ -215,11 +235,13 @@ class RapportSerializer(serializers.ModelSerializer):
     en_retard = serializers.SerializerMethodField()
     #: RPT-014 : ce que le superviseur demande de corriger.
     correction = serializers.SerializerMethodField()
+    #: RPT-016 : pourquoi le rapport validé a été rouvert.
+    reouverture = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
-        fields = ["id", "visite", "statut", "correction", "objectif_prevu", "est_imprevue",
-                  "justification",
+        fields = ["id", "visite", "statut", "correction", "reouverture", "objectif_prevu",
+                  "est_imprevue", "justification",
                   "presentations", "resultat", "resultat_obtenu", "resume", "prochaine_action",
                   "prochaine_action_type", "prochaine_action_echeance", "visite_proposee",
                   "remises", "champs", "definitions", "soumis_le", "echeance", "en_retard",
@@ -235,6 +257,10 @@ class RapportSerializer(serializers.ModelSerializer):
     @extend_schema_field(CorrectionSerializer(allow_null=True))
     def get_correction(self, rapport):
         return correction_de(rapport)
+
+    @extend_schema_field(ReouvertureRapportSerializer(allow_null=True))
+    def get_reouverture(self, rapport):
+        return reouverture_de(rapport)
 
     def get_en_retard(self, rapport) -> bool:
         return services.en_retard(rapport)

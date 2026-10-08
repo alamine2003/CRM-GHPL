@@ -1695,7 +1695,9 @@
     "cloche_other": "Notifications, {{count}} non lues",
     "toutVoir": "Tout voir",
     "correction_demandee": "{{nom}} demande une correction de votre rapport du {{jour}}",
-    "rapport_corrige": "{{nom}} a corrigé son rapport du {{jour}}"
+    "rapport_corrige": "{{nom}} a corrigé son rapport du {{jour}}",
+    "rapport_rouvert": "{{nom}} a rouvert votre rapport du {{jour}}",
+    "rapport_rouvert_suivi": "{{nom}} a rouvert un rapport validé du {{jour}}"
   },
   "revision": {
     "demander": "Demander une révision",
@@ -1757,7 +1759,18 @@
     "modifie": "Modifié",
     "voir": "Voir la version {{version}}",
     "masquer": "Masquer la version {{version}}",
-    "titre": "Version {{version}}, telle que soumise"
+    "titre": "Version {{version}}, telle que soumise",
+    "reponseReouverture": "Version {{version}}, soumise le {{date}} après réouverture",
+    "motif": "Rouvert par {{par}} le {{date}} : « {{commentaire}} »"
+  },
+  "reouvertureRapport": {
+    "rouvrir": "Rouvrir le rapport",
+    "titre": "Rouvrir le rapport",
+    "aide": "Le rapport revient au délégué, qui le corrige et le soumet à nouveau. Sa journée revient dans « À traiter » jusqu'à la nouvelle validation ; son classement de conformité ne change pas.",
+    "motif": "Pourquoi rouvrir ce rapport ?",
+    "envoyer": "Rouvrir",
+    "fait": "Rapport rouvert : il est revenu au délégué.",
+    "rouvertLe": "Rouvert le {{date}} par {{par}}"
   },
   "versions": {
     "titre_one": "Version",
@@ -1966,7 +1979,7 @@
     "conforme": "Conforme",
     "aVerifier_one": "À vérifier · {{count}} écart",
     "aVerifier_other": "À vérifier · {{count}} écarts",
-    "fige": "Validée : figée",
+    "fige": "Classement figé",
     "ecarts": {
       "hors_plage": "{{qui}} : {{heures}}, hors de la plage horaire",
       "distance": "{{qui}} : pointée à {{distance}} m du lieu (seuil {{seuil}} m)",
@@ -1989,7 +2002,8 @@
     "statuts": {
       "attendu": "Rapport à rédiger",
       "brouillon": "Rapport en brouillon",
-      "a_corriger": "Rapport à corriger"
+      "a_corriger": "Rapport à corriger",
+      "rouvert": "Rapport rouvert"
     },
     "produits": "Produits présentés",
     "produitsAide": "Touchez les produits dans l'ordre où vous les avez présentés.",
@@ -2125,7 +2139,8 @@
     "suite": "Suite :",
     "plus_one": "Voir la visite plus ancienne",
     "plus_other": "Voir les {{count}} visites plus anciennes",
-    "moins": "Voir moins"
+    "moins": "Voir moins",
+    "journee": "Ouvrir la journée"
   },
   "indisponibilite": {
     "ouvrir": "Je suis indisponible aujourd'hui",
@@ -2181,7 +2196,9 @@
     "effectuees_one": "{{count}} effectuée",
     "effectuees_other": "{{count}} effectuées",
     "aCorriger_one": "{{count}} renvoyé pour correction",
-    "aCorriger_other": "{{count}} renvoyés pour correction"
+    "aCorriger_other": "{{count}} renvoyés pour correction",
+    "rouverts_one": "{{count}} rapport rouvert",
+    "rouverts_other": "{{count}} rapports rouverts"
   },
   "journee": {
     "controles": "Contrôles de la journée",
@@ -2210,8 +2227,8 @@
     "journeeValidee": "Journée validée : son classement ne bouge plus et elle a quitté « À traiter ».",
     "manquants_one": "{{count}} rapport n'est pas encore soumis : la journée se validera quand il le sera. Les rapports soumis se valident déjà un par un.",
     "manquants_other": "{{count}} rapports ne sont pas encore soumis : la journée se validera quand ils le seront. Les rapports soumis se valident déjà un par un.",
-    "renvoyes_one": "{{count}} rapport est renvoyé pour correction : la journée se validera quand il sera soumis à nouveau. Les autres rapports soumis se valident déjà un par un.",
-    "renvoyes_other": "{{count}} rapports sont renvoyés pour correction : la journée se validera quand ils seront soumis à nouveau. Les autres rapports soumis se valident déjà un par un.",
+    "renvoyes_one": "{{count}} rapport est renvoyé au délégué : la journée se validera quand il sera soumis à nouveau. Les autres rapports soumis se valident déjà un par un.",
+    "renvoyes_other": "{{count}} rapports sont renvoyés au délégué : la journée se validera quand ils seront soumis à nouveau. Les autres rapports soumis se valident déjà un par un.",
     "confirmerJournee": "Valider la journée ?",
     "confirmerJourneeTexte_one": "Le rapport soumis de la journée sera validé, et la journée figée.",
     "confirmerJourneeTexte_other": "Les {{count}} rapports soumis de la journée seront validés, et la journée figée.",
@@ -2228,7 +2245,8 @@
     },
     "titres": {
       "remplacement": "Vous validez en remplacement du superviseur de ce délégué.",
-      "escalade": "Journée escaladée : ses rapports attendent depuis plus que le délai du pays. Vous la validez par escalade ; le superviseur garde la main."
+      "escalade": "Journée escaladée : ses rapports attendent depuis plus que le délai du pays. Vous la validez par escalade ; le superviseur garde la main.",
+      "consultation": "Vous consultez cette journée en tant que DM du périmètre : vous pouvez rouvrir un rapport validé, la validation reste au superviseur."
     },
     "lot_one": "Valider la journée conforme",
     "lot_other": "Valider les {{count}} journées conformes",

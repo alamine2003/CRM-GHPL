@@ -136,6 +136,11 @@ class Rapport(ModeleDePays):
                                        on_delete=models.PROTECT, related_name="+")  # fmt: skip
     correction_commentaire = models.TextField(blank=True)
     correction_champs = models.JSONField(default=list, blank=True)
+    #: RPT-016 (0.6.6) : la dernière réouverture d'un rapport validé ; qui, quand, pourquoi.
+    rouvert_le = models.DateTimeField(null=True, blank=True)
+    rouvert_par = models.ForeignKey("identite.Utilisateur", null=True, blank=True,
+                                    on_delete=models.PROTECT, related_name="+")  # fmt: skip
+    rouvert_motif = models.TextField(blank=True)
 
     class Meta:
         ordering = ["-cree_le"]

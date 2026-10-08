@@ -55,3 +55,17 @@ test('RPT-014 : la correction demandée ouvre le rapport, sans nom de prospect',
   expect(visiteDeNotification(n)).toBe('v1');
   expect(semaineDeNotification(n)).toBeUndefined();
 });
+
+test('RPT-016 : la réouverture ouvre le rapport à reprendre', () => {
+  const n = {
+    id: 'n2',
+    type: 'rapport_rouvert',
+    donnees: { visite: 'v1', date: '2026-10-13', nom: 'Kossi GUEYE' },
+    cree_le: '2026-10-20T08:00:00Z',
+    lue_le: null,
+  } as Notification;
+  expect(texteNotification(n, i18n.t, 'fr')).toBe(
+    'Kossi GUEYE a rouvert votre rapport du 13 octobre',
+  );
+  expect(visiteDeNotification(n)).toBe('v1');
+});

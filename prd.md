@@ -704,6 +704,15 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.47 Réouverture d'un rapport validé (mise en œuvre 0.6.6)
+
+- **Rouvrir** (RPT-016) : sous un rapport validé, « Rouvrir le rapport ». Une fenêtre demande le motif, obligatoire ; « Rouvrir » renvoie le rapport au délégué, au statut « rouvert ».
+- **CA1 : qui et jusqu'à quand.** Le superviseur responsable (ou son remplaçant) rouvre jusqu'à 30 jours après la validation ; au-delà, le bouton ne lui est plus proposé et le serveur refuse (« Validé il y a plus de 30 jours : seul le DM peut le rouvrir »). Le DM du périmètre rouvre à tout moment ; il ouvre la journée en consultation : il lit tout et rouvre, sans valider à la place du superviseur.
+- **Trouver un rapport validé** : une journée validée quitte « À traiter » ; elle s'ouvre depuis la conformité de la semaine (« Ouvrir la journée » sur chaque journée terminée) et depuis la fiche du prospect (« Ouvrir la journée » sur chaque rapport, pour l'encadrement).
+- **CA2 : audité et notifié.** La réouverture est inscrite au journal d'audit, avec le motif. [D, 8 octobre 2026, 31.A] Le délégué est prévenu (« Kossi Gueye a rouvert votre rapport du 21 septembre ») ; quand c'est le DM qui rouvre, le superviseur l'est aussi (« … a rouvert un rapport validé du … »), la notification ouvrant la journée.
+- **La journée** : [D, 8 octobre 2026, 32.A] elle revient dans « À traiter » jusqu'à la nouvelle validation, même au-delà des 4 semaines de la file, et compte « 1 rapport rouvert ». Son classement de conformité reste figé : les heures et positions des visites n'ont pas changé. La page de la semaine dit « Classement figé ».
+- **Le délégué** reprend le rapport depuis la notification ou la liste « Rapports à corriger » (motif en tête du rapport), le corrige et le soumet à nouveau ; la version suivante dit « soumise après réouverture » et rappelle le motif. Qui a rouvert est prévenu du retour (comme 28.A), puis valide.
+
 ### 14.46 Correction et nouvelle soumission (mise en œuvre 0.6.5)
 
 - **Le délégué corrige** (RPT-015) : il ouvre le rapport depuis la notification ou depuis la liste « Rapports à corriger » de la Tournée, le modifie et le soumet à nouveau ; le rapport redevient « soumis », en version suivante (RG-037). [D, 8 octobre 2026, 29.A] La liste montre les rapports à corriger **de toutes les semaines**, pas seulement de la semaine en cours ; un rapport resoumis en sort aussitôt, même sans réseau.

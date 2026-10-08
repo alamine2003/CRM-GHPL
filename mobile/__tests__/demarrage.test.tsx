@@ -221,6 +221,7 @@ test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', asyn
     visite: 'v1',
     statut: 'brouillon',
     correction: null,
+    reouverture: null,
     objectif_prevu: '',
   };
   const rapport = jest.fn(async () => rapportOuvert);

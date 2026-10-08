@@ -20,7 +20,9 @@ from .serializers import (
     PieceJointeSerializer,
     PresentationSerializer,
     RemiseSerializer,
+    ReouvertureRapportSerializer,
     correction_de,
+    reouverture_de,
 )
 
 
@@ -42,6 +44,8 @@ class JourneeATraiterSerializer(serializers.Serializer):
     horodatages_douteux = serializers.IntegerField()
     #: RPT-014 : rapports renvoyés au délégué pour correction.
     rapports_a_corriger = serializers.IntegerField()
+    #: RPT-016 : rapports validés puis rouverts, qui attendent leur nouvelle soumission.
+    rapports_rouverts = serializers.IntegerField()
     #: [H] Ouverte au DM du périmètre par escalade (0.6.3).
     escalade = serializers.BooleanField()
     #: 23.A : conforme, complète et sans horodatage douteux ; validable avec le lot.
@@ -75,6 +79,8 @@ class CorrectionFigeeSerializer(serializers.Serializer):
     par = serializers.CharField()
     commentaire = serializers.CharField()
     champs = serializers.ListField(child=serializers.CharField())
+    #: RPT-016 : la version répond à une réouverture, non à une demande de correction.
+    reouverture = serializers.BooleanField(required=False, default=False)
 
 
 class VersionLueSerializer(serializers.Serializer):
@@ -126,10 +132,15 @@ class RapportLuSerializer(serializers.ModelSerializer):
     historique = serializers.SerializerMethodField()
     precedente = serializers.SerializerMethodField()
     modifies = serializers.SerializerMethodField()
+    #: RPT-016 : la réouverture en cours, tant que le rapport attend sa nouvelle soumission ;
+    #: et si la personne qui lit peut le rouvrir.
+    reouverture = serializers.SerializerMethodField()
+    rouvrable = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
-        fields = ["id", "statut", "correction", "historique", "precedente", "modifies",
+        fields = ["id", "statut", "correction", "reouverture", "rouvrable", "historique",
+                  "precedente", "modifies",
                   "valide_le", "valide_par", "mode_validation",
                   "soumis_le", "en_retard", "horodatage_douteux",
                   "heure_telephone", "recu_le", "versions", "objectif_prevu", "resultat",
@@ -172,6 +183,13 @@ class RapportLuSerializer(serializers.ModelSerializer):
 
     def get_versions(self, rapport) -> int:
         return len(rapport.versions.all())
+
+    @extend_schema_field(ReouvertureRapportSerializer(allow_null=True))
+    def get_reouverture(self, rapport):
+        return reouverture_de(rapport)
+
+    def get_rouvrable(self, rapport) -> bool:
+        return bool(getattr(rapport, "rouvrable", False))
 
     @extend_schema_field(VersionLueSerializer(many=True))
     def get_historique(self, rapport):
@@ -236,8 +254,10 @@ class JourneeSerializer(serializers.Serializer):
     ecarts = EcartConformiteSerializer(many=True)
     #: Validée : le classement ne bouge plus (VIS-010 CA3).
     fige = serializers.BooleanField()
-    #: À quel titre l'utilisateur valide : `direct`, `remplacement` ou `escalade`.
-    mode = serializers.ChoiceField(choices=ModeDecision.choices)
+    #: À quel titre l'utilisateur valide : `direct`, `remplacement` ou `escalade` ; le DM du
+    #: périmètre la lit en `consultation`, pour en rouvrir un rapport (RPT-016).
+    mode = serializers.ChoiceField(choices=[*ModeDecision.choices,
+                                            ("consultation", "Consultation")])  # fmt: skip
     #: 22.A : visites effectuées dont le rapport n'est pas soumis ; la journée attend.
     rapports_manquants = serializers.IntegerField()
     activites = ActiviteSerializer(many=True)
@@ -271,3 +291,9 @@ class DemandeCorrectionSerializer(serializers.Serializer):
     commentaire = serializers.CharField(max_length=2000, allow_blank=True)
     champs = serializers.ListField(child=serializers.CharField(max_length=40), required=False,
                                    default=list)  # fmt: skip
+
+
+class DemandeReouvertureRapportSerializer(serializers.Serializer):
+    """RPT-016 : motif obligatoire."""
+
+    motif = serializers.CharField(max_length=2000, allow_blank=True)

@@ -27,7 +27,7 @@ from apps.planning.models import ModeDecision, Planning
 from apps.socle.services import aujourdhui
 
 from .models import Rapport, StatutRapport
-from .validation import eligible_au_lot, mode_pour
+from .validation import EN_REPRISE, eligible_au_lot, journee_validee, mode_pour
 
 SEMAINES = 4
 #: Plannings dont les visites s'exécutent : approuvés, en cours ou terminés.
@@ -42,7 +42,11 @@ def _plannings(utilisateur, pays) -> list[Planning]:
 
     titulaires = [utilisateur.pk, *(r.pk for r in remplaces_par(utilisateur, pays))]
     debut = lundi(aujourdhui(pays)) - timedelta(weeks=SEMAINES - 1)
-    executes = Planning.objects.filter(pays=pays, statut__in=EXECUTES, semaine__gte=debut)
+    # 32.A : une journée dont un rapport a été rouvert revient, même plus ancienne.
+    reprises = models.Q(visites__rapport__rouvert_le__isnull=False,
+                        visites__rapport__statut__in=EN_REPRISE)  # fmt: skip
+    executes = Planning.objects.filter(models.Q(semaine__gte=debut) | reprises, pays=pays,
+                                       statut__in=EXECUTES)  # fmt: skip
     # Les postes rattachés (ou remplacés), et, pour l'escalade, ceux des réseaux du DM.
     reseaux = PerimetreReseau.objects.filter(actif_le(aujourdhui(pays)), utilisateur=utilisateur)
     candidats = (
@@ -70,6 +74,7 @@ def _rapports(planning: Planning, jour) -> dict:
         "rapports_en_retard": transmis.filter(en_retard=True).count(),
         "horodatages_douteux": transmis.filter(horodatage_douteux=True).count(),
         "rapports_a_corriger": rapports.filter(statut=StatutRapport.A_CORRIGER).count(),
+        "rapports_rouverts": rapports.filter(statut=StatutRapport.ROUVERT).count(),
     }
 
 
@@ -88,7 +93,7 @@ def journees_a_traiter(utilisateur, pays) -> list[dict]:
             if mode is None:
                 continue  # ni responsable, ni remplaçant, ni DM d'une journée en escalade
             journee = conformite.recalculer(planning, jour)
-            if journee.fige_le is not None:
+            if journee_validee(planning, jour, journee):
                 continue  # validée (0.6.3) : elle a quitté la file
             delegues[planning.delegue_id] = planning.delegue
             par_delegue[planning.delegue_id].append(

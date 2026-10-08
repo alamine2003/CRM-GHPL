@@ -1695,7 +1695,9 @@
     "cloche_other": "Notifications, {{count}} unread",
     "toutVoir": "See all",
     "correction_demandee": "{{nom}} requests a correction of your report of {{jour}}",
-    "rapport_corrige": "{{nom}} corrected their report of {{jour}}"
+    "rapport_corrige": "{{nom}} corrected their report of {{jour}}",
+    "rapport_rouvert": "{{nom}} reopened your report of {{jour}}",
+    "rapport_rouvert_suivi": "{{nom}} reopened an approved report of {{jour}}"
   },
   "revision": {
     "demander": "Request a revision",
@@ -1757,7 +1759,18 @@
     "modifie": "Changed",
     "voir": "Show version {{version}}",
     "masquer": "Hide version {{version}}",
-    "titre": "Version {{version}}, as submitted"
+    "titre": "Version {{version}}, as submitted",
+    "reponseReouverture": "Version {{version}}, submitted on {{date}} after reopening",
+    "motif": "Reopened by {{par}} on {{date}}: “{{commentaire}}”"
+  },
+  "reouvertureRapport": {
+    "rouvrir": "Reopen the report",
+    "titre": "Reopen the report",
+    "aide": "The report goes back to the representative, who corrects and submits it again. Its day returns to “To do” until it is approved again; its compliance rating does not change.",
+    "motif": "Why reopen this report?",
+    "envoyer": "Reopen",
+    "fait": "Report reopened: it went back to the representative.",
+    "rouvertLe": "Reopened on {{date}} by {{par}}"
   },
   "versions": {
     "titre_one": "Version",
@@ -1966,7 +1979,7 @@
     "conforme": "Compliant",
     "aVerifier_one": "To review · {{count}} issue",
     "aVerifier_other": "To review · {{count}} issues",
-    "fige": "Validated: frozen",
+    "fige": "Rating frozen",
     "ecarts": {
       "hors_plage": "{{qui}}: {{heures}}, outside visiting hours",
       "distance": "{{qui}}: checked in {{distance}} m from the place (limit {{seuil}} m)",
@@ -1989,7 +2002,8 @@
     "statuts": {
       "attendu": "Report to write",
       "brouillon": "Report in draft",
-      "a_corriger": "Report to correct"
+      "a_corriger": "Report to correct",
+      "rouvert": "Report reopened"
     },
     "produits": "Products presented",
     "produitsAide": "Tap the products in the order you presented them.",
@@ -2125,7 +2139,8 @@
     "suite": "Next:",
     "plus_one": "See the older visit",
     "plus_other": "See the {{count}} older visits",
-    "moins": "See less"
+    "moins": "See less",
+    "journee": "Open the day"
   },
   "indisponibilite": {
     "ouvrir": "I am unavailable today",
@@ -2181,7 +2196,9 @@
     "effectuees_one": "{{count}} done",
     "effectuees_other": "{{count}} done",
     "aCorriger_one": "{{count}} sent back for correction",
-    "aCorriger_other": "{{count}} sent back for correction"
+    "aCorriger_other": "{{count}} sent back for correction",
+    "rouverts_one": "{{count}} report reopened",
+    "rouverts_other": "{{count}} reports reopened"
   },
   "journee": {
     "controles": "Day checks",
@@ -2210,8 +2227,8 @@
     "journeeValidee": "Day approved: its classification no longer changes and it has left “To review”.",
     "manquants_one": "{{count}} report has not been submitted yet: the day can be approved once it is. Submitted reports can already be approved one by one.",
     "manquants_other": "{{count}} reports have not been submitted yet: the day can be approved once they are. Submitted reports can already be approved one by one.",
-    "renvoyes_one": "{{count}} report was sent back for correction: the day can be approved once it is submitted again. The other submitted reports can already be approved one by one.",
-    "renvoyes_other": "{{count}} reports were sent back for correction: the day can be approved once they are submitted again. The other submitted reports can already be approved one by one.",
+    "renvoyes_one": "{{count}} report was sent back to the representative: the day can be approved once it is submitted again. The other submitted reports can already be approved one by one.",
+    "renvoyes_other": "{{count}} reports were sent back to the representative: the day can be approved once they are submitted again. The other submitted reports can already be approved one by one.",
     "confirmerJournee": "Approve the day?",
     "confirmerJourneeTexte_one": "The day's submitted report will be approved and the day locked.",
     "confirmerJourneeTexte_other": "The day's {{count}} submitted reports will be approved and the day locked.",
@@ -2228,7 +2245,8 @@
     },
     "titres": {
       "remplacement": "You are approving as the deputy of this rep's supervisor.",
-      "escalade": "Escalated day: its reports have been waiting longer than the country delay. You approve it by escalation; the supervisor keeps control."
+      "escalade": "Escalated day: its reports have been waiting longer than the country delay. You approve it by escalation; the supervisor keeps control.",
+      "consultation": "You are viewing this day as the area DM: you can reopen an approved report; approval stays with the supervisor."
     },
     "lot_one": "Approve the compliant day",
     "lot_other": "Approve the {{count}} compliant days",

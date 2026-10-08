@@ -25,6 +25,7 @@ export const ICONES: Record<Notification['type'], ReactNode> = {
   redaction_rouverte: <LockOpenRounded color="primary" fontSize="small" />,
   correction_demandee: <RateReviewOutlined color="warning" fontSize="small" />,
   rapport_corrige: <FactCheckRounded color="primary" fontSize="small" />,
+  rapport_rouvert: <LockOpenRounded color="warning" fontSize="small" />,
 };
 
 /** Texte d'une notification, composé dans la langue de l'utilisateur (prd.md §18). */
@@ -45,7 +46,9 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
         timeZone: fuseau,
       }).format(new Date(n.donnees.echeance))
     : '';
-  return t(`notifications.${n.type}`, {
+  // RPT-016, 31.A : le superviseur apprend qu'un rapport de son délégué a été rouvert.
+  const cle = n.type === 'rapport_rouvert' && n.donnees.delegue ? 'rapport_rouvert_suivi' : n.type;
+  return t(`notifications.${cle}`, {
     numero: n.donnees.numero_semaine,
     nom: n.donnees.nom,
     debut: jour(n.donnees.debut),
@@ -69,7 +72,11 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
  */
 export function destination(n: Notification) {
   // RPT-015, 28.A : le rapport corrigé se relit dans sa journée.
-  if (n.type === 'rapport_corrige' && n.donnees.delegue && n.donnees.date)
+  if (
+    (n.type === 'rapport_corrige' || n.type === 'rapport_rouvert') &&
+    n.donnees.delegue &&
+    n.donnees.date
+  )
     return `/a-traiter/${n.donnees.delegue}/${n.donnees.date}`;
   if ((n.type === 'planning_soumis' || n.type === 'escalade') && n.donnees.planning)
     return `/validation/${n.donnees.planning}`;

@@ -157,6 +157,7 @@ export default function ConsultationPlanning({ id }: { id: string }) {
           </Box>
           <CarteConformite
             semaine={c}
+            lienJournee={(iso) => `/a-traiter/${c.delegue.id}/${iso}`}
             jourLong={(iso) => {
               const d = date(iso, { weekday: 'long', day: 'numeric' });
               return d.charAt(0).toUpperCase() + d.slice(1);

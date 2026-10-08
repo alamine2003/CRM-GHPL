@@ -531,6 +531,22 @@ export function FormulaireRapport({
             : t('rapport.aCorriger')}
         </Alerte>
       )}
+      {rapport.statut === 'rouvert' && rapport.reouverture && (
+        <Alerte type="attention">
+          {[
+            t('reouvertureRapport.rouvertLe', {
+              date: new Intl.DateTimeFormat(i18n.language, {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              }).format(new Date(rapport.reouverture.le)),
+              par: rapport.reouverture.par,
+            }),
+            `« ${rapport.reouverture.motif} »`,
+          ].join('\n')}
+        </Alerte>
+      )}
       {enRetard && <Alerte type="attention">{t('rapport.retard')}</Alerte>}
       {horsLigne && <Alerte type="attention">{t('rapport.horsLigneLocal')}</Alerte>}
       {repris && !horsLigne && <Alerte type="info">{t('rapport.repris')}</Alerte>}

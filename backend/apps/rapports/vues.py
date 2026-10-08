@@ -355,3 +355,23 @@ class CorrectionRapportVue(VuePerimetre):
         v = _lire(sf.DemandeCorrectionSerializer, request)
         rapport = demander_correction(rapport, request.user, v["commentaire"], v["champs"])
         return Response(sf.RapportLuSerializer(rapport).data)
+
+
+class ReouvertureRapportVue(VuePerimetre):
+    """RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
+    après la validation, le DM du périmètre au-delà (CA1)."""
+
+    actions = {"POST": VALIDER}
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.select_related("visite__planning"))
+
+    @extend_schema(request=sf.DemandeReouvertureRapportSerializer, responses=sf.RapportLuSerializer,
+                   operation_id="rapport_rouvrir")  # fmt: skip
+    def post(self, request, id):
+        from .validation import rouvrir
+
+        rapport = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(sf.DemandeReouvertureRapportSerializer, request)
+        rapport = rouvrir(rapport, request.user, v["motif"])
+        return Response(sf.RapportLuSerializer(rapport).data)

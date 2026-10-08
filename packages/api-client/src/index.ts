@@ -914,6 +914,12 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { commentaire, champs },
         }),
+      /** RPT-016 : rouvrir un rapport validé, avec un motif. */
+      rouvrir: (id: string, motif: string) =>
+        requete<RapportLu>(`/api/v1/rapports/${id}/rouvrir/`, {
+          methode: 'POST',
+          corps: { motif },
+        }),
       /** RPT-013 ; 22.A : la journée se valide quand tous ses rapports sont soumis. */
       validerJournee: (delegue: string, date: string) =>
         requete<ResultatValidation>('/api/v1/rapports/journee/valider/', {

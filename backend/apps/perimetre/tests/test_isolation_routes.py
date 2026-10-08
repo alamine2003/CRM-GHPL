@@ -140,6 +140,7 @@ def senegal(monde):
         "visite-rapport-pieces": visite.pk, "visite-rapport-piece": visite.pk,
         "rapport-piece-lue": visite.pk, "rapport-valider": visite.pk,
         "rapport-correction": visite.pk,
+        "rapport-rouvrir": visite.pk,
         "champ-rapport": champ.pk, "champ-rapport-archiver": champ.pk,
         "visite-non-realisee": visite.pk,
         "passage-dissocier": passage.pk, "planning-activites": planning.pk,

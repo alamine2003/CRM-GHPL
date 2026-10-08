@@ -27,6 +27,9 @@ class TypeNotification(models.TextChoices):
     CORRECTION_DEMANDEE = "correction_demandee", "Correction demandée"
     #: RPT-015, 28.A (0.6.5) : le délégué a soumis le rapport corrigé.
     RAPPORT_CORRIGE = "rapport_corrige", "Rapport corrigé"
+    #: RPT-016 (0.6.6) : un rapport validé est rouvert ; le délégué, et le superviseur quand
+    #: c'est le DM qui rouvre (31.A).
+    RAPPORT_ROUVERT = "rapport_rouvert", "Rapport rouvert"
 
 
 class Notification(ModeleDePays):

@@ -88,7 +88,12 @@ export default function JourneeRapports({ cle }: { cle: string }) {
     );
   }
   const j = journee.data;
-  const renvoyes = j.visites.filter((v) => v.rapport_statut === 'a_corriger').length;
+  // RPT-014, RPT-016 : renvoyés pour correction ou rouverts, ils attendent le délégué.
+  const renvoyes = j.visites.filter(
+    (v) => v.rapport_statut === 'a_corriger' || v.rapport_statut === 'rouvert',
+  ).length;
+  // RPT-016 : le DM lit la journée pour en rouvrir un rapport, sans la valider.
+  const consultation = j.mode === 'consultation';
   const conforme = j.classement === 'conforme';
   async function validerJournee() {
     setConfirmation(false);
@@ -118,10 +123,12 @@ export default function JourneeRapports({ cle }: { cle: string }) {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-          <Button variant="outlined" component={LienRouteur} to={`/validation/${j.planning}`}>
-            {t('aTraiter.consulter')}
-          </Button>
-          {!j.fige && (
+          {!consultation && (
+            <Button variant="outlined" component={LienRouteur} to={`/validation/${j.planning}`}>
+              {t('aTraiter.consulter')}
+            </Button>
+          )}
+          {!j.fige && !consultation && (
             <Button
               variant="contained"
               disabled={j.rapports_manquants > 0}
@@ -212,7 +219,7 @@ export default function JourneeRapports({ cle }: { cle: string }) {
             <CarteVisite
               visite={v}
               ecarts={j.ecarts.filter((e) => e.visite === v.id)}
-              fige={j.fige}
+              fige={j.fige || consultation}
               surValide={rafraichir}
             />
           </Box>
@@ -333,6 +340,7 @@ function Rapport({
   const [enCours, setEnCours] = useState(false);
   const [correction, setCorrection] = useState(false);
   const [precedente, setPrecedente] = useState(false);
+  const [reouverture, setReouverture] = useState(false);
   const dateCourte = (iso: string) =>
     new Intl.DateTimeFormat(i18n.language, {
       day: 'numeric',
@@ -428,13 +436,41 @@ function Rapport({
         />
       )}
       {r.statut === 'valide' && valideLe && (
-        <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 600, pt: 0.5 }}>
-          {t('validationRapports.valideLe', {
-            date: valideLe,
-            par: r.valide_par ?? '—',
-            mode: t(`validationRapports.modes.${r.mode_validation || 'unitaire'}`),
-          })}
-        </Typography>
+        <Stack
+          direction="row"
+          sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, pt: 0.5 }}
+        >
+          <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 600 }}>
+            {t('validationRapports.valideLe', {
+              date: valideLe,
+              par: r.valide_par ?? '—',
+              mode: t(`validationRapports.modes.${r.mode_validation || 'unitaire'}`),
+            })}
+          </Typography>
+          {r.rouvrable && (
+            <Button size="small" onClick={() => setReouverture(true)}>
+              {t('reouvertureRapport.rouvrir')}
+            </Button>
+          )}
+        </Stack>
+      )}
+      {r.reouverture && (
+        <Alert severity="warning" sx={{ mt: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {t('reouvertureRapport.rouvertLe', {
+              date: dateCourte(r.reouverture.le),
+              par: r.reouverture.par,
+            })}
+          </Typography>
+          <Typography variant="body2">« {r.reouverture.motif} »</Typography>
+        </Alert>
+      )}
+      {reouverture && (
+        <DialogueReouverture
+          rapport={r}
+          surFermer={() => setReouverture(false)}
+          surEnvoye={surValide}
+        />
       )}
       {r.horodatage_douteux && (
         <Typography variant="body2" sx={{ color: 'text.secondary', pt: 0.5 }}>
@@ -447,17 +483,22 @@ function Rapport({
       {derniere?.correction && (
         <Alert severity="info" sx={{ mt: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            {t('rapportCorrige.reponse', {
-              version: derniere.numero,
-              date: dateCourte(derniere.soumis_le),
-            })}
+            {t(
+              derniere.correction.reouverture
+                ? 'rapportCorrige.reponseReouverture'
+                : 'rapportCorrige.reponse',
+              { version: derniere.numero, date: dateCourte(derniere.soumis_le) },
+            )}
           </Typography>
           <Typography variant="body2">
-            {t('rapportCorrige.demande', {
-              par: derniere.correction.par,
-              date: dateCourte(derniere.correction.le),
-              commentaire: derniere.correction.commentaire,
-            })}
+            {t(
+              derniere.correction.reouverture ? 'rapportCorrige.motif' : 'rapportCorrige.demande',
+              {
+                par: derniere.correction.par,
+                date: dateCourte(derniere.correction.le),
+                commentaire: derniere.correction.commentaire,
+              },
+            )}
           </Typography>
           <Typography variant="body2">
             {r.modifies.length
@@ -772,6 +813,68 @@ function DialogueCorrection({
           onClick={() => void envoyer()}
         >
           {t('correction.envoyer')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/** RPT-016 : rouvrir un rapport validé ; le motif est obligatoire. */
+function DialogueReouverture({
+  rapport: r,
+  surFermer,
+  surEnvoye,
+}: {
+  rapport: RapportLu;
+  surFermer: () => void;
+  surEnvoye: () => Promise<unknown>;
+}) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const notifier = useNotifier();
+  const [motif, setMotif] = useState('');
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+  async function envoyer() {
+    setEnvoi(true);
+    setErreur(null);
+    try {
+      await client.rapports.rouvrir(r.id, motif);
+      notifier(t('reouvertureRapport.fait'));
+      surFermer();
+      await surEnvoye();
+    } catch (e) {
+      setErreur(messageErreur(e, t('erreurs.reseau')));
+    } finally {
+      setEnvoi(false);
+    }
+  }
+  return (
+    <Dialog open onClose={surFermer} fullWidth maxWidth="sm">
+      <DialogTitle>{t('reouvertureRapport.titre')}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 0.5 }}>
+          <DialogContentText>{t('reouvertureRapport.aide')}</DialogContentText>
+          {erreur && <Alert severity="error">{erreur}</Alert>}
+          <TextField
+            label={t('reouvertureRapport.motif')}
+            value={motif}
+            onChange={(e) => setMotif(e.target.value)}
+            multiline
+            minRows={3}
+            required
+            autoFocus
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={surFermer}>{t('commun.annuler')}</Button>
+        <Button
+          variant="contained"
+          disabled={envoi || !motif.trim()}
+          onClick={() => void envoyer()}
+        >
+          {t('reouvertureRapport.envoyer')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -1,5 +1,6 @@
 import type { Semaine } from '@innov/api-client';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from '../i18n';
 import { CarteConformite } from './Conformite';
@@ -43,5 +44,23 @@ describe('DC-55 : positions trop imprécises dans la conformité', () => {
     render(<CarteConformite semaine={journee(0)} jourLong={(iso) => iso} />);
     expect(screen.getByText('3 visites sans GPS (tolérance : 1)')).toBeInTheDocument();
     expect(screen.queryByText(/trop imprécise/)).toBeNull();
+  });
+});
+
+describe('RPT-016 : la journée terminée s’ouvre depuis la conformité', () => {
+  it('RPT-016 : « Ouvrir la journée » mène à la journée du délégué', () => {
+    render(
+      <MemoryRouter>
+        <CarteConformite
+          semaine={journee(0)}
+          jourLong={(iso) => iso}
+          lienJournee={(iso) => `/a-traiter/d1/${iso}`}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('link', { name: 'Ouvrir la journée' })).toHaveAttribute(
+      'href',
+      '/a-traiter/d1/2026-10-13',
+    );
   });
 });

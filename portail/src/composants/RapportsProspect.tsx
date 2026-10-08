@@ -1,7 +1,8 @@
 import type { RapportChronologie } from '@innov/api-client';
-import { Box, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, Skeleton, Stack, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Link as LienRouteur } from 'react-router';
 import { useSession } from '../contexteSession';
 import { Etiquette } from './Elements';
 import { ErreurChargement } from './Erreurs';
@@ -12,7 +13,10 @@ import { ErreurChargement } from './Erreurs';
  */
 export default function RapportsProspect({ id }: { id: string }) {
   const { t, i18n } = useTranslation();
-  const { client } = useSession();
+  const { client, etat } = useSession();
+  // RPT-016 : l'encadrement ouvre la journée d'un rapport, pour le relire ou le rouvrir.
+  const encadrement =
+    etat.statut === 'connecte' && etat.perimetre.actions.includes('rapports.valider');
   const rapports = useQuery<RapportChronologie[]>({
     queryKey: ['prospects', 'rapports', id],
     queryFn: () => client.prospects.rapports(id),
@@ -47,6 +51,12 @@ export default function RapportsProspect({ id }: { id: string }) {
               {date(r.date)}
             </Typography>
             {r.en_retard && <Etiquette ton="warning">{t('chronologie.enRetard')}</Etiquette>}
+            {encadrement && !r.de_moi && <Box sx={{ flex: 1 }} />}
+            {encadrement && !r.de_moi && (
+              <Button size="small" component={LienRouteur} to={`/a-traiter/${r.delegue}/${r.date}`}>
+                {t('chronologie.journee')}
+              </Button>
+            )}
           </Stack>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {[r.heure, r.etablissement, r.delegue_nom].filter(Boolean).join(' · ')}

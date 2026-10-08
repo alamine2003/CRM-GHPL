@@ -59,7 +59,10 @@ export function MesNotifications() {
       style={{
         borderLeftWidth: 3,
         borderLeftColor: non_lues.some(
-          (n) => n.type === 'revision_demandee' || n.type === 'correction_demandee',
+          (n) =>
+            n.type === 'revision_demandee' ||
+            n.type === 'correction_demandee' ||
+            n.type === 'rapport_rouvert',
         )
           ? p.attention
           : p.succes,

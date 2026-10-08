@@ -1,6 +1,7 @@
 import { ErreurApi, type ClientApi, type RapportChronologie } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContexteSession, type Session } from '../contexteSession';
 import i18n from '../i18n';
@@ -12,6 +13,7 @@ const RAPPORT = {
   date: '2026-10-06',
   heure: '10:30',
   etablissement: 'Clinique du Cap',
+  delegue: 'd1',
   delegue_nom: 'Aminata TOURE',
   de_moi: false,
   statut: 'soumis',
@@ -28,19 +30,21 @@ const RAPPORT = {
   soumis_le: '2026-10-06T18:00:00Z',
 } as unknown as RapportChronologie;
 
-function rendre(rapports: (id: string) => Promise<RapportChronologie[]>) {
+function rendre(rapports: (id: string) => Promise<RapportChronologie[]>, actions?: string[]) {
   const session = {
-    etat: { statut: 'chargement' },
+    etat: actions ? { statut: 'connecte', perimetre: { actions } } : { statut: 'chargement' },
     client: { prospects: { rapports } } as unknown as ClientApi,
   } as unknown as Session;
   return render(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-    >
-      <ContexteSession.Provider value={session}>
-        <RapportsProspect id="p1" />
-      </ContexteSession.Provider>
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <ContexteSession.Provider value={session}>
+          <RapportsProspect id="p1" />
+        </ContexteSession.Provider>
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -49,6 +53,26 @@ beforeEach(async () => {
 });
 
 describe('RPT-011 : rapports de visite du prospect au portail', () => {
+  it('RPT-016 : l’encadrement ouvre la journée du rapport, pour le relire ou le rouvrir', async () => {
+    rendre(
+      vi.fn(async () => [RAPPORT]),
+      ['rapports.valider'],
+    );
+    expect(await screen.findByRole('link', { name: 'Ouvrir la journée' })).toHaveAttribute(
+      'href',
+      '/a-traiter/d1/2026-10-06',
+    );
+  });
+
+  it('RPT-016 : sans le droit de valider, pas de lien vers la journée', async () => {
+    rendre(
+      vi.fn(async () => [RAPPORT]),
+      [],
+    );
+    await screen.findByText('Bon accueil');
+    expect(screen.queryByRole('link', { name: 'Ouvrir la journée' })).toBeNull();
+  });
+
   it('RPT-011 : la liste, du plus récent au plus ancien, avec le nom du délégué', async () => {
     const rapports = vi.fn(async () => [
       {

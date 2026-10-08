@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-07 22:14+0000\n"
+"POT-Creation-Date: 2026-10-08 01:25+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -956,6 +956,15 @@ msgstr "Tell the representative what to correct."
 
 msgid "Champ du rapport inconnu."
 msgstr "Unknown report field."
+
+msgid "Seul un rapport validé se rouvre."
+msgstr "Only an approved report can be reopened."
+
+msgid "Validé il y a plus de 30 jours : seul le DM peut le rouvrir."
+msgstr "Approved more than 30 days ago: only the DM can reopen it."
+
+msgid "Dites pourquoi vous rouvrez ce rapport."
+msgstr "Say why you are reopening this report."
 
 msgid "Ce libellé ou ce code est déjà utilisé dans cette liste."
 msgstr "This label or code is already used in this list."

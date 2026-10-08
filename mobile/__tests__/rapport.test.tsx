@@ -28,6 +28,7 @@ const BROUILLON: Rapport = {
   visite: 'v1',
   statut: 'brouillon',
   correction: null,
+  reouverture: null,
   objectif_prevu: 'Présenter la nouvelle forme sirop',
   est_imprevue: false,
   justification: '',
@@ -474,6 +475,24 @@ describe('RPT-010 : soumission et retard', () => {
     expect(await screen.findByText(/Soumis sur le téléphone à/)).toBeTruthy();
     expect(screen.queryByText('Soumettre le rapport')).toBeNull();
   });
+});
+
+test('RPT-016 : le rapport rouvert dit qui l’a rouvert et pourquoi', async () => {
+  const rouvert = {
+    ...BROUILLON,
+    statut: 'rouvert' as const,
+    soumis_le: '2026-10-13T18:00:00Z',
+    echeance: '2026-10-13T23:59:59Z',
+    reouverture: {
+      le: '2026-10-20T08:00:00Z',
+      par: 'Kossi GUEYE',
+      motif: 'Le résultat ne correspond pas à l’échange.',
+    },
+  };
+  await rendre({ rapport: jest.fn(async () => rouvert) });
+  expect(await screen.findByText(/Rouvert le .* par Kossi GUEYE/)).toBeTruthy();
+  expect(screen.getByText(/« Le résultat ne correspond pas à l’échange. »/)).toBeTruthy();
+  expect(screen.queryByText(/En retard : ce rapport/)).toBeNull();
 });
 
 test('RPT-014 : le rapport à corriger dit qui demande quoi et les parties à revoir', async () => {

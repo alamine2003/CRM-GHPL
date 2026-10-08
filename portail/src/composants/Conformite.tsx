@@ -7,17 +7,21 @@ import type { Semaine } from '@innov/api-client';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import ScheduleRounded from '@mui/icons-material/ScheduleRounded';
-import { Box, Card, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, Stack, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { Link as LienRouteur } from 'react-router';
 import { texteEcart } from './conformiteTextes';
 import { EnTeteCarte } from './Elements';
 
 export function CarteConformite({
   semaine,
   jourLong,
+  lienJournee,
 }: {
   semaine: Semaine;
   jourLong: (iso: string) => string;
+  /** RPT-016 : la journée terminée s'ouvre, pour lire ses rapports ou en rouvrir un. */
+  lienJournee?: (iso: string) => string;
 }) {
   const { t } = useTranslation();
   if (semaine.conformite.length === 0) return null;
@@ -63,6 +67,15 @@ export function CarteConformite({
                   <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {t('conformite.fige')}
                   </Typography>
+                )}
+                {lienJournee && j.terminee && (
+                  // Le Stack impose ses marges : un espace souple pousse le lien à droite.
+                  <Box sx={{ flex: 1 }} />
+                )}
+                {lienJournee && j.terminee && (
+                  <Button size="small" component={LienRouteur} to={lienJournee(j.date)}>
+                    {t('journee.ouvrir')}
+                  </Button>
                 )}
               </Stack>
               {j.ecarts.map((e, i) => (

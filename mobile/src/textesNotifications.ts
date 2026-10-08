@@ -54,6 +54,8 @@ export function iconeNotification(
     case 'revision_demandee':
     case 'correction_demandee':
       return { nom: 'rate-review', couleur: p.attention };
+    case 'rapport_rouvert':
+      return { nom: 'lock-open', couleur: p.attention };
     case 'remplacement_attribue':
       return { nom: 'swap-horiz', couleur: p.info };
     case 'rappel_planning':
@@ -87,7 +89,9 @@ export function semaineDeNotification(n: Notification): string | undefined {
   return n.donnees.semaine && !auPortail.includes(n.type) ? n.donnees.semaine : undefined;
 }
 
-/** RPT-014 : une correction demandée ouvre le rapport de la visite, à corriger. */
+/** RPT-014, RPT-016 : une correction demandée ou une réouverture ouvre le rapport à reprendre. */
 export function visiteDeNotification(n: Notification): string | undefined {
-  return n.type === 'correction_demandee' ? n.donnees.visite : undefined;
+  return n.type === 'correction_demandee' || n.type === 'rapport_rouvert'
+    ? n.donnees.visite
+    : undefined;
 }

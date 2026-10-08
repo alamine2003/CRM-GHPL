@@ -2,6 +2,29 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.6] — Réouverture d'un rapport validé
+
+Sixième jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté (RPT-016)
+
+- « Rouvrir le rapport » sous un rapport validé, avec un motif obligatoire ; le rapport revient au délégué.
+- **CA1** : le superviseur rouvre jusqu'à 30 jours après la validation ; au-delà, seul le DM du périmètre, qui lit la journée en consultation.
+- **CA2** : la réouverture est inscrite au journal d'audit et notifiée au délégué ; décision 31.A : quand le DM rouvre, le superviseur est prévenu aussi.
+- Décision 32.A : la journée revient dans « À traiter » (« 1 rapport rouvert ») jusqu'à la nouvelle validation ; son classement de conformité reste figé.
+- Les journées validées s'ouvrent depuis la conformité de la semaine et depuis la fiche du prospect.
+- Le délégué retrouve le rapport rouvert dans « Rapports à corriger », motif en tête ; la version suivante dit « soumise après réouverture ».
+
+### Design
+
+Revue sur le rendu réel (bureau, téléphone, portail en largeur de téléphone). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Semaine, conformité | « Validée : figée » restait affiché sur une journée dont un rapport venait d'être rouvert. | « Classement figé » : c'est ce qui ne change pas. |
+| Semaine et fiche prospect | « Ouvrir la journée » se collait au texte au lieu de s'aligner à droite. | Lien aligné à droite, comme dans « À traiter ». |
+| À traiter | « 1 rouvert » : on ne savait pas ce qui l'était. | « 1 rapport rouvert ». |
+
 ## [0.6.5] — Correction et nouvelle soumission
 
 Cinquième jalon du cycle 0.6 « Validation des rapports ».

@@ -201,8 +201,15 @@ test('RPT-014, 29.A : les rapports à corriger, même d’une semaine passée, o
   };
   // Déjà resoumis (sur ce téléphone) : il sort de la liste.
   const resoumis = { ...aCorriger, id: 'v02', rapport_statut: 'soumis' as const };
-  await rendre(jest.fn(async () => ({ ...PROGRAMME, a_corriger: [aCorriger, resoumis] })));
-  expect(await screen.findByText('Rapports à corriger (1)')).toBeTruthy();
+  // RPT-016 : un rapport rouvert s'y range aussi.
+  const rouvert = {
+    ...visite('v03', '10:00', 'ROUVERT', '2026-09-22'),
+    statut: 'effectuee' as const,
+    rapport_statut: 'rouvert' as const,
+  };
+  await rendre(jest.fn(async () => ({ ...PROGRAMME, a_corriger: [aCorriger, resoumis, rouvert] })));
+  expect(await screen.findByText('Rapports à corriger (2)')).toBeTruthy();
+  expect(screen.getByText('Rapport rouvert')).toBeTruthy();
   expect(screen.queryByText('Rapports en retard (1)')).toBeNull();
   expect(screen.getByText(/lundi 21 septembre/i)).toBeTruthy();
   await fireEvent.press(screen.getByText(/REVOIR/));
