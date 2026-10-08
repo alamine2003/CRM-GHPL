@@ -2,6 +2,28 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.5] — Filtres et périodes du pilotage
+
+Cinquième jalon du cycle 0.7 « Indicateurs de pilotage ».
+
+### Ajouté (DSH-005, prd.md §14.55)
+
+- Périodes : semaine, 30 et 90 derniers jours, 6 et 12 derniers mois, dates choisies (un an au plus), au pilotage et à la consolidation du siège.
+- Filtres : zone, secteur, division, réseau, superviseur, délégué, activité ; valeurs tirées du seul périmètre (CA1), combinables, gardées dans l'adresse.
+- Décision par délégation : au-delà d'un cycle, la couverture se lit sur toute la période.
+
+### Design
+
+Revue sur le rendu réel (responsable pays et direction du siège de la démonstration, bureau et téléphone) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Période | « Dates choisies » envoyait une demande sans dates : erreur, page bloquée en chargement | Les dates partent de la période affichée |
+| Filtres | Deux changements successifs de l'adresse s'écrasaient : seul le dernier comptait | Changements groupés en une seule mise à jour |
+| Note | « Cycle de 4 semaines, du 9 septembre au 8 octobre » sur une période de 30 jours | « La couverture se lit sur toute la période » |
+| Téléphone | Dix champs de filtre avant le premier chiffre | Filtres repliés derrière « Filtres (n) », période toujours visible |
+| Téléphone | « Filtres (5) » comptait la période et les dates | Seuls les filtres sont comptés |
+
 ## [0.7.4] — Consolidation du siège
 
 Quatrième jalon du cycle 0.7 « Indicateurs de pilotage ».

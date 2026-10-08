@@ -4380,6 +4380,20 @@ export interface components {
       /** Format: date */
       debut?: string;
     };
+    Option: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+    };
+    /** @description DSH-005 CA1 : les valeurs de filtre proposées, tirées du seul périmètre. */
+    OptionsPilotage: {
+      zones: components['schemas']['Option'][];
+      secteurs: components['schemas']['Option'][];
+      divisions: components['schemas']['Option'][];
+      reseaux: components['schemas']['Option'][];
+      superviseurs: components['schemas']['Option'][];
+      delegues: components['schemas']['Option'][];
+    };
     Ordre: {
       /** Format: date */
       date: string;
@@ -4577,6 +4591,16 @@ export interface components {
      * @enum {string}
      */
     PeriodeActiviteEnum: 'journee' | 'matin' | 'apres_midi';
+    /**
+     * @description * `semaine` - semaine
+     *     * `30j` - 30j
+     *     * `90j` - 90j
+     *     * `6m` - 6m
+     *     * `1a` - 1a
+     *     * `dates` - dates
+     * @enum {string}
+     */
+    PeriodePilotageEnum: 'semaine' | '30j' | '90j' | '6m' | '1a' | 'dates';
     Personne: {
       /** Format: uuid */
       id: string;
@@ -5607,8 +5631,10 @@ export interface components {
       debut: string;
       /** Format: date */
       fin: string;
+      periode: components['schemas']['PeriodePilotageEnum'];
       cycle: components['schemas']['CyclePeriode'];
       par: components['schemas']['ParEnum'];
+      options: components['schemas']['OptionsPilotage'];
       delegues: components['schemas']['LigneEquipe'][];
       groupes: components['schemas']['GroupeEquipe'][];
       total: components['schemas']['TotalEquipe'];
@@ -5617,6 +5643,7 @@ export interface components {
     TableauSiege: {
       /** Format: date-time */
       calcule_le: string;
+      periode: components['schemas']['PeriodePilotageEnum'];
       /** Format: date */
       debut: string;
       /** Format: date */
@@ -8358,9 +8385,19 @@ export interface operations {
   pilotage_equipe: {
     parameters: {
       query?: {
+        au?: string;
+        delegue?: string;
+        division?: string;
+        du?: string;
         par?: 'delegue' | 'reseau' | 'secteur' | 'zone';
+        periode?: '1a' | '30j' | '6m' | '90j' | 'dates' | 'semaine';
+        reseau?: string;
+        secteur?: string;
         /** @description Un jour de la semaine ; par défaut, celle-ci */
         semaine?: string;
+        statut?: 'actif' | 'sans_activite';
+        superviseur?: string;
+        zone?: string;
       };
       header?: never;
       path?: never;
@@ -8403,6 +8440,9 @@ export interface operations {
   pilotage_siege: {
     parameters: {
       query?: {
+        au?: string;
+        du?: string;
+        periode?: '1a' | '30j' | '6m' | '90j' | 'dates' | 'semaine';
         /** @description Un jour de la semaine ; par défaut, celle-ci */
         semaine?: string;
       };

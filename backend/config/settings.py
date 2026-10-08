@@ -260,6 +260,7 @@ SPECTACULAR_SETTINGS = {
         "LangueEnum": "apps.socle.models.CHOIX_LANGUES",
         "StatutEnum": "apps.socle.models.Pays.Statut",
         "StatutRapportEnum": "apps.rapports.models.StatutRapport",
+        "PeriodePilotageEnum": "apps.pilotage.serializers.PERIODES",
         "TypeChampEnum": "apps.rapports.models.TypeChamp",
         "RetourPrescripteurEnum": "apps.rapports.models.RetourPrescripteur",
         "TypeRemiseEnum": "apps.rapports.models.TypeRemise",

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 18:10+0000\n"
+"POT-Creation-Date: 2026-10-08 18:27+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -483,6 +483,12 @@ msgstr "Action not allowed."
 
 msgid "Vous n'avez pas accès à ce pays."
 msgstr "You do not have access to this country."
+
+msgid "Choisissez une date de début et une date de fin, dans l'ordre."
+msgstr "Choose a start date and an end date, in that order."
+
+msgid "Une période dure un an au plus."
+msgstr "A period lasts one year at most."
 
 msgid "Vue réservée au siège."
 msgstr "View reserved for headquarters."

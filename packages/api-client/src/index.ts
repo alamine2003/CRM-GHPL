@@ -914,17 +914,17 @@ export function creerClient(options: OptionsClient) {
       /** DSH-001 : les chiffres du délégué connecté, pour la semaine d'un jour donné. */
       mesChiffres: (jour?: string) =>
         requete<MesChiffres>(`/api/v1/pilotage/mes-chiffres/${jour ? `?semaine=${jour}` : ''}`),
-      /** DSH-002, DSH-003, DSH-012 : le tableau des délégués pilotés, regroupé au besoin. */
-      equipe: (jour?: string, par?: 'delegue' | 'reseau' | 'zone' | 'secteur') => {
-        const p = new URLSearchParams();
-        if (jour) p.set('semaine', jour);
-        if (par && par !== 'delegue') p.set('par', par);
-        const q = p.toString();
+      /** DSH-002 à DSH-005, DSH-012 : le tableau des délégués pilotés : semaine ou période
+       * (`periode`, `du`, `au`), regroupement (`par`), filtres du périmètre. */
+      equipe: (parametres: Record<string, string> = {}) => {
+        const q = new URLSearchParams(parametres).toString();
         return requete<TableauEquipe>(`/api/v1/pilotage/equipe/${q ? `?${q}` : ''}`);
       },
       /** DSH-004 : la consolidation du siège, par pays, sans aucun nom. */
-      siege: (jour?: string) =>
-        requete<TableauSiege>(`/api/v1/pilotage/siege/${jour ? `?semaine=${jour}` : ''}`),
+      siege: (parametres: Record<string, string> = {}) => {
+        const q = new URLSearchParams(parametres).toString();
+        return requete<TableauSiege>(`/api/v1/pilotage/siege/${q ? `?${q}` : ''}`);
+      },
     },
     /** Champs supplémentaires du rapport, par pays (RPT-008). */
     rapports: {

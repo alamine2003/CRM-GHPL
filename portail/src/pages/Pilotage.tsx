@@ -51,14 +51,14 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
   const { t, i18n } = useTranslation();
   const { client, choisirPays } = useSession();
   const [parametres, setParametres] = useSearchParams();
-  const semaine = parametres.get('semaine') ?? '';
   const brut = parametres.get('par') ?? '';
   const par: Regroupement = (REGROUPEMENTS as readonly string[]).includes(brut)
     ? (brut as Regroupement)
     : 'delegue';
+  const demande = lireParametres(parametres, CLES_PILOTAGE);
   const tableau = useQuery({
-    queryKey: ['pilotage-equipe', semaine, par],
-    queryFn: () => client.pilotage.equipe(semaine || undefined, par),
+    queryKey: ['pilotage-equipe', demande],
+    queryFn: () => client.pilotage.equipe(demande),
   });
   const titre = t('navigation.pilotage');
   if (tableau.isError) {
@@ -81,24 +81,20 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
   const d = tableau.data;
   const jour = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' });
   const date = (iso: string) => jour.format(new Date(`${iso}T12:00:00`));
-  const changer = (cle: string, valeur: string) =>
+  // Plusieurs clés d'un coup : deux appels successifs repartiraient de la même adresse.
+  const changer = (cle: string | Record<string, string>, valeur = '') =>
     setParametres(
       (p) => {
         const suite = new URLSearchParams(p);
-        if (valeur) suite.set(cle, valeur);
-        else suite.delete(cle);
+        for (const [k, v] of Object.entries(typeof cle === 'string' ? { [cle]: valeur } : cle)) {
+          if (v) suite.set(k, v);
+          else suite.delete(k);
+        }
         return suite;
       },
       { replace: true },
     );
   const aller = (lundi: string) => changer('semaine', lundi);
-  const decaler = (iso: string, jours: number) => {
-    const x = new Date(`${iso}T12:00:00Z`);
-    x.setUTCDate(x.getUTCDate() + jours);
-    return x.toISOString().slice(0, 10);
-  };
-  const suivante = decaler(d.debut, 7);
-  const enCours = d.fin >= d.aujourdhui;
   const total = d.total.semaine;
   const pourcent = new Intl.NumberFormat(i18n.language, { style: 'percent' });
   const taux = (v: number | null) => (v === null ? '—' : pourcent.format(v));
@@ -107,7 +103,7 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
     <Stack spacing={2.5}>
       <EnTetePage
         titre={titre}
-        sousTitre={t('pilotage.semaine', { debut: date(d.debut), fin: date(d.fin) })}
+        sousTitre={libellePeriode(t, d.periode, date(d.debut), date(d.fin))}
         actions={
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
@@ -124,31 +120,9 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
                 </MenuItem>
               ))}
             </TextField>
-            <Tooltip title={t('pilotage.precedente')}>
-              <IconButton
-                aria-label={t('pilotage.precedente')}
-                onClick={() => aller(decaler(d.debut, -7))}
-              >
-                <ChevronLeftRounded />
-              </IconButton>
-            </Tooltip>
-            {!enCours && (
-              <Button variant="text" onClick={() => aller('')}>
-                {t('pilotage.cetteSemaine')}
-              </Button>
+            {d.periode === 'semaine' && (
+              <FlechesSemaine debut={d.debut} fin={d.fin} aujourdhui={d.aujourdhui} aller={aller} />
             )}
-            <Tooltip title={t('pilotage.suivante')}>
-              <span>
-                <IconButton
-                  aria-label={t('pilotage.suivante')}
-                  disabled={enCours}
-                  // La semaine en cours se lit sans paramètre : l'adresse reste « /pilotage ».
-                  onClick={() => aller(decaler(suivante, 7) > d.aujourdhui ? '' : suivante)}
-                >
-                  <ChevronRightRounded />
-                </IconButton>
-              </span>
-            </Tooltip>
           </Stack>
         }
       />
@@ -169,12 +143,19 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
           {t('pilotage.auditSiege')}
         </Alert>
       )}
-      {/* Sur téléphone, l'en-tête masque son sous-titre : la semaine se redit ici. */}
+      <BarreFiltres
+        valeurs={parametres}
+        changer={changer}
+        options={d.options}
+        bornes={[d.debut, d.fin]}
+        effacer={() => setParametres(new URLSearchParams(par === 'delegue' ? {} : { par }))}
+      />
+      {/* Sur téléphone, l'en-tête masque son sous-titre : la période se redit ici. */}
       <Typography
         variant="body2"
         sx={{ color: 'text.secondary', display: { xs: 'block', sm: 'none' }, mt: -1.5 }}
       >
-        {t('pilotage.semaine', { debut: date(d.debut), fin: date(d.fin) })}
+        {libellePeriode(t, d.periode, date(d.debut), date(d.fin))}
       </Typography>
       {d.delegues.length === 0 ? (
         <Card>
@@ -240,11 +221,13 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
             />
           )}
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {t('pilotage.note', {
-              count: d.cycle.semaines,
-              debut: date(d.cycle.debut),
-              fin: date(d.cycle.fin),
-            })}
+            {d.periode !== 'semaine' && d.cycle.debut === d.debut
+              ? t('pilotage.notePeriode')
+              : t('pilotage.note', {
+                  count: d.cycle.semaines,
+                  debut: date(d.cycle.debut),
+                  fin: date(d.cycle.fin),
+                })}
           </Typography>
         </>
       )}
@@ -510,10 +493,10 @@ function PilotageSiege() {
   const { t, i18n } = useTranslation();
   const { client, choisirPays } = useSession();
   const [parametres, setParametres] = useSearchParams();
-  const semaine = parametres.get('semaine') ?? '';
+  const demande = lireParametres(parametres, CLES_PERIODE);
   const tableau = useQuery({
-    queryKey: ['pilotage-siege', semaine],
-    queryFn: () => client.pilotage.siege(semaine || undefined),
+    queryKey: ['pilotage-siege', demande],
+    queryFn: () => client.pilotage.siege(demande),
   });
   const titre = t('navigation.pilotage');
   if (tableau.isError)
@@ -535,13 +518,7 @@ function PilotageSiege() {
   const date = (iso: string) => jour.format(new Date(`${iso}T12:00:00`));
   const pourcent = new Intl.NumberFormat(i18n.language, { style: 'percent' });
   const taux = (v: number | null) => (v === null ? '—' : pourcent.format(v));
-  const decaler = (iso: string, jours: number) => {
-    const x = new Date(`${iso}T12:00:00Z`);
-    x.setUTCDate(x.getUTCDate() + jours);
-    return x.toISOString().slice(0, 10);
-  };
   const aujourdhui = new Date().toISOString().slice(0, 10);
-  const enCours = d.fin >= aujourdhui;
   const aller = (lundi: string) =>
     setParametres(
       (p) => {
@@ -571,38 +548,33 @@ function PilotageSiege() {
     <Stack spacing={2.5}>
       <EnTetePage
         titre={titre}
-        sousTitre={t('pilotage.semaine', { debut: date(d.debut), fin: date(d.fin) })}
+        sousTitre={libellePeriode(t, d.periode, date(d.debut), date(d.fin))}
         actions={
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Tooltip title={t('pilotage.precedente')}>
-              <IconButton
-                aria-label={t('pilotage.precedente')}
-                onClick={() => aller(decaler(d.debut, -7))}
-              >
-                <ChevronLeftRounded />
-              </IconButton>
-            </Tooltip>
-            {!enCours && (
-              <Button variant="text" onClick={() => aller('')}>
-                {t('pilotage.cetteSemaine')}
-              </Button>
+            {d.periode === 'semaine' && (
+              <FlechesSemaine debut={d.debut} fin={d.fin} aujourdhui={aujourdhui} aller={aller} />
             )}
-            <Tooltip title={t('pilotage.suivante')}>
-              <span>
-                <IconButton
-                  aria-label={t('pilotage.suivante')}
-                  disabled={enCours}
-                  onClick={() => {
-                    const suivant = decaler(d.debut, 7);
-                    aller(decaler(suivant, 7) > aujourdhui ? '' : suivant);
-                  }}
-                >
-                  <ChevronRightRounded />
-                </IconButton>
-              </span>
-            </Tooltip>
           </Stack>
         }
+      />
+      <BarreFiltres
+        valeurs={parametres}
+        changer={(cle, valeur = '') =>
+          setParametres(
+            (p) => {
+              const suite = new URLSearchParams(p);
+              const valeurs = typeof cle === 'string' ? { [cle]: valeur } : cle;
+              for (const [k, v] of Object.entries(valeurs)) {
+                if (v) suite.set(k, v);
+                else suite.delete(k);
+              }
+              return suite;
+            },
+            { replace: true },
+          )
+        }
+        bornes={[d.debut, d.fin]}
+        effacer={() => setParametres(new URLSearchParams())}
       />
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         {t('pilotage.siegeIntro')}
@@ -656,6 +628,220 @@ function PilotageSiege() {
           </Table>
         </TableContainer>
       </Card>
+    </Stack>
+  );
+}
+
+/** Clés de l'adresse transmises au serveur (DSH-005) : période, regroupement, filtres. */
+const CLES_PERIODE = ['semaine', 'periode', 'du', 'au'] as const;
+const CLES_PILOTAGE = [
+  ...CLES_PERIODE,
+  'par',
+  'zone',
+  'secteur',
+  'division',
+  'reseau',
+  'superviseur',
+  'delegue',
+  'statut',
+] as const;
+const PERIODES = ['semaine', '30j', '90j', '6m', '1a', 'dates'] as const;
+const FILTRES = [
+  ['zone', 'zones'],
+  ['secteur', 'secteurs'],
+  ['division', 'divisions'],
+  ['reseau', 'reseaux'],
+  ['superviseur', 'superviseurs'],
+  ['delegue', 'delegues'],
+] as const;
+
+function lireParametres(parametres: URLSearchParams, cles: readonly string[]) {
+  const lus: Record<string, string> = {};
+  for (const cle of cles) {
+    const valeur = parametres.get(cle);
+    if (valeur) lus[cle] = valeur;
+  }
+  return lus;
+}
+
+function libellePeriode(t: TFunction, periode: string, debut: string, fin: string) {
+  return periode === 'semaine'
+    ? t('pilotage.semaine', { debut, fin })
+    : t('pilotage.periodeDu', { debut, fin });
+}
+
+function decalerJours(iso: string, jours: number) {
+  const x = new Date(`${iso}T12:00:00Z`);
+  x.setUTCDate(x.getUTCDate() + jours);
+  return x.toISOString().slice(0, 10);
+}
+
+/** La semaine précédente, la suivante (jamais au-delà d'aujourd'hui), la semaine en cours. */
+function FlechesSemaine({
+  debut,
+  fin,
+  aujourdhui,
+  aller,
+}: {
+  debut: string;
+  fin: string;
+  aujourdhui: string;
+  aller: (lundi: string) => void;
+}) {
+  const { t } = useTranslation();
+  const enCours = fin >= aujourdhui;
+  const suivante = decalerJours(debut, 7);
+  return (
+    <>
+      <Tooltip title={t('pilotage.precedente')}>
+        <IconButton
+          aria-label={t('pilotage.precedente')}
+          onClick={() => aller(decalerJours(debut, -7))}
+        >
+          <ChevronLeftRounded />
+        </IconButton>
+      </Tooltip>
+      {!enCours && (
+        <Button variant="text" onClick={() => aller('')}>
+          {t('pilotage.cetteSemaine')}
+        </Button>
+      )}
+      <Tooltip title={t('pilotage.suivante')}>
+        <span>
+          <IconButton
+            aria-label={t('pilotage.suivante')}
+            disabled={enCours}
+            // La semaine en cours se lit sans paramètre : l'adresse reste « /pilotage ».
+            onClick={() => aller(decalerJours(suivante, 7) > aujourdhui ? '' : suivante)}
+          >
+            <ChevronRightRounded />
+          </IconButton>
+        </span>
+      </Tooltip>
+    </>
+  );
+}
+
+/**
+ * DSH-005 : la période, puis les filtres du périmètre ; une liste n'apparaît que si elle offre
+ * un vrai choix. Les valeurs vivent dans l'adresse de la page.
+ */
+function BarreFiltres({
+  valeurs,
+  changer,
+  options,
+  bornes,
+  effacer,
+}: {
+  valeurs: URLSearchParams;
+  changer: (cle: string | Record<string, string>, valeur?: string) => void;
+  options?: TableauEquipe['options'];
+  /** La période affichée : « Dates choisies » part de ces dates, toujours valides. */
+  bornes: [string, string];
+  effacer: () => void;
+}) {
+  const { t } = useTranslation();
+  const periode = valeurs.get('periode') ?? 'semaine';
+  const actifs = [...CLES_PILOTAGE].filter((c) => c !== 'par' && c !== 'semaine' && valeurs.get(c));
+  const liste = (cle: string, libelle: string, choix: { id: string; libelle: string }[]) => (
+    <TextField
+      key={cle}
+      select
+      size="small"
+      label={libelle}
+      value={valeurs.get(cle) ?? ''}
+      onChange={(e) => changer(cle, e.target.value)}
+      slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+      sx={{ minWidth: 160, maxWidth: 240 }}
+    >
+      <MenuItem value="">{t('pilotage.filtres.tous')}</MenuItem>
+      {choix.map((c) => (
+        <MenuItem key={c.id} value={c.id}>
+          {c.libelle}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+  // Sur téléphone, les filtres se replient derrière un bouton ; la période reste visible.
+  const [ouverts, setOuverts] = useState(false);
+  const filtresActifs = [...FILTRES.map(([cle]) => cle), 'statut'].filter((c) =>
+    valeurs.get(c),
+  ).length;
+  const replies = { display: { xs: ouverts ? 'contents' : 'none', sm: 'contents' } };
+  return (
+    <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+      <TextField
+        select
+        size="small"
+        label={t('pilotage.filtres.periode')}
+        value={periode}
+        onChange={(e) => {
+          const dates = e.target.value === 'dates';
+          changer({
+            semaine: '',
+            periode: e.target.value === 'semaine' ? '' : e.target.value,
+            du: dates ? bornes[0] : '',
+            au: dates ? bornes[1] : '',
+          });
+        }}
+        sx={{ minWidth: 160 }}
+      >
+        {PERIODES.map((p) => (
+          <MenuItem key={p} value={p}>
+            {t(`pilotage.periodes.${p}`)}
+          </MenuItem>
+        ))}
+      </TextField>
+      {periode === 'dates' && (
+        <>
+          <TextField
+            type="date"
+            size="small"
+            label={t('pilotage.filtres.du')}
+            value={valeurs.get('du') ?? ''}
+            onChange={(e) => changer('du', e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+          <TextField
+            type="date"
+            size="small"
+            label={t('pilotage.filtres.au')}
+            value={valeurs.get('au') ?? ''}
+            onChange={(e) => changer('au', e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+        </>
+      )}
+      {options && (
+        <Button
+          variant="outlined"
+          onClick={() => setOuverts((o) => !o)}
+          aria-expanded={ouverts}
+          sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+        >
+          {filtresActifs
+            ? t('pilotage.filtres.boutonN', { count: filtresActifs })
+            : t('pilotage.filtres.bouton')}
+        </Button>
+      )}
+      <Box sx={replies}>
+        {options &&
+          FILTRES.map(([cle, cleOptions]) =>
+            options[cleOptions].length > 1 || valeurs.get(cle)
+              ? liste(cle, t(`pilotage.filtres.${cle}`), options[cleOptions])
+              : null,
+          )}
+        {options &&
+          liste('statut', t('pilotage.filtres.statut'), [
+            { id: 'actif', libelle: t('pilotage.filtres.actif') },
+            { id: 'sans_activite', libelle: t('pilotage.filtres.sansActivite') },
+          ])}
+        {actifs.length > 0 && (
+          <Button variant="text" onClick={effacer}>
+            {t('pilotage.filtres.effacer')}
+          </Button>
+        )}
+      </Box>
     </Stack>
   );
 }

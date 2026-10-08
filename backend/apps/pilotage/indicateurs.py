@@ -341,7 +341,7 @@ def delegues_des_postes(postes, exclu, debut: date, fin: date) -> list:
         Occupation.objects.filter(pendant, poste__in=postes, debut__lte=fin)
         .exclude(utilisateur=exclu)
         .select_related("utilisateur", "poste")
-        .prefetch_related("poste__reseaux", "poste__secteurs__zone")
+        .prefetch_related("poste__reseaux__division", "poste__secteurs__zone")
         .order_by("utilisateur__last_name", "utilisateur__first_name", "-debut")
     )
     vus, liste = set(), []
@@ -363,21 +363,96 @@ def _groupes_du_poste(poste, par: str) -> list[tuple]:
     return []
 
 
-def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue") -> dict:
-    """DSH-002, DSH-003, DSH-012 : la semaine de chaque délégué piloté, côte à côte par ordre
-    alphabétique (DC-49 : aucun classement), la couverture sur le cycle, le total de l'ensemble
-    et, si demandé, celui de chaque réseau, zone ou secteur : un total est toujours la somme de
-    ses délégués (DSH-003 CA1). Un poste rattaché à deux réseaux compte dans chacun ; le total de
-    l'ensemble ne compte chaque délégué qu'une fois."""
+#: §14.18, DSH-005 : périodes glissantes (jours), la semaine civile, ou des dates choisies.
+PERIODES = {"semaine": None, "30j": 30, "90j": 90, "6m": 182, "1a": 365, "dates": None}
+#: Filtres de DSH-005 : identifiants d'objets de l'organisation, et l'activité de la période.
+FILTRES = ("zone", "secteur", "division", "reseau", "superviseur", "delegue")
+
+
+def bornes(pays, periode: str = "semaine", jour: date | None = None, du=None, au=None):
+    """Les dates d'une période (incluses) : la semaine de `jour`, les N derniers jours jusqu'à
+    `jour` (aujourd'hui par défaut), ou les dates choisies."""
+    today = aujourdhui(pays)
+    if periode == "dates":
+        return du, au
+    if periode == "semaine":
+        return semaine(jour or today)
+    fin = jour or today
+    return fin - timedelta(days=PERIODES[periode] - 1), fin
+
+
+def _options(pilotes, rattachements) -> dict:
+    """DSH-005 CA1 : les valeurs proposées viennent des seuls postes du périmètre."""
+    zones, secteurs, divisions, reseaux = {}, {}, {}, {}
+    for _, poste in pilotes:
+        for r in poste.reseaux.all():
+            reseaux[r.pk] = r.libelle
+            divisions[r.division_id] = r.division.libelle
+        for s in poste.secteurs.all():
+            secteurs[s.pk] = s.libelle
+            zones[s.zone_id] = s.zone.libelle
+    superviseurs = {r.superviseur_id: r.superviseur for r in rattachements}
+    trier = lambda d: [{"id": k, "libelle": v} for k, v in sorted(d.items(), key=lambda x: x[1])]  # noqa: E731
+    personne = lambda u: {"id": u.pk, "libelle": f"{u.first_name} {u.last_name}".strip()}  # noqa: E731
+    return {
+        "zones": trier(zones), "secteurs": trier(secteurs), "divisions": trier(divisions),
+        "reseaux": trier(reseaux),
+        "superviseurs": sorted((personne(u) for u in superviseurs.values()),
+                               key=lambda x: x["libelle"]),
+        "delegues": [personne(d) for d, _ in pilotes],
+    }  # fmt: skip
+
+
+def _retenu(delegue, poste, filtres: dict, sup_par_poste: dict) -> bool:
+    if filtres.get("delegue") and delegue.pk != filtres["delegue"]:
+        return False
+    if filtres.get("reseau") and filtres["reseau"] not in {r.pk for r in poste.reseaux.all()}:
+        return False
+    if filtres.get("division") and filtres["division"] not in {
+        r.division_id for r in poste.reseaux.all()
+    }:
+        return False
+    if filtres.get("secteur") and filtres["secteur"] not in {s.pk for s in poste.secteurs.all()}:
+        return False
+    if filtres.get("zone") and filtres["zone"] not in {s.zone_id for s in poste.secteurs.all()}:
+        return False
+    if filtres.get("superviseur") and filtres["superviseur"] not in sup_par_poste.get(
+        poste.pk, set()
+    ):
+        return False
+    return True
+
+
+def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue",
+                     periode: str = "semaine", du=None, au=None,
+                     filtres: dict | None = None) -> dict:  # fmt: skip
+    """DSH-002, DSH-003, DSH-005, DSH-012 : la période de chaque délégué piloté, côte à côte
+    par ordre alphabétique (DC-49 : aucun classement), la couverture sur le cycle (ou sur la
+    période quand elle est plus longue), le total de l'ensemble et, si demandé, celui de chaque
+    réseau, zone ou secteur : un total est toujours la somme de ses délégués (DSH-003 CA1). Un
+    poste rattaché à deux réseaux compte dans chacun ; le total de l'ensemble ne compte chaque
+    délégué qu'une fois. Les filtres ne font que restreindre le périmètre (DSH-005 CA1)."""
     from django.utils import timezone
 
+    from apps.organisation.models import Rattachement
+
+    filtres = filtres or {}
     pays = perimetre.pays_actif
     today = aujourdhui(pays)
-    debut, fin = semaine(jour or today)
+    debut, fin = bornes(pays, periode, jour, du, au)
     cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
-    debut_cycle = debut - timedelta(weeks=cycle - 1)
+    debut_cycle = min(debut, fin - timedelta(weeks=cycle) + timedelta(days=1))
     postes = postes_du_pilotage(perimetre, debut, fin)
-    pilotes = delegues_des_postes(postes, perimetre.utilisateur, debut, fin)
+    tous = delegues_des_postes(postes, perimetre.utilisateur, debut, fin)
+    pendant = Q(fin__isnull=True) | Q(fin__gt=debut)
+    rattachements = list(
+        Rattachement.objects.filter(pendant, poste_id__in={p.pk for _, p in tous},
+                                    debut__lte=fin).select_related("superviseur")
+    )  # fmt: skip
+    sup_par_poste: dict = defaultdict(set)
+    for r in rattachements:
+        sup_par_poste[r.poste_id].add(r.superviseur_id)
+    pilotes = [(d, p) for d, p in tous if _retenu(d, p, filtres, sup_par_poste)]
     lot = Lot(pays, [d for d, _ in pilotes], debut_cycle, fin)
     lignes = [
         {"delegue": delegue, "poste": poste,
@@ -385,6 +460,9 @@ def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue") 
          "cycle": lot.calculer(delegue, debut_cycle, fin)}
         for delegue, poste in pilotes
     ]  # fmt: skip
+    statut = filtres.get("statut")
+    if statut:
+        lignes = [x for x in lignes if x["semaine"]["activite"] == (statut == "actif")]
     groupes: dict = {}
     for ligne in lignes:
         for cle, libelle in _groupes_du_poste(ligne["poste"], par):
@@ -393,10 +471,12 @@ def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue") 
     return {
         "aujourdhui": today,
         "calcule_le": timezone.now(),
+        "periode": periode,
         "debut": debut,
         "fin": fin,
         "cycle": {"debut": debut_cycle, "fin": fin, "semaines": cycle},
         "par": par,
+        "options": _options(tous, rattachements),
         "delegues": lignes,
         "groupes": [
             {"id": g["id"], "libelle": g["libelle"],
@@ -415,7 +495,8 @@ def _total(lignes: list) -> dict:
     }
 
 
-def tableau_siege(perimetre, jour: date | None = None) -> dict:
+def tableau_siege(perimetre, jour: date | None = None, periode: str = "semaine", du=None,
+                  au=None) -> dict:  # fmt: skip
     """DSH-004 : la consolidation du siège, sans aucun nom : par pays (ordre alphabétique,
     aucun classement, DC-49), le nombre de délégués et les totaux de leur semaine et de leur
     cycle ; puis le total de tous les pays, tiré des sommes."""
@@ -424,11 +505,16 @@ def tableau_siege(perimetre, jour: date | None = None) -> dict:
     from apps.organisation.models import Poste
 
     reference = jour or timezone.localdate()
-    debut, fin = semaine(reference)
+    if periode == "dates":
+        debut, fin = du, au
+    elif periode == "semaine":
+        debut, fin = semaine(reference)
+    else:
+        debut, fin = reference - timedelta(days=PERIODES[periode] - 1), reference
     lignes, toutes = [], []
     for pays in perimetre.pays_accessibles:
         cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
-        debut_cycle = debut - timedelta(weeks=cycle - 1)
+        debut_cycle = min(debut, fin - timedelta(weeks=cycle) + timedelta(days=1))
         pilotes = delegues_des_postes(Poste.objects.filter(pays=pays), None, debut, fin)
         lot = Lot(pays, [d for d, _ in pilotes], debut_cycle, fin)
         semaines = [lot.calculer(d, debut, fin) for d, _ in pilotes]
@@ -442,6 +528,7 @@ def tableau_siege(perimetre, jour: date | None = None) -> dict:
         })  # fmt: skip
     return {
         "calcule_le": timezone.now(),
+        "periode": periode,
         "debut": debut,
         "fin": fin,
         "pays": lignes,

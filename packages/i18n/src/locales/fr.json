@@ -2413,6 +2413,35 @@
     "siegeIntro": "Chiffres agrégés par pays, sans aucun nom. « Voir les délégués » ouvre le détail d'un pays ; cette consultation est inscrite au journal d'audit.",
     "tableauSiege": "Indicateurs de la semaine par pays",
     "tousPays": "Tous les pays",
-    "voirDelegues": "Voir les délégués"
+    "voirDelegues": "Voir les délégués",
+    "periodeDu": "Du {{debut}} au {{fin}}",
+    "periodes": {
+      "semaine": "Semaine",
+      "30j": "30 derniers jours",
+      "90j": "90 derniers jours",
+      "6m": "6 derniers mois",
+      "1a": "12 derniers mois",
+      "dates": "Dates choisies"
+    },
+    "filtres": {
+      "periode": "Période",
+      "du": "Du",
+      "au": "Au",
+      "tous": "Tous",
+      "zone": "Zone",
+      "secteur": "Secteur",
+      "division": "Division",
+      "reseau": "Réseau",
+      "superviseur": "Superviseur",
+      "delegue": "Délégué",
+      "statut": "Activité",
+      "actif": "Avec activité",
+      "sansActivite": "Sans activité",
+      "effacer": "Effacer les filtres",
+      "bouton": "Filtres",
+      "boutonN_one": "Filtres ({{count}})",
+      "boutonN_other": "Filtres ({{count}})"
+    },
+    "notePeriode": "Taux bornés à 100 %, sans note ni classement ; délégués par ordre alphabétique. Les jours à venir ne comptent pas encore. La période dépasse un cycle de visites : la couverture se lit sur toute la période."
   }
 }

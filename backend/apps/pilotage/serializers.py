@@ -85,9 +85,41 @@ class ChoixSemaineSerializer(serializers.Serializer):
     semaine = serializers.DateField(required=False)
 
 
-class ChoixPilotageSerializer(ChoixSemaineSerializer):
+PERIODES = ["semaine", "30j", "90j", "6m", "1a", "dates"]
+
+
+class ChoixPeriodeSerializer(ChoixSemaineSerializer):
+    """§14.18, DSH-005 : la semaine (par défaut), une période glissante, ou des dates
+    choisies, d'un an au plus."""
+
+    periode = serializers.ChoiceField(choices=PERIODES, required=False, default="semaine")
+    du = serializers.DateField(required=False)
+    au = serializers.DateField(required=False)
+
+    def validate(self, attrs):
+        from django.utils.translation import gettext as _
+
+        if attrs.get("periode") == "dates":
+            du, au = attrs.get("du"), attrs.get("au")
+            if not du or not au or du > au:
+                raise serializers.ValidationError(
+                    {"du": _("Choisissez une date de début et une date de fin, dans l'ordre.")}
+                )
+            if (au - du).days > 365:
+                raise serializers.ValidationError({"au": _("Une période dure un an au plus.")})
+        return attrs
+
+
+class ChoixPilotageSerializer(ChoixPeriodeSerializer):
     par = serializers.ChoiceField(choices=["delegue", "reseau", "zone", "secteur"],
                                   required=False, default="delegue")  # fmt: skip
+    zone = serializers.UUIDField(required=False)
+    secteur = serializers.UUIDField(required=False)
+    division = serializers.UUIDField(required=False)
+    reseau = serializers.UUIDField(required=False)
+    superviseur = serializers.UUIDField(required=False)
+    delegue = serializers.UUIDField(required=False)
+    statut = serializers.ChoiceField(choices=["actif", "sans_activite"], required=False)
 
 
 class IndicateursPeriodeSerializer(serializers.Serializer):
@@ -134,6 +166,22 @@ class GroupeEquipeSerializer(serializers.Serializer):
     total = TotalEquipeSerializer()
 
 
+class OptionSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    libelle = serializers.CharField()
+
+
+class OptionsPilotageSerializer(serializers.Serializer):
+    """DSH-005 CA1 : les valeurs de filtre proposées, tirées du seul périmètre."""
+
+    zones = OptionSerializer(many=True)
+    secteurs = OptionSerializer(many=True)
+    divisions = OptionSerializer(many=True)
+    reseaux = OptionSerializer(many=True)
+    superviseurs = OptionSerializer(many=True)
+    delegues = OptionSerializer(many=True)
+
+
 class TableauEquipeSerializer(serializers.Serializer):
     """DSH-002, DSH-003, DSH-012 : les délégués pilotés côte à côte, par ordre alphabétique,
     regroupés au besoin, et les totaux tirés des sommes (DC-49 : aucun classement)."""
@@ -142,8 +190,10 @@ class TableauEquipeSerializer(serializers.Serializer):
     calcule_le = serializers.DateTimeField()
     debut = serializers.DateField()
     fin = serializers.DateField()
+    periode = serializers.ChoiceField(choices=PERIODES)
     cycle = CyclePeriodeSerializer()
     par = serializers.ChoiceField(choices=["delegue", "reseau", "zone", "secteur"])
+    options = OptionsPilotageSerializer()
     delegues = LigneEquipeSerializer(many=True)
     groupes = GroupeEquipeSerializer(many=True)
     total = TotalEquipeSerializer()
@@ -167,6 +217,7 @@ class TableauSiegeSerializer(serializers.Serializer):
     """DSH-004 : la consolidation du siège, par pays, et le total de tous les pays."""
 
     calcule_le = serializers.DateTimeField()
+    periode = serializers.ChoiceField(choices=PERIODES)
     debut = serializers.DateField()
     fin = serializers.DateField()
     pays = LignePaysSerializer(many=True)

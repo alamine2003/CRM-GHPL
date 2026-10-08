@@ -54,7 +54,8 @@ def test_dsh004_ca1_la_descente_nominative_du_siege_est_auditee(monde, semaine):
     assert [x["delegue"]["id"] for x in r.json()["delegues"]] == [str(monde["deleg.sn"].pk)]
     (e,) = EvenementAudit.objects.filter(action="pilotage.consultation_nominative")
     assert (e.acteur, e.pays.code) == (monde["ada.siege"], "SN")
-    assert e.details == {"semaine": "2026-10-12", "par": "reseau", "delegues": 1}
+    assert e.details == {"semaine": "2026-10-12", "fin": "2026-10-18", "par": "reseau",
+                         "delegues": 1, "filtres": {}}  # fmt: skip
     # Chaque consultation compte.
     lire(monde, "ada.siege", EQUIPE, "SN")
     assert EvenementAudit.objects.filter(action="pilotage.consultation_nominative").count() == 2

@@ -56,8 +56,23 @@ const TABLEAU: TableauEquipe = {
   calcule_le: '2026-10-08T12:00:00Z',
   debut: '2026-10-05',
   fin: '2026-10-11',
+  periode: 'semaine',
   cycle: { debut: '2026-09-14', fin: '2026-10-11', semaines: 4 },
   par: 'delegue',
+  options: {
+    zones: [{ id: 'z1', libelle: 'Dakar' }],
+    secteurs: [],
+    divisions: [],
+    reseaux: [
+      { id: 'r1', libelle: 'Cardio' },
+      { id: 'r2', libelle: 'Gastro' },
+    ],
+    superviseurs: [],
+    delegues: [
+      { id: 'd1', libelle: 'Aminata TOURE' },
+      { id: 'd2', libelle: 'Moussa SARR' },
+    ],
+  },
   groupes: [],
   delegues: [
     {
@@ -160,7 +175,7 @@ describe('Pilotage', () => {
       true,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Semaine précédente' }));
-    expect(equipe).toHaveBeenLastCalledWith('2026-09-28', 'delegue');
+    expect(equipe).toHaveBeenLastCalledWith({ semaine: '2026-09-28' });
   });
 
   it('DSH-003 : par réseau, une ligne de total par réseau, dépliable sur ses délégués', async () => {
@@ -174,7 +189,7 @@ describe('Pilotage', () => {
     };
     const { equipe } = rendre('/pilotage?par=reseau', parReseau);
     const tableau = await screen.findByRole('table');
-    expect(equipe).toHaveBeenLastCalledWith(undefined, 'reseau');
+    expect(equipe).toHaveBeenLastCalledWith({ par: 'reseau' });
     // En-tête, deux réseaux repliés, l'ensemble.
     expect(within(tableau).getAllByRole('row')).toHaveLength(4);
     expect(within(tableau).getByText('Réseau')).toBeTruthy();
@@ -193,6 +208,7 @@ describe('Pilotage', () => {
   it("DSH-004 : le siège voit les pays sans aucun nom, et descend au nominatif d'un pays", async () => {
     const siege: TableauSiege = {
       calcule_le: '2026-10-08T12:00:00Z',
+      periode: 'semaine',
       debut: '2026-10-05',
       fin: '2026-10-11',
       delegues: 2,
@@ -236,5 +252,24 @@ describe('Pilotage', () => {
     expect(screen.getByText('Aminata TOURE')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Tous les pays' }));
     expect(choisirPays).toHaveBeenCalledWith(null);
+  });
+
+  it('DSH-005 : la période et les filtres du périmètre passent au serveur', async () => {
+    const { equipe } = rendre('/pilotage?periode=30j&reseau=r2&statut=actif', {
+      ...TABLEAU,
+      periode: '30j',
+      debut: '2026-09-09',
+      fin: '2026-10-08',
+    });
+    await screen.findByRole('table');
+    expect(equipe).toHaveBeenLastCalledWith({ periode: '30j', reseau: 'r2', statut: 'actif' });
+    expect(screen.getAllByText('Du 9 septembre au 8 octobre').length).toBeGreaterThan(0);
+    // Hors semaine, pas de flèches de semaine.
+    expect(screen.queryByRole('button', { name: 'Semaine précédente' })).toBeNull();
+    // Une liste n'apparaît que si elle offre un choix : une seule zone, pas de liste « Zone ».
+    expect(screen.queryByLabelText('Zone')).toBeNull();
+    expect(screen.getByLabelText('Réseau')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Effacer les filtres' }));
+    expect(equipe).toHaveBeenLastCalledWith({});
   });
 });

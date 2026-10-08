@@ -12,6 +12,14 @@ from apps.planning.models import Visite
 
 from . import serializers as s
 
+#: §14.18, DSH-005 : la période du tableau.
+PARAMETRES_PERIODE = [
+    OpenApiParameter("periode", OpenApiTypes.STR, required=False,
+                     enum=["semaine", "30j", "90j", "6m", "1a", "dates"]),
+    OpenApiParameter("du", OpenApiTypes.DATE, required=False),
+    OpenApiParameter("au", OpenApiTypes.DATE, required=False),
+]  # fmt: skip
+
 
 class MesChiffresVue(VuePerimetre):
     """DSH-001 : les indicateurs du délégué connecté, sur ses propres visites ; le téléphone les
@@ -56,24 +64,32 @@ class EquipeVue(VuePerimetre):
                              description="Un jour de la semaine ; par défaut, celle-ci"),
             OpenApiParameter("par", OpenApiTypes.STR, required=False,
                              enum=["delegue", "reseau", "zone", "secteur"]),
+            *PARAMETRES_PERIODE,
+            *[OpenApiParameter(f, OpenApiTypes.UUID, required=False)
+              for f in ("zone", "secteur", "division", "reseau", "superviseur", "delegue")],
+            OpenApiParameter("statut", OpenApiTypes.STR, required=False,
+                             enum=["actif", "sans_activite"]),
         ],
         responses=s.TableauEquipeSerializer, operation_id="pilotage_equipe",
     )  # fmt: skip
     def get(self, request):
-        from .indicateurs import tableau_pilotage
+        from .indicateurs import FILTRES, tableau_pilotage
 
         choix = s.ChoixPilotageSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
         pays = pays_requis(self.perimetre)
         v = choix.validated_data
-        donnees = tableau_pilotage(self.perimetre, v.get("semaine"), v["par"])
+        filtres = {k: v[k] for k in (*FILTRES, "statut") if v.get(k)}
+        donnees = tableau_pilotage(self.perimetre, v.get("semaine"), v["par"], v["periode"],
+                                   v.get("du"), v.get("au"), filtres)  # fmt: skip
         if self.perimetre.est_siege:
             # DSH-004 CA1 : chaque consultation nominative par le siège est auditée.
             from apps.audit.services import enregistrer
 
             enregistrer("pilotage.consultation_nominative", pays=pays, details={
-                "semaine": donnees["debut"].isoformat(), "par": v["par"],
-                "delegues": len(donnees["delegues"]),
+                "semaine": donnees["debut"].isoformat(), "fin": donnees["fin"].isoformat(),
+                "par": v["par"], "delegues": len(donnees["delegues"]),
+                "filtres": {k: str(x) for k, x in filtres.items()},
             })  # fmt: skip
         return Response(s.TableauEquipeSerializer(donnees).data)
 
@@ -90,7 +106,8 @@ class SiegeVue(VuePerimetre):
 
     @extend_schema(
         parameters=[OpenApiParameter("semaine", OpenApiTypes.DATE, required=False,
-                                     description="Un jour de la semaine ; par défaut, celle-ci")],
+                                     description="Un jour de la semaine ; par défaut, celle-ci"),
+                    *PARAMETRES_PERIODE],
         responses=s.TableauSiegeSerializer, operation_id="pilotage_siege",
     )  # fmt: skip
     def get(self, request):
@@ -103,7 +120,9 @@ class SiegeVue(VuePerimetre):
         if not self.perimetre.est_siege:
             raise ErreurMetier("reserve_au_siege", _("Vue réservée au siège."),
                                status.HTTP_403_FORBIDDEN)  # fmt: skip
-        choix = s.ChoixSemaineSerializer(data=request.query_params)
+        choix = s.ChoixPeriodeSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
-        donnees = tableau_siege(self.perimetre, choix.validated_data.get("semaine"))
+        v = choix.validated_data
+        donnees = tableau_siege(self.perimetre, v.get("semaine"), v["periode"], v.get("du"),
+                                v.get("au"))  # fmt: skip
         return Response(s.TableauSiegeSerializer(donnees).data)

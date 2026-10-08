@@ -2413,6 +2413,35 @@
     "siegeIntro": "Figures aggregated by country, with no names. “See representatives” opens a country's detail; this consultation is recorded in the audit log.",
     "tableauSiege": "Weekly figures by country",
     "tousPays": "All countries",
-    "voirDelegues": "See representatives"
+    "voirDelegues": "See representatives",
+    "periodeDu": "From {{debut}} to {{fin}}",
+    "periodes": {
+      "semaine": "Week",
+      "30j": "Last 30 days",
+      "90j": "Last 90 days",
+      "6m": "Last 6 months",
+      "1a": "Last 12 months",
+      "dates": "Chosen dates"
+    },
+    "filtres": {
+      "periode": "Period",
+      "du": "From",
+      "au": "To",
+      "tous": "All",
+      "zone": "Zone",
+      "secteur": "Sector",
+      "division": "Division",
+      "reseau": "Network",
+      "superviseur": "Supervisor",
+      "delegue": "Representative",
+      "statut": "Activity",
+      "actif": "With activity",
+      "sansActivite": "No activity",
+      "effacer": "Clear filters",
+      "bouton": "Filters",
+      "boutonN_one": "Filters ({{count}})",
+      "boutonN_other": "Filters ({{count}})"
+    },
+    "notePeriode": "Rates capped at 100%, with no score or ranking; representatives in alphabetical order. Days ahead do not count yet. The period is longer than a visit cycle: coverage is read over the whole period."
   }
 }

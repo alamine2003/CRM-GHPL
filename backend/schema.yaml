@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.4
+  version: 0.7.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2543,6 +2543,26 @@ paths:
         (DSH-002 CA1).
       parameters:
       - in: query
+        name: au
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: division
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: du
+        schema:
+          type: string
+          format: date
+      - in: query
         name: par
         schema:
           type: string
@@ -2552,11 +2572,49 @@ paths:
           - secteur
           - zone
       - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1a
+          - 30j
+          - 6m
+          - 90j
+          - dates
+          - semaine
+      - in: query
+        name: reseau
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: secteur
+        schema:
+          type: string
+          format: uuid
+      - in: query
         name: semaine
         schema:
           type: string
           format: date
         description: Un jour de la semaine ; par défaut, celle-ci
+      - in: query
+        name: statut
+        schema:
+          type: string
+          enum:
+          - actif
+          - sans_activite
+      - in: query
+        name: superviseur
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: zone
+        schema:
+          type: string
+          format: uuid
       tags:
       - pilotage
       security:
@@ -2599,6 +2657,27 @@ paths:
         DSH-004 : la consolidation du siège, agrégée par pays, sans aucun nom. Réservée au
         siège ; la descente au nominatif passe par le choix d'un pays (`pilotage/equipe/`).
       parameters:
+      - in: query
+        name: au
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: du
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1a
+          - 30j
+          - 6m
+          - 90j
+          - dates
+          - semaine
       - in: query
         name: semaine
         schema:
@@ -8522,6 +8601,53 @@ components:
           format: date
       required:
       - utilisateur
+    Option:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+      required:
+      - id
+      - libelle
+    OptionsPilotage:
+      type: object
+      description: 'DSH-005 CA1 : les valeurs de filtre proposées, tirées du seul
+        périmètre.'
+      properties:
+        zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+        secteurs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+        divisions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+        reseaux:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+        superviseurs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+        delegues:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+      required:
+      - delegues
+      - divisions
+      - reseaux
+      - secteurs
+      - superviseurs
+      - zones
     Ordre:
       type: object
       properties:
@@ -8984,6 +9110,22 @@ components:
         * `journee` - Journée
         * `matin` - Matin
         * `apres_midi` - Après-midi
+    PeriodePilotageEnum:
+      enum:
+      - semaine
+      - 30j
+      - 90j
+      - 6m
+      - 1a
+      - dates
+      type: string
+      description: |-
+        * `semaine` - semaine
+        * `30j` - 30j
+        * `90j` - 90j
+        * `6m` - 6m
+        * `1a` - 1a
+        * `dates` - dates
     Personne:
       type: object
       properties:
@@ -11618,10 +11760,14 @@ components:
         fin:
           type: string
           format: date
+        periode:
+          $ref: '#/components/schemas/PeriodePilotageEnum'
         cycle:
           $ref: '#/components/schemas/CyclePeriode'
         par:
           $ref: '#/components/schemas/ParEnum'
+        options:
+          $ref: '#/components/schemas/OptionsPilotage'
         delegues:
           type: array
           items:
@@ -11640,7 +11786,9 @@ components:
       - delegues
       - fin
       - groupes
+      - options
       - par
+      - periode
       - total
     TableauSiege:
       type: object
@@ -11650,6 +11798,8 @@ components:
         calcule_le:
           type: string
           format: date-time
+        periode:
+          $ref: '#/components/schemas/PeriodePilotageEnum'
         debut:
           type: string
           format: date
@@ -11670,6 +11820,7 @@ components:
       - delegues
       - fin
       - pays
+      - periode
       - total
     Taux:
       type: object

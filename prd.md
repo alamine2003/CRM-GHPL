@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.55 Filtres et périodes du pilotage (mise en œuvre 0.7.5)
+
+- **Périodes** (§14.18, DSH-005) : la semaine (par défaut, avec ses flèches), les 30 ou 90 derniers jours, les 6 ou 12 derniers mois, ou des dates choisies (un an au plus ; elles partent de la période affichée). [D, 8 octobre 2026, délégation] Quand la période dépasse un cycle de visites, la couverture se lit sur toute la période ; sinon sur le cycle qui se termine avec elle. La comparaison à la période précédente reste celle de « Mes chiffres » (semaine) ; elle s'étendra aux autres périodes si le pilote le demande.
+- **Filtres** : zone, secteur, division, réseau, superviseur, délégué, et activité (avec ou sans activité sur la période). Le pays se choisit par le sélecteur de pays (siège, multi-pays). Les filtres se combinent et vivent dans l'adresse de la page (lien partageable).
+- **CA1** : les valeurs proposées viennent des seuls postes du périmètre (les réseaux du DM, l'équipe du superviseur…) ; un identifiant hors périmètre passé à la main ne fait que restreindre le tableau, il ne révèle rien. Une liste n'apparaît que si elle offre un vrai choix ; sur téléphone, les filtres se replient derrière « Filtres (n) ».
+- Le siège en vue consolidée choisit aussi la période ; la consultation nominative auditée garde la période et les filtres dans son événement (§14.54).
+
 ### 14.54 Consolidation du siège (mise en œuvre 0.7.4)
 
 - **Vue consolidée** (DSH-004) : le siège, sans pays choisi, ouvre « Pilotage » sur un tableau par pays (ordre alphabétique, sans classement, DC-49) : nombre de délégués, visites faites, réalisation, écarts justifiés, géolocalisées, rapports dans le délai, couverture du cycle, à suivre ; puis « Tous les pays », tiré des sommes. Aucun nom ni identifiant de délégué n'y figure.
@@ -1084,7 +1091,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | DSH-002 | Indicateurs du superviseur par délégué rattaché. | 0.7.2 | CA1 : un délégué non rattaché n'apparaît jamais. Livré en 0.7.2 (§14.52). |
 | DSH-003 | Indicateurs pays par zone, secteur, réseau ; vue DM/DF par réseau. | 0.7.3 | CA1 : les totaux d'un réseau égalent la somme de ses délégués. Livré en 0.7.3 (§14.53). |
 | DSH-004 | Consolidation siège : comparaison et total par pays, agrégés ; descente nominative auditée. | 0.7.4 | CA1 : chaque consultation nominative par le siège crée un événement d'audit. Livré en 0.7.4 (§14.54). |
-| DSH-005 | Filtres : période, pays, zone, secteur, division, réseau, superviseur, délégué, statut. | 0.7.5 | CA1 : les filtres proposés sont limités au périmètre. |
+| DSH-005 | Filtres : période, pays, zone, secteur, division, réseau, superviseur, délégué, statut. | 0.7.5 | CA1 : les filtres proposés sont limités au périmètre. Livré en 0.7.5 (§14.55). |
 | DSH-006 | Taux de réalisation et part des écarts justifiés, deux chiffres distincts (KPI-03, DC-50). | 0.7.6 | CA1 : la définition est celle de la section 5. |
 | DSH-007 | Délais de validation des plannings et rapports (KPI-02, KPI-09). | 0.7.7 | CA1 : calculés en heures ouvrées du pays. |
 | DSH-008 | Exports contrôlés et audités. | 0.7.8 | Voir RPT-019. |
