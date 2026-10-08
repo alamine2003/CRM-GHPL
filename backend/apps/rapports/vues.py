@@ -183,6 +183,34 @@ class ChronologieProspectVue(VuePerimetre):
             rapports, many=True, context={"lecteur": request.user}).data)  # fmt: skip
 
 
+class HistoriqueSynchroVue(VuePerimetre):
+    """OFF-001 (0.8.1) : en une lecture, les trois derniers rapports de chaque prospect de sa
+    liste cible, que le téléphone garde pour travailler sans réseau."""
+
+    actions = {"GET": LIRE}
+    serializer_class = s.HistoriqueSynchroSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.none())
+
+    @extend_schema(responses=s.HistoriqueSynchroSerializer, operation_id="synchro_historique")
+    def get(self, request):
+        from django.utils import timezone
+
+        from .chronologie import historique_liste_cible
+
+        contexte = {"lecteur": request.user}
+        donnees = {
+            "genere_le": timezone.now(),
+            "prospects": [
+                {"prospect": p, "rapports": s.RapportChronologieSerializer(
+                    rapports, many=True, context=contexte).data}
+                for p, rapports in historique_liste_cible(self.perimetre)
+            ],
+        }  # fmt: skip
+        return Response(donnees)
+
+
 class VisitesProposeesVue(VuePerimetre):
     """DC-61 : à la préparation de la semaine, les visites proposées dans ses rapports et pas
     encore replanifiées."""

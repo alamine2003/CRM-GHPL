@@ -2,6 +2,25 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.1] — Une semaine de travail sans réseau
+
+Premier jalon du cycle 0.8 « Mobilité ».
+
+### Ajouté (OFF-001, SEC-005, prd.md §14.60)
+
+- Synchronisation du téléphone en une passe : programme, semaines en cours et suivante, détail des visites, liste cible, trois dernières visites de chaque prospect (une seule lecture côté serveur), visites proposées, « Mes chiffres » ; tout est gardé dans la base locale chiffrée.
+- Départ automatique à la connexion et au retour dans l'application (plus de 30 minutes) ; « Synchroniser maintenant » dans le profil ; une partie qui échoue ne vide rien.
+- Profil : carte « Données hors connexion » (dernière synchronisation, ce qui est gardé).
+- Chiffrement de la base locale vérifié par un test (clé de 256 bits, magasin sécurisé, appliquée avant toute lecture).
+
+### Design
+
+Revue sur le rendu réel (délégué de la démonstration, téléphone clair et sombre, avec et sans réseau) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Profil | « 12 visites · 50 prospects · 6 historiques » : mot technique, ligne coupée au milieu | Trois lignes claires, un nombre chacune |
+
 ## [0.7.9] — Grafana, points d'attention et clôture du cycle 0.7
 
 Neuvième et dernier jalon du cycle 0.7 « Indicateurs de pilotage » : recette `recette-0.7.md`, démonstration `demonstration-0.7.md`.

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.9
+  version: 0.8.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4813,6 +4813,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/Role'
           description: ''
+  /api/v1/synchro/historique/:
+    get:
+      operationId: synchro_historique
+      description: |-
+        OFF-001 (0.8.1) : en une lecture, les trois derniers rapports de chaque prospect de sa
+        liste cible, que le téléphone garde pour travailler sans réseau.
+      tags:
+      - synchro
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoriqueSynchro'
+          description: ''
   /api/v1/utilisateurs/:
     get:
       operationId: utilisateurs_liste
@@ -7902,6 +7919,33 @@ components:
       - id
       - libelle
       - total
+    HistoriqueProspect:
+      type: object
+      description: 'OFF-001 : les derniers rapports d''un prospect de la liste cible.'
+      properties:
+        prospect:
+          type: string
+          format: uuid
+        rapports:
+          type: array
+          items:
+            $ref: '#/components/schemas/RapportChronologie'
+      required:
+      - prospect
+      - rapports
+    HistoriqueSynchro:
+      type: object
+      properties:
+        genere_le:
+          type: string
+          format: date-time
+        prospects:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoriqueProspect'
+      required:
+      - genere_le
+      - prospects
     ImportBirdNotes:
       type: object
       properties:

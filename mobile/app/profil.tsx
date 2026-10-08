@@ -7,6 +7,7 @@ import { identifiantInstallation } from '../src/appareil';
 import { Bouton, Carte, Ligne, Texte, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
+import { CarteSynchro } from '../src/Synchronisation';
 import { useSession } from '../src/session';
 import { VERSION_APP } from '../src/version';
 
@@ -38,6 +39,8 @@ export default function Profil() {
           derniere
         />
       </Carte>
+
+      <CarteSynchro />
 
       <Carte>
         <Texte variante="sousTitre" style={{ marginBottom: 10 }}>

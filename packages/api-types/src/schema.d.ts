@@ -2725,6 +2725,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/synchro/historique/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description OFF-001 (0.8.1) : en une lecture, les trois derniers rapports de chaque prospect de sa
+     *     liste cible, que le téléphone garde pour travailler sans réseau.
+     */
+    get: operations['synchro_historique'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/utilisateurs/': {
     parameters: {
       query?: never;
@@ -4038,6 +4058,17 @@ export interface components {
       libelle: string;
       delegues: string[];
       total: components['schemas']['TotalEquipe'];
+    };
+    /** @description OFF-001 : les derniers rapports d'un prospect de la liste cible. */
+    HistoriqueProspect: {
+      /** Format: uuid */
+      prospect: string;
+      rapports: components['schemas']['RapportChronologie'][];
+    };
+    HistoriqueSynchro: {
+      /** Format: date-time */
+      genere_le: string;
+      prospects: components['schemas']['HistoriqueProspect'][];
     };
     ImportBirdNotes: {
       /** Format: uri */
@@ -10468,6 +10499,25 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Role'];
+        };
+      };
+    };
+  };
+  synchro_historique: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HistoriqueSynchro'];
         };
       };
     };

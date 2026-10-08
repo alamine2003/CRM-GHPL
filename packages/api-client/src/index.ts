@@ -37,6 +37,7 @@ import type {
   TableauEquipe,
   TableauSiege,
   Prescription,
+  HistoriqueSynchro,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -191,6 +192,7 @@ export type {
   TableauEquipe,
   TableauSiege,
   Prescription,
+  HistoriqueSynchro,
   TendanceProduit,
   PointAttention,
   Objectifs,
@@ -1003,6 +1005,8 @@ export function creerClient(options: OptionsClient) {
         }),
       /** DC-61 : les visites proposées dans ses rapports, pas encore replanifiées. */
       visitesProposees: () => requete<VisiteProposee[]>('/api/v1/rapports/visites-proposees/'),
+      /** OFF-001 : en une lecture, l'historique de la liste cible gardé sur le téléphone. */
+      historique: () => requete<HistoriqueSynchro>('/api/v1/synchro/historique/'),
       champs: () => requete<ChampRapport[]>('/api/v1/rapports/champs/'),
       creerChamp: (saisie: SaisieChamp) =>
         requete<ChampRapport>('/api/v1/rapports/champs/', { methode: 'POST', corps: saisie }),

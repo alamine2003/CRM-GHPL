@@ -2557,5 +2557,19 @@
     },
     "sansPortefeuille": "This network has no product in its portfolio.",
     "note": "The vertical line marks what is expected by today. Visits and presentations count those of the representatives in the network's positions over the period."
+  },
+  "synchro": {
+    "titre": "Offline data",
+    "aide": "The phone keeps your week, the next one, your target list and the last three visits to each prospect: you can work without a network.",
+    "derniere": "Last sync",
+    "incomplete": "Incomplete",
+    "echecs_one": "{{count}} item not read, kept as before",
+    "echecs_other": "{{count}} items not read, kept as before",
+    "jamais": "Not synced on this phone yet.",
+    "sansReseau": "No network: your saved data remains usable. Try again later.",
+    "maintenant": "Sync now",
+    "visites": "Visits this week and next",
+    "prospects": "Prospects on the target list",
+    "historiques": "Prospects with their last visits"
   }
 }

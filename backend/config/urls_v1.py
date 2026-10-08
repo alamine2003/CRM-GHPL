@@ -262,6 +262,8 @@ urlpatterns = [
         rap.VisitesProposeesVue.as_view(),
         name="visites-proposees",
     ),
+    # OFF-001 : historique de la liste cible, en une lecture, pour le téléphone
+    path("synchro/historique/", rap.HistoriqueSynchroVue.as_view(), name="synchro-historique"),
     path("rapports/champs/<uuid:id>/", rap.ChampRapportVue.as_view(), name="champ-rapport"),
     path(
         "rapports/champs/<uuid:id>/archiver/",

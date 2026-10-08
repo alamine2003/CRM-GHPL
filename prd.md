@@ -704,6 +704,14 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.60 Données du téléphone pour une semaine sans réseau (mise en œuvre 0.8.1)
+
+- **Synchronisation** (OFF-001) : en une passe, le téléphone garde dans sa base locale chiffrée le programme de la semaine, le détail de chaque visite de la semaine et de la suivante, la semaine en cours et la suivante, la liste cible (fiches, établissements, exercices), les trois dernières visites de chaque prospect de la liste (« Préparer ma visite », en une seule lecture), les visites proposées et « Mes chiffres ». Chaque écran relit ces données quand le réseau manque.
+- [D, 8 octobre 2026, délégation] La synchronisation part d'elle-même à la connexion et au retour dans l'application quand la dernière date de plus de 30 minutes ; « Synchroniser maintenant » la relance depuis le profil. Une partie qui échoue ne vide rien de ce qui était gardé : elle est comptée (« Incomplète ») et la passe continue. Sans réseau, le profil le dit et les données gardées restent utilisables.
+- Le profil montre « Données hors connexion » : l'heure de la dernière synchronisation, le nombre de visites de la semaine et de la suivante, de prospects de la liste cible et de prospects avec leurs dernières visites.
+- **CA1** : après une synchronisation, la semaine et la suivante se travaillent en mode avion (programme, détails, fiches, historique) ; les envois faits sans réseau restent dans la file d'attente (0.2.7), la file complète et sa limite de 7 jours arrivent en 0.8.3.
+- **Chiffrement** (SEC-005) : la base locale est chiffrée par SQLCipher ; sa clé de 256 bits, tirée au hasard une fois, reste dans le magasin sécurisé du téléphone (Keychain, Keystore), limitée à cet appareil déverrouillé, et s'applique avant toute lecture (CA1).
+
 ### 14.59 Grafana, fraîcheur, tendance de prescription et points d'attention (mise en œuvre 0.7.9)
 
 - **Grafana isolé** (DSH-010) : Grafana ne lit que le schéma `pilotage`, des agrégats par pays, jour et réseau tirés du même moteur que le portail, sans nom de délégué ni texte libre (CA3). Chaque pays a son rôle de base de données, qui ne lit que les vues de son pays (CA1) ; le siège a le sien, qui ne lit que l'agrégat par pays (CA2). Aucun de ces rôles n'atteint les tables métier. Mise en place, comptes et mots de passe : `docs/grafana.md` ; rien de secret dans le dépôt.
@@ -1136,7 +1144,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 
 | ID | Exigence | Version | Critères d'acceptation |
 |---|---|---|---|
-| OFF-001 | Données locales : planning de la semaine, liste cible (fiches, établissements, exercices), portefeuilles, motifs, paramètres utiles, brouillons et rapports, historique des 3 dernières visites par prospect. | 0.8.1 | CA1 : après une synchronisation, 7 jours de travail sont possibles en mode avion. |
+| OFF-001 | Données locales : planning de la semaine, liste cible (fiches, établissements, exercices), portefeuilles, motifs, paramètres utiles, brouillons et rapports, historique des 3 dernières visites par prospect. | 0.8.1 | CA1 : après une synchronisation, 7 jours de travail sont possibles en mode avion. Livré en 0.8.1 (§14.60). |
 | OFF-002 | Création et modification hors connexion des visites, rapports, absences et prospects. | 0.8.2 | CA1 : chaque objet créé hors connexion a un identifiant unique généré sur le téléphone. |
 | OFF-003 | File d'attente locale visible ; reprise automatique au retour du réseau. | 0.8.3 | CA1 : l'état « n éléments en attente » et l'heure de dernière synchronisation sont toujours visibles. CA2 : une coupure pendant l'envoi ne crée aucun doublon. |
 | OFF-004 | Détection et résolution des conflits sans perte silencieuse (`RG-050` à `RG-054`). | 0.8.4 | CA1 : une décision du superviseur n'est jamais écrasée par une donnée locale. CA2 : un conflit est présenté au délégué avec les deux versions. |
@@ -1152,7 +1160,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | SEC-002 | Verrouillage temporaire après 5 échecs consécutifs (15 minutes), alerte à l'utilisateur. | 0.0.3 | CA1 : le 6ᵉ essai est refusé même avec le bon mot de passe pendant 15 minutes. |
 | SEC-003 | Double authentification (code à usage unique par application) **obligatoire** pour `admin_siege`, `direction_siege`, `responsable_pays`, `admin_pays`, `df`, `dm` ; facultative pour les autres. | 0.0.8 | CA1 : un compte de ces rôles ne peut pas accéder aux données sans l'avoir activée. |
 | SEC-004 | Sessions : expiration après inactivité (portail : 30 minutes ; mobile : verrouillage local par code ou biométrie après le délai du pays, 15 minutes par défaut, de 5 à 30, DC-59) ; révocation à distance. | 0.0.8 | CA1 : une session révoquée échoue à l'appel suivant. |
-| SEC-005 | Données mobiles chiffrées au repos ; clé protégée par le magasin sécurisé du téléphone. | 0.8.1 | CA1 : la base locale extraite du téléphone est illisible sans la clé. |
+| SEC-005 | Données mobiles chiffrées au repos ; clé protégée par le magasin sécurisé du téléphone. | 0.8.1 | CA1 : la base locale extraite du téléphone est illisible sans la clé. Livré en 0.8.1 (§14.60). |
 | SEC-006 | Effacement à distance : un compte ou appareil désactivé efface les données locales à la connexion suivante. | 0.8.3 | CA1 : après révocation, l'application efface ses données et revient à l'écran de connexion. |
 | SEC-007 | Communications chiffrées (TLS 1.2+) ; aucun secret dans le code. | 0.0.1 | CA1 : l'analyse de secrets de la CI ne trouve rien. |
 | SEC-008 | Isolation par pays vérifiée par des tests automatisés, y compris recherche, export, pièces jointes, notifications et Grafana. | 0.9.1 | CA1 : la suite d'isolation passe à 100 % avant chaque livraison. |

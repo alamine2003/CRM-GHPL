@@ -67,3 +67,38 @@ def visites_proposees(delegue) -> QuerySet:
         .distinct("visite__prospect_id")
     )
     return sorted(rapports, key=lambda r: r.visite.date, reverse=True)
+
+
+#: OFF-001 : rapports gardés sur le téléphone par prospect de la liste cible.
+HISTORIQUE = 3
+
+
+def historique_liste_cible(perimetre: Perimetre) -> list[tuple]:
+    """OFF-001 (0.8.1) : pour chaque prospect de la liste cible des postes occupés, ses
+    `HISTORIQUE` derniers rapports lisibles (pour le délégué, les siens, RPT-011 CA1), en une
+    seule lecture : `[(prospect_id, [rapports…])]`."""
+    from collections import defaultdict
+
+    from apps.prospects.ciblage import postes_occupes
+    from apps.prospects.models import Cible
+
+    pays = perimetre.pays_actif
+    if pays is None:
+        return []
+    postes = postes_occupes(perimetre.utilisateur, pays)
+    prospects = list(
+        Cible.objects.filter(fin__isnull=True, poste__in=postes, prospect__archive_le__isnull=True)
+        .values_list("prospect_id", flat=True)
+        .distinct()
+    )
+    par_prospect: dict = defaultdict(list)
+    for r in (
+        rapports_visibles(perimetre)
+        .filter(visite__prospect_id__in=prospects)
+        .select_related("visite", "delegue", "resultat", "prochaine_action_type")
+        .order_by("visite__prospect_id", "-visite__date", "-visite__heure")
+    ):
+        liste = par_prospect[r.visite.prospect_id]
+        if len(liste) < HISTORIQUE:
+            liste.append(r)
+    return [(p, par_prospect[p]) for p in prospects if par_prospect[p]]

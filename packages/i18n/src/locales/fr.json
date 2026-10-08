@@ -2557,5 +2557,19 @@
     },
     "sansPortefeuille": "Ce réseau n'a pas de produit dans son portefeuille.",
     "note": "Le trait vertical marque ce qui est attendu à ce jour. Les visites et présentations comptent celles des délégués des postes du réseau sur la période."
+  },
+  "synchro": {
+    "titre": "Données hors connexion",
+    "aide": "Le téléphone garde votre semaine, la suivante, votre liste cible et les trois dernières visites de chaque prospect : vous pouvez travailler sans réseau.",
+    "derniere": "Dernière synchronisation",
+    "incomplete": "Incomplète",
+    "echecs_one": "{{count}} élément non lu, gardé tel qu'avant",
+    "echecs_other": "{{count}} éléments non lus, gardés tels qu'avant",
+    "jamais": "Pas encore synchronisé sur ce téléphone.",
+    "sansReseau": "Pas de réseau : vos données gardées restent utilisables. Réessayez plus tard.",
+    "maintenant": "Synchroniser maintenant",
+    "visites": "Visites de la semaine et de la suivante",
+    "prospects": "Prospects de la liste cible",
+    "historiques": "Prospects avec leurs dernières visites"
   }
 }

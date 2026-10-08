@@ -5,6 +5,7 @@ import { LimiteErreur } from '../src/Erreurs';
 import { FournisseurSession } from '../src/FournisseurSession';
 import '../src/i18n';
 import { POLICES } from '../src/polices';
+import { SynchroAuto } from '../src/Synchronisation';
 import { Verrou } from '../src/Verrou';
 
 export default function Disposition() {
@@ -17,6 +18,7 @@ export default function Disposition() {
       <FournisseurSession>
         <StatusBar style="light" />
         <Verrou>
+          <SynchroAuto />
           <Stack screenOptions={{ headerShown: false }} />
         </Verrou>
       </FournisseurSession>

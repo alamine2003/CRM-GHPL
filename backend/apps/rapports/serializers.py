@@ -327,3 +327,15 @@ class SoumissionRapportSerializer(serializers.Serializer):
 
 
 STATUTS_RAPPORT_VISITE = [("attendu", "Rapport attendu"), *StatutRapport.choices]
+
+
+class HistoriqueProspectSerializer(serializers.Serializer):
+    """OFF-001 : les derniers rapports d'un prospect de la liste cible."""
+
+    prospect = serializers.UUIDField()
+    rapports = RapportChronologieSerializer(many=True)
+
+
+class HistoriqueSynchroSerializer(serializers.Serializer):
+    genere_le = serializers.DateTimeField()
+    prospects = HistoriqueProspectSerializer(many=True)
