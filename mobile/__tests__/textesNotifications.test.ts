@@ -69,3 +69,18 @@ test('RPT-016 : la réouverture ouvre le rapport à reprendre', () => {
   );
   expect(visiteDeNotification(n)).toBe('v1');
 });
+
+test('0.6.8, 37.A : le rappel de 18 h et les rapports validés se lisent au téléphone', () => {
+  const rappel = {
+    id: 'n3',
+    type: 'rappel_rapport',
+    donnees: { date: '2026-10-13', nombre: 2 },
+    cree_le: '2026-10-13T18:00:00Z',
+    lue_le: null,
+  } as Notification;
+  expect(texteNotification(rappel, i18n.t, 'fr')).toBe(
+    '2 rapports du jour à soumettre avant minuit',
+  );
+  const valides = { ...rappel, type: 'rapports_valides', donnees: { nombre: 1 } } as Notification;
+  expect(texteNotification(valides, i18n.t, 'fr')).toBe('1 rapport validé');
+});

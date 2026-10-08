@@ -14,5 +14,7 @@ class Command(BaseCommand):
         bilan = executer()
         self.stdout.write(
             f"{bilan['rappels']} rappel(s), {bilan['escalades']} escalade(s), "
-            f"{bilan['alertes']} alerte(s), {bilan['rapports']} rapport(s) en retard signalé(s)."
+            f"{bilan['alertes']} alerte(s), {bilan['rapports']} rapport(s) en retard signalé(s), "
+            f"{bilan['rappels_rapport']} rappel(s) de rapport, "
+            f"{bilan['journees_escaladees']} journée(s) escaladée(s)."
         )

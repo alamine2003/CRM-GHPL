@@ -704,6 +704,15 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.49 Notifications du workflow de rapport (mise en œuvre 0.6.8)
+
+- **Rapports soumis** (§18) : le superviseur responsable reçoit « n rapports à valider » ; les soumissions d'un même jour s'ajoutent à la notification tant qu'elle n'est pas lue (NOT-003, au centre ; le push arrive en 0.8.5). Elle ouvre « À traiter ».
+- **Rapports validés** (§18) : le délégué reçoit « n rapports validés », regroupés de la même façon.
+- **Rappel de 18 h** (NOT-006) : [D, 8 octobre 2026, 37.A] à 18 h, heure du pays, le jour de la visite, le délégué dont un rapport du jour n'est pas soumis reçoit « Rapport de la visite du jour à soumettre avant minuit » (ou « n rapports du jour… »), une fois par jour.
+- **Escalade d'une journée** : [D, 8 octobre 2026, 38.A] quand une journée passe au DM du périmètre (un rapport soumis attend depuis plus de 24 heures ouvrées, 25.A), chaque DM reçoit une notification par journée (« Aminata Touré, journée du 6 octobre : à valider par escalade ») qui ouvre la journée.
+- Les rappels, alertes et escalades partent avec la tâche périodique (`executer_echeances`). [H] Comme les alertes de retard, l'escalade n'est notifiée que pour les journées des 7 derniers jours : pas d'avalanche à la mise en service.
+- Correction demandée, réouverture et rapport corrigé sont notifiés depuis 0.6.4 à 0.6.6.
+
 ### 14.48 Rapports en retard (mise en œuvre 0.6.7)
 
 - **Onglet « Retards »** (RPT-017) : [D, 8 octobre 2026, 35.A] dans « À traiter », à côté de « Journées », avec leur nombre (« Retards (2) »). Il liste :

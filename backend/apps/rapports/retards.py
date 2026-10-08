@@ -124,3 +124,71 @@ def alertes(pays, maintenant: datetime) -> int:
                                  nombre=len(en_retard), nom=nom):  # fmt: skip
                 nombre += 1
     return nombre
+
+
+#: NOT-006, 37.A : le rappel au délégué part à 18 h, heure du pays, le jour de la visite.
+HEURE_RAPPEL = 18
+
+
+def rappels(pays, maintenant: datetime) -> int:
+    """37.A : à 18 h le jour de la visite, le délégué dont un rapport du jour n'est pas soumis
+    reçoit un rappel (« à soumettre avant minuit »), une fois par jour."""
+    from zoneinfo import ZoneInfo
+
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier_une_fois
+
+    local = maintenant.astimezone(ZoneInfo(pays.fuseau))
+    if local.hour < HEURE_RAPPEL:
+        return 0
+    jour = local.date()
+    par_delegue: dict = {}
+    visites = (
+        Visite.objects.filter(pays=pays, archive_le__isnull=True, statut=StatutVisite.EFFECTUEE,
+                              date=jour, planning__statut__in=EXECUTES)
+        .filter(NON_SOUMIS)
+        .select_related("planning__delegue")
+    )  # fmt: skip
+    for v in visites:
+        par_delegue.setdefault(v.planning.delegue, []).append(v)
+    envoyes = 0
+    for delegue, en_attente in par_delegue.items():
+        cle = f"rappel-rapport:{jour.isoformat()}"
+        envoye = notifier_une_fois(delegue, TypeNotification.RAPPEL_RAPPORT, pays, cle,
+                                   date=jour.isoformat(), nombre=len(en_attente))  # fmt: skip
+        envoyes += envoye is not None
+    return envoyes
+
+
+def escalades(pays, maintenant: datetime) -> int:
+    """38.A : quand une journée passe au DM du périmètre (un rapport soumis attend depuis plus
+    que le délai d'escalade), chaque DM est prévenu une fois, par journée."""
+    from apps.identite.models import Utilisateur
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier_une_fois
+    from apps.planning.echeances import dms_du_planning
+
+    from .models import Rapport
+    from .validation import en_escalade
+
+    # [H] Comme les alertes : pas d'avalanche pour des journées anciennes (mise en service).
+    depuis = (maintenant - FENETRE_ALERTE).date()
+    jours = (
+        Rapport.objects.filter(pays=pays, statut=StatutRapport.SOUMIS,
+                               visite__archive_le__isnull=True, visite__date__gte=depuis)
+        .values_list("visite__planning", "visite__date")
+        .distinct()
+    )  # fmt: skip
+    envoyes = 0
+    for planning_id, jour in jours:
+        planning = Planning.objects.select_related("delegue", "pays").get(pk=planning_id)
+        if not en_escalade(planning, jour, maintenant):
+            continue
+        delegue = planning.delegue
+        nom = f"{delegue.first_name} {delegue.last_name}".strip()
+        for dm in Utilisateur.objects.filter(pk__in=dms_du_planning(planning, jour)):
+            envoyes += notifier_une_fois(dm, TypeNotification.JOURNEE_ESCALADEE, pays,
+                                         f"escalade-journee:{planning.pk}:{jour.isoformat()}",
+                                         delegue=str(delegue.pk), date=jour.isoformat(),
+                                         nom=nom) is not None  # fmt: skip
+    return envoyes

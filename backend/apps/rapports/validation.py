@@ -144,7 +144,19 @@ def _valider(rapport: Rapport, par, mode: str) -> Rapport:
     rapport.save(update_fields=["statut", "valide_le", "valide_par", "mode_validation",
                                 "modifie_le"])  # fmt: skip
     _auditer("rapport.validation", rapport, mode=mode, visite=str(rapport.visite_id))
+    _prevenir_validation(rapport)
     return rapport
+
+
+def _prevenir_validation(rapport: Rapport) -> None:
+    """prd.md §18 (0.6.8) : « n rapports validés » au délégué, regroupés par jour."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier_regroupe
+    from apps.socle.services import aujourdhui
+
+    jour = aujourdhui(rapport.pays).isoformat()
+    notifier_regroupe(rapport.delegue, TypeNotification.RAPPORTS_VALIDES, rapport.pays,
+                      f"valides:{jour}")  # fmt: skip
 
 
 def _figer_si_complete(planning: Planning, jour: date) -> bool:

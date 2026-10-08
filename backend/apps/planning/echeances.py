@@ -226,9 +226,10 @@ def avancer_plannings(pays: Pays, maintenant: datetime) -> int:
 def executer(maintenant: datetime | None = None) -> dict:
     """Une passe sur chaque pays, chacun dans sa transaction et son isolation (ADR-003)."""
     maintenant = maintenant or timezone.now()
-    from apps.rapports.retards import alertes as alertes_rapports
+    from apps.rapports import retards
 
-    bilan = {"rappels": 0, "escalades": 0, "alertes": 0, "plannings": 0, "rapports": 0}
+    bilan = {"rappels": 0, "escalades": 0, "alertes": 0, "plannings": 0, "rapports": 0,
+             "rappels_rapport": 0, "journees_escaladees": 0}  # fmt: skip
     for pays in Pays.objects.filter(statut=Pays.Statut.ACTIF):
         with transaction.atomic():
             with connection.cursor() as curseur:
@@ -237,5 +238,7 @@ def executer(maintenant: datetime | None = None) -> dict:
             bilan["escalades"] += escalades(pays, maintenant)
             bilan["alertes"] += alertes_non_approuves(pays, maintenant)
             bilan["plannings"] += avancer_plannings(pays, maintenant)
-            bilan["rapports"] += alertes_rapports(pays, maintenant)
+            bilan["rapports"] += retards.alertes(pays, maintenant)
+            bilan["rappels_rapport"] += retards.rappels(pays, maintenant)
+            bilan["journees_escaladees"] += retards.escalades(pays, maintenant)
     return bilan

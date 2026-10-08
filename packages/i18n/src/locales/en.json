@@ -1699,7 +1699,14 @@
     "rapport_rouvert": "{{nom}} reopened your report of {{jour}}",
     "rapport_rouvert_suivi": "{{nom}} reopened an approved report of {{jour}}",
     "rapport_en_retard_one": "{{nom}}: report of {{jour}} still not submitted, 48 h after the visit",
-    "rapport_en_retard_other": "{{nom}}: {{count}} reports of {{jour}} still not submitted, 48 h after the visits"
+    "rapport_en_retard_other": "{{nom}}: {{count}} reports of {{jour}} still not submitted, 48 h after the visits",
+    "rapports_soumis_one": "{{count}} report to approve",
+    "rapports_soumis_other": "{{count}} reports to approve",
+    "rapports_valides_one": "{{count}} report approved",
+    "rapports_valides_other": "{{count}} reports approved",
+    "rappel_rapport_one": "Today's visit report to submit before midnight",
+    "rappel_rapport_other": "{{count}} of today's reports to submit before midnight",
+    "journee_escaladee": "{{nom}}, day of {{jour}}: to approve by escalation"
   },
   "revision": {
     "demander": "Request a revision",

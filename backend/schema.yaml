@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.6.7
+  version: 0.6.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -8088,6 +8088,10 @@ components:
       - rapport_corrige
       - rapport_rouvert
       - rapport_en_retard
+      - rapports_soumis
+      - rapports_valides
+      - rappel_rapport
+      - journee_escaladee
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
@@ -8103,6 +8107,10 @@ components:
         * `rapport_corrige` - Rapport corrigé
         * `rapport_rouvert` - Rapport rouvert
         * `rapport_en_retard` - Rapport en retard
+        * `rapports_soumis` - Rapports soumis
+        * `rapports_valides` - Rapports validés
+        * `rappel_rapport` - Rapport à soumettre
+        * `journee_escaladee` - Journée escaladée
     NullEnum:
       enum:
       - null

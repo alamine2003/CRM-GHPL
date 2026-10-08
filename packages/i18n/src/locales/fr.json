@@ -1699,7 +1699,14 @@
     "rapport_rouvert": "{{nom}} a rouvert votre rapport du {{jour}}",
     "rapport_rouvert_suivi": "{{nom}} a rouvert un rapport validé du {{jour}}",
     "rapport_en_retard_one": "{{nom}} : rapport du {{jour}} toujours pas soumis, 48 h après la visite",
-    "rapport_en_retard_other": "{{nom}} : {{count}} rapports du {{jour}} toujours pas soumis, 48 h après les visites"
+    "rapport_en_retard_other": "{{nom}} : {{count}} rapports du {{jour}} toujours pas soumis, 48 h après les visites",
+    "rapports_soumis_one": "{{count}} rapport à valider",
+    "rapports_soumis_other": "{{count}} rapports à valider",
+    "rapports_valides_one": "{{count}} rapport validé",
+    "rapports_valides_other": "{{count}} rapports validés",
+    "rappel_rapport_one": "Rapport de la visite du jour à soumettre avant minuit",
+    "rappel_rapport_other": "{{count}} rapports du jour à soumettre avant minuit",
+    "journee_escaladee": "{{nom}}, journée du {{jour}} : à valider par escalade"
   },
   "revision": {
     "demander": "Demander une révision",

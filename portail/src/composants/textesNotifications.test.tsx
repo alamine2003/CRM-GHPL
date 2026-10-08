@@ -79,3 +79,21 @@ describe('RPT-017, 34.A : rapport en retard', () => {
     expect(destination(n)).toBe('/a-traiter?onglet=retards&delegue=d1');
   });
 });
+
+describe('0.6.8 : notifications du workflow de rapport', () => {
+  it('rapports soumis et journée escaladée : textes et destinations', () => {
+    const t = i18n.t.bind(i18n);
+    const soumis = notif('rapports_soumis', { nombre: 3 });
+    expect(texteNotification(soumis, t, 'fr')).toBe('3 rapports à valider');
+    expect(destination(soumis)).toBe('/a-traiter');
+    const escalade = notif('journee_escaladee', {
+      delegue: 'd1',
+      date: '2026-10-13',
+      nom: 'Awa FICTIVE',
+    });
+    expect(texteNotification(escalade, t, 'fr')).toBe(
+      'Awa FICTIVE, journée du 13 octobre : à valider par escalade',
+    );
+    expect(destination(escalade)).toBe('/a-traiter/d1/2026-10-13');
+  });
+});

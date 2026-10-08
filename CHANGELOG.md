@@ -2,6 +2,24 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.8] — Notifications du workflow de rapport
+
+Huitième jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté (prd.md §18, NOT-003, NOT-006)
+
+- « n rapports à valider » au superviseur et « n rapports validés » au délégué, regroupés par jour tant que la notification n'est pas lue.
+- Décision 37.A : rappel au délégué à 18 h le jour de la visite si un rapport du jour n'est pas soumis.
+- Décision 38.A : une notification par journée escaladée au DM du périmètre, qui ouvre la journée.
+
+### Design
+
+Revue sur le rendu réel (centre de notifications du portail) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Notifications du DM | À la mise en service, 32 journées anciennes lui étaient escaladées d'un coup. | Seules les journées des 7 derniers jours sont notifiées, comme les alertes de retard. |
+
 ## [0.6.7] — Rapports en retard
 
 Septième jalon du cycle 0.6 « Validation des rapports ».

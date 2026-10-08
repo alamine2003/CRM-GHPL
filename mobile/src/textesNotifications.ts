@@ -59,6 +59,7 @@ export function iconeNotification(
     case 'remplacement_attribue':
       return { nom: 'swap-horiz', couleur: p.info };
     case 'rappel_planning':
+    case 'rappel_rapport':
       return { nom: 'schedule', couleur: p.attention };
     case 'escalade':
       return { nom: 'notification-important', couleur: p.erreur };

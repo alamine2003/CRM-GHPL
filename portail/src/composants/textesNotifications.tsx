@@ -27,6 +27,10 @@ export const ICONES: Record<Notification['type'], ReactNode> = {
   rapport_corrige: <FactCheckRounded color="primary" fontSize="small" />,
   rapport_rouvert: <LockOpenRounded color="warning" fontSize="small" />,
   rapport_en_retard: <ScheduleRounded color="warning" fontSize="small" />,
+  rapports_soumis: <AssignmentTurnedInRounded color="primary" fontSize="small" />,
+  rapports_valides: <CheckCircleRounded color="success" fontSize="small" />,
+  rappel_rapport: <ScheduleRounded color="warning" fontSize="small" />,
+  journee_escaladee: <NotificationImportantRounded color="error" fontSize="small" />,
 };
 
 /** Texte d'une notification, composé dans la langue de l'utilisateur (prd.md §18). */
@@ -76,8 +80,12 @@ export function destination(n: Notification) {
   if (n.type === 'rapport_en_retard')
     return `/a-traiter?onglet=retards${n.donnees.delegue ? `&delegue=${n.donnees.delegue}` : ''}`;
   // RPT-015, 28.A : le rapport corrigé se relit dans sa journée.
+  // 0.6.8 : les rapports à valider attendent dans « À traiter ».
+  if (n.type === 'rapports_soumis') return '/a-traiter';
   if (
-    (n.type === 'rapport_corrige' || n.type === 'rapport_rouvert') &&
+    (n.type === 'rapport_corrige' ||
+      n.type === 'rapport_rouvert' ||
+      n.type === 'journee_escaladee') &&
     n.donnees.delegue &&
     n.donnees.date
   )

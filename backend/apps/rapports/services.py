@@ -512,7 +512,24 @@ def soumettre(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None 
              horodatage_douteux=douteux)  # fmt: skip
     if repond_a and demandeur is not None:
         _prevenir_correction_faite(rapport, demandeur)
+    elif premiere:
+        _prevenir_soumission(rapport)
     return rapport
+
+
+def _prevenir_soumission(rapport: Rapport) -> None:
+    """prd.md §18 (0.6.8) : « n rapports à valider », un compteur par jour et par superviseur
+    responsable, plutôt qu'une notification par rapport."""
+    from apps.identite.models import Utilisateur
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier_regroupe
+    from apps.planning.services import responsables
+    from apps.socle.services import aujourdhui
+
+    jour = aujourdhui(rapport.pays).isoformat()
+    for sup in Utilisateur.objects.filter(pk__in=responsables(rapport.visite.planning)):
+        notifier_regroupe(sup, TypeNotification.RAPPORTS_SOUMIS, rapport.pays,
+                          f"soumis:{jour}")  # fmt: skip
 
 
 def _correction_figee(rapport: Rapport) -> dict | None:

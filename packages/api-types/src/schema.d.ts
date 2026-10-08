@@ -4159,6 +4159,10 @@ export interface components {
      *     * `rapport_corrige` - Rapport corrigé
      *     * `rapport_rouvert` - Rapport rouvert
      *     * `rapport_en_retard` - Rapport en retard
+     *     * `rapports_soumis` - Rapports soumis
+     *     * `rapports_valides` - Rapports validés
+     *     * `rappel_rapport` - Rapport à soumettre
+     *     * `journee_escaladee` - Journée escaladée
      * @enum {string}
      */
     NotificationTypeEnum:
@@ -4174,7 +4178,11 @@ export interface components {
       | 'correction_demandee'
       | 'rapport_corrige'
       | 'rapport_rouvert'
-      | 'rapport_en_retard';
+      | 'rapport_en_retard'
+      | 'rapports_soumis'
+      | 'rapports_valides'
+      | 'rappel_rapport'
+      | 'journee_escaladee';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
