@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.54 Consolidation du siège (mise en œuvre 0.7.4)
+
+- **Vue consolidée** (DSH-004) : le siège, sans pays choisi, ouvre « Pilotage » sur un tableau par pays (ordre alphabétique, sans classement, DC-49) : nombre de délégués, visites faites, réalisation, écarts justifiés, géolocalisées, rapports dans le délai, couverture du cycle, à suivre ; puis « Tous les pays », tiré des sommes. Aucun nom ni identifiant de délégué n'y figure.
+- **Descente nominative** : « Voir les délégués » choisit le pays et ouvre le tableau par délégué de ce pays, avec ses regroupements (§14.53). Un bandeau le rappelle ; « Tous les pays » ramène à la vue consolidée.
+- **CA1** : chaque consultation nominative par le siège (chaque chargement du tableau d'un pays) crée l'événement d'audit `pilotage.consultation_nominative` : qui, quand, quel pays, quelle semaine, quel regroupement, combien de délégués. La vue agrégée n'en crée pas. L'encadrement du pays consulte son périmètre sans événement.
+- La semaine de référence est celle du jour du serveur ; chaque pays garde sa propre durée de cycle pour la couverture.
+
 ### 14.53 Pilotage du DM, du DF et du pays (mise en œuvre 0.7.3)
 
 - **Qui voit quoi** (DSH-003) : la page « Pilotage » s'ouvre au DM et au DF pour les postes des réseaux de leur périmètre (et, pour le DM, les postes qui lui sont rattachés, RG-023), au responsable pays pour tout le pays ; le superviseur garde les postes qui lui sont rattachés. Le périmètre est celui de la semaine affichée. [D, 8 octobre 2026, délégation] L'administrateur pays n'y a pas accès : il administre, il ne pilote pas l'activité (comme pour la lecture des rapports, DC-62).
@@ -1076,7 +1083,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | DSH-001 | Indicateurs du délégué : visites prévues/réalisées, couverture, rapports validés, retards. | 0.7.1 | CA1 : disponibles hors connexion pour la semaine en cours (dernière synchronisation affichée). Livré en 0.7.1 (§14.51). |
 | DSH-002 | Indicateurs du superviseur par délégué rattaché. | 0.7.2 | CA1 : un délégué non rattaché n'apparaît jamais. Livré en 0.7.2 (§14.52). |
 | DSH-003 | Indicateurs pays par zone, secteur, réseau ; vue DM/DF par réseau. | 0.7.3 | CA1 : les totaux d'un réseau égalent la somme de ses délégués. Livré en 0.7.3 (§14.53). |
-| DSH-004 | Consolidation siège : comparaison et total par pays, agrégés ; descente nominative auditée. | 0.7.4 | CA1 : chaque consultation nominative par le siège crée un événement d'audit. |
+| DSH-004 | Consolidation siège : comparaison et total par pays, agrégés ; descente nominative auditée. | 0.7.4 | CA1 : chaque consultation nominative par le siège crée un événement d'audit. Livré en 0.7.4 (§14.54). |
 | DSH-005 | Filtres : période, pays, zone, secteur, division, réseau, superviseur, délégué, statut. | 0.7.5 | CA1 : les filtres proposés sont limités au périmètre. |
 | DSH-006 | Taux de réalisation et part des écarts justifiés, deux chiffres distincts (KPI-03, DC-50). | 0.7.6 | CA1 : la définition est celle de la section 5. |
 | DSH-007 | Délais de validation des plannings et rapports (KPI-02, KPI-09). | 0.7.7 | CA1 : calculés en heures ouvrées du pays. |

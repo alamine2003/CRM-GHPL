@@ -1,5 +1,6 @@
 """API des indicateurs de pilotage (cycle 0.7)."""
 
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
@@ -63,7 +64,46 @@ class EquipeVue(VuePerimetre):
 
         choix = s.ChoixPilotageSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
-        pays_requis(self.perimetre)
+        pays = pays_requis(self.perimetre)
         v = choix.validated_data
         donnees = tableau_pilotage(self.perimetre, v.get("semaine"), v["par"])
+        if self.perimetre.est_siege:
+            # DSH-004 CA1 : chaque consultation nominative par le siège est auditée.
+            from apps.audit.services import enregistrer
+
+            enregistrer("pilotage.consultation_nominative", pays=pays, details={
+                "semaine": donnees["debut"].isoformat(), "par": v["par"],
+                "delegues": len(donnees["delegues"]),
+            })  # fmt: skip
         return Response(s.TableauEquipeSerializer(donnees).data)
+
+
+class SiegeVue(VuePerimetre):
+    """DSH-004 : la consolidation du siège, agrégée par pays, sans aucun nom. Réservée au
+    siège ; la descente au nominatif passe par le choix d'un pays (`pilotage/equipe/`)."""
+
+    actions = {"GET": Action.PILOTAGE_LIRE}
+    serializer_class = s.TableauSiegeSerializer
+
+    def selection(self, perimetre):
+        return Visite.objects.none()
+
+    @extend_schema(
+        parameters=[OpenApiParameter("semaine", OpenApiTypes.DATE, required=False,
+                                     description="Un jour de la semaine ; par défaut, celle-ci")],
+        responses=s.TableauSiegeSerializer, operation_id="pilotage_siege",
+    )  # fmt: skip
+    def get(self, request):
+        from rest_framework import status
+
+        from apps.socle.erreurs import ErreurMetier
+
+        from .indicateurs import tableau_siege
+
+        if not self.perimetre.est_siege:
+            raise ErreurMetier("reserve_au_siege", _("Vue réservée au siège."),
+                               status.HTTP_403_FORBIDDEN)  # fmt: skip
+        choix = s.ChoixSemaineSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        donnees = tableau_siege(self.perimetre, choix.validated_data.get("semaine"))
+        return Response(s.TableauSiegeSerializer(donnees).data)

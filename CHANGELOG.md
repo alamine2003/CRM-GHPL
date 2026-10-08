@@ -2,6 +2,24 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.4] — Consolidation du siège
+
+Quatrième jalon du cycle 0.7 « Indicateurs de pilotage ».
+
+### Ajouté (DSH-004, REC-10, prd.md §14.54)
+
+- « Pilotage » du siège en vue consolidée : un tableau par pays, agrégé, sans aucun nom, et le total de tous les pays.
+- Descente au nominatif d'un pays (« Voir les délégués ») ; chaque consultation crée l'événement d'audit `pilotage.consultation_nominative` (CA1), rappelé par un bandeau.
+
+### Design
+
+Revue sur le rendu réel (direction du siège de la démonstration, bureau et téléphone) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Descente nominative | Aucun chemin visible pour revenir à la vue consolidée, hors du sélecteur de pays en haut de page | Bouton « Tous les pays » dans le bandeau d'audit |
+| Téléphone | Bouton du bandeau coupé sur quatre lignes | Libellé court, sur une ligne |
+
 ## [0.7.3] — Pilotage du DM, du DF et du pays
 
 Troisième jalon du cycle 0.7 « Indicateurs de pilotage ».

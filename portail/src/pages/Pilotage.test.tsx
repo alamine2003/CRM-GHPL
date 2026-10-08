@@ -1,4 +1,10 @@
-import type { ClientApi, IndicateursPeriode, TableauEquipe } from '@innov/api-client';
+import type {
+  ClientApi,
+  IndicateursPeriode,
+  Perimetre,
+  TableauEquipe,
+  TableauSiege,
+} from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
@@ -76,11 +82,29 @@ const TABLEAU: TableauEquipe = {
   },
 };
 
-function rendre(adresse = '/pilotage', donnees: TableauEquipe = TABLEAU) {
+const PAYS = { code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' };
+const SUPERVISEUR: Perimetre = {
+  pays_actif: PAYS,
+  vue_consolidee: false,
+  roles: ['superviseur'],
+  actions: ['pilotage.lire'],
+  pays_accessibles: [PAYS],
+};
+
+function rendre(
+  adresse = '/pilotage',
+  donnees: TableauEquipe = TABLEAU,
+  perimetre: Perimetre = SUPERVISEUR,
+  siege?: TableauSiege,
+) {
   const equipe = vi.fn(async () => donnees);
+  const choisirPays = vi.fn(async () => undefined);
   const session = {
     etat: { statut: 'chargement' },
-    client: { pilotage: { equipe } } as unknown as ClientApi,
+    choisirPays,
+    client: {
+      pilotage: { equipe, siege: vi.fn(async () => siege) },
+    } as unknown as ClientApi,
   } as unknown as Session;
   render(
     <MemoryRouter initialEntries={[adresse]}>
@@ -88,12 +112,12 @@ function rendre(adresse = '/pilotage', donnees: TableauEquipe = TABLEAU) {
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
         <ContexteSession.Provider value={session}>
-          <Pilotage />
+          <Pilotage perimetre={perimetre} />
         </ContexteSession.Provider>
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { equipe };
+  return { equipe, choisirPays };
 }
 
 describe('Pilotage', () => {
@@ -164,5 +188,53 @@ describe('Pilotage', () => {
         .getByRole('button', { name: 'Masquer les délégués de Gastro' })
         .getAttribute('aria-expanded'),
     ).toBe('true');
+  });
+
+  it("DSH-004 : le siège voit les pays sans aucun nom, et descend au nominatif d'un pays", async () => {
+    const siege: TableauSiege = {
+      calcule_le: '2026-10-08T12:00:00Z',
+      debut: '2026-10-05',
+      fin: '2026-10-11',
+      delegues: 2,
+      pays: [
+        {
+          pays: { code: 'SN', nom: 'Sénégal' },
+          delegues: 2,
+          cycle_semaines: 4,
+          total: TABLEAU.total,
+        },
+        { pays: { code: 'TG', nom: 'Togo' }, delegues: 0, cycle_semaines: 4, total: TABLEAU.total },
+      ],
+      total: TABLEAU.total,
+    };
+    const consolide: Perimetre = {
+      pays_actif: null,
+      vue_consolidee: true,
+      roles: ['direction_siege'],
+      actions: ['pilotage.lire'],
+      pays_accessibles: [PAYS],
+    };
+    const { choisirPays } = rendre('/pilotage', TABLEAU, consolide, siege);
+    const tableau = await screen.findByRole('table', {
+      name: 'Indicateurs de la semaine par pays',
+    });
+    expect(within(tableau).getByText('Sénégal')).toBeTruthy();
+    expect(within(tableau).getByText('Tous les pays')).toBeTruthy();
+    expect(within(tableau).queryByText('Aminata TOURE')).toBeNull();
+    // Le Togo n'a aucun délégué : pas de descente.
+    expect(within(tableau).getAllByRole('button', { name: 'Voir les délégués' })).toHaveLength(1);
+    fireEvent.click(within(tableau).getByRole('button', { name: 'Voir les délégués' }));
+    expect(choisirPays).toHaveBeenCalledWith('SN');
+  });
+
+  it("DSH-004 CA1 : en descente nominative, le siège est prévenu de l'audit", async () => {
+    const { choisirPays } = rendre('/pilotage', TABLEAU, {
+      ...SUPERVISEUR,
+      roles: ['admin_siege'],
+    });
+    expect(await screen.findByText(/inscrite au journal d'audit/)).toBeTruthy();
+    expect(screen.getByText('Aminata TOURE')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Tous les pays' }));
+    expect(choisirPays).toHaveBeenCalledWith(null);
   });
 });

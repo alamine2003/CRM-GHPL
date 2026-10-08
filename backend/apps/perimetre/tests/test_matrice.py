@@ -21,7 +21,14 @@ ATTENDU = {
     Action.RAPPORTS_LIRE: {"responsable_pays", "df", "dm", "superviseur", "delegue"},
     Action.RAPPORTS_VALIDER: {"dm", "superviseur"},
     Action.INDICATEURS_LIRE: {"superviseur", "delegue"},
-    Action.PILOTAGE_LIRE: {"responsable_pays", "df", "dm", "superviseur"},
+    Action.PILOTAGE_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "df",
+        "dm",
+        "superviseur",
+    },
     Action.REMPLACEMENTS_GERER: {"admin_pays", "dm", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",

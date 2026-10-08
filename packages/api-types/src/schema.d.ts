@@ -1533,6 +1533,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/pilotage/siege/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description DSH-004 : la consolidation du siège, agrégée par pays, sans aucun nom. Réservée au
+     *     siège ; la descente au nominatif passe par le choix d'un pays (`pilotage/equipe/`).
+     */
+    get: operations['pilotage_siege'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/plannings/': {
     parameters: {
       query?: never;
@@ -4119,6 +4139,13 @@ export interface components {
       semaine: components['schemas']['IndicateursPeriode'];
       cycle: components['schemas']['IndicateursPeriode'];
     };
+    /** @description Un pays : ses totaux seulement, sans aucun nom de délégué (DSH-004). */
+    LignePays: {
+      pays: components['schemas']['PaysPilotage'];
+      delegues: number;
+      cycle_semaines: number;
+      total: components['schemas']['TotalEquipe'];
+    };
     ListeCible: {
       poste: components['schemas']['PosteCible'];
       cibles: components['schemas']['Cible'][];
@@ -4510,6 +4537,10 @@ export interface components {
       readonly statut: components['schemas']['StatutEnum'];
       /** Format: date-time */
       readonly cree_le: string;
+    };
+    PaysPilotage: {
+      code: string;
+      nom: string;
     };
     PaysResume: {
       code: string;
@@ -5580,6 +5611,18 @@ export interface components {
       par: components['schemas']['ParEnum'];
       delegues: components['schemas']['LigneEquipe'][];
       groupes: components['schemas']['GroupeEquipe'][];
+      total: components['schemas']['TotalEquipe'];
+    };
+    /** @description DSH-004 : la consolidation du siège, par pays, et le total de tous les pays. */
+    TableauSiege: {
+      /** Format: date-time */
+      calcule_le: string;
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      pays: components['schemas']['LignePays'][];
+      delegues: number;
       total: components['schemas']['TotalEquipe'];
     };
     /** @description Chaque taux entre 0 et 1, vide quand rien ne le fonde. */
@@ -8353,6 +8396,28 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['MesChiffres'];
+        };
+      };
+    };
+  };
+  pilotage_siege: {
+    parameters: {
+      query?: {
+        /** @description Un jour de la semaine ; par défaut, celle-ci */
+        semaine?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TableauSiege'];
         };
       };
     };

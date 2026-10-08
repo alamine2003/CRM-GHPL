@@ -2391,7 +2391,8 @@
       "aSuivre": "To follow up",
       "reseau": "Network",
       "zone": "Zone",
-      "secteur": "Sector"
+      "secteur": "Sector",
+      "pays": "Country"
     },
     "regrouper": "Group",
     "par": {
@@ -2407,6 +2408,11 @@
     },
     "ensemble": "All",
     "deplier": "Show representatives of {{libelle}}",
-    "replier": "Hide representatives of {{libelle}}"
+    "replier": "Hide representatives of {{libelle}}",
+    "auditSiege": "Head-office named consultation: each opening of this page is recorded in the audit log.",
+    "siegeIntro": "Figures aggregated by country, with no names. “See representatives” opens a country's detail; this consultation is recorded in the audit log.",
+    "tableauSiege": "Weekly figures by country",
+    "tousPays": "All countries",
+    "voirDelegues": "See representatives"
   }
 }

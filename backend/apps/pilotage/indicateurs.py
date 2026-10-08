@@ -319,7 +319,8 @@ def postes_du_pilotage(perimetre, debut: date, fin: date):
 
     pays, moi = perimetre.pays_actif, perimetre.utilisateur
     postes = Poste.objects.filter(pays=pays)
-    if Role.RESPONSABLE_PAYS in perimetre.roles:
+    # DSH-004 : le siège descend au nominatif d'un pays ; la consultation est auditée (vue).
+    if perimetre.est_siege or Role.RESPONSABLE_PAYS in perimetre.roles:
         return postes
     pendant = Q(fin__isnull=True) | Q(fin__gt=debut)
     choisis = Q(pk__in=[])
@@ -411,4 +412,42 @@ def _total(lignes: list) -> dict:
     return {
         "semaine": somme([x["semaine"] for x in lignes]),
         "cycle": somme([x["cycle"] for x in lignes]),
+    }
+
+
+def tableau_siege(perimetre, jour: date | None = None) -> dict:
+    """DSH-004 : la consolidation du siège, sans aucun nom : par pays (ordre alphabétique,
+    aucun classement, DC-49), le nombre de délégués et les totaux de leur semaine et de leur
+    cycle ; puis le total de tous les pays, tiré des sommes."""
+    from django.utils import timezone
+
+    from apps.organisation.models import Poste
+
+    reference = jour or timezone.localdate()
+    debut, fin = semaine(reference)
+    lignes, toutes = [], []
+    for pays in perimetre.pays_accessibles:
+        cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
+        debut_cycle = debut - timedelta(weeks=cycle - 1)
+        pilotes = delegues_des_postes(Poste.objects.filter(pays=pays), None, debut, fin)
+        lot = Lot(pays, [d for d, _ in pilotes], debut_cycle, fin)
+        semaines = [lot.calculer(d, debut, fin) for d, _ in pilotes]
+        cycles = [lot.calculer(d, debut_cycle, fin) for d, _ in pilotes]
+        toutes.append((semaines, cycles))
+        lignes.append({
+            "pays": pays,
+            "delegues": len(pilotes),
+            "cycle_semaines": cycle,
+            "total": {"semaine": somme(semaines), "cycle": somme(cycles)},
+        })  # fmt: skip
+    return {
+        "calcule_le": timezone.now(),
+        "debut": debut,
+        "fin": fin,
+        "pays": lignes,
+        "delegues": sum(x["delegues"] for x in lignes),
+        "total": {
+            "semaine": somme([s for semaines, _ in toutes for s in semaines]),
+            "cycle": somme([c for _, cycles in toutes for c in cycles]),
+        },
     }

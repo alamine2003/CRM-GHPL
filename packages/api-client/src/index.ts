@@ -35,6 +35,7 @@ import type {
   ATraiter,
   MesChiffres,
   TableauEquipe,
+  TableauSiege,
   Retards,
   Journee,
   RapportLu,
@@ -182,7 +183,9 @@ export type {
   IndicateursPeriode,
   LigneEquipe,
   MesChiffres,
+  LignePays,
   TableauEquipe,
+  TableauSiege,
   TauxIndicateurs,
   Retards,
   RapportEnRetard,
@@ -919,6 +922,9 @@ export function creerClient(options: OptionsClient) {
         const q = p.toString();
         return requete<TableauEquipe>(`/api/v1/pilotage/equipe/${q ? `?${q}` : ''}`);
       },
+      /** DSH-004 : la consolidation du siège, par pays, sans aucun nom. */
+      siege: (jour?: string) =>
+        requete<TableauSiege>(`/api/v1/pilotage/siege/${jour ? `?semaine=${jour}` : ''}`),
     },
     /** Champs supplémentaires du rapport, par pays (RPT-008). */
     rapports: {

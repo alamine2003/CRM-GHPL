@@ -60,7 +60,7 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
   },
   '/planning': { titre: 'navigation.planning', rendu: () => <Planning /> },
   '/a-traiter': { titre: 'navigation.aTraiter', rendu: () => <ATraiter /> },
-  '/pilotage': { titre: 'navigation.pilotage', rendu: () => <Pilotage /> },
+  '/pilotage': { titre: 'navigation.pilotage', rendu: (_, p) => <Pilotage perimetre={p} /> },
   '/validation': { titre: 'navigation.validation', rendu: () => <Validation /> },
   '/remplacements': { titre: 'navigation.remplacements', rendu: () => <Remplacements /> },
   '/notifications': {

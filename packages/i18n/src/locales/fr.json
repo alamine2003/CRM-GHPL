@@ -2391,7 +2391,8 @@
       "aSuivre": "À suivre",
       "reseau": "Réseau",
       "zone": "Zone",
-      "secteur": "Secteur"
+      "secteur": "Secteur",
+      "pays": "Pays"
     },
     "regrouper": "Regrouper",
     "par": {
@@ -2407,6 +2408,11 @@
     },
     "ensemble": "Ensemble",
     "deplier": "Afficher les délégués de {{libelle}}",
-    "replier": "Masquer les délégués de {{libelle}}"
+    "replier": "Masquer les délégués de {{libelle}}",
+    "auditSiege": "Consultation nominative du siège : chaque ouverture de cette page est inscrite au journal d'audit.",
+    "siegeIntro": "Chiffres agrégés par pays, sans aucun nom. « Voir les délégués » ouvre le détail d'un pays ; cette consultation est inscrite au journal d'audit.",
+    "tableauSiege": "Indicateurs de la semaine par pays",
+    "tousPays": "Tous les pays",
+    "voirDelegues": "Voir les délégués"
   }
 }

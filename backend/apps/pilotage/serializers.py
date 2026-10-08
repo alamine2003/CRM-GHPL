@@ -147,3 +147,28 @@ class TableauEquipeSerializer(serializers.Serializer):
     delegues = LigneEquipeSerializer(many=True)
     groupes = GroupeEquipeSerializer(many=True)
     total = TotalEquipeSerializer()
+
+
+class PaysPilotageSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    nom = serializers.CharField()
+
+
+class LignePaysSerializer(serializers.Serializer):
+    """Un pays : ses totaux seulement, sans aucun nom de délégué (DSH-004)."""
+
+    pays = PaysPilotageSerializer()
+    delegues = serializers.IntegerField()
+    cycle_semaines = serializers.IntegerField()
+    total = TotalEquipeSerializer()
+
+
+class TableauSiegeSerializer(serializers.Serializer):
+    """DSH-004 : la consolidation du siège, par pays, et le total de tous les pays."""
+
+    calcule_le = serializers.DateTimeField()
+    debut = serializers.DateField()
+    fin = serializers.DateField()
+    pays = LignePaysSerializer(many=True)
+    delegues = serializers.IntegerField()
+    total = TotalEquipeSerializer()

@@ -396,5 +396,7 @@ urlpatterns = [
     path("pilotage/mes-chiffres/", pil.MesChiffresVue.as_view(), name="mes-chiffres"),
     # DSH-002, DSH-012 : le tableau de l'équipe du superviseur
     path("pilotage/equipe/", pil.EquipeVue.as_view(), name="pilotage-equipe"),
+    # DSH-004 : la consolidation du siège, par pays
+    path("pilotage/siege/", pil.SiegeVue.as_view(), name="pilotage-siege"),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

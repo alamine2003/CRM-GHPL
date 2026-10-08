@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 01:25+0000\n"
+"POT-Creation-Date: 2026-10-08 18:10+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -483,6 +483,9 @@ msgstr "Action not allowed."
 
 msgid "Vous n'avez pas accès à ce pays."
 msgstr "You do not have access to this country."
+
+msgid "Vue réservée au siège."
+msgstr "View reserved for headquarters."
 
 msgid "Le planning ne peut pas être soumis : corrigez les points signalés."
 msgstr "The plan cannot be submitted: fix the points listed."

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.3
+  version: 0.7.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2591,6 +2591,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MesChiffres'
+          description: ''
+  /api/v1/pilotage/siege/:
+    get:
+      operationId: pilotage_siege
+      description: |-
+        DSH-004 : la consolidation du siège, agrégée par pays, sans aucun nom. Réservée au
+        siège ; la descente au nominatif passe par le choix d'un pays (`pilotage/equipe/`).
+      parameters:
+      - in: query
+        name: semaine
+        schema:
+          type: string
+          format: date
+        description: Un jour de la semaine ; par défaut, celle-ci
+      tags:
+      - pilotage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableauSiege'
           description: ''
   /api/v1/plannings/:
     post:
@@ -8000,6 +8024,23 @@ components:
       - delegue
       - poste
       - semaine
+    LignePays:
+      type: object
+      description: 'Un pays : ses totaux seulement, sans aucun nom de délégué (DSH-004).'
+      properties:
+        pays:
+          $ref: '#/components/schemas/PaysPilotage'
+        delegues:
+          type: integer
+        cycle_semaines:
+          type: integer
+        total:
+          $ref: '#/components/schemas/TotalEquipe'
+      required:
+      - cycle_semaines
+      - delegues
+      - pays
+      - total
     ListeCible:
       type: object
       properties:
@@ -8848,6 +8889,16 @@ components:
       - langue
       - nom
       - statut
+    PaysPilotage:
+      type: object
+      properties:
+        code:
+          type: string
+        nom:
+          type: string
+      required:
+      - code
+      - nom
     PaysResume:
       type: object
       properties:
@@ -11590,6 +11641,35 @@ components:
       - fin
       - groupes
       - par
+      - total
+    TableauSiege:
+      type: object
+      description: 'DSH-004 : la consolidation du siège, par pays, et le total de
+        tous les pays.'
+      properties:
+        calcule_le:
+          type: string
+          format: date-time
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        pays:
+          type: array
+          items:
+            $ref: '#/components/schemas/LignePays'
+        delegues:
+          type: integer
+        total:
+          $ref: '#/components/schemas/TotalEquipe'
+      required:
+      - calcule_le
+      - debut
+      - delegues
+      - fin
+      - pays
       - total
     Taux:
       type: object

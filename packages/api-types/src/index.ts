@@ -154,6 +154,9 @@ export type MesChiffres = Schemas['MesChiffres'];
 export type TableauEquipe = Schemas['TableauEquipe'];
 export type LigneEquipe = Schemas['LigneEquipe'];
 export type IndicateursPeriode = Schemas['IndicateursPeriode'];
+/** DSH-004 : la consolidation du siège, par pays, sans aucun nom. */
+export type TableauSiege = Schemas['TableauSiege'];
+export type LignePays = Schemas['LignePays'];
 export type Journee = Schemas['Journee'];
 export type VisiteJournee = Schemas['VisiteJournee'];
 export type RapportLu = Schemas['RapportLu'];

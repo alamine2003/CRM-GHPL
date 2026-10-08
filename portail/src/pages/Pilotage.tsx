@@ -1,9 +1,10 @@
-import type { IndicateursPeriode, LigneEquipe, TableauEquipe } from '@innov/api-client';
+import type { IndicateursPeriode, LigneEquipe, Perimetre, TableauEquipe } from '@innov/api-client';
 import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -23,7 +24,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { type TFunction } from 'i18next';
-import { Fragment, useState } from 'react';
+import { Fragment, type ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { BarreChiffres, Chiffre, EnTetePage, Etiquette, EtatVide } from '../composants/Elements';
@@ -40,9 +41,15 @@ type Regroupement = (typeof REGROUPEMENTS)[number];
  * côte par ordre alphabétique, regroupés au besoin par réseau, zone ou secteur ; chaque total
  * est tiré des sommes. Ni note, ni appréciation, ni classement (DC-49).
  */
-export default function Pilotage() {
+export default function Pilotage({ perimetre }: { perimetre: Perimetre }) {
+  // DSH-004 : le siège, sans pays choisi, ne voit que des agrégés par pays.
+  if (perimetre.vue_consolidee) return <PilotageSiege />;
+  return <PilotagePerimetre siege={perimetre.roles.some((r) => r.endsWith('_siege'))} />;
+}
+
+function PilotagePerimetre({ siege }: { siege: boolean }) {
   const { t, i18n } = useTranslation();
-  const { client } = useSession();
+  const { client, choisirPays } = useSession();
   const [parametres, setParametres] = useSearchParams();
   const semaine = parametres.get('semaine') ?? '';
   const brut = parametres.get('par') ?? '';
@@ -145,6 +152,23 @@ export default function Pilotage() {
           </Stack>
         }
       />
+      {siege && (
+        <Alert
+          severity="info"
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              sx={{ whiteSpace: 'nowrap' }}
+              onClick={() => void choisirPays(null)}
+            >
+              {t('pilotage.tousPays')}
+            </Button>
+          }
+        >
+          {t('pilotage.auditSiege')}
+        </Alert>
+      )}
       {/* Sur téléphone, l'en-tête masque son sous-titre : la semaine se redit ici. */}
       <Typography
         variant="body2"
@@ -343,18 +367,21 @@ function Ligne({
   variante = 'delegue',
   ouvert,
   basculer,
+  action,
 }: {
   ligne: LigneEquipe;
   taux: (v: number | null) => string;
   /** `groupe` : total d'un réseau, d'une zone ou d'un secteur ; `retrait` : un de ses délégués. */
-  variante?: 'delegue' | 'retrait' | 'groupe' | 'total';
+  variante?: 'delegue' | 'retrait' | 'groupe' | 'total' | 'pays';
   ouvert?: boolean;
   basculer?: () => void;
+  /** DSH-004 : sous le nom d'un pays, le lien de descente au nominatif. */
+  action?: ReactNode;
 }) {
   const { t } = useTranslation();
   const s: IndicateursPeriode = ligne.semaine;
   const c = ligne.cycle;
-  const total = variante === 'total' || variante === 'groupe';
+  const total = variante !== 'delegue' && variante !== 'retrait';
   const fort = total ? { fontWeight: 700 } : {};
   const bord =
     variante === 'total' ? { borderTop: 2, borderColor: 'divider', borderBottom: 0 } : {};
@@ -380,6 +407,7 @@ function Ligne({
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {ligne.poste.libelle}
           </Typography>
+          {action}
         </Box>
       </Stack>
     </TableCell>
@@ -470,5 +498,164 @@ function Taux({ valeur, detail, sx }: { valeur: string; detail?: string; sx?: ob
         </Typography>
       )}
     </TableCell>
+  );
+}
+
+/**
+ * DSH-004 : la consolidation du siège, par pays (ordre alphabétique, sans classement), sans
+ * aucun nom ; « Voir les délégués » choisit le pays et descend au nominatif, consultation
+ * inscrite au journal d'audit.
+ */
+function PilotageSiege() {
+  const { t, i18n } = useTranslation();
+  const { client, choisirPays } = useSession();
+  const [parametres, setParametres] = useSearchParams();
+  const semaine = parametres.get('semaine') ?? '';
+  const tableau = useQuery({
+    queryKey: ['pilotage-siege', semaine],
+    queryFn: () => client.pilotage.siege(semaine || undefined),
+  });
+  const titre = t('navigation.pilotage');
+  if (tableau.isError)
+    return (
+      <Stack spacing={2.5}>
+        <EnTetePage titre={titre} />
+        <ErreurChargement erreur={tableau.error} reessayer={() => void tableau.refetch()} />
+      </Stack>
+    );
+  if (!tableau.data)
+    return (
+      <Stack spacing={2.5}>
+        <EnTetePage titre={titre} />
+        <Skeleton variant="rounded" height={260} />
+      </Stack>
+    );
+  const d = tableau.data;
+  const jour = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' });
+  const date = (iso: string) => jour.format(new Date(`${iso}T12:00:00`));
+  const pourcent = new Intl.NumberFormat(i18n.language, { style: 'percent' });
+  const taux = (v: number | null) => (v === null ? '—' : pourcent.format(v));
+  const decaler = (iso: string, jours: number) => {
+    const x = new Date(`${iso}T12:00:00Z`);
+    x.setUTCDate(x.getUTCDate() + jours);
+    return x.toISOString().slice(0, 10);
+  };
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const enCours = d.fin >= aujourdhui;
+  const aller = (lundi: string) =>
+    setParametres(
+      (p) => {
+        const suite = new URLSearchParams(p);
+        if (lundi) suite.set('semaine', lundi);
+        else suite.delete('semaine');
+        return suite;
+      },
+      { replace: true },
+    );
+  const ligne = (id: string, libelle: string, nombre: number, total: TableauEquipe['total']) => ({
+    delegue: { id, prenom: libelle, nom: '' },
+    poste: { id, libelle: t('pilotage.delegues', { count: nombre }) },
+    semaine: total.semaine,
+    cycle: total.cycle,
+  });
+  const colonnes = [
+    'visites',
+    'realisation',
+    'ecarts',
+    'geolocalisation',
+    'rapports',
+    'couverture',
+    'aSuivre',
+  ] as const;
+  return (
+    <Stack spacing={2.5}>
+      <EnTetePage
+        titre={titre}
+        sousTitre={t('pilotage.semaine', { debut: date(d.debut), fin: date(d.fin) })}
+        actions={
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            <Tooltip title={t('pilotage.precedente')}>
+              <IconButton
+                aria-label={t('pilotage.precedente')}
+                onClick={() => aller(decaler(d.debut, -7))}
+              >
+                <ChevronLeftRounded />
+              </IconButton>
+            </Tooltip>
+            {!enCours && (
+              <Button variant="text" onClick={() => aller('')}>
+                {t('pilotage.cetteSemaine')}
+              </Button>
+            )}
+            <Tooltip title={t('pilotage.suivante')}>
+              <span>
+                <IconButton
+                  aria-label={t('pilotage.suivante')}
+                  disabled={enCours}
+                  onClick={() => {
+                    const suivant = decaler(d.debut, 7);
+                    aller(decaler(suivant, 7) > aujourdhui ? '' : suivant);
+                  }}
+                >
+                  <ChevronRightRounded />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
+        }
+      />
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        {t('pilotage.siegeIntro')}
+      </Typography>
+      <Card>
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table size="small" aria-label={t('pilotage.tableauSiege')}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ ...celluleNom, verticalAlign: 'bottom' }}>
+                  {t('pilotage.colonnes.pays')}
+                </TableCell>
+                {colonnes.map((c) => (
+                  <TableCell
+                    key={c}
+                    align={c === 'aSuivre' ? 'left' : 'right'}
+                    sx={{ lineHeight: 1.35, verticalAlign: 'bottom' }}
+                  >
+                    {t(`pilotage.colonnes.${c}`)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {d.pays.map((x) => (
+                <Ligne
+                  key={x.pays.code}
+                  variante="pays"
+                  ligne={ligne(x.pays.code, x.pays.nom, x.delegues, x.total)}
+                  taux={taux}
+                  action={
+                    x.delegues > 0 && (
+                      <Button
+                        size="small"
+                        variant="text"
+                        sx={{ px: 0, minWidth: 0, display: 'block' }}
+                        onClick={() => void choisirPays(x.pays.code)}
+                      >
+                        {t('pilotage.voirDelegues')}
+                      </Button>
+                    )
+                  }
+                />
+              ))}
+              <Ligne
+                variante="total"
+                ligne={ligne('total', t('pilotage.tousPays'), d.delegues, d.total)}
+                taux={taux}
+              />
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+    </Stack>
   );
 }
