@@ -137,7 +137,8 @@
     "validation": "Plannings à valider",
     "remplacements": "Remplaçants",
     "notifications": "Notifications",
-    "aTraiter": "À traiter"
+    "aTraiter": "À traiter",
+    "objectifs": "Objectifs"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -2443,5 +2444,56 @@
       "boutonN_other": "Filtres ({{count}})"
     },
     "notePeriode": "Taux bornés à 100 %, sans note ni classement ; délégués par ordre alphabétique. Les jours à venir ne comptent pas encore. La période dépasse un cycle de visites : la couverture se lit sur toute la période."
+  },
+  "objectifs": {
+    "sousTitre": "Par réseau, avec l'avance ou le retard à ce jour",
+    "nouveau": "Nouvel objectif",
+    "tous": "Afficher aussi les objectifs terminés depuis plus de 90 jours",
+    "aucun": "Aucun objectif en cours",
+    "aucunGerer": "Fixez un objectif de visites, de couverture des potentiels A et B ou de présentations d'un produit pour un réseau.",
+    "aucunLire": "Le DM du réseau ou l'administrateur pays fixe les objectifs.",
+    "colonnes": {
+      "objectif": "Objectif",
+      "periode": "Période",
+      "avancement": "Avancement",
+      "etat": "État"
+    },
+    "indicateurs": {
+      "visites": "{{cible}} visites faites",
+      "couverture_ab": "{{cible}} % des potentiels A et B visités",
+      "presentations": "{{cible}} présentations de {{produit}}"
+    },
+    "periode": "Du {{debut}} au {{fin}}",
+    "realiseSur": "{{realise}}{{unite}} sur {{cible}}{{unite}}",
+    "attendu": "{{attendu}}{{unite}} attendus à ce jour",
+    "etats": {
+      "atteint": "Atteint",
+      "en_avance": "En avance",
+      "en_retard": "En retard",
+      "non_atteint": "Non atteint",
+      "a_venir": "À venir"
+    },
+    "modifier": "Modifier",
+    "archiver": "Archiver",
+    "archiverTitre": "Archiver cet objectif ?",
+    "archiverAide": "Il disparaît des listes et du suivi. L'opération est tracée dans le journal d'audit.",
+    "modifierTitre": "Modifier l'objectif",
+    "aide": "L'avancement compare le réalisé à ce qui est attendu à ce jour, au prorata du temps écoulé de la période.",
+    "champs": {
+      "reseau": "Réseau",
+      "indicateur": "Indicateur",
+      "produit": "Produit",
+      "debut": "Du",
+      "fin": "Au",
+      "cible": "Cible",
+      "ciblePourcent": "Cible (%)"
+    },
+    "choix": {
+      "visites": "Visites faites",
+      "couverture_ab": "Couverture des potentiels A et B",
+      "presentations": "Présentations d'un produit"
+    },
+    "sansPortefeuille": "Ce réseau n'a pas de produit dans son portefeuille.",
+    "note": "Le trait vertical marque ce qui est attendu à ce jour. Les visites et présentations comptent celles des délégués des postes du réseau sur la période."
   }
 }

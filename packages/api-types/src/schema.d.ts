@@ -1533,6 +1533,62 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/pilotage/objectifs/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
+     *     l'administrateur pays en fixent (CA1).
+     */
+    get: operations['objectifs'];
+    put?: never;
+    /**
+     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
+     *     l'administrateur pays en fixent (CA1).
+     */
+    post: operations['objectif_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/pilotage/objectifs/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['objectif_modifier'];
+    trace?: never;
+  };
+  '/api/v1/pilotage/objectifs/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['objectif_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/pilotage/siege/': {
     parameters: {
       query?: never;
@@ -3950,6 +4006,13 @@ export interface components {
       /** Format: double */
       precision_m?: number | null;
     };
+    /**
+     * @description * `visites` - visites
+     *     * `couverture_ab` - couverture_ab
+     *     * `presentations` - presentations
+     * @enum {string}
+     */
+    IndicateurEnum: 'visites' | 'couverture_ab' | 'presentations';
     /** @description Les indicateurs d'une période ; `activite` faux : « Aucune activité » (DSH-012 CA2). */
     Indicateurs: {
       /** Format: date */
@@ -4362,6 +4425,29 @@ export interface components {
       min: number;
       max: number;
     };
+    /** @description DSH-009 CA1 : une période, un réseau, un indicateur et une cible. */
+    ObjectifReseau: {
+      /** Format: uuid */
+      id: string;
+      reseau: components['schemas']['Option'];
+      indicateur: components['schemas']['IndicateurEnum'];
+      produit: components['schemas']['Option'] | null;
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      cible: number;
+      gerable: boolean;
+      suivi: components['schemas']['SuiviObjectifReseau'];
+    };
+    /** @description Les objectifs des réseaux visibles, et ce qu'il faut pour en fixer un nouveau. */
+    ObjectifsReseau: {
+      /** Format: date */
+      aujourdhui: string;
+      objectifs: components['schemas']['ObjectifReseau'][];
+      reseaux_geres: components['schemas']['Option'][];
+      portefeuilles: components['schemas']['ProduitsReseau'][];
+    };
     Occupation: {
       /** Format: uuid */
       readonly id: string;
@@ -4464,6 +4550,13 @@ export interface components {
       date?: string;
       libelle?: string;
       variable?: boolean;
+    };
+    PatchedModificationObjectifReseau: {
+      /** Format: date */
+      debut?: string;
+      /** Format: date */
+      fin?: string;
+      cible?: number;
     };
     PatchedModificationPoste: {
       libelle?: string;
@@ -4764,6 +4857,11 @@ export interface components {
       code: string;
       libelle: string;
       classe_libelle?: string | null;
+    };
+    ProduitsReseau: {
+      /** Format: uuid */
+      reseau: string;
+      produits: components['schemas']['Option'][];
     };
     /** @description VIS-001 : le programme de la semaine, tel qu'approuvé, journée par journée. */
     Programme: {
@@ -5365,6 +5463,18 @@ export interface components {
       /** @default false */
       variable: boolean;
     };
+    SaisieObjectifReseau: {
+      /** Format: uuid */
+      reseau: string;
+      indicateur: components['schemas']['IndicateurEnum'];
+      /** Format: uuid */
+      produit?: string | null;
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      cible: number;
+    };
     SaisiePiece: {
       /** Format: uuid */
       id: string;
@@ -5577,6 +5687,24 @@ export interface components {
       retraits: components['schemas']['VisiteFigee'][];
       mineures: components['schemas']['ModificationMineure'][];
     };
+    /** @description DSH-009 CA2 : le réalisé, l'attendu à ce jour, l'état. */
+    SuiviObjectifReseau: {
+      realise: number;
+      attendu: number;
+      etat: components['schemas']['SuiviObjectifReseauEtatEnum'];
+      /** Format: double */
+      taux: number;
+      delegues: number;
+    };
+    /**
+     * @description * `a_venir` - a_venir
+     *     * `en_avance` - en_avance
+     *     * `en_retard` - en_retard
+     *     * `atteint` - atteint
+     *     * `non_atteint` - non_atteint
+     * @enum {string}
+     */
+    SuiviObjectifReseauEtatEnum: 'a_venir' | 'en_avance' | 'en_retard' | 'atteint' | 'non_atteint';
     Synthese: {
       divisions: number;
       reseaux: number;
@@ -8434,6 +8562,99 @@ export interface operations {
         content: {
           'application/json': components['schemas']['MesChiffres'];
         };
+      };
+    };
+  };
+  objectifs: {
+    parameters: {
+      query?: {
+        tous?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifsReseau'];
+        };
+      };
+    };
+  };
+  objectif_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieObjectifReseau'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieObjectifReseau'];
+        'multipart/form-data': components['schemas']['SaisieObjectifReseau'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifReseau'];
+        };
+      };
+    };
+  };
+  objectif_modifier: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationObjectifReseau'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationObjectifReseau'];
+        'multipart/form-data': components['schemas']['PatchedModificationObjectifReseau'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifReseau'];
+        };
+      };
+    };
+  };
+  objectif_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

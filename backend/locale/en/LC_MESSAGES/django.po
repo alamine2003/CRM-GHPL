@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 18:27+0000\n"
+"POT-Creation-Date: 2026-10-08 19:00+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -483,6 +483,22 @@ msgstr "Action not allowed."
 
 msgid "Vous n'avez pas accès à ce pays."
 msgstr "You do not have access to this country."
+
+msgid "Seuls le DM du réseau et l'administrateur pays fixent ses objectifs."
+msgstr ""
+"Only the network's DM and the country administrator set its targets."
+
+msgid "La fin vient après le début."
+msgstr "The end date must come after the start date."
+
+msgid "La cible est un nombre positif."
+msgstr "The target is a positive number."
+
+msgid "Une couverture se donne en pourcentage, 100 au plus."
+msgstr "Coverage is a percentage, 100 at most."
+
+msgid "Choisissez un produit du portefeuille du réseau."
+msgstr "Choose a product from the network's portfolio."
 
 msgid "Choisissez une date de début et une date de fin, dans l'ordre."
 msgstr "Choose a start date and an end date, in that order."

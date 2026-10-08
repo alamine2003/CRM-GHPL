@@ -36,6 +36,9 @@ import type {
   MesChiffres,
   TableauEquipe,
   TableauSiege,
+  Objectifs,
+  Objectif,
+  SaisieObjectif,
   Retards,
   Journee,
   RapportLu,
@@ -186,6 +189,9 @@ export type {
   LignePays,
   TableauEquipe,
   TableauSiege,
+  Objectifs,
+  Objectif,
+  SaisieObjectif,
   TauxIndicateurs,
   Retards,
   RapportEnRetard,
@@ -920,6 +926,15 @@ export function creerClient(options: OptionsClient) {
         const q = new URLSearchParams(parametres).toString();
         return requete<TableauEquipe>(`/api/v1/pilotage/equipe/${q ? `?${q}` : ''}`);
       },
+      /** DSH-009 : les objectifs des réseaux visibles et leur suivi (`tous` : terminés aussi). */
+      objectifs: (tous = false) =>
+        requete<Objectifs>(`/api/v1/pilotage/objectifs/${tous ? '?tous=1' : ''}`),
+      creerObjectif: (saisie: SaisieObjectif) =>
+        requete<Objectif>('/api/v1/pilotage/objectifs/', { methode: 'POST', corps: saisie }),
+      modifierObjectif: (id: string, champs: { debut?: string; fin?: string; cible?: number }) =>
+        requete<Objectif>(`/api/v1/pilotage/objectifs/${id}/`, { methode: 'PATCH', corps: champs }),
+      archiverObjectif: (id: string) =>
+        requete<void>(`/api/v1/pilotage/objectifs/${id}/archiver/`, { methode: 'POST' }),
       /** DSH-004 : la consolidation du siège, par pays, sans aucun nom. */
       siege: (parametres: Record<string, string> = {}) => {
         const q = new URLSearchParams(parametres).toString();

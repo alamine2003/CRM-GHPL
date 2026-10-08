@@ -223,3 +223,58 @@ class TableauSiegeSerializer(serializers.Serializer):
     pays = LignePaysSerializer(many=True)
     delegues = serializers.IntegerField()
     total = TotalEquipeSerializer()
+
+
+class SuiviObjectifReseauSerializer(serializers.Serializer):
+    """DSH-009 CA2 : le réalisé, l'attendu à ce jour, l'état."""
+
+    realise = serializers.IntegerField()
+    attendu = serializers.IntegerField()
+    etat = serializers.ChoiceField(
+        choices=["a_venir", "en_avance", "en_retard", "atteint", "non_atteint"]
+    )
+    taux = serializers.FloatField()
+    delegues = serializers.IntegerField()
+
+
+class ObjectifReseauSerializer(serializers.Serializer):
+    """DSH-009 CA1 : une période, un réseau, un indicateur et une cible."""
+
+    id = serializers.UUIDField()
+    reseau = OptionSerializer(source="reseau_option")
+    indicateur = serializers.ChoiceField(choices=["visites", "couverture_ab", "presentations"])
+    produit = OptionSerializer(source="produit_option", allow_null=True)
+    debut = serializers.DateField()
+    fin = serializers.DateField()
+    cible = serializers.IntegerField()
+    gerable = serializers.BooleanField()
+    suivi = SuiviObjectifReseauSerializer()
+
+
+class ProduitsReseauSerializer(serializers.Serializer):
+    reseau = serializers.UUIDField()
+    produits = OptionSerializer(many=True)
+
+
+class ObjectifsReseauSerializer(serializers.Serializer):
+    """Les objectifs des réseaux visibles, et ce qu'il faut pour en fixer un nouveau."""
+
+    aujourdhui = serializers.DateField()
+    objectifs = ObjectifReseauSerializer(many=True)
+    reseaux_geres = OptionSerializer(many=True)
+    portefeuilles = ProduitsReseauSerializer(many=True)
+
+
+class SaisieObjectifReseauSerializer(serializers.Serializer):
+    reseau = serializers.UUIDField()
+    indicateur = serializers.ChoiceField(choices=["visites", "couverture_ab", "presentations"])
+    produit = serializers.UUIDField(required=False, allow_null=True)
+    debut = serializers.DateField()
+    fin = serializers.DateField()
+    cible = serializers.IntegerField(min_value=1)
+
+
+class ModificationObjectifReseauSerializer(serializers.Serializer):
+    debut = serializers.DateField(required=False)
+    fin = serializers.DateField(required=False)
+    cible = serializers.IntegerField(min_value=1, required=False)

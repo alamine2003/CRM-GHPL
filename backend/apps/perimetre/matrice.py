@@ -49,6 +49,8 @@ class Action(StrEnum):
     RAPPORTS_VALIDER = "rapports.valider"
     INDICATEURS_LIRE = "indicateurs.lire"
     PILOTAGE_LIRE = "pilotage.lire"
+    OBJECTIFS_LIRE = "objectifs.lire"
+    OBJECTIFS_GERER = "objectifs.gerer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -155,6 +157,12 @@ MATRICE: dict[Action, frozenset[str]] = {
     Action.PILOTAGE_LIRE: frozenset(
         SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
+    # DSH-009 : objectifs par réseau, fixés par le DM du réseau ou l'administrateur pays
+    # (périmètre vérifié par le service) ; lus par l'encadrement de ces réseaux et le pays.
+    Action.OBJECTIFS_LIRE: frozenset(
+        SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}
+    ),
+    Action.OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS, Role.DM}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}

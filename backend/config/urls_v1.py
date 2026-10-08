@@ -398,5 +398,13 @@ urlpatterns = [
     path("pilotage/equipe/", pil.EquipeVue.as_view(), name="pilotage-equipe"),
     # DSH-004 : la consolidation du siège, par pays
     path("pilotage/siege/", pil.SiegeVue.as_view(), name="pilotage-siege"),
+    # DSH-009 : objectifs par réseau
+    path("pilotage/objectifs/", pil.ObjectifsVue.as_view(), name="objectifs"),
+    path("pilotage/objectifs/<uuid:id>/", pil.ObjectifVue.as_view(), name="objectif"),
+    path(
+        "pilotage/objectifs/<uuid:id>/archiver/",
+        pil.ArchivageObjectifVue.as_view(),
+        name="objectif-archiver",
+    ),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
 ]

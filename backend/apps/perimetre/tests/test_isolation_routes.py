@@ -115,7 +115,13 @@ def senegal(monde):
     from apps.rapports.services import creer_champ
 
     champ = creer_champ(sn, libelle="Patients par semaine", type="nombre")
+    from apps.pilotage.models import Objectif
+
+    objectif = Objectif.objects.create(pays=sn, reseau=reseau, indicateur="visites",
+                                       debut=date(2099, 4, 6), fin=date(2099, 6, 28), cible=100,
+                                       cree_par=monde["admin.sn"])  # fmt: skip
     return {
+        "objectif": objectif.pk, "objectif-archiver": objectif.pk,
         "prospect-historique": prospect.pk, "etablissement-historique": etab.pk,
         "prospect-rapports": prospect.pk,
         "doublon-trancher": doublon.pk, "fusion-defaire": fusion.pk,

@@ -137,7 +137,8 @@
     "validation": "Plans to approve",
     "remplacements": "Replacements",
     "notifications": "Notifications",
-    "aTraiter": "To review"
+    "aTraiter": "To review",
+    "objectifs": "Targets"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -2443,5 +2444,56 @@
       "boutonN_other": "Filters ({{count}})"
     },
     "notePeriode": "Rates capped at 100%, with no score or ranking; representatives in alphabetical order. Days ahead do not count yet. The period is longer than a visit cycle: coverage is read over the whole period."
+  },
+  "objectifs": {
+    "sousTitre": "By network, ahead or behind as of today",
+    "nouveau": "New target",
+    "tous": "Also show targets that ended over 90 days ago",
+    "aucun": "No current target",
+    "aucunGerer": "Set a target of visits, A and B coverage or product presentations for a network.",
+    "aucunLire": "The network's DM or the country administrator sets targets.",
+    "colonnes": {
+      "objectif": "Target",
+      "periode": "Period",
+      "avancement": "Progress",
+      "etat": "Status"
+    },
+    "indicateurs": {
+      "visites": "{{cible}} visits made",
+      "couverture_ab": "{{cible}}% of A and B prospects visited",
+      "presentations": "{{cible}} presentations of {{produit}}"
+    },
+    "periode": "{{debut}} to {{fin}}",
+    "realiseSur": "{{realise}}{{unite}} of {{cible}}{{unite}}",
+    "attendu": "{{attendu}}{{unite}} expected by today",
+    "etats": {
+      "atteint": "Reached",
+      "en_avance": "Ahead",
+      "en_retard": "Behind",
+      "non_atteint": "Not reached",
+      "a_venir": "Upcoming"
+    },
+    "modifier": "Edit",
+    "archiver": "Archive",
+    "archiverTitre": "Archive this target?",
+    "archiverAide": "It leaves the lists and tracking. The action is recorded in the audit log.",
+    "modifierTitre": "Edit target",
+    "aide": "Progress compares what was done with what is expected by today, pro rata of the elapsed period.",
+    "champs": {
+      "reseau": "Network",
+      "indicateur": "Indicator",
+      "produit": "Product",
+      "debut": "From",
+      "fin": "To",
+      "cible": "Target",
+      "ciblePourcent": "Target (%)"
+    },
+    "choix": {
+      "visites": "Visits made",
+      "couverture_ab": "A and B coverage",
+      "presentations": "Product presentations"
+    },
+    "sansPortefeuille": "This network has no product in its portfolio.",
+    "note": "The vertical line marks what is expected by today. Visits and presentations count those of the representatives in the network's positions over the period."
   }
 }

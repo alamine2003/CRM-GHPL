@@ -29,6 +29,16 @@ ATTENDU = {
         "dm",
         "superviseur",
     },
+    Action.OBJECTIFS_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+    },
+    Action.OBJECTIFS_GERER: {"admin_pays", "dm"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "dm", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",
@@ -207,6 +217,9 @@ REQUETES = {
     Action.RAPPORTS_VALIDER: ("get", "/api/v1/rapports/a-traiter/", None, 200),
     Action.INDICATEURS_LIRE: ("get", "/api/v1/pilotage/mes-chiffres/", None, 200),
     Action.PILOTAGE_LIRE: ("get", "/api/v1/pilotage/equipe/", None, 200),
+    Action.OBJECTIFS_LIRE: ("get", "/api/v1/pilotage/objectifs/", None, 200),
+    # Sans corps : l'action passe, la saisie est refusée.
+    Action.OBJECTIFS_GERER: ("post", "/api/v1/pilotage/objectifs/", {}, 400),
 }  # fmt: skip
 
 

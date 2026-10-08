@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.5
+  version: 0.7.6
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2650,6 +2650,105 @@ paths:
               schema:
                 $ref: '#/components/schemas/MesChiffres'
           description: ''
+  /api/v1/pilotage/objectifs/:
+    get:
+      operationId: objectifs
+      description: |-
+        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
+        l'administrateur pays en fixent (CA1).
+      parameters:
+      - in: query
+        name: tous
+        schema:
+          type: boolean
+      tags:
+      - pilotage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifsReseau'
+          description: ''
+    post:
+      operationId: objectif_creer
+      description: |-
+        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
+        l'administrateur pays en fixent (CA1).
+      tags:
+      - pilotage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifReseau'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifReseau'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifReseau'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifReseau'
+          description: ''
+  /api/v1/pilotage/objectifs/{id}/:
+    patch:
+      operationId: objectif_modifier
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - pilotage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifReseau'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifReseau'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifReseau'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifReseau'
+          description: ''
+  /api/v1/pilotage/objectifs/{id}/archiver/:
+    post:
+      operationId: objectif_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - pilotage
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/pilotage/siege/:
     get:
       operationId: pilotage_siege
@@ -7647,6 +7746,16 @@ components:
       required:
       - le
       - prospect
+    IndicateurEnum:
+      enum:
+      - visites
+      - couverture_ab
+      - presentations
+      type: string
+      description: |-
+        * `visites` - visites
+        * `couverture_ab` - couverture_ab
+        * `presentations` - presentations
     Indicateurs:
       type: object
       description: 'Les indicateurs d''une période ; `activite` faux : « Aucune activité
@@ -8561,6 +8670,68 @@ components:
       - max
       - min
       - visites
+    ObjectifReseau:
+      type: object
+      description: 'DSH-009 CA1 : une période, un réseau, un indicateur et une cible.'
+      properties:
+        id:
+          type: string
+          format: uuid
+        reseau:
+          $ref: '#/components/schemas/Option'
+        indicateur:
+          $ref: '#/components/schemas/IndicateurEnum'
+        produit:
+          allOf:
+          - $ref: '#/components/schemas/Option'
+          nullable: true
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        cible:
+          type: integer
+        gerable:
+          type: boolean
+        suivi:
+          $ref: '#/components/schemas/SuiviObjectifReseau'
+      required:
+      - cible
+      - debut
+      - fin
+      - gerable
+      - id
+      - indicateur
+      - produit
+      - reseau
+      - suivi
+    ObjectifsReseau:
+      type: object
+      description: Les objectifs des réseaux visibles, et ce qu'il faut pour en fixer
+        un nouveau.
+      properties:
+        aujourdhui:
+          type: string
+          format: date
+        objectifs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectifReseau'
+        reseaux_geres:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+        portefeuilles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProduitsReseau'
+      required:
+      - aujourdhui
+      - objectifs
+      - portefeuilles
+      - reseaux_geres
     Occupation:
       type: object
       properties:
@@ -8801,6 +8972,18 @@ components:
           maxLength: 120
         variable:
           type: boolean
+    PatchedModificationObjectifReseau:
+      type: object
+      properties:
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        cible:
+          type: integer
+          minimum: 1
     PatchedModificationPoste:
       type: object
       properties:
@@ -9564,6 +9747,19 @@ components:
       - code
       - id
       - libelle
+    ProduitsReseau:
+      type: object
+      properties:
+        reseau:
+          type: string
+          format: uuid
+        produits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+      required:
+      - produits
+      - reseau
     Programme:
       type: object
       description: 'VIS-001 : le programme de la semaine, tel qu''approuvé, journée
@@ -11153,6 +11349,33 @@ components:
       required:
       - date
       - libelle
+    SaisieObjectifReseau:
+      type: object
+      properties:
+        reseau:
+          type: string
+          format: uuid
+        indicateur:
+          $ref: '#/components/schemas/IndicateurEnum'
+        produit:
+          type: string
+          format: uuid
+          nullable: true
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        cible:
+          type: integer
+          minimum: 1
+      required:
+      - cible
+      - debut
+      - fin
+      - indicateur
+      - reseau
     SaisiePiece:
       type: object
       properties:
@@ -11643,6 +11866,41 @@ components:
       - modifiable
       - reference
       - retraits
+    SuiviObjectifReseau:
+      type: object
+      description: 'DSH-009 CA2 : le réalisé, l''attendu à ce jour, l''état.'
+      properties:
+        realise:
+          type: integer
+        attendu:
+          type: integer
+        etat:
+          $ref: '#/components/schemas/SuiviObjectifReseauEtatEnum'
+        taux:
+          type: number
+          format: double
+        delegues:
+          type: integer
+      required:
+      - attendu
+      - delegues
+      - etat
+      - realise
+      - taux
+    SuiviObjectifReseauEtatEnum:
+      enum:
+      - a_venir
+      - en_avance
+      - en_retard
+      - atteint
+      - non_atteint
+      type: string
+      description: |-
+        * `a_venir` - a_venir
+        * `en_avance` - en_avance
+        * `en_retard` - en_retard
+        * `atteint` - atteint
+        * `non_atteint` - non_atteint
     Synthese:
       type: object
       properties:

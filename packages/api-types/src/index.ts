@@ -157,6 +157,10 @@ export type IndicateursPeriode = Schemas['IndicateursPeriode'];
 /** DSH-004 : la consolidation du siège, par pays, sans aucun nom. */
 export type TableauSiege = Schemas['TableauSiege'];
 export type LignePays = Schemas['LignePays'];
+/** DSH-009 : objectifs par réseau et leur suivi. */
+export type Objectifs = Schemas['ObjectifsReseau'];
+export type Objectif = Schemas['ObjectifReseau'];
+export type SaisieObjectif = Schemas['SaisieObjectifReseau'];
 export type Journee = Schemas['Journee'];
 export type VisiteJournee = Schemas['VisiteJournee'];
 export type RapportLu = Schemas['RapportLu'];

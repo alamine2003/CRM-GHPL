@@ -2,6 +2,33 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.6] — Objectifs par réseau
+
+Sixième jalon du cycle 0.7 « Indicateurs de pilotage ».
+
+### Ajouté (DSH-006, DSH-009, prd.md §14.56)
+
+- Page « Objectifs » : objectifs datés par réseau sur les visites faites, la couverture des potentiels A et B ou les présentations d'un produit ; fixés par le DM du réseau ou l'administrateur pays, lus par l'encadrement de leur périmètre (CA1).
+- Avancement : réalisé contre la cible, repère de l'attendu à ce jour et état « En avance », « En retard », « Atteint »… (CA2).
+- Création, modification et archivage tracés dans le journal d'audit.
+- Décision par délégation : l'attendu est la cible au prorata des jours écoulés de la période.
+- Taux de réalisation et part des écarts justifiés vérifiés contre la définition de KPI-03 (DSH-006).
+
+### Modifié
+
+- Une confirmation sans champ reste une boîte centrée sur téléphone, au lieu d'occuper tout l'écran.
+
+### Design
+
+Revue sur le rendu réel (administrateur pays et DM de la démonstration, bureau et téléphone) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Téléphone | Le tableau débordait : l'état et les actions étaient hors de l'écran | Une carte par objectif, état en haut à droite |
+| Archiver | Un appui archivait sans retour possible | Confirmation « Archiver cet objectif ? » |
+| Confirmation | Sur téléphone, la boîte vide occupait tout l'écran | Boîte centrée quand il n'y a pas de champ |
+| Interrupteur | « Afficher aussi les objectifs terminés » alors que les récents l'étaient déjà | « … terminés depuis plus de 90 jours » |
+
 ## [0.7.5] — Filtres et périodes du pilotage
 
 Cinquième jalon du cycle 0.7 « Indicateurs de pilotage ».

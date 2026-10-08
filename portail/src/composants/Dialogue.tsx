@@ -43,7 +43,8 @@ export default function DialogueFormulaire({
   const [envoi, setEnvoi] = useState(false);
   const notifier = useNotifier();
   // Sur téléphone, le formulaire occupe tout l'écran : champs plus larges, clavier mieux géré.
-  const telephone = !useMediaQuery(useTheme().breakpoints.up('sm'));
+  // Une simple confirmation, sans champ, reste une boîte centrée.
+  const telephone = !useMediaQuery(useTheme().breakpoints.up('sm')) && !!children;
 
   async function valider(evenement: FormEvent) {
     evenement.preventDefault();

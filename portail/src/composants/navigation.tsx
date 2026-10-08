@@ -3,6 +3,7 @@ import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
 import AccountTreeRounded from '@mui/icons-material/AccountTreeRounded';
 import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
 import BarChartRounded from '@mui/icons-material/BarChartRounded';
+import FlagRounded from '@mui/icons-material/FlagRounded';
 import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import CompareArrowsRounded from '@mui/icons-material/CompareArrowsRounded';
 import EditNoteRounded from '@mui/icons-material/EditNoteRounded';
@@ -107,6 +108,13 @@ export const ENTREES: Entree[] = [
     section: 'activite',
     chemin: '/pilotage',
     visible: peut('pilotage.lire'),
+  },
+  {
+    cle: 'objectifs',
+    icone: <FlagRounded />,
+    section: 'activite',
+    chemin: '/objectifs',
+    visible: peut('objectifs.lire'),
   },
   {
     cle: 'organisation',
