@@ -2,6 +2,28 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.9] — Grafana, points d'attention et clôture du cycle 0.7
+
+Neuvième et dernier jalon du cycle 0.7 « Indicateurs de pilotage » : recette `recette-0.7.md`, démonstration `demonstration-0.7.md`.
+
+### Ajouté (DSH-010, DSH-011, DC-53, DC-57, prd.md §14.59)
+
+- Grafana isolé par pays : schéma `pilotage` d'agrégats sans nom ni texte libre, recalculés chaque heure ; un rôle de base par pays qui ne lit que ses vues, un rôle du siège qui ne lit que l'agrégat par pays (CA1 à CA3). Provisionnement et tableaux dans `deploiement/grafana/`, guide `docs/grafana.md`, sans aucun secret.
+- Fraîcheur : « calculé à … » à côté de la période du pilotage, rechargement toutes les 5 minutes ; heure du dernier calcul dans Grafana.
+- Fiabilité : la somme des jours de Grafana égale le tableau du pays (test automatisé).
+- Points d'attention (DC-57) : actions promises en retard, prescripteurs passés à « prescrit », prescripteurs en baisse, chacun relié à ses visites.
+- Tendance de prescription (DC-53) : retours par produit, part favorable de la période et de la précédente, agrégée.
+- Décision par délégation : DC-52 (position de référence) passe au cycle 0.8.
+
+### Design
+
+Revue sur le rendu réel (responsable pays et DM de la démonstration, bureau et téléphone) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Points d'attention | Deux visites du même délégué le même jour donnaient deux lignes identiques (« 29 sept. · Aminata Touré ») | Une ligne par journée, « (2 visites) » |
+| Pilotage | Rien ne disait de quand datent les chiffres | « calculé à 20:33 » à côté de la période ; rechargement toutes les 5 minutes |
+
 ## [0.7.8] — Exports audités
 
 Huitième jalon du cycle 0.7 « Indicateurs de pilotage ».

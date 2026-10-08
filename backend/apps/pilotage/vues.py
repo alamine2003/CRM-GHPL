@@ -191,6 +191,40 @@ class ExportVue(VuePerimetre):
         return reponse
 
 
+class PrescriptionVue(VuePerimetre):
+    """DC-53, DC-57 (0.7.9) : tendance de prescription agrégée par produit et points
+    d'attention, sur les délégués, la période et les filtres du tableau de pilotage."""
+
+    actions = {"GET": Action.PILOTAGE_LIRE}
+    serializer_class = s.PrescriptionSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Visite.objects.none())
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("semaine", OpenApiTypes.DATE, required=False),
+            *PARAMETRES_PERIODE,
+            *[OpenApiParameter(f, OpenApiTypes.UUID, required=False)
+              for f in ("zone", "secteur", "division", "reseau", "superviseur", "delegue")],
+        ],
+        responses=s.PrescriptionSerializer, operation_id="pilotage_prescription",
+    )  # fmt: skip
+    def get(self, request):
+        from .indicateurs import FILTRES, bornes, pilotes_retenus
+        from .prescription import prescription
+
+        choix = s.ChoixPilotageSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        pays = pays_requis(self.perimetre)
+        v = choix.validated_data
+        filtres = {k: v[k] for k in FILTRES if v.get(k)}
+        debut, fin = bornes(pays, v["periode"], v.get("semaine"), v.get("du"), v.get("au"))
+        _, _, pilotes = pilotes_retenus(self.perimetre, debut, fin, filtres)
+        donnees = {"debut": debut, "fin": fin, **prescription(pays, pilotes, debut, fin)}
+        return Response(s.PrescriptionSerializer(donnees).data)
+
+
 # --- Objectifs par réseau (DSH-009, 0.7.6) --------------------------------------------------
 
 

@@ -22,4 +22,9 @@ app.conf.beat_schedule = {
         "task": "apps.planning.taches.echeances",
         "schedule": crontab(minute="*/15"),
     },
+    # DSH-011 : Grafana à jour à moins d'une heure.
+    "agregats-grafana": {
+        "task": "apps.pilotage.taches.rafraichir_grafana",
+        "schedule": crontab(minute=7),
+    },
 }

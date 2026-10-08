@@ -308,3 +308,51 @@ class ModificationObjectifReseauSerializer(serializers.Serializer):
     debut = serializers.DateField(required=False)
     fin = serializers.DateField(required=False)
     cible = serializers.IntegerField(min_value=1, required=False)
+
+
+# --- Tendance de prescription et points d'attention (DC-53, DC-57, 0.7.9) -------------------
+
+
+class RetoursSerializer(serializers.Serializer):
+    non_prescrit = serializers.IntegerField()
+    peu = serializers.IntegerField()
+    prescrit = serializers.IntegerField()
+    tres_bien = serializers.IntegerField()
+
+
+class TendanceProduitSerializer(serializers.Serializer):
+    """DC-53 : les retours sur un produit, agrégés, sans nom de prescripteur."""
+
+    produit = serializers.UUIDField(allow_null=True)
+    libelle = serializers.CharField()
+    periode = RetoursSerializer()
+    precedente = RetoursSerializer()
+    favorable_periode = serializers.FloatField(allow_null=True)
+    favorable_precedente = serializers.FloatField(allow_null=True)
+
+
+class VisitePointSerializer(serializers.Serializer):
+    visite = serializers.UUIDField()
+    date = serializers.DateField()
+    delegue = serializers.CharField()
+    delegue_id = serializers.UUIDField()
+    produit = serializers.CharField(allow_blank=True)
+    prospect = serializers.CharField(allow_blank=True)
+
+
+class PointAttentionSerializer(serializers.Serializer):
+    """DC-57 : une phrase calculée par une règle, et les visites qui la fondent."""
+
+    regle = serializers.ChoiceField(
+        choices=["actions_en_retard", "passages_prescrit", "retours_en_baisse"]
+    )
+    nombre = serializers.IntegerField()
+    produit = serializers.CharField(allow_blank=True)
+    visites = VisitePointSerializer(many=True)
+
+
+class PrescriptionSerializer(serializers.Serializer):
+    debut = serializers.DateField()
+    fin = serializers.DateField()
+    tendance = TendanceProduitSerializer(many=True)
+    points = PointAttentionSerializer(many=True)

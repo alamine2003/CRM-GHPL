@@ -2467,6 +2467,44 @@
       "csv": "Fichier CSV",
       "fait": "Export téléchargé ; il est inscrit au journal d'audit.",
       "aide": "Avec la période et les filtres affichés. Chaque export est inscrit au journal d'audit."
+    },
+    "calculeA": "calculé à {{heure}}",
+    "attention": {
+      "titre": "Points d'attention",
+      "aucun": "Rien à signaler sur la période.",
+      "note": "Calculés par des règles sur les rapports de la sélection ; chaque point renvoie aux visites qui le fondent. Rien n'est envoyé à un service extérieur.",
+      "regles": {
+        "actions_en_retard_one": "action promise en retard : le délégué n'est pas revenu voir le prospect depuis l'échéance",
+        "actions_en_retard_other": "actions promises en retard : le délégué n'est pas revenu voir le prospect depuis l'échéance",
+        "passages_prescrit_one": "prescripteur passé à « prescrit » sur {{produit}}",
+        "passages_prescrit_other": "prescripteurs passés à « prescrit » sur {{produit}}",
+        "retours_en_baisse_one": "prescripteur en baisse sur {{produit}}",
+        "retours_en_baisse_other": "prescripteurs en baisse sur {{produit}}"
+      },
+      "visites_one": "Voir la visite",
+      "visites_other": "Voir les visites",
+      "etAutres_one": "et {{count}} autre",
+      "etAutres_other": "et {{count}} autres",
+      "nVisites_one": "({{count}} visite)",
+      "nVisites_other": "({{count}} visites)"
+    },
+    "tendance": {
+      "titre": "Tendance de prescription",
+      "produit": "Produit",
+      "retours": "Retours de la période",
+      "favorable": "Favorables",
+      "precedente": "Période précédente",
+      "niveaux": {
+        "tres_bien_one": "{{count}} prescrit très bien",
+        "tres_bien_other": "{{count}} prescrivent très bien",
+        "prescrit_one": "{{count}} prescrit",
+        "prescrit_other": "{{count}} prescrivent",
+        "peu_one": "{{count}} prescrit peu",
+        "peu_other": "{{count}} prescrivent peu",
+        "non_prescrit_one": "{{count}} ne prescrit pas",
+        "non_prescrit_other": "{{count}} ne prescrivent pas"
+      },
+      "note": "Part des retours « prescrit » ou « prescrit très bien », sur la période et sur la période précédente de même durée. Agrégée : le détail par prescripteur reste au délégué."
     }
   },
   "objectifs": {

@@ -36,6 +36,7 @@ import type {
   MesChiffres,
   TableauEquipe,
   TableauSiege,
+  Prescription,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -189,6 +190,9 @@ export type {
   LignePays,
   TableauEquipe,
   TableauSiege,
+  Prescription,
+  TendanceProduit,
+  PointAttention,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -930,6 +934,11 @@ export function creerClient(options: OptionsClient) {
        * RPT-019, DSH-008 : le tableau (`contenu=indicateurs`) ou les rapports de ses délégués
        * (`contenu=rapports`), en `fichier=csv` ou `xlsx` ; mêmes période et filtres. Audité.
        */
+      /** DC-53, DC-57 : tendance de prescription et points d'attention, même sélection. */
+      prescription: (parametres: Record<string, string> = {}) => {
+        const q = new URLSearchParams(parametres).toString();
+        return requete<Prescription>(`/api/v1/pilotage/prescription/${q ? `?${q}` : ''}`);
+      },
       exporter: (parametres: Record<string, string>) =>
         requete<Blob>(`/api/v1/pilotage/export/?${new URLSearchParams(parametres).toString()}`, {
           binaire: true,

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.8
+  version: 0.7.9
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2850,6 +2850,80 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/pilotage/prescription/:
+    get:
+      operationId: pilotage_prescription
+      description: |-
+        DC-53, DC-57 (0.7.9) : tendance de prescription agrégée par produit et points
+        d'attention, sur les délégués, la période et les filtres du tableau de pilotage.
+      parameters:
+      - in: query
+        name: au
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: division
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: du
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1a
+          - 30j
+          - 6m
+          - 90j
+          - dates
+          - semaine
+      - in: query
+        name: reseau
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: secteur
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: semaine
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: superviseur
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: zone
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - pilotage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prescription'
+          description: ''
   /api/v1/pilotage/siege/:
     get:
       operationId: pilotage_siege
@@ -9647,6 +9721,26 @@ components:
         * `android` - Android
         * `ios` - iOS
         * `web` - Web
+    PointAttention:
+      type: object
+      description: 'DC-57 : une phrase calculée par une règle, et les visites qui
+        la fondent.'
+      properties:
+        regle:
+          $ref: '#/components/schemas/RegleEnum'
+        nombre:
+          type: integer
+        produit:
+          type: string
+        visites:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisitePoint'
+      required:
+      - nombre
+      - produit
+      - regle
+      - visites
     Portefeuille:
       type: object
       description: Portefeuille d'un réseau aujourd'hui.
@@ -9809,6 +9903,28 @@ components:
       - echantillons
       - retours
       - visites
+    Prescription:
+      type: object
+      properties:
+        debut:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        tendance:
+          type: array
+          items:
+            $ref: '#/components/schemas/TendanceProduit'
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/PointAttention'
+      required:
+      - debut
+      - fin
+      - points
+      - tendance
     Presentation:
       type: object
       description: Un produit présenté, à son rang, avec le retour du prescripteur
@@ -10937,6 +11053,16 @@ components:
       required:
       - id
       - nom
+    RegleEnum:
+      enum:
+      - actions_en_retard
+      - passages_prescrit
+      - retours_en_baisse
+      type: string
+      description: |-
+        * `actions_en_retard` - actions_en_retard
+        * `passages_prescrit` - passages_prescrit
+        * `retours_en_baisse` - retours_en_baisse
     Regroupement:
       type: object
       properties:
@@ -11290,6 +11416,22 @@ components:
         * `peu` - Prescrit peu
         * `prescrit` - Prescrit
         * `tres_bien` - Prescrit très bien
+    Retours:
+      type: object
+      properties:
+        non_prescrit:
+          type: integer
+        peu:
+          type: integer
+        prescrit:
+          type: integer
+        tres_bien:
+          type: integer
+      required:
+      - non_prescrit
+      - peu
+      - prescrit
+      - tres_bien
     RetraitCible:
       type: object
       properties:
@@ -12269,6 +12411,35 @@ components:
       - part_planifiee
       - rapports_dans_delai
       - realisation
+    TendanceProduit:
+      type: object
+      description: 'DC-53 : les retours sur un produit, agrégés, sans nom de prescripteur.'
+      properties:
+        produit:
+          type: string
+          format: uuid
+          nullable: true
+        libelle:
+          type: string
+        periode:
+          $ref: '#/components/schemas/Retours'
+        precedente:
+          $ref: '#/components/schemas/Retours'
+        favorable_periode:
+          type: number
+          format: double
+          nullable: true
+        favorable_precedente:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - favorable_periode
+      - favorable_precedente
+      - libelle
+      - periode
+      - precedente
+      - produit
     Terminaison:
       type: object
       description: 'VIS-004 : l''heure réelle de fin et la position, prises par le
@@ -12852,6 +13023,31 @@ components:
       - id
       - objectif
       - statut
+    VisitePoint:
+      type: object
+      properties:
+        visite:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        delegue:
+          type: string
+        delegue_id:
+          type: string
+          format: uuid
+        produit:
+          type: string
+        prospect:
+          type: string
+      required:
+      - date
+      - delegue
+      - delegue_id
+      - produit
+      - prospect
+      - visite
     VisiteProgramme:
       type: object
       description: Une visite du programme, à la date et à l'heure approuvées (VIS-001).

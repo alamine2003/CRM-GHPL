@@ -35,6 +35,7 @@ import { BarreChiffres, Chiffre, EnTetePage, Etiquette, EtatVide } from '../comp
 import { ErreurChargement } from '../composants/Erreurs';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
+import PilotagePrescription from './PilotagePrescription';
 
 /** DSH-003 : à plat, ou par réseau, zone, secteur du poste. */
 const REGROUPEMENTS = ['delegue', 'reseau', 'zone', 'secteur'] as const;
@@ -49,10 +50,15 @@ type Regroupement = (typeof REGROUPEMENTS)[number];
 export default function Pilotage({ perimetre }: { perimetre: Perimetre }) {
   // DSH-004 : le siège, sans pays choisi, ne voit que des agrégés par pays.
   if (perimetre.vue_consolidee) return <PilotageSiege />;
-  return <PilotagePerimetre siege={perimetre.roles.some((r) => r.endsWith('_siege'))} />;
+  return (
+    <PilotagePerimetre
+      siege={perimetre.roles.some((r) => r.endsWith('_siege'))}
+      ouvrirJournee={perimetre.actions.includes('rapports.valider')}
+    />
+  );
 }
 
-function PilotagePerimetre({ siege }: { siege: boolean }) {
+function PilotagePerimetre({ siege, ouvrirJournee }: { siege: boolean; ouvrirJournee: boolean }) {
   const { t, i18n } = useTranslation();
   const { client, choisirPays } = useSession();
   const [parametres, setParametres] = useSearchParams();
@@ -63,6 +69,8 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
   const demande = lireParametres(parametres, CLES_PILOTAGE);
   const tableau = useQuery({
     queryKey: ['pilotage-equipe', demande],
+    // DSH-011 : à jour à moins de 5 minutes, même page laissée ouverte.
+    refetchInterval: 5 * 60 * 1000,
     queryFn: () => client.pilotage.equipe(demande),
   });
   const titre = t('navigation.pilotage');
@@ -108,7 +116,7 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
     <Stack spacing={2.5}>
       <EnTetePage
         titre={titre}
-        sousTitre={libellePeriode(t, d.periode, date(d.debut), date(d.fin))}
+        sousTitre={`${libellePeriode(t, d.periode, date(d.debut), date(d.fin))} · ${calculeA(t, i18n.language, d.calcule_le)}`}
         actions={
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
@@ -161,7 +169,8 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
         variant="body2"
         sx={{ color: 'text.secondary', display: { xs: 'block', sm: 'none' }, mt: -1.5 }}
       >
-        {libellePeriode(t, d.periode, date(d.debut), date(d.fin))}
+        {libellePeriode(t, d.periode, date(d.debut), date(d.fin))} ·{' '}
+        {calculeA(t, i18n.language, d.calcule_le)}
       </Typography>
       {d.delegues.length === 0 ? (
         <Card>
@@ -205,6 +214,7 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
             />
           </BarreChiffres>
           <DelaisValidation delais={d.delais} />
+          <PilotagePrescription demande={demande} ouvrirJournee={ouvrirJournee} />
           {d.par !== 'delegue' && d.groupes.length === 0 ? (
             <Card>
               <EtatVide titre={t(`pilotage.sansGroupe.${d.par}`)} />
@@ -503,6 +513,8 @@ function PilotageSiege() {
   const demande = lireParametres(parametres, CLES_PERIODE);
   const tableau = useQuery({
     queryKey: ['pilotage-siege', demande],
+    // DSH-011 : à jour à moins de 5 minutes, même page laissée ouverte.
+    refetchInterval: 5 * 60 * 1000,
     queryFn: () => client.pilotage.siege(demande),
   });
   const titre = t('navigation.pilotage');
@@ -555,7 +567,7 @@ function PilotageSiege() {
     <Stack spacing={2.5}>
       <EnTetePage
         titre={titre}
-        sousTitre={libellePeriode(t, d.periode, date(d.debut), date(d.fin))}
+        sousTitre={`${libellePeriode(t, d.periode, date(d.debut), date(d.fin))} · ${calculeA(t, i18n.language, d.calcule_le)}`}
         actions={
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
             {d.periode === 'semaine' && (
@@ -716,6 +728,12 @@ function MenuExport({
 }
 
 type Delais = TableauEquipe['delais'];
+
+/** DSH-011 CA1 : l'heure du calcul, affichée avec la période. */
+function calculeA(t: TFunction, langue: string, iso: string) {
+  const heure = new Intl.DateTimeFormat(langue, { hour: '2-digit', minute: '2-digit' });
+  return t('pilotage.calculeA', { heure: heure.format(new Date(iso)) });
+}
 
 /** Une médiane en heures ouvrées : en heures sous un jour ouvré, en jours au-delà. */
 function duree(t: TFunction, langue: string, heures: number | null) {

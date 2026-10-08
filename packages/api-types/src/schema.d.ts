@@ -1610,6 +1610,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/pilotage/prescription/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description DC-53, DC-57 (0.7.9) : tendance de prescription agrégée par produit et points
+     *     d'attention, sur les délégués, la période et les filtres du tableau de pilotage.
+     */
+    get: operations['pilotage_prescription'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/pilotage/siege/': {
     parameters: {
       query?: never;
@@ -4813,6 +4833,13 @@ export interface components {
      * @enum {string}
      */
     PlateformeEnum: 'android' | 'ios' | 'web';
+    /** @description DC-57 : une phrase calculée par une règle, et les visites qui la fondent. */
+    PointAttention: {
+      regle: components['schemas']['RegleEnum'];
+      nombre: number;
+      produit: string;
+      visites: components['schemas']['VisitePoint'][];
+    };
     /** @description Portefeuille d'un réseau aujourd'hui. */
     Portefeuille: {
       reseau: components['schemas']['ReseauResume'];
@@ -4870,6 +4897,14 @@ export interface components {
       derniere: string;
       retours: components['schemas']['RetourPrepare'][];
       echantillons: components['schemas']['EchantillonPrepare'][];
+    };
+    Prescription: {
+      /** Format: date */
+      debut: string;
+      /** Format: date */
+      fin: string;
+      tendance: components['schemas']['TendanceProduit'][];
+      points: components['schemas']['PointAttention'][];
     };
     /** @description Un produit présenté, à son rang, avec le retour du prescripteur (RPT-004). */
     Presentation: {
@@ -5259,6 +5294,13 @@ export interface components {
       id: string;
       nom: string | null;
     };
+    /**
+     * @description * `actions_en_retard` - actions_en_retard
+     *     * `passages_prescrit` - passages_prescrit
+     *     * `retours_en_baisse` - retours_en_baisse
+     * @enum {string}
+     */
+    RegleEnum: 'actions_en_retard' | 'passages_prescrit' | 'retours_en_baisse';
     Regroupement: {
       visites: string[];
     };
@@ -5403,6 +5445,12 @@ export interface components {
      * @enum {string}
      */
     RetourPrescripteurEnum: 'non_prescrit' | 'peu' | 'prescrit' | 'tres_bien';
+    Retours: {
+      non_prescrit: number;
+      peu: number;
+      prescrit: number;
+      tres_bien: number;
+    };
     RetraitCible: {
       motif?: string;
     };
@@ -5842,6 +5890,18 @@ export interface components {
       /** Format: double */
       part_planifiee: number | null;
     };
+    /** @description DC-53 : les retours sur un produit, agrégés, sans nom de prescripteur. */
+    TendanceProduit: {
+      /** Format: uuid */
+      produit: string | null;
+      libelle: string;
+      periode: components['schemas']['Retours'];
+      precedente: components['schemas']['Retours'];
+      /** Format: double */
+      favorable_periode: number | null;
+      /** Format: double */
+      favorable_precedente: number | null;
+    };
     /** @description VIS-004 : l'heure réelle de fin et la position, prises par le téléphone. */
     Terminaison: {
       /** Format: date-time */
@@ -6070,6 +6130,17 @@ export interface components {
       statut: string;
       objectif: string;
       etablissement?: string | null;
+    };
+    VisitePoint: {
+      /** Format: uuid */
+      visite: string;
+      /** Format: date */
+      date: string;
+      delegue: string;
+      /** Format: uuid */
+      delegue_id: string;
+      produit: string;
+      prospect: string;
     };
     /** @description Une visite du programme, à la date et à l'heure approuvées (VIS-001). */
     VisiteProgramme: {
@@ -8732,6 +8803,36 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  pilotage_prescription: {
+    parameters: {
+      query?: {
+        au?: string;
+        delegue?: string;
+        division?: string;
+        du?: string;
+        periode?: '1a' | '30j' | '6m' | '90j' | 'dates' | 'semaine';
+        reseau?: string;
+        secteur?: string;
+        semaine?: string;
+        superviseur?: string;
+        zone?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Prescription'];
+        };
       };
     };
   };

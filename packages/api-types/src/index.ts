@@ -157,6 +157,10 @@ export type IndicateursPeriode = Schemas['IndicateursPeriode'];
 /** DSH-004 : la consolidation du siège, par pays, sans aucun nom. */
 export type TableauSiege = Schemas['TableauSiege'];
 export type LignePays = Schemas['LignePays'];
+/** DC-53, DC-57 : tendance de prescription agrégée et points d'attention. */
+export type Prescription = Schemas['Prescription'];
+export type TendanceProduit = Schemas['TendanceProduit'];
+export type PointAttention = Schemas['PointAttention'];
 /** DSH-009 : objectifs par réseau et leur suivi. */
 export type Objectifs = Schemas['ObjectifsReseau'];
 export type Objectif = Schemas['ObjectifReseau'];

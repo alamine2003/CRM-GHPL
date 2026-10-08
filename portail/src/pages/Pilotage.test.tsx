@@ -1,4 +1,5 @@
 import type {
+  Prescription,
   ClientApi,
   IndicateursPeriode,
   Perimetre,
@@ -60,6 +61,38 @@ const SANS_DELAI: TableauEquipe['delais'] = {
   cible_heures: 24,
   plannings: { decisions: 0, mediane: null, dans_cible: 0 },
   rapports: { decisions: 0, mediane: null, dans_cible: 0 },
+};
+
+const PRESCRIPTION: Prescription = {
+  debut: '2026-10-05',
+  fin: '2026-10-11',
+  tendance: [
+    {
+      produit: 'p1',
+      libelle: 'Cardiol',
+      periode: { tres_bien: 1, prescrit: 2, peu: 1, non_prescrit: 0 },
+      precedente: { tres_bien: 0, prescrit: 1, peu: 1, non_prescrit: 0 },
+      favorable_periode: 0.75,
+      favorable_precedente: 0.5,
+    },
+  ],
+  points: [
+    {
+      regle: 'passages_prescrit',
+      nombre: 2,
+      produit: 'Cardiol',
+      visites: [
+        {
+          visite: 'v1',
+          date: '2026-10-07',
+          delegue: 'Aminata TOURE',
+          delegue_id: 'd1',
+          produit: 'Cardiol',
+          prospect: '',
+        },
+      ],
+    },
+  ],
 };
 
 const TABLEAU: TableauEquipe = {
@@ -126,12 +159,13 @@ function rendre(
 ) {
   const equipe = vi.fn(async () => donnees);
   const exporter = vi.fn(async () => new Blob(['x']));
+  const prescription = vi.fn(async () => PRESCRIPTION);
   const choisirPays = vi.fn(async () => undefined);
   const session = {
     etat: { statut: 'chargement' },
     choisirPays,
     client: {
-      pilotage: { equipe, exporter, siege: vi.fn(async () => siege) },
+      pilotage: { equipe, exporter, prescription, siege: vi.fn(async () => siege) },
     } as unknown as ClientApi,
   } as unknown as Session;
   render(
@@ -145,7 +179,7 @@ function rendre(
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { equipe, exporter, choisirPays };
+  return { equipe, exporter, prescription, choisirPays };
 }
 
 describe('Pilotage', () => {
@@ -177,7 +211,9 @@ describe('Pilotage', () => {
     expect(within(equipe).getByText('Équipe')).toBeTruthy();
     expect(within(equipe).getByText('2 délégués')).toBeTruthy();
     expect(screen.queryByText(/rang|score|meilleur/i)).toBeNull();
-    expect(screen.getAllByText('Semaine du 5 octobre au 11 octobre').length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/^Semaine du 5 octobre au 11 octobre · calculé à/).length,
+    ).toBeGreaterThan(0);
   });
 
   it("DSH-007 : délais de validation, médiane en heures ouvrées, part en moins d'un jour", async () => {
@@ -299,7 +335,9 @@ describe('Pilotage', () => {
     });
     await screen.findByRole('table');
     expect(equipe).toHaveBeenLastCalledWith({ periode: '30j', reseau: 'r2', statut: 'actif' });
-    expect(screen.getAllByText('Du 9 septembre au 8 octobre').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^Du 9 septembre au 8 octobre · calculé à/).length).toBeGreaterThan(
+      0,
+    );
     // Hors semaine, pas de flèches de semaine.
     expect(screen.queryByRole('button', { name: 'Semaine précédente' })).toBeNull();
     // Une liste n'apparaît que si elle offre un choix : une seule zone, pas de liste « Zone ».
@@ -337,5 +375,28 @@ describe('Pilotage', () => {
         fichier: 'csv',
       }),
     );
+  });
+
+  it("DC-57, DC-53 : points d'attention reliés aux visites, tendance agrégée par produit", async () => {
+    const { prescription } = rendre('/pilotage?par=reseau&reseau=r2', TABLEAU, {
+      ...SUPERVISEUR,
+      actions: ['pilotage.lire', 'rapports.valider'],
+    });
+    const points = await screen.findByRole('region', { name: "Points d'attention" });
+    expect(
+      within(points).getByText(/prescripteurs passés à « prescrit » sur Cardiol/),
+    ).toBeTruthy();
+    // Ni regroupement ni statut : la sélection du tableau seulement.
+    expect(prescription).toHaveBeenLastCalledWith({ reseau: 'r2' });
+    fireEvent.click(within(points).getByRole('button', { name: 'Voir les visites' }));
+    // Le superviseur valide : la visite ouvre la journée du délégué.
+    const lien = await within(points).findByRole('link', { name: /Aminata TOURE/ });
+    expect(lien.getAttribute('href')).toBe('/a-traiter/d1/2026-10-07');
+    const tendance = screen.getByRole('table', { name: 'Tendance de prescription' });
+    expect(within(tendance).getByText('Cardiol')).toBeTruthy();
+    expect(within(tendance).getByText('75 %')).toBeTruthy();
+    expect(
+      within(tendance).getByText('1 prescrit très bien · 2 prescrivent · 1 prescrit peu'),
+    ).toBeTruthy();
   });
 });

@@ -2467,6 +2467,44 @@
       "csv": "CSV file",
       "fait": "Export downloaded; it is recorded in the audit log.",
       "aide": "With the period and filters shown. Each export is recorded in the audit log."
+    },
+    "calculeA": "calculated at {{heure}}",
+    "attention": {
+      "titre": "Points of attention",
+      "aucun": "Nothing to report for this period.",
+      "note": "Calculated by rules from the reports in the selection; each point links to the visits behind it. Nothing is sent to an external service.",
+      "regles": {
+        "actions_en_retard_one": "promised action overdue: the rep has not been back to the prospect since the due date",
+        "actions_en_retard_other": "promised actions overdue: the rep has not been back to the prospect since the due date",
+        "passages_prescrit_one": "prescriber moved to “prescribes” on {{produit}}",
+        "passages_prescrit_other": "prescribers moved to “prescribes” on {{produit}}",
+        "retours_en_baisse_one": "prescriber declining on {{produit}}",
+        "retours_en_baisse_other": "prescribers declining on {{produit}}"
+      },
+      "visites_one": "See the visit",
+      "visites_other": "See the visits",
+      "etAutres_one": "and {{count}} more",
+      "etAutres_other": "and {{count}} more",
+      "nVisites_one": "({{count}} visit)",
+      "nVisites_other": "({{count}} visits)"
+    },
+    "tendance": {
+      "titre": "Prescription trend",
+      "produit": "Product",
+      "retours": "Feedback in the period",
+      "favorable": "Favourable",
+      "precedente": "Previous period",
+      "niveaux": {
+        "tres_bien_one": "{{count}} prescribes very well",
+        "tres_bien_other": "{{count}} prescribe very well",
+        "prescrit_one": "{{count}} prescribes",
+        "prescrit_other": "{{count}} prescribe",
+        "peu_one": "{{count}} prescribes little",
+        "peu_other": "{{count}} prescribe little",
+        "non_prescrit_one": "{{count}} does not prescribe",
+        "non_prescrit_other": "{{count}} do not prescribe"
+      },
+      "note": "Share of “prescribes” or “prescribes very well” feedback, in the period and in the previous period of the same length. Aggregated: per-prescriber detail stays with the rep."
     }
   },
   "objectifs": {

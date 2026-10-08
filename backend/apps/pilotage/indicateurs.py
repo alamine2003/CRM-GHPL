@@ -425,25 +425,11 @@ def _retenu(delegue, poste, filtres: dict, sup_par_poste: dict) -> bool:
     return True
 
 
-def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue",
-                     periode: str = "semaine", du=None, au=None,
-                     filtres: dict | None = None) -> dict:  # fmt: skip
-    """DSH-002, DSH-003, DSH-005, DSH-012 : la période de chaque délégué piloté, côte à côte
-    par ordre alphabétique (DC-49 : aucun classement), la couverture sur le cycle (ou sur la
-    période quand elle est plus longue), le total de l'ensemble et, si demandé, celui de chaque
-    réseau, zone ou secteur : un total est toujours la somme de ses délégués (DSH-003 CA1). Un
-    poste rattaché à deux réseaux compte dans chacun ; le total de l'ensemble ne compte chaque
-    délégué qu'une fois. Les filtres ne font que restreindre le périmètre (DSH-005 CA1)."""
-    from django.utils import timezone
-
+def pilotes_retenus(perimetre, debut: date, fin: date, filtres: dict):
+    """Les délégués du périmètre sur la période (`tous`), les rattachements de leurs postes, et
+    ceux que les filtres retiennent (DSH-005 CA1 : un filtre ne fait que restreindre)."""
     from apps.organisation.models import Rattachement
 
-    filtres = filtres or {}
-    pays = perimetre.pays_actif
-    today = aujourdhui(pays)
-    debut, fin = bornes(pays, periode, jour, du, au)
-    cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
-    debut_cycle = min(debut, fin - timedelta(weeks=cycle) + timedelta(days=1))
     postes = postes_du_pilotage(perimetre, debut, fin)
     tous = delegues_des_postes(postes, perimetre.utilisateur, debut, fin)
     pendant = Q(fin__isnull=True) | Q(fin__gt=debut)
@@ -455,6 +441,27 @@ def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue",
     for r in rattachements:
         sup_par_poste[r.poste_id].add(r.superviseur_id)
     pilotes = [(d, p) for d, p in tous if _retenu(d, p, filtres, sup_par_poste)]
+    return tous, rattachements, pilotes
+
+
+def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue",
+                     periode: str = "semaine", du=None, au=None,
+                     filtres: dict | None = None) -> dict:  # fmt: skip
+    """DSH-002, DSH-003, DSH-005, DSH-012 : la période de chaque délégué piloté, côte à côte
+    par ordre alphabétique (DC-49 : aucun classement), la couverture sur le cycle (ou sur la
+    période quand elle est plus longue), le total de l'ensemble et, si demandé, celui de chaque
+    réseau, zone ou secteur : un total est toujours la somme de ses délégués (DSH-003 CA1). Un
+    poste rattaché à deux réseaux compte dans chacun ; le total de l'ensemble ne compte chaque
+    délégué qu'une fois. Les filtres ne font que restreindre le périmètre (DSH-005 CA1)."""
+    from django.utils import timezone
+
+    filtres = filtres or {}
+    pays = perimetre.pays_actif
+    today = aujourdhui(pays)
+    debut, fin = bornes(pays, periode, jour, du, au)
+    cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
+    debut_cycle = min(debut, fin - timedelta(weeks=cycle) + timedelta(days=1))
+    tous, rattachements, pilotes = pilotes_retenus(perimetre, debut, fin, filtres)
     lot = Lot(pays, [d for d, _ in pilotes], debut_cycle, fin)
     lignes = [
         {"delegue": delegue, "poste": poste,

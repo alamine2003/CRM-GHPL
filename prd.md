@@ -704,6 +704,16 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.59 Grafana, fraîcheur, tendance de prescription et points d'attention (mise en œuvre 0.7.9)
+
+- **Grafana isolé** (DSH-010) : Grafana ne lit que le schéma `pilotage`, des agrégats par pays, jour et réseau tirés du même moteur que le portail, sans nom de délégué ni texte libre (CA3). Chaque pays a son rôle de base de données, qui ne lit que les vues de son pays (CA1) ; le siège a le sien, qui ne lit que l'agrégat par pays (CA2). Aucun de ces rôles n'atteint les tables métier. Mise en place, comptes et mots de passe : `docs/grafana.md` ; rien de secret dans le dépôt.
+- **Fraîcheur** (DSH-011) : les agrégats de Grafana sont recalculés chaque heure et le tableau de bord affiche l'heure du dernier calcul ; le portail calcule à la demande, se recharge toutes les 5 minutes et affiche « calculé à … » à côté de la période (CA1).
+- **Fiabilité des calculs** : la somme des jours de Grafana égale, pour la même période, le tableau du pays dans le portail (test automatisé).
+- **Points d'attention** (DC-57) : sous les délais de validation, des phrases calculées par trois règles, chacune reliée à ses visites : actions promises en retard (échéance passée, prospect pas revu depuis), prescripteurs passés à « prescrit » sur un produit, prescripteurs en baisse. Les visites du même jour d'un délégué se regroupent ; l'encadrement qui valide ouvre la journée d'un clic. Rien n'est envoyé à un service extérieur.
+- **Tendance de prescription** (DC-53) : par produit, les retours de la période, la part favorable (« prescrit » ou « prescrit très bien ») et celle de la période précédente de même durée ; agrégée, sur la sélection du tableau (réseau, secteur, zone…). Le détail par prescripteur reste au délégué, dans « Préparer ma visite » ; les points de prescription ne nomment pas le prescripteur.
+- **Recette et démonstration du cycle 0.7** : `recette-0.7.md` relie chaque critère du cycle (DSH-001 à DSH-012, RPT-019, DC-49, DC-50, DC-53, DC-57, REC-09 pour Grafana, REC-10) au test qui le prouve ; `demonstration-0.7.md` déroule le pilotage du délégué au siège en 30 minutes.
+- [D, 8 octobre 2026, délégation] DC-52 (position de référence proposée à partir des pointages de deux personnes, validée sur une carte) passe au cycle 0.8 : elle s'appuie sur les pointages du terrain et sur la carte du téléphone, que le cycle 0.8 « Mobilité » reprend.
+
 ### 14.58 Exports audités (mise en œuvre 0.7.8)
 
 - **Exporter** (RPT-019, DSH-008) : sur « Pilotage », le bouton « Exporter » propose les indicateurs par délégué ou les rapports de visite, en classeur Excel ou en fichier CSV. L'export reprend la période et les filtres affichés ; le regroupement ne change rien. Il est ouvert au superviseur, au DM, au DF, au responsable pays et au siège (pays choisi) : le texte libre des rapports reste réservé à l'encadrement (§19) ; ni le délégué ni l'administrateur pays n'exportent.
@@ -870,12 +880,12 @@ La relecture (`revue-exigences.md`, question O-12) a relevé 13 exigences douteu
 | DC-49 | R1 | Pas de score composite, d'appréciation ni de classement des délégués ; taux corrigés côte à côte (§14.18, DSH-012) | Cycle 0.7 |
 | DC-50 | R2 | Deux chiffres distincts : réalisation (visites faites / prévues) et part des écarts justifiés (KPI-03, DSH-006) | Cycle 0.7 |
 | DC-51 | R3 | « Maladie » retirée ; « indisponibilité imprévue », sans motif médical, déclarable le jour même, même semaine fermée, et qui justifie les visites du jour (PLN-009) | 0.5.9 |
-| DC-52 | R4 | Position de référence proposée seulement à partir de pointages d'au moins deux personnes différentes, validée sur une carte (§14.18, §14.35) | Cycle 0.7 ou 0.8 |
-| DC-53 | R5 | Tendance de prescription agrégée (produit, secteur, réseau) ; détail par prescripteur visible du seul délégué (§14.35) | Cycle 0.7 |
+| DC-52 | R4 | Position de référence proposée seulement à partir de pointages d'au moins deux personnes différentes, validée sur une carte (§14.18, §14.35) | Cycle 0.8 (§14.59) |
+| DC-53 | R5 | Tendance de prescription agrégée (produit, secteur, réseau) ; détail par prescripteur visible du seul délégué (§14.35) | 0.7.9 (§14.59) |
 | DC-54 | R6 | Délai sans synchronisation réglable par pays, 7 jours par défaut (OFF-007, RG-054) | 0.8.3 |
 | DC-55 | R7 | Pointage : une position dont la précision annoncée dépasse le seuil est « imprécise », pas « loin du lieu » ; rayon de pointage propre possible par établissement (VIS-010, §7.5) | 0.5.9 ; valeurs à mesurer au pilote |
 | DC-56 | R8 | Performance : 1 s pour le portail sur une bonne connexion, 2 s perçues sur le téléphone en 3G, mesurées (NFR-002, §14.35) | Tous cycles, contrôle en 0.9 |
-| DC-57 | R9 | Le « résumé automatique » devient une liste de points d'attention calculés par des règles, reliés à leurs visites ; aucune donnée envoyée à un service extérieur (§14.35) | Cycle 0.7 |
+| DC-57 | R9 | Le « résumé automatique » devient une liste de points d'attention calculés par des règles, reliés à leurs visites ; aucune donnée envoyée à un service extérieur (§14.35) | 0.7.9 (§14.59) |
 | DC-58 | R10 | Le mobile personnel d'un médecin ne s'affiche qu'aux délégués qui l'ont dans leur liste cible, et seulement s'il accepte d'être contacté sur ce numéro ; il sert toujours à repérer les doublons (§14.1) | 0.5.9 |
 | DC-59 | R11 | Verrouillage du téléphone après un délai réglable par pays, 15 minutes par défaut, de 5 à 30 (SEC-004) | 0.5.9 |
 | DC-60 | R12 | Pas d'échéance sur une demande de correction (RPT-014) | 0.6.4 |
@@ -1118,8 +1128,8 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | DSH-007 | Délais de validation des plannings et rapports (KPI-02, KPI-09). | 0.7.7 | CA1 : calculés en heures ouvrées du pays. Livré en 0.7.7 (§14.57). |
 | DSH-008 | Exports contrôlés et audités. | 0.7.8 | Voir RPT-019. Livré en 0.7.8 (§14.58). |
 | DSH-009 | Objectifs par réseau et par période (visites, couverture A/B, présentations d'un produit), saisis par le DM ou l'administrateur pays ; suivi réalisé / objectif. | 0.7.6 | CA1 : un objectif a une période, un réseau, un indicateur et une cible. CA2 : le tableau de bord affiche l'avance ou le retard. Livré en 0.7.6 (§14.56). |
-| DSH-010 | Grafana : tableaux de bord sur des vues de pilotage en lecture seule, isolées par pays. | 0.7.9 | CA1 : un compte Grafana d'un pays ne lit que les vues de ce pays. CA2 : le siège lit des agrégats. CA3 : aucune donnée de rapport en texte libre n'est exposée à Grafana. |
-| DSH-011 | Fraîcheur : tableaux de bord du portail à jour à moins de 5 minutes ; Grafana à moins de 1 heure [H]. | 0.7.9 | CA1 : l'heure de dernière mise à jour est affichée. |
+| DSH-010 | Grafana : tableaux de bord sur des vues de pilotage en lecture seule, isolées par pays. | 0.7.9 | CA1 : un compte Grafana d'un pays ne lit que les vues de ce pays. CA2 : le siège lit des agrégats. CA3 : aucune donnée de rapport en texte libre n'est exposée à Grafana. Livré en 0.7.9 (§14.59). |
+| DSH-011 | Fraîcheur : tableaux de bord du portail à jour à moins de 5 minutes ; Grafana à moins de 1 heure [H]. | 0.7.9 | CA1 : l'heure de dernière mise à jour est affichée. Livré en 0.7.9 (§14.59). |
 | DSH-012 | Tableau hebdomadaire de l'équipe : les taux de chaque délégué côte à côte, **sans note composite ni classement** (DC-49, §14.18). | 0.7.2 | CA1 : chaque taux a une formule bornée à 100 % ; une visite imprévue n'abaisse aucun taux. CA2 : sans aucune visite, « Aucune activité ». Livré en 0.7.2 (§14.52). |
 
 ### 15.9 Hors connexion et synchronisation — OFF

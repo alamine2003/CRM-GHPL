@@ -400,6 +400,7 @@ urlpatterns = [
     path("pilotage/siege/", pil.SiegeVue.as_view(), name="pilotage-siege"),
     # DSH-009 : objectifs par réseau
     path("pilotage/export/", pil.ExportVue.as_view(), name="pilotage-export"),
+    path("pilotage/prescription/", pil.PrescriptionVue.as_view(), name="pilotage-prescription"),
     path("pilotage/objectifs/", pil.ObjectifsVue.as_view(), name="objectifs"),
     path("pilotage/objectifs/<uuid:id>/", pil.ObjectifVue.as_view(), name="objectif"),
     path(
