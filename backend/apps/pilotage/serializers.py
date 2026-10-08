@@ -122,6 +122,15 @@ class ChoixPilotageSerializer(ChoixPeriodeSerializer):
     statut = serializers.ChoiceField(choices=["actif", "sans_activite"], required=False)
 
 
+class ChoixExportSerializer(ChoixPilotageSerializer):
+    """RPT-019, DSH-008 : le contenu et le format d'un export du tableau de pilotage."""
+
+    contenu = serializers.ChoiceField(choices=["indicateurs", "rapports"], required=False,
+                                      default="indicateurs")  # fmt: skip
+    #: « format » est réservé par le cadriciel (choix du rendu) : le fichier se nomme ainsi.
+    fichier = serializers.ChoiceField(choices=["csv", "xlsx"], required=False, default="csv")
+
+
 class IndicateursPeriodeSerializer(serializers.Serializer):
     """Les indicateurs d'une période dont les dates sont portées par le tableau."""
 

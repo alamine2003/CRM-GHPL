@@ -2457,6 +2457,16 @@
       "dansCible_other": "{{n}} of {{count}} decisions within one working day",
       "aucuneDecision": "No decision in this period",
       "note": "Time from submission to the decision (approval, revision, validation or correction request) made in the period, in the country's working hours, excluding weekends and public holidays. Target: under one working day."
+    },
+    "export": {
+      "bouton": "Export",
+      "enCours": "Exporting…",
+      "indicateurs": "Indicators by rep",
+      "rapports": "Visit reports",
+      "xlsx": "Excel workbook",
+      "csv": "CSV file",
+      "fait": "Export downloaded; it is recorded in the audit log.",
+      "aide": "With the period and filters shown. Each export is recorded in the audit log."
     }
   },
   "objectifs": {

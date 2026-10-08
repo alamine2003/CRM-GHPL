@@ -926,6 +926,14 @@ export function creerClient(options: OptionsClient) {
         const q = new URLSearchParams(parametres).toString();
         return requete<TableauEquipe>(`/api/v1/pilotage/equipe/${q ? `?${q}` : ''}`);
       },
+      /**
+       * RPT-019, DSH-008 : le tableau (`contenu=indicateurs`) ou les rapports de ses délégués
+       * (`contenu=rapports`), en `fichier=csv` ou `xlsx` ; mêmes période et filtres. Audité.
+       */
+      exporter: (parametres: Record<string, string>) =>
+        requete<Blob>(`/api/v1/pilotage/export/?${new URLSearchParams(parametres).toString()}`, {
+          binaire: true,
+        }),
       /** DSH-009 : les objectifs des réseaux visibles et leur suivi (`tous` : terminés aussi). */
       objectifs: (tous = false) =>
         requete<Objectifs>(`/api/v1/pilotage/objectifs/${tous ? '?tous=1' : ''}`),

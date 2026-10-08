@@ -6,7 +6,7 @@ import type {
   TableauSiege,
 } from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContexteSession, type Session } from '../contexteSession';
@@ -125,12 +125,13 @@ function rendre(
   siege?: TableauSiege,
 ) {
   const equipe = vi.fn(async () => donnees);
+  const exporter = vi.fn(async () => new Blob(['x']));
   const choisirPays = vi.fn(async () => undefined);
   const session = {
     etat: { statut: 'chargement' },
     choisirPays,
     client: {
-      pilotage: { equipe, siege: vi.fn(async () => siege) },
+      pilotage: { equipe, exporter, siege: vi.fn(async () => siege) },
     } as unknown as ClientApi,
   } as unknown as Session;
   render(
@@ -144,7 +145,7 @@ function rendre(
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { equipe, choisirPays };
+  return { equipe, exporter, choisirPays };
 }
 
 describe('Pilotage', () => {
@@ -306,5 +307,35 @@ describe('Pilotage', () => {
     expect(screen.getByLabelText('Réseau')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Effacer les filtres' }));
     expect(equipe).toHaveBeenLastCalledWith({});
+  });
+
+  it('RPT-019 : exporter le tableau ou les rapports, avec la période et les filtres', async () => {
+    URL.createObjectURL = vi.fn(() => 'blob:export');
+    URL.revokeObjectURL = vi.fn();
+    const { exporter } = rendre('/pilotage?periode=30j&reseau=r2&par=reseau', {
+      ...TABLEAU,
+      periode: '30j',
+      debut: '2026-09-09',
+      fin: '2026-10-08',
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Exporter' }));
+    const menu = await screen.findByRole('menu');
+    const choix = within(menu).getAllByRole('menuitem');
+    expect(choix.map((x) => x.textContent)).toEqual([
+      'Indicateurs par déléguéClasseur Excel',
+      'Indicateurs par déléguéFichier CSV',
+      'Rapports de visiteClasseur Excel',
+      'Rapports de visiteFichier CSV',
+    ]);
+    fireEvent.click(choix[3]!);
+    // Le regroupement ne change pas l'export ; la période et les filtres, si.
+    await waitFor(() =>
+      expect(exporter).toHaveBeenCalledWith({
+        periode: '30j',
+        reseau: 'r2',
+        contenu: 'rapports',
+        fichier: 'csv',
+      }),
+    );
   });
 });

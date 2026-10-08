@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.7
+  version: 0.7.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2625,6 +2625,107 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TableauEquipe'
+          description: ''
+  /api/v1/pilotage/export/:
+    get:
+      operationId: pilotage_export
+      description: |-
+        RPT-019, DSH-008 (0.7.8) : le tableau de pilotage, ou les rapports de ses délégués, en
+        CSV ou en classeur Excel ; même période, mêmes filtres, même périmètre (CA1). Chaque export
+        crée un événement d'audit avec ses filtres et son nombre de lignes (CA2, RG-061).
+      parameters:
+      - in: query
+        name: au
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: contenu
+        schema:
+          type: string
+          enum:
+          - indicateurs
+          - rapports
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: division
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: du
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fichier
+        schema:
+          type: string
+          enum:
+          - csv
+          - xlsx
+      - in: query
+        name: periode
+        schema:
+          type: string
+          enum:
+          - 1a
+          - 30j
+          - 6m
+          - 90j
+          - dates
+          - semaine
+      - in: query
+        name: reseau
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: secteur
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: semaine
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: statut
+        schema:
+          type: string
+          enum:
+          - actif
+          - sans_activite
+      - in: query
+        name: superviseur
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: zone
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - pilotage
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
           description: ''
   /api/v1/pilotage/mes-chiffres/:
     get:

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 19:00+0000\n"
+"POT-Creation-Date: 2026-10-08 20:00+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -484,9 +484,89 @@ msgstr "Action not allowed."
 msgid "Vous n'avez pas accès à ce pays."
 msgstr "You do not have access to this country."
 
+msgid "Délégué"
+msgstr "Rep"
+
+msgid "Poste"
+msgstr "Position"
+
+msgid "Visites prévues échues"
+msgstr "Planned visits due"
+
+msgid "Visites faites"
+msgstr "Visits made"
+
+msgid "Dont imprévues"
+msgstr "Of which unplanned"
+
+msgid "Réalisation (%)"
+msgstr "Completion (%)"
+
+msgid "Écarts"
+msgstr "Deviations"
+
+msgid "Écarts justifiés (%)"
+msgstr "Justified deviations (%)"
+
+msgid "Géolocalisées (%)"
+msgstr "Geolocated (%)"
+
+msgid "Rapports dans le délai (%)"
+msgstr "Reports on time (%)"
+
+msgid "Couverture du cycle (%)"
+msgstr "Cycle coverage (%)"
+
+msgid "Date de la visite"
+msgstr "Visit date"
+
+msgid "Prospect"
+msgstr "Prospect"
+
+msgid "Établissement"
+msgstr "Facility"
+
+msgid "Statut"
+msgstr "Status"
+
+msgid "Soumis le"
+msgstr "Submitted on"
+
+msgid "En retard"
+msgstr "Late"
+
+msgid "Validé le"
+msgstr "Validated on"
+
+msgid "Mode de validation"
+msgstr "Validation mode"
+
+msgid "Objectif prévu"
+msgstr "Planned objective"
+
+msgid "Résultat obtenu"
+msgstr "Outcome"
+
+msgid "Produits présentés"
+msgstr "Products presented"
+
+msgid "Prochaine action"
+msgstr "Next action"
+
+msgid "Échéance"
+msgstr "Due date"
+
+msgid "Résumé"
+msgstr "Summary"
+
+msgid "Oui"
+msgstr "Yes"
+
+msgid "Non"
+msgstr "No"
+
 msgid "Seuls le DM du réseau et l'administrateur pays fixent ses objectifs."
-msgstr ""
-"Only the network's DM and the country administrator set its targets."
+msgstr "Only the network's DM and the country administrator set its targets."
 
 msgid "La fin vient après le début."
 msgstr "The end date must come after the start date."
@@ -508,6 +588,12 @@ msgstr "A period lasts one year at most."
 
 msgid "Vue réservée au siège."
 msgstr "View reserved for headquarters."
+
+msgid "Rapports"
+msgstr "Reports"
+
+msgid "Indicateurs"
+msgstr "Indicators"
 
 msgid "Le planning ne peut pas être soumis : corrigez les points signalés."
 msgstr "The plan cannot be submitted: fix the points listed."

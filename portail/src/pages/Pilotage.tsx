@@ -3,12 +3,16 @@ import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
+import FileDownloadRounded from '@mui/icons-material/FileDownloadRounded';
 import {
   Alert,
   Box,
   Button,
   Card,
   IconButton,
+  ListItemText,
+  ListSubheader,
+  Menu,
   MenuItem,
   Skeleton,
   Stack,
@@ -29,7 +33,8 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { BarreChiffres, Chiffre, EnTetePage, Etiquette, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
-import { useSession } from '../contexteSession';
+import { useNotifier } from '../contexteNotifications';
+import { messageErreur, useSession } from '../contexteSession';
 
 /** DSH-003 : à plat, ou par réseau, zone, secteur du poste. */
 const REGROUPEMENTS = ['delegue', 'reseau', 'zone', 'secteur'] as const;
@@ -123,6 +128,7 @@ function PilotagePerimetre({ siege }: { siege: boolean }) {
             {d.periode === 'semaine' && (
               <FlechesSemaine debut={d.debut} fin={d.fin} aujourdhui={d.aujourdhui} aller={aller} />
             )}
+            <MenuExport demande={demande} debut={d.debut} fin={d.fin} />
           </Stack>
         }
       />
@@ -634,6 +640,78 @@ function PilotageSiege() {
         pays={d.pays.map((x) => ({ code: x.pays.code, nom: x.pays.nom, delais: x.delais }))}
       />
     </Stack>
+  );
+}
+
+/**
+ * RPT-019, DSH-008 (0.7.8) : exporter le tableau ou les rapports de ses délégués, avec la même
+ * période et les mêmes filtres, en CSV ou en classeur Excel. Le serveur limite au périmètre et
+ * inscrit chaque export au journal d'audit.
+ */
+function MenuExport({
+  demande,
+  debut,
+  fin,
+}: {
+  demande: Record<string, string>;
+  debut: string;
+  fin: string;
+}) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const notifier = useNotifier();
+  const [ancre, setAncre] = useState<HTMLElement | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+  async function exporter(contenu: 'indicateurs' | 'rapports', fichier: 'csv' | 'xlsx') {
+    setAncre(null);
+    setEnvoi(true);
+    try {
+      const { par: _par, ...filtres } = demande;
+      const blob = await client.pilotage.exporter({ ...filtres, contenu, fichier });
+      const lien = document.createElement('a');
+      lien.href = URL.createObjectURL(blob);
+      lien.download = `${contenu}-${debut}-${fin}.${fichier}`;
+      lien.click();
+      URL.revokeObjectURL(lien.href);
+      notifier(t('pilotage.export.fait'));
+    } catch (e) {
+      notifier(messageErreur(e, t('erreurs.reseau')), 'error');
+    } finally {
+      setEnvoi(false);
+    }
+  }
+  return (
+    <>
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<FileDownloadRounded />}
+        disabled={envoi}
+        aria-haspopup="menu"
+        onClick={(e) => setAncre(e.currentTarget)}
+        sx={{ ml: 1, whiteSpace: 'nowrap' }}
+      >
+        {envoi ? t('pilotage.export.enCours') : t('pilotage.export.bouton')}
+      </Button>
+      <Menu anchorEl={ancre} open={!!ancre} onClose={() => setAncre(null)}>
+        <ListSubheader
+          disableSticky
+          sx={{ lineHeight: 1.4, py: 1, maxWidth: 260, whiteSpace: 'normal' }}
+        >
+          {t('pilotage.export.aide')}
+        </ListSubheader>
+        {(['indicateurs', 'rapports'] as const).flatMap((contenu) =>
+          (['xlsx', 'csv'] as const).map((fichier) => (
+            <MenuItem key={`${contenu}-${fichier}`} onClick={() => void exporter(contenu, fichier)}>
+              <ListItemText
+                primary={t(`pilotage.export.${contenu}`)}
+                secondary={t(`pilotage.export.${fichier}`)}
+              />
+            </MenuItem>
+          )),
+        )}
+      </Menu>
+    </>
   );
 }
 

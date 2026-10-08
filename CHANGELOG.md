@@ -2,6 +2,26 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.8] — Exports audités
+
+Huitième jalon du cycle 0.7 « Indicateurs de pilotage ».
+
+### Ajouté (RPT-019, DSH-008, RG-061, prd.md §14.58)
+
+- « Exporter » sur « Pilotage » : indicateurs par délégué ou rapports de visite, en classeur Excel ou en CSV, avec la période et les filtres affichés.
+- Limité au périmètre du tableau (CA1) ; chaque export est inscrit au journal d'audit avec ses filtres et son nombre de lignes (CA2).
+- Décision par délégation : CSV « ; » en UTF-8 avec BOM, classeur .xlsx sans dépendance, heures du pays, cellules neutralisées contre les formules.
+
+### Design
+
+Revue sur le rendu réel (responsable pays de la démonstration, bureau et téléphone ; fichiers téléchargés et relus) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Menu d'export | Rien ne disait que l'export suit la période et les filtres, ni qu'il est audité | Une ligne d'aide en tête du menu |
+| Fichier des rapports | Heures en temps universel (« 2026-09-21T09:55+00:00 ») | Heure du pays, « 2026-09-21 09:55 » |
+| Classeur Excel | Sans style par défaut, et des cellules vides écrites comme du texte | Style « Normal » déclaré ; cellules vides omises |
+
 ## [0.7.7] — Délais de validation
 
 Septième jalon du cycle 0.7 « Indicateurs de pilotage ».

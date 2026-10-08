@@ -49,6 +49,7 @@ class Action(StrEnum):
     RAPPORTS_VALIDER = "rapports.valider"
     INDICATEURS_LIRE = "indicateurs.lire"
     PILOTAGE_LIRE = "pilotage.lire"
+    PILOTAGE_EXPORTER = "pilotage.exporter"
     OBJECTIFS_LIRE = "objectifs.lire"
     OBJECTIFS_GERER = "objectifs.gerer"
 
@@ -155,6 +156,11 @@ MATRICE: dict[Action, frozenset[str]] = {
     # lui sont rattachés, DM et DF pour leurs réseaux, le responsable pays pour tout le pays ;
     # le siège en agrégé par pays, et au nominatif d'un pays choisi, consultation auditée.
     Action.PILOTAGE_LIRE: frozenset(
+        SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
+    ),
+    # RPT-019, DSH-008 : exports du tableau de pilotage, dans le périmètre, audités ; le texte
+    # libre des rapports n'est exportable que par le superviseur et au-dessus (prd.md §19).
+    Action.PILOTAGE_EXPORTER: frozenset(
         SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
     # DSH-009 : objectifs par réseau, fixés par le DM du réseau ou l'administrateur pays

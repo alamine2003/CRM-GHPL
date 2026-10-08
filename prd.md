@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.58 Exports audités (mise en œuvre 0.7.8)
+
+- **Exporter** (RPT-019, DSH-008) : sur « Pilotage », le bouton « Exporter » propose les indicateurs par délégué ou les rapports de visite, en classeur Excel ou en fichier CSV. L'export reprend la période et les filtres affichés ; le regroupement ne change rien. Il est ouvert au superviseur, au DM, au DF, au responsable pays et au siège (pays choisi) : le texte libre des rapports reste réservé à l'encadrement (§19) ; ni le délégué ni l'administrateur pays n'exportent.
+- **CA1** : l'export porte sur les seuls délégués du tableau, donc du périmètre ; un DM sans réseau obtient un fichier vide. Les rapports exportés sont ceux des visites de la période, jamais un brouillon.
+- **CA2** : chaque export crée l'événement d'audit `export.indicateurs` ou `export.rapports` : qui, quand, quel pays, format, période, filtres et nombre de lignes (RG-061). Le menu le rappelle.
+- [D, 8 octobre 2026, délégation] Formats : CSV à séparateur « ; » en UTF-8 avec BOM (Excel en français l'ouvre tel quel) et classeur .xlsx écrit sans bibliothèque supplémentaire (en-tête en gras, figé, filtre automatique). Les heures sont celles du pays (« 2026-09-21 09:55 »). Une cellule qui commence par =, +, - ou @ est préfixée d'une apostrophe : un tableur ne l'exécute pas comme une formule.
+
 ### 14.57 Délais de validation (mise en œuvre 0.7.7)
 
 - **Délais** (DSH-007, KPI-02, KPI-09) : « Pilotage » montre, sous les chiffres clés, le délai médian de validation des plannings et celui des rapports, le nombre de décisions et combien ont été prises en moins d'un jour ouvré (la cible des deux indicateurs) ; une médiane au-delà d'un jour ouvré ressort en orange. Le siège les lit par pays et pour tous les pays.
@@ -1085,7 +1092,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | RPT-016 | Réouverture d'un rapport validé : superviseur ≤ 30 jours, DM au-delà ; motif obligatoire. | 0.6.6 | CA1 : un superviseur ne peut pas rouvrir un rapport validé il y a 31 jours. CA2 : la réouverture est auditée et notifiée. |
 | RPT-017 | Identification des rapports en retard et alerte au superviseur à 48 h. | 0.6.7 | CA1 : la liste des retards est filtrable par délégué. |
 | RPT-018 | Validation par escalade (DM) ou remplacement. | 0.6.3 | CA1 : le mode est visible dans l'historique. |
-| RPT-019 | Export des rapports (CSV/Excel) dans le périmètre, audité. | 0.7.8 | CA1 : l'export ne contient que le périmètre de l'utilisateur. CA2 : chaque export crée un événement d'audit (filtres, nombre de lignes). |
+| RPT-019 | Export des rapports (CSV/Excel) dans le périmètre, audité. | 0.7.8 | CA1 : l'export ne contient que le périmètre de l'utilisateur. CA2 : chaque export crée un événement d'audit (filtres, nombre de lignes). Livré en 0.7.8 (§14.58). |
 
 ### 15.7 Notifications — NOT
 
@@ -1109,7 +1116,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | DSH-005 | Filtres : période, pays, zone, secteur, division, réseau, superviseur, délégué, statut. | 0.7.5 | CA1 : les filtres proposés sont limités au périmètre. Livré en 0.7.5 (§14.55). |
 | DSH-006 | Taux de réalisation et part des écarts justifiés, deux chiffres distincts (KPI-03, DC-50). | 0.7.6 | CA1 : la définition est celle de la section 5. Livré en 0.7.6 (§14.56). |
 | DSH-007 | Délais de validation des plannings et rapports (KPI-02, KPI-09). | 0.7.7 | CA1 : calculés en heures ouvrées du pays. Livré en 0.7.7 (§14.57). |
-| DSH-008 | Exports contrôlés et audités. | 0.7.8 | Voir RPT-019. |
+| DSH-008 | Exports contrôlés et audités. | 0.7.8 | Voir RPT-019. Livré en 0.7.8 (§14.58). |
 | DSH-009 | Objectifs par réseau et par période (visites, couverture A/B, présentations d'un produit), saisis par le DM ou l'administrateur pays ; suivi réalisé / objectif. | 0.7.6 | CA1 : un objectif a une période, un réseau, un indicateur et une cible. CA2 : le tableau de bord affiche l'avance ou le retard. Livré en 0.7.6 (§14.56). |
 | DSH-010 | Grafana : tableaux de bord sur des vues de pilotage en lecture seule, isolées par pays. | 0.7.9 | CA1 : un compte Grafana d'un pays ne lit que les vues de ce pays. CA2 : le siège lit des agrégats. CA3 : aucune donnée de rapport en texte libre n'est exposée à Grafana. |
 | DSH-011 | Fraîcheur : tableaux de bord du portail à jour à moins de 5 minutes ; Grafana à moins de 1 heure [H]. | 0.7.9 | CA1 : l'heure de dernière mise à jour est affichée. |

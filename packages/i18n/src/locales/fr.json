@@ -2457,6 +2457,16 @@
       "dansCible_other": "{{n}} sur {{count}} décisions en moins d'un jour ouvré",
       "aucuneDecision": "Aucune décision sur la période",
       "note": "Délai entre la soumission et la décision (approbation, révision, validation ou demande de correction) prise sur la période, en heures ouvrées du pays, sans les week-ends ni les jours fériés. Cible : moins d'un jour ouvré."
+    },
+    "export": {
+      "bouton": "Exporter",
+      "enCours": "Export…",
+      "indicateurs": "Indicateurs par délégué",
+      "rapports": "Rapports de visite",
+      "xlsx": "Classeur Excel",
+      "csv": "Fichier CSV",
+      "fait": "Export téléchargé ; il est inscrit au journal d'audit.",
+      "aide": "Avec la période et les filtres affichés. Chaque export est inscrit au journal d'audit."
     }
   },
   "objectifs": {

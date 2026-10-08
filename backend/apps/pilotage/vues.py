@@ -12,6 +12,7 @@ from apps.perimetre.matrice import Action
 from apps.perimetre.vues import VuePerimetre
 from apps.planning.models import Visite
 
+from . import exports
 from . import serializers as s
 
 #: §14.18, DSH-005 : la période du tableau.
@@ -128,6 +129,66 @@ class SiegeVue(VuePerimetre):
         donnees = tableau_siege(self.perimetre, v.get("semaine"), v["periode"], v.get("du"),
                                 v.get("au"))  # fmt: skip
         return Response(s.TableauSiegeSerializer(donnees).data)
+
+
+class ExportVue(VuePerimetre):
+    """RPT-019, DSH-008 (0.7.8) : le tableau de pilotage, ou les rapports de ses délégués, en
+    CSV ou en classeur Excel ; même période, mêmes filtres, même périmètre (CA1). Chaque export
+    crée un événement d'audit avec ses filtres et son nombre de lignes (CA2, RG-061)."""
+
+    actions = {"GET": Action.PILOTAGE_EXPORTER}
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Visite.objects.none())
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("contenu", OpenApiTypes.STR, required=False,
+                             enum=["indicateurs", "rapports"]),
+            OpenApiParameter("fichier", OpenApiTypes.STR, required=False, enum=["csv", "xlsx"]),
+            OpenApiParameter("semaine", OpenApiTypes.DATE, required=False),
+            *PARAMETRES_PERIODE,
+            *[OpenApiParameter(f, OpenApiTypes.UUID, required=False)
+              for f in ("zone", "secteur", "division", "reseau", "superviseur", "delegue")],
+            OpenApiParameter("statut", OpenApiTypes.STR, required=False,
+                             enum=["actif", "sans_activite"]),
+        ],
+        responses={(200, "text/csv"): OpenApiTypes.BINARY,
+                   (200, exports.FORMATS["xlsx"][0]): OpenApiTypes.BINARY},
+        operation_id="pilotage_export",
+    )  # fmt: skip
+    def get(self, request):
+        from django.http import HttpResponse
+
+        from apps.audit.services import enregistrer
+
+        from .indicateurs import FILTRES, tableau_pilotage
+
+        choix = s.ChoixExportSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        pays = pays_requis(self.perimetre)
+        v = choix.validated_data
+        filtres = {k: v[k] for k in (*FILTRES, "statut") if v.get(k)}
+        donnees = tableau_pilotage(self.perimetre, v.get("semaine"), "delegue", v["periode"],
+                                   v.get("du"), v.get("au"), filtres)  # fmt: skip
+        if v["contenu"] == "rapports":
+            entetes, lignes = exports.rapports(pays, donnees)
+            titre = _("Rapports")
+        else:
+            entetes, lignes = exports.indicateurs(donnees)
+            titre = _("Indicateurs")
+        type_mime, extension = exports.FORMATS[v["fichier"]]
+        contenu = (exports.en_xlsx(entetes, lignes, titre) if v["fichier"] == "xlsx"
+                   else exports.en_csv(entetes, lignes))  # fmt: skip
+        enregistrer(f"export.{v['contenu']}", pays=pays, details={
+            "format": v["fichier"], "periode": v["periode"],
+            "debut": donnees["debut"].isoformat(), "fin": donnees["fin"].isoformat(),
+            "filtres": {k: str(x) for k, x in filtres.items()}, "lignes": len(lignes),
+        })  # fmt: skip
+        nom = f"{v['contenu']}-{pays.code.lower()}-{donnees['debut']}-{donnees['fin']}.{extension}"
+        reponse = HttpResponse(contenu, content_type=type_mime)
+        reponse["Content-Disposition"] = f'attachment; filename="{nom}"'
+        return reponse
 
 
 # --- Objectifs par réseau (DSH-009, 0.7.6) --------------------------------------------------

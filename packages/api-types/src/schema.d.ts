@@ -1513,6 +1513,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/pilotage/export/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description RPT-019, DSH-008 (0.7.8) : le tableau de pilotage, ou les rapports de ses délégués, en
+     *     CSV ou en classeur Excel ; même période, mêmes filtres, même périmètre (CA1). Chaque export
+     *     crée un événement d'audit avec ses filtres et son nombre de lignes (CA2, RG-061).
+     */
+    get: operations['pilotage_export'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/pilotage/mes-chiffres/': {
     parameters: {
       query?: never;
@@ -8561,6 +8582,40 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['TableauEquipe'];
+        };
+      };
+    };
+  };
+  pilotage_export: {
+    parameters: {
+      query?: {
+        au?: string;
+        contenu?: 'indicateurs' | 'rapports';
+        delegue?: string;
+        division?: string;
+        du?: string;
+        fichier?: 'csv' | 'xlsx';
+        periode?: '1a' | '30j' | '6m' | '90j' | 'dates' | 'semaine';
+        reseau?: string;
+        secteur?: string;
+        semaine?: string;
+        statut?: 'actif' | 'sans_activite';
+        superviseur?: string;
+        zone?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string;
         };
       };
     };
