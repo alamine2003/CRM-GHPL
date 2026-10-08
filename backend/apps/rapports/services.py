@@ -468,7 +468,11 @@ def _horodatage(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | Non
 def soumettre(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None = None) -> Rapport:
     """RPT-002 CA1 : impossible sans le socle et les champs obligatoires du pays. RPT-010 :
     version figée, marquage en retard, horodatage du téléphone contrôlé."""
-    rapport = Rapport.objects.select_for_update().select_related("visite").get(pk=rapport.pk)
+    rapport = (
+        Rapport.objects.select_for_update(of=("self",))
+        .select_related("visite__planning__delegue", "correction_par")
+        .get(pk=rapport.pk)
+    )
     derniere = rapport.versions.order_by("-numero").first()
     if (rapport.statut == StatutRapport.SOUMIS and derniere is not None
             and derniere.heure_telephone == soumis_le):  # fmt: skip
@@ -483,6 +487,8 @@ def soumettre(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None 
     recu_le = timezone.now()
     moment, douteux = _horodatage(rapport, soumis_le, envoye_le, recu_le)
     premiere = derniere is None
+    # RPT-015 : la version garde la demande à laquelle elle répond.
+    repond_a = _correction_figee(rapport) if rapport.statut == StatutRapport.A_CORRIGER else None
     rapport.statut = StatutRapport.SOUMIS
     rapport.soumis_le = moment
     # RG-032 : seule la première soumission peut être en retard (comme le planning).
@@ -495,12 +501,38 @@ def soumettre(rapport: Rapport, soumis_le: datetime, envoye_le: datetime | None 
         pays=rapport.pays, rapport=rapport, numero=(derniere.numero + 1) if derniere else 1,
         contenu=contenu_fige(rapport), soumis_le=moment, heure_telephone=soumis_le,
         recu_le=recu_le, en_retard=premiere and rapport.en_retard,
-        horodatage_douteux=douteux,
+        horodatage_douteux=douteux, correction=repond_a,
     )  # fmt: skip
     _auditer("rapport.soumission", rapport, visite=str(rapport.visite_id),
              soumis_le=moment.isoformat(), en_retard=rapport.en_retard,
              horodatage_douteux=douteux)  # fmt: skip
+    if repond_a and rapport.correction_par_id:
+        _prevenir_correction_faite(rapport)
     return rapport
+
+
+def _correction_figee(rapport: Rapport) -> dict | None:
+    if rapport.correction_le is None:
+        return None
+    par = rapport.correction_par
+    return {
+        "le": rapport.correction_le.isoformat(),
+        "par": f"{par.first_name} {par.last_name}".strip() if par else "",
+        "commentaire": rapport.correction_commentaire,
+        "champs": rapport.correction_champs,
+    }
+
+
+def _prevenir_correction_faite(rapport: Rapport) -> None:
+    """28.A : qui a demandé la correction apprend que le rapport corrigé est revenu."""
+    from apps.notifications.models import TypeNotification
+    from apps.notifications.services import notifier
+
+    visite = rapport.visite
+    delegue = visite.planning.delegue
+    notifier(rapport.correction_par, TypeNotification.RAPPORT_CORRIGE, rapport.pays,
+             delegue=str(delegue.pk), date=visite.date.isoformat(), visite=str(visite.pk),
+             nom=f"{delegue.first_name} {delegue.last_name}".strip())  # fmt: skip
 
 
 # --- Pièces jointes (RPT-007) -----------------------------------------------------------------

@@ -58,6 +58,9 @@ export async function changerVisite(id: string, champs: Partial<VisiteProgramme>
     a_justifier: (memoire.valeur.a_justifier ?? []).map((v) =>
       v.id === id ? { ...v, ...champs } : v,
     ),
+    a_corriger: (memoire.valeur.a_corriger ?? []).map((v) =>
+      v.id === id ? { ...v, ...champs } : v,
+    ),
   };
   await ecrire(CLE_PROGRAMME, programme).catch(() => undefined);
   ecouteurs.forEach((e) => e(programme));
@@ -803,6 +806,8 @@ export function useVisiteDuProgramme(id: string) {
   const visite = [
     ...(programme?.jours.flatMap((j) => j.visites) ?? []),
     ...(programme?.a_justifier ?? []),
+    // 29.A : un rapport à corriger d'une semaine passée s'ouvre aussi.
+    ...(programme?.a_corriger ?? []),
   ].find((v) => v.id === id);
   return { programme, visite };
 }

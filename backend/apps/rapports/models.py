@@ -156,6 +156,8 @@ class VersionRapport(ModeleDePays):
     recu_le = models.DateTimeField()
     en_retard = models.BooleanField(default=False)
     horodatage_douteux = models.BooleanField(default=False)
+    #: RPT-015 : la demande de correction à laquelle cette version répond (qui, quand, quoi).
+    correction = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ["rapport", "numero"]

@@ -79,6 +79,7 @@ const PROGRAMME: Programme = {
   verrouillage_minutes: 15,
   motifs_ecart: [{ id: 'm-absent', libelle: 'Absent du cabinet' }],
   a_justifier: [],
+  a_corriger: [],
   jours: [{ date: '2026-10-13', ferie: null, visites: [VISITE], activites: [] }],
 };
 

@@ -704,13 +704,22 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.46 Correction et nouvelle soumission (mise en œuvre 0.6.5)
+
+- **Le délégué corrige** (RPT-015) : il ouvre le rapport depuis la notification ou depuis la liste « Rapports à corriger » de la Tournée, le modifie et le soumet à nouveau ; le rapport redevient « soumis », en version suivante (RG-037). [D, 8 octobre 2026, 29.A] La liste montre les rapports à corriger **de toutes les semaines**, pas seulement de la semaine en cours ; un rapport resoumis en sort aussitôt, même sans réseau.
+- **Le superviseur est prévenu** : [D, 8 octobre 2026, 28.A] qui a demandé la correction reçoit « Aminata Touré a corrigé son rapport du 21 septembre » ; la notification ouvre la journée.
+- **CA1 : la version précédente reste consultable.** Sur la journée, au-dessus du rapport : « Version 2, soumise le … après correction », la demande à laquelle elle répond, et ce qui a changé (« Modifié : Résumé de l'échange », ou « Rien n'a changé par rapport à la version précédente »). Chaque partie modifiée porte l'étiquette « Modifié ». « Voir la version 1 » déplie la version précédente telle que soumise.
+- Chaque version garde la demande de correction à laquelle elle répond : l'historique des allers-retours ne se perd pas si une nouvelle correction est demandée.
+- La journée attend le rapport corrigé (22.A) ; la page le dit (« 1 rapport est renvoyé pour correction : la journée se validera quand il sera soumis à nouveau »). Une fois soumis, il se valide comme les autres (REC-08).
+- Le rapport resoumis n'est jamais « en retard » : seule la première soumission compte (RG-032).
+
 ### 14.45 Demande de correction (mise en œuvre 0.6.4)
 
 - **Demander une correction** (RPT-014) : sur la journée, « Demander une correction » sous chaque rapport soumis. Une fenêtre demande « Ce qu'il faut corriger » et, facultativement, les parties à revoir (parties du rapport et champs du pays). « Renvoyer au délégué » renvoie le rapport : il passe « à corriger ». **CA1** : sans commentaire, le bouton reste inactif, et le serveur refuse la demande.
 - **Sans échéance** (DC-60) : la demande ne fixe pas de délai ; le rapport renvoyé n'est pas « en retard » pour autant, seul compte le retard de sa première soumission.
 - **CA2** : les autres rapports de la journée se valident toujours un par un. La journée, elle, attend le rapport corrigé (22.A) : « Valider la journée » reste inactif, et « À traiter » compte les rapports renvoyés pour correction.
 - **Le délégué** reçoit une notification (« Kossi Gueye demande une correction de votre rapport du 21 septembre »), qui ouvre le rapport. En tête du rapport, le commentaire, qui l'a demandé, quand, et les parties à revoir. Dans la Tournée, les rapports de la semaine à corriger ont leur propre liste, distincte des rapports en retard.
-- **Resoumission** : le délégué corrige et soumet à nouveau ; le rapport redevient « soumis », en version 2 (RG-037), et la demande s'efface. Voir la version précédente arrive en 0.6.5 (RPT-015).
+- **Resoumission** : le délégué corrige et soumet à nouveau ; le rapport redevient « soumis », en version 2 (RG-037), et la demande s'efface. Voir la version précédente : 0.6.5 (§14.46).
 - La demande est inscrite au journal d'audit. Seul un rapport soumis se renvoie ; un rapport déjà renvoyé ne se renvoie pas une seconde fois.
 
 ### 14.44 Validation des rapports (mise en œuvre 0.6.3)

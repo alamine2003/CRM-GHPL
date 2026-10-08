@@ -27,6 +27,8 @@ class DonneesNotificationSerializer(serializers.Serializer):
     #: Correction demandée (RPT-014) : la visite dont le rapport est à corriger, et son jour.
     visite = serializers.UUIDField(required=False)
     date = serializers.DateField(required=False)
+    #: Rapport corrigé (RPT-015) : le délégué, pour ouvrir sa journée.
+    delegue = serializers.UUIDField(required=False)
 
 
 class NotificationSerializer(serializers.Serializer):

@@ -13,6 +13,7 @@ from apps.planning.serializers import (
     EcartConformiteSerializer,
 )
 
+from . import versions as versions_figees
 from .models import Rapport
 from .serializers import (
     CorrectionSerializer,
@@ -69,6 +70,39 @@ class ChampLuSerializer(serializers.Serializer):
     valeur = serializers.JSONField(allow_null=True)
 
 
+class CorrectionFigeeSerializer(serializers.Serializer):
+    le = serializers.DateTimeField()
+    par = serializers.CharField()
+    commentaire = serializers.CharField()
+    champs = serializers.ListField(child=serializers.CharField())
+
+
+class VersionLueSerializer(serializers.Serializer):
+    """RG-037, RPT-015 : une soumission du rapport, et la correction à laquelle elle répond."""
+
+    numero = serializers.IntegerField()
+    soumis_le = serializers.DateTimeField()
+    correction = CorrectionFigeeSerializer(allow_null=True)
+
+
+class ContenuLuSerializer(serializers.Serializer):
+    """RPT-015 CA1 : le contenu d'une version précédente, tel que soumis."""
+
+    objectif_prevu = serializers.CharField()
+    resultat = serializers.CharField(allow_null=True)
+    resultat_obtenu = serializers.CharField()
+    presentations = PresentationSerializer(many=True)
+    remises = RemiseSerializer(many=True)
+    resume = serializers.CharField()
+    prochaine_action_type = serializers.CharField(allow_null=True)
+    prochaine_action = serializers.CharField()
+    prochaine_action_echeance = serializers.DateField(allow_null=True)
+    visite_proposee = serializers.BooleanField()
+    champs = ChampLuSerializer(many=True)
+    #: Noms des documents joints à cette version.
+    pieces_jointes = serializers.ListField(child=serializers.CharField())
+
+
 class RapportLuSerializer(serializers.ModelSerializer):
     """0.6.2 : le rapport soumis, à lire par le superviseur : tout son contenu, ses pièces
     jointes (RPT-007 CA2), son retard et son horodatage (RPT-010 CA1), ses versions (RG-037)."""
@@ -88,10 +122,15 @@ class RapportLuSerializer(serializers.ModelSerializer):
     valide_par = serializers.SerializerMethodField()
     #: RPT-014 : la correction demandée, tant qu'elle attend.
     correction = serializers.SerializerMethodField()
+    #: RPT-015 : les soumissions successives ; la version d'avant ; ce qui a changé depuis.
+    historique = serializers.SerializerMethodField()
+    precedente = serializers.SerializerMethodField()
+    modifies = serializers.SerializerMethodField()
 
     class Meta:
         model = Rapport
-        fields = ["id", "statut", "correction", "valide_le", "valide_par", "mode_validation",
+        fields = ["id", "statut", "correction", "historique", "precedente", "modifies",
+                  "valide_le", "valide_par", "mode_validation",
                   "soumis_le", "en_retard", "horodatage_douteux",
                   "heure_telephone", "recu_le", "versions", "objectif_prevu", "resultat",
                   "resultat_obtenu", "presentations", "remises", "resume",
@@ -133,6 +172,27 @@ class RapportLuSerializer(serializers.ModelSerializer):
 
     def get_versions(self, rapport) -> int:
         return len(rapport.versions.all())
+
+    @extend_schema_field(VersionLueSerializer(many=True))
+    def get_historique(self, rapport):
+        return [{"numero": v.numero, "soumis_le": v.soumis_le, "correction": v.correction}
+                for v in rapport.versions.all()]  # fmt: skip
+
+    @staticmethod
+    def _deux_dernieres(rapport):
+        versions = list(rapport.versions.all())
+        return versions[-2:] if len(versions) > 1 else None
+
+    @extend_schema_field(ContenuLuSerializer(allow_null=True))
+    def get_precedente(self, rapport):
+        paire = self._deux_dernieres(rapport)
+        if not paire:
+            return None
+        return ContenuLuSerializer(versions_figees.lecture(paire[0].contenu)).data
+
+    def get_modifies(self, rapport) -> list[str]:
+        paire = self._deux_dernieres(rapport)
+        return versions_figees.modifies(paire[0].contenu, paire[1].contenu) if paire else []
 
 
 class VisiteJourneeSerializer(serializers.Serializer):

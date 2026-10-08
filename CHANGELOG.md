@@ -2,6 +2,26 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.5] — Correction et nouvelle soumission
+
+Cinquième jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté (RPT-015)
+
+- **CA1** : la version précédente d'un rapport corrigé reste consultable. Le superviseur voit la version, la demande à laquelle elle répond et ce qui a changé ; chaque partie modifiée porte « Modifié » ; « Voir la version 1 » déplie l'ancienne version.
+- Décision 28.A : qui a demandé la correction est prévenu quand le rapport corrigé revient ; la notification ouvre la journée.
+- Décision 29.A : la liste « Rapports à corriger » de la Tournée montre ceux de toutes les semaines.
+- Chaque version garde la demande de correction à laquelle elle répond.
+
+### Design
+
+Revue sur le rendu réel (bureau, téléphone, portail en largeur de téléphone). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Journée, version précédente dépliée | L'étiquette « Modifié » se répétait dans l'ancienne version : on ne savait plus laquelle était à jour. | L'étiquette reste sur la version actuelle seulement. |
+| Journée avec un rapport renvoyé | « 1 rapport n'est pas encore soumis » : faux, il l'a été puis a été renvoyé. | « 1 rapport est renvoyé pour correction : la journée se validera quand il sera soumis à nouveau. » |
+
 ## [0.6.4] — Demande de correction
 
 Quatrième jalon du cycle 0.6 « Validation des rapports ».

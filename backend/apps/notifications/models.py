@@ -25,6 +25,8 @@ class TypeNotification(models.TextChoices):
     REDACTION_ROUVERTE = "redaction_rouverte", "Rédaction rouverte"
     #: RPT-014 (0.6.4) : le superviseur demande une correction d'un rapport.
     CORRECTION_DEMANDEE = "correction_demandee", "Correction demandée"
+    #: RPT-015, 28.A (0.6.5) : le délégué a soumis le rapport corrigé.
+    RAPPORT_CORRIGE = "rapport_corrige", "Rapport corrigé"
 
 
 class Notification(ModeleDePays):

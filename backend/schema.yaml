@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.6.4
+  version: 0.6.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5885,6 +5885,59 @@ components:
       - semaine
       - suivante
       - visites
+    ContenuLu:
+      type: object
+      description: 'RPT-015 CA1 : le contenu d''une version précédente, tel que soumis.'
+      properties:
+        objectif_prevu:
+          type: string
+        resultat:
+          type: string
+          nullable: true
+        resultat_obtenu:
+          type: string
+        presentations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Presentation'
+        remises:
+          type: array
+          items:
+            $ref: '#/components/schemas/Remise'
+        resume:
+          type: string
+        prochaine_action_type:
+          type: string
+          nullable: true
+        prochaine_action:
+          type: string
+        prochaine_action_echeance:
+          type: string
+          format: date
+          nullable: true
+        visite_proposee:
+          type: boolean
+        champs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChampLu'
+        pieces_jointes:
+          type: array
+          items:
+            type: string
+      required:
+      - champs
+      - objectif_prevu
+      - pieces_jointes
+      - presentations
+      - prochaine_action
+      - prochaine_action_echeance
+      - prochaine_action_type
+      - remises
+      - resultat
+      - resultat_obtenu
+      - resume
+      - visite_proposee
     ControlePlanning:
       type: object
       description: 'Contrôle du planning (PLN-004) : `bloquant` (RG-015) ou `signalement`
@@ -6019,6 +6072,25 @@ components:
         par:
           type: string
           readOnly: true
+        commentaire:
+          type: string
+        champs:
+          type: array
+          items:
+            type: string
+      required:
+      - champs
+      - commentaire
+      - le
+      - par
+    CorrectionFigee:
+      type: object
+      properties:
+        le:
+          type: string
+          format: date-time
+        par:
+          type: string
         commentaire:
           type: string
         champs:
@@ -6654,6 +6726,9 @@ components:
         date:
           type: string
           format: date
+        delegue:
+          type: string
+          format: uuid
     DonneesNotificationMotifEnum:
       enum:
       - soumission
@@ -7911,6 +7986,7 @@ components:
       - reouverture_demandee
       - redaction_rouverte
       - correction_demandee
+      - rapport_corrige
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
@@ -7923,6 +7999,7 @@ components:
         * `reouverture_demandee` - Réouverture demandée
         * `redaction_rouverte` - Rédaction rouverte
         * `correction_demandee` - Correction demandée
+        * `rapport_corrige` - Rapport corrigé
     NullEnum:
       enum:
       - null
@@ -8880,6 +8957,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VisiteProgramme'
+        a_corriger:
+          type: array
+          items:
+            $ref: '#/components/schemas/VisiteProgramme'
         prochaine:
           type: string
           format: uuid
@@ -8895,6 +8976,7 @@ components:
           items:
             $ref: '#/components/schemas/Resume'
       required:
+      - a_corriger
       - a_justifier
       - attente_gps_secondes
       - aujourdhui
@@ -9622,6 +9704,21 @@ components:
           - $ref: '#/components/schemas/Correction'
           nullable: true
           readOnly: true
+        historique:
+          type: array
+          items:
+            $ref: '#/components/schemas/VersionLue'
+          readOnly: true
+        precedente:
+          allOf:
+          - $ref: '#/components/schemas/ContenuLu'
+          nullable: true
+          readOnly: true
+        modifies:
+          type: array
+          items:
+            type: string
+          readOnly: true
         valide_le:
           type: string
           format: date-time
@@ -9708,11 +9805,14 @@ components:
       - correction
       - en_retard
       - heure_telephone
+      - historique
       - horodatage_douteux
       - id
       - mode_validation
+      - modifies
       - objectif_prevu
       - pieces_jointes
+      - precedente
       - presentations
       - prochaine_action
       - prochaine_action_echeance
@@ -11164,6 +11264,24 @@ components:
       - remarques
       - soumis_le
       - visites
+    VersionLue:
+      type: object
+      description: 'RG-037, RPT-015 : une soumission du rapport, et la correction
+        à laquelle elle répond.'
+      properties:
+        numero:
+          type: integer
+        soumis_le:
+          type: string
+          format: date-time
+        correction:
+          allOf:
+          - $ref: '#/components/schemas/CorrectionFigee'
+          nullable: true
+      required:
+      - correction
+      - numero
+      - soumis_le
     Visite:
       type: object
       properties:

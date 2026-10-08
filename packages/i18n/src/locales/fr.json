@@ -1694,7 +1694,8 @@
     "cloche_one": "Notifications, {{count}} non lue",
     "cloche_other": "Notifications, {{count}} non lues",
     "toutVoir": "Tout voir",
-    "correction_demandee": "{{nom}} demande une correction de votre rapport du {{jour}}"
+    "correction_demandee": "{{nom}} demande une correction de votre rapport du {{jour}}",
+    "rapport_corrige": "{{nom}} a corrigé son rapport du {{jour}}"
   },
   "revision": {
     "demander": "Demander une révision",
@@ -1747,6 +1748,16 @@
     "precedente": "Révision demandée sur la version {{numero}}, le {{date}} par {{par}}",
     "visiteRetiree": "visite retirée depuis",
     "verifier": "Vérifiez que chaque point a été repris avant de décider."
+  },
+  "rapportCorrige": {
+    "reponse": "Version {{version}}, soumise le {{date}} après correction",
+    "demande": "Demande de {{par}} le {{date}} : « {{commentaire}} »",
+    "modifies": "Modifié : {{parties}}",
+    "rienModifie": "Rien n'a changé par rapport à la version précédente.",
+    "modifie": "Modifié",
+    "voir": "Voir la version {{version}}",
+    "masquer": "Masquer la version {{version}}",
+    "titre": "Version {{version}}, telle que soumise"
   },
   "versions": {
     "titre_one": "Version",
@@ -2199,6 +2210,8 @@
     "journeeValidee": "Journée validée : son classement ne bouge plus et elle a quitté « À traiter ».",
     "manquants_one": "{{count}} rapport n'est pas encore soumis : la journée se validera quand il le sera. Les rapports soumis se valident déjà un par un.",
     "manquants_other": "{{count}} rapports ne sont pas encore soumis : la journée se validera quand ils le seront. Les rapports soumis se valident déjà un par un.",
+    "renvoyes_one": "{{count}} rapport est renvoyé pour correction : la journée se validera quand il sera soumis à nouveau. Les autres rapports soumis se valident déjà un par un.",
+    "renvoyes_other": "{{count}} rapports sont renvoyés pour correction : la journée se validera quand ils seront soumis à nouveau. Les autres rapports soumis se valident déjà un par un.",
     "confirmerJournee": "Valider la journée ?",
     "confirmerJourneeTexte_one": "Le rapport soumis de la journée sera validé, et la journée figée.",
     "confirmerJourneeTexte_other": "Les {{count}} rapports soumis de la journée seront validés, et la journée figée.",

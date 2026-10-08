@@ -3224,6 +3224,22 @@ export interface components {
       escalade: components['schemas']['Escalade'] | null;
       postes: string[];
     };
+    /** @description RPT-015 CA1 : le contenu d'une version précédente, tel que soumis. */
+    ContenuLu: {
+      objectif_prevu: string;
+      resultat: string | null;
+      resultat_obtenu: string;
+      presentations: components['schemas']['Presentation'][];
+      remises: components['schemas']['Remise'][];
+      resume: string;
+      prochaine_action_type: string | null;
+      prochaine_action: string;
+      /** Format: date */
+      prochaine_action_echeance: string | null;
+      visite_proposee: boolean;
+      champs: components['schemas']['ChampLu'][];
+      pieces_jointes: string[];
+    };
     /** @description Contrôle du planning (PLN-004) : `bloquant` (RG-015) ou `signalement` (RG-016). */
     ControlePlanning: {
       code: components['schemas']['CodeControleEnum'];
@@ -3271,6 +3287,13 @@ export interface components {
       /** Format: date-time */
       le: string;
       readonly par: string;
+      commentaire: string;
+      champs: string[];
+    };
+    CorrectionFigee: {
+      /** Format: date-time */
+      le: string;
+      par: string;
       commentaire: string;
       champs: string[];
     };
@@ -3521,6 +3544,8 @@ export interface components {
       visite?: string;
       /** Format: date */
       date?: string;
+      /** Format: uuid */
+      delegue?: string;
     };
     /**
      * @description * `soumission` - soumission
@@ -4073,6 +4098,7 @@ export interface components {
      *     * `reouverture_demandee` - Réouverture demandée
      *     * `redaction_rouverte` - Rédaction rouverte
      *     * `correction_demandee` - Correction demandée
+     *     * `rapport_corrige` - Rapport corrigé
      * @enum {string}
      */
     NotificationTypeEnum:
@@ -4085,7 +4111,8 @@ export interface components {
       | 'plannings_non_approuves'
       | 'reouverture_demandee'
       | 'redaction_rouverte'
-      | 'correction_demandee';
+      | 'correction_demandee'
+      | 'rapport_corrige';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
@@ -4469,6 +4496,7 @@ export interface components {
       version: number | null;
       jours: components['schemas']['JourProgramme'][];
       a_justifier: components['schemas']['VisiteProgramme'][];
+      a_corriger: components['schemas']['VisiteProgramme'][];
       /** Format: uuid */
       prochaine: string | null;
       geolocalisation: boolean;
@@ -4717,6 +4745,9 @@ export interface components {
       readonly id: string;
       readonly statut: components['schemas']['StatutRapportEnum'];
       readonly correction: components['schemas']['Correction'] | null;
+      readonly historique: components['schemas']['VersionLue'][];
+      readonly precedente: components['schemas']['ContenuLu'] | null;
+      readonly modifies: string[];
       /** Format: date-time */
       readonly valide_le: string | null;
       readonly valide_par: string | null;
@@ -5382,6 +5413,13 @@ export interface components {
       changements: components['schemas']['ResumeComparaison'] | null;
       motif: components['schemas']['MotifVersionEnum'];
       mineures: number;
+    };
+    /** @description RG-037, RPT-015 : une soumission du rapport, et la correction à laquelle elle répond. */
+    VersionLue: {
+      numero: number;
+      /** Format: date-time */
+      soumis_le: string;
+      correction: components['schemas']['CorrectionFigee'] | null;
     };
     Visite: {
       /** Format: uuid */

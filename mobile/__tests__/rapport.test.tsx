@@ -103,6 +103,7 @@ beforeEach(async () => {
       fuseau: 'UTC',
       jours: [{ date: '2026-10-13', visites: [{ id: 'v1', date: '2026-10-13', heure: '09:00' }] }],
       a_justifier: [],
+      a_corriger: [],
     },
     maj: '2026-10-13T06:30:00.000Z',
   });

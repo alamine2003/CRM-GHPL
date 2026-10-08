@@ -40,3 +40,12 @@ describe('0.3.9 : textes de la fermeture', () => {
     ).toBe('Kossi FICTIF a rouvert la rédaction de votre planning de la semaine 42');
   });
 });
+
+describe('RPT-015, 28.A : rapport corrigé', () => {
+  it('se dit avec le nom et le jour, et ouvre la journée', () => {
+    const t = i18n.t.bind(i18n);
+    const n = notif('rapport_corrige', { delegue: 'd1', date: '2026-09-21', nom: 'Awa FICTIVE' });
+    expect(texteNotification(n, t, 'fr')).toBe('Awa FICTIVE a corrigé son rapport du 21 septembre');
+    expect(destination(n)).toBe('/a-traiter/d1/2026-09-21');
+  });
+});

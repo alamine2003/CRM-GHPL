@@ -1694,7 +1694,8 @@
     "cloche_one": "Notifications, {{count}} unread",
     "cloche_other": "Notifications, {{count}} unread",
     "toutVoir": "See all",
-    "correction_demandee": "{{nom}} requests a correction of your report of {{jour}}"
+    "correction_demandee": "{{nom}} requests a correction of your report of {{jour}}",
+    "rapport_corrige": "{{nom}} corrected their report of {{jour}}"
   },
   "revision": {
     "demander": "Request a revision",
@@ -1747,6 +1748,16 @@
     "precedente": "Revision requested on version {{numero}}, on {{date}} by {{par}}",
     "visiteRetiree": "visit since removed",
     "verifier": "Check that each point was addressed before deciding."
+  },
+  "rapportCorrige": {
+    "reponse": "Version {{version}}, submitted on {{date}} after correction",
+    "demande": "Requested by {{par}} on {{date}}: “{{commentaire}}”",
+    "modifies": "Changed: {{parties}}",
+    "rienModifie": "Nothing changed from the previous version.",
+    "modifie": "Changed",
+    "voir": "Show version {{version}}",
+    "masquer": "Hide version {{version}}",
+    "titre": "Version {{version}}, as submitted"
   },
   "versions": {
     "titre_one": "Version",
@@ -2199,6 +2210,8 @@
     "journeeValidee": "Day approved: its classification no longer changes and it has left “To review”.",
     "manquants_one": "{{count}} report has not been submitted yet: the day can be approved once it is. Submitted reports can already be approved one by one.",
     "manquants_other": "{{count}} reports have not been submitted yet: the day can be approved once they are. Submitted reports can already be approved one by one.",
+    "renvoyes_one": "{{count}} report was sent back for correction: the day can be approved once it is submitted again. The other submitted reports can already be approved one by one.",
+    "renvoyes_other": "{{count}} reports were sent back for correction: the day can be approved once they are submitted again. The other submitted reports can already be approved one by one.",
     "confirmerJournee": "Approve the day?",
     "confirmerJourneeTexte_one": "The day's submitted report will be approved and the day locked.",
     "confirmerJourneeTexte_other": "The day's {{count}} submitted reports will be approved and the day locked.",

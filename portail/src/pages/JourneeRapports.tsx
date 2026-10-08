@@ -2,12 +2,15 @@ import type { Journee, RapportLu, VisiteJournee } from '@innov/api-client';
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
+import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
+import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import PictureAsPdfRounded from '@mui/icons-material/PictureAsPdfRounded';
 import {
   Alert,
   Box,
   Button,
   Card,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -85,6 +88,7 @@ export default function JourneeRapports({ cle }: { cle: string }) {
     );
   }
   const j = journee.data;
+  const renvoyes = j.visites.filter((v) => v.rapport_statut === 'a_corriger').length;
   const conforme = j.classement === 'conforme';
   async function validerJournee() {
     setConfirmation(false);
@@ -132,7 +136,10 @@ export default function JourneeRapports({ cle }: { cle: string }) {
         <Alert severity="success">{t('validationRapports.journeeValidee')}</Alert>
       ) : j.rapports_manquants > 0 ? (
         <Alert severity="info">
-          {t('validationRapports.manquants', { count: j.rapports_manquants })}
+          {/* Un rapport renvoyé au délégué a été soumis : il attend sa nouvelle version. */}
+          {renvoyes === j.rapports_manquants
+            ? t('validationRapports.renvoyes', { count: renvoyes })
+            : t('validationRapports.manquants', { count: j.rapports_manquants })}
         </Alert>
       ) : null}
       {j.mode !== 'direct' && (
@@ -325,6 +332,7 @@ function Rapport({
   const notifier = useNotifier();
   const [enCours, setEnCours] = useState(false);
   const [correction, setCorrection] = useState(false);
+  const [precedente, setPrecedente] = useState(false);
   const dateCourte = (iso: string) =>
     new Intl.DateTimeFormat(i18n.language, {
       day: 'numeric',
@@ -360,11 +368,7 @@ function Rapport({
         minute: '2-digit',
       }).format(new Date(r.soumis_le))
     : null;
-  const echeance = r.prochaine_action_echeance
-    ? new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' }).format(
-        new Date(`${r.prochaine_action_echeance}T12:00:00`),
-      )
-    : null;
+  const derniere = r.historique[r.historique.length - 1];
   const vide = '—';
   return (
     <Box component="section" sx={{ mt: 1.5, pt: 1, borderTop: 1, borderColor: 'divider' }}>
@@ -440,89 +444,215 @@ function Rapport({
           })}
         </Typography>
       )}
-      <Stack divider={<Box sx={{ borderTop: 1, borderColor: 'divider' }} />}>
-        {r.objectif_prevu && (
-          <Ligne libelle={t('rapport.objectifPrevu')} valeur={r.objectif_prevu} />
-        )}
-        <Ligne
-          libelle={t('rapport.produits')}
-          valeur={
-            r.presentations.length ? (
-              <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-                {r.presentations.map((p, i) => (
-                  <li key={`${p.produit ?? p.libelle}-${i}`}>
-                    {p.retour ? `${p.libelle} — ${t(`rapport.retours.${p.retour}`)}` : p.libelle}
-                  </li>
-                ))}
-              </Box>
-            ) : (
-              vide
-            )
-          }
-        />
-        {r.remises.length > 0 && (
-          <Ligne
-            libelle={t('rapport.remises')}
-            valeur={
-              <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-                {r.remises.map((x, i) => (
-                  <li key={`${x.produit ?? x.article}-${i}`}>
-                    {t('journee.remise', {
-                      type: t(`rapport.typesRemise.${x.type}`),
-                      libelle: x.libelle,
-                      quantite: x.quantite,
-                    })}
-                  </li>
-                ))}
-              </Box>
-            }
-          />
-        )}
-        <Ligne
-          libelle={t('journee.resultat')}
-          valeur={[r.resultat, r.resultat_obtenu].filter(Boolean).join(' — ') || vide}
-        />
-        {r.resume && <Ligne libelle={t('rapport.resume')} valeur={r.resume} />}
-        <Ligne
-          libelle={t('rapport.prochaineAction')}
-          valeur={
-            <>
-              {[r.prochaine_action_type, r.prochaine_action].filter(Boolean).join(' — ') || vide}
-              {(echeance || r.visite_proposee) && (
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {[
-                    echeance ? t('journee.echeance', { date: echeance }) : null,
-                    r.visite_proposee ? t('rapport.visiteProposeeLue') : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </Typography>
-              )}
-            </>
-          }
-        />
-        {r.champs.map((c) => (
-          <Ligne key={c.libelle} libelle={c.libelle} valeur={valeurChamp(c.valeur, t) ?? vide} />
-        ))}
-        {r.pieces_jointes.length > 0 && (
-          <Ligne
-            libelle={t('journee.pieces')}
-            valeur={
-              <Stack spacing={0.5} sx={{ alignItems: 'flex-start', ml: -0.75 }}>
-                {r.pieces_jointes.map((p) => (
-                  <BoutonPiece key={p.id} id={p.id} nom={p.nom} />
-                ))}
-              </Stack>
-            }
-          />
-        )}
-      </Stack>
+      {derniere?.correction && (
+        <Alert severity="info" sx={{ mt: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {t('rapportCorrige.reponse', {
+              version: derniere.numero,
+              date: dateCourte(derniere.soumis_le),
+            })}
+          </Typography>
+          <Typography variant="body2">
+            {t('rapportCorrige.demande', {
+              par: derniere.correction.par,
+              date: dateCourte(derniere.correction.le),
+              commentaire: derniere.correction.commentaire,
+            })}
+          </Typography>
+          <Typography variant="body2">
+            {r.modifies.length
+              ? t('rapportCorrige.modifies', {
+                  parties: r.modifies.map((c) => libellePartie(c, r, t)).join(', '),
+                })
+              : t('rapportCorrige.rienModifie')}
+          </Typography>
+        </Alert>
+      )}
+      <LignesContenu
+        c={r}
+        modifies={r.modifies}
+        pieces={
+          r.pieces_jointes.length > 0 ? (
+            <Stack spacing={0.5} sx={{ alignItems: 'flex-start', ml: -0.75 }}>
+              {r.pieces_jointes.map((p) => (
+                <BoutonPiece key={p.id} id={p.id} nom={p.nom} />
+              ))}
+            </Stack>
+          ) : null
+        }
+      />
+      {r.precedente && (
+        <Box sx={{ mt: 1 }}>
+          <Button
+            size="small"
+            aria-expanded={precedente}
+            startIcon={precedente ? <ExpandLessRounded /> : <ExpandMoreRounded />}
+            onClick={() => setPrecedente((v) => !v)}
+            sx={{ ml: -0.75 }}
+          >
+            {t(precedente ? 'rapportCorrige.masquer' : 'rapportCorrige.voir', {
+              version: r.versions - 1,
+            })}
+          </Button>
+          <Collapse in={precedente} unmountOnExit>
+            <Box
+              role="region"
+              aria-label={t('rapportCorrige.titre', { version: r.versions - 1 })}
+              sx={{ mt: 1, px: 2, py: 1, bgcolor: 'action.hover', borderRadius: 1 }}
+            >
+              <Typography variant="subtitle2" component="h4">
+                {t('rapportCorrige.titre', { version: r.versions - 1 })}
+              </Typography>
+              <LignesContenu
+                c={r.precedente}
+                modifies={[]}
+                pieces={
+                  r.precedente.pieces_jointes.length > 0
+                    ? r.precedente.pieces_jointes.join(', ')
+                    : null
+                }
+              />
+            </Box>
+          </Collapse>
+        </Box>
+      )}
     </Box>
   );
 }
 
+/** Le contenu d'un rapport, ou d'une version précédente (RPT-015), ligne par ligne ; une
+ * partie modifiée depuis la version d'avant est marquée. */
+function LignesContenu({
+  c,
+  modifies,
+  pieces,
+}: {
+  c: ContenuAffiche;
+  modifies: string[];
+  pieces: ReactNode;
+}) {
+  const { t, i18n } = useTranslation();
+  const echeance = c.prochaine_action_echeance
+    ? new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' }).format(
+        new Date(`${c.prochaine_action_echeance}T12:00:00`),
+      )
+    : null;
+  const vide = '—';
+  return (
+    <Stack divider={<Box sx={{ borderTop: 1, borderColor: 'divider' }} />}>
+      {c.objectif_prevu && <Ligne libelle={t('rapport.objectifPrevu')} valeur={c.objectif_prevu} />}
+      <Ligne
+        libelle={t('rapport.produits')}
+        modifie={modifies.includes('presentations')}
+        valeur={
+          c.presentations.length ? (
+            <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+              {c.presentations.map((p, i) => (
+                <li key={`${p.produit ?? p.libelle}-${i}`}>
+                  {p.retour ? `${p.libelle} — ${t(`rapport.retours.${p.retour}`)}` : p.libelle}
+                </li>
+              ))}
+            </Box>
+          ) : (
+            vide
+          )
+        }
+      />
+      {c.remises.length > 0 && (
+        <Ligne
+          libelle={t('rapport.remises')}
+          modifie={modifies.includes('remises')}
+          valeur={
+            <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+              {c.remises.map((x, i) => (
+                <li key={`${x.produit ?? x.article}-${i}`}>
+                  {t('journee.remise', {
+                    type: t(`rapport.typesRemise.${x.type}`),
+                    libelle: x.libelle,
+                    quantite: x.quantite,
+                  })}
+                </li>
+              ))}
+            </Box>
+          }
+        />
+      )}
+      <Ligne
+        libelle={t('journee.resultat')}
+        modifie={modifies.includes('resultat')}
+        valeur={[c.resultat, c.resultat_obtenu].filter(Boolean).join(' — ') || vide}
+      />
+      {c.resume && (
+        <Ligne
+          libelle={t('rapport.resume')}
+          valeur={c.resume}
+          modifie={modifies.includes('resume')}
+        />
+      )}
+      <Ligne
+        libelle={t('rapport.prochaineAction')}
+        modifie={modifies.includes('prochaine_action')}
+        valeur={
+          <>
+            {[c.prochaine_action_type, c.prochaine_action].filter(Boolean).join(' — ') || vide}
+            {(echeance || c.visite_proposee) && (
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {[
+                  echeance ? t('journee.echeance', { date: echeance }) : null,
+                  c.visite_proposee ? t('rapport.visiteProposeeLue') : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Typography>
+            )}
+          </>
+        }
+      />
+      {c.champs.map((x) => (
+        <Ligne
+          key={x.code}
+          libelle={x.libelle}
+          valeur={valeurChamp(x.valeur, t) ?? vide}
+          modifie={modifies.includes(x.code)}
+        />
+      ))}
+      {pieces && (
+        <Ligne
+          libelle={t('journee.pieces')}
+          valeur={pieces}
+          modifie={modifies.includes('pieces_jointes')}
+        />
+      )}
+    </Stack>
+  );
+}
+
+type ContenuAffiche = Pick<
+  RapportLu,
+  | 'objectif_prevu'
+  | 'presentations'
+  | 'remises'
+  | 'resultat'
+  | 'resultat_obtenu'
+  | 'resume'
+  | 'prochaine_action_type'
+  | 'prochaine_action'
+  | 'prochaine_action_echeance'
+  | 'visite_proposee'
+  | 'champs'
+>;
+
 /** Libellé à gauche, texte aligné à gauche : un résumé de plusieurs lignes reste lisible. */
-function Ligne({ libelle, valeur }: { libelle: string; valeur: ReactNode }) {
+function Ligne({
+  libelle,
+  valeur,
+  modifie = false,
+}: {
+  libelle: string;
+  valeur: ReactNode;
+  modifie?: boolean;
+}) {
+  const { t } = useTranslation();
   return (
     <Box
       sx={{
@@ -535,6 +665,11 @@ function Ligne({ libelle, valeur }: { libelle: string; valeur: ReactNode }) {
     >
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         {libelle}
+        {modifie && (
+          <Box component="span" sx={{ display: 'block', mt: 0.25 }}>
+            <Etiquette ton="info">{t('rapportCorrige.modifie')}</Etiquette>
+          </Box>
+        )}
       </Typography>
       <Typography component="div" variant="body2" sx={{ overflowWrap: 'anywhere' }}>
         {valeur}

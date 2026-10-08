@@ -717,6 +717,8 @@ class ProgrammeSerializer(serializers.Serializer):
     jours = JourProgrammeSerializer(many=True)
     #: Visites restées prévues après leur journée, à justifier (VIS-009 CA1).
     a_justifier = VisiteProgrammeSerializer(many=True)
+    #: RPT-014, 29.A : rapports renvoyés pour correction, de toutes les semaines.
+    a_corriger = VisiteProgrammeSerializer(many=True)
     #: La prochaine visite du jour : la première qui n'est pas encore faite.
     prochaine = serializers.UUIDField(allow_null=True)
     #: Le pays enregistre la position au début et à la fin des visites (RG-028).

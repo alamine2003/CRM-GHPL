@@ -71,6 +71,7 @@ const PROGRAMME: Programme = {
   verrouillage_minutes: 15,
   motifs_ecart: [{ id: 'm-absent', libelle: 'Absent du cabinet' }],
   a_justifier: [],
+  a_corriger: [],
   jours: [
     { date: '2026-10-12', ferie: null, visites: [], activites: [] },
     {
@@ -183,20 +184,29 @@ test('RG-032 : un rapport de la veille non soumis remonte en tête, « en retard
     rapport_statut: 'brouillon' as const,
   };
   const soumis = { ...hier, id: 'v00', rapport_statut: 'soumis' as const };
-  // RPT-014 : renvoyé pour correction, il n'est pas « en retard » mais « à corriger ».
-  const aCorriger = {
-    ...visite('v01', '16:00', 'REVOIR', '2026-10-12'),
-    statut: 'effectuee' as const,
-    rapport_statut: 'a_corriger' as const,
-  };
   const jours = PROGRAMME.jours.map((j) =>
-    j.date === '2026-10-12' ? { ...j, visites: [hier, soumis, aCorriger] } : j,
+    j.date === '2026-10-12' ? { ...j, visites: [hier, soumis] } : j,
   );
   await rendre(jest.fn(async () => ({ ...PROGRAMME, jours })));
   expect(await screen.findByText('Rapports en retard (1)')).toBeTruthy();
-  expect(screen.getByText('Rapports à corriger (1)')).toBeTruthy();
   await fireEvent.press(screen.getByText(/VEILLE/));
   expect(mockPousser).toHaveBeenCalledWith({ pathname: '/rapport/[id]', params: { id: 'v0' } });
+});
+
+test('RPT-014, 29.A : les rapports à corriger, même d’une semaine passée, ont leur liste', async () => {
+  const aCorriger = {
+    ...visite('v01', '16:00', 'REVOIR', '2026-09-21'),
+    statut: 'effectuee' as const,
+    rapport_statut: 'a_corriger' as const,
+  };
+  // Déjà resoumis (sur ce téléphone) : il sort de la liste.
+  const resoumis = { ...aCorriger, id: 'v02', rapport_statut: 'soumis' as const };
+  await rendre(jest.fn(async () => ({ ...PROGRAMME, a_corriger: [aCorriger, resoumis] })));
+  expect(await screen.findByText('Rapports à corriger (1)')).toBeTruthy();
+  expect(screen.queryByText('Rapports en retard (1)')).toBeNull();
+  expect(screen.getByText(/lundi 21 septembre/i)).toBeTruthy();
+  await fireEvent.press(screen.getByText(/REVOIR/));
+  expect(mockPousser).toHaveBeenCalledWith({ pathname: '/rapport/[id]', params: { id: 'v01' } });
 });
 
 test('DC-51 : « Je suis indisponible aujourd’hui » justifie la journée sans motif', async () => {

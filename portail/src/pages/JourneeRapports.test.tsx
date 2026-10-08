@@ -13,6 +13,9 @@ const RAPPORT = {
   id: 'r1',
   statut: 'soumis',
   correction: null,
+  historique: [{ numero: 1, soumis_le: '2026-10-13T20:00:00Z', correction: null }],
+  precedente: null,
+  modifies: [],
   valide_le: null,
   valide_par: null,
   mode_validation: '',
@@ -268,6 +271,16 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
     );
   });
 
+  it('RPT-014 : un rapport renvoyé n’est pas « pas encore soumis »', async () => {
+    const visites = JOURNEE.visites.map((v, i) =>
+      i === 1 ? { ...v, rapport_statut: 'a_corriger' } : v,
+    );
+    rendre({ ...JOURNEE, visites } as unknown as Journee);
+    expect(
+      await screen.findByText(/1 rapport est renvoyé pour correction : la journée se validera/),
+    ).toBeInTheDocument();
+  });
+
   it('RPT-014 : la correction en attente s’affiche sur le rapport', async () => {
     const visites = JOURNEE.visites.map((v, i) =>
       i === 0
@@ -293,5 +306,65 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('« Précisez le résumé. »')).toBeInTheDocument();
     expect(screen.getByText(/À revoir : Résumé de l.échange/)).toBeInTheDocument();
+  });
+
+  it('RPT-015 CA1 : le rapport corrigé dit ce qui a changé ; la version 1 reste lisible', async () => {
+    const visites = JOURNEE.visites.map((v, i) =>
+      i === 0
+        ? {
+            ...v,
+            rapport: {
+              ...RAPPORT,
+              versions: 2,
+              resume: 'Le prix lui paraît élevé.',
+              historique: [
+                { numero: 1, soumis_le: '2026-10-13T20:00:00Z', correction: null },
+                {
+                  numero: 2,
+                  soumis_le: '2026-10-14T09:00:00Z',
+                  correction: {
+                    le: '2026-10-14T08:00:00Z',
+                    par: 'Kossi GUEYE',
+                    commentaire: 'Précisez le résumé.',
+                    champs: ['resume'],
+                  },
+                },
+              ],
+              modifies: ['resume'],
+              precedente: {
+                objectif_prevu: 'Présenter Cardiol',
+                resultat: 'Objectif atteint',
+                resultat_obtenu: 'Essai sur 5 patients',
+                presentations: RAPPORT.presentations,
+                remises: RAPPORT.remises,
+                resume: 'Intérêt pour la nouvelle forme',
+                prochaine_action_type: 'Revisiter le prescripteur',
+                prochaine_action: 'Revenir avec l’étude',
+                prochaine_action_echeance: '2026-10-27',
+                visite_proposee: true,
+                champs: RAPPORT.champs,
+                pieces_jointes: ['fiche-produit.pdf'],
+              },
+            },
+          }
+        : v,
+    );
+    rendre({ ...JOURNEE, visites } as unknown as Journee);
+    const visite = await screen.findByRole('article', { name: '09:00 · Awa NDIAYE' });
+    expect(
+      within(visite).getByText(/Version 2, soumise le .* après correction/),
+    ).toBeInTheDocument();
+    expect(
+      within(visite).getByText(/Demande de Kossi GUEYE le .* : « Précisez le résumé. »/),
+    ).toBeInTheDocument();
+    expect(within(visite).getByText(/Modifié : Résumé de l.échange/)).toBeInTheDocument();
+    expect(within(visite).getAllByText('Modifié')).toHaveLength(1);
+    expect(within(visite).queryByText('Intérêt pour la nouvelle forme')).toBeNull();
+    fireEvent.click(within(visite).getByRole('button', { name: 'Voir la version 1' }));
+    const v1 = within(visite).getByRole('region', { name: 'Version 1, telle que soumise' });
+    expect(within(v1).getByText('Intérêt pour la nouvelle forme')).toBeInTheDocument();
+    expect(within(v1).getByText('fiche-produit.pdf')).toBeInTheDocument();
+    // L'étiquette « Modifié » reste sur la version actuelle.
+    expect(within(v1).queryByText('Modifié')).toBeNull();
   });
 });

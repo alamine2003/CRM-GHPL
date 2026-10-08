@@ -2,6 +2,7 @@ import type { Notification } from '@innov/api-client';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import EventBusyRounded from '@mui/icons-material/EventBusyRounded';
+import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
 import LockOpenRounded from '@mui/icons-material/LockOpenRounded';
 import NotificationImportantRounded from '@mui/icons-material/NotificationImportantRounded';
 import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
@@ -23,6 +24,7 @@ export const ICONES: Record<Notification['type'], ReactNode> = {
   reouverture_demandee: <LockOpenRounded color="warning" fontSize="small" />,
   redaction_rouverte: <LockOpenRounded color="primary" fontSize="small" />,
   correction_demandee: <RateReviewOutlined color="warning" fontSize="small" />,
+  rapport_corrige: <FactCheckRounded color="primary" fontSize="small" />,
 };
 
 /** Texte d'une notification, composé dans la langue de l'utilisateur (prd.md §18). */
@@ -66,6 +68,9 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
  * décider, la file, ou la semaine du délégué.
  */
 export function destination(n: Notification) {
+  // RPT-015, 28.A : le rapport corrigé se relit dans sa journée.
+  if (n.type === 'rapport_corrige' && n.donnees.delegue && n.donnees.date)
+    return `/a-traiter/${n.donnees.delegue}/${n.donnees.date}`;
   if ((n.type === 'planning_soumis' || n.type === 'escalade') && n.donnees.planning)
     return `/validation/${n.donnees.planning}`;
   if (

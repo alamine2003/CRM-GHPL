@@ -99,6 +99,21 @@ def a_justifier(pays: Pays, delegue: Utilisateur, today: date) -> list[Visite]:
     ]
 
 
+def a_corriger(pays: Pays, delegue: Utilisateur) -> list[Visite]:
+    """RPT-014, 29.A : les visites dont le rapport est renvoyé pour correction, quelle que soit
+    leur semaine, les plus anciennes d'abord."""
+    visites = list(
+        Visite.objects.filter(pays=pays, planning__delegue=delegue, archive_le__isnull=True,
+                              rapport__statut="a_corriger")
+        .select_related("prospect__type", "prospect__specialite", "etablissement", "reseau",
+                        "motif_ecart", "rapport")
+        .order_by("date", "heure", "ordre")
+    )  # fmt: skip
+    for v in visites:
+        v.modification_en_attente = False
+    return visites
+
+
 def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dict:
     """La semaine qui contient `jour` (aujourd'hui par défaut), telle qu'approuvée."""
     from . import services
@@ -162,6 +177,7 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         "verrouillage_minutes": valeur_parametre(pays, "verrouillage_minutes"),
         "motifs_ecart": _motifs(pays),
         "a_justifier": a_justifier(pays, delegue, today),
+        "a_corriger": a_corriger(pays, delegue),
     }
 
 

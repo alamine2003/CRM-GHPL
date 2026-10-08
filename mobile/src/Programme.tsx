@@ -104,20 +104,31 @@ export function ProgrammeDuJour() {
   // Restées prévues après leur journée : à justifier (VIS-009 CA1).
   const aJustifier = (programme.a_justifier ?? []).filter((v) => v.statut === 'prevue');
   // RG-032 : passé minuit, un rapport non soumis d'un jour précédent de la semaine est en
-  // retard ; il reste à portée de main, en tête de la Tournée. Un rapport renvoyé pour
-  // correction (RPT-014) a sa propre liste : il n'est pas en retard, il est à revoir.
-  const rapportsDe = (statuts: string[]) =>
-    programme.jours
-      .filter((j) => j.date < programme.aujourdhui)
-      .flatMap((j) =>
-        j.visites
-          .filter(
-            (v) => v.statut === 'effectuee' && statuts.includes(v.rapport_statut ?? 'attendu'),
-          )
-          .map((v) => ({ v, j })),
-      );
-  const rapportsACorriger = rapportsDe(['a_corriger']);
-  const rapportsEnRetard = rapportsDe(['attendu', 'brouillon']);
+  // retard ; il reste à portée de main, en tête de la Tournée.
+  const rapportsEnRetard = programme.jours
+    .filter((j) => j.date < programme.aujourdhui)
+    .flatMap((j) =>
+      j.visites
+        .filter(
+          (v) =>
+            v.statut === 'effectuee' &&
+            ['attendu', 'brouillon'].includes(v.rapport_statut ?? 'attendu'),
+        )
+        .map((v) => ({ v, j })),
+    );
+  // RPT-014, 29.A : un rapport renvoyé pour correction a sa propre liste, toutes semaines
+  // confondues : il n'est pas en retard, il est à revoir. Resoumis, il en sort aussitôt.
+  const rapportsACorriger = (programme.a_corriger ?? [])
+    .filter((v) => v.rapport_statut === 'a_corriger')
+    .map((v) => ({
+      v,
+      j: programme.jours.find((j) => j.date === v.date) ?? {
+        date: v.date,
+        ferie: null,
+        visites: [v],
+        activites: [],
+      },
+    }));
   const listeRapports = (titre: string, note: string, liste: typeof rapportsEnRetard) =>
     liste.length > 0 && (
       <Carte style={{ gap: 4 }}>
