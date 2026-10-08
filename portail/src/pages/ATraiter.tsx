@@ -12,15 +12,18 @@ import {
   DialogTitle,
   Skeleton,
   Stack,
+  Tab,
+  Tabs,
   Typography,
 } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link as LienRouteur } from 'react-router';
+import { Link as LienRouteur, useSearchParams } from 'react-router';
 import { texteEcart } from '../composants/conformiteTextes';
 import { BarreChiffres, Chiffre, EnTetePage, Etiquette, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
+import Retards from '../composants/Retards';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 
@@ -37,6 +40,60 @@ export default function ATraiter() {
   const requetes = useQueryClient();
   const notifier = useNotifier();
   const [confirmation, setConfirmation] = useState(false);
+  // 35.A : les retards (RPT-017) dans un onglet ; onglet et délégué filtré restent dans l'adresse.
+  const [parametres, setParametres] = useSearchParams();
+  const onglet = parametres.get('onglet') === 'retards' ? 'retards' : 'journees';
+  const changer = (valeurs: Record<string, string>) =>
+    setParametres(
+      (p) => {
+        const suite = new URLSearchParams(p);
+        for (const [cle, valeur] of Object.entries(valeurs)) {
+          if (valeur) suite.set(cle, valeur);
+          else suite.delete(cle);
+        }
+        return suite;
+      },
+      { replace: true },
+    );
+  // Le nombre de retards, sur l'onglet (même requête que l'onglet, sans filtre).
+  const retards = useQuery({
+    queryKey: ['rapports-retards', ''],
+    queryFn: () => client.rapports.retards(),
+  });
+  const nombreRetards = retards.data
+    ? retards.data.rapports.length + retards.data.journees.length
+    : 0;
+  const onglets = (
+    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Tabs
+        value={onglet}
+        onChange={(_, v: string) => changer({ onglet: v === 'retards' ? v : '' })}
+        textColor="inherit"
+      >
+        <Tab value="journees" label={t('aTraiter.onglets.journees')} />
+        <Tab
+          value="retards"
+          label={
+            nombreRetards
+              ? t('aTraiter.onglets.retardsN', { count: nombreRetards })
+              : t('aTraiter.onglets.retards')
+          }
+        />
+      </Tabs>
+    </Box>
+  );
+  if (onglet === 'retards') {
+    return (
+      <Stack spacing={2.5}>
+        <EnTetePage titre={t('navigation.aTraiter')} sousTitre={t('retards.sousTitre')} />
+        {onglets}
+        <Retards
+          delegue={parametres.get('delegue') ?? ''}
+          surDelegue={(id) => changer({ delegue: id })}
+        />
+      </Stack>
+    );
+  }
 
   if (file.isError) {
     return (
@@ -109,6 +166,7 @@ export default function ATraiter() {
           </Button>
         </DialogActions>
       </Dialog>
+      {onglets}
       <BarreChiffres>
         <Chiffre libelle={t('aTraiter.chiffres.aVerifier')} valeur={aVerifier} ton="warning" />
         <Chiffre libelle={t('aTraiter.chiffres.rapports')} valeur={rapports} />

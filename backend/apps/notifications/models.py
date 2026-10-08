@@ -30,6 +30,8 @@ class TypeNotification(models.TextChoices):
     #: RPT-016 (0.6.6) : un rapport validé est rouvert ; le délégué, et le superviseur quand
     #: c'est le DM qui rouvre (31.A).
     RAPPORT_ROUVERT = "rapport_rouvert", "Rapport rouvert"
+    #: RPT-017, 34.A (0.6.7) : un rapport toujours pas soumis 48 h après la visite.
+    RAPPORT_EN_RETARD = "rapport_en_retard", "Rapport en retard"
 
 
 class Notification(ModeleDePays):

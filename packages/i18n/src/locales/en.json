@@ -1697,7 +1697,9 @@
     "correction_demandee": "{{nom}} requests a correction of your report of {{jour}}",
     "rapport_corrige": "{{nom}} corrected their report of {{jour}}",
     "rapport_rouvert": "{{nom}} reopened your report of {{jour}}",
-    "rapport_rouvert_suivi": "{{nom}} reopened an approved report of {{jour}}"
+    "rapport_rouvert_suivi": "{{nom}} reopened an approved report of {{jour}}",
+    "rapport_en_retard_one": "{{nom}}: report of {{jour}} still not submitted, 48 h after the visit",
+    "rapport_en_retard_other": "{{nom}}: {{count}} reports of {{jour}} still not submitted, 48 h after the visits"
   },
   "revision": {
     "demander": "Request a revision",
@@ -2198,7 +2200,31 @@
     "aCorriger_one": "{{count}} sent back for correction",
     "aCorriger_other": "{{count}} sent back for correction",
     "rouverts_one": "{{count}} report reopened",
-    "rouverts_other": "{{count}} reports reopened"
+    "rouverts_other": "{{count}} reports reopened",
+    "onglets": {
+      "journees": "Days",
+      "retards": "Overdue",
+      "retardsN": "Overdue ({{count}})"
+    }
+  },
+  "retards": {
+    "sousTitre": "Reports not submitted after their deadline, old days not yet approved",
+    "delegue": "Representative",
+    "tous": "All representatives",
+    "aucun": "Nothing overdue",
+    "aucunTexte": "All expected reports are submitted, and no old day is waiting for approval.",
+    "rapports_one": "{{count}} report not submitted",
+    "rapports_other": "{{count}} reports not submitted",
+    "rapportsAide": "Due before midnight on the day of the visit. The supervisor is alerted 48 h after the visit.",
+    "journees_one": "{{count}} day older than 4 weeks not approved",
+    "journees_other": "{{count}} days older than 4 weeks not approved",
+    "journeesAide": "They have left “To do”: open them to approve them.",
+    "depuis_one": "{{count}} day overdue",
+    "depuis_other": "{{count}} days overdue",
+    "etats": {
+      "attendu": "Nothing written",
+      "brouillon": "Draft"
+    }
   },
   "journee": {
     "controles": "Day checks",

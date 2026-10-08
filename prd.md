@@ -704,6 +704,17 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.48 Rapports en retard (mise en œuvre 0.6.7)
+
+- **Onglet « Retards »** (RPT-017) : [D, 8 octobre 2026, 35.A] dans « À traiter », à côté de « Journées », avec leur nombre (« Retards (2) »). Il liste :
+  - les **rapports non soumis** après leur échéance (minuit le jour de la visite, RG-032) : visite effectuée, rien d'écrit ou brouillon ; avec le jour, l'heure, le prospect, le lieu, le nombre de jours de retard ;
+  - les **journées de plus de 4 semaines non validées** (20.A) : elles ont quitté « Journées » et se retrouvent ici.
+  Chaque ligne ouvre la journée. Un rapport renvoyé pour correction ou rouvert n'est pas en retard : il est sans échéance (DC-60).
+- **CA1 : filtrable par délégué.** Un choix « Délégué » (« Tous les délégués » par défaut) ; l'onglet et le délégué choisis restent dans l'adresse de la page.
+- **Alerte des 48 heures** (RG-032) : [D, 8 octobre 2026, 34.A] 48 heures après la visite (sa fin, ou la fin de sa journée), un rapport toujours pas soumis prévient le superviseur responsable du poste : « Aminata Touré : 2 rapports du 6 octobre toujours pas soumis, 48 h après les visites ». Une seule alerte par délégué et par jour ; la notification ouvre l'onglet « Retards » filtré sur le délégué. Elle part avec la tâche périodique des rappels et escalades.
+- [H] La liste remonte sur 13 semaines ; seules les visites des 7 derniers jours déclenchent une alerte (pas d'avalanche à la mise en service).
+- Qui voit quoi : le responsable du poste ou son remplaçant, et le DM du périmètre ; jamais le délégué.
+
 ### 14.47 Réouverture d'un rapport validé (mise en œuvre 0.6.6)
 
 - **Rouvrir** (RPT-016) : sous un rapport validé, « Rouvrir le rapport ». Une fenêtre demande le motif, obligatoire ; « Rouvrir » renvoie le rapport au délégué, au statut « rouvert ».

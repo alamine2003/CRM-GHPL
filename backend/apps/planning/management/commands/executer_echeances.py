@@ -7,11 +7,12 @@ from apps.planning.echeances import executer
 
 
 class Command(BaseCommand):
-    help = "Rappels, escalades et alertes du lundi (NOT-006, PLN-016, RG-019)."
+    help = ("Rappels, escalades, alertes du lundi et rapports en retard (NOT-006, PLN-016, "
+            "RG-019, RPT-017).")  # fmt: skip
 
     def handle(self, *args, **options):
         bilan = executer()
         self.stdout.write(
             f"{bilan['rappels']} rappel(s), {bilan['escalades']} escalade(s), "
-            f"{bilan['alertes']} alerte(s)."
+            f"{bilan['alertes']} alerte(s), {bilan['rapports']} rapport(s) en retard signalé(s)."
         )

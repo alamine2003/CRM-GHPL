@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.6.6
+  version: 0.6.7
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -3907,6 +3907,29 @@ paths:
                 type: string
                 format: binary
           description: ''
+  /api/v1/rapports/retards/:
+    get:
+      operationId: rapports_retards
+      description: |-
+        RPT-017 : les rapports en retard et les journées anciennes non validées
+        (`?delegue=<id>` pour un seul délégué, CA1).
+      parameters:
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - rapports
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Retards'
+          description: ''
   /api/v1/rapports/visites-proposees/:
     get:
       operationId: visites_proposees
@@ -7144,18 +7167,6 @@ components:
       - active
       - codes_secours_restants
       - requise
-    EtatEnum:
-      enum:
-      - approuve
-      - non_approuve
-      - sans_planning
-      - sans_poste
-      type: string
-      description: |-
-        * `approuve` - approuve
-        * `non_approuve` - non_approuve
-        * `sans_planning` - sans_planning
-        * `sans_poste` - sans_poste
     EtatExploitation:
       type: object
       properties:
@@ -7617,6 +7628,31 @@ components:
       required:
       - date
       - delegue
+    JourneeEnRetard:
+      type: object
+      description: '20.A : une journée de plus de 4 semaines, toujours pas validée.'
+      properties:
+        delegue:
+          $ref: '#/components/schemas/Delegue'
+        date:
+          type: string
+          format: date
+        planning:
+          type: string
+          format: uuid
+        effectuees:
+          type: integer
+        rapports_a_valider:
+          type: integer
+        rapports_attendus:
+          type: integer
+      required:
+      - date
+      - delegue
+      - effectuees
+      - planning
+      - rapports_a_valider
+      - rapports_attendus
     JourneeModeEnum:
       enum:
       - direct
@@ -8051,6 +8087,7 @@ components:
       - correction_demandee
       - rapport_corrige
       - rapport_rouvert
+      - rapport_en_retard
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
@@ -8065,6 +8102,7 @@ components:
         * `correction_demandee` - Correction demandée
         * `rapport_corrige` - Rapport corrigé
         * `rapport_rouvert` - Rapport rouvert
+        * `rapport_en_retard` - Rapport en retard
     NullEnum:
       enum:
       - null
@@ -9006,7 +9044,7 @@ components:
         fuseau:
           type: string
         etat:
-          $ref: '#/components/schemas/EtatEnum'
+          $ref: '#/components/schemas/ProgrammeEtatEnum'
         planning:
           allOf:
           - $ref: '#/components/schemas/Planning'
@@ -9055,6 +9093,18 @@ components:
       - semaine
       - verrouillage_minutes
       - version
+    ProgrammeEtatEnum:
+      enum:
+      - approuve
+      - non_approuve
+      - sans_planning
+      - sans_poste
+      type: string
+      description: |-
+        * `approuve` - approuve
+        * `non_approuve` - non_approuve
+        * `sans_planning` - sans_planning
+        * `sans_poste` - sans_poste
     Proposition:
       type: object
       properties:
@@ -9761,6 +9811,50 @@ components:
       - soumis_le
       - statut
       - visite
+    RapportEnRetard:
+      type: object
+      description: 'RPT-017 : une visite effectuée dont le rapport n''est pas soumis
+        après son échéance.'
+      properties:
+        visite:
+          type: string
+          format: uuid
+        delegue:
+          $ref: '#/components/schemas/Delegue'
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        prospect:
+          type: string
+          nullable: true
+          readOnly: true
+        etablissement:
+          type: string
+          nullable: true
+        etat:
+          $ref: '#/components/schemas/RapportEnRetardEtatEnum'
+        jours_de_retard:
+          type: integer
+      required:
+      - date
+      - delegue
+      - etat
+      - heure
+      - jours_de_retard
+      - prospect
+      - visite
+    RapportEnRetardEtatEnum:
+      enum:
+      - attendu
+      - brouillon
+      type: string
+      description: |-
+        * `attendu` - attendu
+        * `brouillon` - brouillon
     RapportLu:
       type: object
       description: |-
@@ -10282,6 +10376,26 @@ components:
       required:
       - non_lues
       - notifications
+    Retards:
+      type: object
+      description: 'RPT-017 CA1 : les retards, filtrables par délégué.'
+      properties:
+        delegues:
+          type: array
+          items:
+            $ref: '#/components/schemas/Delegue'
+        rapports:
+          type: array
+          items:
+            $ref: '#/components/schemas/RapportEnRetard'
+        journees:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourneeEnRetard'
+      required:
+      - delegues
+      - journees
+      - rapports
     RetourPrepare:
       type: object
       properties:

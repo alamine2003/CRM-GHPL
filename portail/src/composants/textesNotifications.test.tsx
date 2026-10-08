@@ -60,3 +60,22 @@ describe('RPT-016, 31.A : rapport rouvert par le DM', () => {
     expect(destination(n)).toBe('/a-traiter/d1/2026-09-21');
   });
 });
+
+describe('RPT-017, 34.A : rapport en retard', () => {
+  it('le superviseur est alerté, et la notification ouvre les retards du délégué', () => {
+    const t = i18n.t.bind(i18n);
+    const n = notif('rapport_en_retard', {
+      delegue: 'd1',
+      date: '2026-10-13',
+      nom: 'Awa FICTIVE',
+      nombre: 2,
+    });
+    expect(texteNotification(n, t, 'fr')).toBe(
+      'Awa FICTIVE : 2 rapports du 13 octobre toujours pas soumis, 48 h après les visites',
+    );
+    expect(texteNotification({ ...n, donnees: { ...n.donnees, nombre: 1 } }, t, 'fr')).toBe(
+      'Awa FICTIVE : rapport du 13 octobre toujours pas soumis, 48 h après la visite',
+    );
+    expect(destination(n)).toBe('/a-traiter?onglet=retards&delegue=d1');
+  });
+});

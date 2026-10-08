@@ -51,16 +51,46 @@ const FILE: DonneesATraiter = {
   ],
 };
 
-function rendre(file: DonneesATraiter) {
+const RETARDS = {
+  delegues: [
+    { id: 'd1', prenom: 'Aminata', nom: 'TOURE' },
+    { id: 'd2', prenom: 'Moussa', nom: 'SARR' },
+  ],
+  rapports: [
+    {
+      visite: 'v9',
+      delegue: { id: 'd1', prenom: 'Aminata', nom: 'TOURE' },
+      date: '2026-10-05',
+      heure: '10:30',
+      prospect: 'Awa NDIAYE',
+      etablissement: 'Clinique du Cap',
+      etat: 'brouillon',
+      jours_de_retard: 3,
+    },
+  ],
+  journees: [
+    {
+      delegue: { id: 'd2', prenom: 'Moussa', nom: 'SARR' },
+      date: '2026-09-01',
+      planning: 'pl9',
+      effectuees: 2,
+      rapports_a_valider: 2,
+      rapports_attendus: 0,
+    },
+  ],
+};
+
+function rendre(file: DonneesATraiter, adresse = '/a-traiter') {
   const validerLot = vi.fn(async () => ({ journees: 1, rapports: 2 }));
+  const retards = vi.fn(async () => RETARDS);
   const session = {
     etat: { statut: 'chargement' },
     client: {
-      rapports: { aTraiter: vi.fn(async () => file), validerLot },
+      rapports: { aTraiter: vi.fn(async () => file), validerLot, retards },
     } as unknown as ClientApi,
   } as unknown as Session;
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[adresse]}>
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
@@ -70,7 +100,7 @@ function rendre(file: DonneesATraiter) {
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { validerLot };
+  return { validerLot, retards };
 }
 
 beforeEach(async () => {
@@ -157,5 +187,29 @@ describe('RPT-012 : file « À traiter » du superviseur', () => {
     rendre(FILE);
     await screen.findByText('Journées à vérifier');
     expect(screen.queryByRole('button', { name: /Valider les/ })).toBeNull();
+  });
+
+  it('RPT-017, 35.A : l’onglet « Retards » liste les rapports non soumis et les journées anciennes', async () => {
+    rendre(FILE, '/a-traiter?onglet=retards');
+    expect(await screen.findByText('1 rapport non soumis')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Retards (2)' })).toBeInTheDocument();
+    expect(screen.getByText('Tous les délégués')).toBeInTheDocument();
+    expect(screen.getByText('3 jours de retard')).toBeInTheDocument();
+    expect(screen.getByText('En brouillon')).toBeInTheDocument();
+    expect(screen.getByText('Aminata TOURE · Awa NDIAYE · Clinique du Cap')).toBeInTheDocument();
+    expect(screen.getByText('1 journée de plus de 4 semaines non validée')).toBeInTheDocument();
+    const liens = screen.getAllByRole('link', { name: 'Ouvrir la journée' });
+    expect(liens.map((l) => l.getAttribute('href'))).toEqual([
+      '/a-traiter/d1/2026-10-05',
+      '/a-traiter/d2/2026-09-01',
+    ]);
+  });
+
+  it('RPT-017 CA1 : la liste se filtre par délégué', async () => {
+    const { retards } = rendre(FILE, '/a-traiter?onglet=retards');
+    await screen.findByText('1 rapport non soumis');
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Délégué' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Moussa SARR' }));
+    await waitFor(() => expect(retards).toHaveBeenCalledWith('d2'));
   });
 });

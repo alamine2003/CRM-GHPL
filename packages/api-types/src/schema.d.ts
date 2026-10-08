@@ -2282,6 +2282,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/rapports/retards/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description RPT-017 : les rapports en retard et les journées anciennes non validées
+     *     (`?delegue=<id>` pour un seul délégué, CA1).
+     */
+    get: operations['rapports_retards'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/rapports/visites-proposees/': {
     parameters: {
       query?: never;
@@ -3733,14 +3753,6 @@ export interface components {
       requise: boolean;
       codes_secours_restants: number;
     };
-    /**
-     * @description * `approuve` - approuve
-     *     * `non_approuve` - non_approuve
-     *     * `sans_planning` - sans_planning
-     *     * `sans_poste` - sans_poste
-     * @enum {string}
-     */
-    EtatEnum: 'approuve' | 'non_approuve' | 'sans_planning' | 'sans_poste';
     EtatExploitation: {
       /** @description Vrai si la base refuse toute modification du journal d'audit (AUD-001 CA2). */
       audit_immuable: boolean;
@@ -3933,6 +3945,17 @@ export interface components {
       delegue: string;
       /** Format: date */
       date: string;
+    };
+    /** @description 20.A : une journée de plus de 4 semaines, toujours pas validée. */
+    JourneeEnRetard: {
+      delegue: components['schemas']['Delegue'];
+      /** Format: date */
+      date: string;
+      /** Format: uuid */
+      planning: string;
+      effectuees: number;
+      rapports_a_valider: number;
+      rapports_attendus: number;
     };
     /**
      * @description * `direct` - Décision du responsable du poste
@@ -4135,6 +4158,7 @@ export interface components {
      *     * `correction_demandee` - Correction demandée
      *     * `rapport_corrige` - Rapport corrigé
      *     * `rapport_rouvert` - Rapport rouvert
+     *     * `rapport_en_retard` - Rapport en retard
      * @enum {string}
      */
     NotificationTypeEnum:
@@ -4149,7 +4173,8 @@ export interface components {
       | 'redaction_rouverte'
       | 'correction_demandee'
       | 'rapport_corrige'
-      | 'rapport_rouvert';
+      | 'rapport_rouvert'
+      | 'rapport_en_retard';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
@@ -4528,7 +4553,7 @@ export interface components {
       /** Format: date */
       aujourdhui: string;
       fuseau: string;
-      etat: components['schemas']['EtatEnum'];
+      etat: components['schemas']['ProgrammeEtatEnum'];
       planning: components['schemas']['Planning'] | null;
       version: number | null;
       jours: components['schemas']['JourProgramme'][];
@@ -4541,6 +4566,14 @@ export interface components {
       verrouillage_minutes: number;
       motifs_ecart: components['schemas']['Resume'][];
     };
+    /**
+     * @description * `approuve` - approuve
+     *     * `non_approuve` - non_approuve
+     *     * `sans_planning` - sans_planning
+     *     * `sans_poste` - sans_poste
+     * @enum {string}
+     */
+    ProgrammeEtatEnum: 'approuve' | 'non_approuve' | 'sans_planning' | 'sans_poste';
     Proposition: {
       /** Format: uuid */
       id: string;
@@ -4776,6 +4809,26 @@ export interface components {
       /** Format: date-time */
       readonly soumis_le: string | null;
     };
+    /** @description RPT-017 : une visite effectuée dont le rapport n'est pas soumis après son échéance. */
+    RapportEnRetard: {
+      /** Format: uuid */
+      visite: string;
+      delegue: components['schemas']['Delegue'];
+      /** Format: date */
+      date: string;
+      /** Format: time */
+      heure: string | null;
+      readonly prospect: string | null;
+      etablissement?: string | null;
+      etat: components['schemas']['RapportEnRetardEtatEnum'];
+      jours_de_retard: number;
+    };
+    /**
+     * @description * `attendu` - attendu
+     *     * `brouillon` - brouillon
+     * @enum {string}
+     */
+    RapportEnRetardEtatEnum: 'attendu' | 'brouillon';
     /**
      * @description 0.6.2 : le rapport soumis, à lire par le superviseur : tout son contenu, ses pièces
      *     jointes (RPT-007 CA2), son retard et son horodatage (RPT-010 CA1), ses versions (RG-037).
@@ -4971,6 +5024,12 @@ export interface components {
     ResumeNotifications: {
       non_lues: number;
       notifications: components['schemas']['Notification'][];
+    };
+    /** @description RPT-017 CA1 : les retards, filtrables par délégué. */
+    Retards: {
+      delegues: components['schemas']['Delegue'][];
+      rapports: components['schemas']['RapportEnRetard'][];
+      journees: components['schemas']['JourneeEnRetard'][];
     };
     RetourPrepare: {
       libelle: string;
@@ -9201,6 +9260,27 @@ export interface operations {
         };
         content: {
           'application/octet-stream': string;
+        };
+      };
+    };
+  };
+  rapports_retards: {
+    parameters: {
+      query?: {
+        delegue?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Retards'];
         };
       };
     };

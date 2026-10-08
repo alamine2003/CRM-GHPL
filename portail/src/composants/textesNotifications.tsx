@@ -26,6 +26,7 @@ export const ICONES: Record<Notification['type'], ReactNode> = {
   correction_demandee: <RateReviewOutlined color="warning" fontSize="small" />,
   rapport_corrige: <FactCheckRounded color="primary" fontSize="small" />,
   rapport_rouvert: <LockOpenRounded color="warning" fontSize="small" />,
+  rapport_en_retard: <ScheduleRounded color="warning" fontSize="small" />,
 };
 
 /** Texte d'une notification, composé dans la langue de l'utilisateur (prd.md §18). */
@@ -71,6 +72,9 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
  * décider, la file, ou la semaine du délégué.
  */
 export function destination(n: Notification) {
+  // RPT-017, 34.A : un rapport en retard s'ouvre dans l'onglet « Retards », filtré sur le délégué.
+  if (n.type === 'rapport_en_retard')
+    return `/a-traiter?onglet=retards${n.donnees.delegue ? `&delegue=${n.donnees.delegue}` : ''}`;
   // RPT-015, 28.A : le rapport corrigé se relit dans sa journée.
   if (
     (n.type === 'rapport_corrige' || n.type === 'rapport_rouvert') &&

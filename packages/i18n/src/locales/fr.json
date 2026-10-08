@@ -1697,7 +1697,9 @@
     "correction_demandee": "{{nom}} demande une correction de votre rapport du {{jour}}",
     "rapport_corrige": "{{nom}} a corrigé son rapport du {{jour}}",
     "rapport_rouvert": "{{nom}} a rouvert votre rapport du {{jour}}",
-    "rapport_rouvert_suivi": "{{nom}} a rouvert un rapport validé du {{jour}}"
+    "rapport_rouvert_suivi": "{{nom}} a rouvert un rapport validé du {{jour}}",
+    "rapport_en_retard_one": "{{nom}} : rapport du {{jour}} toujours pas soumis, 48 h après la visite",
+    "rapport_en_retard_other": "{{nom}} : {{count}} rapports du {{jour}} toujours pas soumis, 48 h après les visites"
   },
   "revision": {
     "demander": "Demander une révision",
@@ -2198,7 +2200,31 @@
     "aCorriger_one": "{{count}} renvoyé pour correction",
     "aCorriger_other": "{{count}} renvoyés pour correction",
     "rouverts_one": "{{count}} rapport rouvert",
-    "rouverts_other": "{{count}} rapports rouverts"
+    "rouverts_other": "{{count}} rapports rouverts",
+    "onglets": {
+      "journees": "Journées",
+      "retards": "Retards",
+      "retardsN": "Retards ({{count}})"
+    }
+  },
+  "retards": {
+    "sousTitre": "Rapports non soumis après leur échéance, journées anciennes non validées",
+    "delegue": "Délégué",
+    "tous": "Tous les délégués",
+    "aucun": "Aucun retard",
+    "aucunTexte": "Tous les rapports attendus sont soumis, et aucune journée ancienne n'attend de validation.",
+    "rapports_one": "{{count}} rapport non soumis",
+    "rapports_other": "{{count}} rapports non soumis",
+    "rapportsAide": "Attendus avant minuit le jour de la visite. Le superviseur est alerté 48 h après la visite.",
+    "journees_one": "{{count}} journée de plus de 4 semaines non validée",
+    "journees_other": "{{count}} journées de plus de 4 semaines non validées",
+    "journeesAide": "Elles ont quitté « À traiter » : ouvrez-les pour les valider.",
+    "depuis_one": "{{count}} jour de retard",
+    "depuis_other": "{{count}} jours de retard",
+    "etats": {
+      "attendu": "Rien d'écrit",
+      "brouillon": "En brouillon"
+    }
   },
   "journee": {
     "controles": "Contrôles de la journée",

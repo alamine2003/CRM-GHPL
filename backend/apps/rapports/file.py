@@ -36,12 +36,12 @@ EXECUTES = (StatutPlanning.APPROUVE, StatutPlanning.EN_COURS, StatutPlanning.TER
 TRANSMIS = (StatutRapport.SOUMIS, StatutRapport.VALIDE)
 
 
-def _plannings(utilisateur, pays) -> list[Planning]:
+def _plannings(utilisateur, pays, depuis=None) -> list[Planning]:
     from apps.organisation.models import PerimetreReseau, actif_le
     from apps.organisation.services import remplaces_par
 
     titulaires = [utilisateur.pk, *(r.pk for r in remplaces_par(utilisateur, pays))]
-    debut = lundi(aujourdhui(pays)) - timedelta(weeks=SEMAINES - 1)
+    debut = depuis or lundi(aujourdhui(pays)) - timedelta(weeks=SEMAINES - 1)
     # 32.A : une journée dont un rapport a été rouvert revient, même plus ancienne.
     reprises = models.Q(visites__rapport__rouvert_le__isnull=False,
                         visites__rapport__statut__in=EN_REPRISE)  # fmt: skip

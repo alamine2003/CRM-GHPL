@@ -249,6 +249,8 @@ urlpatterns = [
         rap.CorrectionRapportVue.as_view(),
         name="rapport-correction",
     ),
+    # RPT-017 : rapports en retard, journées anciennes non validées
+    path("rapports/retards/", rap.RetardsVue.as_view(), name="rapports-retards"),
     # RPT-016 : réouverture d'un rapport validé, avec un motif
     path(
         "rapports/<uuid:id>/rouvrir/", rap.ReouvertureRapportVue.as_view(), name="rapport-rouvrir"

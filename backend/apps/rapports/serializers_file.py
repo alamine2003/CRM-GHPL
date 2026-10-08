@@ -297,3 +297,45 @@ class DemandeReouvertureRapportSerializer(serializers.Serializer):
     """RPT-016 : motif obligatoire."""
 
     motif = serializers.CharField(max_length=2000, allow_blank=True)
+
+
+class RapportEnRetardSerializer(serializers.Serializer):
+    """RPT-017 : une visite effectuée dont le rapport n'est pas soumis après son échéance."""
+
+    visite = serializers.UUIDField(source="pk")
+    delegue = DelegueSerializer()
+    date = serializers.DateField()
+    heure = serializers.TimeField(allow_null=True, format="%H:%M")
+    prospect = serializers.SerializerMethodField()
+    etablissement = serializers.CharField(source="etablissement.nom", allow_null=True,
+                                          default=None)  # fmt: skip
+    #: `attendu` (rien d'écrit) ou `brouillon`.
+    etat = serializers.ChoiceField(choices=["attendu", "brouillon"])
+    jours_de_retard = serializers.IntegerField()
+
+    def get_prospect(self, visite) -> str | None:
+        p = visite.prospect
+        return " ".join(x for x in (p.prenom, p.nom) if x) if p else None
+
+
+class JourneeEnRetardSerializer(serializers.Serializer):
+    """20.A : une journée de plus de 4 semaines, toujours pas validée."""
+
+    delegue = DelegueSerializer()
+    date = serializers.DateField()
+    planning = serializers.UUIDField()
+    effectuees = serializers.IntegerField()
+    rapports_a_valider = serializers.IntegerField()
+    rapports_attendus = serializers.IntegerField()
+
+
+class RetardsSerializer(serializers.Serializer):
+    """RPT-017 CA1 : les retards, filtrables par délégué."""
+
+    delegues = DelegueSerializer(many=True)
+    rapports = RapportEnRetardSerializer(many=True)
+    journees = JourneeEnRetardSerializer(many=True)
+
+
+class ChoixRetardsSerializer(serializers.Serializer):
+    delegue = serializers.UUIDField(required=False)

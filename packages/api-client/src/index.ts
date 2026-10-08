@@ -33,6 +33,7 @@ import type {
   RapportChronologie,
   VisiteProposee,
   ATraiter,
+  Retards,
   Journee,
   RapportLu,
   ResultatValidation,
@@ -175,6 +176,9 @@ export type {
   ATraiter,
   DelegueATraiter,
   JourneeATraiter,
+  Retards,
+  RapportEnRetard,
+  JourneeEnRetard,
   Journee,
   VisiteJournee,
   RapportLu,
@@ -898,6 +902,11 @@ export function creerClient(options: OptionsClient) {
     rapports: {
       /** RPT-012 : la file de travail du superviseur, ses journées à traiter par délégué. */
       aTraiter: () => requete<ATraiter>('/api/v1/rapports/a-traiter/'),
+      /** RPT-017 : rapports non soumis et journées anciennes non validées ; CA1 : par délégué. */
+      retards: (delegue?: string) =>
+        requete<Retards>(
+          `/api/v1/rapports/retards/${delegue ? `?${new URLSearchParams({ delegue })}` : ''}`,
+        ),
       /** 0.6.2 : une journée d'un délégué, ses visites et leurs rapports soumis. */
       journee: (delegue: string, date: string) =>
         requete<Journee>(

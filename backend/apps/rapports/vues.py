@@ -375,3 +375,25 @@ class ReouvertureRapportVue(VuePerimetre):
         v = _lire(sf.DemandeReouvertureRapportSerializer, request)
         rapport = rouvrir(rapport, request.user, v["motif"])
         return Response(sf.RapportLuSerializer(rapport).data)
+
+
+class RetardsVue(VuePerimetre):
+    """RPT-017 : les rapports en retard et les journées anciennes non validées
+    (`?delegue=<id>` pour un seul délégué, CA1)."""
+
+    actions = {"GET": VALIDER}
+    serializer_class = sf.RetardsSerializer
+
+    def selection(self, perimetre):
+        return perimetre.filtrer_par_pays(Rapport.objects.none())
+
+    @extend_schema(parameters=[OpenApiParameter("delegue", OpenApiTypes.UUID, required=False)],
+                   responses=sf.RetardsSerializer, operation_id="rapports_retards")  # fmt: skip
+    def get(self, request):
+        from .retards import retards
+
+        choix = sf.ChoixRetardsSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        pays = pays_requis(self.perimetre)
+        donnees = retards(request.user, pays, choix.validated_data.get("delegue"))
+        return Response(sf.RetardsSerializer(donnees).data)

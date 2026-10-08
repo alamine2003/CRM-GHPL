@@ -2,6 +2,28 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.6.7] — Rapports en retard
+
+Septième jalon du cycle 0.6 « Validation des rapports ».
+
+### Ajouté (RPT-017, RG-032)
+
+- Onglet « Retards » dans « À traiter » (décision 35.A) : les rapports non soumis après leur échéance, avec leurs jours de retard, et les journées de plus de 4 semaines non validées ; chaque ligne ouvre la journée.
+- **CA1** : la liste se filtre par délégué ; le filtre reste dans l'adresse de la page.
+- Décision 34.A : 48 heures après la visite, un rapport toujours pas soumis alerte le superviseur, une seule fois par délégué et par jour ; la notification ouvre les retards du délégué.
+- [H] Liste sur 13 semaines ; alertes pour les visites des 7 derniers jours seulement.
+
+### Design
+
+Revue sur le rendu réel (bureau, portail en largeur de téléphone). Seconde revue après corrections :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Notifications | Deux visites du même jour donnaient deux alertes identiques, impossibles à distinguer ; « Le rapport de Aminata… » sans élision. | Une alerte par délégué et par jour, avec le nombre : « Aminata Touré : 2 rapports du 6 octobre toujours pas soumis, 48 h après les visites ». |
+| Retards, filtre | Le choix « Délégué » semblait vide alors que tous les délégués étaient affichés. | « Tous les délégués » s'affiche, libellé au-dessus. |
+| À traiter, onglets | Rien n'indiquait qu'il y avait des retards. | « Retards (2) ». |
+| Retards, téléphone | Le texte de chaque ligne s'écrasait à côté du lien. | Le lien passe sous le texte quand la place manque. |
+
 ## [0.6.6] — Réouverture d'un rapport validé
 
 Sixième jalon du cycle 0.6 « Validation des rapports ».
