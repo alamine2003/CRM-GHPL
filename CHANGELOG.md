@@ -2,6 +2,30 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.7.3] — Pilotage du DM, du DF et du pays
+
+Troisième jalon du cycle 0.7 « Indicateurs de pilotage ».
+
+### Ajouté (DSH-003, prd.md §14.53)
+
+- « Pilotage » ouvert au DM et au DF (postes de leurs réseaux) et au responsable pays (tout le pays).
+- « Regrouper » par réseau, zone ou secteur : une ligne de total par groupe, dépliable sur ses délégués ; le total d'un groupe est la somme de ses délégués (CA1).
+- Décisions par délégation : l'administrateur pays n'a pas cette page ; un poste de deux réseaux compte dans chacun, une seule fois dans l'ensemble.
+
+### Modifié
+
+- Moteur des indicateurs : données chargées par lot pour tous les délégués ; 0,3 s au lieu de 5,7 s pour les 207 délégués de la démonstration.
+
+### Design
+
+Revue sur le rendu réel (responsable pays et DM de la démonstration, bureau et téléphone) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Par réseau | Un tableau complet par réseau : page très longue, colonnes non alignées d'un tableau à l'autre | Un seul tableau : une ligne de total par réseau, dépliable sur ses délégués, puis « Ensemble » |
+| Par réseau | Première colonne intitulée « Délégué » sur des lignes de réseau | En-tête « Réseau », « Zone » ou « Secteur » selon le regroupement |
+| Responsable pays | Page affichée après 5,7 s | Calcul groupé : 0,3 s |
+
 ## [0.7.2] — Tableau de l'équipe du superviseur
 
 Deuxième jalon du cycle 0.7 « Indicateurs de pilotage ».

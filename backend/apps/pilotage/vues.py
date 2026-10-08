@@ -38,8 +38,10 @@ class MesChiffresVue(VuePerimetre):
 
 
 class EquipeVue(VuePerimetre):
-    """DSH-002, DSH-012 : le tableau hebdomadaire de l'équipe du superviseur ; un délégué d'un
-    poste qui ne lui est pas rattaché n'y apparaît jamais (CA1)."""
+    """DSH-002, DSH-003, DSH-012 : le tableau hebdomadaire des délégués pilotés (superviseur :
+    postes rattachés ; DM et DF : leurs réseaux ; responsable pays : tout le pays), regroupé par
+    réseau, zone ou secteur au besoin (`?par=`). Un délégué hors périmètre n'y apparaît jamais
+    (DSH-002 CA1)."""
 
     actions = {"GET": Action.PILOTAGE_LIRE}
     serializer_class = s.TableauEquipeSerializer
@@ -48,15 +50,20 @@ class EquipeVue(VuePerimetre):
         return perimetre.filtrer_par_pays(Visite.objects.none())
 
     @extend_schema(
-        parameters=[OpenApiParameter("semaine", OpenApiTypes.DATE, required=False,
-                                     description="Un jour de la semaine ; par défaut, celle-ci")],
+        parameters=[
+            OpenApiParameter("semaine", OpenApiTypes.DATE, required=False,
+                             description="Un jour de la semaine ; par défaut, celle-ci"),
+            OpenApiParameter("par", OpenApiTypes.STR, required=False,
+                             enum=["delegue", "reseau", "zone", "secteur"]),
+        ],
         responses=s.TableauEquipeSerializer, operation_id="pilotage_equipe",
     )  # fmt: skip
     def get(self, request):
-        from .indicateurs import tableau_equipe
+        from .indicateurs import tableau_pilotage
 
-        choix = s.ChoixSemaineSerializer(data=request.query_params)
+        choix = s.ChoixPilotageSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
-        pays = pays_requis(self.perimetre)
-        donnees = tableau_equipe(pays, request.user, choix.validated_data.get("semaine"))
+        pays_requis(self.perimetre)
+        v = choix.validated_data
+        donnees = tableau_pilotage(self.perimetre, v.get("semaine"), v["par"])
         return Response(s.TableauEquipeSerializer(donnees).data)

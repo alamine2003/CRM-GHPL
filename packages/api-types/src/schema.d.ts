@@ -1499,8 +1499,10 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * @description DSH-002, DSH-012 : le tableau hebdomadaire de l'équipe du superviseur ; un délégué d'un
-     *     poste qui ne lui est pas rattaché n'y apparaît jamais (CA1).
+     * @description DSH-002, DSH-003, DSH-012 : le tableau hebdomadaire des délégués pilotés (superviseur :
+     *     postes rattachés ; DM et DF : leurs réseaux ; responsable pays : tout le pays), regroupé par
+     *     réseau, zone ou secteur au besoin (`?par=`). Un délégué hors périmètre n'y apparaît jamais
+     *     (DSH-002 CA1).
      */
     get: operations['pilotage_equipe'];
     put?: never;
@@ -3893,6 +3895,14 @@ export interface components {
      * @enum {string}
      */
     GraviteControleEnum: 'bloquant' | 'signalement';
+    /** @description DSH-003 : un réseau, une zone ou un secteur, ses délégués et leur total (CA1). */
+    GroupeEquipe: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+      delegues: string[];
+      total: components['schemas']['TotalEquipe'];
+    };
     ImportBirdNotes: {
       /** Format: uri */
       fichier: string;
@@ -4352,6 +4362,14 @@ export interface components {
       /** @description Identifiant ou courriel. */
       identifiant: string;
     };
+    /**
+     * @description * `delegue` - delegue
+     *     * `reseau` - reseau
+     *     * `zone` - zone
+     *     * `secteur` - secteur
+     * @enum {string}
+     */
+    ParEnum: 'delegue' | 'reseau' | 'zone' | 'secteur';
     Parametre: {
       cle: string;
       description: string;
@@ -5546,8 +5564,8 @@ export interface components {
       sans_lieu: number;
     };
     /**
-     * @description DSH-002, DSH-012 : les délégués de l'équipe côte à côte, par ordre alphabétique, et le
-     *     total de l'équipe tiré des sommes (DC-49 : aucun classement).
+     * @description DSH-002, DSH-003, DSH-012 : les délégués pilotés côte à côte, par ordre alphabétique,
+     *     regroupés au besoin, et les totaux tirés des sommes (DC-49 : aucun classement).
      */
     TableauEquipe: {
       /** Format: date */
@@ -5559,7 +5577,9 @@ export interface components {
       /** Format: date */
       fin: string;
       cycle: components['schemas']['CyclePeriode'];
+      par: components['schemas']['ParEnum'];
       delegues: components['schemas']['LigneEquipe'][];
+      groupes: components['schemas']['GroupeEquipe'][];
       total: components['schemas']['TotalEquipe'];
     };
     /** @description Chaque taux entre 0 et 1, vide quand rien ne le fonde. */
@@ -8295,6 +8315,7 @@ export interface operations {
   pilotage_equipe: {
     parameters: {
       query?: {
+        par?: 'delegue' | 'reseau' | 'secteur' | 'zone';
         /** @description Un jour de la semaine ; par défaut, celle-ci */
         semaine?: string;
       };

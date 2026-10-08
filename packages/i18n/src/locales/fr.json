@@ -2362,8 +2362,8 @@
     "precedente": "Semaine précédente",
     "suivante": "Semaine suivante",
     "cetteSemaine": "Semaine en cours",
-    "sansEquipe": "Aucun délégué rattaché cette semaine",
-    "sansEquipeDetail": "Les délégués des postes qui vous sont rattachés apparaissent ici.",
+    "sansEquipe": "Aucun délégué piloté cette semaine",
+    "sansEquipeDetail": "Les délégués des postes de votre périmètre apparaissent ici.",
     "visitesFaites": "Visites faites",
     "dontImprevues_one": "dont {{count}} imprévue",
     "dontImprevues_other": "dont {{count}} imprévues",
@@ -2388,7 +2388,25 @@
       "geolocalisation": "Géolocalisées",
       "rapports": "Rapports dans le délai",
       "couverture": "Couverture du cycle",
-      "aSuivre": "À suivre"
-    }
+      "aSuivre": "À suivre",
+      "reseau": "Réseau",
+      "zone": "Zone",
+      "secteur": "Secteur"
+    },
+    "regrouper": "Regrouper",
+    "par": {
+      "delegue": "Par délégué",
+      "reseau": "Par réseau",
+      "zone": "Par zone",
+      "secteur": "Par secteur"
+    },
+    "sansGroupe": {
+      "reseau": "Aucun réseau sur ces postes",
+      "zone": "Aucune zone sur ces postes",
+      "secteur": "Aucun secteur sur ces postes"
+    },
+    "ensemble": "Ensemble",
+    "deplier": "Afficher les délégués de {{libelle}}",
+    "replier": "Masquer les délégués de {{libelle}}"
   }
 }

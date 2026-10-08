@@ -29,7 +29,7 @@ aucun classement (DC-49).
 from __future__ import annotations
 
 import math
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import date, timedelta
 
 from django.db.models import Q
@@ -37,7 +37,7 @@ from django.db.models import Q
 from apps.organisation.models import Occupation
 from apps.planning.calendrier import lundi
 from apps.planning.etats import StatutVisite
-from apps.planning.indisponibilite import couverte, du_planning
+from apps.planning.indisponibilite import couverte
 from apps.planning.models import Decision, Planning, Visite
 from apps.socle.services import aujourdhui, valeur_parametre
 
@@ -60,41 +60,6 @@ def semaine(jour: date) -> tuple[date, date]:
     return debut, debut + timedelta(days=6)
 
 
-def _visites(pays, delegue, debut: date, fin: date) -> tuple[list, list, dict]:
-    """Les visites approuvées de la période, les imprévues, et les indisponibilités par
-    planning."""
-    from apps.planning import services
-    from apps.planning.programme import _visites_approuvees
-
-    plannings = (
-        Planning.objects.filter(pays=pays, delegue=delegue, semaine__gte=lundi(debut),
-                                semaine__lte=fin, versions__decision=Decision.APPROUVE)
-        .distinct()
-        .order_by("semaine")
-    )  # fmt: skip
-    approuvees, indisponibles = [], {}
-    for planning in plannings:
-        indisponibles[planning.pk] = du_planning(planning)
-        for v in _visites_approuvees(planning, services.reference(planning)):
-            if debut <= v.date <= fin:
-                approuvees.append(v)
-    imprevues = list(
-        Visite.objects.filter(pays=pays, planning__delegue=delegue, archive_le__isnull=True,
-                              est_imprevue=True, date__gte=debut, date__lte=fin)
-        .select_related("etablissement")
-    )  # fmt: skip
-    return approuvees, imprevues, indisponibles
-
-
-def _rapports(visites: list) -> dict:
-    from apps.rapports.models import Rapport
-
-    lus = Rapport.objects.filter(visite_id__in=[v.pk for v in visites]).only(
-        "visite_id", "statut", "soumis_le", "en_retard"
-    )
-    return {r.visite_id: r for r in lus}
-
-
 def geolocalisee(visite: Visite, distance_pays: int) -> bool:
     """§14.18 : le pointage du démarrage est assez près du lieu, et assez précis (DC-55)."""
     if visite.debut_le is None or visite.sans_gps or visite.distance_debut_m is None:
@@ -106,107 +71,167 @@ def geolocalisee(visite: Visite, distance_pays: int) -> bool:
     return visite.distance_debut_m <= seuil and (precision is None or precision <= seuil)
 
 
-def _cibles(pays, delegue, debut: date, fin: date) -> dict:
-    """Les prospects de la liste cible des postes occupés sur la période, avec leur potentiel
-    et la plus forte fréquence."""
-    from apps.prospects.models import Cible
+class Lot:
+    """Les données de plusieurs délégués sur une fenêtre, chargées en quelques requêtes
+    groupées ; chaque période incluse dans la fenêtre (la semaine, la précédente, le cycle) se
+    compte ensuite sans requête de plus (sauf la version approuvée de chaque planning)."""
 
-    postes = Occupation.objects.filter(
-        Q(fin__isnull=True) | Q(fin__gt=debut), utilisateur=delegue, poste__pays=pays,
-        debut__lte=fin,
-    ).values("poste_id")  # fmt: skip
-    cibles = Cible.objects.filter(
-        Q(fin__isnull=True) | Q(fin__gt=debut), poste_id__in=postes, debut__lte=fin,
-        prospect__archive_le__isnull=True,
-    ).values_list("prospect_id", "prospect__potentiel", "frequence")  # fmt: skip
-    liste: dict = {}
-    for prospect, potentiel, frequence in cibles:
-        avant = liste.get(prospect)
-        liste[prospect] = (potentiel, max(frequence, avant[1] if avant else 0))
-    return liste
+    def __init__(self, pays, delegues, debut: date, fin: date):
+        from apps.planning import services
+        from apps.planning.models import Activite, TypeActivite
+        from apps.planning.programme import _visites_approuvees
+        from apps.prospects.models import Cible
+        from apps.rapports.models import Rapport
+
+        self.today = aujourdhui(pays)
+        self.distance = valeur_parametre(pays, "distance_pointage_m")
+        self.cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
+        ids = [d.pk for d in delegues]
+        plannings = list(
+            Planning.objects.filter(pays=pays, delegue_id__in=ids, semaine__gte=lundi(debut),
+                                    semaine__lte=fin, versions__decision=Decision.APPROUVE)
+            .distinct()
+            .order_by("semaine")
+        )  # fmt: skip
+        self.indisponibles: dict = defaultdict(list)
+        for a in Activite.objects.filter(planning__in=plannings, archive_le__isnull=True,
+                                         type=TypeActivite.INDISPONIBILITE):  # fmt: skip
+            self.indisponibles[a.planning_id].append(a)
+        self.approuvees: dict = defaultdict(list)
+        for planning in plannings:
+            for v in _visites_approuvees(planning, services.reference(planning)):
+                if debut <= v.date <= fin:
+                    self.approuvees[planning.delegue_id].append(v)
+        self.imprevues: dict = defaultdict(list)
+        for v in Visite.objects.filter(
+            pays=pays, planning__delegue_id__in=ids, archive_le__isnull=True,
+            est_imprevue=True, date__gte=debut, date__lte=fin,
+        ).select_related("etablissement", "planning"):  # fmt: skip
+            self.imprevues[v.planning.delegue_id].append(v)
+        faites = [
+            v.pk for liste in (*self.approuvees.values(), *self.imprevues.values())
+            for v in liste if v.statut == StatutVisite.EFFECTUEE
+        ]  # fmt: skip
+        self.rapports = {
+            r.visite_id: r
+            for r in Rapport.objects.filter(visite_id__in=faites).only(
+                "visite_id", "statut", "soumis_le", "en_retard"
+            )
+        }
+        pendant = Q(fin__isnull=True) | Q(fin__gt=debut)
+        self.occupations: dict = defaultdict(list)
+        for o in Occupation.objects.filter(pendant, utilisateur_id__in=ids, poste__pays=pays,
+                                           debut__lte=fin):  # fmt: skip
+            self.occupations[o.utilisateur_id].append(o)
+        postes = {o.poste_id for liste in self.occupations.values() for o in liste}
+        # Colonnes seules : une liste cible de pays compte des milliers de lignes.
+        self.cibles: dict = defaultdict(list)
+        for poste, prospect, potentiel, frequence, c_debut, c_fin in Cible.objects.filter(
+            pendant, poste_id__in=postes, debut__lte=fin, prospect__archive_le__isnull=True
+        ).values_list("poste_id", "prospect_id", "prospect__potentiel", "frequence", "debut",
+                      "fin"):  # fmt: skip
+            self.cibles[poste].append((prospect, potentiel, frequence, c_debut, c_fin))
+
+    def visites(self, delegue, debut: date, fin: date) -> tuple[list, list]:
+        dans = lambda v: debut <= v.date <= fin  # noqa: E731
+        return ([v for v in self.approuvees[delegue.pk] if dans(v)],
+                [v for v in self.imprevues[delegue.pk] if dans(v)])  # fmt: skip
+
+    def liste_cible(self, delegue, debut: date, fin: date) -> dict:
+        """Les prospects de la liste cible des postes occupés sur la période, avec leur
+        potentiel et la plus forte fréquence."""
+        actif = lambda x: x.debut <= fin and (x.fin is None or x.fin > debut)  # noqa: E731
+        liste: dict = {}
+        for o in self.occupations[delegue.pk]:
+            if not actif(o):
+                continue
+            for prospect, potentiel, frequence, c_debut, c_fin in self.cibles[o.poste_id]:
+                if c_debut <= fin and (c_fin is None or c_fin > debut):
+                    avant = liste.get(prospect, (None, 0))[1]
+                    liste[prospect] = (potentiel, max(frequence, avant))
+        return liste
+
+    def calculer(self, delegue, debut: date, fin: date) -> dict:
+        """Les comptages et les taux d'un délégué sur une période de la fenêtre."""
+        today = self.today
+        approuvees, imprevues = self.visites(delegue, debut, fin)
+        indisponibles = self.indisponibles
+
+        echues, a_venir, effectuees_prevues, justifies, a_justifier = [], 0, 0, 0, 0
+        for v in approuvees:
+            if v.statut in A_FAIRE and not v.date < today:
+                a_venir += 1
+                continue
+            echues.append(v)
+            if v.statut == StatutVisite.EFFECTUEE:
+                effectuees_prevues += 1
+            elif v.statut in ECARTS and v.motif_ecart_id:
+                justifies += 1
+            elif v.statut == StatutVisite.PREVUE and couverte(v, indisponibles[v.planning_id]):
+                justifies += 1  # DC-51 : l'indisponibilité justifie la journée d'un coup
+            elif v.statut == StatutVisite.PREVUE:
+                a_justifier += 1
+        faites = [v for v in approuvees + imprevues if v.statut == StatutVisite.EFFECTUEE]
+        imprevues_faites = len(faites) - effectuees_prevues
+        geo = sum(1 for v in faites if geolocalisee(v, self.distance))
+
+        soumis = dans_delai = valides = attendus = en_retard = 0
+        for v in faites:
+            r = self.rapports.get(v.pk)
+            if r is not None and r.soumis_le is not None:
+                soumis += 1
+                dans_delai += int(not r.en_retard)
+                valides += int(r.statut == "valide")
+            else:
+                attendus += 1
+                en_retard += int(v.date < today)
+
+        liste = self.liste_cible(delegue, debut, fin)
+        visites_par_prospect = Counter(v.prospect_id for v in faites if v.prospect_id)
+        semaines = max(1, round(((fin - debut).days + 1) / 7))
+        ab = {p: f for p, (potentiel, f) in liste.items() if potentiel in ("A", "B")}
+        vus = sum(1 for p in liste if visites_par_prospect[p])
+        ab_vus = sum(1 for p in ab if visites_par_prospect[p])
+        ab_frequence = sum(
+            1 for p, f in ab.items()
+            if visites_par_prospect[p] >= max(1, math.ceil(f * semaines / self.cycle))
+        )  # fmt: skip
+
+        comptes = {
+            "activite": bool(approuvees or imprevues),
+            "visites": {
+                "prevues": len(approuvees),
+                "echues": len(echues),
+                "a_venir": a_venir,
+                "effectuees_prevues": effectuees_prevues,
+                "ecarts": len(echues) - effectuees_prevues,
+                "ecarts_justifies": justifies,
+                "a_justifier": a_justifier,
+                "imprevues": imprevues_faites,
+                "effectuees": len(faites),
+                "geolocalisees": geo,
+            },
+            "rapports": {
+                "soumis": soumis,
+                "dans_delai": dans_delai,
+                "valides": valides,
+                "a_soumettre": attendus,
+                "en_retard": en_retard,
+            },
+            "couverture": {
+                "cibles": len(liste),
+                "visitees": vus,
+                "cibles_ab": len(ab),
+                "visitees_ab": ab_vus,
+                "frequence_ab": ab_frequence,
+            },
+        }
+        return {**comptes, "taux": taux_de(comptes)}
 
 
 def calculer(pays, delegue, debut: date, fin: date) -> dict:
     """Les comptages et les taux d'un délégué sur une période."""
-    today = aujourdhui(pays)
-    distance = valeur_parametre(pays, "distance_pointage_m")
-    approuvees, imprevues, indisponibles = _visites(pays, delegue, debut, fin)
-
-    echues, a_venir, effectuees_prevues, justifies, a_justifier = [], 0, 0, 0, 0
-    for v in approuvees:
-        passee = v.date < today
-        if v.statut in A_FAIRE and not passee:
-            a_venir += 1
-            continue
-        echues.append(v)
-        if v.statut == StatutVisite.EFFECTUEE:
-            effectuees_prevues += 1
-        elif v.statut in ECARTS and v.motif_ecart_id:
-            justifies += 1
-        elif v.statut == StatutVisite.PREVUE and couverte(v, indisponibles[v.planning_id]):
-            justifies += 1  # DC-51 : l'indisponibilité justifie la journée d'un coup
-        elif v.statut == StatutVisite.PREVUE:
-            a_justifier += 1
-    faites = [v for v in approuvees if v.statut == StatutVisite.EFFECTUEE] + [
-        v for v in imprevues if v.statut == StatutVisite.EFFECTUEE
-    ]
-    imprevues_faites = len(faites) - effectuees_prevues
-    geo = sum(1 for v in faites if geolocalisee(v, distance))
-
-    rapports = _rapports(faites)
-    soumis = dans_delai = valides = attendus = en_retard = 0
-    for v in faites:
-        r = rapports.get(v.pk)
-        if r is not None and r.soumis_le is not None:
-            soumis += 1
-            dans_delai += int(not r.en_retard)
-            valides += int(r.statut == "valide")
-        else:
-            attendus += 1
-            en_retard += int(v.date < today)
-
-    liste = _cibles(pays, delegue, debut, fin)
-    visites_par_prospect = Counter(v.prospect_id for v in faites if v.prospect_id)
-    semaines = max(1, round(((fin - debut).days + 1) / 7))
-    cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
-    ab = {p: f for p, (potentiel, f) in liste.items() if potentiel in ("A", "B")}
-    vus = sum(1 for p in liste if visites_par_prospect[p])
-    ab_vus = sum(1 for p in ab if visites_par_prospect[p])
-    ab_frequence = sum(
-        1 for p, f in ab.items()
-        if visites_par_prospect[p] >= max(1, math.ceil(f * semaines / cycle))
-    )  # fmt: skip
-
-    comptes = {
-        "activite": bool(approuvees or imprevues),
-        "visites": {
-            "prevues": len(approuvees),
-            "echues": len(echues),
-            "a_venir": a_venir,
-            "effectuees_prevues": effectuees_prevues,
-            "ecarts": len(echues) - effectuees_prevues,
-            "ecarts_justifies": justifies,
-            "a_justifier": a_justifier,
-            "imprevues": imprevues_faites,
-            "effectuees": len(faites),
-            "geolocalisees": geo,
-        },
-        "rapports": {
-            "soumis": soumis,
-            "dans_delai": dans_delai,
-            "valides": valides,
-            "a_soumettre": attendus,
-            "en_retard": en_retard,
-        },
-        "couverture": {
-            "cibles": len(liste),
-            "visitees": vus,
-            "cibles_ab": len(ab),
-            "visitees_ab": ab_vus,
-            "frequence_ab": ab_frequence,
-        },
-    }
-    return {**comptes, "taux": taux_de(comptes)}
+    return Lot(pays, [delegue], debut, fin).calculer(delegue, debut, fin)
 
 
 def taux_de(comptes: dict) -> dict:
@@ -246,9 +271,9 @@ def calculer_vide() -> dict:
     }  # fmt: skip
 
 
-def jours(pays, delegue, debut: date, fin: date) -> list[dict]:
+def jours(lot: Lot, delegue, debut: date, fin: date) -> list[dict]:
     """La courbe de la période : visites prévues (approuvées) et faites, jour par jour."""
-    approuvees, imprevues, _ = _visites(pays, delegue, debut, fin)
+    approuvees, imprevues = lot.visites(delegue, debut, fin)
     prevues = Counter(v.date for v in approuvees)
     faites = Counter(v.date for v in approuvees + imprevues if v.statut == StatutVisite.EFFECTUEE)
     return [
@@ -267,68 +292,123 @@ def mes_chiffres(pays, delegue, jour: date | None = None) -> dict:
     debut, fin = semaine(jour or today)
     cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
     debut_cycle = debut - timedelta(weeks=cycle - 1)
+    avant = debut - timedelta(days=7)
+    lot = Lot(pays, [delegue], min(debut_cycle, avant), fin)
     return {
         "aujourdhui": today,
         "calcule_le": timezone.now(),
-        "semaine": {"debut": debut, "fin": fin, **calculer(pays, delegue, debut, fin)},
-        "precedente": {"debut": debut - timedelta(days=7), "fin": debut - timedelta(days=1),
-                       **calculer(pays, delegue, debut - timedelta(days=7),
-                                  debut - timedelta(days=1))},
+        "semaine": {"debut": debut, "fin": fin, **lot.calculer(delegue, debut, fin)},
+        "precedente": {"debut": avant, "fin": debut - timedelta(days=1),
+                       **lot.calculer(delegue, avant, debut - timedelta(days=1))},
         "cycle": {"debut": debut_cycle, "fin": fin, "semaines": cycle,
-                  **calculer(pays, delegue, debut_cycle, fin)},
-        "jours": jours(pays, delegue, debut, fin),
+                  **lot.calculer(delegue, debut_cycle, fin)},
+        "jours": jours(lot, delegue, debut, fin),
     }  # fmt: skip
 
 
-def equipe_du_superviseur(pays, superviseur, debut: date, fin: date) -> list:
-    """DSH-002 CA1 : les délégués des postes rattachés au superviseur pendant la période, avec
-    leur poste ; jamais un délégué d'un poste qui ne lui est pas rattaché."""
-    from apps.organisation.models import Rattachement
+#: Regroupements du tableau (DSH-003) : à plat, ou par réseau, zone, secteur du poste.
+REGROUPEMENTS = ("delegue", "reseau", "zone", "secteur")
 
+
+def postes_du_pilotage(perimetre, debut: date, fin: date):
+    """Les postes dont l'utilisateur pilote les délégués sur la période (DSH-002, DSH-003) :
+    rattachés au superviseur (ou au DM, pour un superviseur-visiteur, RG-023), des réseaux du
+    périmètre du DM et du DF, tout le pays pour le responsable pays."""
+    from apps.identite.models import Role
+    from apps.organisation.models import PerimetreReseau, Poste, Rattachement
+
+    pays, moi = perimetre.pays_actif, perimetre.utilisateur
+    postes = Poste.objects.filter(pays=pays)
+    if Role.RESPONSABLE_PAYS in perimetre.roles:
+        return postes
     pendant = Q(fin__isnull=True) | Q(fin__gt=debut)
-    postes = Rattachement.objects.filter(pendant, superviseur=superviseur, poste__pays=pays,
-                                         debut__lte=fin).values("poste_id")  # fmt: skip
+    choisis = Q(pk__in=[])
+    if perimetre.roles & {Role.SUPERVISEUR, Role.DM}:
+        rattaches = Rattachement.objects.filter(pendant, superviseur=moi, debut__lte=fin)
+        choisis |= Q(pk__in=rattaches.values("poste_id"))
+    if perimetre.roles & {Role.DF, Role.DM}:
+        reseaux = PerimetreReseau.objects.filter(pendant, utilisateur=moi, debut__lte=fin)
+        choisis |= Q(reseaux__in=reseaux.values("reseau_id"))
+    return postes.filter(choisis).distinct()
+
+
+def delegues_des_postes(postes, exclu, debut: date, fin: date) -> list:
+    """Les occupants des postes sur la période, par ordre alphabétique, avec leur poste (le
+    plus récent s'il y en a eu deux) ; jamais l'utilisateur lui-même."""
+    pendant = Q(fin__isnull=True) | Q(fin__gt=debut)
     occupations = (
-        Occupation.objects.filter(pendant, poste_id__in=postes, debut__lte=fin)
-        .exclude(utilisateur=superviseur)
+        Occupation.objects.filter(pendant, poste__in=postes, debut__lte=fin)
+        .exclude(utilisateur=exclu)
         .select_related("utilisateur", "poste")
+        .prefetch_related("poste__reseaux", "poste__secteurs__zone")
         .order_by("utilisateur__last_name", "utilisateur__first_name", "-debut")
     )
-    vus, equipe = set(), []
+    vus, liste = set(), []
     for o in occupations:
         if o.utilisateur_id not in vus:
             vus.add(o.utilisateur_id)
-            equipe.append((o.utilisateur, o.poste))
-    return equipe
+            liste.append((o.utilisateur, o.poste))
+    return liste
 
 
-def tableau_equipe(pays, superviseur, jour: date | None = None) -> dict:
-    """DSH-002, DSH-012 : la semaine de chaque délégué de l'équipe, côte à côte, dans l'ordre
-    alphabétique (DC-49 : aucun classement), la couverture sur le cycle, et le total de l'équipe
-    tiré des sommes."""
+def _groupes_du_poste(poste, par: str) -> list[tuple]:
+    if par == "reseau":
+        return [(r.pk, r.libelle) for r in poste.reseaux.all()]
+    if par == "secteur":
+        return [(s.pk, s.libelle) for s in poste.secteurs.all()]
+    if par == "zone":
+        zones = {s.zone_id: s.zone.libelle for s in poste.secteurs.all()}
+        return list(zones.items())
+    return []
+
+
+def tableau_pilotage(perimetre, jour: date | None = None, par: str = "delegue") -> dict:
+    """DSH-002, DSH-003, DSH-012 : la semaine de chaque délégué piloté, côte à côte par ordre
+    alphabétique (DC-49 : aucun classement), la couverture sur le cycle, le total de l'ensemble
+    et, si demandé, celui de chaque réseau, zone ou secteur : un total est toujours la somme de
+    ses délégués (DSH-003 CA1). Un poste rattaché à deux réseaux compte dans chacun ; le total de
+    l'ensemble ne compte chaque délégué qu'une fois."""
     from django.utils import timezone
 
+    pays = perimetre.pays_actif
     today = aujourdhui(pays)
     debut, fin = semaine(jour or today)
     cycle = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
     debut_cycle = debut - timedelta(weeks=cycle - 1)
-    lignes = []
-    for delegue, poste in equipe_du_superviseur(pays, superviseur, debut, fin):
-        lignes.append({
-            "delegue": delegue,
-            "poste": poste,
-            "semaine": calculer(pays, delegue, debut, fin),
-            "cycle": calculer(pays, delegue, debut_cycle, fin),
-        })  # fmt: skip
+    postes = postes_du_pilotage(perimetre, debut, fin)
+    pilotes = delegues_des_postes(postes, perimetre.utilisateur, debut, fin)
+    lot = Lot(pays, [d for d, _ in pilotes], debut_cycle, fin)
+    lignes = [
+        {"delegue": delegue, "poste": poste,
+         "semaine": lot.calculer(delegue, debut, fin),
+         "cycle": lot.calculer(delegue, debut_cycle, fin)}
+        for delegue, poste in pilotes
+    ]  # fmt: skip
+    groupes: dict = {}
+    for ligne in lignes:
+        for cle, libelle in _groupes_du_poste(ligne["poste"], par):
+            groupes.setdefault(cle, {"id": cle, "libelle": libelle, "lignes": []})
+            groupes[cle]["lignes"].append(ligne)
     return {
         "aujourdhui": today,
         "calcule_le": timezone.now(),
         "debut": debut,
         "fin": fin,
         "cycle": {"debut": debut_cycle, "fin": fin, "semaines": cycle},
+        "par": par,
         "delegues": lignes,
-        "total": {
-            "semaine": somme([x["semaine"] for x in lignes]),
-            "cycle": somme([x["cycle"] for x in lignes]),
-        },
+        "groupes": [
+            {"id": g["id"], "libelle": g["libelle"],
+             "delegues": [x["delegue"].pk for x in g["lignes"]],
+             "total": _total(g["lignes"])}
+            for g in sorted(groupes.values(), key=lambda g: g["libelle"])
+        ],
+        "total": _total(lignes),
+    }  # fmt: skip
+
+
+def _total(lignes: list) -> dict:
+    return {
+        "semaine": somme([x["semaine"] for x in lignes]),
+        "cycle": somme([x["cycle"] for x in lignes]),
     }

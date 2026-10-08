@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.7.2
+  version: 0.7.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2537,9 +2537,20 @@ paths:
     get:
       operationId: pilotage_equipe
       description: |-
-        DSH-002, DSH-012 : le tableau hebdomadaire de l'équipe du superviseur ; un délégué d'un
-        poste qui ne lui est pas rattaché n'y apparaît jamais (CA1).
+        DSH-002, DSH-003, DSH-012 : le tableau hebdomadaire des délégués pilotés (superviseur :
+        postes rattachés ; DM et DF : leurs réseaux ; responsable pays : tout le pays), regroupé par
+        réseau, zone ou secteur au besoin (`?par=`). Un délégué hors périmètre n'y apparaît jamais
+        (DSH-002 CA1).
       parameters:
+      - in: query
+        name: par
+        schema:
+          type: string
+          enum:
+          - delegue
+          - reseau
+          - secteur
+          - zone
       - in: query
         name: semaine
         schema:
@@ -7458,6 +7469,28 @@ components:
       description: |-
         * `bloquant` - bloquant
         * `signalement` - signalement
+    GroupeEquipe:
+      type: object
+      description: 'DSH-003 : un réseau, une zone ou un secteur, ses délégués et leur
+        total (CA1).'
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+        delegues:
+          type: array
+          items:
+            type: string
+            format: uuid
+        total:
+          $ref: '#/components/schemas/TotalEquipe'
+      required:
+      - delegues
+      - id
+      - libelle
+      - total
     ImportBirdNotes:
       type: object
       properties:
@@ -8471,6 +8504,18 @@ components:
           maxLength: 254
       required:
       - identifiant
+    ParEnum:
+      enum:
+      - delegue
+      - reseau
+      - zone
+      - secteur
+      type: string
+      description: |-
+        * `delegue` - delegue
+        * `reseau` - reseau
+        * `zone` - zone
+        * `secteur` - secteur
     Parametre:
       type: object
       properties:
@@ -11507,8 +11552,8 @@ components:
     TableauEquipe:
       type: object
       description: |-
-        DSH-002, DSH-012 : les délégués de l'équipe côte à côte, par ordre alphabétique, et le
-        total de l'équipe tiré des sommes (DC-49 : aucun classement).
+        DSH-002, DSH-003, DSH-012 : les délégués pilotés côte à côte, par ordre alphabétique,
+        regroupés au besoin, et les totaux tirés des sommes (DC-49 : aucun classement).
       properties:
         aujourdhui:
           type: string
@@ -11524,10 +11569,16 @@ components:
           format: date
         cycle:
           $ref: '#/components/schemas/CyclePeriode'
+        par:
+          $ref: '#/components/schemas/ParEnum'
         delegues:
           type: array
           items:
             $ref: '#/components/schemas/LigneEquipe'
+        groupes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupeEquipe'
         total:
           $ref: '#/components/schemas/TotalEquipe'
       required:
@@ -11537,6 +11588,8 @@ components:
       - debut
       - delegues
       - fin
+      - groupes
+      - par
       - total
     Taux:
       type: object

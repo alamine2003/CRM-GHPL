@@ -85,6 +85,11 @@ class ChoixSemaineSerializer(serializers.Serializer):
     semaine = serializers.DateField(required=False)
 
 
+class ChoixPilotageSerializer(ChoixSemaineSerializer):
+    par = serializers.ChoiceField(choices=["delegue", "reseau", "zone", "secteur"],
+                                  required=False, default="delegue")  # fmt: skip
+
+
 class IndicateursPeriodeSerializer(serializers.Serializer):
     """Les indicateurs d'une période dont les dates sont portées par le tableau."""
 
@@ -120,14 +125,25 @@ class CyclePeriodeSerializer(serializers.Serializer):
     semaines = serializers.IntegerField()
 
 
+class GroupeEquipeSerializer(serializers.Serializer):
+    """DSH-003 : un réseau, une zone ou un secteur, ses délégués et leur total (CA1)."""
+
+    id = serializers.UUIDField()
+    libelle = serializers.CharField()
+    delegues = serializers.ListField(child=serializers.UUIDField())
+    total = TotalEquipeSerializer()
+
+
 class TableauEquipeSerializer(serializers.Serializer):
-    """DSH-002, DSH-012 : les délégués de l'équipe côte à côte, par ordre alphabétique, et le
-    total de l'équipe tiré des sommes (DC-49 : aucun classement)."""
+    """DSH-002, DSH-003, DSH-012 : les délégués pilotés côte à côte, par ordre alphabétique,
+    regroupés au besoin, et les totaux tirés des sommes (DC-49 : aucun classement)."""
 
     aujourdhui = serializers.DateField()
     calcule_le = serializers.DateTimeField()
     debut = serializers.DateField()
     fin = serializers.DateField()
     cycle = CyclePeriodeSerializer()
+    par = serializers.ChoiceField(choices=["delegue", "reseau", "zone", "secteur"])
     delegues = LigneEquipeSerializer(many=True)
+    groupes = GroupeEquipeSerializer(many=True)
     total = TotalEquipeSerializer()

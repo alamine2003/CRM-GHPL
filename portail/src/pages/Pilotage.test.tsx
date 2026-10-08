@@ -51,6 +51,8 @@ const TABLEAU: TableauEquipe = {
   debut: '2026-10-05',
   fin: '2026-10-11',
   cycle: { debut: '2026-09-14', fin: '2026-10-11', semaines: 4 },
+  par: 'delegue',
+  groupes: [],
   delegues: [
     {
       delegue: { id: 'd1', prenom: 'Aminata', nom: 'TOURE' },
@@ -74,8 +76,8 @@ const TABLEAU: TableauEquipe = {
   },
 };
 
-function rendre(adresse = '/pilotage') {
-  const equipe = vi.fn(async () => TABLEAU);
+function rendre(adresse = '/pilotage', donnees: TableauEquipe = TABLEAU) {
+  const equipe = vi.fn(async () => donnees);
   const session = {
     etat: { statut: 'chargement' },
     client: { pilotage: { equipe } } as unknown as ClientApi,
@@ -134,6 +136,33 @@ describe('Pilotage', () => {
       true,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Semaine précédente' }));
-    expect(equipe).toHaveBeenLastCalledWith('2026-09-28');
+    expect(equipe).toHaveBeenLastCalledWith('2026-09-28', 'delegue');
+  });
+
+  it('DSH-003 : par réseau, une ligne de total par réseau, dépliable sur ses délégués', async () => {
+    const parReseau: TableauEquipe = {
+      ...TABLEAU,
+      par: 'reseau',
+      groupes: [
+        { id: 'r1', libelle: 'Cardio', delegues: ['d1'], total: TABLEAU.total },
+        { id: 'r2', libelle: 'Gastro', delegues: ['d1', 'd2'], total: TABLEAU.total },
+      ],
+    };
+    const { equipe } = rendre('/pilotage?par=reseau', parReseau);
+    const tableau = await screen.findByRole('table');
+    expect(equipe).toHaveBeenLastCalledWith(undefined, 'reseau');
+    // En-tête, deux réseaux repliés, l'ensemble.
+    expect(within(tableau).getAllByRole('row')).toHaveLength(4);
+    expect(within(tableau).getByText('Réseau')).toBeTruthy();
+    expect(within(tableau).getByText('Ensemble')).toBeTruthy();
+    expect(within(tableau).queryByText('Moussa SARR')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Afficher les délégués de Gastro' }));
+    expect(within(tableau).getAllByRole('row')).toHaveLength(6);
+    expect(within(tableau).getByText('Moussa SARR')).toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', { name: 'Masquer les délégués de Gastro' })
+        .getAttribute('aria-expanded'),
+    ).toBe('true');
   });
 });

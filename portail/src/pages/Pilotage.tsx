@@ -1,11 +1,14 @@
 import type { IndicateursPeriode, LigneEquipe, TableauEquipe } from '@innov/api-client';
 import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
+import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
+import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import {
   Box,
   Button,
   Card,
   IconButton,
+  MenuItem,
   Skeleton,
   Stack,
   Table,
@@ -14,30 +17,41 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { type TFunction } from 'i18next';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router';
 import { BarreChiffres, Chiffre, EnTetePage, Etiquette, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { useSession } from '../contexteSession';
 
+/** DSH-003 : à plat, ou par réseau, zone, secteur du poste. */
+const REGROUPEMENTS = ['delegue', 'reseau', 'zone', 'secteur'] as const;
+type Regroupement = (typeof REGROUPEMENTS)[number];
+
 /**
- * « Pilotage » du superviseur (DSH-002, DSH-012 ; 0.7.2) : les taux de la semaine de chaque
- * délégué de son équipe, côte à côte, par ordre alphabétique, et le total de l'équipe tiré des
- * sommes. Ni note, ni appréciation, ni classement (DC-49) ; chaque taux dit ce qu'il compte.
+ * « Pilotage » (DSH-002, DSH-003, DSH-012 ; 0.7.2, 0.7.3) : les taux de la semaine de chaque
+ * délégué piloté (équipe du superviseur, réseaux du DM et du DF, pays du responsable), côte à
+ * côte par ordre alphabétique, regroupés au besoin par réseau, zone ou secteur ; chaque total
+ * est tiré des sommes. Ni note, ni appréciation, ni classement (DC-49).
  */
 export default function Pilotage() {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const [parametres, setParametres] = useSearchParams();
   const semaine = parametres.get('semaine') ?? '';
+  const brut = parametres.get('par') ?? '';
+  const par: Regroupement = (REGROUPEMENTS as readonly string[]).includes(brut)
+    ? (brut as Regroupement)
+    : 'delegue';
   const tableau = useQuery({
-    queryKey: ['pilotage-equipe', semaine],
-    queryFn: () => client.pilotage.equipe(semaine || undefined),
+    queryKey: ['pilotage-equipe', semaine, par],
+    queryFn: () => client.pilotage.equipe(semaine || undefined, par),
   });
   const titre = t('navigation.pilotage');
   if (tableau.isError) {
@@ -60,16 +74,17 @@ export default function Pilotage() {
   const d = tableau.data;
   const jour = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'long' });
   const date = (iso: string) => jour.format(new Date(`${iso}T12:00:00`));
-  const aller = (lundi: string) =>
+  const changer = (cle: string, valeur: string) =>
     setParametres(
       (p) => {
         const suite = new URLSearchParams(p);
-        if (lundi) suite.set('semaine', lundi);
-        else suite.delete('semaine');
+        if (valeur) suite.set(cle, valeur);
+        else suite.delete(cle);
         return suite;
       },
       { replace: true },
     );
+  const aller = (lundi: string) => changer('semaine', lundi);
   const decaler = (iso: string, jours: number) => {
     const x = new Date(`${iso}T12:00:00Z`);
     x.setUTCDate(x.getUTCDate() + jours);
@@ -87,7 +102,21 @@ export default function Pilotage() {
         titre={titre}
         sousTitre={t('pilotage.semaine', { debut: date(d.debut), fin: date(d.fin) })}
         actions={
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <TextField
+              select
+              size="small"
+              label={t('pilotage.regrouper')}
+              value={par}
+              onChange={(e) => changer('par', e.target.value === 'delegue' ? '' : e.target.value)}
+              sx={{ minWidth: 170, mr: 1 }}
+            >
+              {REGROUPEMENTS.map((r) => (
+                <MenuItem key={r} value={r}>
+                  {t(`pilotage.par.${r}`)}
+                </MenuItem>
+              ))}
+            </TextField>
             <Tooltip title={t('pilotage.precedente')}>
               <IconButton
                 aria-label={t('pilotage.precedente')}
@@ -164,7 +193,28 @@ export default function Pilotage() {
               detail={sur(t, d.total.cycle.couverture.visitees, d.total.cycle.couverture.cibles)}
             />
           </BarreChiffres>
-          <TableauDelegues tableau={d} taux={taux} />
+          {d.par !== 'delegue' && d.groupes.length === 0 ? (
+            <Card>
+              <EtatVide titre={t(`pilotage.sansGroupe.${d.par}`)} />
+            </Card>
+          ) : (
+            <TableauDelegues
+              lignes={d.delegues}
+              total={d.total}
+              groupes={
+                d.par === 'delegue'
+                  ? undefined
+                  : d.groupes.map((g) => ({
+                      ...g,
+                      lignes: d.delegues.filter((x) => g.delegues.includes(x.delegue.id)),
+                    }))
+              }
+              libelleTotal={d.par === 'delegue' ? t('pilotage.equipe') : t('pilotage.ensemble')}
+              entete={t(`pilotage.colonnes.${d.par}`)}
+              titre={t('pilotage.tableau')}
+              taux={taux}
+            />
+          )}
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             {t('pilotage.note', {
               count: d.cycle.semaines,
@@ -178,14 +228,31 @@ export default function Pilotage() {
   );
 }
 
+type Groupe = TableauEquipe['groupes'][number] & { lignes: LigneEquipe[] };
+
 function TableauDelegues({
-  tableau,
+  lignes,
+  total,
+  groupes,
+  libelleTotal,
+  entete,
+  titre,
   taux,
 }: {
-  tableau: TableauEquipe;
+  lignes: LigneEquipe[];
+  total: TableauEquipe['total'];
+  /** DSH-003 : une ligne par réseau, zone ou secteur, qui se déplie sur ses délégués. */
+  groupes?: Groupe[];
+  libelleTotal: string;
+  /** En-tête de la première colonne : « Délégué », ou le nom du regroupement. */
+  entete: string;
+  titre: string;
   taux: (v: number | null) => string;
 }) {
   const { t } = useTranslation();
+  const [ouverts, setOuverts] = useState<string[]>([]);
+  const basculer = (id: string) =>
+    setOuverts((o) => (o.includes(id) ? o.filter((x) => x !== id) : [...o, id]));
   const colonnes = [
     'visites',
     'realisation',
@@ -195,15 +262,24 @@ function TableauDelegues({
     'couverture',
     'aSuivre',
   ] as const;
+  const resume = (
+    id: string,
+    libelle: string,
+    nombre: number,
+    valeurs: TableauEquipe['total'],
+  ) => ({
+    delegue: { id, prenom: libelle, nom: '' },
+    poste: { id, libelle: t('pilotage.delegues', { count: nombre }) },
+    semaine: valeurs.semaine,
+    cycle: valeurs.cycle,
+  });
   return (
     <Card>
       <TableContainer sx={{ overflowX: 'auto' }}>
-        <Table size="small" aria-label={t('pilotage.tableau')}>
+        <Table size="small" aria-label={titre}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ ...celluleNom, verticalAlign: 'bottom' }}>
-                {t('pilotage.colonnes.delegue')}
-              </TableCell>
+              <TableCell sx={{ ...celluleNom, verticalAlign: 'bottom' }}>{entete}</TableCell>
               {colonnes.map((c) => (
                 <TableCell
                   key={c}
@@ -216,20 +292,34 @@ function TableauDelegues({
             </TableRow>
           </TableHead>
           <TableBody>
-            {tableau.delegues.map((ligne) => (
-              <Ligne key={ligne.delegue.id} ligne={ligne} taux={taux} />
-            ))}
+            {groupes
+              ? groupes.map((g) => {
+                  const ouvert = ouverts.includes(g.id);
+                  return (
+                    <Fragment key={g.id}>
+                      <Ligne
+                        variante="groupe"
+                        ouvert={ouvert}
+                        basculer={() => basculer(g.id)}
+                        ligne={resume(g.id, g.libelle, g.lignes.length, g.total)}
+                        taux={taux}
+                      />
+                      {ouvert &&
+                        g.lignes.map((ligne) => (
+                          <Ligne
+                            key={ligne.delegue.id}
+                            variante="retrait"
+                            ligne={ligne}
+                            taux={taux}
+                          />
+                        ))}
+                    </Fragment>
+                  );
+                })
+              : lignes.map((ligne) => <Ligne key={ligne.delegue.id} ligne={ligne} taux={taux} />)}
             <Ligne
-              total
-              ligne={{
-                delegue: { id: 'equipe', prenom: t('pilotage.equipe'), nom: '' },
-                poste: {
-                  id: 'equipe',
-                  libelle: t('pilotage.delegues', { count: tableau.delegues.length }),
-                },
-                semaine: tableau.total.semaine,
-                cycle: tableau.total.cycle,
-              }}
+              variante="total"
+              ligne={resume('total', libelleTotal, lignes.length, total)}
               taux={taux}
             />
           </TableBody>
@@ -250,25 +340,48 @@ const celluleNom = {
 function Ligne({
   ligne,
   taux,
-  total,
+  variante = 'delegue',
+  ouvert,
+  basculer,
 }: {
   ligne: LigneEquipe;
   taux: (v: number | null) => string;
-  total?: boolean;
+  /** `groupe` : total d'un réseau, d'une zone ou d'un secteur ; `retrait` : un de ses délégués. */
+  variante?: 'delegue' | 'retrait' | 'groupe' | 'total';
+  ouvert?: boolean;
+  basculer?: () => void;
 }) {
   const { t } = useTranslation();
   const s: IndicateursPeriode = ligne.semaine;
   const c = ligne.cycle;
+  const total = variante === 'total' || variante === 'groupe';
   const fort = total ? { fontWeight: 700 } : {};
-  const bord = total ? { borderTop: 2, borderColor: 'divider', borderBottom: 0 } : {};
+  const bord =
+    variante === 'total' ? { borderTop: 2, borderColor: 'divider', borderBottom: 0 } : {};
+  const libelle = `${ligne.delegue.prenom} ${ligne.delegue.nom}`.trim();
   const nom = (
-    <TableCell sx={{ ...celluleNom, ...bord }}>
-      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-        {`${ligne.delegue.prenom} ${ligne.delegue.nom}`.trim()}
-      </Typography>
-      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-        {ligne.poste.libelle}
-      </Typography>
+    <TableCell sx={{ ...celluleNom, ...bord, pl: variante === 'retrait' ? 5 : undefined }}>
+      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+        {variante === 'groupe' && (
+          <IconButton
+            size="small"
+            onClick={basculer}
+            aria-expanded={ouvert}
+            aria-label={t(ouvert ? 'pilotage.replier' : 'pilotage.deplier', { libelle })}
+            sx={{ ml: -1 }}
+          >
+            {ouvert ? <ExpandLessRounded /> : <ExpandMoreRounded />}
+          </IconButton>
+        )}
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {libelle}
+          </Typography>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {ligne.poste.libelle}
+          </Typography>
+        </Box>
+      </Stack>
     </TableCell>
   );
   if (!s.activite && !total) {

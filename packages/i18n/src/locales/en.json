@@ -2362,8 +2362,8 @@
     "precedente": "Previous week",
     "suivante": "Next week",
     "cetteSemaine": "Current week",
-    "sansEquipe": "No representative assigned this week",
-    "sansEquipeDetail": "Representatives of the positions assigned to you appear here.",
+    "sansEquipe": "No representative to follow this week",
+    "sansEquipeDetail": "Representatives of the positions in your scope appear here.",
     "visitesFaites": "Visits made",
     "dontImprevues_one": "including {{count}} unplanned",
     "dontImprevues_other": "including {{count}} unplanned",
@@ -2388,7 +2388,25 @@
       "geolocalisation": "Geolocated",
       "rapports": "Reports on time",
       "couverture": "Cycle coverage",
-      "aSuivre": "To follow up"
-    }
+      "aSuivre": "To follow up",
+      "reseau": "Network",
+      "zone": "Zone",
+      "secteur": "Sector"
+    },
+    "regrouper": "Group",
+    "par": {
+      "delegue": "By representative",
+      "reseau": "By network",
+      "zone": "By zone",
+      "secteur": "By sector"
+    },
+    "sansGroupe": {
+      "reseau": "No network on these positions",
+      "zone": "No zone on these positions",
+      "secteur": "No sector on these positions"
+    },
+    "ensemble": "All",
+    "deplier": "Show representatives of {{libelle}}",
+    "replier": "Hide representatives of {{libelle}}"
   }
 }

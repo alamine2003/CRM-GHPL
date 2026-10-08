@@ -911,9 +911,14 @@ export function creerClient(options: OptionsClient) {
       /** DSH-001 : les chiffres du délégué connecté, pour la semaine d'un jour donné. */
       mesChiffres: (jour?: string) =>
         requete<MesChiffres>(`/api/v1/pilotage/mes-chiffres/${jour ? `?semaine=${jour}` : ''}`),
-      /** DSH-002, DSH-012 : le tableau de l'équipe du superviseur, pour la semaine d'un jour. */
-      equipe: (jour?: string) =>
-        requete<TableauEquipe>(`/api/v1/pilotage/equipe/${jour ? `?semaine=${jour}` : ''}`),
+      /** DSH-002, DSH-003, DSH-012 : le tableau des délégués pilotés, regroupé au besoin. */
+      equipe: (jour?: string, par?: 'delegue' | 'reseau' | 'zone' | 'secteur') => {
+        const p = new URLSearchParams();
+        if (jour) p.set('semaine', jour);
+        if (par && par !== 'delegue') p.set('par', par);
+        const q = p.toString();
+        return requete<TableauEquipe>(`/api/v1/pilotage/equipe/${q ? `?${q}` : ''}`);
+      },
     },
     /** Champs supplémentaires du rapport, par pays (RPT-008). */
     rapports: {

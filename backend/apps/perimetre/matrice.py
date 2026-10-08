@@ -149,9 +149,10 @@ MATRICE: dict[Action, frozenset[str]] = {
     # et le superviseur qui occupe un poste ; l'encadrement s'ajoute avec ses vues (0.7.2 à
     # 0.7.4).
     Action.INDICATEURS_LIRE: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
-    # « Pilotage » au portail (DSH-002, DSH-012) : en 0.7.2, le superviseur pour les délégués
-    # des postes qui lui sont rattachés ; DM, DF, pays et siège s'ajoutent en 0.7.3 et 0.7.4.
-    Action.PILOTAGE_LIRE: frozenset({Role.SUPERVISEUR}),
+    # « Pilotage » au portail (DSH-002, DSH-003, DSH-012) : le superviseur pour les postes qui
+    # lui sont rattachés, DM et DF pour leurs réseaux, le responsable pays pour tout le pays ;
+    # le siège s'ajoute en 0.7.4 (agrégats, descente nominative auditée).
+    Action.PILOTAGE_LIRE: frozenset({Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
