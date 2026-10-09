@@ -704,6 +704,17 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.69 Isolation complète (mise en œuvre 0.9.1)
+
+- **Suite d'isolation** (SEC-008) : `make isolation` lance seule la suite, marquée `isolation` (47 tests) ; la CI la rejoue avec tous les tests, avant chaque livraison (**CA1**). Elle réunit :
+  - chaque route à identifiant, essayée avec un objet d'un autre pays (0.0.7) ; une nouvelle route sans cas fait échouer la suite ;
+  - **chaque route de lecture**, essayée par **chaque rôle** d'un autre pays (administrateur, responsable, DF, DM, superviseur, délégué, compte sans rôle) : aucune réponse ne porte un identifiant ni un nom du premier pays (recherche, notifications, pilotage, synchronisation compris) ; une contre-épreuve vérifie que le pays lui-même retrouve ses données ;
+  - la recherche par nom, les ressemblances, une vraie pièce jointe, les exports CSV et Excel des indicateurs et des rapports ;
+  - **dans un même pays**, un autre délégué (autre réseau, autre poste) et un superviseur non rattaché essaient toutes les routes du planning, des visites et des rapports d'un délégué, en lecture et en écriture : 403 ou 404 seulement ; les files du superviseur (plannings, journées, retards, pilotage) ne nomment que son équipe ;
+  - la sécurité au niveau des lignes de la base (ADR-003) et Grafana avec les rôles réels de la base (0.7.9).
+- [D, 9 octobre 2026, délégation] Une fuite se cherche par les identifiants des objets et par des noms que seul l'autre pays porte, sans tenir compte de la casse. Le compte d'une personne affectée aux deux pays (ORG-009) y apparaît légitimement et n'est pas compté comme une fuite.
+- Aucune fuite trouvée : la suite n'a demandé aucune correction du code.
+
 ### 14.68 Recette, démonstration et essais de terrain du cycle 0.8 (mise en œuvre 0.8.9)
 
 - **Recette** : `recette-0.8.md` relie chaque critère d'acceptation du cycle (OFF-001 à OFF-007, NOT-002 à NOT-005, SEC-005, SEC-006, DC-52, DC-54) et les scénarios REC-06, REC-07 et REC-17 aux tests qui les prouvent. Quatre écarts ne se lèvent que sur un vrai téléphone : sept jours en mode avion (OFF-001), base extraite illisible (SEC-005), push reçu après redémarrage (NOT-002), poids sur un réseau réel (OFF-006).
@@ -1224,7 +1235,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | SEC-005 | Données mobiles chiffrées au repos ; clé protégée par le magasin sécurisé du téléphone. | 0.8.1 | CA1 : la base locale extraite du téléphone est illisible sans la clé. Livré en 0.8.1 (§14.60). |
 | SEC-006 | Effacement à distance : un compte ou appareil désactivé efface les données locales à la connexion suivante. | 0.8.3 | CA1 : après révocation, l'application efface ses données et revient à l'écran de connexion. Livré en 0.8.3 (§14.62). |
 | SEC-007 | Communications chiffrées (TLS 1.2+) ; aucun secret dans le code. | 0.0.1 | CA1 : l'analyse de secrets de la CI ne trouve rien. |
-| SEC-008 | Isolation par pays vérifiée par des tests automatisés, y compris recherche, export, pièces jointes, notifications et Grafana. | 0.9.1 | CA1 : la suite d'isolation passe à 100 % avant chaque livraison. |
+| SEC-008 | Isolation par pays vérifiée par des tests automatisés, y compris recherche, export, pièces jointes, notifications et Grafana. | 0.9.1 | CA1 : la suite d'isolation passe à 100 % avant chaque livraison. Livré en 0.9.1 (§14.69). |
 
 ### 15.11 Audit — AUD
 

@@ -16,7 +16,7 @@ from apps.pilotage import grafana
 
 from .test_mes_chiffres import semaine  # noqa: F401
 
-pytestmark = pytest.mark.django_db
+pytestmark = [pytest.mark.django_db, pytest.mark.isolation]
 
 DU, AU = date(2026, 10, 6), date(2026, 10, 15)
 

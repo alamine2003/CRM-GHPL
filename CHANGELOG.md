@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.1] — Isolation complète
+
+Premier jalon du cycle 0.9 « Durcissement et pilote ».
+
+### Ajouté (SEC-008, prd.md §14.69)
+
+- `make isolation` : la suite d'isolation seule (47 tests), aussi rejouée par la CI.
+- Chaque route de lecture essayée par chaque rôle d'un autre pays ; recherche, pièce jointe, exports CSV et Excel.
+- Dans un même pays : un autre délégué et un superviseur non rattaché n'ouvrent ni le planning, ni les visites, ni les rapports d'un délégué.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [0.8.9] — Recette, démonstration et essais de terrain du cycle 0.8
 
 Clôture du cycle 0.8 « Mobilité ».

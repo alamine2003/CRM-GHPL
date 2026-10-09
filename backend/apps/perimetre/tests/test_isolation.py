@@ -7,7 +7,7 @@ from apps.socle.models import ParametrePays
 
 from .conftest import client_de
 
-pytestmark = pytest.mark.django_db
+pytestmark = [pytest.mark.django_db, pytest.mark.isolation]
 
 
 def test_un_utilisateur_sans_role_ne_voit_rien(monde):

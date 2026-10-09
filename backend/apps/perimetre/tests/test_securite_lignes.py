@@ -14,7 +14,7 @@ from apps.socle.models import JournalChangement, ParametrePays
 
 from .conftest import client_de
 
-pytestmark = pytest.mark.django_db
+pytestmark = [pytest.mark.django_db, pytest.mark.isolation]
 
 
 def executer(sql, parametres=None):

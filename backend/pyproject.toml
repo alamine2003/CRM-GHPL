@@ -7,6 +7,9 @@ DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
 testpaths = ["apps", "tests"]
 addopts = "--strict-markers"
+markers = [
+  "isolation: suite d'isolation par pays, rôle, réseau et délégué (SEC-008, make isolation)",
+]
 filterwarnings = [
   "error",
   # staticfiles/ n'existe qu'après collectstatic (image Docker).

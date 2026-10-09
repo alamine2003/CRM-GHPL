@@ -18,7 +18,7 @@ from apps.organisation.models import Occupation, PerimetreReseau
 
 from .conftest import client_de
 
-pytestmark = pytest.mark.django_db
+pytestmark = [pytest.mark.django_db, pytest.mark.isolation]
 
 
 def _routes(motifs, prefixe=""):
