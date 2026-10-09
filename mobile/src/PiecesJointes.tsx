@@ -1,7 +1,7 @@
 /**
  * Documents du rapport (RPT-007) : un PDF, trois au plus, 10 Mo chacun (CA1). Pas de photo
  * (décision DC-48 : risque de données de patient, aucun usage établi). Sans réseau, la pièce attend dans la file et part
- * au retour du réseau, même après la soumission du rapport (téléversement différé).
+ * au retour du réseau, même après la soumission du rapport (téléversement différé, OFF-005).
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { ClientApi, PieceJointe, Rapport } from '@innov/api-client';
@@ -26,7 +26,11 @@ export const TAILLE_MAX = 10 * 1024 * 1024;
 
 type Choisie = { uri: string; nom: string; type_mime: string; taille: number };
 
-/** Envoie la pièce, ou la met en attente sans réseau. */
+/**
+ * Annonce la pièce puis l'envoie ; sans réseau, l'une et l'autre attendent dans la file. OFF-005
+ * (0.8.7) : l'annonce (nom, taille) part avant le fichier, et les fichiers partent en dernier :
+ * le rapport arrive sans attendre un gros document, qui s'affiche « en attente ».
+ */
 export async function joindrePiece(
   client: ClientApi,
   visite: string,
@@ -39,7 +43,16 @@ export async function joindrePiece(
     ...choisie,
     prise_le: new Date().toISOString(),
   };
+  const annonce = {
+    id: saisie.id,
+    nom: saisie.nom,
+    taille: saisie.taille,
+    prise_le: saisie.prise_le,
+  };
+  let annoncee = false;
   try {
+    await client.visites.annoncerPiece(visite, annonce);
+    annoncee = true;
     const piece = await client.visites.joindrePiece(visite, {
       id: saisie.id,
       nom: saisie.nom,
@@ -51,6 +64,14 @@ export async function joindrePiece(
     if (!estTransitoire(e)) throw e;
     // RPT-009 : le document quitte le cache du téléphone pour un dossier durable.
     saisie.uri = await garderFichier(saisie.uri, saisie.id);
+    if (!annoncee)
+      await mettreEnAttente({
+        id: nouvelIdentifiant(),
+        type: 'annonce_piece',
+        visite,
+        saisie: annonce,
+        resume: saisie.nom,
+      });
     await mettreEnAttente({
       id: nouvelIdentifiant(),
       type: 'piece_jointe',
@@ -168,7 +189,9 @@ export function PiecesJointes({
     };
   }, [visite]);
 
-  const total = rapport.pieces_jointes.length + enAttente.length;
+  const total =
+    rapport.pieces_jointes.filter((x) => !enAttente.some((a) => a.id === x.id)).length +
+    enAttente.length;
 
   async function ajouter(choisie: Choisie | null) {
     if (!choisie) return;
@@ -225,14 +248,18 @@ export function PiecesJointes({
     <View style={{ gap: 6 }}>
       <Texte variante="sousTitre">{t('pieces.titre')}</Texte>
       {modifiable && <Texte variante="discret">{t('pieces.aide', { n: PIECES_MAX })}</Texte>}
-      {rapport.pieces_jointes.map((x) => (
-        <Ligne
-          key={x.id}
-          nom={x.nom}
-          octets={x.taille}
-          surRetrait={modifiable ? () => void retirer(x) : undefined}
-        />
-      ))}
+      {rapport.pieces_jointes
+        // Annoncée et pas encore envoyée d'ici : elle s'affiche une fois, avec la file.
+        .filter((x) => !enAttente.some((a) => a.id === x.id))
+        .map((x) => (
+          <Ligne
+            key={x.id}
+            nom={x.nom}
+            octets={x.taille}
+            note={x.en_attente ? t('pieces.enAttenteAilleurs') : undefined}
+            surRetrait={modifiable && !x.en_attente ? () => void retirer(x) : undefined}
+          />
+        ))}
       {enAttente.map((x) => (
         <Ligne key={x.id} nom={x.nom} octets={x.taille} note={t('pieces.enAttente')} />
       ))}

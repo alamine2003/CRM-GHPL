@@ -1574,7 +1574,8 @@
       "brouillon_rapport": "Report (draft)",
       "soumission_rapport": "Report submitted",
       "proposition": "Record update proposal",
-      "piece_jointe": "Report document"
+      "piece_jointe": "Report document",
+      "annonce_piece": "Document announced"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -2141,7 +2142,8 @@
     "enAttente": "Waiting for network",
     "horsLigne": "No network: the file is kept on the phone and will be sent automatically when the network is back.",
     "tropLourde": "This document is over 10 MB.",
-    "maximum": "{{n}} attachments at most: remove one to add another."
+    "maximum": "{{n}} attachments at most: remove one to add another.",
+    "enAttenteAilleurs": "Announced, waiting for the file"
   },
   "chronologie": {
     "titre": "Previous visits",
@@ -2255,7 +2257,8 @@
     "resultat": "Result",
     "echeance": "To do by {{date}}",
     "pieces": "Attachments",
-    "ouvrir": "Open the day"
+    "ouvrir": "Open the day",
+    "pieceEnAttente": "{{nom}}: attachment pending, sent once the representative's phone is online"
   },
   "validationRapports": {
     "journee": "Approve the day",

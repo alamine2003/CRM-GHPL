@@ -228,6 +228,11 @@ urlpatterns = [
         "visites/<uuid:id>/rapport/pieces/",
         rap.PiecesRapportVue.as_view(),
         name="visite-rapport-pieces",
+    ),
+    path(
+        "visites/<uuid:id>/rapport/pieces/annonce/",
+        rap.AnnoncePieceVue.as_view(),
+        name="visite-rapport-pieces-annonce",
     ),  # fmt: skip
     path(
         "visites/<uuid:id>/rapport/pieces/<uuid:piece>/",

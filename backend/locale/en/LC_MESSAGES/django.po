@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 03:21+0000\n"
+"POT-Creation-Date: 2026-10-09 04:13+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -433,7 +433,6 @@ msgstr "Unknown job: “%(fonction)s”."
 msgid "Produit absent du référentiel (%(n)s lignes) : non ajouté."
 msgstr "Product missing from the catalogue (%(n)s rows): not added."
 
-#| msgid_plural "%(n)d notifications."
 msgid "Vous ne recevez pas cette notification."
 msgstr "You do not receive this notification."
 
@@ -1213,14 +1212,14 @@ msgstr "This field is not in this report."
 msgid "Complétez le rapport avant de le soumettre."
 msgstr "Complete the report before submitting it."
 
-msgid "Cet identifiant est déjà utilisé."
-msgstr "This identifier is already used."
-
 msgid "Un fichier ne dépasse pas 10 Mo."
 msgstr "A file cannot exceed 10 MB."
 
 msgid "Trois pièces jointes au plus par rapport."
 msgstr "Three attachments at most per report."
+
+msgid "Cet identifiant est déjà utilisé."
+msgstr "This identifier is already used."
 
 msgid "Seuls les documents PDF sont acceptés."
 msgstr "Only PDF documents are accepted."
@@ -1252,6 +1251,9 @@ msgstr "Approved more than 30 days ago: only the DM can reopen it."
 
 msgid "Dites pourquoi vous rouvrez ce rapport."
 msgstr "Say why you are reopening this report."
+
+msgid "Ce document n'est pas encore arrivé du téléphone."
+msgstr "This document has not arrived from the phone yet."
 
 msgid "Ce libellé ou ce code est déjà utilisé dans cette liste."
 msgstr "This label or code is already used in this list."

@@ -182,13 +182,17 @@ class PieceJointe(ModeleDePays):
     envoi rejoué depuis la file d'attente ne crée pas de doublon."""
 
     rapport = models.ForeignKey(Rapport, on_delete=models.CASCADE, related_name="pieces_jointes")
-    fichier = models.FileField(upload_to=_chemin_piece, max_length=300)
+    #: OFF-005 (0.8.7) : vide tant que la pièce est seulement annoncée ; le fichier arrive
+    #: plus tard, quand le téléphone a du réseau pour l'envoyer.
+    fichier = models.FileField(upload_to=_chemin_piece, max_length=300, blank=True)
     nom = models.CharField(max_length=200)
     type_mime = models.CharField(max_length=60)
     taille = models.PositiveIntegerField()
     #: Moment où le délégué a choisi le document, sur le téléphone : une
     #: pièce prise avant la soumission peut arriver après, faute de réseau.
     prise_le = models.DateTimeField()
+    #: Arrivée du fichier ; vide, la pièce est « en attente » (OFF-005 CA1).
+    recue_le = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["prise_le"]

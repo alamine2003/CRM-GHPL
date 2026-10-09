@@ -623,21 +623,8 @@ def _exiger_ajout_possible(rapport: Rapport, prise_le: datetime) -> None:
     _exiger_modifiable(rapport)
 
 
-@transaction.atomic
-def joindre(rapport: Rapport, *, id, fichier, prise_le: datetime) -> PieceJointe:
-    """RPT-007 : ajoute un document PDF ; rejouer le même envoi ne crée rien de plus."""
-    from django.core.files.base import ContentFile
-
-    rapport = Rapport.objects.select_for_update().get(pk=rapport.pk)
-    # Rejeu : la pièce déjà reçue (même retirée depuis) est rendue telle quelle.
-    existante = PieceJointe.objects.filter(pk=id).first()
-    if existante is not None:
-        if existante.rapport_id != rapport.pk:
-            raise ErreurMetier("identifiant_pris", _("Cet identifiant est déjà utilisé."),
-                               status.HTTP_409_CONFLICT)  # fmt: skip
-        return existante
-    _exiger_ajout_possible(rapport, prise_le)
-    if fichier.size > TAILLE_MAX_PIECE:
+def _exiger_place(rapport: Rapport, taille: int) -> None:
+    if taille > TAILLE_MAX_PIECE:
         raise ErreurMetier("piece_trop_lourde",
                            _("Un fichier ne dépasse pas 10 Mo."), champ="fichier")  # fmt: skip
     if rapport.pieces_jointes.filter(archive_le__isnull=True).count() >= PIECES_MAX:
@@ -645,6 +632,55 @@ def joindre(rapport: Rapport, *, id, fichier, prise_le: datetime) -> PieceJointe
             "pieces_trop_nombreuses", _("Trois pièces jointes au plus par rapport."),
             champ="fichier",
         )  # fmt: skip
+
+
+def _piece_du_rapport(rapport: Rapport, id) -> PieceJointe | None:
+    existante = PieceJointe.objects.filter(pk=id).first()
+    if existante is not None and existante.rapport_id != rapport.pk:
+        raise ErreurMetier("identifiant_pris", _("Cet identifiant est déjà utilisé."),
+                           status.HTTP_409_CONFLICT)  # fmt: skip
+    return existante
+
+
+@transaction.atomic
+def annoncer(rapport: Rapport, *, id, nom: str, taille: int, prise_le: datetime) -> PieceJointe:
+    """OFF-005 (0.8.7) : le téléphone annonce un document avant de l'envoyer ; le rapport
+    part sans attendre son fichier et montre « pièce en attente » (CA1). Rejouer l'annonce ne
+    crée rien de plus."""
+    rapport = Rapport.objects.select_for_update().get(pk=rapport.pk)
+    existante = _piece_du_rapport(rapport, id)
+    if existante is not None:
+        return existante
+    _exiger_ajout_possible(rapport, prise_le)
+    _exiger_place(rapport, taille)
+    if not nom.lower().endswith(".pdf"):
+        raise ErreurMetier("type_de_fichier",
+                           _("Seuls les documents PDF sont acceptés."),
+                           champ="fichier")  # fmt: skip
+    piece = PieceJointe.objects.create(
+        pk=id, pays=rapport.pays, rapport=rapport, nom=nom[:200],
+        type_mime="application/pdf", taille=taille, prise_le=prise_le,
+    )  # fmt: skip
+    _auditer("rapport.piece_jointe_annonce", rapport, piece=str(piece.pk), taille=taille)
+    return piece
+
+
+@transaction.atomic
+def joindre(rapport: Rapport, *, id, fichier, prise_le: datetime) -> PieceJointe:
+    """RPT-007 : ajoute un document PDF ; rejouer le même envoi ne crée rien de plus. Une pièce
+    annoncée (OFF-005) reçoit ici son fichier, quel que soit l'état du rapport depuis."""
+    from django.core.files.base import ContentFile
+
+    rapport = Rapport.objects.select_for_update().get(pk=rapport.pk)
+    # Rejeu : la pièce déjà reçue (même retirée depuis) est rendue telle quelle.
+    existante = _piece_du_rapport(rapport, id)
+    if existante is not None and existante.recue_le is not None:
+        return existante
+    if existante is None:
+        _exiger_ajout_possible(rapport, prise_le)
+        _exiger_place(rapport, fichier.size)
+    elif fichier.size > TAILLE_MAX_PIECE:
+        _exiger_place(rapport, fichier.size)
     contenu = fichier.read()
     reconnu = _type_du_contenu(contenu[:16])
     if reconnu is None:
@@ -653,12 +689,13 @@ def joindre(rapport: Rapport, *, id, fichier, prise_le: datetime) -> PieceJointe
                            champ="fichier")  # fmt: skip
     mime, extension = reconnu
     nom = (getattr(fichier, "name", "") or "").rsplit("/", 1)[-1][:200] or f"piece.{extension}"
-    piece = PieceJointe(pk=id, pays=rapport.pays, rapport=rapport, nom=nom, type_mime=mime,
-                        taille=len(contenu), prise_le=prise_le)  # fmt: skip
+    piece = existante or PieceJointe(pk=id, pays=rapport.pays, rapport=rapport, nom=nom,
+                                     prise_le=prise_le)  # fmt: skip
+    piece.type_mime, piece.taille, piece.recue_le = mime, len(contenu), timezone.now()
     piece.fichier.save(f"{id}.{extension}", ContentFile(contenu), save=False)
     piece.save()
-    _auditer("rapport.piece_jointe_ajout", rapport, piece=str(piece.pk), taille=piece.taille,
-             type=mime)  # fmt: skip
+    _auditer("rapport.piece_jointe_recue" if existante else "rapport.piece_jointe_ajout",
+             rapport, piece=str(piece.pk), taille=piece.taille, type=mime)  # fmt: skip
     return piece
 
 

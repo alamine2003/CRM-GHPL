@@ -3091,6 +3091,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/visites/{id}/rapport/pieces/annonce/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description OFF-005 (0.8.7) : le téléphone annonce un document ; son fichier suivra. */
+    post: operations['piece_jointe_annoncer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/rapport/soumettre/': {
     parameters: {
       query?: never;
@@ -3264,6 +3281,15 @@ export interface components {
     AjoutCibles: {
       prospects: string[];
       frequence?: number | null;
+    };
+    /** @description OFF-005 (0.8.7) : la pièce choisie sur le téléphone, avant son fichier. */
+    AnnoncePiece: {
+      /** Format: uuid */
+      id: string;
+      nom: string;
+      taille: number;
+      /** Format: date-time */
+      prise_le: string;
     };
     Anomalie: {
       entite: string;
@@ -4900,6 +4926,7 @@ export interface components {
       readonly taille: number;
       /** Format: date-time */
       readonly prise_le: string;
+      readonly en_attente: boolean;
     };
     Planning: {
       /** Format: uuid */
@@ -11258,6 +11285,33 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  piece_jointe_annoncer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AnnoncePiece'];
+        'application/x-www-form-urlencoded': components['schemas']['AnnoncePiece'];
+        'multipart/form-data': components['schemas']['AnnoncePiece'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PieceJointe'];
+        };
       };
     };
   };

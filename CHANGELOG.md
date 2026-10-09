@@ -2,6 +2,25 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.7] — Pièces jointes envoyées plus tard
+
+Septième jalon du cycle 0.8 « Mobilité ».
+
+### Ajouté (OFF-005, prd.md §14.66)
+
+- Le téléphone annonce un document (nom, taille) avant de l'envoyer ; le rapport et sa soumission n'attendent plus le fichier.
+- Dans la file, les fichiers partent après tout le reste.
+- Portail : « pièce en attente, envoyée quand le téléphone du délégué aura du réseau » ; téléphone : « Annoncée, en attente du fichier ».
+- Le fichier d'une pièce annoncée arrive même après la soumission ou la validation ; son arrivée est auditée.
+
+### Design
+
+Revue sur le rendu réel (superviseur de la démonstration, bureau 1440 px et téléphone 390 px) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Journée, pièce en attente (téléphone) | Le sablier se centrait sur un texte de trois lignes, détaché du nom du document | Sablier aligné sur la première ligne |
+
 ## [0.8.6] — Courriels de sécurité et préférences de notification
 
 Sixième jalon du cycle 0.8 « Mobilité ».

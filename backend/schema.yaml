@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.8.6
+  version: 0.8.7
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5567,6 +5567,41 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/visites/{id}/rapport/pieces/annonce/:
+    post:
+      operationId: piece_jointe_annoncer
+      description: 'OFF-005 (0.8.7) : le téléphone annonce un document ; son fichier
+        suivra.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - visites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnnoncePiece'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnnoncePiece'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnnoncePiece'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PieceJointe'
+          description: ''
   /api/v1/visites/{id}/rapport/soumettre/:
     post:
       operationId: rapport_soumettre
@@ -5918,6 +5953,28 @@ components:
           nullable: true
       required:
       - prospects
+    AnnoncePiece:
+      type: object
+      description: 'OFF-005 (0.8.7) : la pièce choisie sur le téléphone, avant son
+        fichier.'
+      properties:
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+          maxLength: 200
+        taille:
+          type: integer
+          minimum: 1
+        prise_le:
+          type: string
+          format: date-time
+      required:
+      - id
+      - nom
+      - prise_le
+      - taille
     Anomalie:
       type: object
       properties:
@@ -9798,7 +9855,11 @@ components:
           type: string
           format: date-time
           readOnly: true
+        en_attente:
+          type: boolean
+          readOnly: true
       required:
+      - en_attente
       - id
       - nom
       - prise_le

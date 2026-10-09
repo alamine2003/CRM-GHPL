@@ -5,6 +5,7 @@ import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import PictureAsPdfRounded from '@mui/icons-material/PictureAsPdfRounded';
+import HourglassEmptyRounded from '@mui/icons-material/HourglassEmptyRounded';
 import {
   Alert,
   Box,
@@ -515,9 +516,13 @@ function Rapport({
         pieces={
           r.pieces_jointes.length > 0 ? (
             <Stack spacing={0.5} sx={{ alignItems: 'flex-start', ml: -0.75 }}>
-              {r.pieces_jointes.map((p) => (
-                <BoutonPiece key={p.id} id={p.id} nom={p.nom} />
-              ))}
+              {r.pieces_jointes.map((p) =>
+                p.en_attente ? (
+                  <PieceEnAttente key={p.id} nom={p.nom} />
+                ) : (
+                  <BoutonPiece key={p.id} id={p.id} nom={p.nom} />
+                ),
+              )}
             </Stack>
           ) : null
         }
@@ -889,6 +894,19 @@ function valeurChamp(valeur: unknown, t: Traduire): string | null {
 }
 
 /** RPT-007 CA2 : la pièce se lit avec la session ; elle s'ouvre dans un nouvel onglet. */
+/** OFF-005 (0.8.7) : le rapport est arrivé, son document pas encore (réseau du délégué). */
+function PieceEnAttente({ nom }: { nom: string }) {
+  const { t } = useTranslation();
+  return (
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start', px: 0.75, py: 0.5 }}>
+      <HourglassEmptyRounded fontSize="small" color="action" sx={{ mt: '2px' }} />
+      <Typography variant="body2" color="text.secondary">
+        {t('journee.pieceEnAttente', { nom })}
+      </Typography>
+    </Stack>
+  );
+}
+
 function BoutonPiece({ id, nom }: { id: string; nom: string }) {
   const { t } = useTranslation();
   const { client } = useSession();

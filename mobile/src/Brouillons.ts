@@ -183,6 +183,16 @@ export type Envoi =
     }
   | {
       id: string;
+      /** OFF-005 (0.8.7) : l'annonce d'un document (nom, taille), qui part avant le fichier
+       * pour que le rapport n'attende pas ; le serveur montre « pièce en attente ». */
+      type: 'annonce_piece';
+      visite: string;
+      saisie: { id: string; nom: string; taille: number; prise_le: string };
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
       /** Document du rapport choisi sans réseau (RPT-007) : le fichier reste sur le
        * téléphone, à son adresse locale, jusqu'à l'envoi. */
       type: 'piece_jointe';
@@ -318,8 +328,17 @@ export function envoyerAttente(client: ClientApi): Promise<number> {
   return rejeuEnCours;
 }
 
+/** OFF-005 : les fichiers partent après tout le reste ; une rafale de documents n'empêche ni
+ * le rapport ni sa soumission d'arriver (l'ordre des autres envois est gardé). */
+function fichiersEnDernier(envois: Envoi[]) {
+  return [
+    ...envois.filter((e) => e.type !== 'piece_jointe'),
+    ...envois.filter((e) => e.type === 'piece_jointe'),
+  ];
+}
+
 async function rejouer(client: ClientApi): Promise<number> {
-  const envois = await lireAttente();
+  const envois = fichiersEnDernier(await lireAttente());
   const partis = new Set<string>();
   const refus = new Map<string, string>();
   const conflits = new Map<string, ConflitVisite>();
@@ -337,6 +356,8 @@ async function rejouer(client: ClientApi): Promise<number> {
         await client.visites.imprevue(envoi.saisie);
       } else if (envoi.type === 'reporter_visite') {
         await client.visites.reporter(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'annonce_piece') {
+        await client.visites.annoncerPiece(envoi.visite, envoi.saisie);
       } else if (envoi.type === 'piece_jointe') {
         const { id, uri, nom, type_mime, prise_le } = envoi.saisie;
         await client.visites.joindrePiece(envoi.visite, {

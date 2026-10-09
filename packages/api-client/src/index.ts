@@ -910,6 +910,15 @@ export function creerClient(options: OptionsClient) {
         requete<Rapport>(`/api/v1/visites/${id}/rapport/`, { methode: 'PUT', corps: saisie }),
       /** Pièce jointe (RPT-007) : photo ou PDF ; l'identifiant vient du téléphone, l'envoi se
        * rejoue sans doublon. Sur le téléphone, le fichier est donné par son adresse locale. */
+      /** OFF-005 (0.8.7) : annoncer un document ; le rapport part sans attendre son fichier. */
+      annoncerPiece: (
+        id: string,
+        annonce: { id: string; nom: string; taille: number; prise_le: string },
+      ) =>
+        requete<PieceJointe>(`/api/v1/visites/${id}/rapport/pieces/annonce/`, {
+          methode: 'POST',
+          corps: annonce,
+        }),
       joindrePiece: (
         id: string,
         piece: {

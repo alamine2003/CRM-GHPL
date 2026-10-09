@@ -153,10 +153,25 @@ class VisiteProposeeSerializer(serializers.Serializer):
 class PieceJointeSerializer(serializers.ModelSerializer):
     """Un document PDF joint (RPT-007) ; le fichier se lit par sa propre adresse."""
 
+    #: OFF-005 CA1 : annoncée par le téléphone, son fichier n'est pas encore arrivé.
+    en_attente = serializers.SerializerMethodField()
+
     class Meta:
         model = PieceJointe
-        fields = ["id", "nom", "type_mime", "taille", "prise_le"]
+        fields = ["id", "nom", "type_mime", "taille", "prise_le", "en_attente"]
         read_only_fields = fields
+
+    def get_en_attente(self, piece) -> bool:
+        return piece.recue_le is None
+
+
+class AnnoncePieceSerializer(serializers.Serializer):
+    """OFF-005 (0.8.7) : la pièce choisie sur le téléphone, avant son fichier."""
+
+    id = serializers.UUIDField()
+    nom = serializers.CharField(max_length=200)
+    taille = serializers.IntegerField(min_value=1)
+    prise_le = serializers.DateTimeField()
 
 
 class SaisiePieceSerializer(serializers.Serializer):

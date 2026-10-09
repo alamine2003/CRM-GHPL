@@ -8,6 +8,7 @@
 
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -18,6 +19,7 @@ from apps.organisation.vues import _lire, pays_requis
 from apps.perimetre.matrice import Action
 from apps.perimetre.vues import VuePerimetre
 from apps.planning.models import Visite
+from apps.socle.erreurs import ErreurMetier
 
 from . import serializers as s
 from . import serializers_file as sf
@@ -119,6 +121,33 @@ class PiecesRapportVue(VueVisitesDuDelegue):
         return Response(s.PieceJointeSerializer(piece).data, status=status.HTTP_201_CREATED)
 
 
+class AnnoncePieceVue(VueVisitesDuDelegue):
+    """OFF-005 (0.8.7) : le téléphone annonce un document ; son fichier suivra."""
+
+    actions = {"POST": REDIGER}
+
+    @extend_schema(request=s.AnnoncePieceSerializer, responses={201: s.PieceJointeSerializer},
+                   operation_id="piece_jointe_annoncer")  # fmt: skip
+    def post(self, request, id):
+        visite = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.AnnoncePieceSerializer, request)
+        piece = services.annoncer(services.rapport_de(visite), **v)
+        return Response(s.PieceJointeSerializer(piece).data, status=status.HTTP_201_CREATED)
+
+
+def _fichier(p: PieceJointe):
+    """Le fichier d'une pièce ; annoncée, elle n'en a pas encore (OFF-005)."""
+    if p.recue_le is None:
+        raise ErreurMetier("piece_en_attente",
+                           _("Ce document n'est pas encore arrivé du téléphone."),
+                           status.HTTP_409_CONFLICT)  # fmt: skip
+    reponse = FileResponse(p.fichier.open("rb"), content_type=p.type_mime,
+                           as_attachment=False, filename=p.nom)  # fmt: skip
+    reponse["Cache-Control"] = "private, no-store"
+    reponse["X-Content-Type-Options"] = "nosniff"
+    return reponse
+
+
 class PieceRapportVue(VueVisitesDuDelegue):
     """RPT-007 CA2 : la pièce jointe ne se lit que par qui voit le rapport ; elle se retire
     tant que le rapport n'est pas soumis."""
@@ -133,12 +162,7 @@ class PieceRapportVue(VueVisitesDuDelegue):
     @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY},
                    operation_id="piece_jointe_lire")  # fmt: skip
     def get(self, request, id, piece):
-        p = self._piece(id, piece)
-        reponse = FileResponse(p.fichier.open("rb"), content_type=p.type_mime,
-                               as_attachment=False, filename=p.nom)  # fmt: skip
-        reponse["Cache-Control"] = "private, no-store"
-        reponse["X-Content-Type-Options"] = "nosniff"
-        return reponse
+        return _fichier(self._piece(id, piece))
 
     @extend_schema(responses={204: None}, operation_id="piece_jointe_retirer")
     def delete(self, request, id, piece):
@@ -327,12 +351,7 @@ class PieceLueVue(VuePerimetre):
     @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY},
                    operation_id="piece_jointe_consulter")  # fmt: skip
     def get(self, request, id):
-        p = get_object_or_404(self.get_queryset(), pk=id)
-        reponse = FileResponse(p.fichier.open("rb"), content_type=p.type_mime,
-                               as_attachment=False, filename=p.nom)  # fmt: skip
-        reponse["Cache-Control"] = "private, no-store"
-        reponse["X-Content-Type-Options"] = "nosniff"
-        return reponse
+        return _fichier(get_object_or_404(self.get_queryset(), pk=id))
 
 
 class ValidationRapportVue(VuePerimetre):

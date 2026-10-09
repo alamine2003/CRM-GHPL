@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.66 Téléversement différé des pièces jointes (mise en œuvre 0.8.7)
+
+- **Annonce, puis fichier** (OFF-005) : quand le délégué joint un document (PDF, RPT-007), le téléphone l'annonce d'abord au serveur (nom, taille, heure du choix), puis envoie le fichier. Sans réseau, l'annonce et le fichier attendent dans la file ; au retour du réseau, les fichiers partent après tout le reste : un document lourd ne retient ni le rapport ni sa soumission.
+- **CA1** : un rapport arrivé sans son document l'indique « pièce en attente » : au portail, le superviseur lit « etude.pdf : pièce en attente, envoyée quand le téléphone du délégué aura du réseau », sans bouton pour l'ouvrir ; sur le téléphone, « Annoncée, en attente du fichier ». Le document ne s'ouvre qu'une fois arrivé.
+- [D, 9 octobre 2026, délégation] Une pièce annoncée reçoit son fichier quel que soit l'état du rapport depuis (soumis, validé) : le délégué l'avait choisie avant. Les règles des pièces s'appliquent dès l'annonce (PDF seul, 10 Mo, trois au plus) et le contenu est contrôlé à l'arrivée (un faux PDF est refusé). Une pièce annoncée ne se retire pas tant que son fichier n'est pas arrivé.
+- L'arrivée du fichier est auditée (`rapport.piece_jointe_recue`) ; les pièces envoyées avant 0.8.7 sont toutes considérées comme reçues.
+
 ### 14.65 Courriels de sécurité et préférences de notification (mise en œuvre 0.8.6)
 
 - **Courriels** (NOT-004) : INNOV CRM n'envoie que des courriels de sécurité du compte : récupération d'accès, verrouillage, nouveau téléphone connecté au compte (à partir du deuxième), double authentification activée ou désactivée, et secours d'une décision en attente depuis plus de 48 heures. **CA1** : un test vérifie qu'aucun autre module n'envoie de courriel et que la liste des courriels est exactement celle-ci. Aucun courriel ne porte de nom de prospect ni de donnée de santé.
@@ -1186,7 +1193,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | OFF-002 | Création et modification hors connexion des visites, rapports, absences et prospects. | 0.8.2 | CA1 : chaque objet créé hors connexion a un identifiant unique généré sur le téléphone. Livré en 0.8.2 (§14.61). |
 | OFF-003 | File d'attente locale visible ; reprise automatique au retour du réseau. | 0.8.3 | CA1 : l'état « n éléments en attente » et l'heure de dernière synchronisation sont toujours visibles. CA2 : une coupure pendant l'envoi ne crée aucun doublon. Livré en 0.8.3 (§14.62). |
 | OFF-004 | Détection et résolution des conflits sans perte silencieuse (`RG-050` à `RG-054`). | 0.8.4 | CA1 : une décision du superviseur n'est jamais écrasée par une donnée locale. CA2 : un conflit est présenté au délégué avec les deux versions. Livré en 0.8.4 (§14.63). |
-| OFF-005 | Téléversement différé des pièces jointes. | 0.8.7 | CA1 : un rapport synchronisé sans sa pièce jointe l'indique « pièce en attente ». |
+| OFF-005 | Téléversement différé des pièces jointes. | 0.8.7 | CA1 : un rapport synchronisé sans sa pièce jointe l'indique « pièce en attente ». Livré en 0.8.7 (§14.66). |
 | OFF-006 | Optimisation réseau faible : envois par petits lots, compression, reprise. | 0.8.8 | CA1 : une synchronisation quotidienne typique transfère moins de 500 Ko hors pièces jointes [H]. |
 | OFF-007 | Au-delà du délai sans synchronisation fixé par le pays (7 jours par défaut, plus long pour les zones isolées, DC-54), les données locales deviennent inaccessibles jusqu'à la prochaine connexion réussie. | 0.8.3 | CA1 : au 8ᵉ jour, l'application demande une connexion et n'affiche plus les données. CA2 : les éléments en attente ne sont pas effacés et partent à la connexion. Livré en 0.8.3 (§14.62). |
 

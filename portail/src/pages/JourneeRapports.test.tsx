@@ -47,6 +47,7 @@ const RAPPORT = {
       type_mime: 'application/pdf',
       taille: 10,
       prise_le: '2026-10-13T10:00:00Z',
+      en_attente: false,
     },
   ],
 } as const;
@@ -193,6 +194,29 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
     // RPT-010 CA1 : « Soumis en retard », et les deux heures d'un horodatage douteux.
     expect(within(visite).getByText('Soumis en retard')).toBeInTheDocument();
     expect(within(visite).getByText(/Heure du téléphone/)).toBeInTheDocument();
+  });
+
+  it('OFF-005 CA1 : un rapport arrivé sans son document dit « pièce en attente »', async () => {
+    const journee = {
+      ...JOURNEE,
+      visites: JOURNEE.visites.map((v, i) =>
+        i === 0
+          ? {
+              ...v,
+              rapport: {
+                ...RAPPORT,
+                pieces_jointes: [{ ...RAPPORT.pieces_jointes[0], en_attente: true }],
+              },
+            }
+          : v,
+      ),
+    } as unknown as Journee;
+    rendre(journee);
+    const visite = await screen.findByRole('article', { name: '09:00 · Awa NDIAYE' });
+    expect(
+      within(visite).getByText(/fiche-produit.pdf : pièce en attente, envoyée quand le téléphone/),
+    ).toBeInTheDocument();
+    expect(within(visite).queryByRole('button', { name: 'fiche-produit.pdf' })).toBeNull();
   });
 
   it('RPT-007 CA2 : la pièce jointe du rapport soumis s’ouvre pour le superviseur', async () => {
