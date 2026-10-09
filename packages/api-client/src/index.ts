@@ -116,6 +116,7 @@ import type {
   StatutPays,
   SyntheseEtablissements,
   PositionProposee,
+  Journal,
   SyntheseOrganisation,
   SyntheseProspects,
   Transfert,
@@ -281,6 +282,8 @@ export type {
   StatutPays,
   SyntheseEtablissements,
   PositionProposee,
+  EvenementJournal,
+  Journal,
   SyntheseOrganisation,
   SyntheseProspects,
   Transfert,
@@ -414,6 +417,17 @@ export interface FiltresEtablissements extends Pagination {
   /** DC-52 : sans position, avec une position proposée à valider. */
   position_proposee?: '1';
   tri?: TriEtablissements;
+}
+
+/** AUD-002 : filtres du journal d'audit. */
+export interface FiltresJournal extends Pagination {
+  q?: string;
+  famille?: string;
+  action?: string;
+  objet?: string;
+  resultat?: 'succes' | 'echec';
+  du?: string;
+  au?: string;
 }
 
 export interface SaisieEtablissement {
@@ -1155,6 +1169,17 @@ export function creerClient(options: OptionsClient) {
       mesListes: () => requete<ListeCible[]>('/api/v1/ciblage/moi/'),
     },
     /** Fiches établissements (PRP-003). */
+    audit: {
+      /** AUD-002 : le journal du périmètre (siège : tout ou le pays choisi ; pays : le sien). */
+      journal: (filtres: FiltresJournal = {}) => {
+        const params = new URLSearchParams(
+          Object.entries(filtres)
+            .filter(([, v]) => v !== undefined && v !== '')
+            .map(([k, v]) => [k, String(v)]),
+        ).toString();
+        return requete<Journal>(`/api/v1/audit/${params ? `?${params}` : ''}`);
+      },
+    },
     etablissements: {
       liste: (filtres: FiltresEtablissements = {}) => {
         const params = new URLSearchParams(

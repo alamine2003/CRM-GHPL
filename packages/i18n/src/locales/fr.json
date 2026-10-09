@@ -138,7 +138,8 @@
     "remplacements": "Remplaçants",
     "notifications": "Notifications",
     "aTraiter": "À traiter",
-    "objectifs": "Objectifs"
+    "objectifs": "Objectifs",
+    "audit": "Journal d'audit"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -2680,6 +2681,77 @@
       "rapports_valides": "Rapports validés",
       "rappel_rapport": "Rappel : rapport à soumettre",
       "journee_escaladee": "Journée remontée (escalade)"
+    }
+  },
+  "audit": {
+    "titre": "Journal d'audit",
+    "introduction": "Qui a fait quoi, quand et d'où : connexions, décisions, exports, modifications. Le journal ne se modifie jamais.",
+    "rechercher": "Personne (identifiant)",
+    "toutesFamilles": "Toutes les familles",
+    "tousResultats": "Tous les résultats",
+    "du": "Du",
+    "au": "Au",
+    "vide": "Aucun événement",
+    "videTexte": "Rien ne correspond à ces filtres. Élargissez la période ou retirez un filtre.",
+    "systeme": "Système",
+    "siege": "Siège",
+    "details": "Détails",
+    "sansDetails": "Aucun détail.",
+    "immuable": "Cet événement est immuable : la base refuse toute modification ou suppression.",
+    "colonnes": {
+      "famille": "Famille",
+      "resultat": "Résultat",
+      "acteur": "Personne",
+      "roles": "Rôles",
+      "pays": "Pays",
+      "objet": "Objet",
+      "client": "Application",
+      "adresse": "Adresse",
+      "reference": "Référence de la requête"
+    },
+    "resultats": {
+      "succes": "Réussi",
+      "echec": "Échec"
+    },
+    "familles": {
+      "rapport": "Rapports",
+      "planning": "Plannings",
+      "visite": "Visites",
+      "organisation": "Organisation",
+      "export": "Exports",
+      "pays": "Pays",
+      "referentiel": "Référentiels",
+      "prospect": "Prospects",
+      "etablissement": "Établissements",
+      "double_auth": "Double authentification",
+      "pilotage": "Pilotage",
+      "objectif": "Objectifs",
+      "mot_de_passe": "Mots de passe",
+      "connexion": "Connexions",
+      "compte": "Comptes",
+      "activite": "Activités",
+      "session": "Sessions",
+      "jour_ferie": "Jours fériés",
+      "import": "Imports",
+      "affectation": "Affectations",
+      "utilisateur": "Utilisateurs",
+      "role": "Rôles",
+      "portefeuille": "Portefeuilles",
+      "passage": "Passages",
+      "localite": "Localités",
+      "cible": "Listes cibles",
+      "appareil": "Téléphones",
+      "zone": "Zones",
+      "secteur": "Secteurs",
+      "parametre": "Paramètres",
+      "fusion": "Fusions",
+      "doublon": "Doublons",
+      "proposition": "Propositions",
+      "exercice": "Lieux d'exercice",
+      "remplacement": "Remplacements",
+      "notification": "Notifications",
+      "produit": "Produits",
+      "valeur": "Valeurs de référence"
     }
   }
 }

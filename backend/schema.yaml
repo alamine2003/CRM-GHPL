@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.9.1
+  version: 0.9.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -126,6 +126,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Appareil'
+          description: ''
+  /api/v1/audit/:
+    get:
+      operationId: audit_journal
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+      - in: query
+        name: au
+        schema:
+          type: string
+      - in: query
+        name: du
+        schema:
+          type: string
+      - in: query
+        name: famille
+        schema:
+          type: string
+        description: rapport, planning…
+      - in: query
+        name: objet
+        schema:
+          type: string
+        description: Identifiant d'objet
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Identifiant de la personne
+      - in: query
+        name: resultat
+        schema:
+          type: string
+          enum:
+          - echec
+          - succes
+      - in: query
+        name: taille
+        schema:
+          type: integer
+      tags:
+      - audit
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
           description: ''
   /api/v1/auth/activite/:
     get:
@@ -8046,6 +8103,64 @@ components:
       - role_contourne
       - tables_attendues
       - tables_protegees
+    EvenementJournal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        le:
+          type: string
+          format: date-time
+        action:
+          type: string
+        famille:
+          type: string
+        resultat:
+          type: string
+        acteur:
+          type: string
+        acteur_nom:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        pays:
+          type: string
+          nullable: true
+        objet_type:
+          type: string
+        objet_id:
+          type: string
+        details:
+          type: object
+          additionalProperties: {}
+        client:
+          type: string
+          nullable: true
+        adresse:
+          type: string
+          nullable: true
+        reference:
+          type: string
+          nullable: true
+      required:
+      - acteur
+      - acteur_nom
+      - action
+      - adresse
+      - client
+      - details
+      - famille
+      - id
+      - le
+      - objet_id
+      - objet_type
+      - pays
+      - reference
+      - resultat
+      - roles
     Exercice:
       type: object
       properties:
@@ -8514,6 +8629,31 @@ components:
       - date
       - ferie
       - planifiable
+    Journal:
+      type: object
+      description: 'AUD-002 : une page du journal et les familles d''actions de la
+        portée.'
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        taille:
+          type: integer
+        familles:
+          type: array
+          items:
+            type: string
+        resultats:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvenementJournal'
+      required:
+      - familles
+      - page
+      - resultats
+      - taille
+      - total
     Journee:
       type: object
       description: '0.6.2 : une journée d''un délégué, à consulter avant de la valider

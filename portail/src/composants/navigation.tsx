@@ -11,6 +11,7 @@ import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
 import SwapHorizRounded from '@mui/icons-material/SwapHorizRounded';
 import GroupsRounded from '@mui/icons-material/GroupsRounded';
+import HistoryEduRounded from '@mui/icons-material/HistoryEduRounded';
 import HomeRounded from '@mui/icons-material/HomeRounded';
 import InboxRounded from '@mui/icons-material/InboxRounded';
 import MedicationRounded from '@mui/icons-material/MedicationRounded';
@@ -159,6 +160,13 @@ export const ENTREES: Entree[] = [
     section: 'administration',
     chemin: '/parametres',
     visible: peut('parametres.lire'),
+  },
+  {
+    cle: 'audit',
+    icone: <HistoryEduRounded />,
+    section: 'administration',
+    chemin: '/audit',
+    visible: peut('audit.lire'),
   },
   {
     cle: 'pays',

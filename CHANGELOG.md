@@ -2,6 +2,23 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.2] — Consultation du journal d'audit
+
+Deuxième jalon du cycle 0.9 « Durcissement et pilote ».
+
+### Ajouté (AUD-002, prd.md §14.70)
+
+- « Journal d'audit » au portail : le siège voit tous les pays, le responsable et l'administrateur pays le leur seulement ; les autres rôles n'y ont pas accès.
+- Filtres par personne, famille d'actions, résultat et période (à l'heure du pays) ; détail de chaque événement, adresse masquée.
+
+### Design
+
+Revue sur le rendu réel (administrateur pays de la démonstration, bureau 1440 px et téléphone 390 px) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Journal, liste | Le code technique (« connexion ») en gras, puis sa famille (« Connexions ») dessous : redondant et peu lisible | La famille en clair en gras ; le code exact en petit, en chasse fixe |
+
 ## [0.9.1] — Isolation complète
 
 Premier jalon du cycle 0.9 « Durcissement et pilote ».

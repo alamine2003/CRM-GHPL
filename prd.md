@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.70 Consultation du journal d'audit (mise en œuvre 0.9.2)
+
+- **Journal d'audit** (AUD-002) : au portail, rubrique « Journal d'audit » de l'administration, pour les rôles que prd.md §6.3 autorise : l'administrateur et la direction du siège (tous les pays en vue consolidée, ou le pays choisi), le responsable et l'administrateur pays (**CA1** : leur pays seulement, ni un autre pays, ni les événements du siège sans pays). Les autres rôles n'y ont pas accès (403).
+- **Lecture** : du plus récent au plus ancien, 30 par page ; chaque ligne donne l'heure, la famille en clair (« Connexions », « Rapports », « Exports »…) avec le code exact de l'action, la personne et le résultat (« Réussi », « Échec »). Le détail montre les rôles, le pays, l'objet, l'application, l'adresse, la référence de la requête et les détails de l'événement ; il rappelle que l'événement est immuable.
+- **Filtres** : personne (identifiant), famille, résultat, période (du … au …, lue dans le fuseau du pays : un événement de 22 h 30 à Dakar reste de son jour) ; l'API accepte aussi une action exacte et un identifiant d'objet.
+- [D, 9 octobre 2026, délégation] L'adresse IP est masquée (deux premiers nombres) comme dans « Activité du compte » : assez pour reconnaître un réseau, pas pour pister une personne. Lire le journal n'est pas lui-même audité, pour ne pas le noyer ; l'export du journal n'est pas ouvert (non demandé par AUD-002).
+
 ### 14.69 Isolation complète (mise en œuvre 0.9.1)
 
 - **Suite d'isolation** (SEC-008) : `make isolation` lance seule la suite, marquée `isolation` (47 tests) ; la CI la rejoue avec tous les tests, avant chaque livraison (**CA1**). Elle réunit :
@@ -1242,7 +1249,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | ID | Exigence | Version | Critères d'acceptation |
 |---|---|---|---|
 | AUD-001 | Journal d'audit **immuable** : connexions, échecs, décisions (approbation, révision, validation, correction, réouverture), escalades, remplacements, changements de rôle, affectations, transferts, fusions, défusions, imports, exports, consultations nominatives du siège, modifications de paramètres, révocations d'appareil. | 0.0.8 | CA1 : chaque événement contient auteur, rôle, pays, action, objet, date, contexte (appareil, adresse), résultat. CA2 : aucun rôle applicatif ne peut modifier ou supprimer un événement. |
-| AUD-002 | Consultation et filtrage du journal par le siège et l'administrateur pays. | 0.9.2 | CA1 : l'administrateur pays ne voit que son pays. |
+| AUD-002 | Consultation et filtrage du journal par le siège et l'administrateur pays. | 0.9.2 | CA1 : l'administrateur pays ne voit que son pays. Livré en 0.9.2 (§14.70). |
 | AUD-003 | Historisation des versions de planning et de rapport. | 0.3.6 | CA1 : chaque version est consultable dans son état exact au moment de sa soumission. |
 
 ### 15.12 Démonstration — DEM

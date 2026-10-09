@@ -5,6 +5,7 @@
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView
 
+from apps.audit import vues as aud
 from apps.identite import vues_comptes as comptes
 from apps.imports import vues as imp
 from apps.notifications import vues as ntf
@@ -374,6 +375,8 @@ urlpatterns = [
     path("ciblage/cibles/<uuid:id>/retirer/", cib.CibleRetraitVue.as_view(), name="cible-retirer"),
     path("ciblage/moi/", cib.MaListeCibleVue.as_view(), name="ciblage-moi"),
     path("etablissements/", prs.EtablissementsVue.as_view(), name="etablissements"),
+    # Journal d'audit (AUD-002)
+    path("audit/", aud.JournalAuditVue.as_view(), name="audit"),
     path(
         "etablissements/synthese/",
         prs.SyntheseEtablissementsVue.as_view(),

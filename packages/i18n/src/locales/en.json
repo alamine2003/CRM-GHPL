@@ -138,7 +138,8 @@
     "remplacements": "Replacements",
     "notifications": "Notifications",
     "aTraiter": "To review",
-    "objectifs": "Targets"
+    "objectifs": "Targets",
+    "audit": "Audit log"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -2680,6 +2681,77 @@
       "rapports_valides": "Reports approved",
       "rappel_rapport": "Reminder: report to submit",
       "journee_escaladee": "Day escalated"
+    }
+  },
+  "audit": {
+    "titre": "Audit log",
+    "introduction": "Who did what, when and from where: sign-ins, decisions, exports, changes. The log can never be modified.",
+    "rechercher": "Person (username)",
+    "toutesFamilles": "All families",
+    "tousResultats": "All results",
+    "du": "From",
+    "au": "To",
+    "vide": "No events",
+    "videTexte": "Nothing matches these filters. Widen the period or remove a filter.",
+    "systeme": "System",
+    "siege": "Head office",
+    "details": "Details",
+    "sansDetails": "No details.",
+    "immuable": "This event is immutable: the database refuses any change or deletion.",
+    "colonnes": {
+      "famille": "Family",
+      "resultat": "Result",
+      "acteur": "Person",
+      "roles": "Roles",
+      "pays": "Country",
+      "objet": "Object",
+      "client": "Application",
+      "adresse": "Address",
+      "reference": "Request reference"
+    },
+    "resultats": {
+      "succes": "Succeeded",
+      "echec": "Failed"
+    },
+    "familles": {
+      "rapport": "Reports",
+      "planning": "Plans",
+      "visite": "Visits",
+      "organisation": "Organisation",
+      "export": "Exports",
+      "pays": "Countries",
+      "referentiel": "Reference data",
+      "prospect": "Prospects",
+      "etablissement": "Facilities",
+      "double_auth": "Two-factor authentication",
+      "pilotage": "Dashboards",
+      "objectif": "Targets",
+      "mot_de_passe": "Passwords",
+      "connexion": "Sign-ins",
+      "compte": "Accounts",
+      "activite": "Activities",
+      "session": "Sessions",
+      "jour_ferie": "Public holidays",
+      "import": "Imports",
+      "affectation": "Assignments",
+      "utilisateur": "Users",
+      "role": "Roles",
+      "portefeuille": "Portfolios",
+      "passage": "Joint visits",
+      "localite": "Localities",
+      "cible": "Target lists",
+      "appareil": "Phones",
+      "zone": "Zones",
+      "secteur": "Sectors",
+      "parametre": "Settings",
+      "fusion": "Merges",
+      "doublon": "Duplicates",
+      "proposition": "Proposals",
+      "exercice": "Practice locations",
+      "remplacement": "Replacements",
+      "notification": "Notifications",
+      "produit": "Products",
+      "valeur": "Reference values"
     }
   }
 }

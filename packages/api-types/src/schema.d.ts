@@ -85,6 +85,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/audit/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['audit_journal'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/auth/activite/': {
     parameters: {
       query?: never;
@@ -4137,6 +4153,27 @@ export interface components {
       /** @description Vrai si le rôle PostgreSQL ignore la sécurité au niveau des lignes. */
       role_contourne: boolean;
     };
+    EvenementJournal: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      le: string;
+      action: string;
+      famille: string;
+      resultat: string;
+      acteur: string;
+      acteur_nom: string;
+      roles: string[];
+      pays: string | null;
+      objet_type: string;
+      objet_id: string;
+      details: {
+        [key: string]: unknown;
+      };
+      client: string | null;
+      adresse: string | null;
+      reference: string | null;
+    };
     Exercice: {
       /** Format: uuid */
       readonly id: string;
@@ -4336,6 +4373,14 @@ export interface components {
       date: string;
       ferie: string | null;
       planifiable: boolean;
+    };
+    /** @description AUD-002 : une page du journal et les familles d'actions de la portée. */
+    Journal: {
+      total: number;
+      page: number;
+      taille: number;
+      familles: string[];
+      resultats: components['schemas']['EvenementJournal'][];
     };
     /** @description 0.6.2 : une journée d'un délégué, à consulter avant de la valider (RPT-013, 0.6.3). */
     Journee: {
@@ -6562,6 +6607,38 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Appareil'];
+        };
+      };
+    };
+  };
+  audit_journal: {
+    parameters: {
+      query?: {
+        action?: string;
+        au?: string;
+        du?: string;
+        /** @description rapport, planning… */
+        famille?: string;
+        /** @description Identifiant d'objet */
+        objet?: string;
+        page?: number;
+        /** @description Identifiant de la personne */
+        q?: string;
+        resultat?: 'echec' | 'succes';
+        taille?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Journal'];
         };
       };
     };

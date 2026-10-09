@@ -26,6 +26,7 @@ const Referentiels = lazy(() => import('./pages/Referentiels'));
 const Prospects = lazy(() => import('./pages/Prospects'));
 const Etablissements = lazy(() => import('./pages/Etablissements'));
 const Imports = lazy(() => import('./pages/Imports'));
+const JournalAudit = lazy(() => import('./pages/JournalAudit'));
 const Ciblage = lazy(() => import('./pages/Ciblage'));
 const Doublons = lazy(() => import('./pages/Doublons'));
 const Propositions = lazy(() => import('./pages/Propositions'));
@@ -76,6 +77,7 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
     rendu: (_, p) => <Propositions perimetre={p} />,
   },
   '/imports': { titre: 'navigation.imports', rendu: (_, p) => <Imports perimetre={p} /> },
+  '/audit': { titre: 'navigation.audit', rendu: (_, p) => <JournalAudit perimetre={p} /> },
   '/pays': { titre: 'navigation.pays', rendu: (_, p) => <PaysPage perimetre={p} /> },
   '/profil': {
     titre: 'navigation.profil',
