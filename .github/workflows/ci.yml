@@ -54,6 +54,9 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
       - name: Tests (dont schéma OpenAPI à jour)
         run: pytest -q
+      # 0.9.3 : aucune faille connue dans les dépendances du serveur (docs/revue-securite.md).
+      - name: Audit des dépendances
+        run: pip install pip-audit && pip-audit -r requirements.txt
 
   clients:
     name: Portail, mobile et paquets
@@ -65,6 +68,11 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      # 0.9.3 : aucune faille critique dans les dépendances livrées. Les alertes « élevées » de
+      # la chaîne de construction mobile (Expo, Metro, Jest) sont suivies dans
+      # docs/revue-securite.md et levées à la montée de version d'Expo.
+      - name: Audit des dépendances
+        run: npm audit --omit=dev --audit-level=critical
       - name: Types d'API à jour avec backend/schema.yaml
         run: npm run api:types && git diff --exit-code -- packages/api-types
       - name: Lint et format

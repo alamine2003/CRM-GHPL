@@ -118,6 +118,7 @@ INNOV_CLE_CHIFFREMENT = os.environ.get("INNOV_CLE_CHIFFREMENT", "")
 MIDDLEWARE = [
     "apps.socle.journalisation.ReferenceRequete",
     "django.middleware.security.SecurityMiddleware",
+    "apps.socle.securite.EntetesSecurite",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     # OFF-006 : avant tout ce qui modifie la réponse ; voir apps/socle/compression.py.
     "apps.socle.compression.CompressionApi",
@@ -288,10 +289,24 @@ SPECTACULAR_SETTINGS = {
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = "same-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+# Corps de requête hors fichiers : 2,5 Mo au plus ; les pièces jointes (10 Mo, RPT-007) passent
+# par le téléversement, contrôlé par le service.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 2_621_440
 # Sécurité du transport : uniquement derrière l'hébergeur (recette, préproduction, production).
 if ENVIRONNEMENT not in {"developpement", "test"}:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SSL_REDIRECT", True)
     SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+# `check --deploy` (0.9.3) : deux avertissements écartés à dessein.
+# - W003 : l'API n'a pas de formulaire ; elle s'authentifie par l'en-tête Authorization. Le seul
+#   cookie (rafraîchissement du portail) est httpOnly, SameSite=Strict, limité à /api/v1/auth/,
+#   et n'est lu qu'avec l'en-tête X-Innov-Client, qui impose une requête CORS autorisée.
+# - W021 : pas de préchargement HSTS tant que le domaine de production n'est pas fixé
+#   (l'inscription est très difficile à retirer).
+SILENCED_SYSTEM_CHECKS = ["security.W003", "security.W021"]

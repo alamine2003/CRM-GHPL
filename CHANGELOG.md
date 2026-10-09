@@ -2,6 +2,25 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.3] — Renforcement de la sécurité
+
+Troisième jalon du cycle 0.9 « Durcissement et pilote ».
+
+### Ajouté (prd.md §14.71)
+
+- `docs/revue-securite.md` : revue de sécurité, chaque point relié à sa preuve ou à un risque accepté.
+- En-têtes de sécurité sur chaque réponse ; pièce jointe ouverte en bac à sable ; HSTS sous-domaines compris.
+- Test de la configuration de production (`check --deploy` sans avertissement, clé secrète obligatoire, jamais de débogage).
+- CI : audit des dépendances du serveur et des paquets livrés.
+
+### Corrigé
+
+- Django REST framework 3.17.2 : deux failles connues (PYSEC-2026-3827, PYSEC-2026-3828).
+
+### Design
+
+Pas d'écran modifié.
+
 ## [0.9.2] — Consultation du journal d'audit
 
 Deuxième jalon du cycle 0.9 « Durcissement et pilote ».

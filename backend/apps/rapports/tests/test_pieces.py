@@ -47,6 +47,8 @@ def test_rpt007_joindre_relire_et_rejouer_sans_doublon(monde, effectuee):  # noq
     lu = c.get(url(effectuee, f"pieces/{ident}/"))
     assert lu.status_code == 200 and b"".join(lu.streaming_content) == PDF
     assert lu["Cache-Control"] == "private, no-store"
+    # 0.9.3 : ouvert dans un navigateur, le PDF ne peut rien exécuter.
+    assert lu["Content-Security-Policy"].startswith("sandbox;")
     assert EvenementAudit.objects.filter(action="rapport.piece_jointe_ajout").count() == 1
 
 

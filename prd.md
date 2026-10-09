@@ -704,6 +704,15 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.71 Renforcement de la sécurité (mise en œuvre 0.9.3)
+
+- **Revue de sécurité** : `docs/revue-securite.md` passe en revue l'authentification, les sessions, le contrôle d'accès, les données et fichiers, la configuration et les dépendances, chaque point relié à sa preuve (test, réglage) ou à un risque accepté. Aucun défaut critique ou majeur ouvert (prd.md §21.2, condition 2).
+- **En-têtes** : chaque réponse de l'API porte une politique de contenu fermée (l'API ne sert ni page ni script), une politique des capteurs (position, caméra, micro), `X-Frame-Options: DENY`, `Referrer-Policy: same-origin`, `nosniff` ; HSTS d'un an, sous-domaines compris.
+- **Fichiers** : une pièce jointe ouverte dans un navigateur l'est en bac à sable (`Content-Security-Policy: sandbox`) : un PDF ne peut exécuter ni script ni formulaire.
+- **Secrets et configuration** : un test lance `check --deploy` en configuration de production et n'accepte aucun avertissement ; la production refuse de démarrer sans clé secrète de 50 caractères et ne tourne jamais en débogage. [D, 9 octobre 2026, délégation] Deux avertissements de Django sont écartés et justifiés dans la configuration : la protection CSRF par formulaire (l'API n'a pas de formulaire ; le seul cookie est httpOnly, SameSite=Strict, et n'est lu qu'avec un en-tête qui impose une requête CORS autorisée) et le préchargement HSTS (différé jusqu'au choix du domaine de production, l'inscription étant très difficile à retirer).
+- **Dépendances** : Django REST framework monté en 3.17.2 (deux failles connues corrigées) ; la CI audite les dépendances du serveur (`pip-audit`, aucune faille) et des paquets livrés (`npm audit`, aucune faille critique). [D, 9 octobre 2026, délégation] Les alertes « élevées » de la chaîne de construction mobile (Expo, Metro, Jest), non livrée dans l'application, sont un risque accepté jusqu'à la montée de version d'Expo.
+- **Reste** : un test d'intrusion indépendant sur la préproduction, avant la 1.0.0, par un prestataire choisi par l'entreprise.
+
 ### 14.70 Consultation du journal d'audit (mise en œuvre 0.9.2)
 
 - **Journal d'audit** (AUD-002) : au portail, rubrique « Journal d'audit » de l'administration, pour les rôles que prd.md §6.3 autorise : l'administrateur et la direction du siège (tous les pays en vue consolidée, ou le pays choisi), le responsable et l'administrateur pays (**CA1** : leur pays seulement, ni un autre pays, ni les événements du siège sans pays). Les autres rôles n'y ont pas accès (403).

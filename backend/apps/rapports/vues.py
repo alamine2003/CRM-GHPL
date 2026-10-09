@@ -145,6 +145,8 @@ def _fichier(p: PieceJointe):
                            as_attachment=False, filename=p.nom)  # fmt: skip
     reponse["Cache-Control"] = "private, no-store"
     reponse["X-Content-Type-Options"] = "nosniff"
+    # 0.9.3 : ouvert dans un navigateur, le PDF n'exécute ni script ni formulaire.
+    reponse["Content-Security-Policy"] = "sandbox; default-src 'none'; frame-ancestors 'none'"
     return reponse
 
 
