@@ -704,6 +704,17 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.77 Candidat final : gel, publication et dossier de lancement (mise en œuvre 0.9.9)
+
+- **Gel fonctionnel** [D, 9 octobre 2026, délégation] : à partir de la 0.9.9, aucune fonction nouvelle n'entre avant la 1.0.0. Seules entrent les corrections de défauts relevés en recette, aux essais de terrain ou pendant le pilote, livrées en 0.9.9 révisées par la procédure de mise à jour.
+- **Publication** (§21.2, condition 7) : profil de construction `production` (magasins, canal de mises à jour `production`) et soumission sur la piste interne de Google Play. Le guide `docs/publication-magasins.md` donne ce que l'entreprise fournit, les étapes et le contenu des fiches, dont la déclaration des données collectées.
+- **Défauts corrigés en préparant la publication** :
+  - le module de mise à jour à distance (`expo-updates`, EAS Update) manquait alors que la procédure de mise à jour en dépend. Il est ajouté, avec une version d'exécution liée à la version de l'application : une mise à jour à distance ne vise que les téléphones de la même version ;
+  - le texte de l'autorisation de position ne parlait que des établissements. Il dit maintenant la position au début et à la fin de chaque visite, jamais en continu, comme l'exigent les magasins ;
+  - le texte de Face ID annonçait encore « 5 minutes ».
+- **Dossier de lancement** (§21.2, condition 9 ; §21.3) : `docs/dossier-lancement.md` reprend les neuf conditions, avec leur état, leur preuve et ce qui reste. Il donne l'ordre conseillé jusqu'à la 1.0.0 et les risques, et se termine par la décision à signer de la direction générale.
+- **Reste, hors du dépôt** : les formalités CDP, la souscription de l'hébergement, la recette en préproduction, le test d'intrusion, les essais de terrain, la reprise de BirdNotes, la publication, le pilote et la décision de la direction générale (dossier, §2).
+
 ### 14.76 Correction des défauts et recette utilisateur (mise en œuvre 0.9.8)
 
 - **Recette utilisateur** (§21.1, §21.2 condition 1) : `docs/recette-utilisateur.md` donne une fiche par scénario REC-01 à REC-20. Chaque fiche indique :

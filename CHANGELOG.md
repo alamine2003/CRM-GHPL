@@ -2,6 +2,25 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.9] — Candidat final
+
+Dernier jalon du cycle 0.9 « Durcissement et pilote » : gel fonctionnel avant la 1.0.0.
+
+### Ajouté (prd.md §14.77, §21.2, §21.3)
+
+- `docs/dossier-lancement.md` : les neuf conditions de la 1.0.0, leur état, leur preuve et ce qui reste ; l'ordre conseillé ; les risques ; la décision à signer de la direction générale.
+- `docs/publication-magasins.md` et profil de construction `production` : publication sur Google Play et l'App Store.
+- Mises à jour à distance de l'application (`expo-updates`), comme le prévoit la procédure de mise à jour.
+
+### Corrigé
+
+- Texte de l'autorisation de position : il dit la position au début et à la fin de chaque visite, jamais en continu (exigence des magasins).
+- Texte de Face ID : il annonçait encore « 5 minutes ».
+
+### Design
+
+Pas d'écran modifié (textes des demandes d'autorisation du système seulement).
+
 ## [0.9.8] — Correction des défauts et recette utilisateur
 
 Huitième jalon du cycle 0.9 « Durcissement et pilote ».

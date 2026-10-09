@@ -7,20 +7,40 @@
     "apercu": {
       "distribution": "internal",
       "environment": "preview",
-      "android": { "buildType": "apk" }
+      "android": {
+        "buildType": "apk"
+      }
     },
     "simulateur": {
       "extends": "apercu",
-      "ios": { "simulator": true }
+      "ios": {
+        "simulator": true
+      }
     },
     "recette": {
       "distribution": "store",
       "environment": "preview",
       "autoIncrement": true,
-      "android": { "buildType": "app-bundle" }
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "environment": "production",
+      "channel": "production",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   },
   "submit": {
-    "recette": {}
+    "recette": {},
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
   }
 }
