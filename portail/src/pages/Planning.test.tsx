@@ -11,6 +11,7 @@ import Planning from './Planning';
 
 const VISITE: Visite = {
   id: 'v1',
+  version: 1,
   date: '2026-10-27',
   heure: null,
   prospect: {

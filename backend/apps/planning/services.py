@@ -236,20 +236,56 @@ def _heure(h) -> str | None:
     return h.strftime("%H:%M") if h else None
 
 
+def _actuels(visite: Visite) -> dict:
+    return {"date": visite.date, "heure": visite.heure, "prospect": visite.prospect_id,
+            "etablissement": visite.etablissement_id, "reseau": visite.reseau_id,
+            "objectif": visite.objectif, "note": visite.note}  # fmt: skip
+
+
+def _normaliser(cle: str, valeur):
+    if cle in ("prospect", "etablissement", "reseau"):
+        return getattr(valeur, "pk", valeur)
+    if cle in ("objectif", "note"):
+        return (valeur or "").strip()
+    return valeur
+
+
 def _changements(visite: Visite, champs: dict) -> set[str]:
     """Ce que la saisie change vraiment : le téléphone renvoie souvent tout le formulaire."""
-    actuels = {"date": visite.date, "heure": visite.heure, "prospect": visite.prospect_id,
-               "etablissement": visite.etablissement_id, "reseau": visite.reseau_id,
-               "objectif": visite.objectif, "note": visite.note}  # fmt: skip
-    differents = set()
-    for cle, valeur in champs.items():
-        if cle in ("prospect", "etablissement", "reseau"):
-            valeur = getattr(valeur, "pk", valeur)
-        elif cle in ("objectif", "note"):
-            valeur = (valeur or "").strip()
-        if cle in actuels and valeur != actuels[cle]:
-            differents.add(cle)
-    return differents
+    actuels = _actuels(visite)
+    return {cle for cle, valeur in champs.items()
+            if cle in actuels and _normaliser(cle, valeur) != actuels[cle]}  # fmt: skip
+
+
+def _sans_conflit(visite: Visite, champs: dict, avant: dict | None) -> dict:
+    """OFF-004, RG-052, RG-053 : avec `avant` (la visite telle que le téléphone la
+    connaissait), seuls les champs que le délégué a changés s'écrivent : le reste du formulaire,
+    renvoyé tel quel, n'écrase pas ce qui a changé ailleurs. Un champ changé des deux côtés, et
+    autrement, est un conflit : rien n'est écrasé en silence. Le contrôle se fait champ par
+    champ : un rangement de la journée, qui touche l'ordre, n'en est pas un."""
+    if not avant:
+        return champs
+    champs = {
+        cle: valeur for cle, valeur in champs.items()
+        if cle not in avant or _normaliser(cle, valeur) != _normaliser(cle, avant[cle])
+    }  # fmt: skip
+    actuels = _actuels(visite)
+    en_conflit = sorted(
+        cle for cle, valeur in champs.items()
+        if cle in avant and cle in actuels
+        and actuels[cle] != _normaliser(cle, avant[cle])
+        and actuels[cle] != _normaliser(cle, valeur)
+    )  # fmt: skip
+    if en_conflit:
+        raise ErreurMetier(
+            "conflit_version",
+            _("Cette visite a changé ailleurs depuis votre dernière synchronisation."),
+            status.HTTP_409_CONFLICT,
+            champs=en_conflit,
+            serveur={cle: str(actuels[cle]) if actuels[cle] is not None else None
+                     for cle in en_conflit},
+        )  # fmt: skip
+    return champs
 
 
 def _tracer_mineures(planning: Planning, jour: date, avant: dict) -> None:
@@ -453,11 +489,12 @@ def ajouter_visite(planning: Planning, id=None, report: bool = False, **champs) 
 
 
 @transaction.atomic
-def modifier_visite(visite: Visite, **champs) -> Visite:
+def modifier_visite(visite: Visite, avant: dict | None = None, **champs) -> Visite:
     """Après approbation (PLN-015, RG-018), changer l'heure dans la journée est mineur : libre
     et tracé, le planning reste approuvé (CA1) ; tout autre changement est majeur."""
     planning = visite.planning
     approuve = _exiger_modifiable(planning, apres_approbation=True)
+    champs = _sans_conflit(visite, champs, avant)
     _exiger_jour_ouvert(planning, visite.date)
     if "date" in champs:
         _exiger_jour_ouvert(planning, champs["date"])

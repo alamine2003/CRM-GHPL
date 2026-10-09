@@ -32,6 +32,7 @@ const position = Location.getCurrentPositionAsync as jest.Mock;
 
 const VISITE: VisiteProgramme = {
   id: 'v1',
+  version: 1,
   date: '2026-10-13',
   heure: '09:00',
   prospect: {

@@ -19,6 +19,7 @@ import {
   type Envoi,
   envoyerAttente,
   estTransitoire,
+  garderMaVersion,
   lireAttente,
   lireBrouillon,
   oublierBrouillon,
@@ -368,6 +369,12 @@ export default function EcranSemaine() {
           surAbandonner={(id) =>
             void abandonnerEnvoi(id).then(async () => setAttente(await lireAttente()))
           }
+          surGarderMienne={(id) => {
+            setEnvoiAttente(true);
+            void garderMaVersion(id)
+              .then(() => charger(semaine?.semaine))
+              .finally(() => setEnvoiAttente(false));
+          }}
         />
       )}
       {!semaine ? (

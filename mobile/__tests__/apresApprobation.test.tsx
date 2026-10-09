@@ -32,6 +32,7 @@ jest.mock('../src/semaineLocale', () => ({
 
 const VISITE: Visite = {
   id: 'v1',
+  version: 1,
   date: '2026-10-14',
   heure: '09:00',
   prospect: {

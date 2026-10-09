@@ -354,10 +354,24 @@ def _remises(rapport: Rapport, saisies: list[dict]) -> list[dict]:
 
 
 @transaction.atomic
-def enregistrer(rapport: Rapport, **valeurs) -> Rapport:
-    """Le brouillon : chaque envoi reprend tout ce que le délégué a saisi."""
+def enregistrer(rapport: Rapport, version: int | None = None, **valeurs) -> Rapport:
+    """Le brouillon : chaque envoi reprend tout ce que le délégué a saisi.
+
+    RG-050 : un rapport soumis, validé ou rendu ne se modifie pas, la décision l'emporte.
+    RG-052 : avec `version`, la saisie qui s'appuie sur une version périmée est un conflit ; la
+    version 0 désigne le modèle vierge gardé par le téléphone (OFF-002), que la première
+    ouverture du rapport porte à 1.
+    """
     rapport = Rapport.objects.select_for_update().get(pk=rapport.pk)
     _exiger_modifiable(rapport)
+    if version is not None and rapport.version > max(version, 1):
+        raise ErreurMetier(
+            "conflit_version",
+            _("Ce rapport a changé ailleurs depuis votre dernière synchronisation : ouvrez-le "
+              "pour choisir la version à garder."),
+            status.HTTP_409_CONFLICT,
+            version=rapport.version,
+        )  # fmt: skip
     if "presentations" in valeurs:
         rapport.presentations = _presentations(rapport, valeurs["presentations"] or [])
     if "remises" in valeurs:

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.8.3
+  version: 0.8.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5917,6 +5917,34 @@ components:
           $ref: '#/components/schemas/RoleEnum'
       required:
       - role
+    AvantVisite:
+      type: object
+      description: 'RG-052 (0.8.4) : les valeurs de la visite telles que le téléphone
+        les connaissait.'
+      properties:
+        date:
+          type: string
+          format: date
+        heure:
+          type: string
+          format: time
+          nullable: true
+        prospect:
+          type: string
+          format: uuid
+          nullable: true
+        etablissement:
+          type: string
+          format: uuid
+          nullable: true
+        reseau:
+          type: string
+          format: uuid
+          nullable: true
+        objectif:
+          type: string
+        note:
+          type: string
     BlankEnum:
       enum:
       - ''
@@ -9368,6 +9396,8 @@ components:
         note:
           type: string
           maxLength: 500
+        avant:
+          $ref: '#/components/schemas/AvantVisite'
     PatchedSaisieEtablissement:
       type: object
       properties:
@@ -10644,6 +10674,9 @@ components:
           type: string
           format: uuid
           readOnly: true
+        version:
+          type: integer
+          readOnly: true
         visite:
           type: string
           format: uuid
@@ -10790,6 +10823,7 @@ components:
       - soumis_le
       - statut
       - types_action_proposes
+      - version
       - visite
       - visite_proposee
     RapportChronologie:
@@ -11876,6 +11910,9 @@ components:
         visite_proposee:
           type: boolean
         champs: {}
+        version:
+          type: integer
+          minimum: 0
     SaisieVisite:
       type: object
       properties:
@@ -12842,6 +12879,9 @@ components:
           type: string
           format: uuid
           readOnly: true
+        version:
+          type: integer
+          readOnly: true
         date:
           type: string
           format: date
@@ -12963,6 +13003,7 @@ components:
       - reportee_de
       - reseau
       - sans_gps
+      - version
     VisiteFigee:
       type: object
       description: Une visite telle que soumise dans une version (RG-037).
@@ -13150,6 +13191,9 @@ components:
           type: string
           format: uuid
           readOnly: true
+        version:
+          type: integer
+          readOnly: true
         date:
           type: string
           format: date
@@ -13274,6 +13318,7 @@ components:
       - reportee_de
       - reseau
       - sans_gps
+      - version
     VisiteProposee:
       type: object
       description: 'DC-61 : un prospect pour qui la dernière visite a proposé d''y

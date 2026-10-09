@@ -2,6 +2,31 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.4] — Conflits sans perte silencieuse
+
+Quatrième jalon du cycle 0.8 « Mobilité ».
+
+### Ajouté (OFF-004, RG-050 à RG-053, prd.md §14.63)
+
+- Le rapport et la visite portent leur version ; une saisie qui s'appuie sur une version périmée est refusée (conflit) au lieu d'écraser.
+- Visites : seuls les champs changés par le délégué s'écrivent ; un champ changé des deux côtés est un conflit.
+- Téléphone : « Ce rapport a changé ailleurs » montre les deux versions, champ par champ, avec « Garder ma version » et « Garder la version du serveur » ; une visite en conflit attend le choix dans la file d'envoi.
+- Une décision du superviseur (rapport soumis, validé) l'emporte toujours : la saisie restée sur le téléphone se lit, puis s'abandonne.
+
+### Corrigé
+
+- Une saisie de rapport restée sur le téléphone l'emportait sans rien dire sur un rapport changé ailleurs, ou était ignorée sans explication après une décision.
+- Le rappel d'envoi d'un rapport disparaît dès que la saisie est arrivée au serveur.
+
+### Design
+
+Revue sur le rendu réel (délégué de la démonstration, téléphone 360 px ; rapport écrit sans réseau, puis changé depuis un autre appareil) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Conflit de rapport | Encadré bleu « information » dans une carte orange « attention » : deux signaux contraires | Texte simple dans la carte ; l'encadré orange reste réservé à une décision du superviseur |
+| Après « Garder ma version » | « 1 envoi en attente » restait affiché alors que le rapport était enregistré | Le rappel d'envoi du rapport est retiré dès l'enregistrement |
+
 ## [0.8.3] — File visible, sept jours sans réseau, effacement à distance
 
 Troisième jalon du cycle 0.8 « Mobilité ».

@@ -21,6 +21,7 @@ import {
   ecouterFile,
   type Envoi,
   envoyerAttente,
+  garderMaVersion,
   lireAttente,
 } from './Brouillons';
 import { Alerte, Bouton, Carte, Ligne, Logo, Texte, usePalette } from './composants';
@@ -207,6 +208,7 @@ export function CarteSynchro() {
           envoi={envoi}
           surEnvoyer={relancer}
           surAbandonner={(id) => void abandonnerEnvoi(id)}
+          surGarderMienne={(id) => void garderMaVersion(id).then(relancer)}
         />
       )}
     </>

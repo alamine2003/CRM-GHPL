@@ -34,6 +34,7 @@ import {
   useLien,
   usePalette,
 } from './composants';
+import { avantDe, conflitDe } from './Conflits';
 import type { Alerte as AlerteVisite } from './Controles';
 import { Pilule } from './Etablissements';
 import { nomProspect } from './Fiches';
@@ -305,8 +306,11 @@ export function FormulaireVisite({
     };
     // L'identifiant est tiré ici : renvoyée après une coupure, la visite n'est créée qu'une fois.
     const ajout = { ...saisie, id: nouvelIdentifiant() };
+    // OFF-004 : la visite telle que le téléphone la connaît ; seuls les champs changés
+    // s'écrivent, et un champ changé ailleurs entre-temps est un conflit (RG-053).
+    const modification = visite ? { ...saisie, avant: avantDe(visite) } : null;
     try {
-      if (visite) await client.visites.modifier(visite.id, saisie);
+      if (visite && modification) await client.visites.modifier(visite.id, modification);
       else if (semaine.planning) await client.plannings.ajouterVisite(semaine.planning.id, ajout);
       await oublierBrouillon();
       surTermine(
@@ -319,8 +323,10 @@ export function FormulaireVisite({
               : t('visites.ajoutee'),
       );
     } catch (e) {
-      if (estTransitoire(e) && semaine.planning) {
+      const conflit = conflitDe(e);
+      if ((estTransitoire(e) || conflit) && semaine.planning) {
         // Sans réseau : la visite attend sur le téléphone et partira au retour du réseau.
+        // En conflit : elle attend que le délégué choisisse entre les deux versions.
         const resume = [
           libelleJour({ date } as JourSemaine),
           prospect ? nomProspect(prospect, t) : '',
@@ -328,8 +334,15 @@ export function FormulaireVisite({
           .filter(Boolean)
           .join(' · ');
         await mettreEnAttente(
-          visite
-            ? { id: nouvelIdentifiant(), type: 'modif_visite', visite: visite.id, saisie, resume }
+          visite && modification
+            ? {
+                id: nouvelIdentifiant(),
+                type: 'modif_visite',
+                visite: visite.id,
+                saisie: modification,
+                resume,
+                ...(conflit ? { conflit, erreur: messageErreur(e, '') } : {}),
+              }
             : {
                 id: ajout.id,
                 type: 'ajout_visite',
@@ -339,7 +352,7 @@ export function FormulaireVisite({
               },
         );
         await oublierBrouillon();
-        surTermine(t('attente.gardee'));
+        surTermine(t(conflit ? 'conflits.visiteGardee' : 'attente.gardee'));
         return;
       }
       setErreur(messageErreur(e, t('erreurs.reseau')));

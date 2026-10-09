@@ -22,6 +22,7 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => 'indispo-1' }));
 
 const visite = (id: string, heure: string, nom: string, date = '2026-10-13'): VisiteProgramme => ({
   id,
+  version: 1,
   date,
   heure,
   prospect: {

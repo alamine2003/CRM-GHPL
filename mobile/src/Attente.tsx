@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Brouillon, Envoi } from './Brouillons';
 import { Alerte, Bouton, Carte, Texte, usePalette } from './composants';
+import { differencesVisite, TableauDifferences } from './Conflits';
 import { police } from './polices';
 
 /** Sans réseau : la semaine affichée est celle gardée sur le téléphone, à telle heure. */
@@ -61,11 +62,14 @@ export function CarteAttente({
   envoi,
   surEnvoyer,
   surAbandonner,
+  surGarderMienne,
 }: {
   envois: Envoi[];
   envoi: boolean;
   surEnvoyer: () => void;
   surAbandonner: (id: string) => void;
+  /** OFF-004 : renvoyer sa version d'une visite en conflit. */
+  surGarderMienne?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const p = usePalette();
@@ -83,8 +87,26 @@ export function CarteAttente({
               {t(`attente.types.${e.type}`)} · {e.resume}
             </Text>
             {e.erreur ? <Text style={[styles.erreur, { color: p.erreur }]}>{e.erreur}</Text> : null}
+            {e.type === 'modif_visite' && e.conflit ? (
+              <View style={{ gap: 8, marginTop: 4 }}>
+                <TableauDifferences
+                  lignes={differencesVisite(e.conflit, e.saisie as Record<string, unknown>, t)}
+                />
+                {surGarderMienne && (
+                  <Bouton
+                    libelle={t('conflits.garderTelephone')}
+                    onPress={() => surGarderMienne(e.id)}
+                  />
+                )}
+                <Bouton
+                  secondaire
+                  libelle={t('conflits.garderServeur')}
+                  onPress={() => surAbandonner(e.id)}
+                />
+              </View>
+            ) : null}
           </View>
-          {e.erreur ? (
+          {e.erreur && !(e.type === 'modif_visite' && e.conflit) ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('attente.abandonnerUn', { resume: e.resume })}

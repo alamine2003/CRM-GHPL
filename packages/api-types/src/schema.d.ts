@@ -3263,6 +3263,21 @@ export interface components {
     AttributionRole: {
       role: components['schemas']['RoleEnum'];
     };
+    /** @description RG-052 (0.8.4) : les valeurs de la visite telles que le téléphone les connaissait. */
+    AvantVisite: {
+      /** Format: date */
+      date?: string;
+      /** Format: time */
+      heure?: string | null;
+      /** Format: uuid */
+      prospect?: string | null;
+      /** Format: uuid */
+      etablissement?: string | null;
+      /** Format: uuid */
+      reseau?: string | null;
+      objectif?: string;
+      note?: string;
+    };
     /** @enum {unknown} */
     BlankEnum: '';
     /** @description Qui l'utilisateur peut faire remplacer, et par qui (superviseurs du pays). */
@@ -4719,6 +4734,7 @@ export interface components {
       reseau?: string | null;
       objectif?: string;
       note?: string;
+      avant?: components['schemas']['AvantVisite'];
     };
     PatchedSaisieEtablissement: {
       nom?: string;
@@ -5199,6 +5215,7 @@ export interface components {
     Rapport: {
       /** Format: uuid */
       readonly id: string;
+      readonly version: number;
       /** Format: uuid */
       readonly visite: string;
       readonly statut: components['schemas']['StatutRapportEnum'];
@@ -5686,6 +5703,7 @@ export interface components {
       prochaine_action_echeance?: string | null;
       visite_proposee?: boolean;
       champs?: unknown;
+      version?: number;
     };
     SaisieVisite: {
       /** Format: uuid */
@@ -6105,6 +6123,7 @@ export interface components {
     Visite: {
       /** Format: uuid */
       readonly id: string;
+      readonly version: number;
       /** Format: date */
       date: string;
       /** Format: time */
@@ -6212,6 +6231,7 @@ export interface components {
     VisiteProgramme: {
       /** Format: uuid */
       readonly id: string;
+      readonly version: number;
       /** Format: date */
       date: string;
       /** Format: time */

@@ -12,6 +12,7 @@
  */
 import type {
   ClientApi,
+  Rapport,
   Demarrage,
   Ecart,
   Imprevue,
@@ -27,11 +28,14 @@ import { Platform } from 'react-native';
 import { ErreurApi } from '@innov/api-client';
 import * as Crypto from 'expo-crypto';
 import { ecrire, lire, oublier } from './baseLocale';
+import { type ConflitVisite, conflitDe } from './Conflits';
 import {
   lireBrouillonRapport,
   marquerEnvoye,
   oublierBrouillon as oublierBrouillonRapport,
   oublierFichier,
+  oublierSaisie,
+  versionDeBase,
 } from './BrouillonRapport';
 
 const CLE_BROUILLON = 'planning.brouillon';
@@ -84,6 +88,8 @@ export type Envoi =
       saisie: ModificationVisite;
       resume: string;
       erreur?: string;
+      /** OFF-004 : la visite a changé ailleurs ; le délégué choisit (RG-053). */
+      conflit?: ConflitVisite;
     }
   | {
       id: string;
@@ -262,6 +268,42 @@ export async function abandonnerEnvoi(id: string) {
   await modifierFile((envois) => envois.filter((e) => e.id !== id));
 }
 
+/** La saisie du rapport est arrivée au serveur : son rappel d'envoi n'a plus lieu d'être. */
+export async function retirerBrouillonsRapport(visite: string) {
+  await modifierFile((envois) =>
+    envois.filter((e) => !(e.type === 'brouillon_rapport' && e.visite === visite)),
+  );
+}
+
+/** OFF-004 : la version du serveur l'emporte ; la saisie locale du rapport et ses envois
+ * en attente sont abandonnés, en connaissance de cause. */
+export async function abandonnerRapportLocal(visite: string, rapport: Rapport) {
+  await oublierSaisie(visite, rapport);
+  await modifierFile((envois) =>
+    envois.filter(
+      (e) =>
+        !(
+          (e.type === 'brouillon_rapport' || e.type === 'soumission_rapport') &&
+          e.visite === visite
+        ),
+    ),
+  );
+}
+
+/**
+ * OFF-004 : « Garder ma version » d'une visite en conflit. La modification repart des valeurs
+ * que le serveur a montrées : renvoyée, elle les remplace en connaissance de cause.
+ */
+export async function garderMaVersion(id: string) {
+  await modifierFile((envois) =>
+    envois.map((e) => {
+      if (e.id !== id || e.type !== 'modif_visite' || !e.conflit) return e;
+      const avant = { ...e.saisie.avant, ...e.conflit.serveur } as ModificationVisite['avant'];
+      return { ...e, saisie: { ...e.saisie, avant }, conflit: undefined, erreur: undefined };
+    }),
+  );
+}
+
 /**
  * Rejoue la file dans l'ordre. Un envoi réussi en sort ; un refus du serveur reste, avec son
  * message, pour que le délégué corrige ou abandonne ; une panne de réseau arrête tout.
@@ -280,6 +322,7 @@ async function rejouer(client: ClientApi): Promise<number> {
   const envois = await lireAttente();
   const partis = new Set<string>();
   const refus = new Map<string, string>();
+  const conflits = new Map<string, ConflitVisite>();
   for (const envoi of envois) {
     try {
       if (envoi.type === 'ajout_visite') {
@@ -306,13 +349,21 @@ async function rejouer(client: ClientApi): Promise<number> {
       } else if (envoi.type === 'brouillon_rapport') {
         const brouillon = await lireBrouillonRapport(envoi.visite);
         if (brouillon?.saisie && !brouillon.envoye) {
-          const rapport = await client.visites.enregistrerRapport(envoi.visite, brouillon.saisie);
+          // RG-052 : la version de base part avec la saisie ; si le rapport a changé ailleurs,
+          // le serveur refuse (conflit) et le délégué choisit en ouvrant le rapport (RG-053).
+          const rapport = await client.visites.enregistrerRapport(envoi.visite, {
+            ...brouillon.saisie,
+            version: versionDeBase(brouillon),
+          });
           await marquerEnvoye(envoi.visite, rapport);
         }
       } else if (envoi.type === 'soumission_rapport') {
         const brouillon = await lireBrouillonRapport(envoi.visite);
         if (brouillon?.saisie && !brouillon.envoye)
-          await client.visites.enregistrerRapport(envoi.visite, brouillon.saisie);
+          await client.visites.enregistrerRapport(envoi.visite, {
+            ...brouillon.saisie,
+            version: versionDeBase(brouillon),
+          });
         await client.visites.soumettreRapport(envoi.visite, envoi.soumis_le);
         await oublierBrouillonRapport(envoi.visite);
       } else if (envoi.type === 'proposition') {
@@ -333,13 +384,23 @@ async function rejouer(client: ClientApi): Promise<number> {
     } catch (e) {
       if (estTransitoire(e)) break;
       refus.set(envoi.id, e instanceof Error ? e.message : String(e));
+      const conflit = conflitDe(e);
+      if (conflit) conflits.set(envoi.id, conflit);
     }
   }
   // Seuls les envois rejoués changent ; ce qui s'est ajouté entre-temps reste tel quel.
   await modifierFile((actuels) =>
     actuels
       .filter((e) => !partis.has(e.id))
-      .map((e) => (refus.has(e.id) ? { ...e, erreur: refus.get(e.id) } : e)),
+      .map((e) =>
+        refus.has(e.id)
+          ? {
+              ...e,
+              erreur: refus.get(e.id),
+              ...(conflits.has(e.id) ? { conflit: conflits.get(e.id) } : {}),
+            }
+          : e,
+      ),
   );
   return partis.size;
 }

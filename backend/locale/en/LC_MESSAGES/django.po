@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 20:00+0000\n"
+"POT-Creation-Date: 2026-10-09 02:50+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -714,6 +714,9 @@ msgstr "This planning can no longer be changed in its current state."
 msgid "Cette journée est passée : son planning ne se modifie plus."
 msgstr "This day is over: its planning can no longer be changed."
 
+msgid "Cette visite a changé ailleurs depuis votre dernière synchronisation."
+msgstr "This visit was changed elsewhere since your last sync."
+
 msgid "Ce jour n'est pas un jour ouvré de la semaine du planning."
 msgstr "This day is not a working day of the planning week."
 
@@ -1021,6 +1024,13 @@ msgstr "Unknown item."
 
 msgid "Échantillon ou cadeau attendu."
 msgstr "Sample or gift expected."
+
+msgid ""
+"Ce rapport a changé ailleurs depuis votre dernière synchronisation : ouvrez-"
+"le pour choisir la version à garder."
+msgstr ""
+"This report was changed elsewhere since your last sync: open it to choose "
+"which version to keep."
 
 msgid "Résultat inconnu."
 msgstr "Unknown result."

@@ -51,6 +51,7 @@ export async function declarerImprevue(
   };
   const locale: VisiteProgramme = {
     id: saisie.id,
+    version: 0,
     date: programme.aujourdhui,
     heure: heureLocale(le, programme.fuseau),
     prospect: {

@@ -153,12 +153,14 @@ class VisiteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Visite
-        fields = ["id", "date", "heure", "prospect", "etablissement", "reseau", "objectif",
+        fields = ["id", "version", "date", "heure", "prospect", "etablissement", "reseau",
+                  "objectif",
                   "note", "statut", "manquants", "passage", "ordre", "debut_le", "sans_gps",
                   "distance_debut_m", "fin_le", "fin_sans_gps", "distance_fin_m",
                   "motif_ecart", "commentaire_ecart", "ecart_le", "reportee_de",
                   "report", "est_imprevue", "justification", "rapport_statut"]  # fmt: skip
-        read_only_fields = ["debut_le", "sans_gps", "distance_debut_m", "fin_le", "fin_sans_gps",
+        read_only_fields = ["version", "debut_le", "sans_gps", "distance_debut_m", "fin_le",
+                            "fin_sans_gps",
                             "distance_fin_m", "commentaire_ecart", "ecart_le",
                             "reportee_de", "est_imprevue", "justification"]  # fmt: skip
 
@@ -208,9 +210,23 @@ class SaisieVisiteSerializer(serializers.Serializer):
     note = serializers.CharField(max_length=500, required=False, allow_blank=True)
 
 
+class AvantVisiteSerializer(serializers.Serializer):
+    """RG-052 (0.8.4) : les valeurs de la visite telles que le téléphone les connaissait."""
+
+    date = serializers.DateField(required=False)
+    heure = serializers.TimeField(required=False, allow_null=True)
+    prospect = serializers.UUIDField(required=False, allow_null=True)
+    etablissement = serializers.UUIDField(required=False, allow_null=True)
+    reseau = serializers.UUIDField(required=False, allow_null=True)
+    objectif = serializers.CharField(required=False, allow_blank=True)
+    note = serializers.CharField(required=False, allow_blank=True)
+
+
 class ModificationVisiteSerializer(SaisieVisiteSerializer):
     id = None
     date = serializers.DateField(required=False)
+    #: Un champ changé ailleurs depuis, et autrement, est un conflit (OFF-004, RG-053).
+    avant = AvantVisiteSerializer(required=False)
 
 
 class OrdreSerializer(serializers.Serializer):

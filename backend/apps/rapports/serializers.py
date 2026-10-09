@@ -240,7 +240,8 @@ class RapportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Rapport
-        fields = ["id", "visite", "statut", "correction", "reouverture", "objectif_prevu",
+        fields = ["id", "version", "visite", "statut", "correction", "reouverture",
+                  "objectif_prevu",
                   "est_imprevue", "justification",
                   "presentations", "resultat", "resultat_obtenu", "resume", "prochaine_action",
                   "prochaine_action_type", "prochaine_action_echeance", "visite_proposee",
@@ -312,6 +313,9 @@ class SaisieRapportSerializer(serializers.Serializer):
     prochaine_action_echeance = serializers.DateField(required=False, allow_null=True)
     visite_proposee = serializers.BooleanField(required=False)
     champs = serializers.JSONField(required=False)
+    #: RG-052 (0.8.4) : la version du rapport sur laquelle la saisie s'appuie ; si le rapport a
+    #: changé depuis, l'enregistrement est refusé (conflit) au lieu d'écraser en silence.
+    version = serializers.IntegerField(required=False, min_value=0)
 
     def validate_champs(self, valeur):
         if not isinstance(valeur, dict):

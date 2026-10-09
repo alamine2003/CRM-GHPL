@@ -25,6 +25,7 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => 'envoi-1' }));
 
 const BROUILLON: Rapport = {
   id: 'r1',
+  version: 1,
   visite: 'v1',
   statut: 'brouillon',
   correction: null,
@@ -214,6 +215,8 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
     prochaine_action_echeance: '2026-10-20',
     visite_proposee: true,
     champs: { patients: 40 },
+    // RG-052 : la version du rapport sur laquelle la saisie s'appuie.
+    version: 1,
   });
   expect(soumettreRapport).toHaveBeenCalledWith('v1', expect.any(String));
   expect(await screen.findByText('Rapport soumis à votre superviseur.')).toBeTruthy();

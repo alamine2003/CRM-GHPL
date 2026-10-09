@@ -2594,5 +2594,40 @@
     },
     "ligneHeure": "Synchronisé à {{heure}}",
     "ligneJour": "Synchronisé le {{jour}}"
+  },
+  "conflits": {
+    "visiteGardee": "Cette visite a changé ailleurs entre-temps : choisissez la version à garder (profil ou semaine, « envois en attente »).",
+    "autre": "une autre valeur",
+    "vide": "(vide)",
+    "telephone": "Sur ce téléphone",
+    "serveur": "Sur le serveur",
+    "aucuneDifference": "Les deux versions sont identiques.",
+    "rapportTitre": "Ce rapport a changé ailleurs",
+    "rapportAide": "Votre saisie, restée sur ce téléphone, et le rapport enregistré entre-temps sur le serveur diffèrent. Rien n'a été remplacé : choisissez la version à garder.",
+    "decision": "Votre superviseur a {{statut}} ce rapport entre-temps : sa décision l'emporte. Voici ce qui restait sur ce téléphone, non envoyé.",
+    "statuts": {
+      "soumis": "reçu",
+      "valide": "validé"
+    },
+    "garderTelephone": "Garder ma version",
+    "garderServeur": "Garder la version du serveur",
+    "abandonnerTelephone": "J'ai lu : abandonner ma version",
+    "versionGardee": "Votre version est gardée ; elle part au serveur.",
+    "champs": {
+      "date": "Date",
+      "heure": "Heure",
+      "prospect": "Prospect",
+      "etablissement": "Lieu",
+      "reseau": "Réseau",
+      "objectif": "Objectif",
+      "note": "Note",
+      "produits": "Produits présentés",
+      "resultat": "Résultat",
+      "resultat_obtenu": "Résultat obtenu",
+      "resume": "Résumé",
+      "prochaine_action_type": "Type de prochaine action",
+      "prochaine_action": "Prochaine action",
+      "prochaine_action_echeance": "Échéance"
+    }
   }
 }

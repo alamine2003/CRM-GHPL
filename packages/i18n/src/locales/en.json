@@ -2594,5 +2594,40 @@
     },
     "ligneHeure": "Synced at {{heure}}",
     "ligneJour": "Synced on {{jour}}"
+  },
+  "conflits": {
+    "visiteGardee": "This visit was changed elsewhere in the meantime: choose which version to keep (profile or week, “waiting to send”).",
+    "autre": "another value",
+    "vide": "(empty)",
+    "telephone": "On this phone",
+    "serveur": "On the server",
+    "aucuneDifference": "Both versions are the same.",
+    "rapportTitre": "This report was changed elsewhere",
+    "rapportAide": "Your input, kept on this phone, and the report saved on the server in the meantime differ. Nothing was replaced: choose which version to keep.",
+    "decision": "Your supervisor {{statut}} this report in the meantime: their decision stands. Here is what was left on this phone, unsent.",
+    "statuts": {
+      "soumis": "received",
+      "valide": "approved"
+    },
+    "garderTelephone": "Keep my version",
+    "garderServeur": "Keep the server version",
+    "abandonnerTelephone": "I have read it: drop my version",
+    "versionGardee": "Your version is kept; it is being sent to the server.",
+    "champs": {
+      "date": "Date",
+      "heure": "Time",
+      "prospect": "Prospect",
+      "etablissement": "Place",
+      "reseau": "Network",
+      "objectif": "Objective",
+      "note": "Note",
+      "produits": "Products presented",
+      "resultat": "Outcome",
+      "resultat_obtenu": "Result achieved",
+      "resume": "Summary",
+      "prochaine_action_type": "Next action type",
+      "prochaine_action": "Next action",
+      "prochaine_action_echeance": "Due date"
+    }
   }
 }

@@ -9,7 +9,9 @@ import * as FS from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 import { ecrire, lire, oublier } from './baseLocale';
 
-export type SaisieLocale = Required<Omit<SaisieRapport, 'champs'>> & { champs: ValeursChamps };
+export type SaisieLocale = Required<Omit<SaisieRapport, 'champs' | 'version'>> & {
+  champs: ValeursChamps;
+};
 
 export type BrouillonRapport = {
   /** Le rapport tel que le serveur l'a rendu la dernière fois (listes proposées, statut…). */
@@ -21,7 +23,22 @@ export type BrouillonRapport = {
   envoye: boolean;
   /** RPT-010 : soumis sur le téléphone, sans réseau, à cette heure ; en attente d'envoi. */
   soumis_le?: string | null;
+  /** RG-052 (0.8.4) : la version du serveur sur laquelle la saisie non envoyée s'appuie. */
+  base_version?: number;
 };
+
+/** La version que la saisie locale prolonge : celle de sa première modification non envoyée. */
+export function versionDeBase(b: BrouillonRapport | null): number | undefined {
+  if (!b) return undefined;
+  return b.base_version ?? b.rapport.version;
+}
+
+/** RG-052 : une saisie non envoyée garde sa base ; une saisie neuve part du rapport reçu. */
+function baseDe(actuel: BrouillonRapport | null, rapport: Rapport) {
+  return actuel && !actuel.envoye && actuel.saisie
+    ? (actuel.base_version ?? actuel.rapport.version)
+    : rapport.version;
+}
 
 const cle = (visite: string) => `rapport.${visite}`;
 
@@ -40,15 +57,25 @@ export async function garderRapport(visite: string, rapport: Rapport) {
     modifie_le: enCours?.modifie_le ?? null,
     envoye: !enCours,
     soumis_le: actuel?.soumis_le ?? null,
+    // La saisie en cours garde la version sur laquelle elle s'appuie (RG-052).
+    base_version: enCours && actuel ? baseDe(actuel, actuel.rapport) : undefined,
   } satisfies BrouillonRapport).catch(() => undefined);
 }
 
-export async function garderSaisie(visite: string, rapport: Rapport, saisie: SaisieLocale) {
+export async function garderSaisie(
+  visite: string,
+  rapport: Rapport,
+  saisie: SaisieLocale,
+  /** OFF-004 : « Garder ma version » repart de la version du serveur qu'il a vue. */
+  base?: number,
+) {
+  const actuel = await lireBrouillonRapport(visite);
   await ecrire(cle(visite), {
     rapport,
     saisie,
     modifie_le: new Date().toISOString(),
     envoye: false,
+    base_version: base ?? baseDe(actuel, rapport),
   } satisfies BrouillonRapport).catch(() => undefined);
 }
 
@@ -60,6 +87,17 @@ export async function marquerEnvoye(visite: string, rapport: Rapport) {
     modifie_le: actuel?.modifie_le ?? null,
     envoye: true,
     soumis_le: actuel?.soumis_le ?? null,
+  } satisfies BrouillonRapport).catch(() => undefined);
+}
+
+/** OFF-004 : le délégué abandonne sa saisie locale au profit du rapport du serveur. */
+export async function oublierSaisie(visite: string, rapport: Rapport) {
+  await ecrire(cle(visite), {
+    rapport,
+    saisie: null,
+    modifie_le: null,
+    envoye: true,
+    soumis_le: null,
   } satisfies BrouillonRapport).catch(() => undefined);
 }
 
@@ -78,6 +116,7 @@ export async function garderSoumission(
     // Renvoyée avant la soumission : le serveur vérifie le rapport tel que soumis.
     envoye: false,
     soumis_le,
+    base_version: baseDe(actuel, rapport),
   } satisfies BrouillonRapport).catch(() => undefined);
 }
 

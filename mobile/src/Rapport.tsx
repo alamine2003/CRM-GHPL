@@ -18,11 +18,13 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Switch, View } from 'react-native';
 import { ActionPrecedente } from './ActionPrecedente';
 import {
+  abandonnerRapportLocal as abandonnerSaisie,
   envoyerAttente,
   estTransitoire,
   lireAttente,
   mettreEnAttente,
   nouvelIdentifiant,
+  retirerBrouillonsRapport,
 } from './Brouillons';
 import {
   garderRapport,
@@ -32,7 +34,9 @@ import {
   marquerEnvoye,
   oublierBrouillon,
   type SaisieLocale,
+  versionDeBase,
 } from './BrouillonRapport';
+import { ConflitRapport, estConflit } from './Conflits';
 import { Alerte, Bouton, Carte, Champ, Texte, usePalette } from './composants';
 import { Pilule } from './Etablissements';
 import i18n from './i18n';
@@ -317,6 +321,8 @@ export function FormulaireRapport({
   const [horsLigne, setHorsLigne] = useState(false);
   // RPT-010 : soumis sur le téléphone sans réseau, à cette heure ; en attente d'envoi.
   const [soumisLocal, setSoumisLocal] = useState<string | null>(null);
+  /** OFF-004 : la saisie du téléphone, quand le rapport a changé ailleurs entre-temps. */
+  const [conflit, setConflit] = useState<SaisieLocale | null>(null);
   const modifie = useRef(false);
   // L'heure d'ouverture de l'écran suffit pour dire si l'échéance est passée.
   const [ouvertLe] = useState(() => Date.now());
@@ -346,15 +352,22 @@ export function FormulaireRapport({
         const r = await client.visites.rapport(id);
         await garderRapport(id, r);
         if (!actif) return;
-        // Une saisie faite sur le téléphone, pas encore reçue par le serveur, l'emporte.
-        const enCours = local?.saisie && !local.envoye && MODIFIABLES.has(r.statut);
+        // Une saisie faite sur le téléphone, pas encore reçue par le serveur, l'emporte… sauf si
+        // le rapport a changé ailleurs depuis (RG-052) ou si le superviseur a décidé (RG-050) :
+        // le délégué voit alors les deux versions et choisit (RG-053).
+        const nonEnvoyee = local?.saisie && !local.envoye ? local.saisie : null;
+        const change =
+          !!nonEnvoyee &&
+          (!MODIFIABLES.has(r.statut) || r.version > Math.max(versionDeBase(local) ?? 0, 1));
+        const enCours = !!nonEnvoyee && !change;
+        setConflit(change ? nonEnvoyee : null);
         setRapport(r);
-        setSaisie(enCours ? local.saisie : saisieDe(r));
+        setSaisie(enCours && nonEnvoyee ? nonEnvoyee : saisieDe(r));
         setRepris(!!enCours);
         setHorsLigne(false);
         setSoumisLocal(local?.soumis_le && MODIFIABLES.has(r.statut) ? local.soumis_le : null);
         // Repris : il sera renvoyé à la prochaine saisie ou depuis la file.
-        if (enCours && local.modifie_le)
+        if (enCours && local?.modifie_le)
           setGarde({ ou: 'telephone', le: new Date(local.modifie_le) });
       } catch (e) {
         if (!actif) return;
@@ -387,14 +400,21 @@ export function FormulaireRapport({
       void (async () => {
         await garderSaisie(id, rapport, saisie);
         try {
-          const r = await client.visites.enregistrerRapport(id, saisie);
+          const version = versionDeBase(await lireBrouillonRapport(id));
+          const r = await client.visites.enregistrerRapport(id, { ...saisie, version });
           await marquerEnvoye(id, r);
+          await retirerBrouillonsRapport(id);
           modifie.current = false;
           setRapport((avant) => (avant ? { ...r, pieces_jointes: avant.pieces_jointes } : r));
           setGarde({ ou: 'serveur', le: new Date() });
           setHorsLigne(false);
           await changerVisite(id, { rapport_statut: r.statut });
         } catch (e) {
+          if (estConflit(e)) {
+            // Changé ailleurs pendant la saisie : on relit, et le délégué choisit.
+            setTentative((n) => n + 1);
+            return;
+          }
           if (!estTransitoire(e)) {
             setMessage({ texte: messageErreur(e, t('erreurs.reseau')), ton: 'erreur' });
             return;
@@ -432,6 +452,36 @@ export function FormulaireRapport({
     );
   if (!rapport || !saisie)
     return <ActivityIndicator accessibilityLabel={t('session.chargement')} />;
+
+  if (conflit)
+    return (
+      <View style={{ gap: 12 }}>
+        <EnteteVisite visite={visite} fuseau={programme?.fuseau} />
+        <ConflitRapport
+          rapport={rapport}
+          telephone={conflit}
+          surGarderTelephone={() =>
+            void (async () => {
+              // RG-053 : le délégué garde sa version en connaissance de cause ; elle repart de
+              // la version du serveur qu'il vient de voir.
+              await garderSaisie(id, rapport, conflit, rapport.version);
+              modifie.current = true;
+              setConflit(null);
+              setSaisie(conflit);
+              setMessage({ texte: t('conflits.versionGardee'), ton: 'succes' });
+            })()
+          }
+          surGarderServeur={() =>
+            void (async () => {
+              await abandonnerSaisie(id, rapport);
+              setConflit(null);
+              setSoumisLocal(null);
+              setSaisie(saisieDe(rapport));
+            })()
+          }
+        />
+      </View>
+    );
 
   if (soumisLocal)
     return (
@@ -488,7 +538,8 @@ export function FormulaireRapport({
     // RPT-010 CA1 : l'heure du geste, sur le téléphone, fait foi même si l'envoi attend.
     const soumisLe = new Date().toISOString();
     try {
-      await client.visites.enregistrerRapport(id, saisie);
+      const version = versionDeBase(await lireBrouillonRapport(id)) ?? rapport?.version;
+      await client.visites.enregistrerRapport(id, { ...saisie, version });
       const r = await client.visites.soumettreRapport(id, soumisLe);
       modifie.current = false;
       setRapport(r);
@@ -497,6 +548,11 @@ export function FormulaireRapport({
       await changerVisite(id, { rapport_statut: r.statut });
       setMessage({ texte: t('rapport.soumis'), ton: 'succes' });
     } catch (e) {
+      if (estConflit(e)) {
+        await garderSaisie(id, rapport ?? (await lireBrouillonRapport(id))!.rapport, saisie);
+        setTentative((n) => n + 1);
+        return;
+      }
       if (!estTransitoire(e) || !rapport) {
         setMessage({ texte: messageErreur(e, t('erreurs.reseau')), ton: 'erreur' });
         return;
