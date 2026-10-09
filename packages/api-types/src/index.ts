@@ -11,6 +11,8 @@ export type Informations = Schemas['Informations'];
 export type Langue = Schemas['Langue'];
 export type Jetons = Schemas['Jetons'];
 export type Moi = Schemas['Moi'];
+/** NOT-005 (0.8.6) : une notification reçue et si elle part en push. */
+export type PreferenceNotification = Schemas['PreferenceNotification'];
 export type TypeClient = Schemas['ClientEnum'];
 export type Perimetre = Schemas['Perimetre'];
 export type PaysResume = Schemas['PaysResume'];

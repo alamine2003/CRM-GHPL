@@ -136,6 +136,15 @@ def _nouveaux_codes(d: DoubleAuthentification) -> list[str]:
 
 
 @transaction.atomic
+def _prevenir(utilisateur: Utilisateur, activee: bool) -> None:
+    """NOT-004 : un changement de double authentification est signalé par courriel."""
+    from django.db import transaction
+
+    from . import courriels
+
+    transaction.on_commit(lambda: courriels.courriel_double_auth(utilisateur, activee))
+
+
 def activer(utilisateur: Utilisateur, code: str) -> list[str]:
     """Confirme le premier code ; renvoie les codes de secours (montrés une seule fois)."""
     from apps.audit.services import enregistrer
@@ -152,6 +161,7 @@ def activer(utilisateur: Utilisateur, code: str) -> list[str]:
     d.active_le = timezone.now()
     d.save(update_fields=["active_le"])
     enregistrer("double_auth.activation", objet=utilisateur, pays=utilisateur.pays_principal)
+    _prevenir(utilisateur, activee=True)
     return _nouveaux_codes(d)
 
 
@@ -178,6 +188,7 @@ def desactiver(utilisateur: Utilisateur, code: str) -> None:
         raise ErreurMetier("code_invalide", _("Code incorrect ou expiré."))
     DoubleAuthentification.objects.filter(utilisateur=utilisateur).delete()
     enregistrer("double_auth.desactivation", objet=utilisateur, pays=utilisateur.pays_principal)
+    _prevenir(utilisateur, activee=False)
 
 
 @transaction.atomic

@@ -2629,5 +2629,31 @@
       "prochaine_action": "Next action",
       "prochaine_action_echeance": "Due date"
     }
+  },
+  "preferences": {
+    "titre": "Notifications on this phone",
+    "aide": "Choose what arrives as a notification. Everything stays in the notification centre.",
+    "obligatoire": "Mandatory",
+    "obligatoireAide": "This notification cannot be turned off.",
+    "sansReseau": "No network: notification settings can be changed when you are online.",
+    "types": {
+      "planning_soumis": "Plan to decide",
+      "planning_approuve": "Plan approved",
+      "revision_demandee": "Plan revision requested",
+      "remplacement_attribue": "Replacement assigned",
+      "rappel_planning": "Reminder: plan to submit",
+      "escalade": "Plan escalated",
+      "plannings_non_approuves": "Plans not approved",
+      "reouverture_demandee": "Week reopening requested",
+      "redaction_rouverte": "Week reopened",
+      "correction_demandee": "Report correction requested",
+      "rapport_corrige": "Corrected report to decide",
+      "rapport_rouvert": "Report reopened",
+      "rapport_en_retard": "Late report",
+      "rapports_soumis": "Reports to approve",
+      "rapports_valides": "Reports approved",
+      "rappel_rapport": "Reminder: report to submit",
+      "journee_escaladee": "Day escalated"
+    }
   }
 }

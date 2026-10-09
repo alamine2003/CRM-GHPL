@@ -15,7 +15,7 @@ EXCEPTIONS = {
     "perimetre", "mon-organisation", "erreurs-clients", "connexion-code", "double-auth",
     "double-auth-initialiser", "double-auth-activer", "double-auth-codes-secours",
     "double-auth-desactiver", "sessions", "sessions-revoquer-autres", "session-revoquer",
-    "mon-activite", "push-jeton",
+    "mon-activite", "push-jeton", "preferences-notifications",
 }  # fmt: skip
 
 

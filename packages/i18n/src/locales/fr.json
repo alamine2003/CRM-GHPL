@@ -2629,5 +2629,31 @@
       "prochaine_action": "Prochaine action",
       "prochaine_action_echeance": "Échéance"
     }
+  },
+  "preferences": {
+    "titre": "Notifications sur ce téléphone",
+    "aide": "Choisissez ce qui arrive en notification. Tout reste visible dans le centre de notifications.",
+    "obligatoire": "Obligatoire",
+    "obligatoireAide": "Cette notification ne peut pas être coupée.",
+    "sansReseau": "Pas de réseau : les réglages des notifications se changent avec du réseau.",
+    "types": {
+      "planning_soumis": "Planning à décider",
+      "planning_approuve": "Planning approuvé",
+      "revision_demandee": "Révision de planning demandée",
+      "remplacement_attribue": "Remplacement attribué",
+      "rappel_planning": "Rappel : planning à soumettre",
+      "escalade": "Planning remonté (escalade)",
+      "plannings_non_approuves": "Plannings non approuvés",
+      "reouverture_demandee": "Réouverture de semaine demandée",
+      "redaction_rouverte": "Semaine rouverte",
+      "correction_demandee": "Correction de rapport demandée",
+      "rapport_corrige": "Rapport corrigé à décider",
+      "rapport_rouvert": "Rapport rouvert",
+      "rapport_en_retard": "Rapport en retard",
+      "rapports_soumis": "Rapports à valider",
+      "rapports_valides": "Rapports validés",
+      "rappel_rapport": "Rappel : rapport à soumettre",
+      "journee_escaladee": "Journée remontée (escalade)"
+    }
   }
 }

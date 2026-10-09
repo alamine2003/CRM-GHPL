@@ -15,6 +15,7 @@ from .models import Session, Utilisateur
 from .serializers import (
     ActiviteCompteSerializer,
     ChangementLangueSerializer,
+    ChangementPreferencesSerializer,
     ChangementSerializer,
     CodeSerializer,
     CodesSecoursSerializer,
@@ -27,6 +28,7 @@ from .serializers import (
     JetonsSerializer,
     MoiSerializer,
     OubliSerializer,
+    PreferenceNotificationSerializer,
     RafraichissementSerializer,
     ReinitialisationSerializer,
     SessionSerializer,
@@ -197,6 +199,34 @@ class JetonPushView(APIView):
     def delete(self, request):
         services.enregistrer_jeton_push(self._appareil(request), "")
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PreferencesNotificationsView(APIView):
+    """NOT-005 (0.8.6) : ce que la personne reçoit en push ; les obligatoires restent."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=PreferenceNotificationSerializer(many=True),
+                   operation_id="preferences_notifications")  # fmt: skip
+    def get(self, request):
+        from apps.notifications import preferences
+
+        return Response(
+            PreferenceNotificationSerializer(preferences.preferences(request.user), many=True).data
+        )
+
+    @extend_schema(request=ChangementPreferencesSerializer,
+                   responses=PreferenceNotificationSerializer(many=True),
+                   operation_id="preferences_notifications_changer")  # fmt: skip
+    def put(self, request):
+        from apps.notifications import preferences
+
+        donnees = ChangementPreferencesSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        utilisateur = preferences.changer(request.user, donnees.validated_data["coupes"])
+        return Response(
+            PreferenceNotificationSerializer(preferences.preferences(utilisateur), many=True).data
+        )
 
 
 class MoiView(APIView):

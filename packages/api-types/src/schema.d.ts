@@ -319,6 +319,24 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/auth/preferences/notifications/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description NOT-005 (0.8.6) : ce que la personne reçoit en push ; les obligatoires restent. */
+    get: operations['preferences_notifications'];
+    /** @description NOT-005 (0.8.6) : ce que la personne reçoit en push ; les obligatoires restent. */
+    put: operations['preferences_notifications_changer'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/auth/push/': {
     parameters: {
       query?: never;
@@ -3343,6 +3361,9 @@ export interface components {
       /** Format: date-time */
       le: string;
     };
+    ChangementPreferences: {
+      coupes: string[];
+    };
     Cible: {
       /** Format: uuid */
       readonly id: string;
@@ -4991,6 +5012,12 @@ export interface components {
      * @enum {string}
      */
     PotentielEnum: 'A' | 'B' | 'C';
+    /** @description NOT-005 (0.8.6) : une notification que la personne reçoit, et si elle part en push. */
+    PreferenceNotification: {
+      type: string;
+      obligatoire: boolean;
+      push: boolean;
+    };
     /** @description DC-47 : « Préparer ma visite » ; ce que le délégué a noté chez ce prospect. */
     Preparation: {
       visites: number;
@@ -6785,6 +6812,50 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Perimetre'];
+        };
+      };
+    };
+  };
+  preferences_notifications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PreferenceNotification'][];
+        };
+      };
+    };
+  };
+  preferences_notifications_changer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChangementPreferences'];
+        'application/x-www-form-urlencoded': components['schemas']['ChangementPreferences'];
+        'multipart/form-data': components['schemas']['ChangementPreferences'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PreferenceNotification'][];
         };
       };
     };

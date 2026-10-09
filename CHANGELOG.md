@@ -2,6 +2,25 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.6] — Courriels de sécurité et préférences de notification
+
+Sixième jalon du cycle 0.8 « Mobilité ».
+
+### Ajouté (NOT-004, NOT-005, prd.md §14.65)
+
+- Courriels : nouveau téléphone connecté au compte, double authentification activée ou désactivée, et secours d'une décision en attente depuis plus de 48 heures (le nombre, un lien, aucun nom).
+- Un test garantit qu'aucun autre courriel n'est envoyé.
+- Profil du téléphone : « Notifications sur ce téléphone », un interrupteur par notification reçue ; révision, correction et escalades obligatoires ; le pays peut en ajouter (`notifications_obligatoires`).
+- Route `auth/preferences/notifications/` ; chaque changement est audité.
+
+### Design
+
+Revue sur le rendu réel (délégué de la démonstration, téléphone 360 px) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Notifications sur ce téléphone | Coupée, la notification montrait un rond blanc sans piste : on ne voyait pas l'interrupteur | Piste grise quand c'est coupé, verte quand c'est actif, bouton blanc ; les obligatoires sont grisées et marquées « Obligatoire » |
+
 ## [0.8.5] — Notifications push
 
 Cinquième jalon du cycle 0.8 « Mobilité ».

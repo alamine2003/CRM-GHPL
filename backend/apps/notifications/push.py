@@ -28,6 +28,7 @@ from apps.identite.models import Appareil
 from apps.socle.models import Pays
 
 from .models import Notification
+from .preferences import push_coupe
 
 journal = logging.getLogger(__name__)
 
@@ -164,9 +165,12 @@ def envoyer_pays(pays: Pays, maintenant: datetime) -> int:
         if Notification.objects.filter(destinataire_id=destinataire_id, type=type_,
                                        push_le__gt=maintenant - INTERVALLE).exists():  # fmt: skip
             continue  # NOT-003 : déjà un push de ce type dans l'heure
-        appareils = _jetons(destinataire_id)
+        destinataire = groupe[0].destinataire
+        # NOT-005 : coupée par la personne (et non obligatoire), elle reste au centre seulement.
+        coupe = push_coupe(destinataire, type_, pays)
+        appareils = [] if coupe else _jetons(destinataire_id)
         if appareils:
-            langue = groupe[0].destinataire.langue or settings.LANGUAGE_CODE
+            langue = destinataire.langue or settings.LANGUAGE_CODE
             messages = [_message(a, groupe, langue) for a in appareils]
             accuses = transport(messages)
             for appareil, accuse in zip(appareils, accuses, strict=False):

@@ -6,8 +6,9 @@ from .models import Notification
 def notifier(destinataire, type: str, pays, **donnees) -> Notification:
     """Inscrit une notification au centre du destinataire (prd.md §18)."""
     return Notification.objects.create(
-        pays=pays, destinataire=destinataire, type=type, donnees=donnees, push_du=timezone.now()
-    )
+        pays=pays, destinataire=destinataire, type=type, donnees=donnees,
+        push_du=timezone.now(), en_attente_depuis=timezone.now(),
+    )  # fmt: skip
 
 
 def notifier_une_fois(destinataire, type: str, pays, cle: str, **donnees) -> Notification | None:

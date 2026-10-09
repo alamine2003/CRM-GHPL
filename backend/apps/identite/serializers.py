@@ -69,6 +69,19 @@ class JetonPushSerializer(serializers.Serializer):
     )
 
 
+class PreferenceNotificationSerializer(serializers.Serializer):
+    """NOT-005 (0.8.6) : une notification que la personne reçoit, et si elle part en push."""
+
+    type = serializers.CharField()
+    obligatoire = serializers.BooleanField()
+    push = serializers.BooleanField()
+
+
+class ChangementPreferencesSerializer(serializers.Serializer):
+    #: Les types que la personne ne veut plus recevoir en push.
+    coupes = serializers.ListField(child=serializers.CharField(max_length=32), max_length=30)
+
+
 class RafraichissementSerializer(serializers.Serializer):
     rafraichissement = serializers.CharField(
         required=False,

@@ -98,6 +98,7 @@ import type {
   Moi,
   MonOrganisation,
   Occupation,
+  PreferenceNotification,
   Parametre,
   Pays,
   Perimetre,
@@ -259,6 +260,7 @@ export type {
   MonOrganisation,
   MonPoste,
   Occupation,
+  PreferenceNotification,
   Parametre,
   Pays,
   Perimetre,
@@ -618,6 +620,15 @@ export function creerClient(options: OptionsClient) {
       enregistrer: (jeton: string) =>
         requete<void>('/api/v1/auth/push/', { methode: 'PUT', corps: { jeton } }),
       retirer: () => requete<void>('/api/v1/auth/push/', { methode: 'DELETE' }),
+    },
+    /** NOT-005 (0.8.6) : ce que la personne reçoit en push ; les obligatoires restent. */
+    preferences: {
+      lire: () => requete<PreferenceNotification[]>('/api/v1/auth/preferences/notifications/'),
+      changer: (coupes: string[]) =>
+        requete<PreferenceNotification[]>('/api/v1/auth/preferences/notifications/', {
+          methode: 'PUT',
+          corps: { coupes },
+        }),
     },
     changerMotDePasse: (actuel: string, nouveau: string) =>
       requete<void>('/api/v1/auth/mot-de-passe/changement/', {

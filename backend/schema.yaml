@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.8.5
+  version: 0.8.6
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -439,6 +439,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Perimetre'
+          description: ''
+  /api/v1/auth/preferences/notifications/:
+    get:
+      operationId: preferences_notifications
+      description: 'NOT-005 (0.8.6) : ce que la personne reçoit en push ; les obligatoires
+        restent.'
+      tags:
+      - auth
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PreferenceNotification'
+          description: ''
+    put:
+      operationId: preferences_notifications_changer
+      description: 'NOT-005 (0.8.6) : ce que la personne reçoit en push ; les obligatoires
+        restent.'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangementPreferences'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangementPreferences'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangementPreferences'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PreferenceNotification'
           description: ''
   /api/v1/auth/push/:
     put:
@@ -6103,6 +6150,17 @@ components:
       - le
       - nouvelle
       - origine
+    ChangementPreferences:
+      type: object
+      properties:
+        coupes:
+          type: array
+          items:
+            type: string
+            maxLength: 32
+          maxItems: 30
+      required:
+      - coupes
     Cible:
       type: object
       properties:
@@ -10043,6 +10101,21 @@ components:
         * `A` - A
         * `B` - B
         * `C` - C
+    PreferenceNotification:
+      type: object
+      description: 'NOT-005 (0.8.6) : une notification que la personne reçoit, et
+        si elle part en push.'
+      properties:
+        type:
+          type: string
+        obligatoire:
+          type: boolean
+        push:
+          type: boolean
+      required:
+      - obligatoire
+      - push
+      - type
     Preparation:
       type: object
       description: 'DC-47 : « Préparer ma visite » ; ce que le délégué a noté chez

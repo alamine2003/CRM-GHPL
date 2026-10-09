@@ -95,6 +95,7 @@ function fauxClient(surcharges: Partial<ClientApi> = {}): ClientApi {
     demanderReinitialisation: jest.fn(async () => undefined),
     informations: jest.fn(async () => ({ environnement: 'test' })),
     referentiel: { monPortefeuille: jest.fn(async () => []) },
+    preferences: { lire: jest.fn(async () => []), changer: jest.fn(async () => []) },
     ...surcharges,
   } as unknown as ClientApi;
 }

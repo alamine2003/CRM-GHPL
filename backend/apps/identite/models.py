@@ -65,6 +65,9 @@ class Utilisateur(AbstractUser):
         help_text="Vide pour les comptes du siège (RG-002, RG-003).",
     )
     langue = models.CharField(max_length=2, choices=CHOIX_LANGUES, default="fr")
+    #: NOT-005 (0.8.6) : les types de notification que la personne ne veut plus recevoir en
+    #: push ; le centre les garde tous. Les obligatoires n'y entrent jamais.
+    push_coupes = models.JSONField(default=list, blank=True)
     echecs_connexion = models.PositiveSmallIntegerField(default=0, editable=False)
     verrouille_jusqua = models.DateTimeField(null=True, blank=True, editable=False)
 

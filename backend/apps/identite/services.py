@@ -449,19 +449,25 @@ def _appareil_revoque() -> ErreurMetier:
 def _enregistrer_appareil(utilisateur: Utilisateur, description: dict) -> Appareil:
     """Enregistre le téléphone à la première connexion, puis met à jour sa description
     (USR-006). Un appareil révoqué est refusé."""
-    appareil, _cree = Appareil.objects.select_for_update().get_or_create(
+    appareil, cree = Appareil.objects.select_for_update().get_or_create(
         utilisateur=utilisateur,
         identifiant_installation=description["identifiant_installation"],
         defaults={"plateforme": description["plateforme"]},
     )
     if appareil.est_revoque:
         raise _appareil_revoque()
+    # NOT-004 : un téléphone de plus sur un compte qui en avait déjà un est signalé par courriel.
+    nouveau = (
+        cree and Appareil.objects.filter(utilisateur=utilisateur).exclude(pk=appareil.pk).exists()
+    )
     appareil.plateforme = description["plateforme"]
     appareil.systeme = description.get("systeme", "")[:60]
     appareil.modele = description.get("modele", "")[:80]
     appareil.version_app = description.get("version_app", "")[:20]
     appareil.dernier_contact = timezone.now()
     appareil.save()
+    if nouveau:
+        transaction.on_commit(lambda: courriels.courriel_nouvel_appareil(utilisateur, appareil))
     return appareil
 
 

@@ -65,6 +65,17 @@ def _plage(valeur: Any) -> None:
         raise ValidationError("Le début doit précéder la fin.")
 
 
+def _types_notification(valeur: Any) -> None:
+    from apps.notifications.models import TypeNotification
+
+    if (
+        not isinstance(valeur, list)
+        or len(set(valeur)) != len(valeur)
+        or any(t not in TypeNotification.values for t in valeur)
+    ):
+        raise ValidationError("Liste de types de notification distincts attendue.")
+
+
 def _bornes(minimum: int, maximum: int) -> Callable[[Any], None]:
     """Un objet {min, max} d'entiers, min < max, dans [minimum, maximum]."""
 
@@ -230,6 +241,13 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             "(OFF-007, RG-054, DC-54)",
             7,
             _entier(1, 30),
+        ),
+        DefinitionParametre(
+            "notifications_obligatoires",
+            "Notifications que personne ne peut couper, en plus de la révision, de la correction "
+            "et des escalades, toujours obligatoires (NOT-005)",
+            [],
+            _types_notification,
         ),
         DefinitionParametre(
             "rappel_planning_non_soumis",

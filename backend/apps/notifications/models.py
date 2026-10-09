@@ -52,6 +52,10 @@ class Notification(ModeleDePays):
     #: parti ; la tâche périodique regroupe les dus par destinataire et par type.
     push_du = models.DateTimeField(null=True, blank=True)
     push_le = models.DateTimeField(null=True, blank=True)
+    #: NOT-004 (0.8.6) : depuis quand la décision attend (premier événement non lu, que le
+    #: regroupement ne repousse pas), et quand le courriel de secours est parti.
+    en_attente_depuis = models.DateTimeField(null=True, blank=True)
+    secours_le = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-cree_le"]
