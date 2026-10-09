@@ -143,6 +143,25 @@ class Appareil(models.Model):
         return self.revoque_le is not None
 
 
+class JourDeContact(models.Model):
+    """KPI-05 (0.9.7) : un jour où le téléphone d'un utilisateur a échangé avec le serveur
+    (connexion ou rafraîchissement de session, ce que fait chaque synchronisation). Une ligne
+    par personne et par jour, à la date de son pays : l'adoption se compte ainsi en jours de
+    synchronisation par semaine, sans garder chaque échange."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name="+")
+    jour = models.DateField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["utilisateur", "jour"], name="jour_de_contact_unique")
+        ]
+
+    def __str__(self):
+        return f"{self.utilisateur} — {self.jour}"
+
+
 class Session(models.Model):
     """Session ouverte sur un client (portail ou mobile).
 

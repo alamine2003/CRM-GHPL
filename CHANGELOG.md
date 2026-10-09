@@ -2,6 +2,21 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.7] — Kit du pilote contrôlé au Sénégal
+
+Septième jalon du cycle 0.9 « Durcissement et pilote ».
+
+### Ajouté (prd.md §14.75, §5, §21.2)
+
+- Guides utilisateur du délégué, du superviseur et de l'administrateur pays (`docs/guides/`).
+- Protocole du pilote (`docs/pilote.md`) : conditions de départ, déroulé sur 4 semaines, défauts, questionnaire, règles de décision.
+- `rapport_pilote` : les indicateurs de succès (KPI-01 à KPI-09) d'un pays ou d'un réseau sur une période, avec leurs cibles.
+- Jours de synchronisation de chaque téléphone, pour mesurer l'adoption (KPI-05).
+
+### Design
+
+Pas d'écran modifié.
+
 ## [0.9.6] — Mise à jour, retour arrière et migration BirdNotes à blanc
 
 Sixième jalon du cycle 0.9 « Durcissement et pilote ».

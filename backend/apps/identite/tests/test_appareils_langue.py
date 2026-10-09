@@ -148,3 +148,24 @@ def test_sec006_un_compte_suspendu_le_dit_au_telephone(api, delegue, admin_pays)
         "/api/v1/auth/rafraichir/", {"rafraichissement": rafraichissement}, format="json"
     )
     assert rafraichi.status_code == 401 and rafraichi.json()["code"] == "session_expiree"
+
+
+def test_kpi05_chaque_jour_de_synchronisation_est_note_une_fois(api, delegue):
+    """0.9.7 : la connexion et chaque rafraîchissement du téléphone notent le jour (à la date
+    du pays), une seule fois par jour, pour mesurer l'adoption (KPI-05)."""
+    from freezegun import freeze_time
+
+    from apps.identite.models import JourDeContact
+
+    with freeze_time("2026-10-12 08:00"):
+        rafraichissement = jetons(api)["rafraichissement"]
+        for _ in range(2):
+            r = api.post("/api/v1/auth/rafraichir/", {"rafraichissement": rafraichissement},
+                         format="json")  # fmt: skip
+            rafraichissement = r.json()["rafraichissement"]
+    with freeze_time("2026-10-13 08:00"):
+        api.post("/api/v1/auth/rafraichir/", {"rafraichissement": rafraichissement},
+                 format="json")  # fmt: skip
+    jours = sorted(str(j) for j in JourDeContact.objects.filter(utilisateur=delegue)
+                   .values_list("jour", flat=True))  # fmt: skip
+    assert jours == ["2026-10-12", "2026-10-13"]

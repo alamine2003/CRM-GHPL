@@ -704,6 +704,19 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.75 Kit du pilote contrôlé au Sénégal (mise en œuvre 0.9.7)
+
+- **Guides utilisateur** (§21.2, condition 8) : `docs/guides/guide-delegue.md` (application mobile), `guide-superviseur.md` (portail, avec ce que voit un DM en escalade) et `guide-admin-pays.md` (portail). Ils suivent la semaine de travail, citent les libellés exacts de l'interface et disent quoi faire quand ça ne marche pas. Les exemples sont fictifs.
+- **Protocole du pilote** : `docs/pilote.md` donne :
+  - les conditions de départ, dont les formalités CDP, l'hébergement payant, la répétition de la migration et la formation ;
+  - les rôles et le déroulé (S0 à S4, points quotidiens puis hebdomadaires) ;
+  - la consignation et la gravité des défauts ;
+  - le questionnaire de fin ;
+  - les règles de décision : extension, prolongation ou arrêt.
+- **Indicateurs du pilote** (§5, §21.2 condition 4) : `rapport_pilote` calcule KPI-01 à KPI-05, KPI-07 et KPI-09 sur un pays ou un réseau et une période, avec leurs cibles [H], par les moteurs du pilotage. KPI-06 se prouve par la suite d'isolation. Pour KPI-07, le serveur donne un signal : les visites faites depuis plus de 48 h sans rapport reçu ; la file d'envoi de chaque téléphone le confirme.
+- **Adoption** (KPI-05) : le serveur note désormais, une fois par jour et à la date du pays, que le téléphone d'une personne a échangé avec lui (connexion ou rafraîchissement de session, ce que fait toute synchronisation). [D, 9 octobre 2026, délégation] Seul le jour est gardé, ni l'heure ni le nombre d'échanges : c'est assez pour l'indicateur, et cela ne trace pas l'activité de la personne.
+- **Reste, hors du dépôt** : le pilote lui-même (4 semaines sur le terrain, au moins un réseau complet), ses indicateurs réels et la décision d'extension.
+
 ### 14.74 Mise à jour, retour arrière et migration BirdNotes à blanc (mise en œuvre 0.9.6)
 
 - **Procédure de mise à jour** : `docs/mise-a-jour.md` fixe les étapes :

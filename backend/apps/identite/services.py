@@ -426,6 +426,7 @@ def rafraichir(jeton: str) -> Connexion:
             if session.appareil_id:
                 session.appareil.dernier_contact = timezone.now()
                 session.appareil.save(update_fields=["dernier_contact"])
+                noter_contact(session.utilisateur)
             nouveau = nouveau_jeton()
             session.empreinte_precedente = trace
             session.empreinte_rafraichissement = empreinte(nouveau)
@@ -466,9 +467,25 @@ def _enregistrer_appareil(utilisateur: Utilisateur, description: dict) -> Appare
     appareil.version_app = description.get("version_app", "")[:20]
     appareil.dernier_contact = timezone.now()
     appareil.save()
+    noter_contact(utilisateur)
     if nouveau:
         transaction.on_commit(lambda: courriels.courriel_nouvel_appareil(utilisateur, appareil))
     return appareil
+
+
+def noter_contact(utilisateur) -> None:
+    """KPI-05 : ce jour, à la date du pays de la personne, son téléphone a échangé."""
+    from django.core.cache import cache
+
+    from .models import JourDeContact
+
+    pays = utilisateur.pays_principal
+    jour = aujourdhui(pays) if pays else timezone.now().date()
+    cle = f"contact:{utilisateur.pk}:{jour.isoformat()}"
+    if cache.get(cle):
+        return  # déjà noté aujourd'hui : pas d'écriture à chaque rafraîchissement
+    JourDeContact.objects.get_or_create(utilisateur=utilisateur, jour=jour)
+    cache.set(cle, True, 26 * 3600)
 
 
 @transaction.atomic
