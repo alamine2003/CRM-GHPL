@@ -664,6 +664,39 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/etablissements/{id}/position-proposee/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description DC-52 : la position proposée d'un établissement, et sa validation sur la carte. */
+    get: operations['etablissement_position_proposee'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/etablissements/{id}/position-proposee/valider/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['etablissement_valider_position'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/etablissements/{id}/valider/': {
     parameters: {
       query?: never;
@@ -4989,6 +5022,15 @@ export interface components {
       produit: string;
       visites: components['schemas']['VisitePoint'][];
     };
+    Pointage: {
+      /** Format: double */
+      latitude: number;
+      /** Format: double */
+      longitude: number;
+      precision_m: number | null;
+      /** Format: date-time */
+      le: string;
+    };
     /** @description Portefeuille d'un réseau aujourd'hui. */
     Portefeuille: {
       reseau: components['schemas']['ReseauResume'];
@@ -5000,6 +5042,21 @@ export interface components {
       /** Format: date */
       date: string;
       prospects: string[];
+    };
+    /**
+     * @description DC-52 : le point proposé (vide tant que la règle n'est pas remplie) et ses pointages,
+     *     sans le nom de qui les a faits.
+     */
+    PositionProposee: {
+      /** Format: double */
+      latitude: number | null;
+      /** Format: double */
+      longitude: number | null;
+      ecart_max_m: number | null;
+      pointages: components['schemas']['Pointage'][];
+      utilisables: number;
+      personnes: number;
+      seuil_m: number;
     };
     /** @description Un poste avec son occupant et son superviseur du jour ; « vacant » sans occupant. */
     Poste: {
@@ -5980,6 +6037,7 @@ export interface components {
       a_valider: number;
       mes_a_valider: number;
       sans_coordonnees: number;
+      positions_proposees: number;
       secteurs_couverts: number;
       types: {
         [key: string]: number;
@@ -6169,6 +6227,13 @@ export interface components {
     /** @description RPT-013 CA1 : les journées affichées ; seules les éligibles sont validées. */
     ValidationLot: {
       journees: components['schemas']['JourneeChoisie'][];
+    };
+    /** @description Le point placé sur la carte par l'administrateur ; vide, le point proposé. */
+    ValidationPosition: {
+      /** Format: double */
+      latitude?: number;
+      /** Format: double */
+      longitude?: number;
     };
     /** @description Une version figée et sa décision, avec le résumé de ce qui a changé (PLN-014). */
     Version: {
@@ -7256,6 +7321,8 @@ export interface operations {
         localite?: string;
         page?: number;
         portee?: 'pays' | 'perimetre';
+        /** @description 1 */
+        position_proposee?: string;
         /** @description Nom, localité, téléphone */
         q?: string;
         /** @description 1 */
@@ -7420,6 +7487,54 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ChangementFiche'][];
+        };
+      };
+    };
+  };
+  etablissement_position_proposee: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PositionProposee'];
+        };
+      };
+    };
+  };
+  etablissement_valider_position: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['ValidationPosition'];
+        'application/x-www-form-urlencoded': components['schemas']['ValidationPosition'];
+        'multipart/form-data': components['schemas']['ValidationPosition'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Etablissement'];
         };
       };
     };

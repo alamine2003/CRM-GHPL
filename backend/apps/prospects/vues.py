@@ -19,9 +19,9 @@ from apps.perimetre.vues import VuePerimetre
 from apps.referentiel.models import Valeur
 from apps.socle.erreurs import ErreurMetier
 
+from . import positions, services
 from . import recherche as rch
 from . import serializers as s
-from . import services
 from .models import Activite, Etablissement, Exercice, Potentiel, StatutFiche
 
 
@@ -210,6 +210,7 @@ class EtablissementsVue(VueEtablissements):
             OpenApiParameter("localite", str, required=False),
             OpenApiParameter("activite", enum=Activite.values, required=False),
             OpenApiParameter("sans_coordonnees", str, required=False, description="1"),
+            OpenApiParameter("position_proposee", str, required=False, description="1"),
             OpenApiParameter("portee", enum=["perimetre", "pays"], required=False),
             OpenApiParameter("tri", enum=list(rch.TRIS_ETABLISSEMENTS), required=False),
             OpenApiParameter("page", int, required=False),
@@ -224,6 +225,8 @@ class EtablissementsVue(VueEtablissements):
             self.get_queryset(), p, self.perimetre, rch.etablissements_du_perimetre
         )
         qs = rch.filtrer_etablissements(rch.statut(qs, p.get("statut")), p)
+        if p.get("position_proposee") == "1":
+            qs = positions.a_valider(qs, pays_requis(self.perimetre))
         qs = rch.trier(
             services.rechercher_etablissements(qs, p.get("q", "")), p.get("tri"),
             rch.TRIS_ETABLISSEMENTS,
@@ -300,11 +303,37 @@ class SyntheseEtablissementsVue(VueEtablissements):
             ),
         )
         chiffres["sans_coordonnees"] = actifs.filter(latitude__isnull=True).count()
+        pays = self.perimetre.pays_actif
+        chiffres["positions_proposees"] = positions.a_valider(actifs, pays).count() if pays else 0
         chiffres["secteurs_couverts"] = actifs.values("secteur").distinct().count()
         chiffres["types"] = dict(
             actifs.values_list("type__code").annotate(n=Count("id")).values_list("type__code", "n")
         )
         return Response(chiffres)
+
+
+class PositionProposeeVue(VueEtablissements):
+    """DC-52 : la position proposée d'un établissement, et sa validation sur la carte."""
+
+    actions = {"GET": Action.PROSPECTS_GERER}
+
+    @extend_schema(responses=s.PositionProposeeSerializer,
+                   operation_id="etablissement_position_proposee")  # fmt: skip
+    def get(self, request, id):
+        fiche = get_object_or_404(self.get_queryset(), pk=id)
+        return Response(s.PositionProposeeSerializer(positions.proposition(fiche)).data)
+
+
+class ValidationPositionVue(VueEtablissements):
+    actions = {"POST": Action.PROSPECTS_GERER}
+
+    @extend_schema(request=s.ValidationPositionSerializer, responses=s.EtablissementSerializer,
+                   operation_id="etablissement_valider_position")  # fmt: skip
+    def post(self, request, id):
+        fiche = get_object_or_404(self.get_queryset(), pk=id)
+        v = _lire(s.ValidationPositionSerializer, request)
+        return self.detail(positions.valider(fiche, request.user, v.get("latitude"),
+                                             v.get("longitude")))  # fmt: skip
 
 
 class SecteursEtablissementsVue(VuePerimetre):

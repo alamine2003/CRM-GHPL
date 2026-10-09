@@ -885,6 +885,28 @@
     "vues": {
       "liste": "List",
       "carte": "Map"
+    },
+    "proposee": {
+      "titre": "Suggested location",
+      "fondement_one": "Median point of {{count}} visit start check-ins, made by {{personnes}} different people.",
+      "fondement_other": "Median point of {{count}} visit start check-ins, made by {{personnes}} different people.",
+      "ecart": "Check-ins are within {{metres}} m of the point.",
+      "aide": "Small dots: the check-ins. Click on the exact entrance of the facility to move the suggested point there.",
+      "deplace": "Point moved by {{metres}} m.",
+      "revenir": "Back to the suggested point",
+      "valider": "Confirm this location",
+      "validee": "Reference location saved: upcoming visits will be checked against it.",
+      "pointage": "Check-in on {{date}}",
+      "precision": "± {{metres}} m",
+      "point": "Suggested point",
+      "aucunPointage": "No usable check-in yet. A location will be suggested after three visit start check-ins made by at least two people.",
+      "attente_one": "{{count}} usable check-in, from {{personnes}} person. A location will be suggested after three check-ins made by at least two people.",
+      "attente_other": "{{count}} usable check-ins, from {{personnes}} person(s). A location will be suggested after three check-ins made by at least two people.",
+      "bandeau_one": "{{count}} suggested location is awaiting your confirmation.",
+      "bandeau_other": "{{count}} suggested locations are awaiting your confirmation.",
+      "afficher": "Show them",
+      "toutAfficher": "Show all",
+      "filtre": "Suggested locations"
     }
   },
   "lieu": {
@@ -1139,7 +1161,8 @@
       "proposition": "accepted proposal",
       "fusion": "merge",
       "defusion": "unmerge",
-      "import": "import"
+      "import": "import",
+      "position_proposee": "suggested location confirmed"
     }
   },
   "doublons": {

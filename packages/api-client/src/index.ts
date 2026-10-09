@@ -115,6 +115,7 @@ import type {
   StatutFiche,
   StatutPays,
   SyntheseEtablissements,
+  PositionProposee,
   SyntheseOrganisation,
   SyntheseProspects,
   Transfert,
@@ -279,6 +280,7 @@ export type {
   StatutFiche,
   StatutPays,
   SyntheseEtablissements,
+  PositionProposee,
   SyntheseOrganisation,
   SyntheseProspects,
   Transfert,
@@ -409,6 +411,8 @@ export interface FiltresEtablissements extends Pagination {
   localite?: string;
   activite?: ActiviteExercice;
   sans_coordonnees?: '1';
+  /** DC-52 : sans position, avec une position proposée à valider. */
+  position_proposee?: '1';
   tri?: TriEtablissements;
 }
 
@@ -1175,6 +1179,15 @@ export function creerClient(options: OptionsClient) {
         }),
       valider: (id: string) =>
         requete<Etablissement>(`/api/v1/etablissements/${id}/valider/`, { methode: 'POST' }),
+      /** DC-52 : position proposée à partir des pointages (administration). */
+      positionProposee: (id: string) =>
+        requete<PositionProposee>(`/api/v1/etablissements/${id}/position-proposee/`),
+      /** DC-52 : retenir le point proposé, ou celui placé sur la carte. */
+      validerPosition: (id: string, point?: { latitude: number; longitude: number }) =>
+        requete<Etablissement>(`/api/v1/etablissements/${id}/position-proposee/valider/`, {
+          methode: 'POST',
+          corps: point ?? {},
+        }),
       archiver: (id: string, motif = '') =>
         requete<Etablissement>(`/api/v1/etablissements/${id}/archiver/`, {
           methode: 'POST',

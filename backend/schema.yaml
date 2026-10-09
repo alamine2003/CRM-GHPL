@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.8.7
+  version: 0.8.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -894,6 +894,11 @@ paths:
           - pays
           - perimetre
       - in: query
+        name: position_proposee
+        schema:
+          type: string
+        description: '1'
+      - in: query
         name: q
         schema:
           type: string
@@ -1102,6 +1107,61 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ChangementFiche'
+          description: ''
+  /api/v1/etablissements/{id}/position-proposee/:
+    get:
+      operationId: etablissement_position_proposee
+      description: 'DC-52 : la position proposée d''un établissement, et sa validation
+        sur la carte.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PositionProposee'
+          description: ''
+  /api/v1/etablissements/{id}/position-proposee/valider/:
+    post:
+      operationId: etablissement_valider_position
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - etablissements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationPosition'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ValidationPosition'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ValidationPosition'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Etablissement'
           description: ''
   /api/v1/etablissements/{id}/valider/:
     post:
@@ -10023,6 +10083,26 @@ components:
       - produit
       - regle
       - visites
+    Pointage:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        precision_m:
+          type: integer
+          nullable: true
+        le:
+          type: string
+          format: date-time
+      required:
+      - latitude
+      - le
+      - longitude
+      - precision_m
     Portefeuille:
       type: object
       description: Portefeuille d'un réseau aujourd'hui.
@@ -10056,6 +10136,41 @@ components:
       required:
       - date
       - prospects
+    PositionProposee:
+      type: object
+      description: |-
+        DC-52 : le point proposé (vide tant que la règle n'est pas remplie) et ses pointages,
+        sans le nom de qui les a faits.
+      properties:
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        ecart_max_m:
+          type: integer
+          nullable: true
+        pointages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pointage'
+        utilisables:
+          type: integer
+        personnes:
+          type: integer
+        seuil_m:
+          type: integer
+      required:
+      - ecart_max_m
+      - latitude
+      - longitude
+      - personnes
+      - pointages
+      - seuil_m
+      - utilisables
     Poste:
       type: object
       description: Un poste avec son occupant et son superviseur du jour ; « vacant
@@ -12555,6 +12670,8 @@ components:
           type: integer
         sans_coordonnees:
           type: integer
+        positions_proposees:
+          type: integer
         secteurs_couverts:
           type: integer
         types:
@@ -12565,6 +12682,7 @@ components:
       - a_valider
       - actifs
       - mes_a_valider
+      - positions_proposees
       - sans_coordonnees
       - secteurs_couverts
       - types
@@ -12974,6 +13092,21 @@ components:
             $ref: '#/components/schemas/JourneeChoisie'
       required:
       - journees
+    ValidationPosition:
+      type: object
+      description: Le point placé sur la carte par l'administrateur ; vide, le point
+        proposé.
+      properties:
+        latitude:
+          type: number
+          format: double
+          maximum: 90
+          minimum: -90
+        longitude:
+          type: number
+          format: double
+          maximum: 180
+          minimum: -180
     Version:
       type: object
       description: Une version figée et sa décision, avec le résumé de ce qui a changé

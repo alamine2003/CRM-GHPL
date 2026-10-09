@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 04:13+0000\n"
+"POT-Creation-Date: 2026-10-09 04:25+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1050,6 +1050,19 @@ msgstr "Duplicate rejected"
 msgid "Décision inconnue."
 msgstr "Unknown decision."
 
+msgid "Cet établissement a déjà une position de référence."
+msgstr "This facility already has a reference location."
+
+msgid ""
+"Il faut trois pointages, d'au moins deux personnes, pour proposer une "
+"position."
+msgstr ""
+"A location needs three check-ins, from at least two people, before it can be"
+" suggested."
+
+msgid "Indiquez la latitude et la longitude, ou aucune des deux."
+msgstr "Enter both latitude and longitude, or neither."
+
 #, python-format
 msgid "Ce champ ne se propose pas : %(champ)s."
 msgstr "This field cannot be proposed: %(champ)s."
@@ -1135,9 +1148,6 @@ msgstr "Invalid GPS coordinates."
 
 msgid "Le type d'établissement est obligatoire."
 msgstr "The institution type is required."
-
-msgid "Indiquez la latitude et la longitude, ou aucune des deux."
-msgstr "Enter both latitude and longitude, or neither."
 
 msgid "Un exercice relie une fiche prospect et un établissement en service."
 msgstr ""

@@ -885,6 +885,28 @@
     "vues": {
       "liste": "Liste",
       "carte": "Carte"
+    },
+    "proposee": {
+      "titre": "Position proposée",
+      "fondement_one": "Point médian de {{count}} pointages de démarrage, faits par {{personnes}} personnes différentes.",
+      "fondement_other": "Point médian de {{count}} pointages de démarrage, faits par {{personnes}} personnes différentes.",
+      "ecart": "Pointages à {{metres}} m au plus du point.",
+      "aide": "Petits points : les pointages. Cliquez à l'entrée exacte de l'établissement pour y déplacer le point proposé.",
+      "deplace": "Point déplacé de {{metres}} m.",
+      "revenir": "Revenir au point proposé",
+      "valider": "Valider cette position",
+      "validee": "Position de référence enregistrée : les prochaines visites seront contrôlées à partir d'elle.",
+      "pointage": "Pointage du {{date}}",
+      "precision": "± {{metres}} m",
+      "point": "Point proposé",
+      "aucunPointage": "Aucun pointage utilisable pour l'instant. Une position sera proposée après trois pointages de démarrage faits par au moins deux personnes.",
+      "attente_one": "{{count}} pointage utilisable, de {{personnes}} personne. Une position sera proposée après trois pointages faits par au moins deux personnes.",
+      "attente_other": "{{count}} pointages utilisables, de {{personnes}} personne(s). Une position sera proposée après trois pointages faits par au moins deux personnes.",
+      "bandeau_one": "{{count}} position proposée attend votre validation.",
+      "bandeau_other": "{{count}} positions proposées attendent votre validation.",
+      "afficher": "Les afficher",
+      "toutAfficher": "Tout afficher",
+      "filtre": "Positions proposées"
     }
   },
   "lieu": {
@@ -1139,7 +1161,8 @@
       "proposition": "proposition acceptée",
       "fusion": "fusion",
       "defusion": "défusion",
-      "import": "import"
+      "import": "import",
+      "position_proposee": "position proposée validée"
     }
   },
   "doublons": {

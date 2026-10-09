@@ -119,6 +119,8 @@ MIDDLEWARE = [
     "apps.socle.journalisation.ReferenceRequete",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    # OFF-006 : avant tout ce qui modifie la réponse ; voir apps/socle/compression.py.
+    "apps.socle.compression.CompressionApi",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",

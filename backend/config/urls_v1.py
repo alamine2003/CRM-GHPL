@@ -391,6 +391,16 @@ urlpatterns = [
         name="etablissement-valider",
     ),
     path(
+        "etablissements/<uuid:id>/position-proposee/",
+        prs.PositionProposeeVue.as_view(),
+        name="etablissement-position-proposee",
+    ),
+    path(
+        "etablissements/<uuid:id>/position-proposee/valider/",
+        prs.ValidationPositionVue.as_view(),
+        name="etablissement-valider-position",
+    ),
+    path(
         "etablissements/<uuid:id>/archiver/",
         prs.EtablissementArchivageVue.as_view(),
         name="etablissement-archiver",

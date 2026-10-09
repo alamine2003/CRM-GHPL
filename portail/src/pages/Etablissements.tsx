@@ -47,6 +47,7 @@ import DialogueProposition from '../composants/DialogueProposition';
 import { ErreurChargement } from '../composants/Erreurs';
 import Historique from '../composants/Historique';
 import { ProspectsExercant } from '../composants/Exercices';
+import PositionProposee from '../composants/PositionProposee';
 import { BarrePagination } from '../composants/Recherche';
 import { ChampsLieu, ChoixActivite, SelectSecteur } from '../composants/Lieu';
 import { depuis } from '../composants/formats';
@@ -425,6 +426,8 @@ function FicheEtablissement({
                 </Link>
               </Stack>
             </Box>
+          ) : gerer && e.statut !== 'archive' ? (
+            <PositionProposee fiche={e} />
           ) : (
             <Alert severity="warning">
               <strong>{t('etablissement.fiche.sansPosition')}</strong> —{' '}
@@ -528,6 +531,8 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
   const [type, setType] = useState('');
   const [secteur, setSecteur] = useState('');
   const [sansGps, setSansGps] = useState(() => adresse.get('sans_coordonnees') === '1');
+  // DC-52 : n'afficher que les établissements dont une position proposée attend validation.
+  const [proposees, setProposees] = useState(() => adresse.get('position_proposee') === '1');
   const [vue, setVue] = useState<'liste' | 'carte'>('liste');
   const [tri, setTri] = useState<TriEtablissements>('nom');
 
@@ -550,7 +555,7 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
   });
   // Un nouveau filtre ramène à la première page (PRP-005) : la page retenue ne vaut que pour
   // la combinaison de filtres où elle a été choisie.
-  const cleFiltres = JSON.stringify([q, statut, type, secteur, sansGps, tri]);
+  const cleFiltres = JSON.stringify([q, statut, type, secteur, sansGps, proposees, tri]);
   const [pagination, setPagination] = useState({ cle: cleFiltres, page: 1 });
   const page = pagination.cle === cleFiltres ? pagination.page : 1;
   const setPage = (p: number) => setPagination({ cle: cleFiltres, page: p });
@@ -560,6 +565,7 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
     type: type || undefined,
     secteur: secteur || undefined,
     sans_coordonnees: sansGps ? '1' : undefined,
+    position_proposee: proposees ? '1' : undefined,
     tri: tri === 'nom' ? undefined : tri,
     // La carte montre jusqu'à 100 établissements à la fois ; la liste, 20 par page.
     page: vue === 'carte' ? 1 : page,
@@ -618,6 +624,21 @@ export default function Etablissements({ perimetre }: { perimetre: Perimetre }) 
           }
         />
       </BarreChiffres>
+
+      {gerer && s && (s.positions_proposees > 0 || proposees) && (
+        <Alert
+          severity="info"
+          action={
+            <Button color="inherit" size="small" onClick={() => setProposees((v) => !v)}>
+              {proposees
+                ? t('etablissement.proposee.toutAfficher')
+                : t('etablissement.proposee.afficher')}
+            </Button>
+          }
+        >
+          {t('etablissement.proposee.bandeau', { count: s.positions_proposees })}
+        </Alert>
+      )}
 
       <Card sx={{ p: 1.5 }}>
         <Stack spacing={1.25}>

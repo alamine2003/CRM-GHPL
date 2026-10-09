@@ -59,6 +59,7 @@ export type StatutFiche = Schemas['StatutFicheEnum'];
 export type Etablissement = Schemas['Etablissement'];
 export type ListeEtablissements = Schemas['ListeEtablissements'];
 export type SyntheseEtablissements = Schemas['SyntheseEtablissements'];
+export type PositionProposee = Schemas['PositionProposee'];
 export type ActiviteExercice = Schemas['ActiviteEnum'];
 export type Lieu = Schemas['Lieu'];
 export type Localite = Schemas['Localite'];

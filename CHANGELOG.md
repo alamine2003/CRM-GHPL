@@ -2,6 +2,27 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.8] — Réseau faible, position de référence proposée, dossier CDP
+
+Huitième jalon du cycle 0.8 « Mobilité ».
+
+### Ajouté (OFF-006, DC-52, NFR-012, prd.md §14.67)
+
+- Réponses JSON de l'API compressées (gzip), sauf les routes d'authentification.
+- Commande `mesurer_synchro` : poids d'une synchronisation quotidienne, route par route ; 25 Ko compressés sur la démonstration, sous 500 Ko projeté pour une liste cible de 300 prospects (test).
+- Position de référence proposée d'un établissement sans position : point médian de trois pointages d'au moins deux personnes ; validée ou déplacée sur la carte par l'administrateur pays, auditée et inscrite à l'historique ; bandeau et filtre dans la liste.
+- `docs/dossier-cdp.md` : dossier de déclaration à la CDP, à compléter et déposer par le responsable du traitement.
+
+### Design
+
+Revue sur le rendu réel (administrateur pays de la démonstration, bureau 1440 px et téléphone 390 px) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Fiche, position proposée | « Revenir au point proposé » tombait seul sur une ligne, décalé sous le bouton principal | Lien dans la ligne d'explication, à côté de « Point déplacé de 66 m » ; un seul bouton |
+| Fiche, position proposée | Rien ne disait ce qu'étaient les petits points de la carte | Aide : « Petits points : les pointages. Cliquez à l'entrée exacte… » |
+| Carte | Chaque clic recadrait la carte sur tous les points | Le cadre suit les points de fond ; déplacer le point mis en avant ne recadre plus |
+
 ## [0.8.7] — Pièces jointes envoyées plus tard
 
 Septième jalon du cycle 0.8 « Mobilité ».

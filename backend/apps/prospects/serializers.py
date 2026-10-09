@@ -171,8 +171,37 @@ class SyntheseEtablissementsSerializer(serializers.Serializer):
     a_valider = serializers.IntegerField()
     mes_a_valider = serializers.IntegerField()
     sans_coordonnees = serializers.IntegerField()
+    #: DC-52 : établissements sans position dont une position proposée attend l'administrateur.
+    positions_proposees = serializers.IntegerField()
     secteurs_couverts = serializers.IntegerField()
     types = serializers.DictField(child=serializers.IntegerField())
+
+
+class PointageSerializer(serializers.Serializer):
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
+    precision_m = serializers.IntegerField(allow_null=True)
+    le = serializers.DateTimeField()
+
+
+class PositionProposeeSerializer(serializers.Serializer):
+    """DC-52 : le point proposé (vide tant que la règle n'est pas remplie) et ses pointages,
+    sans le nom de qui les a faits."""
+
+    latitude = serializers.FloatField(allow_null=True)
+    longitude = serializers.FloatField(allow_null=True)
+    ecart_max_m = serializers.IntegerField(allow_null=True)
+    pointages = PointageSerializer(many=True)
+    utilisables = serializers.IntegerField()
+    personnes = serializers.IntegerField()
+    seuil_m = serializers.IntegerField()
+
+
+class ValidationPositionSerializer(serializers.Serializer):
+    """Le point placé sur la carte par l'administrateur ; vide, le point proposé."""
+
+    latitude = serializers.FloatField(required=False, min_value=-90, max_value=90)
+    longitude = serializers.FloatField(required=False, min_value=-180, max_value=180)
 
 
 # --- Exercices (PRP-004) ---------------------------------------------------------------------
