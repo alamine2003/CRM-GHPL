@@ -61,7 +61,14 @@ def proposer(
     *,
     nouvel_exercice: Etablissement | None = None,
     commentaire: str = "",
+    ident=None,
 ) -> Proposition:
+    # OFF-002, OFF-003 CA2 : l'identifiant vient du téléphone ; un envoi rejoué depuis la file
+    # rend la proposition déjà créée, sans doublon.
+    if ident is not None:
+        deja = Proposition.objects.filter(pk=ident, auteur=auteur).first()
+        if deja is not None:
+            return deja
     if fiche.statut != StatutFiche.ACTIF:
         raise ErreurMetier(
             "fiche_non_commune", _("Seule une fiche commune reçoit des propositions.")
@@ -78,6 +85,7 @@ def proposer(
     if not propres and nouvel_exercice is None:
         raise ErreurMetier("proposition_vide", _("La proposition ne change rien à la fiche."))
     proposition = Proposition.objects.create(
+        **({"pk": ident} if ident is not None else {}),
         pays=fiche.pays,
         prospect=fiche if isinstance(fiche, Prospect) else None,
         etablissement=fiche if isinstance(fiche, Etablissement) else None,

@@ -14,6 +14,7 @@
  */
 import type { ClientApi } from '@innov/api-client';
 import { ecrire, lire } from './baseLocale';
+import { garderRapport } from './BrouillonRapport';
 import { garderDetail } from './DetailVisite';
 import { CLE_PROGRAMME } from './Execution';
 import { CLE_CHIFFRES } from './MesChiffres';
@@ -29,6 +30,8 @@ export interface EtatSynchro {
   visites: number;
   prospects: number;
   historiques: number;
+  /** Rapports prêts à écrire sans réseau (0.8.2). */
+  rapports?: number;
   /** Parties qui n'ont pas pu être lues (gardées telles qu'avant). */
   echecs: number;
 }
@@ -86,6 +89,11 @@ async function passe(client: ClientApi): Promise<EtatSynchro> {
   for (const h of historique?.prospects ?? [])
     await ecrire(`chronologie.${h.prospect}`, h.rapports);
 
+  // OFF-002 : le rapport (ou son modèle vierge) de chaque visite de la semaine et de la
+  // suivante, pour l'écrire sans réseau ; une saisie locale pas encore envoyée est gardée.
+  const modeles = await essayer(() => client.rapports.modeles());
+  for (const m of modeles?.rapports ?? []) await garderRapport(m.visite, m.rapport);
+
   const proposees = await essayer(() => client.rapports.visitesProposees());
   if (proposees) await ecrire('visites.proposees', proposees);
   const chiffres = await essayer(() => client.pilotage.mesChiffres());
@@ -99,6 +107,7 @@ async function passe(client: ClientApi): Promise<EtatSynchro> {
         visites: visites.size,
         prospects: prospects.size,
         historiques: historique?.prospects.length ?? 0,
+        rapports: modeles?.rapports.length ?? 0,
         echecs,
       }
     : { ...(precedent ?? { le: '', visites: 0, prospects: 0, historiques: 0 }), echecs };

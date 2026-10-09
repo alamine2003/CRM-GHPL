@@ -1238,7 +1238,9 @@
     "mobile": {
       "corriger": "Proposer une correction",
       "envoyee": "Proposition envoyée : la fiche changera après l'accord de votre superviseur ou de l'administrateur pays. La décision s'affichera sur votre accueil.",
-      "aucunChangement": "Modifiez au moins un champ pour envoyer la proposition."
+      "aucunChangement": "Modifiez au moins un champ pour envoyer la proposition.",
+      "horsLigne": "Pas de réseau : votre proposition est gardée sur le téléphone et partira toute seule au retour du réseau.",
+      "enAttente": "Proposition de mise à jour de fiche"
     }
   },
   "qualite": {
@@ -2034,7 +2036,7 @@
     "soumis": "Rapport soumis à votre superviseur.",
     "soumisLe": "Rapport soumis : il ne se modifie plus.",
     "aCorriger": "Votre superviseur demande une correction.",
-    "horsLigne": "Le rapport s'écrit avec du réseau pour l'instant. Votre visite est bien gardée sur le téléphone : réessayez dès que le réseau revient.",
+    "horsLigne": "Ce rapport n'est pas encore sur le téléphone. Synchronisez avec du réseau (profil, « Synchroniser maintenant ») : les rapports de la semaine s'écriront ensuite sans réseau.",
     "reessayer": "Réessayer",
     "filtrer": "Chercher un produit",
     "objectifPrevu": "Objectif prévu",
@@ -2570,6 +2572,7 @@
     "maintenant": "Synchroniser maintenant",
     "visites": "Visites de la semaine et de la suivante",
     "prospects": "Prospects de la liste cible",
-    "historiques": "Prospects avec leurs dernières visites"
+    "historiques": "Prospects avec leurs dernières visites",
+    "rapports": "Rapports prêts à écrire sans réseau"
   }
 }

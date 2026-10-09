@@ -446,6 +446,8 @@ class PropositionSerializer(serializers.Serializer):
 
 
 class SaisiePropositionSerializer(serializers.Serializer):
+    #: OFF-002 : identifiant tiré sur le téléphone ; l'envoi rejoué ne crée rien de plus.
+    id = serializers.UUIDField(required=False)
     prospect = serializers.UUIDField(required=False)
     etablissement = serializers.UUIDField(required=False)
     changements = serializers.DictField(child=serializers.CharField(allow_blank=True), default=dict)

@@ -58,6 +58,13 @@ function client(echoue: string[] = []) {
         prospects: [{ prospect: 'p1', rapports: [{ id: 'r1', date: '2026-10-13' }] }],
       }),
       visitesProposees: ou('proposees', []),
+      modeles: ou('modeles', {
+        genere_le: '2026-10-14T08:00:00Z',
+        rapports: [
+          { visite: 'v1', rapport: { id: 'm1', statut: 'brouillon', visite: 'v1' } },
+          { visite: 'v2', rapport: { id: 'm2', statut: 'brouillon', visite: 'v2' } },
+        ],
+      }),
     },
     pilotage: { mesChiffres: ou('chiffres', { semaine: {} }) },
   } as unknown as ClientApi;
@@ -70,7 +77,7 @@ beforeEach(async () => {
 
 test("OFF-001 CA1 : une passe garde la semaine, la suivante, la liste et l'historique", async () => {
   const etat = await synchroniser(client());
-  expect(etat).toMatchObject({ visites: 2, prospects: 2, historiques: 1, echecs: 0 });
+  expect(etat).toMatchObject({ visites: 2, prospects: 2, historiques: 1, rapports: 2, echecs: 0 });
   for (const cle of [
     'programme.courant',
     'semaine.courante',
@@ -82,6 +89,8 @@ test("OFF-001 CA1 : une passe garde la semaine, la suivante, la liste et l'histo
     'chronologie.p1',
     'visites.proposees',
     'mes-chiffres',
+    'rapport.v1',
+    'rapport.v2',
     'synchro.derniere',
   ])
     expect(mockMemoire.has(cle)).toBe(true);
@@ -122,4 +131,19 @@ test('le profil montre la dernière synchronisation et la relance', async () => 
         ?.busy,
     ).toBeFalsy(),
   );
+});
+
+test('OFF-002 : le modèle reçu ne remplace pas une saisie faite sur le téléphone', async () => {
+  const saisie = { resume: 'Écrit sans réseau' };
+  mockMemoire.set('rapport.v1', {
+    valeur: { rapport: { id: 'm0' }, saisie, modifie_le: '2026-10-14T07:00:00Z', envoye: false },
+    maj: '2026-10-14T07:00:00.000Z',
+  });
+  await synchroniser(client());
+  const garde = mockMemoire.get('rapport.v1')?.valeur as {
+    saisie: unknown;
+    rapport: { id: string };
+  };
+  expect(garde.saisie).toEqual(saisie);
+  expect(garde.rapport.id).toBe('m1');
 });

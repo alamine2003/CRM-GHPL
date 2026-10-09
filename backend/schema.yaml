@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.8.1
+  version: 0.8.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -4830,6 +4830,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/HistoriqueSynchro'
           description: ''
+  /api/v1/synchro/rapports/:
+    get:
+      operationId: synchro_rapports
+      description: |-
+        OFF-002 (0.8.2) : pour chaque visite de la semaine et de la suivante, son rapport ou un
+        modèle vierge (champs du pays, produits, résultats, types d'action), à garder sur le
+        téléphone : le rapport s'écrit sans réseau, même jamais ouvert.
+      tags:
+      - synchro
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelesRapport'
+          description: ''
   /api/v1/utilisateurs/:
     get:
       operationId: utilisateurs_liste
@@ -8687,6 +8705,32 @@ components:
         * `lot` - Validé avec les journées conformes
         * `escalade` - Validé par escalade
         * `remplacement` - Validé par le remplaçant
+    ModeleRapport:
+      type: object
+      description: 'OFF-002 : la visite et son rapport (existant, ou modèle vierge
+        non enregistré).'
+      properties:
+        visite:
+          type: string
+          format: uuid
+        rapport:
+          $ref: '#/components/schemas/Rapport'
+      required:
+      - rapport
+      - visite
+    ModelesRapport:
+      type: object
+      properties:
+        genere_le:
+          type: string
+          format: date-time
+        rapports:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModeleRapport'
+      required:
+      - genere_le
+      - rapports
     Modification:
       type: object
       properties:
@@ -11719,6 +11763,9 @@ components:
     SaisieProposition:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
         prospect:
           type: string
           format: uuid

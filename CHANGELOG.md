@@ -2,6 +2,29 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.2] — Rapports et fiches sans réseau
+
+Deuxième jalon du cycle 0.8 « Mobilité ».
+
+### Ajouté (OFF-002, prd.md §14.61)
+
+- Le rapport de chaque visite de la semaine et de la suivante, ou son modèle vierge, est gardé sur le téléphone : un rapport jamais ouvert s'écrit sans réseau et part au retour du réseau.
+- Une proposition de mise à jour de fiche faite sans réseau attend dans la file, avec un identifiant tiré sur le téléphone ; le serveur ne la crée qu'une fois.
+- Profil : « Rapports prêts à écrire sans réseau ».
+
+### Corrigé
+
+- Démonstration : la semaine en préparation ne perd plus son passage de deux confrères quand le prospect libéré pour « Proposées à votre dernière visite » (DC-61) en faisait partie ; le test échouait selon la date du jour.
+
+### Design
+
+Revue sur le rendu réel (délégué de la démonstration, téléphone, avec et sans réseau) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Rapport jamais ouvert, sans réseau | « Le rapport s'écrit avec du réseau pour l'instant » : bloquant, sans issue | Le rapport s'écrit depuis le modèle gardé ; sinon, le message dit de synchroniser |
+| Proposition de fiche, sans réseau | Erreur de réseau, saisie perdue | Mise en file, message « gardée sur le téléphone » |
+
 ## [0.8.1] — Une semaine de travail sans réseau
 
 Premier jalon du cycle 0.8 « Mobilité ».

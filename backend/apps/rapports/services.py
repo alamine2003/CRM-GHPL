@@ -163,6 +163,20 @@ def rapport_de(visite: Visite) -> Rapport:
     return rapport
 
 
+def modele_rapport(visite: Visite) -> Rapport:
+    """OFF-002 (0.8.2) : le rapport de la visite s'il existe ; sinon un modèle vierge, non
+    enregistré, que le téléphone garde pour écrire le rapport sans réseau. Le serveur ne crée
+    le rapport qu'à son premier envoi, une fois la visite terminée (RG-030)."""
+    existant = Rapport.objects.filter(visite=visite).first()
+    if existant is not None:
+        return existant
+    return Rapport(
+        pays=visite.pays, visite=visite, delegue_id=visite.planning.delegue_id,
+        objectif_prevu=visite.objectif or "",
+        definitions=[c.definition() for c in champs_actifs(visite.pays)],
+    )  # fmt: skip
+
+
 def _exiger_modifiable(rapport: Rapport) -> None:
     if rapport.statut not in MODIFIABLES:
         raise ErreurMetier(

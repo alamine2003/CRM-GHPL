@@ -84,9 +84,10 @@ export function CarteSynchro() {
           <Ligne libelle={t('synchro.derniere')} valeur={quand ?? '—'} />
           <Ligne libelle={t('synchro.visites')} valeur={String(etat.visites)} />
           <Ligne libelle={t('synchro.prospects')} valeur={String(etat.prospects)} />
+          <Ligne libelle={t('synchro.historiques')} valeur={String(etat.historiques)} />
           <Ligne
-            libelle={t('synchro.historiques')}
-            valeur={String(etat.historiques)}
+            libelle={t('synchro.rapports')}
+            valeur={String(etat.rapports ?? 0)}
             derniere={!etat.echecs}
           />
           {etat.echecs > 0 && (

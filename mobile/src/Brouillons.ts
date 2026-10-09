@@ -19,6 +19,7 @@ import type {
   Report,
   Terminaison,
   SaisieActivite,
+  SaisieProposition,
   SaisieVisite,
 } from '@innov/api-client';
 import { Platform } from 'react-native';
@@ -166,6 +167,15 @@ export type Envoi =
     }
   | {
       id: string;
+      /** OFF-002 : proposition de mise à jour d'une fiche faite sans réseau ; son identifiant
+       * est celui de la proposition, le serveur ne la crée qu'une fois. */
+      type: 'proposition';
+      saisie: SaisieProposition;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
       /** Document du rapport choisi sans réseau (RPT-007) : le fichier reste sur le
        * téléphone, à son adresse locale, jusqu'à l'envoi. */
       type: 'piece_jointe';
@@ -294,6 +304,8 @@ async function rejouer(client: ClientApi): Promise<number> {
           await client.visites.enregistrerRapport(envoi.visite, brouillon.saisie);
         await client.visites.soumettreRapport(envoi.visite, envoi.soumis_le);
         await oublierBrouillonRapport(envoi.visite);
+      } else if (envoi.type === 'proposition') {
+        await client.propositions.creer(envoi.saisie);
       } else if (envoi.type === 'indisponibilite') {
         await client.plannings.declarerIndisponibilite(envoi.saisie);
       } else if (envoi.type === 'ajout_activite') {

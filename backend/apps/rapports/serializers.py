@@ -339,3 +339,15 @@ class HistoriqueProspectSerializer(serializers.Serializer):
 class HistoriqueSynchroSerializer(serializers.Serializer):
     genere_le = serializers.DateTimeField()
     prospects = HistoriqueProspectSerializer(many=True)
+
+
+class ModeleRapportSerializer(serializers.Serializer):
+    """OFF-002 : la visite et son rapport (existant, ou modèle vierge non enregistré)."""
+
+    visite = serializers.UUIDField()
+    rapport = RapportSerializer()
+
+
+class ModelesRapportSerializer(serializers.Serializer):
+    genere_le = serializers.DateTimeField()
+    rapports = ModeleRapportSerializer(many=True)

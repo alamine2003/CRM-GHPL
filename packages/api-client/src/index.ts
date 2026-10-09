@@ -38,6 +38,7 @@ import type {
   TableauSiege,
   Prescription,
   HistoriqueSynchro,
+  ModelesRapport,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -193,6 +194,7 @@ export type {
   TableauSiege,
   Prescription,
   HistoriqueSynchro,
+  ModelesRapport,
   TendanceProduit,
   PointAttention,
   Objectifs,
@@ -1007,6 +1009,8 @@ export function creerClient(options: OptionsClient) {
       visitesProposees: () => requete<VisiteProposee[]>('/api/v1/rapports/visites-proposees/'),
       /** OFF-001 : en une lecture, l'historique de la liste cible gardé sur le téléphone. */
       historique: () => requete<HistoriqueSynchro>('/api/v1/synchro/historique/'),
+      /** OFF-002 : rapports et modèles de la semaine et de la suivante, à écrire sans réseau. */
+      modeles: () => requete<ModelesRapport>('/api/v1/synchro/rapports/'),
       champs: () => requete<ChampRapport[]>('/api/v1/rapports/champs/'),
       creerChamp: (saisie: SaisieChamp) =>
         requete<ChampRapport>('/api/v1/rapports/champs/', { methode: 'POST', corps: saisie }),

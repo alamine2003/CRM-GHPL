@@ -157,6 +157,8 @@ export type IndicateursPeriode = Schemas['IndicateursPeriode'];
 /** DSH-004 : la consolidation du siège, par pays, sans aucun nom. */
 export type TableauSiege = Schemas['TableauSiege'];
 export type LignePays = Schemas['LignePays'];
+/** OFF-002 : les rapports (ou modèles vierges) des visites de la semaine et de la suivante. */
+export type ModelesRapport = Schemas['ModelesRapport'];
 /** OFF-001 : les trois derniers rapports de chaque prospect de la liste cible. */
 export type HistoriqueSynchro = Schemas['HistoriqueSynchro'];
 /** DC-53, DC-57 : tendance de prescription agrégée et points d'attention. */

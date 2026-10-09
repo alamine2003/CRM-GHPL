@@ -72,3 +72,25 @@ def test_off001_hors_liste_cible_rien_et_rpt011_ca1(monde, terrain, soumis, cibl
     with freeze_time("2026-01-01 08:00"):
         ciblage.ajouter(poste, [terrain["medecin"]], monde["admin.sn"])
     assert client_de(autre).get(URL).json()["prospects"] == []
+
+
+@freeze_time("2026-10-14 08:00")
+def test_off002_un_modele_de_rapport_pour_chaque_visite_de_la_semaine(monde, terrain, soumis):
+    """OFF-002 : la visite déjà rapportée rend son rapport ; les autres, un modèle vierge que le
+    téléphone garde. Rien n'est créé sur le serveur."""
+    autre = Visite.objects.get(pk=soumis.pk)
+    autre.pk, autre._state.adding = None, True
+    autre.date, autre.statut = date(2026, 10, 16), "prevue"
+    autre.save()
+    avant = Rapport.objects.count()
+    r = client_de(monde["deleg.sn"]).get("/api/v1/synchro/rapports/")
+    assert r.status_code == 200, r.content
+    par_visite = {x["visite"]: x["rapport"] for x in r.json()["rapports"]}
+    assert par_visite[str(soumis.pk)]["statut"] == "soumis"
+    modele = par_visite[str(autre.pk)]
+    assert modele["statut"] == "brouillon" and modele["produits_proposes"]
+    assert modele["types_action_proposes"] and modele["presentations"] == []
+    assert Rapport.objects.count() == avant
+    # Le superviseur sans visite n'a rien à emporter ; le DM n'écrit pas de rapports.
+    assert client_de(monde["sup.sn"]).get("/api/v1/synchro/rapports/").json()["rapports"] == []
+    assert client_de(monde["dm.sn"]).get("/api/v1/synchro/rapports/").status_code == 403

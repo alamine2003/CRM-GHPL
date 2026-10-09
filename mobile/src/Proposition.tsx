@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
+import { estTransitoire, mettreEnAttente, nouvelIdentifiant } from './Brouillons';
 import { Alerte, Bouton, Carte, Champ, Texte } from './composants';
 import { messageErreur, useSession } from './session';
 
@@ -44,7 +45,7 @@ export function ProposerCorrection({
   const [commentaire, setCommentaire] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [envoyee, setEnvoyee] = useState(false);
+  const [envoyee, setEnvoyee] = useState<'envoyee' | 'attente' | null>(null);
 
   if (etat.statut !== 'connecte' || !etat.perimetre.actions.includes('propositions.creer')) {
     return null;
@@ -59,12 +60,24 @@ export function ProposerCorrection({
   async function envoyer() {
     setEnvoi(true);
     setErreur(null);
+    // OFF-002 : l'identifiant est tiré ici ; sans réseau, la proposition attend dans la file
+    // et le serveur ne la créera qu'une fois.
+    const saisie = { id: nouvelIdentifiant(), [objet]: id, changements, commentaire };
     try {
-      await client.propositions.creer({ [objet]: id, changements, commentaire });
-      setEnvoyee(true);
+      await client.propositions.creer(saisie);
+      setEnvoyee('envoyee');
       setOuvert(false);
     } catch (e) {
-      setErreur(messageErreur(e, t('erreurs.reseau')));
+      if (estTransitoire(e)) {
+        await mettreEnAttente({
+          id: saisie.id,
+          type: 'proposition',
+          saisie,
+          resume: t('propositions.mobile.enAttente'),
+        });
+        setEnvoyee('attente');
+        setOuvert(false);
+      } else setErreur(messageErreur(e, t('erreurs.reseau')));
     } finally {
       setEnvoi(false);
     }
@@ -73,14 +86,15 @@ export function ProposerCorrection({
   if (!ouvert) {
     return (
       <View style={{ gap: 12 }}>
-        {envoyee && <Alerte type="succes">{t('propositions.mobile.envoyee')}</Alerte>}
+        {envoyee === 'envoyee' && <Alerte type="succes">{t('propositions.mobile.envoyee')}</Alerte>}
+        {envoyee === 'attente' && <Alerte type="info">{t('propositions.mobile.horsLigne')}</Alerte>}
         <Bouton
           secondaire
           libelle={t('propositions.mobile.corriger')}
           onPress={() => {
             setValeurs(initiales());
             setCommentaire('');
-            setEnvoyee(false);
+            setEnvoyee(null);
             setOuvert(true);
           }}
         />

@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.61 Rapports et fiches sans réseau (mise en œuvre 0.8.2)
+
+- **Rapports** (OFF-002) : la synchronisation garde sur le téléphone le rapport de chaque visite de la semaine et de la suivante, ou, s'il n'existe pas encore, un modèle vierge (champs du pays, produits du portefeuille, résultats, types de prochaine action). Un rapport jamais ouvert s'écrit donc sans réseau ; il part avec la fin de visite, dans l'ordre de la file, au retour du réseau. Le serveur ne crée le rapport qu'à ce premier envoi (RG-030) ; une saisie faite sur le téléphone n'est jamais remplacée par le modèle reçu.
+- **Fiches** : une proposition de mise à jour d'un prospect ou d'un établissement (PRP-014) faite sans réseau attend dans la file ; le délégué voit « Pas de réseau : votre proposition est gardée sur le téléphone… ». [D, 9 octobre 2026, délégation] Le délégué ne crée pas de fiche : il propose des corrections (PRP-014) ; la création reste à l'administration (doublons, §14.6).
+- **CA1** : chaque objet créé sans réseau porte un identifiant tiré sur le téléphone (visites, activités, pièces jointes depuis 0.2.7, propositions en 0.8.2) ; le serveur reconnaît un envoi rejoué et ne crée rien deux fois. Les rapports sont désignés par leur visite.
+- Sans synchronisation préalable, l'écran du rapport le dit et indique « Synchroniser maintenant ».
+
 ### 14.60 Données du téléphone pour une semaine sans réseau (mise en œuvre 0.8.1)
 
 - **Synchronisation** (OFF-001) : en une passe, le téléphone garde dans sa base locale chiffrée le programme de la semaine, le détail de chaque visite de la semaine et de la suivante, la semaine en cours et la suivante, la liste cible (fiches, établissements, exercices), les trois dernières visites de chaque prospect de la liste (« Préparer ma visite », en une seule lecture), les visites proposées et « Mes chiffres ». Chaque écran relit ces données quand le réseau manque.
@@ -1145,7 +1152,7 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | ID | Exigence | Version | Critères d'acceptation |
 |---|---|---|---|
 | OFF-001 | Données locales : planning de la semaine, liste cible (fiches, établissements, exercices), portefeuilles, motifs, paramètres utiles, brouillons et rapports, historique des 3 dernières visites par prospect. | 0.8.1 | CA1 : après une synchronisation, 7 jours de travail sont possibles en mode avion. Livré en 0.8.1 (§14.60). |
-| OFF-002 | Création et modification hors connexion des visites, rapports, absences et prospects. | 0.8.2 | CA1 : chaque objet créé hors connexion a un identifiant unique généré sur le téléphone. |
+| OFF-002 | Création et modification hors connexion des visites, rapports, absences et prospects. | 0.8.2 | CA1 : chaque objet créé hors connexion a un identifiant unique généré sur le téléphone. Livré en 0.8.2 (§14.61). |
 | OFF-003 | File d'attente locale visible ; reprise automatique au retour du réseau. | 0.8.3 | CA1 : l'état « n éléments en attente » et l'heure de dernière synchronisation sont toujours visibles. CA2 : une coupure pendant l'envoi ne crée aucun doublon. |
 | OFF-004 | Détection et résolution des conflits sans perte silencieuse (`RG-050` à `RG-054`). | 0.8.4 | CA1 : une décision du superviseur n'est jamais écrasée par une donnée locale. CA2 : un conflit est présenté au délégué avec les deux versions. |
 | OFF-005 | Téléversement différé des pièces jointes. | 0.8.7 | CA1 : un rapport synchronisé sans sa pièce jointe l'indique « pièce en attente ». |

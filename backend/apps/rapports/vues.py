@@ -57,6 +57,36 @@ class RapportVisiteVue(VueVisitesDuDelegue):
         return Response(s.RapportSerializer(rapport).data)
 
 
+class ModelesRapportVue(VueVisitesDuDelegue):
+    """OFF-002 (0.8.2) : pour chaque visite de la semaine et de la suivante, son rapport ou un
+    modèle vierge (champs du pays, produits, résultats, types d'action), à garder sur le
+    téléphone : le rapport s'écrit sans réseau, même jamais ouvert."""
+
+    actions = {"GET": REDIGER}
+
+    @extend_schema(responses=s.ModelesRapportSerializer, operation_id="synchro_rapports")
+    def get(self, request):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.planning.calendrier import lundi
+        from apps.planning.etats import StatutVisite
+        from apps.socle.services import aujourdhui
+
+        pays = pays_requis(self.perimetre)
+        debut = lundi(aujourdhui(pays))
+        visites = self.get_queryset().filter(
+            date__gte=debut, date__lt=debut + timedelta(days=14),
+            statut__in=(StatutVisite.PREVUE, StatutVisite.EN_COURS, StatutVisite.EFFECTUEE),
+        ).select_related("planning", "reseau", "pays").order_by("date", "heure")  # fmt: skip
+        donnees = {
+            "genere_le": timezone.now(),
+            "rapports": [{"visite": v.pk, "rapport": services.modele_rapport(v)} for v in visites],
+        }
+        return Response(s.ModelesRapportSerializer(donnees).data)
+
+
 class SoumissionRapportVue(VueVisitesDuDelegue):
     """RPT-002 CA1 : la soumission exige le socle et les champs obligatoires du pays. RPT-010 :
     version figée, retard après 23 h 59 le jour de la visite, heure du téléphone contrôlée."""

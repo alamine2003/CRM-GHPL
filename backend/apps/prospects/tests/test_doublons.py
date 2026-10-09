@@ -335,3 +335,22 @@ def test_proposition_refusee_et_nouvel_exercice(monde):
     sup = client_de(monde["sup.sn"])
     assert sup.get("/api/v1/propositions/").json() == []
     assert EvenementAudit.objects.filter(action="proposition.refus").count() == 1
+
+
+def test_off002_proposition_faite_sans_reseau_rejouee_sans_doublon(monde):
+    """OFF-002 CA1 : l'identifiant vient du téléphone ; OFF-003 CA2 : la file rejoue l'envoi
+    après une coupure, le serveur ne crée rien deux fois."""
+    import uuid
+
+    from apps.prospects.models import Proposition
+
+    _poste_du_delegue(monde)
+    fiche = commune(monde)
+    deleg = client_de(monde["deleg.sn"])
+    corps = {"id": str(uuid.uuid4()), "prospect": str(fiche.pk),
+             "changements": {"telephone_mobile": "77 999 88 77"}}  # fmt: skip
+    premiere = deleg.post("/api/v1/propositions/", corps, format="json")
+    rejouee = deleg.post("/api/v1/propositions/", corps, format="json")
+    assert (premiere.status_code, rejouee.status_code) == (201, 201)
+    assert premiere.json()["id"] == rejouee.json()["id"] == corps["id"]
+    assert Proposition.objects.filter(prospect=fiche).count() == 1

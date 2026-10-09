@@ -2745,6 +2745,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/synchro/rapports/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description OFF-002 (0.8.2) : pour chaque visite de la semaine et de la suivante, son rapport ou un
+     *     modèle vierge (champs du pays, produits, résultats, types d'action), à garder sur le
+     *     téléphone : le rapport s'écrit sans réseau, même jamais ouvert.
+     */
+    get: operations['synchro_rapports'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/utilisateurs/': {
     parameters: {
       query?: never;
@@ -4401,6 +4422,17 @@ export interface components {
      * @enum {string}
      */
     ModeValidationEnum: 'unitaire' | 'journee' | 'lot' | 'escalade' | 'remplacement';
+    /** @description OFF-002 : la visite et son rapport (existant, ou modèle vierge non enregistré). */
+    ModeleRapport: {
+      /** Format: uuid */
+      visite: string;
+      rapport: components['schemas']['Rapport'];
+    };
+    ModelesRapport: {
+      /** Format: date-time */
+      genere_le: string;
+      rapports: components['schemas']['ModeleRapport'][];
+    };
     Modification: {
       visite: components['schemas']['VisiteFigee'];
       champs: components['schemas']['ChampsEnum'][];
@@ -5604,6 +5636,8 @@ export interface components {
       prise_le: string;
     };
     SaisieProposition: {
+      /** Format: uuid */
+      id?: string;
       /** Format: uuid */
       prospect?: string;
       /** Format: uuid */
@@ -10518,6 +10552,25 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HistoriqueSynchro'];
+        };
+      };
+    };
+  };
+  synchro_rapports: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ModelesRapport'];
         };
       };
     };

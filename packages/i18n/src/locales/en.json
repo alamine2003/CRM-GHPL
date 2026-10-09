@@ -1238,7 +1238,9 @@
     "mobile": {
       "corriger": "Suggest a correction",
       "envoyee": "Proposal sent: the record will change once your supervisor or the country administrator agrees. The decision will appear on your home screen.",
-      "aucunChangement": "Change at least one field to send the proposal."
+      "aucunChangement": "Change at least one field to send the proposal.",
+      "horsLigne": "No network: your proposal is kept on the phone and will be sent automatically when the network returns.",
+      "enAttente": "Record update proposal"
     }
   },
   "qualite": {
@@ -2034,7 +2036,7 @@
     "soumis": "Report submitted to your supervisor.",
     "soumisLe": "Report submitted: it can no longer be changed.",
     "aCorriger": "Your supervisor asks for a correction.",
-    "horsLigne": "For now the report needs a network connection. Your visit is safely kept on the phone: try again when the network is back.",
+    "horsLigne": "This report is not on the phone yet. Sync with a network (profile, “Sync now”): the week's reports can then be written offline.",
     "reessayer": "Try again",
     "filtrer": "Find a product",
     "objectifPrevu": "Planned objective",
@@ -2570,6 +2572,7 @@
     "maintenant": "Sync now",
     "visites": "Visits this week and next",
     "prospects": "Prospects on the target list",
-    "historiques": "Prospects with their last visits"
+    "historiques": "Prospects with their last visits",
+    "rapports": "Reports ready to write offline"
   }
 }

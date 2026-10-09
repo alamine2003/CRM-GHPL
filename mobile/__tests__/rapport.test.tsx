@@ -258,7 +258,7 @@ test('Sans réseau, le rapport ne s’ouvre pas et le dit', async () => {
       throw new TypeError('Network request failed');
     }),
   });
-  expect(await screen.findByText(/Le rapport s'écrit avec du réseau/)).toBeTruthy();
+  expect(await screen.findByText(/pas encore sur le téléphone. Synchronisez/)).toBeTruthy();
   expect(screen.getByText('Réessayer')).toBeTruthy();
 });
 

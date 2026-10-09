@@ -264,6 +264,8 @@ urlpatterns = [
     ),
     # OFF-001 : historique de la liste cible, en une lecture, pour le téléphone
     path("synchro/historique/", rap.HistoriqueSynchroVue.as_view(), name="synchro-historique"),
+    # OFF-002 : rapports et modèles de la semaine et de la suivante, à écrire sans réseau
+    path("synchro/rapports/", rap.ModelesRapportVue.as_view(), name="synchro-rapports"),
     path("rapports/champs/<uuid:id>/", rap.ChampRapportVue.as_view(), name="champ-rapport"),
     path(
         "rapports/champs/<uuid:id>/archiver/",

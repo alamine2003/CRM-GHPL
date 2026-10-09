@@ -648,7 +648,9 @@ class Generateur:
                 continue
             apres = visites.filter(prospect_id=prospect, date__gt=rapport.visite.date)
             suivante = apres.filter(planning__semaine=semaine)
-            if suivante.exists() and not apres.exclude(planning__semaine=semaine).exists():
+            # Une visite d'un passage reste : la retirer déferait le passage de la semaine.
+            libre = suivante.exists() and not suivante.filter(passage__isnull=False).exists()
+            if libre and not apres.exclude(planning__semaine=semaine).exists():
                 for visite in suivante:
                     pln.retirer_visite(visite)
                 return

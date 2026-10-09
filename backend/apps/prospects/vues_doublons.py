@@ -244,7 +244,7 @@ class PropositionsVue(VuePropositions):
             )
         proposition = propositions.proposer(
             request.user, fiche, v.get("changements", {}), nouvel_exercice=lieu,
-            commentaire=v.get("commentaire", ""),
+            commentaire=v.get("commentaire", ""), ident=v.get("id"),
         )  # fmt: skip
         donnees = s.PropositionSerializer(proposition, context=self.contexte()).data
         return Response(donnees, status=status.HTTP_201_CREATED)
