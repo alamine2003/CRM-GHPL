@@ -2756,5 +2756,61 @@
       "produit": "Products",
       "valeur": "Reference values"
     }
+  },
+  "confidentialite": {
+    "titre": "Privacy policy",
+    "intro": "INNOV CRM is the work application of {{organisation}}'s medical sales teams. It is reserved for accounts created by the company: nobody can sign up on their own. This page explains which data it processes, why, for how long, and how to exercise your rights.",
+    "sections": {
+      "responsable": {
+        "titre": "Who is responsible for your data",
+        "texte": "{{organisation}}, which creates the accounts and organises the work, is the data controller."
+      },
+      "donnees": {
+        "titre": "Data processed",
+        "collaborateurs": "Staff: professional identity and email, username, role and scope, language, registered phones, log of sign-ins and actions.",
+        "visites": "During visits: the time and position at the start and end of each visit, if your country has enabled it. Never continuously, never outside visits.",
+        "professionnels": "Healthcare professionals visited: name, specialty, places of practice, registration number, professional contact details, visit history and feedback on products.",
+        "patients": "No patient health data: the application takes no photos, and attached documents are professional documents."
+      },
+      "finalites": {
+        "titre": "Why",
+        "texte": "To organise the medical representatives' work (schedule, visits, reports), to let managers approve it and follow it through indicators. Headquarters only sees figures without names, except for exceptional, logged consultation. No data is sold or used for advertising."
+      },
+      "acces": {
+        "titre": "Who can see it",
+        "texte": "Everyone only sees what their role allows: a medical representative, their own work; managers, their team's; administrators, their country. This is enforced by the server and by the database."
+      },
+      "lieux": {
+        "titre": "Where the data is",
+        "texte": "The application, its database and attached documents are hosted in Europe. Phone notifications go through Expo, Apple and Google (United States): they only contain a generic sentence, with no name or health data. These transfers outside your country follow the formalities required by the data protection authority."
+      },
+      "conservation": {
+        "titre": "How long",
+        "activite": "Schedules, visits, reports and action log: 5 years, then anonymised.",
+        "positions": "Visit positions: 12 months.",
+        "pieces": "Documents attached to reports: 3 years.",
+        "texte": "These are the default periods; your country may adjust them."
+      },
+      "telephone": {
+        "titre": "On the phone",
+        "texte": "Data kept on the phone to work offline is encrypted. It is erased on sign-out, if the phone is removed or the account suspended, and hidden after several days without synchronisation (7 by default)."
+      },
+      "securite": {
+        "titre": "Security",
+        "texte": "Encrypted connections, strong passwords, two-factor authentication for managers, app lock after a period of inactivity, log of sensitive actions, encrypted backups."
+      },
+      "droits": {
+        "titre": "Your rights",
+        "texte": "You may ask to access your data, have it corrected or deleted, and object to its processing on legitimate grounds. You may also contact your country's data protection authority; in Senegal, the Commission de protection des données personnelles (CDP)."
+      },
+      "contact": {
+        "titre": "Contact us",
+        "avecAdresse": "Write to {{contact}}.",
+        "sansAdresse": "Contact your country administrator, who will pass your request on to the data controller."
+      }
+    },
+    "version": "INNOV CRM version {{version}}.",
+    "lien": "Privacy policy",
+    "retour": "Back to sign-in"
   }
 }

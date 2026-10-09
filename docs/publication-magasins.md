@@ -1,4 +1,4 @@
-# Publication des applications sur Google Play et l'App Store (version 0.9.9)
+# Publication des applications sur Google Play et l'App Store (versions 0.9.9 et 1.0.0)
 
 Condition 7 de la 1.0.0 (prd.md §21.2) : les applications sont publiées sur Google Play et l'App Store, en distribution privée ou publique (question O-06). Ce guide liste ce que l'entreprise doit fournir et les étapes, depuis la construction jusqu'à la mise en ligne.
 
@@ -10,18 +10,39 @@ Condition 7 de la 1.0.0 (prd.md §21.2) : les applications sont publiées sur Go
 |---|---|---|
 | Compte Google Play Console au nom de l'entreprise | play.google.com/console | Paiement unique ; vérification de l'organisation (numéro D-U-N-S) |
 | Compte Apple Developer Program, organisation | developer.apple.com | Abonnement annuel ; numéro D-U-N-S |
-| Choix de distribution (O-06) | Décision | Public avec accès réservé aux comptes créés (hypothèse du PRD), ou privé : Managed Google Play et Apple Business Manager |
-| Politique de confidentialité publiée à une adresse web | Site de l'entreprise | Exigée par les deux magasins ; reprend le dossier CDP (`docs/dossier-cdp.md`) |
+| Choix de distribution (O-06) | Décision, quand elle sera prise | Les trois voies sont prêtes (§1 bis) ; rien à reconstruire pour passer de l'une à l'autre |
+| Adresse de contact pour les données personnelles | Variable `VITE_CONTACT_DONNEES` du portail (Cloudflare Pages) | Affichée par la politique de confidentialité ; sans elle, la page renvoie vers l'administrateur pays |
 | Adresse et téléphone d'assistance | Fiches des magasins | Ceux de l'administration pays ou du support |
 | Compte de démonstration pour la relecture des magasins | Fiches des magasins | Un compte délégué **de démonstration** (données fictives), jamais un vrai compte |
 
+## 1 bis. Trois façons de distribuer, toutes prêtes (1.0.0, O-06)
+
+La question O-06 n'est pas tranchée : les trois voies sont préparées, et on peut commencer par la première pour le pilote.
+
+| Voie | Pour qui | Construction | Ce que l'entreprise fait |
+|---|---|---|---|
+| **Installation directe (pilote)** | Les 2 à 5 téléphones du pilote | `eas build --profile pilote` : fichier APK pour Android ; pour l'iPhone, distribution « ad hoc » limitée aux téléphones enregistrés (`eas device:create`) | Enregistrer chaque iPhone ; envoyer le lien d'installation donné par EAS. Aucune relecture des magasins. |
+| **Magasins publics, accès réservé** (hypothèse du PRD) | Tous les délégués | `eas build --profile production` | Fiches publiques (§3) ; seuls les comptes créés par l'administration se connectent |
+| **Magasins privés** | Tous les délégués, application invisible du public | La même construction `production` | Google : application privée pour l'organisation (Managed Google Play) ; Apple : application sur mesure (Custom App) via Apple Business Manager |
+
+Les deux dernières voies utilisent la **même construction** : le choix se fait dans les consoles des magasins, pas dans le code. Les trois reçoivent les mêmes mises à jour à distance (canal `production`).
+
+### La politique de confidentialité
+
+Les deux magasins exigent une adresse publique. Elle est servie par le portail, sans compte, en français et en anglais :
+
+- adresse à déclarer : `https://<adresse du portail>/confidentialite` ;
+- l'application l'ouvre depuis l'écran de connexion et depuis « Profil », dans la langue de l'utilisateur ; elle connaît l'adresse du portail par la variable `EXPO_PUBLIC_PORTAIL_URL`, à définir dans l'environnement `production` d'EAS ;
+- le texte reprend le dossier CDP. Toute modification du traitement (nouvelle donnée, nouveau prestataire) se reporte dans les catalogues de traduction (`confidentialite.*`) **et** dans la déclaration des magasins (§3).
+
 ## 2. Construire
 
-Profil `production` de `mobile/eas.json` : version de l'application lue dans le fichier `VERSION`, construction pour les magasins (bundle Android, archive iOS), canal de mises à jour `production`. Les variables `EAS_PROJECT_ID` et `EXPO_OWNER` désignent le projet Expo de l'entreprise ; elles se déclarent dans l'environnement EAS, pas dans le dépôt. `EAS_PROJECT_ID` active aussi les mises à jour à distance (`expo-updates`, `docs/mise-a-jour.md`).
+Profil `production` de `mobile/eas.json` : version de l'application lue dans le fichier `VERSION`, construction pour les magasins (bundle Android, archive iOS), canal de mises à jour `production`. Le profil `pilote` donne la même application, à installer directement. Les variables `EAS_PROJECT_ID` et `EXPO_OWNER` désignent le projet Expo de l'entreprise ; elles se déclarent dans l'environnement EAS, pas dans le dépôt. `EAS_PROJECT_ID` active aussi les mises à jour à distance (`expo-updates`, `docs/mise-a-jour.md`).
 
 ```bash
 cd mobile
 eas build --profile production --platform all
+eas build --profile pilote --platform all     # installation directe, pilote
 ```
 
 Les clés de signature sont gardées par EAS (Expo), jamais dans le dépôt.

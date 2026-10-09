@@ -40,9 +40,10 @@ CSRF_TRUSTED_ORIGINS = env_liste("CSRF_TRUSTED_ORIGINS", "http://localhost:5173"
 # Le jeton de rafraîchissement du portail voyage dans un cookie : le portail et
 # l'API doivent partager le même domaine parent (même « site »).
 CORS_ALLOW_CREDENTIALS = True
-# En-têtes propres à INNOV CRM : client du portail (rafraîchissement) et pays actif (§11.4).
+# En-têtes propres à INNOV CRM : client du portail (rafraîchissement), pays actif (§11.4) et
+# version de l'application (0.9.6 ; 1.0.0 : autorisé aussi pour l'application dans un navigateur).
 CORS_ALLOW_HEADERS = ["accept", "accept-language", "authorization", "content-type",
-                      "x-innov-client", "x-pays"]  # fmt: skip
+                      "x-innov-client", "x-pays", "x-version-app"]  # fmt: skip
 PORTAIL_URL = os.environ.get("PORTAIL_URL", "http://localhost:5173").rstrip("/")
 
 INNOV_VERSION = VERSION

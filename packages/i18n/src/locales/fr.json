@@ -2756,5 +2756,61 @@
       "produit": "Produits",
       "valeur": "Valeurs de référence"
     }
+  },
+  "confidentialite": {
+    "titre": "Politique de confidentialité",
+    "intro": "INNOV CRM est l'application de travail des équipes de visite médicale de {{organisation}}. Elle est réservée aux comptes créés par l'entreprise : personne ne peut s'y inscrire seul. Cette page dit quelles données elle traite, pourquoi, combien de temps, et comment exercer vos droits.",
+    "sections": {
+      "responsable": {
+        "titre": "Qui est responsable de vos données",
+        "texte": "{{organisation}}, qui crée les comptes et organise l'activité, est responsable du traitement."
+      },
+      "donnees": {
+        "titre": "Les données traitées",
+        "collaborateurs": "Collaborateurs : identité et courriel professionnels, identifiant, rôle et périmètre, langue, téléphones enregistrés, journal des connexions et des actions.",
+        "visites": "Pendant les visites : l'heure et la position au début et à la fin de chaque visite, si votre pays l'a activé. Jamais en continu, jamais en dehors des visites.",
+        "professionnels": "Professionnels de santé visités : nom, spécialité, lieux d'exercice, numéro d'ordre, coordonnées professionnelles, historique des visites et retours sur les produits.",
+        "patients": "Aucune donnée de santé de patient : l'application ne prend pas de photo, et les documents joints sont des documents professionnels."
+      },
+      "finalites": {
+        "titre": "Pourquoi",
+        "texte": "Organiser l'activité des délégués (planning, visites, rapports), permettre à l'encadrement de la valider et la suivre par des indicateurs. Le siège ne voit que des chiffres sans nom, sauf consultation exceptionnelle, enregistrée. Aucune donnée n'est vendue ni utilisée pour de la publicité."
+      },
+      "acces": {
+        "titre": "Qui y a accès",
+        "texte": "Chacun ne voit que ce que son rôle permet : le délégué, son propre travail ; l'encadrement, celui de son équipe ; l'administration, son pays. Ce contrôle est fait par le serveur et par la base de données."
+      },
+      "lieux": {
+        "titre": "Où sont les données",
+        "texte": "L'application, sa base et les documents joints sont hébergés en Europe. Les notifications sur téléphone passent par Expo, Apple et Google (États-Unis) : elles ne contiennent qu'une phrase générique, sans nom ni donnée de santé. Ces transferts hors de votre pays sont encadrés par les formalités prévues auprès de l'autorité de protection des données."
+      },
+      "conservation": {
+        "titre": "Combien de temps",
+        "activite": "Plannings, visites, rapports et journal des actions : 5 ans, puis anonymisés.",
+        "positions": "Positions des visites : 12 mois.",
+        "pieces": "Documents joints aux rapports : 3 ans.",
+        "texte": "Ce sont les durées par défaut ; votre pays peut les ajuster."
+      },
+      "telephone": {
+        "titre": "Sur le téléphone",
+        "texte": "Les données gardées sur le téléphone pour travailler sans réseau sont chiffrées. Elles sont effacées à la déconnexion, si le téléphone est retiré ou le compte suspendu, et masquées après plusieurs jours sans synchronisation (7 par défaut)."
+      },
+      "securite": {
+        "titre": "Sécurité",
+        "texte": "Échanges chiffrés, mots de passe robustes, double authentification pour l'encadrement, verrouillage de l'application après un délai sans usage, journal des actions sensibles, sauvegardes chiffrées."
+      },
+      "droits": {
+        "titre": "Vos droits",
+        "texte": "Vous pouvez demander à accéder à vos données, à les faire corriger ou supprimer, et vous opposer à leur traitement pour un motif légitime. Vous pouvez aussi saisir l'autorité de protection des données de votre pays ; au Sénégal, la Commission de protection des données personnelles (CDP)."
+      },
+      "contact": {
+        "titre": "Nous écrire",
+        "avecAdresse": "Écrivez à {{contact}}.",
+        "sansAdresse": "Adressez-vous à votre administrateur pays, qui transmet votre demande au responsable du traitement."
+      }
+    },
+    "version": "Version {{version}} d'INNOV CRM.",
+    "lien": "Politique de confidentialité",
+    "retour": "Retour à la connexion"
   }
 }

@@ -704,6 +704,23 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.78 Version 1.0.0 : toutes les options prêtes (mise en œuvre 1.0.0)
+
+- **Version 1.0.0 posée** [D, 9 octobre 2026, responsable produit] : sans attendre les décisions encore ouvertes, la 1.0.0 marque le logiciel complet (périmètre du §8, CI verte, toutes les options préparées). La **mise en production** au Sénégal reste soumise aux neuf conditions du §21.2, et l'autorisation finale reste celle de la direction générale (condition 9). Le §21.3 distingue donc le passage à la 1.0.0 et la mise en production. Le dossier de lancement devient le dossier de mise en production.
+- **Distribution (O-06)** [D, 9 octobre 2026, responsable produit] : la question reste ouverte, et les trois voies sont prêtes :
+  - installation directe sur les téléphones du pilote (profil `pilote` : APK, iPhone en distribution « ad hoc ») ;
+  - magasins publics avec accès réservé aux comptes créés (hypothèse) ;
+  - magasins privés (Managed Google Play, Apple Business Manager).
+
+  Les deux dernières utilisent la même construction ; le choix se fait dans les consoles des magasins (`docs/publication-magasins.md` §1 bis).
+- **Politique de confidentialité publique** (§21.2 condition 7, NFR-012) : page `/confidentialite` du portail, lisible sans compte, en français et en anglais :
+  - elle reprend le dossier CDP : données, finalités, accès, lieux d'hébergement, durées, téléphone, sécurité, droits ;
+  - l'adresse de contact vient de la configuration (`VITE_CONTACT_DONNEES`) ; sans elle, la page renvoie vers l'administrateur pays ;
+  - l'application l'ouvre depuis la connexion et le profil, dans la langue de l'utilisateur ;
+  - les compartiments R2 sont créés avec la juridiction « Union européenne », pour que la page dise vrai sur le lieu d'hébergement.
+- **Défaut corrigé** : l'en-tête `X-Version-App` (0.9.6) n'était pas autorisé par le contrôle CORS. Les téléphones n'étaient pas touchés, car seuls les navigateurs appliquent ce contrôle. En revanche, l'application ouverte dans un navigateur ne pouvait plus se connecter. L'en-tête est autorisé, et le test CORS le vérifie.
+- **CDP** : le dossier est prêt (`docs/dossier-cdp.md`). Le dépôt revient au responsable du traitement et conditionne toujours le pilote.
+
 ### 14.77 Candidat final : gel, publication et dossier de lancement (mise en œuvre 0.9.9)
 
 - **Gel fonctionnel** [D, 9 octobre 2026, délégation] : à partir de la 0.9.9, aucune fonction nouvelle n'entre avant la 1.0.0. Seules entrent les corrections de défauts relevés en recette, aux essais de terrain ou pendant le pilote, livrées en 0.9.9 révisées par la procédure de mise à jour.
@@ -1546,7 +1563,10 @@ Exports : CSV et Excel, limités au périmètre, audités ; les rapports en text
 | REC-19 | Toute l'interface et les notifications existent en français et en anglais. | USR-004 |
 | REC-20 | Restauration complète de la production sur un environnement jetable dans le délai RTO. | NFR-006 |
 
-### 21.2 Conditions pour déclarer la version 1.0.0 stable
+### 21.2 Conditions de la mise en production (version 1.0.0)
+
+> Depuis la décision du §14.78, ces conditions ouvrent la **mise en production**, et non plus le numéro de version : la 1.0.0 est posée sur le logiciel complet, et rien de réel ne commence sans elles.
+
 
 1. Les scénarios REC-01 à REC-20 sont passés en préproduction et pendant le pilote.
 2. Aucun défaut critique ou majeur ouvert sur l'authentification, les permissions, l'isolation, la synchronisation, les workflows de validation ou l'audit.
@@ -1564,7 +1584,8 @@ Exports : CSV et Excel, limités au périmètre, audités ; les rapports en text
 |---|---|---|
 | x.y.z → x.y.(z+1) | CI au vert (lint, types, tests, isolation) ; critères d'acceptation des exigences livrées vérifiés ; journal de version rédigé ; instance de démonstration déployée | Responsable produit et technique (vous) |
 | x.y.9 → x.(y+1).1 | Idem + démonstration du cycle à un référent métier ; aucun défaut critique ouvert ; dette identifiée consignée | Responsable produit et technique, après démonstration |
-| 0.9.9 → 1.0.0 | Conditions de la section 21.2 | Direction générale |
+| 0.9.9 → 1.0.0 | Périmètre de la section 8 livré ; CI au vert ; options de distribution prêtes (§14.78) | Responsable produit et technique |
+| 1.0.0 → mise en production | Conditions de la section 21.2 | Direction générale |
 
 ## 22. Risques et dépendances
 

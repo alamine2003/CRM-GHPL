@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -16,10 +17,11 @@ import { Alerte, Bouton, Champ, Logo, Texte, useLien, usePalette } from '../src/
 import { FiletDemonstration, MentionDemonstration } from '../src/Demonstration';
 import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
+import { adresseConfidentialite } from '../src/version';
 
 /** Connexion du délégué (USR-001, SEC-002), code à usage unique (SEC-003) et demande de lien (USR-005). */
 export default function Connexion() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const p = usePalette();
   const lien = useLien();
   const marges = useSafeAreaInsets();
@@ -238,6 +240,15 @@ export default function Connexion() {
               </Pressable>
             </>
           )}
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => void Linking.openURL(adresseConfidentialite(i18n.language))}
+            style={{ alignSelf: 'center', padding: 10, marginTop: 'auto' }}
+          >
+            <Text style={[styles.discret, { color: p.texteDiscret }]}>
+              {t('confidentialite.lien')}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
       <FiletDemonstration />
@@ -254,6 +265,7 @@ const styles = StyleSheet.create({
   accroche: { color: '#B9C4E8', fontFamily: police.texte, fontSize: 14, lineHeight: 20 },
   feuille: { flex: 1, paddingHorizontal: 16, paddingTop: 24, gap: 16 },
   lien: { fontFamily: police.texteFort, fontSize: 14 },
+  discret: { fontFamily: police.texte, fontSize: 13, textDecorationLine: 'underline' },
   liens: { flexDirection: 'row', justifyContent: 'space-between' },
   code: {
     borderWidth: 1,

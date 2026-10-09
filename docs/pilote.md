@@ -83,7 +83,7 @@ Chaque défaut se consigne dans un tableau partagé :
 |---|---|---|
 | Critique | Perte ou fuite de données, blocage du travail de tous | Le jour même ; le pilote s'arrête s'il n'y a pas de contournement |
 | Majeur | Un parcours essentiel bloqué pour une personne, un indicateur faux | Avant le point hebdomadaire suivant |
-| Mineur | Gêne, libellé, présentation | Version suivante (0.9.8) |
+| Mineur | Gêne, libellé, présentation | Version corrective suivante (1.0.x) |
 
 ## 6. Questionnaire de fin de pilote (délégués et superviseur)
 

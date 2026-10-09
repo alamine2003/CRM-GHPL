@@ -56,7 +56,7 @@ L'administrateur pays construit ensuite l'organisation (zones, secteurs, divisio
 
 Si l'adresse n'est pas trouvée : `INNOV_IP=192.168.1.20 make telephone` (adresse Wi-Fi de l'ordinateur). Dans Expo Go, la base locale du téléphone n'est pas chiffrée (SQLCipher n'existe que dans une vraie compilation) : n'y utiliser que la démonstration. Pour une application installée, chiffrée comme en production : les builds de test ci-dessous.
 
-Variables utiles : `backend/.env.example` (serveur), `VITE_API_URL` (portail), `EXPO_PUBLIC_API_URL` (mobile).
+Variables utiles : `backend/.env.example` (serveur), `VITE_API_URL` et `VITE_CONTACT_DONNEES` (portail), `EXPO_PUBLIC_API_URL` et `EXPO_PUBLIC_PORTAIL_URL` (mobile).
 
 ### Builds de test Android et iOS (EAS)
 

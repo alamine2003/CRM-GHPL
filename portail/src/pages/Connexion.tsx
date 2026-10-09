@@ -168,6 +168,14 @@ export default function Connexion() {
       <Link component={LienRouteur} to="/mot-de-passe-oublie" sx={{ alignSelf: 'center' }}>
         {t('connexion.oublie')}
       </Link>
+      <Link
+        component={LienRouteur}
+        to="/confidentialite"
+        variant="body2"
+        sx={{ alignSelf: 'center', color: 'text.secondary' }}
+      >
+        {t('confidentialite.lien')}
+      </Link>
     </EcranPublic>
   );
 }

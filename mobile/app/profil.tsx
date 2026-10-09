@@ -2,20 +2,21 @@ import { marque, rayon, zoneTactileMin } from '@innov/design';
 import { LANGUES, type Langue } from '@innov/i18n';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { identifiantInstallation } from '../src/appareil';
-import { Bouton, Carte, Ligne, Texte, usePalette } from '../src/composants';
+import { Bouton, Carte, Ligne, Texte, useLien, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
 import { police } from '../src/polices';
 import { CartePreferences } from '../src/Preferences';
 import { CarteSynchro } from '../src/Synchronisation';
 import { useSession } from '../src/session';
-import { VERSION_APP } from '../src/version';
+import { adresseConfidentialite, VERSION_APP } from '../src/version';
 
 /** Profil : compte, langue mémorisée (USR-004), téléphone enregistré (USR-006), déconnexion. */
 export default function Profil() {
   const { t, i18n } = useTranslation();
   const p = usePalette();
+  const lien = useLien();
   const { etat, deconnexion, changerLangue } = useSession();
   const langue = i18n.language as Langue;
   const [installation, setInstallation] = useState('');
@@ -89,6 +90,15 @@ export default function Profil() {
         <Texte variante="discret" style={{ marginTop: 8 }}>
           {t('mobile.telephoneAide')}
         </Texte>
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => void Linking.openURL(adresseConfidentialite(langue))}
+          style={styles.confidentialite}
+        >
+          <Text style={{ color: lien, fontFamily: police.texteFort }}>
+            {t('confidentialite.lien')}
+          </Text>
+        </Pressable>
       </Carte>
 
       <Bouton libelle={t('session.deconnexion')} secondaire onPress={() => void deconnexion()} />
@@ -97,6 +107,7 @@ export default function Profil() {
 }
 
 const styles = StyleSheet.create({
+  confidentialite: { minHeight: zoneTactileMin, justifyContent: 'center', marginTop: 4 },
   langues: { flexDirection: 'row', gap: 8 },
   langue: {
     minHeight: zoneTactileMin,

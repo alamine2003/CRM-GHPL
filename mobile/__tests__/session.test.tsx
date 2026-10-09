@@ -1,7 +1,7 @@
 import { type ClientApi, ErreurApi, type Jetons } from '@innov/api-client';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { AppState, type AppStateStatus } from 'react-native';
+import { AppState, type AppStateStatus, Linking } from 'react-native';
 import Connexion from '../app/connexion';
 import Accueil from '../app/index';
 import Profil from '../app/profil';
@@ -12,7 +12,9 @@ import i18n from '../src/i18n';
 import { oublierEnvironnement } from '../src/Demonstration';
 import { DELAI_VERROU_MS, horloge, Verrou } from '../src/Verrou';
 
-jest.mock('expo-constants', () => ({ expoConfig: { version: '0.0.3', extra: {} } }));
+jest.mock('expo-constants', () => ({
+  expoConfig: { version: '0.0.3', extra: { portailUrl: 'https://portail.exemple.org/' } },
+}));
 jest.mock('expo-router', () => {
   const { Text: Texte } = jest.requireActual('react-native');
   return {
@@ -263,9 +265,20 @@ describe('mobile — session', () => {
     expect(await screen.findByText(/vient d'être envoyé/)).toBeTruthy();
   });
 
+  it('1.0.0 : ouvre la politique de confidentialité depuis la connexion', async () => {
+    const ouvrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    await rendre(<Connexion />, fauxClient());
+    await fireEvent.press(await screen.findByText('Politique de confidentialité'));
+    expect(ouvrir).toHaveBeenCalledWith('https://portail.exemple.org/confidentialite?langue=fr');
+  });
+
   it('se déconnecte depuis le profil', async () => {
     const client = fauxClient({ reprendre: jest.fn(async () => JETONS) });
     await rendre(<Profil />, client);
+    // 1.0.0 : la politique de confidentialité s'ouvre aussi depuis le profil.
+    const ouvrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    await fireEvent.press(await screen.findByText('Politique de confidentialité'));
+    expect(ouvrir).toHaveBeenCalledWith('https://portail.exemple.org/confidentialite?langue=fr');
     await fireEvent.press(await screen.findByText('Se déconnecter'));
     expect(client.deconnexion).toHaveBeenCalled();
     expect(await screen.findByText('redirection:/connexion')).toBeTruthy();

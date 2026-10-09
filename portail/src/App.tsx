@@ -9,6 +9,7 @@ import { ENTREES } from './composants/navigation';
 import { useSession } from './contexteSession';
 import Accueil from './pages/Accueil';
 import ActivationRequise from './pages/ActivationRequise';
+import Confidentialite from './pages/Confidentialite';
 import Connexion from './pages/Connexion';
 import Introuvable from './pages/Introuvable';
 import Oubli from './pages/Oubli';
@@ -169,6 +170,7 @@ export default function App() {
       <Route path="/connexion" element={<Connexion />} />
       <Route path="/mot-de-passe-oublie" element={<Oubli />} />
       <Route path="/reinitialisation" element={<Reinitialisation />} />
+      <Route path="/confidentialite" element={<Confidentialite />} />
       <Route path="*" element={<Protegee />} />
     </Routes>
   );

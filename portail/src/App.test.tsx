@@ -194,8 +194,9 @@ describe('portail — connexion (USR-001, SEC-002)', () => {
     rendre(fauxClient({ reprendre: vi.fn(async () => JETONS) }));
     expect(await screen.findByRole('heading', { name: 'Bonjour Awa' })).toBeInTheDocument();
     expect(screen.getAllByText('Sénégal').length).toBeGreaterThan(0);
-    // Étape en cours (« Cycle 0.1 · Référentiel ») ou cycle terminé (« Cycle 0.0 terminé »).
-    expect(screen.getByText(/^Cycle 0\.\d( · | terminé)/)).toBeInTheDocument();
+    // Étape en cours (« Cycle 0.1 · Référentiel »), cycle terminé (« Cycle 0.0 terminé ») ou,
+    // depuis la 1.0.0, « Version stable ».
+    expect(screen.getByText(/^(Cycle 0\.\d( · | terminé)|Version stable)/)).toBeInTheDocument();
     expect(screen.getByText('Délégué')).toBeInTheDocument();
     expect(await screen.findByText('Service disponible')).toBeInTheDocument();
   });
@@ -334,6 +335,33 @@ describe('portail — rôles et pays actif (USR-001, USR-002)', () => {
     fireEvent.click(await screen.findByRole('option', { name: 'Togo' }));
     expect(client.choisirPays).toHaveBeenCalledWith('TG');
     expect((await screen.findAllByText('Togo')).length).toBeGreaterThan(0);
+  });
+});
+
+describe('portail — politique de confidentialité (1.0.0, §21.2 condition 7)', () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  it('se lit sans compte, depuis la connexion, et reste accessible', async () => {
+    const { container } = rendre(fauxClient());
+    fireEvent.click(await screen.findByRole('link', { name: 'Politique de confidentialité' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Politique de confidentialité' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Vos droits' })).toBeInTheDocument();
+    expect(screen.getByText(/Jamais en continu/)).toBeInTheDocument();
+    // Sans adresse configurée, la page renvoie vers l'administrateur pays.
+    expect(screen.getByText(/votre administrateur pays/)).toBeInTheDocument();
+    expect(await violationsAccessibilite(container)).toEqual([]);
+  });
+
+  it('s’ouvre dans la langue demandée par l’application mobile', async () => {
+    rendre(fauxClient(), '/confidentialite?langue=en');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Privacy policy' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Your rights' })).toBeInTheDocument();
   });
 });
 

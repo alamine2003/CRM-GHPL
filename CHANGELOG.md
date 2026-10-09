@@ -2,6 +2,30 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.0] — Version complète, toutes les options prêtes
+
+Le logiciel couvre tout le périmètre de la 1.0.0 (prd.md §8). La mise en production au Sénégal reste soumise aux conditions du §21.2 et à la décision de la direction générale (§14.78, §21.3).
+
+### Ajouté (prd.md §14.78, §21.2 condition 7, O-06, NFR-012)
+
+- Politique de confidentialité publique (`/confidentialite`), en français et en anglais, exigée par les magasins ; liens depuis la connexion du portail, la connexion de l'application et le profil.
+- Trois façons de distribuer l'application, toutes prêtes : installation directe pour le pilote (profil `pilote`), magasins publics à accès réservé, magasins privés.
+
+### Corrigé
+
+- L'application ouverte dans un navigateur ne pouvait plus se connecter depuis la 0.9.6 : l'en-tête de version de l'application n'était pas autorisé par le contrôle CORS. Les téléphones n'étaient pas touchés.
+
+### Design
+
+Revue sur le rendu réel (portail : bureau 1440 px, tablette 834 px, téléphone 360 px en anglais et en sombre ; application : 360 px clair et 414 px sombre) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Politique de confidentialité | Onglet du navigateur sans titre propre | Titre « Politique de confidentialité · INNOV CRM » |
+| Politique de confidentialité (anglais) | « sales representatives », alors que l'interface dit « medical representative » | Vocabulaire aligné sur l'interface |
+| Connexion (portail et application) | — | Lien discret sous « Mot de passe oublié ? », sans concurrencer l'action principale ; au téléphone, en bas de l'écran |
+| Profil (application) | — | Lien dans la carte « Ce téléphone », zone tactile de 48 px |
+
 ## [0.9.9] — Candidat final
 
 Dernier jalon du cycle 0.9 « Durcissement et pilote » : gel fonctionnel avant la 1.0.0.
