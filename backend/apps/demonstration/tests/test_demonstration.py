@@ -60,9 +60,13 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
 
     prepare, approuve, soumis, *terminees = Planning.objects.filter(pays__code="SN").order_by(
         "statut", "semaine")  # fmt: skip
-    # Les deux semaines précédentes du premier délégué, terminées : son historique (VIS-002).
+    # Les deux semaines précédentes du premier délégué, terminées : son historique (VIS-002) ;
+    # celle du second ne porte que son pointage d'un cabinet sans position (DC-52, 0.8.8).
+    du_second = [p for p in terminees if p.delegue != approuve.delegue]
+    terminees = [p for p in terminees if p.delegue == approuve.delegue]
     assert [p.statut for p in terminees] == ["termine", "termine"]
-    assert all(p.delegue == approuve.delegue and p.visites.exists() for p in terminees)
+    assert all(p.visites.exists() for p in terminees)
+    assert [p.visites.count() for p in du_second] == [1]
     # Approuvée, la semaine en cours a commencé : elle est « en cours » (cycle 0.4).
     assert (approuve.statut, prepare.statut, soumis.statut) == ("en_cours", "brouillon", "soumis")
     assert approuve.reouvert_le is None and not approuve.en_retard
@@ -85,6 +89,13 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     assert approuve.activites.get().type == soumis.activites.get().type == "accompagnement"
     assert "hors_cible" in {a.code for a in controles.signalements(soumis)}
     assert Activite.objects.filter(pays__code="SN", periode="apres_midi").count() == 1
+    # DC-52 : un cabinet sans position attend sa position proposée, de deux personnes.
+    from apps.prospects import positions
+    from apps.prospects.models import Etablissement
+
+    (lieu,) = positions.a_valider(Etablissement.objects.filter(pays__code="SN"),
+                                  Pays.objects.get(code="SN"))  # fmt: skip
+    assert positions.proposition(lieu)["personnes"] == 2
     # La semaine fermée du second délégué : pas de planning, une demande de réouverture.
     assert not Planning.objects.filter(delegue=soumis.delegue, semaine=approuve.semaine).exists()
     assert pln.reouverture_demandee(soumis.delegue, approuve.semaine)

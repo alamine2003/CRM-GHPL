@@ -704,6 +704,12 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.68 Recette, démonstration et essais de terrain du cycle 0.8 (mise en œuvre 0.8.9)
+
+- **Recette** : `recette-0.8.md` relie chaque critère d'acceptation du cycle (OFF-001 à OFF-007, NOT-002 à NOT-005, SEC-005, SEC-006, DC-52, DC-54) et les scénarios REC-06, REC-07 et REC-17 aux tests qui les prouvent. Quatre écarts ne se lèvent que sur un vrai téléphone : sept jours en mode avion (OFF-001), base extraite illisible (SEC-005), push reçu après redémarrage (NOT-002), poids sur un réseau réel (OFF-006).
+- **Essais de terrain** : `docs/essais-terrain.md` fixe le protocole (essais T1 à T9 : semaine en mode avion, coupure pendant l'envoi, synchronisation en zone rurale, document lourd, push, extraction de la base, révocation et délai, position proposée, questions d'ergonomie) et la façon de consigner les écarts. [D, 9 octobre 2026, délégation] Ces essais se mènent sur place avec des délégués volontaires, sur la démonstration ou une préproduction, jamais sur des données réelles avant les formalités CDP ; un défaut critique ou majeur sur la synchronisation bloque le passage au cycle 0.9.
+- **Démonstration** : `demonstration-0.8.md` (30 minutes, surtout sur le téléphone). La démonstration crée maintenant un cabinet sans position pointé par deux délégués (visites imprévues, prospect absent, donc sans rapport attendu) : la position proposée se montre sans préparation.
+
 ### 14.67 Réseau faible, position de référence proposée et dossier CDP (mise en œuvre 0.8.8)
 
 - **Compression** (OFF-006) : les réponses JSON de l'API partent compressées (gzip) quand le téléphone l'accepte, ce que font d'eux-mêmes Android et iOS. [D, 9 octobre 2026, délégation] Les routes d'authentification (`/auth/`) ne sont jamais compressées : elles portent des jetons, et compresser un secret à côté d'un texte choisi par l'appelant expose à l'attaque BREACH ; les documents PDF, déjà compressés, partent tels quels.

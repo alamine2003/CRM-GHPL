@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.9] — Recette, démonstration et essais de terrain du cycle 0.8
+
+Clôture du cycle 0.8 « Mobilité ».
+
+### Ajouté (prd.md §14.68)
+
+- `recette-0.8.md` : chaque critère d'acceptation du cycle relié à ses tests ; quatre écarts qui ne se lèvent que sur un vrai téléphone.
+- `docs/essais-terrain.md` : protocole des essais sur place (semaine en mode avion, coupure pendant l'envoi, zone rurale, document lourd, push, extraction de la base, révocation, position proposée, ergonomie).
+- `demonstration-0.8.md` ; la démonstration crée un établissement sans position pointé par deux délégués, pour montrer la position proposée sans préparation.
+
+### Design
+
+Pas de nouvel écran : la revue de la position proposée est dans 0.8.8.
+
 ## [0.8.8] — Réseau faible, position de référence proposée, dossier CDP
 
 Huitième jalon du cycle 0.8 « Mobilité ».

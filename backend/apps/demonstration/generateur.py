@@ -419,7 +419,51 @@ class Generateur:
         if len(delegues) > 1:
             nombre += self.semaine_soumise(pays, delegues[1], suivante)
             self.semaine_fermee(pays, delegues[1], courante)
+            nombre += self.position_a_proposer(pays, delegues, courante - timedelta(days=14))
         return nombre
+
+    @staticmethod
+    def position_a_proposer(pays, delegues, semaine) -> int:
+        """DC-52 (0.8.8) : un cabinet sans position, pointé au démarrage de trois visites par
+        deux délégués ; le prospect était absent (VIS-005), donc aucun rapport n'est attendu.
+        L'administrateur pays y trouve une position proposée à valider sur la carte."""
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+
+        from apps.planning.etats import StatutPlanning, StatutVisite
+        from apps.planning.models import Planning, Visite
+        from apps.prospects.models import Etablissement
+
+        sans_position = Etablissement.objects.filter(
+            pays=pays, statut="actif", latitude__isnull=True
+        ).order_by("nom")
+        # Un cabinet de préférence ; sinon le premier établissement sans position.
+        lieu = sans_position.filter(type__code="cabinet").first() or sans_position.first()
+        if lieu is None:
+            return 0
+        motif = Valeur.objects.filter(pays=pays, liste="motif_ecart", code="cabinet_ferme").first()
+        lat0, lon0 = CENTRES.get(pays.code, CENTRES["SN"])[-1]
+        fuseau = ZoneInfo(pays.fuseau)
+        # Trois pointages à quelques dizaines de mètres les uns des autres.
+        ecarts = ((0.00012, -0.00018, 11), (-0.00009, 0.00014, 18), (0.00004, 0.00002, 9))
+        for n, (delegue, (dlat, dlon, precision)) in enumerate(
+            zip((delegues[0], delegues[1], delegues[0]), ecarts, strict=True)
+        ):
+            planning, _ = Planning.objects.get_or_create(
+                pays=pays, delegue=delegue, semaine=semaine,
+                defaults={"statut": StatutPlanning.TERMINE},
+            )  # fmt: skip
+            jour = semaine + timedelta(days=n + 1)
+            debut = datetime.combine(jour, time(16, 30), tzinfo=fuseau)
+            Visite.objects.create(
+                pays=pays, planning=planning, etablissement=lieu, date=jour, heure=time(16, 30),
+                statut=StatutVisite.PROSPECT_ABSENT, debut_le=debut, ordre=99,
+                debut_latitude=round(lat0 + dlat, 6), debut_longitude=round(lon0 + dlon, 6),
+                debut_precision_m=precision, ecart_le=debut + timedelta(minutes=10),
+                motif_ecart=motif, est_imprevue=True,
+                justification="Passage au cabinet en fin de tournée",
+            )  # fmt: skip
+        return len(ecarts)
 
     @staticmethod
     def passe_execute(pays, delegue) -> None:
