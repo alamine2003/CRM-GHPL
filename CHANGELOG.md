@@ -2,6 +2,21 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.6] — Mise à jour, retour arrière et migration BirdNotes à blanc
+
+Sixième jalon du cycle 0.9 « Durcissement et pilote ».
+
+### Ajouté (prd.md §14.74, PRP-013)
+
+- `docs/mise-a-jour.md` : livrer une version, revenir en arrière, déroulé du jour J de la migration BirdNotes.
+- Version minimale de l'application : le téléphone envoie sa version, l'API refuse (426) une application trop ancienne quand l'exploitation le décide.
+- Test de réversibilité : chaque migration se défait ; la dernière de chaque application est défaite puis rejouée.
+- `generer_export_birdnotes` (export fictif au volume du vrai) et `repeter_migration` (simulation, import, second import sans création, rapprochement) : 6 050 prospects importés en 43 secondes, sans écart.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [0.9.5] — Hébergement, sauvegardes et restauration
 
 Cinquième jalon du cycle 0.9 « Durcissement et pilote ».

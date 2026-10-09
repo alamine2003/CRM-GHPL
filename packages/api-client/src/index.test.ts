@@ -34,6 +34,30 @@ function stockageMemoire(initial: string | null = null): StockageRafraichissemen
 }
 
 describe('client mobile', () => {
+  it('envoie sa version ; une version trop ancienne est refusée (0.9.6)', async () => {
+    const appel = vi.fn(async () =>
+      reponse(426, {
+        code: 'mise_a_jour_requise',
+        message: 'Mettez l’application à jour.',
+        details: { version_minimale: '0.9.6' },
+      }),
+    );
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage: stockageMemoire(),
+      versionApp: '0.9.5',
+      fetch: appel,
+    });
+    const erreur = await client.connexion('awa.diallo', `${Date.now()}`).catch((e) => e);
+    expect(erreur).toBeInstanceOf(ErreurApi);
+    expect(erreur.statut).toBe(426);
+    expect(erreur.code).toBe('mise_a_jour_requise');
+    const [, init] = appel.mock.calls[0] as unknown as [string, RequestInit];
+    expect((init.headers as Record<string, string>)['X-Version-App']).toBe('0.9.5');
+  });
+
   it('garde le rafraîchissement dans le stockage et l’accès en mémoire', async () => {
     const stockage = stockageMemoire();
     const appel = vi.fn(async () => reponse(200, jetons('A1', 'R1')));

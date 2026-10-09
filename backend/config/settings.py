@@ -126,6 +126,8 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # 0.9.6 : version minimale de l'application mobile (architecture §14.8).
+    "apps.socle.version_app.VersionMinimaleApp",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -274,6 +276,8 @@ EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 # NOT-002 (0.8.5) : notifications push par le service d'Expo. Désactivées tant que
 # l'hébergement ne les ouvre pas ; le jeton d'accès, s'il y en a un, vient de l'environnement.
 PUSH_ACTIF = env_bool("PUSH_ACTIF", False)
+# 0.9.6 (architecture §14.8) : une application plus ancienne reçoit 426 ; vide, tout passe.
+VERSION_MIN_APP = os.environ.get("INNOV_VERSION_MIN_APP", "")
 PUSH_EXPO_URL = os.environ.get("PUSH_EXPO_URL", "https://exp.host/--/api/v2/push/send")
 PUSH_EXPO_JETON = os.environ.get("PUSH_EXPO_JETON", "")
 

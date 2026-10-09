@@ -2,6 +2,7 @@ import { creerClient, type StockageRafraichissement } from '@innov/api-client';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { VERSION_APP } from './version';
 import { decrireAppareil } from './appareil';
 import i18n from './i18n';
 
@@ -51,5 +52,7 @@ export function creerClientMobile(surSessionPerdue?: (erreur: unknown) => void) 
     stockage: stockageSecurise,
     appareil: decrireAppareil,
     surSessionPerdue,
+    // 0.9.6 : le serveur refuse (426) une application plus ancienne que la version minimale.
+    versionApp: VERSION_APP,
   });
 }

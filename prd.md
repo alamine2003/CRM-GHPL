@@ -704,6 +704,30 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.74 Mise à jour, retour arrière et migration BirdNotes à blanc (mise en œuvre 0.9.6)
+
+- **Procédure de mise à jour** : `docs/mise-a-jour.md` fixe les étapes :
+  1. CI verte ;
+  2. étiquette ;
+  3. sauvegarde vérifiée ;
+  4. préproduction et contrôles des parcours clés ;
+  5. annonce ;
+  6. production, hors des heures de tournée ;
+  7. portail ;
+  8. téléphones ;
+  9. surveillance de 24 heures.
+
+  Les migrations suivent la méthode « étendre puis contracter » : l'ancienne et la nouvelle version tournent sur la même base.
+- **Retour arrière** : sur Render, Cloudflare Pages et EAS, retour au déploiement précédent sans restauration. Un test vérifie à chaque livraison que chaque migration se défait. Il défait puis rejoue réellement la dernière migration de chaque application.
+- **Version minimale de l'application** (architecture §14.8) : le téléphone envoie sa version (`X-Version-App`). Quand une livraison change le protocole, l'exploitation relève `INNOV_VERSION_MIN_APP`. L'API répond alors `426` (« mise à jour requise ») à une application plus ancienne, qui garde ses données sur le téléphone. Le portail et la sonde de l'hébergeur ne sont jamais refusés. [D, 9 octobre 2026, délégation] La version minimale ne se relève que deux semaines après la publication de la version qui l'exige.
+- **Migration BirdNotes à blanc** (PRP-013, §14.7) : `generer_export_birdnotes` produit un export entièrement fictif à la structure et au volume du vrai, avec ses défauts : variantes, potentiels hors A/B/C, titres, fiches sans nom, demandes en attente, doublons. `repeter_migration` enchaîne la simulation, l'import, un second import qui ne doit rien créer, puis le rapprochement table par table : chaque ligne est créée, reconnue, fusionnée ou écartée avec son motif, sinon c'est un écart. Résultats sur 6 050 prospects et 1 499 établissements :
+  - import en 43 secondes ;
+  - second import sans aucune création ;
+  - aucun écart.
+
+  Un test rejoue la répétition à chaque livraison. Le déroulé du jour J (gel de BirdNotes, export, sauvegarde, import, contrôles, ouverture, retour arrière) est décrit au §5 du guide.
+- **Reste** : la répétition avec le vrai export, en préproduction, après les formalités CDP ; elle se lance par la même commande.
+
 ### 14.73 Hébergement de production, sauvegardes et restauration (mise en œuvre 0.9.5)
 
 - **Plan d'hébergement** (HT-05, HT-06, DC-33) : `render.yaml` décrit toute la production Render en région Francfort, sur des offres payantes :

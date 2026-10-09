@@ -475,6 +475,9 @@ export interface OptionsClient {
   /** Appelé quand la session est définitivement perdue (expirée, révoquée), avec le refus du
    * serveur : le mobile y lit « appareil_revoque » ou « compte_desactive » (SEC-006). */
   surSessionPerdue?: (erreur: unknown) => void;
+  /** Mobile : version de l'application, envoyée dans `X-Version-App` ; le serveur répond 426
+   * (`mise_a_jour_requise`) quand elle est plus ancienne que la version minimale (0.9.6). */
+  versionApp?: string;
   fetch?: typeof fetch;
 }
 
@@ -512,6 +515,7 @@ export function creerClient(options: OptionsClient) {
     const formulaire = typeof FormData !== 'undefined' && opts.corps instanceof FormData;
     if (opts.corps !== undefined && !formulaire) entetes['Content-Type'] = 'application/json';
     if (portail) entetes['X-Innov-Client'] = 'portail';
+    if (options.versionApp) entetes['X-Version-App'] = options.versionApp;
     if (paysActif) entetes['X-Pays'] = paysActif;
     if (opts.authentifiee && acces) entetes.Authorization = `Bearer ${acces}`;
     const reponse = await appel(`${base}${chemin}`, {
