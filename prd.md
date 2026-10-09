@@ -704,6 +704,15 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.64 Notifications push (mise en œuvre 0.8.5)
+
+- **Push** (NOT-002) : chaque notification du centre (prd.md §18) part aussi en push sur le téléphone de la personne, si elle l'a accepté. Connecté, le téléphone donne son adresse Expo ; elle est oubliée à la déconnexion et à la révocation (SEC-006). Mise en service, comptes et vérification sur un téléphone : `docs/notifications-push.md`.
+- **CA1** : toucher la notification ouvre l'objet (rapport à reprendre, semaine du planning), y compris quand l'application était fermée ; sinon le centre de notifications. La notification touchée est marquée lue.
+- **CA2** : le texte affiché, même sur l'écran verrouillé, est une phrase générique par type, dans la langue de la personne (« Une correction de rapport est demandée. », « 20 rapports à valider. ») : ni nom de prospect ou de délégué, ni produit, ni texte libre. Les données jointes ne portent que des identifiants et des dates.
+- **Regroupement** (NOT-003) : [D, 9 octobre 2026, délégation] le premier événement d'un type attend 10 minutes que la rafale se regroupe, puis une seule notification part ; ensuite, au plus une par type et par heure et par personne, les suivantes partant ensemble à l'heure. **CA1** : 20 rapports soumis en 10 minutes donnent une seule notification « 20 rapports à valider ». Une attente de 10 minutes au plus est acceptée pour les notifications isolées (révision, correction), qui restent visibles aussitôt au centre.
+- Le service push d'Expo reste désactivé (`PUSH_ACTIF`) jusqu'à l'hébergement (0.9.5) ; injoignable, il est retenté à la passe suivante ; une application désinstallée voit son adresse effacée.
+- Correction : le worker Celery ne trouvait pas les tâches périodiques (modules `taches`, et non `tasks`) ; elles sont maintenant déclarées et un test le vérifie.
+
 ### 14.63 Conflits sans perte silencieuse (mise en œuvre 0.8.4)
 
 - **Version de chaque écriture** (RG-052) : le rapport et la visite exposent leur numéro de version. Le téléphone retient, pour une saisie de rapport non envoyée, la version du serveur sur laquelle elle s'appuie, et l'envoie avec elle ; le modèle vierge gardé sans réseau part de la version 0 (§14.61). Si le rapport a changé ailleurs depuis (autre appareil, autre session), le serveur refuse l'écriture (« conflit ») au lieu d'écraser.
@@ -1139,8 +1148,8 @@ Format retenu pour ORG-014 (0.1.8) : classeur Excel, feuille « ORGANISATION »,
 | ID | Exigence | Version | Critères d'acceptation |
 |---|---|---|---|
 | NOT-001 | Centre de notifications dans l'application et le portail (lu / non lu). | 0.3.8 | CA1 : chaque notification ouvre directement l'écran de l'action attendue. |
-| NOT-002 | Notifications push mobiles pour les événements de la section 18. | 0.8.5 | CA1 : toucher la notification ouvre l'objet concerné, même après redémarrage. CA2 : aucune donnée de santé ni nom de prospect dans le texte affiché sur l'écran verrouillé. |
-| NOT-003 | Regroupement anti-saturation : au plus une notification push par type et par heure et par utilisateur ; les suivantes sont regroupées. | 0.8.5 | CA1 : 20 rapports soumis en 10 minutes produisent une seule notification « 20 rapports à valider ». |
+| NOT-002 | Notifications push mobiles pour les événements de la section 18. | 0.8.5 | CA1 : toucher la notification ouvre l'objet concerné, même après redémarrage. CA2 : aucune donnée de santé ni nom de prospect dans le texte affiché sur l'écran verrouillé. Livré en 0.8.5 (§14.64) ; à vérifier sur téléphone (`docs/notifications-push.md`). |
+| NOT-003 | Regroupement anti-saturation : au plus une notification push par type et par heure et par utilisateur ; les suivantes sont regroupées. | 0.8.5 | CA1 : 20 rapports soumis en 10 minutes produisent une seule notification « 20 rapports à valider ». Livré en 0.8.5 (§14.64) ; à vérifier sur téléphone (`docs/notifications-push.md`). |
 | NOT-004 | Courriel réservé à la sécurité du compte (récupération d'accès, nouvel appareil, double authentification) et au secours d'une décision en attente depuis plus de 48 h [H]. | 0.8.6 | CA1 : aucun autre courriel n'est envoyé. |
 | NOT-005 | Préférences par utilisateur dans les limites fixées par le pays (certaines notifications ne peuvent pas être désactivées : révision demandée, correction demandée, escalade). | 0.8.6 | CA1 : une notification obligatoire ne peut pas être désactivée. |
 | NOT-006 | Rappels : planning non soumis (vendredi 9 h, décision du 6 octobre 2026), visite proche, rapport non soumis (18 h), délégué non synchronisé depuis 48 h (au superviseur). | 0.3.8 | CA1 : les heures suivent le fuseau du pays. |

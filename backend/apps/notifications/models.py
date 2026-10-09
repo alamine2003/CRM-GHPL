@@ -2,7 +2,7 @@
 
 Une ligne par événement et par destinataire, écrite dans la transaction de l'événement. Le
 texte n'est pas stocké : le client le compose dans la langue de l'utilisateur à partir du type
-et des données, sans donnée de santé. L'envoi push (Expo) arrive en 0.8.5 (NOT-002).
+et des données, sans donnée de santé. Le push (NOT-002, 0.8.5) part de `push.py`, regroupé.
 """
 
 from django.conf import settings
@@ -48,10 +48,17 @@ class Notification(ModeleDePays):
     #: Ce qu'il faut pour composer le texte et ouvrir l'objet (semaine, planning…).
     donnees = models.JSONField(default=dict)
     lue_le = models.DateTimeField(null=True, blank=True)
+    #: NOT-003 : depuis quand un push est dû (premier événement non poussé), et quand il est
+    #: parti ; la tâche périodique regroupe les dus par destinataire et par type.
+    push_du = models.DateTimeField(null=True, blank=True)
+    push_le = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-cree_le"]
-        indexes = [models.Index(fields=["destinataire", "lue_le"])]
+        indexes = [
+            models.Index(fields=["destinataire", "lue_le"]),
+            models.Index(fields=["push_du"]),
+        ]
 
     def __str__(self):
         return f"{self.destinataire} {self.type}"

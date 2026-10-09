@@ -9,7 +9,12 @@ CATALOGUE = Path(__file__).resolve().parents[1] / "locale" / "en" / "LC_MESSAGES
 
 def test_aucun_message_sans_traduction_anglaise():
     catalogue = polib.pofile(str(CATALOGUE))
-    manquants = [e.msgid for e in catalogue if not e.msgstr and not e.obsolete]
+    # Une phrase au pluriel (ngettext) se traduit dans chacune de ses formes.
+    manquants = [
+        e.msgid
+        for e in catalogue
+        if not e.obsolete and not (all(e.msgstr_plural.values()) if e.msgid_plural else e.msgstr)
+    ]
     assert manquants == [], f"Traductions manquantes : {manquants}"
     assert not catalogue.fuzzy_entries()
 

@@ -13,11 +13,18 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 app = Celery("innov")
 app.config_from_object("django.conf:settings", namespace="CELERY")
-app.autodiscover_tasks()
+# Les tâches vivent dans les modules `taches` de chaque application (pas `tasks`, le nom par
+# défaut de Celery) : sans ce nom, le worker ne les connaîtrait pas.
+app.autodiscover_tasks(related_name="taches")
 
 #: Tâches périodiques (architecture §7.5) : évaluées à l'heure de chaque pays par la tâche
 #: elle-même ; l'ordonnanceur ne fait que la réveiller.
 app.conf.beat_schedule = {
+    # NOT-002, NOT-003 : les push regroupés partent toutes les 5 minutes.
+    "notifications-push": {
+        "task": "apps.notifications.taches.push",
+        "schedule": crontab(minute="*/5"),
+    },
     "echeances-planning": {
         "task": "apps.planning.taches.echeances",
         "schedule": crontab(minute="*/15"),

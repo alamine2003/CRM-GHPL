@@ -119,6 +119,10 @@ class Appareil(models.Model):
     revoque_par = models.ForeignKey(
         Utilisateur, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
+    #: NOT-002 (0.8.5) : l'adresse push d'Expo de ce téléphone, oubliée à la déconnexion et à
+    #: la révocation.
+    jeton_push = models.CharField(max_length=200, blank=True)
+    jeton_push_le = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-dernier_contact"]

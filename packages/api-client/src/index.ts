@@ -613,6 +613,12 @@ export function creerClient(options: OptionsClient) {
     /** Langue de l'interface, mémorisée sur le compte (USR-004). */
     changerLangue: (langue: 'fr' | 'en') =>
       requete<Moi>('/api/v1/auth/moi/', { methode: 'PATCH', corps: { langue } }),
+    /** NOT-002 (0.8.5) : l'adresse push d'Expo du téléphone de la session, ou son retrait. */
+    push: {
+      enregistrer: (jeton: string) =>
+        requete<void>('/api/v1/auth/push/', { methode: 'PUT', corps: { jeton } }),
+      retirer: () => requete<void>('/api/v1/auth/push/', { methode: 'DELETE' }),
+    },
     changerMotDePasse: (actuel: string, nouveau: string) =>
       requete<void>('/api/v1/auth/mot-de-passe/changement/', {
         methode: 'POST',

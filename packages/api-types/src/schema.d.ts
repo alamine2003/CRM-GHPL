@@ -319,6 +319,24 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/auth/push/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** @description NOT-002 (0.8.5) : le téléphone de la session donne, ou retire, son adresse push. */
+    put: operations['push_jeton'];
+    post?: never;
+    /** @description NOT-002 (0.8.5) : le téléphone de la session donne, ou retire, son adresse push. */
+    delete: operations['push_jeton_retirer'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/auth/rafraichir/': {
     parameters: {
       query?: never;
@@ -4188,6 +4206,10 @@ export interface components {
       /** @description Adresse otpauth:// à afficher en QR code. */
       uri: string;
     };
+    /** @description NOT-002 (0.8.5) : l'adresse push d'Expo de ce téléphone. */
+    JetonPush: {
+      jeton: string;
+    };
     Jetons: {
       /** @description Jeton d'accès, à envoyer en « Bearer ». */
       acces: string;
@@ -6764,6 +6786,48 @@ export interface operations {
         content: {
           'application/json': components['schemas']['Perimetre'];
         };
+      };
+    };
+  };
+  push_jeton: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['JetonPush'];
+        'application/x-www-form-urlencoded': components['schemas']['JetonPush'];
+        'multipart/form-data': components['schemas']['JetonPush'];
+      };
+    };
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  push_jeton_retirer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

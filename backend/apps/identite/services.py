@@ -474,7 +474,8 @@ def revoquer_appareil(appareil: Appareil, *, par: Utilisateur | None) -> Apparei
         raise ErreurMetier("appareil_deja_revoque", _("Ce téléphone est déjà révoqué."))
     appareil.revoque_le = timezone.now()
     appareil.revoque_par = par
-    appareil.save(update_fields=["revoque_le", "revoque_par"])
+    appareil.jeton_push = ""
+    appareil.save(update_fields=["revoque_le", "revoque_par", "jeton_push"])
     for session in appareil.sessions.filter(revoquee_le=None):
         _revoquer(session, "appareil_revoque")
     _auditer(
@@ -498,9 +499,19 @@ def _revoquer(session: Session, motif: str) -> None:
 
 
 @transaction.atomic
+def enregistrer_jeton_push(appareil: Appareil, jeton: str) -> None:
+    """NOT-002 : l'adresse push du téléphone ; vide, il ne reçoit plus rien."""
+    Appareil.objects.filter(pk=appareil.pk).update(
+        jeton_push=jeton, jeton_push_le=timezone.now() if jeton else None
+    )
+
+
 def deconnecter(session: Session) -> None:
     if session.revoquee_le is None:
         _revoquer(session, "deconnexion")
+        # Déconnecté, le téléphone ne doit plus rien recevoir (NOT-002).
+        if session.appareil_id:
+            Appareil.objects.filter(pk=session.appareil_id).update(jeton_push="")
         _auditer_connexion("deconnexion", session.utilisateur, "succes", session=str(session.pk))
 
 

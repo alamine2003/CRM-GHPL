@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 02:50+0000\n"
+"POT-Creation-Date: 2026-10-09 02:56+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -203,6 +203,9 @@ msgstr "Your role requires two-step verification: turn it on to continue."
 msgid "En-tête X-Innov-Client manquant."
 msgstr "Missing X-Innov-Client header."
 
+msgid "Réservé à l'application mobile."
+msgstr "Mobile app only."
+
 msgid "Opération inconnue."
 msgstr "Unknown operation."
 
@@ -386,6 +389,114 @@ msgstr "Unknown job: “%(fonction)s”."
 #, python-format
 msgid "Produit absent du référentiel (%(n)s lignes) : non ajouté."
 msgstr "Product missing from the catalogue (%(n)s rows): not added."
+
+#, python-format
+msgid "Un planning attend votre décision."
+msgid_plural "%(n)d plannings attendent votre décision."
+msgstr[0] "A plan awaits your decision."
+msgstr[1] "%(n)d plans await your decision."
+
+#, python-format
+msgid "Votre planning est approuvé."
+msgid_plural "%(n)d plannings approuvés."
+msgstr[0] "Your plan is approved."
+msgstr[1] "%(n)d plans approved."
+
+#, python-format
+msgid "Une révision de votre planning est demandée."
+msgid_plural "%(n)d révisions de planning sont demandées."
+msgstr[0] "A revision of your plan is requested."
+msgstr[1] "%(n)d plan revisions are requested."
+
+#, python-format
+msgid "Un remplacement vous est attribué."
+msgid_plural "%(n)d remplacements vous sont attribués."
+msgstr[0] "A replacement is assigned to you."
+msgstr[1] "%(n)d replacements are assigned to you."
+
+#, python-format
+msgid "Pensez à soumettre votre planning."
+msgid_plural "Pensez à soumettre vos %(n)d plannings."
+msgstr[0] "Remember to submit your plan."
+msgstr[1] "Remember to submit your %(n)d plans."
+
+#, python-format
+msgid "Un planning en attente vous est remonté."
+msgid_plural "%(n)d plannings en attente vous sont remontés."
+msgstr[0] "A pending plan was escalated to you."
+msgstr[1] "%(n)d pending plans were escalated to you."
+
+#, python-format
+msgid "Des plannings ne sont pas encore approuvés."
+msgid_plural "Des plannings ne sont pas encore approuvés (%(n)d alertes)."
+msgstr[0] "Some plans are not approved yet."
+msgstr[1] "Some plans are not approved yet (%(n)d alerts)."
+
+#, python-format
+msgid "Une réouverture de semaine est demandée."
+msgid_plural "%(n)d réouvertures de semaine sont demandées."
+msgstr[0] "A week reopening is requested."
+msgstr[1] "%(n)d week reopenings are requested."
+
+#, python-format
+msgid "La rédaction de votre semaine est rouverte."
+msgid_plural "La rédaction de %(n)d semaines est rouverte."
+msgstr[0] "Your week is open for editing again."
+msgstr[1] "%(n)d weeks are open for editing again."
+
+#, python-format
+msgid "Une correction de rapport est demandée."
+msgid_plural "%(n)d corrections de rapport sont demandées."
+msgstr[0] "A report correction is requested."
+msgstr[1] "%(n)d report corrections are requested."
+
+#, python-format
+msgid "Un rapport corrigé attend votre décision."
+msgid_plural "%(n)d rapports corrigés attendent votre décision."
+msgstr[0] "A corrected report awaits your decision."
+msgstr[1] "%(n)d corrected reports await your decision."
+
+#, python-format
+msgid "Un de vos rapports validés est rouvert."
+msgid_plural "%(n)d de vos rapports sont rouverts."
+msgstr[0] "One of your approved reports was reopened."
+msgstr[1] "%(n)d of your reports were reopened."
+
+#, python-format
+msgid "Un rapport est en retard."
+msgid_plural "%(n)d rapports sont en retard."
+msgstr[0] "A report is late."
+msgstr[1] "%(n)d reports are late."
+
+#, python-format
+msgid "%(n)d rapport à valider."
+msgid_plural "%(n)d rapports à valider."
+msgstr[0] "%(n)d report to approve."
+msgstr[1] "%(n)d reports to approve."
+
+#, python-format
+msgid "%(n)d rapport validé."
+msgid_plural "%(n)d rapports validés."
+msgstr[0] "%(n)d report approved."
+msgstr[1] "%(n)d reports approved."
+
+#, python-format
+msgid "Pensez à soumettre votre rapport de visite."
+msgid_plural "Pensez à soumettre vos %(n)d rapports de visite."
+msgstr[0] "Remember to submit your visit report."
+msgstr[1] "Remember to submit your %(n)d visit reports."
+
+#, python-format
+msgid "Une journée de rapports vous est remontée."
+msgid_plural "%(n)d journées de rapports vous sont remontées."
+msgstr[0] "A day of reports was escalated to you."
+msgstr[1] "%(n)d days of reports were escalated to you."
+
+#, python-format
+msgid "Une nouvelle notification."
+msgid_plural "%(n)d notifications."
+msgstr[0] "A new notification."
+msgstr[1] "%(n)d notifications."
 
 msgid "Ce libellé ou ce code est déjà utilisé."
 msgstr "This label or code is already in use."

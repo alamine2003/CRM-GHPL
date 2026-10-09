@@ -2,6 +2,26 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.5] — Notifications push
+
+Cinquième jalon du cycle 0.8 « Mobilité ».
+
+### Ajouté (NOT-002, NOT-003, prd.md §14.64)
+
+- Le téléphone donne son adresse push au serveur ; chaque notification du centre part aussi en push, et l'ouvrir mène au rapport ou à la semaine, même application fermée.
+- Texte de l'écran verrouillé générique, sans nom ni donnée de santé, dans la langue de la personne.
+- Regroupement : une rafale attend 10 minutes et part en une notification (« 20 rapports à valider. ») ; ensuite, une au plus par type et par heure.
+- `docs/notifications-push.md` : variables du serveur, clés FCM et APNs chez Expo, vérification sur un téléphone.
+
+### Corrigé
+
+- Le worker Celery ne connaissait pas les tâches périodiques (rappels, escalades, Grafana) : ses modules s'appellent `taches`. Un test vérifie désormais chaque tâche de l'ordonnanceur.
+- Le contrôle des traductions acceptait mal les phrases au pluriel.
+
+### Design
+
+Aucun écran nouveau : la notification est celle du système du téléphone. Son texte a été relu pour l'écran verrouillé (une phrase courte, au présent, sans nom ni sigle). L'aperçu web ne reçoit pas de push : l'affichage réel se vérifie sur téléphone, au test terrain (`docs/notifications-push.md`, tableau « Vérifier »).
+
 ## [0.8.4] — Conflits sans perte silencieuse
 
 Quatrième jalon du cycle 0.8 « Mobilité ».

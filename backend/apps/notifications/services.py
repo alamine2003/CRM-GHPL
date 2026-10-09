@@ -6,7 +6,7 @@ from .models import Notification
 def notifier(destinataire, type: str, pays, **donnees) -> Notification:
     """Inscrit une notification au centre du destinataire (prd.md §18)."""
     return Notification.objects.create(
-        pays=pays, destinataire=destinataire, type=type, donnees=donnees
+        pays=pays, destinataire=destinataire, type=type, donnees=donnees, push_du=timezone.now()
     )
 
 
@@ -30,7 +30,9 @@ def notifier_regroupe(destinataire, type: str, pays, cle: str, **donnees) -> Not
     existante.donnees = {**existante.donnees, **donnees,
                          "nombre": existante.donnees.get("nombre", 1) + 1}  # fmt: skip
     existante.cree_le = timezone.now()
-    existante.save(update_fields=["donnees", "cree_le"])
+    # NOT-003 : déjà poussée, elle redevient due ; encore due, elle garde son premier instant.
+    existante.push_du = existante.push_du or existante.cree_le
+    existante.save(update_fields=["donnees", "cree_le", "push_du"])
     return existante
 
 

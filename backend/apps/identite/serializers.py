@@ -61,6 +61,14 @@ class ChangementLangueSerializer(serializers.Serializer):
     langue = serializers.ChoiceField(choices=CHOIX_LANGUES)
 
 
+class JetonPushSerializer(serializers.Serializer):
+    """NOT-002 (0.8.5) : l'adresse push d'Expo de ce téléphone."""
+
+    jeton = serializers.RegexField(
+        r"^Expo(nent)?PushToken\[[A-Za-z0-9_-]{8,160}\]$", max_length=200
+    )
+
+
 class RafraichissementSerializer(serializers.Serializer):
     rafraichissement = serializers.CharField(
         required=False,

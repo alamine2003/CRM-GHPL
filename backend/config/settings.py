@@ -251,6 +251,12 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 
+# NOT-002 (0.8.5) : notifications push par le service d'Expo. Désactivées tant que
+# l'hébergement ne les ouvre pas ; le jeton d'accès, s'il y en a un, vient de l'environnement.
+PUSH_ACTIF = env_bool("PUSH_ACTIF", False)
+PUSH_EXPO_URL = os.environ.get("PUSH_EXPO_URL", "https://exp.host/--/api/v2/push/send")
+PUSH_EXPO_JETON = os.environ.get("PUSH_EXPO_JETON", "")
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "INNOV CRM",
     "DESCRIPTION": "API du CRM multi-pays des délégués médicaux.",

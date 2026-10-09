@@ -5,6 +5,7 @@ import { LimiteErreur } from '../src/Erreurs';
 import { FournisseurSession } from '../src/FournisseurSession';
 import '../src/i18n';
 import { POLICES } from '../src/polices';
+import { Push } from '../src/Push';
 import { GardeHorsLigne, SynchroAuto } from '../src/Synchronisation';
 import { Verrou } from '../src/Verrou';
 
@@ -19,6 +20,7 @@ export default function Disposition() {
         <StatusBar style="light" />
         <Verrou>
           <SynchroAuto />
+          <Push />
           <GardeHorsLigne>
             <Stack screenOptions={{ headerShown: false }} />
           </GardeHorsLigne>

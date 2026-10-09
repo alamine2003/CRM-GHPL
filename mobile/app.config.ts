@@ -39,6 +39,8 @@ const config: ExpoConfig = {
     ],
     // RPT-007 : document PDF joint au rapport (pas de photo, DC-48).
     'expo-document-picker',
+    // NOT-002 : notifications push (adresse Expo, couleur de la marque sur Android).
+    ['expo-notifications', { color: '#1B2A5B' }],
     [
       'expo-local-authentication',
       {

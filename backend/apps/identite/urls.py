@@ -39,6 +39,7 @@ urlpatterns = [
     path("rafraichir/", views.RafraichissementView.as_view(), name="rafraichir"),
     path("deconnexion/", views.DeconnexionView.as_view(), name="deconnexion"),
     path("moi/", views.MoiView.as_view(), name="moi"),
+    path("push/", views.JetonPushView.as_view(), name="push-jeton"),
     path("mot-de-passe/oubli/", views.OubliView.as_view(), name="mot-de-passe-oubli"),
     path(
         "mot-de-passe/reinitialisation/",

@@ -23,6 +23,7 @@ from .serializers import (
     EtapeDoubleAuthSerializer,
     EtatDoubleAuthSerializer,
     InitialisationDoubleAuthSerializer,
+    JetonPushSerializer,
     JetonsSerializer,
     MoiSerializer,
     OubliSerializer,
@@ -172,6 +173,30 @@ class DeconnexionView(APIView):
         reponse = Response(status=status.HTTP_204_NO_CONTENT)
         reponse.delete_cookie(_cookie(), path="/api/v1/auth/", samesite="Strict")
         return reponse
+
+
+class JetonPushView(APIView):
+    """NOT-002 (0.8.5) : le téléphone de la session donne, ou retire, son adresse push."""
+
+    permission_classes = [IsAuthenticated]
+
+    def _appareil(self, request):
+        appareil = request.session_innov.appareil
+        if appareil is None:
+            raise ErreurMetier("appareil_requis", _("Réservé à l'application mobile."))
+        return appareil
+
+    @extend_schema(request=JetonPushSerializer, responses={204: None}, operation_id="push_jeton")
+    def put(self, request):
+        donnees = JetonPushSerializer(data=request.data)
+        donnees.is_valid(raise_exception=True)
+        services.enregistrer_jeton_push(self._appareil(request), donnees.validated_data["jeton"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(request=None, responses={204: None}, operation_id="push_jeton_retirer")
+    def delete(self, request):
+        services.enregistrer_jeton_push(self._appareil(request), "")
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class MoiView(APIView):
