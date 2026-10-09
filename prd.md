@@ -170,9 +170,9 @@ Tous les types de poste suivent **le même workflow** planning → visite → ra
 | Valider un rapport ou demander une correction | Non | Non | Non | Non | Non | Escalade / remplacement | Oui (périm.) | Non |
 | Rouvrir un rapport validé | Non | Non | Non | Non | Non | Oui (> 30 jours, périm.) | Oui (≤ 30 jours, périm.) | Non |
 | Désigner un remplaçant de superviseur | Non | Non | Non | Oui | Non | Oui (périm.) | Oui (pour lui-même) | Non |
-| Consulter les indicateurs | Global agrégé, nominatif audité | Global agrégé, nominatif audité | Pays nominatif | Pays nominatif | Réseaux nominatif | Réseaux nominatif | Délégués rattachés | Personnels |
+| Consulter les indicateurs | Global agrégé, nominatif audité | Global agrégé, nominatif audité | Pays nominatif | Non (§14.76) | Réseaux nominatif | Réseaux nominatif | Délégués rattachés | Personnels |
 | Consulter le journal d'audit | Oui | Oui | Son pays | Son pays | Non | Non | Non | Non |
-| Exporter | Oui (audité) | Oui (audité) | Oui (audité) | Oui (audité) | Oui (audité) | Oui (audité) | Oui (audité) | Non |
+| Exporter | Oui (audité) | Oui (audité) | Oui (audité) | Non (§14.58) | Oui (audité) | Oui (audité) | Oui (audité) | Non |
 | Effacer à distance un appareil | Oui | Non | Non | Oui | Non | Non | Non | Non |
 | Recevoir et lire ses notifications (§18) | Les siennes | Les siennes | Les siennes | Les siennes | Les siennes | Les siennes | Les siennes | Les siennes |
 
@@ -704,6 +704,25 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.76 Correction des défauts et recette utilisateur (mise en œuvre 0.9.8)
+
+- **Recette utilisateur** (§21.1, §21.2 condition 1) : `docs/recette-utilisateur.md` donne une fiche par scénario REC-01 à REC-20. Chaque fiche indique :
+  - les rôles et le matériel ;
+  - les comptes de départ, fictifs ;
+  - les étapes, avec les libellés exacts de l'interface ;
+  - le résultat attendu ;
+  - la preuve automatisée déjà en place ;
+  - une ligne de résultat à remplir en préproduction puis pendant le pilote.
+
+  Elle s'ouvre sur un tableau récapitulatif, et se clôt sur les critères de sortie et une zone de signature. Chaque scénario a au moins une preuve automatisée ; celle de REC-06 et de REC-14 est partielle.
+- **Défauts corrigés**, relevés en rédigeant les guides :
+  - l'écran de verrouillage du téléphone annonçait « 5 minutes » ; il dit maintenant le délai réel du pays (DC-59) ;
+  - le délai sans synchronisation (OFF-007, DC-54) se règle désormais dans « Paramètres », carte « Téléphone », ligne « Masquage des données hors ligne (jours) », au lieu de rester accessible au seul administrateur technique.
+- **Cohérence du PRD** : [D, 9 octobre 2026, délégation] la matrice des droits (§6.3) est alignée sur les décisions déjà prises et sur le code. L'administrateur pays gère le pays, mais ne consulte pas le pilotage nominatif (DSH-003, DC-62) et n'exporte pas (§14.58). §14.61 précise que le délégué ne crée pas de fiche sans réseau.
+- **Limites connues, non bloquantes** :
+  - le formulaire « Nouveau prospect » du téléphone n'a pas de champ « N° d'ordre » : la fusion automatique par numéro d'ordre (REC-13) se constate depuis le portail ;
+  - les périmètres des DF et des DM se tiennent par l'import du fichier d'organisation, sans écran dédié.
+
 ### 14.75 Kit du pilote contrôlé au Sénégal (mise en œuvre 0.9.7)
 
 - **Guides utilisateur** (§21.2, condition 8) : `docs/guides/guide-delegue.md` (application mobile), `guide-superviseur.md` (portail, avec ce que voit un DM en escalade) et `guide-admin-pays.md` (portail). Ils suivent la semaine de travail, citent les libellés exacts de l'interface et disent quoi faire quand ça ne marche pas. Les exemples sont fictifs.
@@ -855,7 +874,7 @@ Mise en œuvre (0.3.9) :
 ### 14.61 Rapports et fiches sans réseau (mise en œuvre 0.8.2)
 
 - **Rapports** (OFF-002) : la synchronisation garde sur le téléphone le rapport de chaque visite de la semaine et de la suivante, ou, s'il n'existe pas encore, un modèle vierge (champs du pays, produits du portefeuille, résultats, types de prochaine action). Un rapport jamais ouvert s'écrit donc sans réseau ; il part avec la fin de visite, dans l'ordre de la file, au retour du réseau. Le serveur ne crée le rapport qu'à ce premier envoi (RG-030) ; une saisie faite sur le téléphone n'est jamais remplacée par le modèle reçu.
-- **Fiches** : une proposition de mise à jour d'un prospect ou d'un établissement (PRP-014) faite sans réseau attend dans la file ; le délégué voit « Pas de réseau : votre proposition est gardée sur le téléphone… ». [D, 9 octobre 2026, délégation] Le délégué ne crée pas de fiche : il propose des corrections (PRP-014) ; la création reste à l'administration (doublons, §14.6).
+- **Fiches** : une proposition de mise à jour d'un prospect ou d'un établissement (PRP-014) faite sans réseau attend dans la file ; le délégué voit « Pas de réseau : votre proposition est gardée sur le téléphone… ». [D, 9 octobre 2026, délégation] Sans réseau, le délégué ne crée pas de fiche : il propose des corrections (PRP-014). Avec du réseau, il peut créer une fiche « à valider » (§6.3, REC-13), que l'administration contrôle (doublons, §14.6). (Précisé en 0.9.8.)
 - **CA1** : chaque objet créé sans réseau porte un identifiant tiré sur le téléphone (visites, activités, pièces jointes depuis 0.2.7, propositions en 0.8.2) ; le serveur reconnaît un envoi rejoué et ne crée rien deux fois. Les rapports sont désignés par leur visite.
 - Sans synchronisation préalable, l'écran du rapport le dit et indique « Synchroniser maintenant ».
 

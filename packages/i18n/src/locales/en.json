@@ -197,7 +197,7 @@
     "doubleAuthPortail": "Your role requires two-step verification. Turn it on from the web portal (My profile), then sign in here again.",
     "verrou": {
       "titre": "App locked",
-      "texte": "For security, the app locks after 5 minutes in the background.",
+      "texte": "For security, the app locks after {{minutes}} minutes in the background.",
       "deverrouiller": "Unlock",
       "invite": "Unlock INNOV CRM",
       "sansProtection": "This phone has no passcode or biometrics: sign in again."
@@ -460,7 +460,8 @@
       "attente_gps_secondes": "Position wait (seconds)",
       "duree_visite_minutes": "Visit duration (minutes)",
       "produit_autre_autorise": "Other product presented (outside the portfolio)",
-      "verrouillage_minutes": "Phone lock (minutes)"
+      "verrouillage_minutes": "Phone lock (minutes)",
+      "delai_hors_ligne_jours": "Hide offline data after (days)"
     },
     "jours": {
       "1": "Mon",
@@ -490,7 +491,9 @@
     "semaineDuPlanning": "{{jour}} {{heure}}, week of the planning",
     "secondes": "{{n}} seconds",
     "minutes": "{{min}} to {{max}} minutes",
-    "minutesN": "{{n}} minutes"
+    "minutesN": "{{n}} minutes",
+    "joursN_one": "{{count}} day",
+    "joursN_other": "{{count}} days"
   },
   "paysPage": {
     "titre": "Countries",

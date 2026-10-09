@@ -44,7 +44,6 @@ Quand l'application reste en arrière-plan trop longtemps, elle se verrouille. L
 - Touchez « Déverrouiller » et utilisez le code ou l'empreinte de votre téléphone.
 - Si votre téléphone n'a ni code ni biométrie, l'application vous demande de vous reconnecter. Mettez un code sur votre téléphone : c'est plus simple et plus sûr.
 
-Remarque : le texte de l'écran de verrouillage parle encore de « 5 minutes ». C'est le délai de votre pays qui s'applique.
 
 ### Déconnexion
 

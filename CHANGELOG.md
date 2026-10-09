@@ -2,6 +2,29 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.8] — Correction des défauts et recette utilisateur
+
+Huitième jalon du cycle 0.9 « Durcissement et pilote ».
+
+### Ajouté (prd.md §14.76, §21.1)
+
+- `docs/recette-utilisateur.md` : une fiche par scénario REC-01 à REC-20 (étapes, résultat attendu, preuve automatisée, résultat à consigner), critères de sortie et signatures.
+
+### Corrigé
+
+- Écran de verrouillage du téléphone : il annonçait « 5 minutes » ; il dit le délai réel du pays (DC-59).
+- « Paramètres », carte « Téléphone » : le délai sans synchronisation (OFF-007, DC-54) se règle enfin depuis le portail.
+- PRD : matrice des droits (§6.3) alignée sur les décisions : l'administrateur pays n'exporte pas et ne consulte pas le pilotage nominatif ; §14.61 précisé (pas de création de fiche sans réseau).
+
+### Design
+
+Revue sur le rendu réel (administrateur pays de la démonstration, bureau 1440 px et téléphone 390 px) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Paramètres, carte « Téléphone » | Le nouveau libellé « Données du téléphone sans synchronisation (jours) » ne disait pas ce que fait le réglage, et coupait sur deux lignes au téléphone | « Masquage des données hors ligne (jours) », court et explicite |
+| Téléphone, écran de verrouillage | Délai faux (« 5 minutes ») | Délai du pays, lu avec le programme ; libellé seul, pas de changement de mise en page |
+
 ## [0.9.7] — Kit du pilote contrôlé au Sénégal
 
 Septième jalon du cycle 0.9 « Durcissement et pilote ».

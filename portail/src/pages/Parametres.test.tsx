@@ -17,12 +17,22 @@ const VERROUILLAGE: Parametre = {
   hypothese: false,
 };
 
+// 0.9.8 : le délai hors ligne du téléphone (OFF-007, DC-54), dans la même carte.
+const HORS_LIGNE: Parametre = {
+  cle: 'delai_hors_ligne_jours',
+  description: 'Au-delà, le téléphone masque ses données jusqu’à la prochaine synchronisation.',
+  valeur: 7,
+  defaut: 7,
+  personnalise: false,
+  hypothese: false,
+};
+
 function rendre(actions: string[]) {
   const modifierParametre = vi.fn(async () => ({ ...VERROUILLAGE, valeur: 20 }));
   const session = {
     etat: { statut: 'chargement' },
     client: {
-      pays: { parametres: vi.fn(async () => [VERROUILLAGE]), modifierParametre },
+      pays: { parametres: vi.fn(async () => [VERROUILLAGE, HORS_LIGNE]), modifierParametre },
       rapports: { champs: vi.fn(async () => []) },
     } as unknown as ClientApi,
   } as unknown as Session;
@@ -54,6 +64,8 @@ describe('DC-59 : carte « Téléphone » des paramètres du pays', () => {
     const carte = titre.closest('.MuiCard-root') as HTMLElement;
     expect(within(carte).getByText('Verrouillage du téléphone (minutes)')).toBeInTheDocument();
     expect(within(carte).getByText('15 minutes')).toBeInTheDocument();
+    expect(within(carte).getByText('Masquage des données hors ligne (jours)')).toBeInTheDocument();
+    expect(within(carte).getByText('7 jours')).toBeInTheDocument();
     // Sans le droit de modifier, rien ne se règle.
     expect(within(carte).queryByRole('button', { name: 'Modifier' })).toBeNull();
   });
@@ -62,7 +74,9 @@ describe('DC-59 : carte « Téléphone » des paramètres du pays', () => {
     const { modifierParametre } = rendre(['parametres.modifier']);
     const titre = await screen.findByText('Téléphone');
     const carte = titre.closest('.MuiCard-root') as HTMLElement;
-    fireEvent.click(within(carte).getByRole('button', { name: 'Modifier' }));
+    // Le premier « Modifier » de la carte : le délai de verrouillage.
+    const [modifier] = within(carte).getAllByRole('button', { name: 'Modifier' });
+    fireEvent.click(modifier as HTMLElement);
     const champ = await screen.findByLabelText('Valeur');
     expect(champ).toHaveValue(15);
     fireEvent.change(champ, { target: { value: '20' } });

@@ -368,9 +368,9 @@ Ajoutez le jour férié avec « Date variable ». Vous pourrez changer sa date j
 
 Ouvrez l'établissement et renseignez un « Rayon de pointage » adapté (par exemple 300 m). Vérifiez aussi que sa position est juste.
 
-### Je ne trouve pas le réglage du délai sans synchronisation (7 jours).
+### Où régler le délai sans synchronisation (7 jours) ?
 
-Ce paramètre existe pour le pays, mais il n'apparaît pas dans l'écran « Paramètres » de cette version. Adressez-vous à l'administrateur technique.
+Dans « Paramètres », carte « Téléphone », ligne « Masquage des données hors ligne (jours) » : de 1 à 30 jours. Au-delà de ce délai sans synchronisation, le téléphone masque ses données jusqu'à la prochaine synchronisation réussie. Allongez-le pour les délégués des zones isolées.
 
 ## À qui s'adresser
 

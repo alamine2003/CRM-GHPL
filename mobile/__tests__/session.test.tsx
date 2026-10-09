@@ -188,6 +188,8 @@ describe('mobile — session', () => {
     maintenant.mockReturnValue(1_000_000 + DELAI_VERROU_MS + 1);
     await act(async () => surChangement('active'));
     expect(await screen.findByText('Application verrouillée')).toBeTruthy();
+    // 0.9.8 : le texte dit le délai réellement appliqué.
+    expect(screen.getByText(/après 15 minutes en arrière-plan/)).toBeTruthy();
     expect(screen.queryByText('Bonjour Awa')).toBeNull();
     await fireEvent.press(screen.getByText('Déverrouiller'));
     expect(await screen.findByText('Bonjour Awa')).toBeTruthy();

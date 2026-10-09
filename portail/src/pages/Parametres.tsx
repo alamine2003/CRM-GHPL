@@ -51,7 +51,8 @@ const GROUPES: { cle: string; parametres: string[] }[] = [
     ],
   },
   { cle: 'rapports', parametres: ['heure_limite_rapport', 'produit_autre_autorise'] },
-  { cle: 'telephone', parametres: ['verrouillage_minutes'] },
+  // 0.9.8 : le délai hors ligne (OFF-007, DC-54) se règle aussi ici.
+  { cle: 'telephone', parametres: ['verrouillage_minutes', 'delai_hors_ligne_jours'] },
   { cle: 'conservation', parametres: ['conservation'] },
 ];
 const TYPES_POSTE = ['vm', 'vm_otc', 'kam', 'dermo'];
@@ -80,6 +81,8 @@ function Apercu({ cle, valeur }: { cle: string; valeur: Valeur }) {
       return <>{t('parametres.minutesN', { n: valeur })}</>;
     case 'attente_gps_secondes':
       return <>{t('parametres.secondes', { n: valeur })}</>;
+    case 'delai_hors_ligne_jours':
+      return <>{t('parametres.joursN', { count: valeur as number })}</>;
     case 'plage_horaire_visites':
       return <>{t('parametres.de', { debut: v.debut, fin: v.fin })}</>;
     case 'duree_visite_minutes':

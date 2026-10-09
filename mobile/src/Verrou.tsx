@@ -36,6 +36,8 @@ export function Verrou({ children }: { children: ReactNode }) {
   const connecte = etat.statut === 'connecte';
   const [verrouille, setVerrouille] = useState(false);
   const [sansProtection, setSansProtection] = useState(false);
+  // 0.9.8 : l'écran dit le délai réel du pays, pas un délai fixe.
+  const [minutes, setMinutes] = useState(DELAI_VERROU_MS / 60000);
   const quitteeLe = useRef<number | null>(null);
 
   const deverrouiller = useCallback(async () => {
@@ -63,6 +65,7 @@ export function Verrou({ children }: { children: ReactNode }) {
         quitteeLe.current = null;
         void delaiDuPays().then((delai) => {
           if (absence < delai) return;
+          setMinutes(Math.round(delai / 60000));
           setVerrouille(true);
           void demanderDeverrouillage.current();
         });
@@ -81,7 +84,7 @@ export function Verrou({ children }: { children: ReactNode }) {
         <Text accessibilityRole="header" style={styles.titre}>
           {t('mobile.verrou.titre')}
         </Text>
-        <Text style={styles.texte}>{t('mobile.verrou.texte')}</Text>
+        <Text style={styles.texte}>{t('mobile.verrou.texte', { minutes })}</Text>
       </View>
       <View style={{ gap: 12 }}>
         {sansProtection ? (

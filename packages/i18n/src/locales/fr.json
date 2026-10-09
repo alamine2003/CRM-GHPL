@@ -197,7 +197,7 @@
     "doubleAuthPortail": "Votre rôle impose la double authentification. Activez-la depuis le portail web (Mon profil), puis reconnectez-vous ici.",
     "verrou": {
       "titre": "Application verrouillée",
-      "texte": "Par sécurité, l'application se verrouille après 5 minutes en arrière-plan.",
+      "texte": "Par sécurité, l'application se verrouille après {{minutes}} minutes en arrière-plan.",
       "deverrouiller": "Déverrouiller",
       "invite": "Déverrouiller INNOV CRM",
       "sansProtection": "Ce téléphone n'a ni code ni biométrie : reconnectez-vous."
@@ -460,7 +460,8 @@
       "attente_gps_secondes": "Attente de la position (secondes)",
       "duree_visite_minutes": "Durée d'une visite (minutes)",
       "produit_autre_autorise": "Autre produit présenté (hors portefeuille)",
-      "verrouillage_minutes": "Verrouillage du téléphone (minutes)"
+      "verrouillage_minutes": "Verrouillage du téléphone (minutes)",
+      "delai_hors_ligne_jours": "Masquage des données hors ligne (jours)"
     },
     "jours": {
       "1": "Lun",
@@ -490,7 +491,9 @@
     "semaineDuPlanning": "{{jour}} {{heure}}, semaine du planning",
     "secondes": "{{n}} secondes",
     "minutes": "de {{min}} à {{max}} minutes",
-    "minutesN": "{{n}} minutes"
+    "minutesN": "{{n}} minutes",
+    "joursN_one": "{{count}} jour",
+    "joursN_other": "{{count}} jours"
   },
   "paysPage": {
     "titre": "Pays",
