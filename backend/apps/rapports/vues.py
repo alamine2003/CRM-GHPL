@@ -82,11 +82,26 @@ class ModelesRapportVue(VueVisitesDuDelegue):
             date__gte=debut, date__lt=debut + timedelta(days=14),
             statut__in=(StatutVisite.PREVUE, StatutVisite.EN_COURS, StatutVisite.EFFECTUEE),
         ).select_related("planning", "reseau", "pays").order_by("date", "heure")  # fmt: skip
+        visites = list(visites)
+        # 0.9.4 : les rapports existants et leurs pièces en deux requêtes, les listes du pays
+        # et des portefeuilles une fois par réponse (`memo`).
+        existants = {
+            r.visite_id: r
+            for r in Rapport.objects.filter(visite__in=visites).prefetch_related("pieces_jointes")
+        }
+        for v in visites:
+            if v.pk in existants:  # la visite et le pays déjà lus
+                existants[v.pk].visite, existants[v.pk].pays = v, v.pays
+        definitions = [c.definition() for c in services.champs_actifs(pays)]
         donnees = {
             "genere_le": timezone.now(),
-            "rapports": [{"visite": v.pk, "rapport": services.modele_rapport(v)} for v in visites],
-        }
-        return Response(s.ModelesRapportSerializer(donnees).data)
+            "rapports": [
+                {"visite": v.pk,
+                 "rapport": existants.get(v.pk) or services.modele_vierge(v, definitions)}
+                for v in visites
+            ],
+        }  # fmt: skip
+        return Response(s.ModelesRapportSerializer(donnees, context={"memo": {}}).data)
 
 
 class SoumissionRapportVue(VueVisitesDuDelegue):

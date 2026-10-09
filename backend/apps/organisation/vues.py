@@ -320,7 +320,9 @@ class OccupationsVue(VuePostes):
     @extend_schema(responses=s.OccupationSerializer(many=True), operation_id="occupations_liste")
     def get(self, request, id):
         poste = self.poste_vise()
-        liens = poste.occupations.select_related("utilisateur", "poste", "pays")
+        # Une requête neuve : le poste visé porte un préchargement réduit (avec_details).
+        liens = Occupation.objects.filter(poste=poste).select_related("utilisateur", "poste",
+                                                                      "pays")  # fmt: skip
         return Response(s.OccupationSerializer(liens, many=True).data)
 
     @extend_schema(request=s.OccupationCreationSerializer, responses={201: s.OccupationSerializer},
@@ -340,7 +342,9 @@ class RattachementsVue(VuePostes):
         responses=s.RattachementSerializer(many=True), operation_id="rattachements_liste"
     )
     def get(self, request, id):
-        liens = self.poste_vise().rattachements.select_related("superviseur", "pays")
+        liens = Rattachement.objects.filter(poste=self.poste_vise()).select_related(
+            "superviseur", "pays"
+        )
         return Response(s.RattachementSerializer(liens, many=True).data)
 
     @extend_schema(request=s.RattachementCreationSerializer,

@@ -48,20 +48,31 @@ def _heure_locale(moment: datetime, fuseau: ZoneInfo) -> time:
     return moment.astimezone(fuseau).time()
 
 
-def ecarts_du_jour(planning: Planning, jour: date, regles: dict) -> list[dict]:
-    """Les écarts d'une journée, dans l'ordre des visites ; vide : la journée est conforme."""
+def visites_du_planning(planning: Planning, jours=None):
+    """Les visites à contrôler, dans l'ordre de la journée ; toutes les journées demandées en
+    une requête (0.9.4)."""
+    qs = planning.visites.filter(archive_le__isnull=True).select_related(
+        "prospect", "etablissement"
+    )
+    if jours is not None:
+        qs = qs.filter(date__in=jours)
+    return qs.order_by("date", "heure", "ordre")
+
+
+def ecarts_du_jour(planning: Planning, jour: date, regles: dict, indisponibles=None,
+                   visites=None) -> list[dict]:  # fmt: skip
+    """Les écarts d'une journée, dans l'ordre des visites ; vide : la journée est conforme.
+    `visites` : celles de la journée, déjà lues dans l'ordre (file de travail, 0.9.4)."""
     fuseau = ZoneInfo(planning.pays.fuseau)
     debut_plage = time.fromisoformat(regles["plage"]["debut"])
     fin_plage = time.fromisoformat(regles["plage"]["fin"])
-    visites = (
-        planning.visites.filter(archive_le__isnull=True, date=jour)
-        .select_related("prospect", "etablissement")
-        .order_by("heure", "ordre")
-    )
+    if visites is None:
+        visites = visites_du_planning(planning, [jour])
     ecarts: list[dict] = []
     sans_gps = 0
     imprecises = 0
-    indisponibles = du_planning(planning)
+    if indisponibles is None:
+        indisponibles = du_planning(planning)
 
     def ecart(code, visite=None, **detail):
         ecarts.append({"code": code, "visite": str(visite.pk) if visite else None,
@@ -110,18 +121,26 @@ def ecarts_du_jour(planning: Planning, jour: date, regles: dict) -> list[dict]:
     return ecarts
 
 
+#: `recalculer` sans journée connue d'avance : elle est lue (et verrouillée) en base.
+A_LIRE = object()
+
+
 @transaction.atomic
-def recalculer(planning: Planning, jour: date) -> ConformiteJournee:
-    """Calcule et garde la conformité d'une journée ; une journée figée ne change plus (CA3)."""
-    existante = (
-        ConformiteJournee.objects.select_for_update()
-        .filter(delegue_id=planning.delegue_id, date=jour)
-        .first()
-    )
+def recalculer(planning: Planning, jour: date, regles=None, indisponibles=None,
+               existante=A_LIRE, visites=None) -> ConformiteJournee:  # fmt: skip
+    """Calcule et garde la conformité d'une journée ; une journée figée ne change plus (CA3).
+    Une file qui relit beaucoup de journées (0.9.4) donne les seuils du pays et les
+    indisponibilités du planning, lus une fois."""
+    if existante is A_LIRE:
+        existante = (
+            ConformiteJournee.objects.select_for_update()
+            .filter(delegue_id=planning.delegue_id, date=jour)
+            .first()
+        )
     if existante is not None and existante.fige_le is not None:
         return existante
-    regles = seuils(planning.pays)
-    ecarts = ecarts_du_jour(planning, jour, regles)
+    regles = regles or seuils(planning.pays)
+    ecarts = ecarts_du_jour(planning, jour, regles, indisponibles, visites)
     champs = {
         "planning": planning,
         "classement": Classement.A_VERIFIER if ecarts else Classement.CONFORME,
@@ -133,6 +152,14 @@ def recalculer(planning: Planning, jour: date) -> ConformiteJournee:
         return ConformiteJournee.objects.create(pays=planning.pays,
                                                 delegue_id=planning.delegue_id, date=jour,
                                                 **champs)  # fmt: skip
+    # 0.9.4 : relue sans changement, la journée n'est pas réécrite (la file la relit souvent).
+    if (existante.planning_id, existante.classement, existante.ecarts, existante.seuils) == (
+        planning.pk,
+        champs["classement"],
+        ecarts,
+        regles,
+    ):
+        return existante
     for cle, valeur in champs.items():
         setattr(existante, cle, valeur)
     existante.save()

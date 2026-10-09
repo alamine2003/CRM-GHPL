@@ -13,7 +13,15 @@ from apps.perimetre.matrice import PAYS_CONSULTATION, SIEGE
 from apps.perimetre.perimetre import Perimetre
 from apps.socle.services import aujourdhui
 
-from .models import Occupation, PerimetreReseau, Poste, Rattachement, actif_le
+from .models import (
+    Occupation,
+    PerimetreReseau,
+    Poste,
+    Rattachement,
+    Reseau,
+    Secteur,
+    actif_le,
+)
 
 
 def postes_visibles(perimetre: Perimetre) -> QuerySet:
@@ -39,15 +47,27 @@ def postes_visibles(perimetre: Perimetre) -> QuerySet:
 
 def avec_details(postes: QuerySet) -> QuerySet:
     """Précharge ce que l'affichage d'un poste demande, sans requête par ligne."""
+    # 0.9.4 : les seules colonnes affichées ; un pays compte plus de 500 postes et leur
+    # historique d'occupations.
+    personne = ("id", "username", "first_name", "last_name")
     return postes.prefetch_related(
-        "reseaux",
-        "secteurs__zone",
+        Prefetch("reseaux", queryset=Reseau.objects.only("id", "libelle")),
+        Prefetch(
+            "secteurs",
+            queryset=Secteur.objects.select_related("zone", "pays").only(
+                "id", "libelle", "archive_le", "zone__libelle", "pays__code"
+            ),
+        ),
         Prefetch(
             "occupations",
-            queryset=Occupation.objects.select_related("utilisateur").order_by("-debut"),
+            queryset=Occupation.objects.select_related("utilisateur")
+            .only("poste_id", "debut", "fin", *(f"utilisateur__{c}" for c in personne))
+            .order_by("-debut"),
         ),
         Prefetch(
             "rattachements",
-            queryset=Rattachement.objects.select_related("superviseur").order_by("-debut"),
+            queryset=Rattachement.objects.select_related("superviseur")
+            .only("poste_id", "debut", "fin", *(f"superviseur__{c}" for c in personne))
+            .order_by("-debut"),
         ),
     ).order_by("libelle")

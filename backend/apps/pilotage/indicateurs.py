@@ -39,6 +39,7 @@ from apps.planning.calendrier import lundi
 from apps.planning.etats import StatutVisite
 from apps.planning.indisponibilite import couverte
 from apps.planning.models import Decision, Planning, Visite
+from apps.planning.programme import LigneVisite, lignes_visites, visites_approuvees_de
 from apps.socle.services import aujourdhui, valeur_parametre
 
 from .delais import delais, durees
@@ -62,13 +63,11 @@ def semaine(jour: date) -> tuple[date, date]:
     return debut, debut + timedelta(days=6)
 
 
-def geolocalisee(visite: Visite, distance_pays: int) -> bool:
+def geolocalisee(visite: LigneVisite, distance_pays: int) -> bool:
     """§14.18 : le pointage du démarrage est assez près du lieu, et assez précis (DC-55)."""
     if visite.debut_le is None or visite.sans_gps or visite.distance_debut_m is None:
         return False
-    seuil = (visite.etablissement.rayon_pointage_m if visite.etablissement else None) or (
-        distance_pays
-    )
+    seuil = visite.rayon_pointage_m or distance_pays
     precision = visite.debut_precision_m
     return visite.distance_debut_m <= seuil and (precision is None or precision <= seuil)
 
@@ -79,9 +78,7 @@ class Lot:
     compte ensuite sans requête de plus (sauf la version approuvée de chaque planning)."""
 
     def __init__(self, pays, delegues, debut: date, fin: date):
-        from apps.planning import services
         from apps.planning.models import Activite, TypeActivite
-        from apps.planning.programme import _visites_approuvees
         from apps.prospects.models import Cible
         from apps.rapports.models import Rapport
 
@@ -100,26 +97,35 @@ class Lot:
                                          type=TypeActivite.INDISPONIBILITE):  # fmt: skip
             self.indisponibles[a.planning_id].append(a)
         self.approuvees: dict = defaultdict(list)
+        # 0.9.4 : toutes les versions approuvées et leurs visites en deux requêtes.
+        approuvees = visites_approuvees_de(plannings)
         for planning in plannings:
-            for v in _visites_approuvees(planning, services.reference(planning)):
+            for v in approuvees.get(planning.pk, []):
                 if debut <= v.date <= fin:
                     self.approuvees[planning.delegue_id].append(v)
         self.imprevues: dict = defaultdict(list)
-        for v in Visite.objects.filter(
-            pays=pays, planning__delegue_id__in=ids, archive_le__isnull=True,
-            est_imprevue=True, date__gte=debut, date__lte=fin,
-        ).select_related("etablissement", "planning"):  # fmt: skip
-            self.imprevues[v.planning.delegue_id].append(v)
+        for v in lignes_visites(
+            Visite.objects.filter(pays=pays, planning__delegue_id__in=ids,
+                                  archive_le__isnull=True, est_imprevue=True, date__gte=debut,
+                                  date__lte=fin),
+            "planning__delegue_id",
+        ):  # fmt: skip
+            self.imprevues[v.delegue_id].append(v)
         faites = [
             v.pk for liste in (*self.approuvees.values(), *self.imprevues.values())
             for v in liste if v.statut == StatutVisite.EFFECTUEE
         ]  # fmt: skip
+        # 0.9.4 : des lignes nommées plutôt que des objets, des milliers à l'échelle d'un pays.
+        # Par délégué et par dates plutôt que par une liste de milliers de visites.
+        faites = set(faites)
         self.rapports = {
             r.visite_id: r
-            for r in Rapport.objects.filter(visite_id__in=faites).only(
-                "visite_id", "statut", "soumis_le", "en_retard"
-            )
-        }
+            for r in Rapport.objects.filter(
+                visite__planning__delegue_id__in=ids, visite__date__gte=debut,
+                visite__date__lte=fin,
+            ).values_list("visite_id", "statut", "soumis_le", "en_retard", named=True)
+            if r.visite_id in faites
+        }  # fmt: skip
         pendant = Q(fin__isnull=True) | Q(fin__gt=debut)
         self.occupations: dict = defaultdict(list)
         for o in Occupation.objects.filter(pendant, utilisateur_id__in=ids, poste__pays=pays,

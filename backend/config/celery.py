@@ -29,6 +29,12 @@ app.conf.beat_schedule = {
         "task": "apps.planning.taches.echeances",
         "schedule": crontab(minute="*/15"),
     },
+    # DSH-011, NFR-002 : les tableaux du pays entier et du siège, gardés 5 minutes,
+    # recalculés toutes les 4 (apps.pilotage.tableaux).
+    "tableaux-pilotage": {
+        "task": "apps.pilotage.taches.prechauffer_tableaux",
+        "schedule": crontab(minute="*/4"),
+    },
     # DSH-011 : Grafana à jour à moins d'une heure.
     "agregats-grafana": {
         "task": "apps.pilotage.taches.rafraichir_grafana",

@@ -140,21 +140,28 @@ class PosteSerializer(_ElementSerializer):
         return next((lien for lien in liens if _actif(lien, jour)), None)
 
     def to_representation(self, poste):
+        # 0.9.4 : l'occupant et le superviseur du jour, cherchés une fois par poste (un pays
+        # en compte plus de 500).
         self.instance_pays = poste.pays
+        self.occupation = self._du_jour(poste.occupations.all())
+        self.rattachement = self._du_jour(poste.rattachements.all())
         return super().to_representation(poste)
+
+    @staticmethod
+    def _personne(u) -> dict:
+        return {"id": str(u.pk), "identifiant": u.username, "prenom": u.first_name,
+                "nom": u.last_name}  # fmt: skip
 
     @extend_schema_field(PersonneSerializer(allow_null=True))
     def get_occupant(self, poste):
-        lien = self._du_jour(poste.occupations.all())
-        return PersonneSerializer(lien.utilisateur).data if lien else None
+        return self._personne(self.occupation.utilisateur) if self.occupation else None
 
     @extend_schema_field(PersonneSerializer(allow_null=True))
     def get_superviseur(self, poste):
-        lien = self._du_jour(poste.rattachements.all())
-        return PersonneSerializer(lien.superviseur).data if lien else None
+        return self._personne(self.rattachement.superviseur) if self.rattachement else None
 
     def get_vacant(self, poste) -> bool:
-        return self._du_jour(poste.occupations.all()) is None
+        return self.occupation is None
 
 
 # --- Écritures --------------------------------------------------------------------------------

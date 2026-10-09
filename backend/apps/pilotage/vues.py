@@ -76,25 +76,26 @@ class EquipeVue(VuePerimetre):
         responses=s.TableauEquipeSerializer, operation_id="pilotage_equipe",
     )  # fmt: skip
     def get(self, request):
-        from .indicateurs import FILTRES, tableau_pilotage
+        from . import tableaux
+        from .indicateurs import FILTRES
 
         choix = s.ChoixPilotageSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
         pays = pays_requis(self.perimetre)
         v = choix.validated_data
-        filtres = {k: v[k] for k in (*FILTRES, "statut") if v.get(k)}
-        donnees = tableau_pilotage(self.perimetre, v.get("semaine"), v["par"], v["periode"],
-                                   v.get("du"), v.get("au"), filtres)  # fmt: skip
+        # 0.9.4 : le pays entier vient du calcul d'avance (DSH-011, `tableaux`).
+        donnees = tableaux.equipe(self.perimetre, v)
         if self.perimetre.est_siege:
             # DSH-004 CA1 : chaque consultation nominative par le siège est auditée.
             from apps.audit.services import enregistrer
 
+            filtres = {k: v[k] for k in (*FILTRES, "statut") if v.get(k)}
             enregistrer("pilotage.consultation_nominative", pays=pays, details={
-                "semaine": donnees["debut"].isoformat(), "fin": donnees["fin"].isoformat(),
+                "semaine": donnees["debut"], "fin": donnees["fin"],
                 "par": v["par"], "delegues": len(donnees["delegues"]),
                 "filtres": {k: str(x) for k, x in filtres.items()},
             })  # fmt: skip
-        return Response(s.TableauEquipeSerializer(donnees).data)
+        return Response(donnees)
 
 
 class SiegeVue(VuePerimetre):
@@ -118,17 +119,14 @@ class SiegeVue(VuePerimetre):
 
         from apps.socle.erreurs import ErreurMetier
 
-        from .indicateurs import tableau_siege
+        from . import tableaux
 
         if not self.perimetre.est_siege:
             raise ErreurMetier("reserve_au_siege", _("Vue réservée au siège."),
                                status.HTTP_403_FORBIDDEN)  # fmt: skip
         choix = s.ChoixPeriodeSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
-        v = choix.validated_data
-        donnees = tableau_siege(self.perimetre, v.get("semaine"), v["periode"], v.get("du"),
-                                v.get("au"))  # fmt: skip
-        return Response(s.TableauSiegeSerializer(donnees).data)
+        return Response(tableaux.siege(self.perimetre, choix.validated_data))
 
 
 class ExportVue(VuePerimetre):
@@ -211,18 +209,12 @@ class PrescriptionVue(VuePerimetre):
         responses=s.PrescriptionSerializer, operation_id="pilotage_prescription",
     )  # fmt: skip
     def get(self, request):
-        from .indicateurs import FILTRES, bornes, pilotes_retenus
-        from .prescription import prescription
+        from . import tableaux
 
         choix = s.ChoixPilotageSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
-        pays = pays_requis(self.perimetre)
-        v = choix.validated_data
-        filtres = {k: v[k] for k in FILTRES if v.get(k)}
-        debut, fin = bornes(pays, v["periode"], v.get("semaine"), v.get("du"), v.get("au"))
-        _, _, pilotes = pilotes_retenus(self.perimetre, debut, fin, filtres)
-        donnees = {"debut": debut, "fin": fin, **prescription(pays, pilotes, debut, fin)}
-        return Response(s.PrescriptionSerializer(donnees).data)
+        pays_requis(self.perimetre)
+        return Response(tableaux.prescription(self.perimetre, choix.validated_data))
 
 
 # --- Objectifs par réseau (DSH-009, 0.7.6) --------------------------------------------------

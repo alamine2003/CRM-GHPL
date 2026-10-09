@@ -10,6 +10,7 @@ Une visite restée prévue après la fin de sa journée est « à justifier » (
 programme la rappelle tant qu'elle n'est pas justifiée, sur la semaine et la précédente.
 """
 
+from dataclasses import dataclass
 from datetime import date, time, timedelta
 
 from django.db.models import Q
@@ -74,6 +75,78 @@ def _visites_approuvees(planning: Planning | None, ref) -> list[Visite]:
         visite.modification_en_attente = figee["id"] in en_attente
         visites.append(visite)
     return visites
+
+
+@dataclass(slots=True)
+class LigneVisite:
+    """Une visite telle que les indicateurs la comptent (`apps.pilotage.indicateurs`) : ses
+    seules colonnes utiles, sans objet Django ; un pays de 500 délégués en lit des dizaines de
+    milliers (0.9.4, NFR-002)."""
+
+    pk: object
+    planning_id: object
+    prospect_id: object
+    motif_ecart_id: object
+    date: date
+    heure: time | None
+    ordre: int
+    statut: str
+    debut_le: object
+    sans_gps: bool
+    distance_debut_m: int | None
+    debut_precision_m: int | None
+    rayon_pointage_m: int | None  # celui de l'établissement (DC-55), s'il en a un
+    delegue_id: object = None
+
+
+#: Les colonnes de `LigneVisite`, dans l'ordre.
+COLONNES_INDICATEURS = (
+    "pk", "planning_id", "prospect_id", "motif_ecart_id", "date", "heure", "ordre", "statut",
+    "debut_le", "sans_gps", "distance_debut_m", "debut_precision_m",
+    "etablissement__rayon_pointage_m",
+)  # fmt: skip
+
+
+def lignes_visites(visites, *autres) -> list[LigneVisite]:
+    """Les visites d'une requête en `LigneVisite` ; `autres` : des colonnes de plus (le
+    délégué)."""
+    return [LigneVisite(*ligne) for ligne in visites.values_list(*COLONNES_INDICATEURS, *autres)]
+
+
+def visites_approuvees_de(plannings) -> dict:
+    """`_visites_approuvees` pour plusieurs plannings en deux requêtes (0.9.4, NFR-002) :
+    la dernière version approuvée de chacun, puis ses visites. Pour les indicateurs : sans
+    l'état des modifications en attente, en `LigneVisite`."""
+    from . import services
+    from .models import Decision, VersionPlanning
+
+    references: dict = {}
+    for version in VersionPlanning.objects.filter(
+        planning__in=plannings, decision=Decision.APPROUVE
+    ).order_by("planning_id", "-numero"):
+        references.setdefault(version.planning_id, version)
+    figees = {
+        planning_id: sorted(services.contenu_effectif(ref).get("visites", []), key=_ordre)
+        for planning_id, ref in references.items()
+    }
+    # Les visites d'une version sont celles de son planning : filtrer par planning évite une
+    # liste de milliers d'identifiants dans la requête.
+    par_id = {
+        str(v.pk): v for v in lignes_visites(Visite.objects.filter(planning_id__in=list(figees)))
+    }
+    resultat: dict = {}
+    for planning_id, liste in figees.items():
+        visites = []
+        for figee in liste:
+            visite = par_id.get(figee["id"])
+            if visite is None:
+                continue
+            visite.date = date.fromisoformat(figee["date"])
+            visite.heure = time.fromisoformat(figee["heure"]) if figee["heure"] else None
+            visite.ordre = figee.get("ordre") or visite.ordre
+            visites.append(visite)
+        resultat[planning_id] = visites
+    return resultat
 
 
 def a_justifier(pays: Pays, delegue: Utilisateur, today: date) -> list[Visite]:

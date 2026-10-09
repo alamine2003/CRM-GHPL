@@ -170,11 +170,15 @@ def modele_rapport(visite: Visite) -> Rapport:
     existant = Rapport.objects.filter(visite=visite).first()
     if existant is not None:
         return existant
-    return Rapport(
-        pays=visite.pays, visite=visite, delegue_id=visite.planning.delegue_id,
-        objectif_prevu=visite.objectif or "",
-        definitions=[c.definition() for c in champs_actifs(visite.pays)],
-    )  # fmt: skip
+    return modele_vierge(visite)
+
+
+def modele_vierge(visite: Visite, definitions: list | None = None) -> Rapport:
+    """Le modèle non enregistré ; `definitions` : les champs du pays, déjà lus (0.9.4)."""
+    if definitions is None:
+        definitions = [c.definition() for c in champs_actifs(visite.pays)]
+    return Rapport(pays=visite.pays, visite=visite, delegue_id=visite.planning.delegue_id,
+                   objectif_prevu=visite.objectif or "", definitions=definitions)  # fmt: skip
 
 
 def _exiger_modifiable(rapport: Rapport) -> None:

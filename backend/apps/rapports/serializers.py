@@ -267,6 +267,21 @@ class RapportSerializer(serializers.ModelSerializer):
                   "pieces_jointes"]  # fmt: skip
         read_only_fields = fields
 
+    def _memo(self, cle, calcul):
+        """0.9.4 : les listes du pays et du portefeuille, lues une fois par réponse quand la
+        réponse porte beaucoup de rapports (synchronisation, `memo` dans le contexte)."""
+        memo = self.context.get("memo")
+        if memo is None:
+            return calcul()
+        if cle not in memo:
+            memo[cle] = calcul()
+        return memo[cle]
+
+    def _liste(self, nom, rapport):
+        return self._memo((nom, rapport.pays_id), lambda: [
+            {"id": v.pk, "libelle": v.libelle} for v in getattr(services, nom)(rapport.pays)
+        ])  # fmt: skip
+
     def get_echeance(self, rapport) -> datetime:
         return services.echeance(rapport)
 
@@ -283,7 +298,9 @@ class RapportSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(PieceJointeSerializer(many=True))
     def get_pieces_jointes(self, rapport):
-        pieces = rapport.pieces_jointes.filter(archive_le__isnull=True)
+        if rapport._state.adding:
+            return []  # modèle vierge, pas encore enregistré
+        pieces = [p for p in rapport.pieces_jointes.all() if p.archive_le is None]
         return PieceJointeSerializer(pieces, many=True).data
 
     def get_manquants(self, rapport) -> list[str]:
@@ -291,25 +308,29 @@ class RapportSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(ResumeSerializer(many=True))
     def get_produits_proposes(self, rapport):
-        return [{"id": p.pk, "libelle": p.libelle}
-                for p in services.produits_proposes(rapport.visite)]  # fmt: skip
+        visite = rapport.visite
+        # Le portefeuille dépend du réseau (ou des postes de la semaine) et du jour.
+        cle = ("produits", visite.reseau_id or ("postes", visite.planning_id), visite.date)
+        return self._memo(cle, lambda: [{"id": p.pk, "libelle": p.libelle}
+                                        for p in services.produits_proposes(visite)])  # fmt: skip
 
     @extend_schema_field(ResumeSerializer(many=True))
     def get_resultats_proposes(self, rapport):
-        return [{"id": v.pk, "libelle": v.libelle} for v in services.resultats(rapport.pays)]
+        return self._liste("resultats", rapport)
 
     def get_produit_autre_autorise(self, rapport) -> bool:
         from apps.socle.services import valeur_parametre
 
-        return bool(valeur_parametre(rapport.pays, "produit_autre_autorise"))
+        return self._memo(("autre", rapport.pays_id), lambda: bool(
+            valeur_parametre(rapport.pays, "produit_autre_autorise")))  # fmt: skip
 
     @extend_schema_field(ResumeSerializer(many=True))
     def get_articles_proposes(self, rapport):
-        return [{"id": v.pk, "libelle": v.libelle} for v in services.articles(rapport.pays)]
+        return self._liste("articles", rapport)
 
     @extend_schema_field(ResumeSerializer(many=True))
     def get_types_action_proposes(self, rapport):
-        return [{"id": v.pk, "libelle": v.libelle} for v in services.types_action(rapport.pays)]
+        return self._liste("types_action", rapport)
 
     @extend_schema_field(ActionPrecedenteSerializer(allow_null=True))
     def get_action_precedente(self, rapport):

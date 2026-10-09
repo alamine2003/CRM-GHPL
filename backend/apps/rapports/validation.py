@@ -205,12 +205,13 @@ def valider_journee(planning: Planning, jour: date, par, titre: str,
     return len(rapports)
 
 
-def eligible_au_lot(planning: Planning, jour: date) -> bool:
-    """23.A, RG-035 : conforme, aucun rapport attendu, aucun horodatage douteux."""
-    journee = conformite.recalculer(planning, jour)
+def eligible_au_lot(planning: Planning, jour: date, journee=None, attendus=None) -> bool:
+    """23.A, RG-035 : conforme, aucun rapport attendu, aucun horodatage douteux. La file
+    (0.9.4) donne la journée déjà calculée et ses rapports attendus."""
+    journee = journee or conformite.recalculer(planning, jour)
     if journee_validee(planning, jour, journee) or journee.classement != "conforme":
         return False
-    if manquants(planning, jour):
+    if manquants(planning, jour) if attendus is None else attendus:
         return False
     return not _en_attente(planning, jour).filter(horodatage_douteux=True).exists()
 

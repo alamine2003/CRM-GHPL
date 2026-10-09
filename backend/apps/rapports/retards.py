@@ -23,7 +23,7 @@ from apps.planning.etats import StatutVisite
 from apps.planning.models import ModeDecision, Planning, Visite
 from apps.socle.services import aujourdhui, debut_du_jour
 
-from .file import EXECUTES, SEMAINES, _plannings, _rapports
+from .file import EXECUTES, SEMAINES, _plannings, _rapports_par_jour, journees_figees
 from .models import StatutRapport
 
 #: [H] Profondeur de la liste des retards.
@@ -76,10 +76,13 @@ def retards(utilisateur, pays, delegue_id=None) -> dict:
                 planning.visites.filter(archive_le__isnull=True, statut=StatutVisite.EFFECTUEE)
                 .values_list("date", flat=True)
             ))  # fmt: skip
-            for jour in jours:
-                if not journee_validee(planning, jour):
-                    ligne = {"delegue": planning.delegue, "date": jour, "planning": planning.pk}
-                    journees.append({**ligne, **_rapports(planning, jour)})
+            # 0.9.4 : les journées figées sans reprise sont validées, sans recalcul.
+            validees = journees_figees(planning, jours)
+            restantes = [j for j in jours if j not in validees and not journee_validee(planning, j)]
+            comptes = _rapports_par_jour(planning, restantes) if restantes else {}
+            for jour in restantes:
+                ligne = {"delegue": planning.delegue, "date": jour, "planning": planning.pk}
+                journees.append({**ligne, **comptes[jour]})
         if en_retard or any(j["delegue"].pk == planning.delegue_id for j in journees):
             delegues[planning.delegue_id] = planning.delegue
     if delegue_id is not None:

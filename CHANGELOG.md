@@ -2,6 +2,23 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.4] — Tests de charge et optimisation
+
+Quatrième jalon du cycle 0.9 « Durcissement et pilote ».
+
+### Ajouté (NFR-001, NFR-002, DC-56, prd.md §14.72)
+
+- `generer_charge` : base fictive au volume d'un pays de 500 délégués, à 8 visites par jour et par délégué ; `mesurer_charge` : temps de réponse des écrans courants de chaque rôle, seuil de 500 ms au 95e centile ; scénario k6 pour la préproduction ; méthode et résultats dans `docs/charge.md`.
+- Tableaux du pays entier, de la prescription et du siège calculés d'avance par le worker toutes les 4 minutes et gardés 5 minutes (DSH-011).
+
+### Modifié
+
+- File « À traiter » et retards du superviseur, tableau de pilotage, tendance de prescription et points d'attention, page « Organisation », synchronisation des rapports du téléphone : beaucoup moins de requêtes et de calculs. Sur 500 délégués, les 20 écrans courants mesurés sont sous 500 ms au 95e centile.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [0.9.3] — Renforcement de la sécurité
 
 Troisième jalon du cycle 0.9 « Durcissement et pilote ».
