@@ -1,0 +1,69 @@
+name: Test de restauration
+
+# REC-20, NFR-006 (0.9.5) : chaque mois, la dernière sauvegarde de nuit de la production est
+# restaurée dans une base jetable de GitHub, contrôlée et chronométrée (docs/exploitation.md
+# §8). Sans les secrets de R2 et la phrase de chiffrement, le test est sauté et le dit.
+on:
+  schedule:
+    - cron: '23 4 3 * *' # le 3 de chaque mois, 04 h 23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restaurer:
+    name: Restaurer la dernière sauvegarde
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          # Base jetable : pas de mot de passe à versionner.
+          POSTGRES_USER: innov
+          POSTGRES_DB: innov_restauree
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U innov" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      R2_URL: ${{ secrets.R2_URL }}
+      R2_CLE: ${{ secrets.R2_CLE }}
+      R2_SECRET: ${{ secrets.R2_SECRET }}
+      R2_COMPARTIMENT_SAUVEGARDES: ${{ secrets.R2_COMPARTIMENT_SAUVEGARDES }}
+      SAUVEGARDE_PHRASE: ${{ secrets.SAUVEGARDE_PHRASE }}
+      CIBLE: postgres://innov@localhost:5432/innov_restauree
+    steps:
+      - name: Secrets présents ?
+        id: secrets
+        run: |
+          if [ -z "$R2_URL" ] || [ -z "$SAUVEGARDE_PHRASE" ]; then
+            echo "::notice::Secrets de sauvegarde absents : test de restauration sauté."
+            echo "present=non" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=oui" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.secrets.outputs.present == 'oui'
+      - name: Outils
+        if: steps.secrets.outputs.present == 'oui'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client-16
+      - name: Restaurer et contrôler
+        if: steps.secrets.outputs.present == 'oui'
+        run: |
+          export AWS_ACCESS_KEY_ID="$R2_CLE" AWS_SECRET_ACCESS_KEY="$R2_SECRET" AWS_DEFAULT_REGION=auto
+          derniere=$(aws s3 ls "s3://$R2_COMPARTIMENT_SAUVEGARDES/quotidiennes/" \
+            --endpoint-url "$R2_URL" | awk '{print $4}' | grep '^innov-.*\.dump\.enc$' \
+            | sort | tail -1)
+          [ -n "$derniere" ] || { echo "::error::Aucune sauvegarde trouvée"; exit 1; }
+          echo "Sauvegarde : $derniere"
+          debut=$(date +%s)
+          scripts/restaurer.sh "quotidiennes/$derniere" "$CIBLE"
+          CIBLE_URL="$CIBLE" scripts/controler_restauration.sh
+          duree=$(( $(date +%s) - debut ))
+          echo "Restauration complète en ${duree} s (RTO : 14400 s)"
+          [ "$duree" -le 14400 ] || { echo "::error::Au-delà du RTO"; exit 1; }
+          echo "### Test de restauration : $derniere, ${duree} s, conforme" >> "$GITHUB_STEP_SUMMARY"

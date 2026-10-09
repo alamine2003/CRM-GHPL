@@ -13,4 +13,5 @@ RUN python manage.py compilemessages && \
 RUN useradd --create-home innov
 USER innov
 EXPOSE 8000
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+# Render donne le port dans PORT (0.9.5) ; 8000 en local.
+CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-3}"]

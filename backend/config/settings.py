@@ -200,9 +200,26 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Pièces jointes des rapports (RPT-007) : jamais servies telles quelles, toujours par une vue
-# qui vérifie le droit de voir le rapport. Disque local en développement ; le stockage objet
-# (Cloudflare R2, architecture §5) se branche au déploiement.
+# qui vérifie le droit de voir le rapport. Disque local en développement ; en hébergement
+# (0.9.5), Cloudflare R2 (compatible S3, architecture §5) : compartiment privé par
+# environnement, lu seulement par l'API, jamais par un lien public.
 MEDIA_ROOT = Path(os.environ.get("INNOV_FICHIERS", BASE_DIR / "fichiers"))
+if os.environ.get("INNOV_STOCKAGE") == "r2":
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": os.environ["R2_COMPARTIMENT"],
+                "endpoint_url": os.environ["R2_URL"],
+                "access_key": os.environ["R2_CLE"],
+                "secret_key": os.environ["R2_SECRET"],
+                "region_name": "auto",
+                "default_acl": None,
+                "file_overwrite": False,
+            },
+        },
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ["apps.identite.authentification.AuthentificationSession"],

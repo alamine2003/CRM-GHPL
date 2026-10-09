@@ -54,6 +54,13 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
       - name: Tests (dont schéma OpenAPI à jour)
         run: pytest -q
+      # 0.9.5 (REC-20, NFR-006) : sauvegarde chiffrée, restauration dans une base jetable,
+      # contrôles et durée, sur la base migrée de la CI (docs/exploitation.md §8).
+      - name: Test de restauration
+        run: |
+          python manage.py migrate --noinput
+          SOURCE_URL="$DATABASE_URL" CIBLE_ADMIN_URL=postgres://innov@localhost:5432/postgres \
+            MANAGE="python manage.py" ../scripts/tester_restauration.sh
       # 0.9.3 : aucune faille connue dans les dépendances du serveur (docs/revue-securite.md).
       - name: Audit des dépendances
         run: pip install pip-audit && pip-audit -r requirements.txt

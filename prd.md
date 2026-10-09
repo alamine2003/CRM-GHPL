@@ -704,6 +704,27 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.73 Hébergement de production, sauvegardes et restauration (mise en œuvre 0.9.5)
+
+- **Plan d'hébergement** (HT-05, HT-06, DC-33) : `render.yaml` décrit toute la production Render en région Francfort, sur des offres payantes :
+  - la base PostgreSQL persistante, avec la sauvegarde continue de Render (retour à un instant donné) ;
+  - l'API, avec une sonde `/api/health/` et les migrations avant chaque bascule ;
+  - le worker et l'ordonnanceur ;
+  - la file Redis, qui ne perd aucune tâche ;
+  - la sauvegarde de nuit.
+
+  Aucun secret n'y est écrit : ils se saisissent dans Render ou y sont tirés au hasard, et un test le vérifie. Le portail part sur Cloudflare Pages avec ses en-têtes de sécurité (`portail/public/_headers`), et les pièces jointes sur un compartiment R2 privé (`INNOV_STOCKAGE=r2`).
+- **Sauvegardes** (NFR-006) : en plus de la sauvegarde continue de Render, une copie de la base part chaque nuit hors de Render. Elle est chiffrée (AES-256, phrase gardée hors de Render) et déposée dans un compartiment R2 dédié, par `scripts/sauvegarder.sh`. `scripts/restaurer.sh` la ramène dans une base neuve.
+- **Test de restauration** (REC-20) : `scripts/tester_restauration.sh` sauvegarde, chiffre, restaure dans une base jetable et compare le nombre de lignes de chaque table. Il vérifie aussi :
+  - que la sécurité au niveau des lignes et les protections du journal d'audit sont revenues ;
+  - que les migrations sont à jour ;
+  - que la durée tient dans les 4 heures.
+
+  La CI le rejoue à chaque livraison. Le workflow « Test de restauration » le rejoue chaque mois sur la vraie sauvegarde de la nuit, une fois les secrets déclarés. Sur la base de charge (500 délégués, 400 Mo), la restauration complète prend 21 secondes. La chaîne entière, jusqu'au dépôt et à la relecture sur un stockage compatible S3, est éprouvée sur un stockage simulé.
+- **Guide d'exploitation** (prd.md §21.2, condition 8) : `docs/exploitation.md` couvre l'installation, les secrets, les sauvegardes, les tâches périodiques, la supervision, les incidents et le test de restauration.
+- [D, 9 octobre 2026, délégation] Le portail est publié sur Cloudflare Pages, comme le prévoit l'architecture, et non sur Render. La phrase de chiffrement des sauvegardes et la clé de chiffrement de la double authentification se gardent dans le coffre de l'entreprise, hors de Render : une sauvegarde restaurée sans elles serait illisible ou sans double authentification.
+- **Reste à l'entreprise** : souscrire les offres payantes (Render, Cloudflare R2, Sentry) et un nom de domaine, puis appliquer le plan. Cela ne peut pas se faire depuis le dépôt.
+
 ### 14.72 Tenue de charge et temps de réponse (mise en œuvre 0.9.4)
 
 - **Base de charge** (NFR-001) : `generer_charge` remplit une base fictive au volume d'un pays de 500 délégués (550 postes, 58 superviseurs, 16 DM, 6 000 prospects), à la densité du PRD : 8 visites par jour et par délégué, deux semaines terminées et la semaine en cours, les visites passées faites, leurs rapports rédigés et les journées d'avant la semaine validées. Elle refuse de tourner en production.

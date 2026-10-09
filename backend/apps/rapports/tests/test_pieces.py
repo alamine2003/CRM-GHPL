@@ -102,3 +102,30 @@ def test_rpt007_retrait_et_televersement_differe(monde, effectuee, portefeuille)
     piece = PieceJointe.objects.get(archive_le__isnull=True)
     r = c.delete(url(effectuee, f"pieces/{piece.pk}/"))
     assert (r.status_code, r.json()["code"]) == (409, "rapport_non_modifiable")
+
+
+@freeze_time("2026-10-13 10:00")
+def test_rpt007_une_piece_va_et_revient_d_un_stockage_s3(settings, monde, effectuee):  # noqa: F811
+    """0.9.5 : en hébergement, les pièces vont sur Cloudflare R2 (compatible S3, simulé ici),
+    dans un compartiment privé ; l'API les relit, aucun lien public n'est donné."""
+    import boto3
+    from moto import mock_aws
+
+    with mock_aws():
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="innov-essai-pieces")
+        settings.STORAGES = {
+            **settings.STORAGES,
+            "default": {"BACKEND": "storages.backends.s3.S3Storage", "OPTIONS": {
+                "bucket_name": "innov-essai-pieces", "region_name": "us-east-1",
+                "default_acl": None, "file_overwrite": False,
+            }},
+        }  # fmt: skip
+        c = client_de(monde["deleg.sn"])
+        ident = uuid.uuid4()
+        r = c.post(url(effectuee, "pieces/"), envoi(ident=ident), format="multipart")
+        assert r.status_code == 201, r.content
+        (objet,) = s3.list_objects_v2(Bucket="innov-essai-pieces")["Contents"]
+        assert objet["Size"] == len(PDF)
+        lu = c.get(url(effectuee, f"pieces/{ident}/"))
+        assert lu.status_code == 200 and b"".join(lu.streaming_content) == PDF

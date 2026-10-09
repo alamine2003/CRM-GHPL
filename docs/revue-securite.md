@@ -69,4 +69,4 @@ Revue de l'application avant le pilote (prd.md §21.2, condition 2 : aucun défa
 
 1. **Test d'intrusion indépendant** sur la préproduction (0.9.5), avant la 1.0.0 : prestataire à choisir par l'entreprise.
 2. Rejouer cette revue à chaque montée de version majeure (Django, Expo).
-3. Relire les en-têtes du portail statique chez l'hébergeur (politique de contenu du portail) au déploiement (0.9.5).
+3. Au premier déploiement, vérifier chez Cloudflare Pages que les en-têtes de `portail/public/_headers` (0.9.5) sont bien servis.

@@ -2,6 +2,21 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.9.5] — Hébergement, sauvegardes et restauration
+
+Cinquième jalon du cycle 0.9 « Durcissement et pilote ».
+
+### Ajouté (HT-05, HT-06, NFR-006, REC-20, prd.md §14.73)
+
+- `render.yaml` : la production Render à Francfort sur offres payantes (base persistante et sauvegarde continue, API, worker, ordonnanceur, file, sauvegarde de nuit), sans aucun secret écrit.
+- Sauvegarde de nuit chiffrée hors de Render (R2), restauration, test de restauration chronométré : à chaque livraison en CI et chaque mois sur la vraie sauvegarde.
+- Pièces jointes sur Cloudflare R2 en hébergement ; portail sur Cloudflare Pages avec ses en-têtes de sécurité.
+- `docs/exploitation.md` : le guide d'exploitation (installation, secrets, sauvegardes, supervision, incidents, restauration).
+
+### Design
+
+Pas d'écran modifié.
+
 ## [0.9.4] — Tests de charge et optimisation
 
 Quatrième jalon du cycle 0.9 « Durcissement et pilote ».

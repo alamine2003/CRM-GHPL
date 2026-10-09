@@ -4,3 +4,4 @@ pytest-django>=4.9
 ruff>=0.6
 polib>=1.2
 freezegun>=1.5
+moto[s3]>=5.0
