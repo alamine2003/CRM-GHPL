@@ -110,14 +110,18 @@ def reactiver_utilisateur(utilisateur: Utilisateur) -> Utilisateur:
 # --- Contrôles d'accès ---------------------------------------------------------------
 
 
+def _compte_desactive() -> ErreurMetier:
+    return ErreurMetier(
+        "compte_desactive",
+        _("Ce compte est désactivé. Contactez votre administrateur pays."),
+        status.HTTP_403_FORBIDDEN,
+    )
+
+
 def verifier_acces_autorise(utilisateur: Utilisateur) -> None:
     """Compte actif, et pays principal actif sauf pour le siège (ORG-001 CA2)."""
     if not utilisateur.is_active:
-        raise ErreurMetier(
-            "compte_desactive",
-            _("Ce compte est désactivé. Contactez votre administrateur pays."),
-            status.HTTP_403_FORBIDDEN,
-        )
+        raise _compte_desactive()
     pays = utilisateur.pays_principal
     if pays is not None and pays.statut != Pays.Statut.ACTIF:
         message = (
@@ -400,15 +404,22 @@ def rafraichir(jeton: str) -> Connexion:
             erreur = ErreurMetier(
                 "session_invalide", _("Session invalide ou expirée."), status.HTTP_401_UNAUTHORIZED
             )
+        elif session.appareil_id and session.appareil.est_revoque:
+            # SEC-006 : même une session déjà fermée par la révocation reçoit ce code, pour que
+            # le téléphone efface ses données au lieu de croire à une simple expiration.
+            if session.revoquee_le is None:
+                _revoquer(session, "appareil_revoque")
+            erreur = _appareil_revoque()
+        elif not session.utilisateur.is_active:
+            if session.revoquee_le is None:
+                _revoquer(session, "compte_suspendu")
+            erreur = _compte_desactive()
         elif not session.est_active:
             erreur = ErreurMetier(
                 "session_expiree",
                 _("Votre session a expiré. Reconnectez-vous."),
                 status.HTTP_401_UNAUTHORIZED,
             )
-        elif session.appareil_id and session.appareil.est_revoque:
-            _revoquer(session, "appareil_revoque")
-            erreur = _appareil_revoque()
         else:
             erreur = None
             verifier_acces_autorise(session.utilisateur)
@@ -457,7 +468,8 @@ def _enregistrer_appareil(utilisateur: Utilisateur, description: dict) -> Appare
 @transaction.atomic
 def revoquer_appareil(appareil: Appareil, *, par: Utilisateur | None) -> Appareil:
     """Révoque un téléphone : ses sessions sont fermées, il ne peut plus se reconnecter
-    (USR-006 CA2). L'effacement à distance des données locales arrive au cycle 0.8."""
+    (USR-006 CA2). À sa prochaine tentative, le téléphone reçoit « appareil_revoque » et efface
+    ses données locales (SEC-006)."""
     if appareil.est_revoque:
         raise ErreurMetier("appareil_deja_revoque", _("Ce téléphone est déjà révoqué."))
     appareil.revoque_le = timezone.now()

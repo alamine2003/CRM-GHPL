@@ -1,6 +1,7 @@
-import type { ClientApi, Jetons } from '@innov/api-client';
+import { type ClientApi, ErreurApi, type Jetons } from '@innov/api-client';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { effacer } from './baseLocale';
+import { effacerFichiers } from './BrouillonRapport';
 import { creerClientMobile } from './client';
 import i18n from './i18n';
 import { ContexteSession, type Etat, type Session } from './session';
@@ -23,6 +24,19 @@ async function ouvrir(client: ClientApi, jetons: Jetons): Promise<Etat> {
   };
 }
 
+/** SEC-006 : refus qui commandent l'effacement des données du téléphone. */
+const CODES_EFFACEMENT = new Set(['appareil_revoque', 'compte_desactive']);
+
+export function doitEffacer(erreur: unknown) {
+  return erreur instanceof ErreurApi && CODES_EFFACEMENT.has(erreur.code);
+}
+
+/** Rien ne reste sur le téléphone : base locale chiffrée (file comprise) et documents. */
+export async function toutEffacer() {
+  await effacer().catch(() => undefined);
+  await effacerFichiers();
+}
+
 export function FournisseurSession({
   children,
   client: clientFourni,
@@ -33,7 +47,11 @@ export function FournisseurSession({
   const [etat, setEtat] = useState<Etat>({ statut: 'chargement' });
   const client = useMemo(
     () =>
-      clientFourni ?? creerClientMobile(() => setEtat({ statut: 'anonyme', sessionExpiree: true })),
+      clientFourni ??
+      creerClientMobile((erreur) => {
+        if (!doitEffacer(erreur)) return setEtat({ statut: 'anonyme', sessionExpiree: true });
+        void toutEffacer().then(() => setEtat({ statut: 'anonyme', effacement: true }));
+      }),
     [clientFourni],
   );
 
@@ -44,7 +62,11 @@ export function FournisseurSession({
       .reprendre()
       .then((jetons) => ouvrir(client, jetons))
       .then((etatConnecte) => actif && setEtat(etatConnecte))
-      .catch(() => actif && setEtat({ statut: 'anonyme' }));
+      .catch(async (erreur) => {
+        // SEC-006 CA1 : à la reprise, un téléphone révoqué efface tout et revient à la connexion.
+        if (doitEffacer(erreur)) await toutEffacer();
+        if (actif) setEtat({ statut: 'anonyme', effacement: doitEffacer(erreur) || undefined });
+      });
     return () => {
       actif = false;
     };
@@ -55,7 +77,10 @@ export function FournisseurSession({
       etat,
       client,
       async connexion(identifiant, motDePasse) {
-        const resultat = await client.connexion(identifiant, motDePasse);
+        const resultat = await client.connexion(identifiant, motDePasse).catch(async (e) => {
+          if (doitEffacer(e)) await toutEffacer();
+          throw e;
+        });
         if (resultat.etape === 'code_requis') return resultat.jetonEtape;
         setEtat(await ouvrir(client, resultat.jetons));
         return null;
@@ -72,7 +97,7 @@ export function FournisseurSession({
       async deconnexion() {
         await client.deconnexion().catch(() => undefined);
         // Rien ne reste sur le téléphone après la déconnexion.
-        await effacer().catch(() => undefined);
+        await toutEffacer();
         setEtat({ statut: 'anonyme' });
       },
     }),

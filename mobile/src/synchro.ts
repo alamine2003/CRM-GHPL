@@ -122,6 +122,26 @@ export async function derniereSynchro(): Promise<EtatSynchro | null> {
   return m?.valeur.le ? m.valeur : null;
 }
 
+/** OFF-007, DC-54 : délai par défaut sans synchronisation avant de masquer les données. */
+export const DELAI_HORS_LIGNE_JOURS = 7;
+
+/** Le délai du pays, lu avec le programme gardé sur le téléphone (7 jours sinon). */
+export async function delaiHorsLigne(): Promise<number> {
+  const programme = await lire<{ delai_hors_ligne_jours?: number }>(CLE_PROGRAMME).catch(
+    () => null,
+  );
+  const jours = programme?.valeur?.delai_hors_ligne_jours;
+  return typeof jours === 'number' && jours > 0 ? jours : DELAI_HORS_LIGNE_JOURS;
+}
+
+/**
+ * RG-054 : la dernière synchronisation réussie date-t-elle de plus de `jours` jours ? Un
+ * téléphone jamais synchronisé ne garde rien à masquer : il ne l'est pas.
+ */
+export function horsDelai(etat: EtatSynchro | null, jours: number, maintenant = Date.now()) {
+  return !!etat && maintenant - new Date(etat.le).getTime() > jours * 24 * 3600 * 1000;
+}
+
 /** Faut-il resynchroniser (jamais fait, ou plus vieux que `FRAICHEUR_MS`) ? */
 export function aRafraichir(etat: EtatSynchro | null, maintenant = Date.now()) {
   return !etat || maintenant - new Date(etat.le).getTime() > FRAICHEUR_MS;

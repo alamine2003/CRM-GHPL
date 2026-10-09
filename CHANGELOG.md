@@ -2,6 +2,32 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [0.8.3] — File visible, sept jours sans réseau, effacement à distance
+
+Troisième jalon du cycle 0.8 « Mobilité ».
+
+### Ajouté (OFF-003, OFF-007, RG-054, DC-54, SEC-006, prd.md §14.62)
+
+- Sur chaque écran du téléphone : « Synchronisé à 14:32 · 2 envois en attente » ; un appui ouvre le profil, qui détaille la file.
+- La file repart d'elle-même au retour dans l'application et chaque minute tant qu'elle n'est pas vide.
+- Paramètre du pays « delai_hors_ligne_jours » (7 jours par défaut, 1 à 30) : au-delà sans synchronisation, les données sont masquées jusqu'à la prochaine synchronisation ; les envois en attente sont gardés et partent d'abord.
+- Effacement à distance : un téléphone révoqué ou un compte suspendu efface ses données locales (base chiffrée, file, documents) à sa tentative suivante et revient à la connexion.
+
+### Corrigé
+
+- Le serveur répondait « session expirée » à un téléphone révoqué : il répond désormais « appareil_revoque » ou « compte_desactive ».
+- File d'envoi : libellés manquants pour l'indisponibilité, le rapport, la proposition et le document.
+
+### Design
+
+Revue sur le rendu réel (délégué de la démonstration, téléphone 360 px, avec et sans réseau, horloge avancée de 8 jours) :
+
+| Écran | Défaut observé | Correction |
+|---|---|---|
+| Ligne de synchronisation | « Synchronisé aujourd'hui à 02:00 · 1 envoi en atten… » coupé sur 360 px | Forme courte : « Synchronisé à 02:00 · 1 envoi en attente » ; le jour seulement s'il ne s'agit pas d'aujourd'hui |
+| File du profil | « Proposition de fiche · Proposition de mise à jour de fiche » : redit, sans dire laquelle | Le nom de la fiche : « Proposition de fiche · Dr … » |
+| Garde des 8 jours | — | Carte unique : ce qui se passe, depuis quand, ce qui est gardé, un seul bouton ; aucune donnée visible derrière |
+
 ## [0.8.2] — Rapports et fiches sans réseau
 
 Deuxième jalon du cycle 0.8 « Mobilité ».

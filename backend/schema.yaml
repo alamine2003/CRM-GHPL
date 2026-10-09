@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 0.8.2
+  version: 0.8.3
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -10146,6 +10146,8 @@ components:
           type: integer
         verrouillage_minutes:
           type: integer
+        delai_hors_ligne_jours:
+          type: integer
         motifs_ecart:
           type: array
           items:
@@ -10155,6 +10157,7 @@ components:
       - a_justifier
       - attente_gps_secondes
       - aujourdhui
+      - delai_hors_ligne_jours
       - etat
       - fuseau
       - geolocalisation

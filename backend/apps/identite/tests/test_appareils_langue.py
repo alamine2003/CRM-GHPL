@@ -74,7 +74,8 @@ def test_un_appareil_revoque_ne_peut_plus_se_connecter_ni_rafraichir(api, delegu
     rafraichi = api.post(
         "/api/v1/auth/rafraichir/", {"rafraichissement": rafraichissement}, format="json"
     )
-    assert rafraichi.status_code == 401
+    # SEC-006 CA1 : le téléphone apprend la révocation, pas une simple expiration.
+    assert rafraichi.status_code == 403 and rafraichi.json()["code"] == "appareil_revoque"
     refus = connecter(api)
     assert refus.status_code == 403 and refus.json()["code"] == "appareil_revoque"
     # Un autre téléphone du même compte reste utilisable.
@@ -122,3 +123,28 @@ def test_l_utilisateur_choisit_sa_langue(api, delegue):
     delegue.refresh_from_db()
     assert delegue.langue == "en"
     assert api.patch("/api/v1/auth/moi/", {"langue": "wo"}, format="json").status_code == 400
+
+
+def test_sec006_un_compte_suspendu_le_dit_au_telephone(api, delegue, admin_pays):
+    """SEC-006 CA1 : le compte suspendu, la session fermée répond « compte_desactive » au lieu
+    d'une expiration ; le téléphone efface alors ses données."""
+    from apps.identite.services import suspendre_utilisateur
+
+    rafraichissement = jetons(api)["rafraichissement"]
+    suspendre_utilisateur(delegue)
+    rafraichi = api.post(
+        "/api/v1/auth/rafraichir/", {"rafraichissement": rafraichissement}, format="json"
+    )
+    assert rafraichi.status_code == 403 and rafraichi.json()["code"] == "compte_desactive"
+    # Une session simplement expirée reste une expiration.
+    from apps.identite.services import reactiver_utilisateur
+
+    reactiver_utilisateur(delegue)
+    rafraichissement = jetons(api)["rafraichissement"]
+    from apps.identite.models import Session
+
+    Session.objects.filter(utilisateur=delegue).update(expire_le="2020-01-01T00:00:00Z")
+    rafraichi = api.post(
+        "/api/v1/auth/rafraichir/", {"rafraichissement": rafraichissement}, format="json"
+    )
+    assert rafraichi.status_code == 401 and rafraichi.json()["code"] == "session_expiree"

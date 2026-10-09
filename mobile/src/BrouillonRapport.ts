@@ -102,6 +102,12 @@ export async function garderFichier(uri: string, id: string): Promise<string> {
   }
 }
 
+/** SEC-006 : à l'effacement à distance, les documents en attente disparaissent aussi. */
+export async function effacerFichiers() {
+  if (Platform.OS === 'web' || !DOSSIER) return;
+  await FS.deleteAsync(DOSSIER, { idempotent: true }).catch(() => undefined);
+}
+
 /** Après l'envoi, la copie durable n'a plus lieu d'être. */
 export async function oublierFichier(uri: string) {
   if (Platform.OS === 'web' || !DOSSIER || !uri.startsWith(DOSSIER)) return;

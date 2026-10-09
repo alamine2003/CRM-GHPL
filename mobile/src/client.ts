@@ -43,7 +43,7 @@ export const stockageSecurise: StockageRafraichissement =
 const apiUrl =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://localhost:8000';
 
-export function creerClientMobile(surSessionPerdue?: () => void) {
+export function creerClientMobile(surSessionPerdue?: (erreur: unknown) => void) {
   return creerClient({
     baseUrl: apiUrl,
     client: 'mobile',

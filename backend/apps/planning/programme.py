@@ -175,6 +175,7 @@ def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dic
         "geolocalisation": valeur_parametre(pays, "geolocalisation_active"),
         "attente_gps_secondes": valeur_parametre(pays, "attente_gps_secondes"),
         "verrouillage_minutes": valeur_parametre(pays, "verrouillage_minutes"),
+        "delai_hors_ligne_jours": valeur_parametre(pays, "delai_hors_ligne_jours"),
         "motifs_ecart": _motifs(pays),
         "a_justifier": a_justifier(pays, delegue, today),
         "a_corriger": a_corriger(pays, delegue),

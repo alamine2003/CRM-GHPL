@@ -76,6 +76,7 @@ const PROGRAMME: Programme = {
   geolocalisation: true,
   attente_gps_secondes: 60,
   verrouillage_minutes: 15,
+  delai_hors_ligne_jours: 7,
   motifs_ecart: [{ id: 'm-absent', libelle: 'Absent du cabinet' }],
   a_justifier: [],
   a_corriger: [],

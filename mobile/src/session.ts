@@ -6,6 +6,8 @@ export type Etat =
   | {
       statut: 'anonyme';
       sessionExpiree?: boolean;
+      /** SEC-006 : téléphone révoqué ou compte désactivé, les données locales sont effacées. */
+      effacement?: boolean;
       /** Rôle sensible sans double authentification : l'activer depuis le portail (SEC-003). */
       doubleAuthRequise?: boolean;
     }

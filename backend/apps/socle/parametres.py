@@ -224,6 +224,14 @@ CATALOGUE: dict[str, DefinitionParametre] = {
             _entier(5, 30),
         ),
         DefinitionParametre(
+            "delai_hors_ligne_jours",
+            "Au-delà de ce nombre de jours sans synchronisation, le téléphone masque ses données "
+            "jusqu'à la prochaine synchronisation réussie ; plus long pour les zones isolées "
+            "(OFF-007, RG-054, DC-54)",
+            7,
+            _entier(1, 30),
+        ),
+        DefinitionParametre(
             "rappel_planning_non_soumis",
             "Rappel du planning non soumis, semaine précédente (NOT-006)",
             {"jour": 5, "heure": "09:00"},

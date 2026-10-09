@@ -452,8 +452,9 @@ export interface OptionsClient {
   stockage?: StockageRafraichissement;
   /** Mobile : description du téléphone envoyée à la connexion (USR-006). */
   appareil?: () => Promise<DescriptionAppareil>;
-  /** Appelé quand la session est définitivement perdue (expirée, révoquée). */
-  surSessionPerdue?: () => void;
+  /** Appelé quand la session est définitivement perdue (expirée, révoquée), avec le refus du
+   * serveur : le mobile y lit « appareil_revoque » ou « compte_desactive » (SEC-006). */
+  surSessionPerdue?: (erreur: unknown) => void;
   fetch?: typeof fetch;
 }
 
@@ -563,7 +564,7 @@ export function creerClient(options: OptionsClient) {
       try {
         await rafraichir();
       } catch (echec) {
-        options.surSessionPerdue?.();
+        options.surSessionPerdue?.(echec);
         throw echec;
       }
       return brute<T>(chemin, { ...opts, authentifiee: true });

@@ -232,6 +232,7 @@ export function FicheProspect({ id }: { id: string }) {
         <ProposerCorrection
           objet="prospect"
           id={fiche.id}
+          nom={nomProspect(fiche, t)}
           actuels={{
             telephone_mobile: fiche.telephone_mobile,
             telephone_pro: fiche.telephone_pro,
@@ -361,6 +362,7 @@ export function FicheEtablissement({ id }: { id: string }) {
         <ProposerCorrection
           objet="etablissement"
           id={fiche.id}
+          nom={fiche.nom}
           actuels={{ adresse: fiche.adresse, telephone: fiche.telephone }}
         />
       )}

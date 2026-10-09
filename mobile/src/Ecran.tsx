@@ -10,10 +10,12 @@ import { FiletDemonstration, MentionDemonstration } from './Demonstration';
 import { usePalette } from './composants';
 import { police } from './polices';
 import { useSession } from './session';
+import { LigneSynchro } from './Synchronisation';
 
 /**
  * Gabarit d'un écran connecté (docs/design.md §4) : en-tête de 56 px (titre à gauche, action à
- * droite), contenu défilant pleine largeur, onglets en bas. Aucune bannière.
+ * droite), sous lui la ligne de synchronisation (OFF-003 CA1), contenu défilant pleine largeur,
+ * onglets en bas. Aucune bannière.
  */
 export function Ecran({
   titre,
@@ -84,6 +86,7 @@ export function Ecran({
           {action}
         </View>
       </View>
+      <LigneSynchro />
       <ScrollView ref={defilement} contentContainerStyle={styles.contenu}>
         {children}
       </ScrollView>

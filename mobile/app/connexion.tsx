@@ -172,6 +172,9 @@ export default function Connexion() {
               {etat.statut === 'anonyme' && etat.doubleAuthRequise && !erreur && (
                 <Alerte type="info">{t('mobile.doubleAuthPortail')}</Alerte>
               )}
+              {etat.statut === 'anonyme' && etat.effacement && !erreur && (
+                <Alerte type="attention">{t('mobile.effacement')}</Alerte>
+              )}
               {etat.statut === 'anonyme' && etat.sessionExpiree && !erreur && (
                 <Alerte type="info">{t('session.expiree')}</Alerte>
               )}

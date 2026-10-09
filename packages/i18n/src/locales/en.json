@@ -201,7 +201,8 @@
       "invite": "Unlock INNOV CRM",
       "sansProtection": "This phone has no passcode or biometrics: sign in again."
     },
-    "identifiantInstallation": "ID"
+    "identifiantInstallation": "ID",
+    "effacement": "This phone was revoked or your account deactivated: its data has been erased. Contact your country administrator."
   },
   "roles": {
     "titre": "Roles",
@@ -1568,7 +1569,12 @@
       "annuler_visite": "Visit cancelled",
       "non_realisee_visite": "Visit not carried out",
       "reporter_visite": "Visit postponed",
-      "imprevue_visite": "Unplanned visit"
+      "imprevue_visite": "Unplanned visit",
+      "indisponibilite": "Unavailability",
+      "brouillon_rapport": "Report (draft)",
+      "soumission_rapport": "Report submitted",
+      "proposition": "Record update proposal",
+      "piece_jointe": "Report document"
     },
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
@@ -2573,6 +2579,20 @@
     "visites": "Visits this week and next",
     "prospects": "Prospects on the target list",
     "historiques": "Prospects with their last visits",
-    "rapports": "Reports ready to write offline"
+    "rapports": "Reports ready to write offline",
+    "aujourdhui": "today at {{heure}}",
+    "leJour": "on {{jour}} at {{heure}}",
+    "enAttente": "Items waiting to send",
+    "ligneJamais": "Not synced yet",
+    "ligneAide": "Opens your profile, to sync or send now",
+    "garde": {
+      "titre": "Sync required",
+      "aide_one": "Last sync {{quand}}. After {{count}} day without syncing, the data on this phone is hidden. Find a network, then sync.",
+      "aide_other": "Last sync {{quand}}. After {{count}} days without syncing, the data on this phone is hidden. Find a network, then sync.",
+      "attente_one": "{{count}} item waiting to send is kept on this phone: it will go out when you sync.",
+      "attente_other": "{{count}} items waiting to send are kept on this phone: they will go out when you sync."
+    },
+    "ligneHeure": "Synced at {{heure}}",
+    "ligneJour": "Synced on {{jour}}"
   }
 }

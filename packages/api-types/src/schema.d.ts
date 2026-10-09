@@ -5020,6 +5020,7 @@ export interface components {
       geolocalisation: boolean;
       attente_gps_secondes: number;
       verrouillage_minutes: number;
+      delai_hors_ligne_jours: number;
       motifs_ecart: components['schemas']['Resume'][];
     };
     /**

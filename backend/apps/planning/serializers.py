@@ -727,6 +727,8 @@ class ProgrammeSerializer(serializers.Serializer):
     attente_gps_secondes = serializers.IntegerField()
     #: SEC-004 (DC-59) : le téléphone se verrouille après ce délai en arrière-plan.
     verrouillage_minutes = serializers.IntegerField()
+    #: OFF-007 (DC-54) : au-delà, le téléphone masque ses données jusqu'à la synchronisation.
+    delai_hors_ligne_jours = serializers.IntegerField()
     #: Motifs d'écart du pays, gardés par le téléphone pour déclarer sans réseau (prd.md §12).
     motifs_ecart = ResumeSerializer(many=True)
 

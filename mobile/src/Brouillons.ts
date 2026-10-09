@@ -6,8 +6,9 @@
  *   semaine propose de la reprendre (CA1 : aucune visite perdue).
  * - **Envois en attente** : sans réseau, une visite ou une absence enregistrée part dans une
  *   file sur le téléphone, avec un identifiant tiré ici (OFF-002 CA1) ; la file se vide dès que
- *   le réseau revient, et le serveur ne crée rien deux fois (OFF-003 CA2). La synchronisation
- *   complète (conflits, 7 jours hors ligne) arrive au cycle 0.8.
+ *   le réseau revient, et le serveur ne crée rien deux fois (OFF-003 CA2). Son compte est
+ *   visible sur chaque écran (OFF-003 CA1, 0.8.3) ; au-delà du délai du pays sans
+ *   synchronisation, elle est gardée et part à la synchronisation suivante (RG-054).
  */
 import type {
   ClientApi,
@@ -226,9 +227,19 @@ export async function lireAttente() {
   return (await lire<Envoi[]>(CLE_ATTENTE).catch(() => null))?.valeur ?? [];
 }
 
+/** OFF-003 CA1 : les écrans qui montrent le nombre d'envois en attente sont prévenus. */
+const ecouteursFile = new Set<(envois: Envoi[]) => void>();
+export function ecouterFile(ecouteur: (envois: Envoi[]) => void) {
+  ecouteursFile.add(ecouteur);
+  return () => {
+    ecouteursFile.delete(ecouteur);
+  };
+}
+
 async function garderAttente(envois: Envoi[]) {
   if (envois.length) await ecrire(CLE_ATTENTE, envois).catch(() => undefined);
   else await oublier(CLE_ATTENTE).catch(() => undefined);
+  ecouteursFile.forEach((e) => e(envois));
 }
 
 /**

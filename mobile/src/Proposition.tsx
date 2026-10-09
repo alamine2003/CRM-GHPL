@@ -27,10 +27,13 @@ const CHAMPS = {
 export function ProposerCorrection({
   objet,
   id,
+  nom,
   actuels,
 }: {
   objet: 'prospect' | 'etablissement';
   id: string;
+  /** Nom de la fiche, pour la reconnaître dans la file d'envoi (0.8.3). */
+  nom?: string;
   actuels: Record<string, string | null | undefined>;
 }) {
   const { t } = useTranslation();
@@ -73,7 +76,7 @@ export function ProposerCorrection({
           id: saisie.id,
           type: 'proposition',
           saisie,
-          resume: t('propositions.mobile.enAttente'),
+          resume: nom || t('propositions.mobile.enAttente'),
         });
         setEnvoyee('attente');
         setOuvert(false);
