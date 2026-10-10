@@ -78,7 +78,7 @@
 | HT-02 | ~10 000 prospects et ~3 000 établissements par pays ; liste cible de 150 à 400 prospects par délégué | [H] | Revoir la taille de la synchronisation initiale |
 | HT-03 | Téléphones Android 10+ et iOS 16+, mélangés, personnels ou fournis | [D] Android+iOS ; [H] versions | Revoir la compatibilité Expo |
 | HT-04 | Réseau mobile 2G/3G intermittent hors des grandes villes | [H] | — |
-| HT-05 | Hébergement Render (région Francfort), Cloudflare Pages, Cloudflare R2 | [D] | — |
+| HT-05 | Hébergement Render (région Francfort) pour l'API et le portail (1.0.1), Cloudflare R2 | [D] | — |
 | HT-06 | Offres payantes Render (base persistante, sauvegardes, PITR) avant le pilote `0.9.7` | [H] | Bloquant pour la production |
 | HT-07 | Render Postgres autorise les extensions `pg_trgm`, `unaccent`, `fuzzystrmatch` et la création de rôles supplémentaires | [H] à vérifier en `0.0.2` | Sans rôles : isolation Grafana par vues dédiées seulement (section 25.2) |
 | HT-08 | Les heures du téléphone peuvent être fausses | [D] | Double horodatage local/serveur (section 14.6) |
@@ -120,7 +120,7 @@ flowchart LR
 flowchart TB
   subgraph Clients
     MOB[Application mobile<br/>React Native + Expo<br/>SQLite chiffrée]
-    WEB[Portail web<br/>React + MUI<br/>Cloudflare Pages]
+    WEB[Portail web<br/>React + MUI<br/>Render, site statique]
   end
 
   subgraph Render[Render · Francfort]
@@ -164,7 +164,7 @@ flowchart TB
 | Ordonnanceur | Celery beat (planification en base) | Render, background worker | Déclenche les tâches périodiques à l'heure de chaque pays | [D] |
 | Base de données | PostgreSQL 16 | Render Postgres (offre payante en production) | Données métier, audit, journal des changements | [D] |
 | Cache et file | Redis 7 | Render Key Value | File Celery, limitation de débit, cache court | [D] |
-| Portail web | React 19, TypeScript, Vite, MUI, TanStack Query, react-router, react-hook-form, zod, i18next, Recharts | Cloudflare Pages | Interface des rôles du portail | [D] |
+| Portail web | React 19, TypeScript, Vite, MUI, TanStack Query, react-router, react-hook-form, zod, i18next, Recharts | Render, site statique (1.0.1) | Interface des rôles du portail | [D] |
 | Application mobile | React Native, Expo (SDK courant), TypeScript, expo-router, expo-sqlite avec SQLCipher | Google Play, App Store via EAS | Interface du délégué, hors connexion | [D] React Native + Expo |
 | Stockage objet | Cloudflare R2 (compatible S3) | Cloudflare | Pièces jointes, imports, exports, sauvegardes | [D] |
 | Notifications push | Expo Push Service (FCM, APNs) | Expo | Acheminement des notifications | [R] `0.8.5` |
@@ -266,7 +266,7 @@ Volume estimé : < 10 Mo après la synchronisation initiale (NFR-004) [H].
 
 ## 6. Architecture du portail web
 
-- Application monopage React 19 + TypeScript + Vite, servie statiquement par Cloudflare Pages.
+- Application monopage React 19 + TypeScript + Vite, servie statiquement par Render (site statique `innov-portail`, 1.0.1 ; Cloudflare Pages jusqu'à la 1.0.0).
 - MUI avec un thème construit depuis `packages/design` (jetons de la maquette : bleu marine `#1B2A5B`, orange `#F26B1D`, Plus Jakarta Sans pour les titres, DM Sans pour le texte, thème clair et sombre).
 - Données serveur via TanStack Query ; formulaires react-hook-form + zod (schémas partagés depuis `packages/domaine` quand la règle est identique au serveur) ; graphiques Recharts.
 - Espaces par rôle : Accueil (superviseur, direction, administration), Visites et rapports, Planning, Prospects, Pilotage, Équipe, Paramètres (6 espaces : utilisateurs et rôles, référentiels, règles de validation, notifications, intégrations, système).
@@ -509,6 +509,7 @@ Mise en œuvre (0.0.3) : le jeton d'accès porte l'identifiant de session (`sid`
 - Mise en œuvre 0.9.8 (prd.md §14.76) : `mobile/src/Verrou.tsx` affiche le délai du pays ; carte « Téléphone » de `portail/src/pages/Parametres.tsx` avec `delai_hors_ligne_jours` ; kit `docs/recette-utilisateur.md`.
 - Mise en œuvre 0.9.9 (prd.md §14.77) : `expo-updates` (greffon, `runtimeVersion` « appVersion », adresse des mises à jour tirée de `EAS_PROJECT_ID`) ; profil EAS `production` (canal `production`, soumission sur la piste interne de Google Play) ; textes d'autorisation de `mobile/app.config.ts` ; guides `docs/publication-magasins.md` et `docs/dossier-lancement.md`.
 - Mise en œuvre 1.0.0 (prd.md §14.78) : page publique `/confidentialite` du portail (route hors `Protegee`, langue imposable par `?langue=`, contact par `VITE_CONTACT_DONNEES`) ; `extra.portailUrl` (`EXPO_PUBLIC_PORTAIL_URL`) et `adresseConfidentialite()` côté mobile ; profil EAS `pilote` (distribution interne, canal `production`) ; `x-version-app` ajouté à `CORS_ALLOW_HEADERS`.
+- Mise en œuvre 1.0.1 (prd.md §14.79) : service `innov-portail` (site statique Render : construction, réécriture vers `index.html`, en-têtes de sécurité) dans `render.yaml` ; `portail/public/_headers` et `_redirects` retirés ; `INNOV_AUTH["COOKIE_SAMESITE"]` lu de `INNOV_COOKIE_SAMESITE` (`Strict` par défaut, `None` seulement en HTTPS) et appliqué par `identite/views.py` à la pose et à l'effacement du cookie ; `pytest-cov` en dépendance de développement.
 - Mise en œuvre 0.8.6 (prd.md §14.65, NOT-004, NOT-005) : `identite/courriels.py` (seul module qui envoie : réinitialisation, verrouillage, `courriel_nouvel_appareil`, `courriel_double_auth`, `courriel_secours`), appelés après validation de la transaction ; `notifications/secours.py` (`courriels(pays, maintenant)`, appelé par `planning.echeances.executer`) avec `Notification.en_attente_depuis` et `secours_le` (migration `notifications/0013`). `Utilisateur.push_coupes` (migration `identite/0008`), `notifications/preferences.py` (`TOUJOURS`, `PAR_ROLE`, `obligatoires`, `preferences`, `changer`, `push_coupe`), paramètre de pays `notifications_obligatoires` ; route `auth/preferences/notifications/` (GET, PUT). Mobile : `src/Preferences.tsx` (`CartePreferences`, au profil) ; client `preferences.lire`, `preferences.changer`.
 - Mise en œuvre 0.8.5 (prd.md §14.64, NOT-002, NOT-003) : `Appareil.jeton_push` et `jeton_push_le` (migration `identite/0007`), route `auth/push/` (PUT, DELETE ; `JetonPushView`, réservée à une session mobile), effacés par `deconnecter` et `revoquer_appareil`. `Notification.push_du` et `push_le` (migration `notifications/0012`), posés par `notifier` et `notifier_regroupe`. `notifications/push.py` : `texte(type, n)` (ngettext, langue de la personne), `transport` (POST JSON au service Expo, `urllib`), `envoyer_pays`, `envoyer` (par pays, `set_config('innov.pays')`, `PUSH_ACTIF`) ; tâche `apps.notifications.taches.push` toutes les 5 minutes. `config/celery.py` : `autodiscover_tasks(related_name="taches")`. Mobile : `expo-notifications`, `src/Push.tsx` (`Push`, `destinationPush`), client `push.enregistrer`, `push.retirer`. Mise en service : `docs/notifications-push.md`.
 - Mise en œuvre 0.8.4 (prd.md §14.63, OFF-004, RG-050 à RG-053) : `version` exposée par `RapportSerializer` et `VisiteSerializer`. `rapports.services.enregistrer(rapport, version=None, ...)` : `rapport_non_modifiable` d'abord (RG-050), puis `conflit_version` (409, `details.version`) si `rapport.version > max(version, 1)`. `planning.services.modifier_visite(visite, avant=None, ...)` : `_sans_conflit` ne garde que les champs changés par rapport à `avant` et lève `conflit_version` (409, `details.champs`, `details.serveur`) pour un champ changé des deux côtés. Mobile : `BrouillonRapport.base_version` et `versionDeBase` ; `Conflits.tsx` (`conflitDe`, `estConflit`, `avantDe`, `differencesRapport`, `differencesVisite`, `ConflitRapport`, `TableauDifferences`) ; file : `conflit` sur `modif_visite`, `garderMaVersion`, `abandonnerRapportLocal`, `retirerBrouillonsRapport`.
@@ -821,9 +822,9 @@ Point d'accès `GET /api/health/` (base, Redis, version) pour la sonde et le dé
 | Environnement | Rôle | Hébergement | Données | Mobile (canal EAS) |
 |---|---|---|---|---|
 | Développement | Construction quotidienne | Poste local : Docker Compose (Postgres, Redis, MinIO, API, worker), Vite, Expo | Fictives | `development` |
-| Recette / démonstration | Validation métier, démonstrations à tout moment | Render (offre minimale) + Cloudflare Pages | **Fictives**, réinitialisables par commande (DEM-001) | `recette` |
+| Recette / démonstration | Validation métier, démonstrations à tout moment | Render (offre minimale, API et portail) | **Fictives**, réinitialisables par commande (DEM-001) | `recette` |
 | Préproduction | Reproduire la production, répéter les migrations et la migration BirdNotes à blanc | Render payant, mêmes réglages que la production | Fictives + copie **anonymisée** de production après 1.0.0 [R] | `preproduction` |
-| Production | Utilisateurs réels | Render payant (Francfort), Cloudflare Pages, R2 | Réelles | `production` |
+| Production | Utilisateurs réels | Render payant (Francfort, API et portail), R2 | Réelles | `production` |
 
 Chaque environnement a ses propres secrets, base, compartiments R2, projet Sentry et canal EAS. La variable `ENVIRONNEMENT` est affichée dans le portail et l'application hors production ; un environnement refuse une livraison destinée à un autre.
 
@@ -834,9 +835,9 @@ flowchart LR
   PR[Pull request] --> CI{CI GitHub Actions<br/>lint · types · tests · isolation<br/>schéma OpenAPI · secrets · build}
   CI -- échec --> STOP[Bloqué]
   CI -- vert + fusion --> MAIN[main]
-  MAIN --> RECETTE[Recette / démo<br/>Render + Pages<br/>EAS Update canal recette]
+  MAIN --> RECETTE[Recette / démo<br/>Render<br/>EAS Update canal recette]
   MAIN -- étiquette vX.Y.Z --> PREPROD[Préproduction<br/>migrations répétées]
-  PREPROD -- approbation manuelle --> PROD[Production<br/>Render pre-deploy : migrations<br/>Pages · EAS Update]
+  PREPROD -- approbation manuelle --> PROD[Production<br/>Render pre-deploy : migrations<br/>portail Render · EAS Update]
   PROD --> SMOKE{Contrôles après livraison<br/>/api/health · parcours clés}
   SMOKE -- échec --> ROLLBACK[Retour à la version précédente]
   MAIN -. code natif modifié .-> BUILD[EAS Build<br/>puis EAS Submit vers les magasins]
@@ -844,11 +845,11 @@ flowchart LR
 
 - **Serveur** : image Docker construite par Render depuis le dépôt (ou publiée sur GHCR) ; commande de pré-déploiement `migrate` ; démarrage avec Gunicorn ; worker et beat déployés avec la même image.
 - **Migrations** : uniquement compatibles en avant et en arrière sur une version (méthode « étendre puis contracter ») pour permettre le retour arrière sans restauration.
-- **Portail** : build Vite publiée par Cloudflare Pages ; aperçus par pull request.
+- **Portail** : build Vite publiée par Render (site statique) ; les aperçus par pull request ont une autre adresse et ne peuvent pas ouvrir de session sur l'API (origine non listée).
 - **Mobile** : EAS Update pour les changements JavaScript compatibles avec la `runtimeVersion` ; EAS Build + Submit pour les changements natifs ; version minimale imposée par l'API (section 14.8).
 - **Versions** : étiquette git `vX.Y.Z` (convention du PRD section 23) ; la même version est affichée par l'API (`/api/health/`), le portail et l'application ; journal de version `CHANGELOG.md`.
 - **Fonctionnalités incomplètes** : désactivables par drapeau de configuration (par pays si besoin) sans bloquer une livraison.
-- **Retour arrière** : redéploiement de l'image précédente (Render), retour au déploiement précédent (Pages), republication de la mise à jour précédente (EAS Update).
+- **Retour arrière** : redéploiement de l'image précédente (Render), retour au déploiement précédent du site statique (Render), republication de la mise à jour précédente (EAS Update).
 
 ## 22. Tests
 
@@ -901,7 +902,7 @@ flowchart LR
 - Cible : 99,5 % de 6 h à 22 h, heure des pays, du lundi au samedi [H] (NFR-005).
 - Le mode hors connexion est la première mesure de continuité : une panne serveur de quelques heures n'empêche ni les visites ni la saisie des rapports.
 - Région unique (Francfort) ; reprise par PITR ou copie logique (RTO ≤ 4 h).
-- Plan de reprise documenté dans `docs/exploitation.md` §7 : panne de l'API, de la base, de R2, d'Expo Push, de Cloudflare Pages ; procédure, responsable, communication aux utilisateurs.
+- Plan de reprise documenté dans `docs/exploitation.md` §7 : panne de l'API, de la base, de R2, d'Expo Push, du portail ; procédure, responsable, communication aux utilisateurs.
 - Plan de repli d'hébergement : l'API est un conteneur Docker standard, redéployable sur un autre fournisseur à partir d'une copie logique (comme le serveur Hetzner de JUSTI GH) [R].
 
 ## 25. Intégrations
@@ -981,7 +982,7 @@ flowchart LR
 | ADR-004 | Application mobile React Native + Expo (EAS Build, Update, Submit) | [D] | Android + iOS, TypeScript partagé, hors connexion fiable ; PWA écartée |
 | ADR-005 | Synchronisation par protocole maison (tirer par curseur, pousser une file idempotente de commandes) sur SQLite chiffrée | [R] `0.8.3` | Contrôle total des règles RG-050 à RG-054 |
 | ADR-006 | Identifiants UUID v7 générés par le créateur, y compris le téléphone | [R] `0.0.2` | Création hors connexion sans collision, ordre temporel |
-| ADR-007 | Hébergement Render (Francfort) + Cloudflare Pages + R2 ; offres payantes en production | [D] modèle ; [H] offres payantes | Modèle AMM ; continuité de l'exploitation |
+| ADR-007 | Hébergement Render (Francfort) pour l'API et le portail (1.0.1 ; Cloudflare Pages auparavant) + R2 ; offres payantes en production | [D] modèle ; [H] offres payantes | Modèle AMM ; continuité de l'exploitation |
 | ADR-008 | Authentification nominative, JWT court + rafraîchissement rotatif lié à l'appareil, TOTP pour les rôles sensibles | [D] méthode ; [R] mécanisme `0.0.3` | Exigences SEC-001 à SEC-004 |
 | ADR-009 | Journal d'audit append-only, écrit dans la transaction métier, chaîné par pays | [D] append-only ; [R] chaînage `0.9.2` | Preuve et non-répudiation |
 | ADR-010 | Aucune validation ni approbation automatique ; validation par lot limitée aux journées conformes | [D] | Objectif n° 1 |

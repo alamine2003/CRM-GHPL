@@ -61,7 +61,7 @@ Division (GHPL 1…) · Réseau (LEAP GYN…, porte un portefeuille) · Classe t
 | API | Django 5.2 + DRF, `/api/v1`, OpenAPI versionné | Seule autorité métier |
 | Worker / beat | Celery + Redis | Tâches à l'heure du pays, avec le pays en paramètre |
 | Base | PostgreSQL 16, UUID v7, RLS sur `pays_id` | Une base, isolation par ligne |
-| Portail | React 19 + TS + Vite + MUI, Cloudflare Pages | Jetons de `packages/design` |
+| Portail | React 19 + TS + Vite + MUI, site statique Render (1.0.1) | Jetons de `packages/design` |
 | Mobile | React Native + Expo, SQLite chiffrée (SQLCipher) | Base locale = source de l'écran |
 | Fichiers | Cloudflare R2 privé, URL signées | Clés sans donnée personnelle |
 | BI | Grafana sur schéma `pilotage`, un rôle par pays | Agrégats, jamais de texte libre |
@@ -143,7 +143,7 @@ Modules serveur : `socle`, `identite`, `organisation`, `perimetre`, `referentiel
 
 ## 18. Décisions déjà validées
 
-Monolithe modulaire (ADR-001) · pile AMM : Django/DRF/PostgreSQL/Redis/Celery + React/MUI (ADR-002) · base unique isolée par `pays_id` (ADR-003) · React Native + Expo, pas de PWA (ADR-004) · Render (Francfort) + Cloudflare Pages + R2 (ADR-007) · aucune validation automatique (ADR-010) · configuration par pays en données (ADR-017) · convention de version (ADR-018) · `fr` + `en` (ADR-019) · données fictives hors production (ADR-020). Recommandations à confirmer : `architecture.md` §28 (statut [R]).
+Monolithe modulaire (ADR-001) · pile AMM : Django/DRF/PostgreSQL/Redis/Celery + React/MUI (ADR-002) · base unique isolée par `pays_id` (ADR-003) · React Native + Expo, pas de PWA (ADR-004) · Render (Francfort, API et portail) + R2 (ADR-007, révisé en 1.0.1) · aucune validation automatique (ADR-010) · configuration par pays en données (ADR-017) · convention de version (ADR-018) · `fr` + `en` (ADR-019) · données fictives hors production (ADR-020). Recommandations à confirmer : `architecture.md` §28 (statut [R]).
 
 ## 19. Interdictions
 

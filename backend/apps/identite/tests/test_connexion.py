@@ -3,6 +3,8 @@
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
+from django.test import override_settings
 from django.utils import timezone
 from freezegun import freeze_time
 
@@ -169,6 +171,38 @@ def test_rafraichissement_portail_par_cookie_et_entete(api, delegue):
     reponse = api.post("/api/v1/auth/rafraichir/", {}, format="json", HTTP_X_INNOV_CLIENT="portail")
     assert reponse.status_code == 200 and reponse.json()["acces"]
     assert "innov_rafraichissement" in reponse.cookies
+
+
+def _auth(**reglages):
+    return override_settings(INNOV_AUTH={**settings.INNOV_AUTH, **reglages})
+
+
+def test_cookie_samesite_none_est_toujours_secure(api, delegue):
+    """1.0.1 : portail et API sur deux adresses *.onrender.com, sans domaine commun."""
+    with _auth(COOKIE_SAMESITE="None", COOKIE_SECURISE=False):
+        cookie = connecter(api, client="portail").cookies["innov_rafraichissement"]
+    assert cookie["samesite"] == "None" and cookie["secure"] and cookie["httponly"]
+    assert cookie["path"] == "/api/v1/auth/"
+
+
+def test_samesite_none_le_cookie_n_est_lu_qu_avec_l_entete(api, delegue):
+    with _auth(COOKIE_SAMESITE="None"):
+        connecter(api, client="portail")
+        sans = api.post("/api/v1/auth/rafraichir/", {}, format="json")
+        assert sans.status_code == 400 and sans.json()["code"] == "client_inconnu"
+        avec = api.post(
+            "/api/v1/auth/rafraichir/", {}, format="json", HTTP_X_INNOV_CLIENT="portail"
+        )
+    assert avec.status_code == 200
+    assert avec.cookies["innov_rafraichissement"]["samesite"] == "None"
+
+
+def test_deconnexion_efface_le_cookie_avec_le_meme_samesite(api, delegue):
+    with _auth(COOKIE_SAMESITE="None"):
+        acces = connecter(api, client="portail").json()["acces"]
+        reponse = api.post("/api/v1/auth/deconnexion/", HTTP_AUTHORIZATION=f"Bearer {acces}")
+    cookie = reponse.cookies["innov_rafraichissement"]
+    assert cookie["samesite"] == "None" and cookie["secure"] and int(cookie["max-age"]) == 0
 
 
 def test_session_portail_expire_apres_trente_minutes_d_inactivite(api, delegue):

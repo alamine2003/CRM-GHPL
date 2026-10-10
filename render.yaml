@@ -1,4 +1,5 @@
 # Plan d'hébergement d'INNOV CRM sur Render (0.9.5, HT-05, HT-06 ; docs/exploitation.md).
+# 1.0.1 : le portail aussi est servi par Render (site statique) ; R2 garde les fichiers.
 # Région Francfort, offres payantes : base persistante avec sauvegardes quotidiennes et
 # restauration à un instant donné (PITR). Aucun secret ici : `sync: false` les fait saisir dans
 # le tableau de bord ; `generateValue` les fait tirer au hasard par Render.
@@ -44,6 +45,8 @@ services:
         sync: false
       - key: PORTAIL_URL
         sync: false
+      - key: INNOV_COOKIE_SAMESITE
+        sync: false # « None » tant que portail et API sont en *.onrender.com ; vide avec un domaine
       - key: INNOV_STOCKAGE
         value: r2
       - key: R2_URL
@@ -68,6 +71,56 @@ services:
         value: 'true'
       - key: PUSH_EXPO_JETON
         sync: false
+
+  # Portail : site statique servi par le réseau de diffusion de Render (1.0.1). Ni offre ni
+  # région : aucune donnée personnelle dans ces fichiers.
+  - type: web
+    name: innov-portail
+    runtime: static
+    buildCommand: npm ci && npm run build -w portail
+    staticPublishPath: portail/dist
+    buildFilter:
+      paths:
+        - portail/**
+        - packages/**
+        - package.json
+        - package-lock.json
+    envVars:
+      - key: NODE_VERSION
+        value: '22' # comme la CI
+      - key: VITE_API_URL
+        sync: false # https://innov-api.onrender.com, puis https://api.<domaine> (reconstruire)
+      - key: VITE_CONTACT_DONNEES
+        sync: false
+    # Application d'une seule page : toute adresse sans fichier sert index.html.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    # En-têtes de sécurité (docs/revue-securite.md §4). connect-src : l'API (VITE_API_URL) ;
+    # img-src : les tuiles OpenStreetMap ; style-src 'unsafe-inline' : MUI et Leaflet.
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://tile.openstreetmap.org; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: same-origin
+      - path: /*
+        name: Permissions-Policy
+        value: geolocation=(), camera=(), microphone=(), payment=()
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
 
   - type: worker
     name: innov-worker
@@ -119,6 +172,3 @@ services:
       - key: SAUVEGARDE_PHRASE
         sync: false # phrase de chiffrement des sauvegardes : à conserver hors de Render
 
-
-# Le portail est publié par Cloudflare Pages (architecture §21) : en-têtes dans
-# portail/public/_headers, guide d'exploitation §2.

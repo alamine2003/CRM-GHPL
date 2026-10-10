@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.1] — Portail et API sur Render
+
+Première version corrective après la 1.0.0.
+
+### Modifié (prd.md §14.79, ADR-007, HT-05)
+
+- Le portail est hébergé sur Render (site statique `innov-portail`), comme l'API. Ses en-têtes de sécurité et la réécriture des adresses sont décrits dans `render.yaml` ; les fichiers propres à Cloudflare Pages sont retirés. Cloudflare ne garde que R2 (pièces jointes, sauvegardes).
+- Le cookie qui garde la session du portail ouverte peut passer en `SameSite=None` (`INNOV_COOKIE_SAMESITE`), seulement en HTTPS. Cela permet de tester avec les deux adresses de Render avant d'acheter un nom de domaine ; par défaut, il reste `SameSite=Strict` (SEC-002, SEC-007).
+- Guide d'exploitation : nouvelle section « Adresses : sans domaine, puis avec un domaine », avec les réglages et les limites des navigateurs.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.0] — Version complète, toutes les options prêtes
 
 Le logiciel couvre tout le périmètre de la 1.0.0 (prd.md §8). La mise en production au Sénégal reste soumise aux conditions du §21.2 et à la décision de la direction générale (§14.78, §21.3).

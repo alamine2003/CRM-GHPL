@@ -37,8 +37,8 @@ elif len(SECRET_KEY) < 50:
 ALLOWED_HOSTS = env_liste("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 CORS_ALLOWED_ORIGINS = env_liste("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
 CSRF_TRUSTED_ORIGINS = env_liste("CSRF_TRUSTED_ORIGINS", "http://localhost:5173")
-# Le jeton de rafraîchissement du portail voyage dans un cookie : le portail et
-# l'API doivent partager le même domaine parent (même « site »).
+# Le jeton de rafraîchissement du portail voyage dans un cookie : le portail et l'API partagent
+# de préférence le même domaine parent (même « site ») ; sinon voir INNOV_COOKIE_SAMESITE.
 CORS_ALLOW_CREDENTIALS = True
 # En-têtes propres à INNOV CRM : client du portail (rafraîchissement), pays actif (§11.4) et
 # version de l'application (0.9.6 ; 1.0.0 : autorisé aussi pour l'application dans un navigateur).
@@ -100,6 +100,17 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Connexion et sessions (SEC-002, architecture §11.1).
+_COOKIE_SECURISE = ENVIRONNEMENT not in {"developpement", "test"}
+# SameSite du cookie de rafraîchissement du portail (1.0.1) : « Strict » dès que le portail et
+# l'API partagent un domaine (portail.<domaine>, api.<domaine>). « None » seulement tant qu'ils
+# sont sur deux adresses *.onrender.com (suffixe public : deux sites distincts). La protection
+# contre les requêtes forgées repose alors sur l'en-tête X-Innov-Client (requête CORS
+# pré-vérifiée, origines listées une à une). Vide ou absent : « Strict ».
+_COOKIE_SAMESITE = (os.environ.get("INNOV_COOKIE_SAMESITE") or "Strict").strip().capitalize()
+if _COOKIE_SAMESITE not in {"Strict", "None"}:
+    raise RuntimeError("INNOV_COOKIE_SAMESITE vaut Strict ou None.")
+if _COOKIE_SAMESITE == "None" and not _COOKIE_SECURISE:
+    raise RuntimeError("INNOV_COOKIE_SAMESITE=None exige HTTPS (hors développement et test).")
 INNOV_AUTH = {
     "ECHECS_AVANT_VERROUILLAGE": 5,
     "DUREE_VERROUILLAGE_MINUTES": 15,
@@ -108,7 +119,8 @@ INNOV_AUTH = {
     "SESSION_MOBILE_JOURS": 7,
     "REINITIALISATION_MINUTES": 30,
     "COOKIE_RAFRAICHISSEMENT": "innov_rafraichissement",
-    "COOKIE_SECURISE": ENVIRONNEMENT not in {"developpement", "test"},
+    "COOKIE_SECURISE": _COOKIE_SECURISE,
+    "COOKIE_SAMESITE": _COOKIE_SAMESITE,
 }
 
 # Chiffrement des secrets de double authentification (SEC-003). Une clé distincte de
@@ -327,7 +339,8 @@ if ENVIRONNEMENT not in {"developpement", "test"}:
 
 # `check --deploy` (0.9.3) : deux avertissements écartés à dessein.
 # - W003 : l'API n'a pas de formulaire ; elle s'authentifie par l'en-tête Authorization. Le seul
-#   cookie (rafraîchissement du portail) est httpOnly, SameSite=Strict, limité à /api/v1/auth/,
+#   cookie (rafraîchissement du portail) est httpOnly, SameSite=Strict (ou None tant que portail
+#   et API n'ont pas de domaine commun, 1.0.1), limité à /api/v1/auth/,
 #   et n'est lu qu'avec l'en-tête X-Innov-Client, qui impose une requête CORS autorisée.
 # - W021 : pas de préchargement HSTS tant que le domaine de production n'est pas fixé
 #   (l'inscription est très difficile à retirer).

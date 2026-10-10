@@ -27,6 +27,8 @@ def test_render_offres_payantes_a_francfort_sans_secret_ecrit():
     p = plan()
     elements = [*p["databases"], *p["services"]]
     for e in elements:
+        if e.get("runtime") == "static":
+            continue  # portail : réseau de diffusion de Render, ni offre ni région
         assert e.get("region") == "frankfurt", e["name"]
         assert e.get("plan") != "free", e["name"]  # HT-05 : base persistante, sauvegardée
     secrets = ("SECRET", "KEY", "CLE", "PASSWORD", "JETON", "PHRASE", "DSN", "TOKEN")
@@ -40,6 +42,27 @@ def test_render_offres_payantes_a_francfort_sans_secret_ecrit():
     assert "migrate" in noms["innov-api"]["preDeployCommand"]
     assert noms["innov-sauvegarde"]["type"] == "cron"
     assert noms["innov-file"]["maxmemoryPolicy"] == "noeviction"
+
+
+def test_portail_statique_sur_render():
+    """1.0.1 : le portail est servi par Render, avec les en-têtes de sécurité de la revue 0.9.3."""
+    s = {x["name"]: x for x in plan()["services"]}
+    p = s["innov-portail"]
+    assert p["type"] == "web" and p["runtime"] == "static"
+    assert p["staticPublishPath"] == "portail/dist" and "build -w portail" in p["buildCommand"]
+    assert {"type": "rewrite", "source": "/*", "destination": "/index.html"} in p["routes"]
+    e = {h["name"]: h["value"] for h in p["headers"] if h["path"] == "/*"}
+    for directive in ("default-src 'self'", "script-src 'self'", "frame-ancestors 'none'",
+                      "object-src 'none'", "base-uri 'self'"):  # fmt: skip
+        assert directive in e["Content-Security-Policy"]
+    assert e["X-Frame-Options"] == "DENY" and e["X-Content-Type-Options"] == "nosniff"
+    assert e["Strict-Transport-Security"].startswith("max-age=31536000")
+    v = {x["key"]: x for x in p["envVars"]}
+    assert v["VITE_API_URL"].get("sync") is False and "value" not in v["VITE_API_URL"]
+    assert v["VITE_CONTACT_DONNEES"].get("sync") is False
+    api = {x["key"]: x for x in s["innov-api"]["envVars"]}
+    # « None » n'est jamais écrit en dur : il se saisit tant qu'il n'y a pas de domaine.
+    assert "value" not in api["INNOV_COOKIE_SAMESITE"]
 
 
 def test_le_stockage_r2_est_choisi_en_hebergement():

@@ -20,7 +20,7 @@ Ce guide complète le guide d'exploitation (`docs/exploitation.md`). Il dit comm
 | 4. Préproduction | Administrateur technique | Déployer l'étiquette ; Render lance `migrate` avant de basculer | `/api/health/` donne la nouvelle version ; parcours clés (§4) |
 | 5. Annonce | Responsable produit | Prévenir les utilisateurs si un écran change (notes de version courtes) | Message envoyé |
 | 6. Production | Administrateur technique | Déployer la même étiquette, hors des heures de tournée (après 20 h, heure du pays) | Même contrôles qu'en 4 |
-| 7. Portail | Automatique | Cloudflare Pages publie la construction de l'étiquette | L'accueil du portail affiche la nouvelle version du service |
+| 7. Portail | Automatique | Render publie la construction de l'étiquette (site statique `innov-portail`) | L'accueil du portail affiche la nouvelle version du service |
 | 8. Téléphones | Responsable technique | `eas update --channel production` (ou nouvelle version sur les magasins ; `EAS_PROJECT_ID` déclaré, `docs/publication-magasins.md`) | Un téléphone de test reçoit la mise à jour |
 | 9. Surveillance | Administrateur technique | Sentry et UptimeRobot pendant 24 h | Pas d'erreur nouvelle |
 
@@ -31,7 +31,7 @@ Durée habituelle : 15 minutes de déploiement, aucune coupure (Render bascule q
 On revient en arrière quand une version provoque une erreur bloquante que l'on ne sait pas corriger dans l'heure.
 
 1. **API, worker, ordonnanceur** : dans Render, sur chaque service, « Rollback » vers le déploiement précédent. Les migrations de la version retirée restent appliquées : grâce à « étendre puis contracter », l'ancienne version les tolère.
-2. **Portail** : dans Cloudflare Pages, « Rollback » vers le déploiement précédent.
+2. **Portail** : dans Render, service `innov-portail`, « Rollback » vers le déploiement précédent.
 3. **Téléphones** : `eas update:republish` de la mise à jour précédente sur le canal `production`.
 4. **Si une migration doit vraiment être défaite** (rare : une donnée mal transformée) :
    ```bash

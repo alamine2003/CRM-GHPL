@@ -11,7 +11,7 @@ Condition 7 de la 1.0.0 (prd.md §21.2) : les applications sont publiées sur Go
 | Compte Google Play Console au nom de l'entreprise | play.google.com/console | Paiement unique ; vérification de l'organisation (numéro D-U-N-S) |
 | Compte Apple Developer Program, organisation | developer.apple.com | Abonnement annuel ; numéro D-U-N-S |
 | Choix de distribution (O-06) | Décision, quand elle sera prise | Les trois voies sont prêtes (§1 bis) ; rien à reconstruire pour passer de l'une à l'autre |
-| Adresse de contact pour les données personnelles | Variable `VITE_CONTACT_DONNEES` du portail (Cloudflare Pages) | Affichée par la politique de confidentialité ; sans elle, la page renvoie vers l'administrateur pays |
+| Adresse de contact pour les données personnelles | Variable `VITE_CONTACT_DONNEES` du portail (Render, `innov-portail`) | Affichée par la politique de confidentialité ; sans elle, la page renvoie vers l'administrateur pays |
 | Adresse et téléphone d'assistance | Fiches des magasins | Ceux de l'administration pays ou du support |
 | Compte de démonstration pour la relecture des magasins | Fiches des magasins | Un compte délégué **de démonstration** (données fictives), jamais un vrai compte |
 

@@ -704,6 +704,15 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.79 Portail et API sur Render (mise en œuvre 1.0.1)
+
+- **Hébergement** [D, 10 octobre 2026, responsable produit] : le portail est servi par Render, comme l'API, et non plus par Cloudflare Pages (remplace la décision du §14.73). Render publie un site statique, `innov-portail`, avec la même construction, la réécriture vers `index.html` et les mêmes en-têtes de sécurité, désormais décrits dans `render.yaml`. Cloudflare ne garde que R2, pour les pièces jointes et les sauvegardes. Les fichiers propres à Cloudflare Pages (`_headers`, `_redirects`) sont retirés.
+- **Sans nom de domaine** [D, 10 octobre 2026, responsable produit] : le domaine sera acheté plus tard. En attendant, le portail et l'API ont deux adresses `…onrender.com`. Le navigateur les traite comme deux sites différents, et refuserait le cookie qui garde la session du portail ouverte. Le réglage `INNOV_COOKIE_SAMESITE=None` le permet, seulement en HTTPS :
+  - la protection contre les requêtes forgées reste assurée : le cookie n'est lu qu'avec l'en-tête `X-Innov-Client`, ce qui impose une vérification préalable du navigateur ; seules les origines listées une à une passent cette vérification (test) ;
+  - limite : Safari, les navigateurs de l'iPhone, Brave et la navigation privée bloquent ce cookie. Le portail s'y déconnecte à chaque rechargement. Cette phase sert aux essais, pas à la mise en service ;
+  - avec le domaine (`portail.<domaine>`, `api.<domaine>`), on vide le réglage et le cookie redevient `SameSite=Strict` (`docs/exploitation.md` §2 bis).
+- **L'application mobile n'est pas concernée** : elle garde ses jetons dans le magasin sécurisé du téléphone, sans cookie.
+
 ### 14.78 Version 1.0.0 : toutes les options prêtes (mise en œuvre 1.0.0)
 
 - **Version 1.0.0 posée** [D, 9 octobre 2026, responsable produit] : sans attendre les décisions encore ouvertes, la 1.0.0 marque le logiciel complet (périmètre du §8, CI verte, toutes les options préparées). La **mise en production** au Sénégal reste soumise aux neuf conditions du §21.2, et l'autorisation finale reste celle de la direction générale (condition 9). Le §21.3 distingue donc le passage à la 1.0.0 et la mise en production. Le dossier de lancement devient le dossier de mise en production.
@@ -778,7 +787,7 @@ Mise en œuvre (0.3.9) :
   9. surveillance de 24 heures.
 
   Les migrations suivent la méthode « étendre puis contracter » : l'ancienne et la nouvelle version tournent sur la même base.
-- **Retour arrière** : sur Render, Cloudflare Pages et EAS, retour au déploiement précédent sans restauration. Un test vérifie à chaque livraison que chaque migration se défait. Il défait puis rejoue réellement la dernière migration de chaque application.
+- **Retour arrière** : sur Render (API et portail depuis la 1.0.1) et EAS, retour au déploiement précédent sans restauration. Un test vérifie à chaque livraison que chaque migration se défait. Il défait puis rejoue réellement la dernière migration de chaque application.
 - **Version minimale de l'application** (architecture §14.8) : le téléphone envoie sa version (`X-Version-App`). Quand une livraison change le protocole, l'exploitation relève `INNOV_VERSION_MIN_APP`. L'API répond alors `426` (« mise à jour requise ») à une application plus ancienne, qui garde ses données sur le téléphone. Le portail et la sonde de l'hébergeur ne sont jamais refusés. [D, 9 octobre 2026, délégation] La version minimale ne se relève que deux semaines après la publication de la version qui l'exige.
 - **Migration BirdNotes à blanc** (PRP-013, §14.7) : `generer_export_birdnotes` produit un export entièrement fictif à la structure et au volume du vrai, avec ses défauts : variantes, potentiels hors A/B/C, titres, fiches sans nom, demandes en attente, doublons. `repeter_migration` enchaîne la simulation, l'import, un second import qui ne doit rien créer, puis le rapprochement table par table : chaque ligne est créée, reconnue, fusionnée ou écartée avec son motif, sinon c'est un écart. Résultats sur 6 050 prospects et 1 499 établissements :
   - import en 43 secondes ;
@@ -797,7 +806,7 @@ Mise en œuvre (0.3.9) :
   - la file Redis, qui ne perd aucune tâche ;
   - la sauvegarde de nuit.
 
-  Aucun secret n'y est écrit : ils se saisissent dans Render ou y sont tirés au hasard, et un test le vérifie. Le portail part sur Cloudflare Pages avec ses en-têtes de sécurité (`portail/public/_headers`), et les pièces jointes sur un compartiment R2 privé (`INNOV_STOCKAGE=r2`).
+  Aucun secret n'y est écrit : ils se saisissent dans Render ou y sont tirés au hasard, et un test le vérifie. Le portail part sur Cloudflare Pages avec ses en-têtes de sécurité (`portail/public/_headers`) ; il passe sur Render en 1.0.1 (§14.79). Les pièces jointes partent sur un compartiment R2 privé (`INNOV_STOCKAGE=r2`).
 - **Sauvegardes** (NFR-006) : en plus de la sauvegarde continue de Render, une copie de la base part chaque nuit hors de Render. Elle est chiffrée (AES-256, phrase gardée hors de Render) et déposée dans un compartiment R2 dédié, par `scripts/sauvegarder.sh`. `scripts/restaurer.sh` la ramène dans une base neuve.
 - **Test de restauration** (REC-20) : `scripts/tester_restauration.sh` sauvegarde, chiffre, restaure dans une base jetable et compare le nombre de lignes de chaque table. Il vérifie aussi :
   - que la sécurité au niveau des lignes et les protections du journal d'audit sont revenues ;
@@ -806,7 +815,7 @@ Mise en œuvre (0.3.9) :
 
   La CI le rejoue à chaque livraison. Le workflow « Test de restauration » le rejoue chaque mois sur la vraie sauvegarde de la nuit, une fois les secrets déclarés. Sur la base de charge (500 délégués, 400 Mo), la restauration complète prend 21 secondes. La chaîne entière, jusqu'au dépôt et à la relecture sur un stockage compatible S3, est éprouvée sur un stockage simulé.
 - **Guide d'exploitation** (prd.md §21.2, condition 8) : `docs/exploitation.md` couvre l'installation, les secrets, les sauvegardes, les tâches périodiques, la supervision, les incidents et le test de restauration.
-- [D, 9 octobre 2026, délégation] Le portail est publié sur Cloudflare Pages, comme le prévoit l'architecture, et non sur Render. La phrase de chiffrement des sauvegardes et la clé de chiffrement de la double authentification se gardent dans le coffre de l'entreprise, hors de Render : une sauvegarde restaurée sans elles serait illisible ou sans double authentification.
+- [D, 9 octobre 2026, délégation ; **remplacée** le 10 octobre 2026, §14.79] Le portail est publié sur Cloudflare Pages, comme le prévoit l'architecture, et non sur Render. La phrase de chiffrement des sauvegardes et la clé de chiffrement de la double authentification se gardent dans le coffre de l'entreprise, hors de Render : une sauvegarde restaurée sans elles serait illisible ou sans double authentification.
 - **Reste à l'entreprise** : souscrire les offres payantes (Render, Cloudflare R2, Sentry) et un nom de domaine, puis appliquer le plan. Cela ne peut pas se faire depuis le dépôt.
 
 ### 14.72 Tenue de charge et temps de réponse (mise en œuvre 0.9.4)

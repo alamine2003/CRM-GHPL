@@ -41,6 +41,11 @@ def _cookie():
     return settings.INNOV_AUTH["COOKIE_RAFRAICHISSEMENT"]
 
 
+def _samesite() -> str:
+    """« Strict », ou « None » tant que portail et API n'ont pas de domaine commun (1.0.1)."""
+    return settings.INNOV_AUTH.get("COOKIE_SAMESITE", "Strict")
+
+
 def _reponse_jetons(connexion: services.Connexion, statut=status.HTTP_200_OK) -> Response:
     portail = connexion.session.client == Session.Client.PORTAIL
     corps = {
@@ -59,8 +64,9 @@ def _reponse_jetons(connexion: services.Connexion, statut=status.HTTP_200_OK) ->
             connexion.rafraichissement,
             max_age=int(services.duree_session(connexion.session.client).total_seconds()),
             httponly=True,
-            secure=settings.INNOV_AUTH["COOKIE_SECURISE"],
-            samesite="Strict",
+            # SameSite=None n'est accepté des navigateurs qu'avec Secure.
+            secure=settings.INNOV_AUTH["COOKIE_SECURISE"] or _samesite() == "None",
+            samesite=_samesite(),
             path="/api/v1/auth/",
         )
     return reponse
@@ -173,7 +179,7 @@ class DeconnexionView(APIView):
     def post(self, request):
         services.deconnecter(request.session_innov)
         reponse = Response(status=status.HTTP_204_NO_CONTENT)
-        reponse.delete_cookie(_cookie(), path="/api/v1/auth/", samesite="Strict")
+        reponse.delete_cookie(_cookie(), path="/api/v1/auth/", samesite=_samesite())
         return reponse
 
 

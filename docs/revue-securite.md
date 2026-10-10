@@ -12,7 +12,7 @@ Revue de l'application avant le pilote (prd.md §21.2, condition 2 : aucun défa
 | Verrouillage après 5 échecs, 15 minutes ; alerte par courriel | Conforme | SEC-002, NOT-004 |
 | Double authentification obligatoire pour les rôles sensibles ; codes de secours | Conforme | SEC-003, `identite/tests/test_double_auth.py` |
 | Jeton d'accès de 15 minutes ; rafraîchissement par rotation, rejeu détecté (la session est révoquée) | Conforme | `test_jeton_de_rafraichissement_rejoue_revoque_la_session` |
-| Portail : jeton de rafraîchissement en cookie httpOnly, SameSite=Strict, limité à `/api/v1/auth/`, lu seulement avec l'en-tête `X-Innov-Client` (requête CORS obligatoire) | Conforme | `identite/views.py` ; W003 de `check --deploy` écarté et justifié (`config/settings.py`) |
+| Portail : jeton de rafraîchissement en cookie httpOnly, SameSite=Strict (ou `None` et `Secure` tant que portail et API n'ont pas de domaine commun, 1.0.1, `INNOV_COOKIE_SAMESITE`), limité à `/api/v1/auth/`, lu seulement avec l'en-tête `X-Innov-Client` (requête CORS obligatoire) | Conforme | `identite/views.py` ; W003 de `check --deploy` écarté et justifié (`config/settings.py`) |
 | Changement de mot de passe, suspension du compte, révocation d'un téléphone : toutes les sessions tombent | Conforme | `test_changement_de_mot_de_passe_connecte`, `test_reinitialisation_change_le_mot_de_passe_et_ferme_les_sessions`, SEC-006 |
 | Inactivité : portail 30 minutes ; téléphone verrouillé selon le pays (5 à 30 minutes) | Conforme | SEC-004, DC-59 |
 
@@ -69,4 +69,4 @@ Revue de l'application avant le pilote (prd.md §21.2, condition 2 : aucun défa
 
 1. **Test d'intrusion indépendant** sur la préproduction (0.9.5), avant la 1.0.0 : prestataire à choisir par l'entreprise.
 2. Rejouer cette revue à chaque montée de version majeure (Django, Expo).
-3. Au premier déploiement, vérifier chez Cloudflare Pages que les en-têtes de `portail/public/_headers` (0.9.5) sont bien servis.
+3. Au premier déploiement, vérifier chez Render que les en-têtes du portail décrits dans `render.yaml` (1.0.1, repris de la 0.9.5) sont bien servis : `curl -I https://<portail>/connexion`.
