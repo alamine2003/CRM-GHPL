@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.2] — Couverture des tests imposée (NFR-014)
+
+### Ajouté (prd.md §14.80, NFR-014)
+
+- Couverture mesurée à chaque livraison et imposée à 90 % au moins :
+  - serveur : permissions (`perimetre`) et workflows de validation et de synchronisation (`planning`, `rapports`), 98 % aujourd'hui ;
+  - téléphone : file d'envoi, brouillons, base locale, conflits et synchronisation, 91 % des instructions et 96 % des lignes (88 % avant les nouveaux tests).
+- Nouveaux tests du téléphone : rejeu de chaque sorte d'envoi saisi sans réseau, retrait d'un envoi, « Garder ma version », abandon de sa saisie au profit du serveur, effacement de la base locale, ouverture ratée puis retentée, comparaison des champs propres au pays en cas de conflit.
+- `make couverture` ; la CI échoue si un seuil n'est plus atteint.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.1] — Portail et API sur Render
 
 Première version corrective après la 1.0.0.

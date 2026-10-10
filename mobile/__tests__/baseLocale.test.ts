@@ -38,3 +38,48 @@ test('SEC-005 CA1 : clé de 256 bits dans le magasin sécurisé, appliquée en p
   expect(mockOrdres[0]).toBe(`PRAGMA key = "x'${cle}'";`);
   expect(mockOrdres.slice(1).some((x) => x.startsWith('INSERT OR REPLACE'))).toBe(true);
 });
+
+describe('1.0.2 (NFR-014) : oubli, effacement et échec d’ouverture', () => {
+  type Module = typeof import('../src/baseLocale');
+  const charger = () => {
+    let module: Module | undefined;
+    jest.isolateModules(() => {
+      module = jest.requireActual<Module>('../src/baseLocale');
+    });
+    return module!;
+  };
+
+  beforeEach(() => {
+    mockOrdres.length = 0;
+  });
+
+  test('oublier retire une seule donnée', async () => {
+    const { oublier } = charger();
+    await oublier('planning.attente');
+    expect(mockOrdres.at(-1)).toBe('DELETE FROM memoire WHERE cle = ?');
+  });
+
+  test('sans clé enregistrée, effacer n’ouvre pas de base : il n’y a rien à vider', async () => {
+    mockMagasin.clear();
+    const { effacer } = charger();
+    await effacer();
+    expect(mockOrdres).toEqual([]);
+    expect(mockMagasin.size).toBe(0); // aucune clé tirée pour rien
+  });
+
+  test('avec une clé, effacer ouvre la base et la vide', async () => {
+    mockMagasin.set('innov.base.cle', 'ab'.repeat(32));
+    const { effacer } = charger();
+    await effacer();
+    expect(mockOrdres[0]).toBe(`PRAGMA key = "x'${'ab'.repeat(32)}'";`);
+    expect(mockOrdres.at(-1)).toBe('DELETE FROM memoire;');
+  });
+
+  test('une ouverture ratée est retentée à l’appel suivant', async () => {
+    const SQLite = jest.requireMock<{ openDatabaseAsync: jest.Mock }>('expo-sqlite');
+    SQLite.openDatabaseAsync.mockRejectedValueOnce(new Error('disque plein'));
+    const { lire: lireIsole } = charger();
+    await expect(lireIsole('essai')).rejects.toThrow('disque plein');
+    await expect(lireIsole('essai')).resolves.toBeNull();
+  });
+});

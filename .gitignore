@@ -36,3 +36,7 @@ mobile/expo-env.d.ts
 
 # Pièces jointes locales (jamais versionnées)
 backend/fichiers/
+
+# Couverture des tests (NFR-014)
+.coverage
+coverage/

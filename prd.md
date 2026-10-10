@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.80 Couverture des tests imposée (mise en œuvre 1.0.2)
+
+- **NFR-014** : la couverture des modules permissions, synchronisation et workflows est mesurée à chaque livraison, et la CI échoue sous 90 %. Mesure à la 1.0.2 :
+  - serveur, permissions et workflows (`perimetre`, `planning`, `rapports`) : 98 % ;
+  - téléphone, synchronisation (file d'envoi, brouillons, base locale, conflits) : 91 % des instructions, 96 % des lignes. Elle était à 88 % : la vérification de la 1.0.0 l'a relevé, et de nouveaux tests ont comblé l'écart.
+- **Périmètre retenu** [D, 10 octobre 2026, responsable produit] : côté serveur, la synchronisation passe par les routes des plannings et des rapports (identifiants fournis par le téléphone, rejeu sans doublon) ; elle est donc couverte avec ces deux modules.
+
 ### 14.79 Portail et API sur Render (mise en œuvre 1.0.1)
 
 - **Hébergement** [D, 10 octobre 2026, responsable produit] : le portail est servi par Render, comme l'API, et non plus par Cloudflare Pages (remplace la décision du §14.73). Render publie un site statique, `innov-portail`, avec la même construction, la réécriture vers `index.html` et les mêmes en-têtes de sécurité, désormais décrits dans `render.yaml`. Cloudflare ne garde que R2, pour les pièces jointes et les sauvegardes. Les fichiers propres à Cloudflare Pages (`_headers`, `_redirects`) sont retirés.

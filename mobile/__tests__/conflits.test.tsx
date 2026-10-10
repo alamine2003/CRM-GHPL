@@ -206,3 +206,51 @@ test('OFF-004 CA2 : une visite changée des deux côtés attend le choix du dél
   expect(modifier).toHaveBeenLastCalledWith('v1', { heure: '11:00', avant: { heure: '10:00:00' } });
   expect(await lireAttente()).toEqual([]);
 });
+
+test('1.0.2 : un envoi refusé s’abandonne d’un geste, avec son message', async () => {
+  await i18n.changeLanguage('fr');
+  const surAbandonner = jest.fn();
+  const refuse = {
+    id: 'e1',
+    type: 'proposition',
+    saisie: { id: 'p1' },
+    resume: 'Dr Diallo',
+    erreur: 'Cette fiche a été fusionnée.',
+  } as unknown as Parameters<typeof CarteAttente>[0]['envois'][number];
+  await render(
+    <CarteAttente
+      envois={[refuse]}
+      envoi={false}
+      surEnvoyer={jest.fn()}
+      surAbandonner={surAbandonner}
+    />,
+  );
+  expect(screen.getByText('Cette fiche a été fusionnée.')).toBeTruthy();
+  await fireEvent.press(screen.getByLabelText(/Dr Diallo/));
+  expect(surAbandonner).toHaveBeenCalledWith('e1');
+});
+
+test('1.0.2 : les champs propres au pays entrent dans la comparaison des deux versions', async () => {
+  await i18n.changeLanguage('fr');
+  const { differencesRapport } =
+    jest.requireActual<typeof import('../src/Conflits')>('../src/Conflits');
+  const rapport = {
+    ...SERVEUR,
+    resume: 'Écrit sans réseau',
+    definitions: [
+      { code: 'patients', libelle: 'Patients vus' },
+      { code: 'stock', libelle: 'Stock constaté' },
+      { code: 'egal', libelle: 'Inchangé' },
+    ],
+    champs: { patients: 12, stock: '', egal: 'oui' },
+  } as unknown as Rapport;
+  const lignes = differencesRapport(
+    { ...SAISIE_TELEPHONE, champs: { patients: '', stock: 'faible', egal: 'oui' } },
+    rapport,
+    i18n.t.bind(i18n),
+  );
+  expect(lignes).toEqual([
+    { libelle: 'Patients vus', telephone: i18n.t('conflits.vide'), serveur: '12' },
+    { libelle: 'Stock constaté', telephone: 'faible', serveur: i18n.t('conflits.vide') },
+  ]);
+});

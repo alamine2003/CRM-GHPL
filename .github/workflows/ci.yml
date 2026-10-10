@@ -52,8 +52,9 @@ jobs:
         run: python manage.py compilemessages
       - name: Migrations à jour
         run: python manage.py makemigrations --check --dry-run
-      - name: Tests (dont schéma OpenAPI à jour)
-        run: pytest -q
+      # NFR-014 (1.0.2) : la couverture des permissions et des workflows reste au moins à 90 %.
+      - name: Tests (dont schéma OpenAPI à jour) et couverture
+        run: pytest -q --cov --cov-report=term
       # 0.9.5 (REC-20, NFR-006) : sauvegarde chiffrée, restauration dans une base jetable,
       # contrôles et durée, sur la base migrée de la CI (docs/exploitation.md §8).
       - name: Test de restauration

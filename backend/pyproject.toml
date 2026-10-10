@@ -16,6 +16,17 @@ filterwarnings = [
   "ignore:No directory at:UserWarning",
 ]
 
+# NFR-014 (1.0.2) : couverture des permissions (perimetre) et des workflows de validation et
+# de synchronisation côté serveur (planning, rapports) au moins 90 % ; `make couverture`, CI.
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/tests/*", "*/migrations/*", "*/management/*"]
+
+[tool.coverage.report]
+include = ["apps/perimetre/*", "apps/planning/*", "apps/rapports/*"]
+fail_under = 90
+skip_covered = true
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
