@@ -1,0 +1,101 @@
+# Démonstration GRATUITE d'INNOV CRM sur Render (1.0.3, DEM-001 ; docs/demo-gratuite.md).
+# Données fictives seulement : jamais de vraies personnes ici (base gratuite, sans sauvegarde,
+# effacée par Render au bout de quelques semaines). La production suit render.yaml.
+# Différences avec la production :
+# - offres gratuites : le service s'endort après un quart d'heure sans visite et met environ
+#   une minute à se réveiller ;
+# - ni Redis, ni worker, ni ordonnanceur : les tâches s'exécutent sur place (CELERY_TASK_ALWAYS_EAGER) ;
+#   les tâches périodiques (escalades, fermeture du lundi, rappels) ne tournent pas ;
+# - pièces jointes sur le disque du service, perdues à chaque redéploiement ; pas de sauvegarde ;
+# - courriels écrits dans le journal du service, pas envoyés.
+# Au démarrage : migrations, puis remplissage de la base si elle est vide (preparer_demo).
+databases:
+  - name: innov-demo-base
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: '16'
+    databaseName: innov
+    user: innov
+    ipAllowList: []
+
+services:
+  - type: web
+    name: innov-demo-api
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: backend/Dockerfile
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health/
+    dockerCommand: >-
+      sh -c "python manage.py migrate --noinput && python manage.py preparer_demo &&
+      exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2"
+    envVars:
+      - key: ENVIRONNEMENT
+        value: demonstration
+      - key: DATABASE_URL
+        fromDatabase: { name: innov-demo-base, property: connectionString }
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: JWT_SIGNING_KEY
+        generateValue: true
+      - key: INNOV_CLE_CHIFFREMENT
+        generateValue: true
+      - key: INNOV_DEMO_MOT_DE_PASSE
+        sync: false # mot de passe des comptes fictifs, 12 caractères au moins, choisi par vous
+      - key: INNOV_DEMO_ECHELLE
+        value: '0.1' # 10 % des volumes réels : une vingtaine de délégués, 150 prospects
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # https://innov-demo-portail.onrender.com (sans / final)
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false # même valeur
+      - key: PORTAIL_URL
+        sync: false # même valeur
+      - key: INNOV_COOKIE_SAMESITE
+        value: None # portail et API sur deux adresses onrender.com (docs/exploitation.md §2 bis)
+
+  - type: web
+    name: innov-demo-portail
+    runtime: static
+    buildCommand: npm ci && npm run build -w portail
+    staticPublishPath: portail/dist
+    buildFilter:
+      paths:
+        - portail/**
+        - packages/**
+        - package.json
+        - package-lock.json
+    envVars:
+      - key: NODE_VERSION
+        value: '22' # comme la CI
+      - key: VITE_API_URL
+        sync: false # https://innov-demo-api.onrender.com (l'adresse réelle, relevée dans Render)
+    # Application d'une seule page : toute adresse sans fichier sert index.html.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    # En-têtes de sécurité (docs/revue-securite.md §4). connect-src : l'API (VITE_API_URL) ;
+    # img-src : les tuiles OpenStreetMap ; style-src 'unsafe-inline' : MUI et Leaflet.
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://tile.openstreetmap.org; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: same-origin
+      - path: /*
+        name: Permissions-Policy
+        value: geolocation=(), camera=(), microphone=(), payment=()
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

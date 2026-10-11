@@ -65,6 +65,29 @@ def test_portail_statique_sur_render():
     assert "value" not in api["INNOV_COOKIE_SAMESITE"]
 
 
+def test_demonstration_gratuite_sur_render():
+    """1.0.3 : la démonstration tient dans les offres gratuites, sans secret écrit, et ne sert
+    que des données fictives (ENVIRONNEMENT=demonstration, remplissage par preparer_demo)."""
+    d = yaml.safe_load((RACINE / "render-demo.yaml").read_text(encoding="utf-8"))
+    assert all(b["plan"] == "free" for b in d["databases"])
+    s = {x["name"]: x for x in d["services"]}
+    api, portail = s["innov-demo-api"], s["innov-demo-portail"]
+    assert api["plan"] == "free" and portail["runtime"] == "static"
+    assert set(s) == {"innov-demo-api", "innov-demo-portail"}  # ni worker, ni Redis, ni cron
+    commande = api["dockerCommand"]
+    assert commande.index("migrate") < commande.index("preparer_demo") < commande.index("gunicorn")
+    v = {x["key"]: x for x in api["envVars"]}
+    assert v["ENVIRONNEMENT"]["value"] == "demonstration"
+    assert "INNOV_STOCKAGE" not in v and "REDIS_URL" not in v
+    for cle in ("DJANGO_SECRET_KEY", "JWT_SIGNING_KEY", "INNOV_CLE_CHIFFREMENT"):
+        assert v[cle].get("generateValue") is True and "value" not in v[cle]
+    assert v["INNOV_DEMO_MOT_DE_PASSE"].get("sync") is False
+    assert "value" not in v["INNOV_DEMO_MOT_DE_PASSE"]
+    # Mêmes en-têtes de sécurité que le portail de production.
+    prod = {x["name"]: x for x in plan()["services"]}["innov-portail"]
+    assert portail["headers"] == prod["headers"] and portail["routes"] == prod["routes"]
+
+
 def test_le_stockage_r2_est_choisi_en_hebergement():
     env = {**os.environ, "INNOV_STOCKAGE": "r2", "R2_URL": "https://compte.r2.exemple",
            "R2_COMPARTIMENT": "innov-essai-pieces", "R2_CLE": "x", "R2_SECRET": "y"}  # fmt: skip

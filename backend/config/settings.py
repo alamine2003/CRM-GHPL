@@ -35,6 +35,9 @@ elif len(SECRET_KEY) < 50:
     raise RuntimeError("DJANGO_SECRET_KEY est obligatoire hors développement (50 caractères min.).")
 
 ALLOWED_HOSTS = env_liste("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+# Render donne l'adresse publique du service (1.0.3) : la démonstration gratuite n'a rien à saisir.
+if os.environ.get("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
 CORS_ALLOWED_ORIGINS = env_liste("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
 CSRF_TRUSTED_ORIGINS = env_liste("CSRF_TRUSTED_ORIGINS", "http://localhost:5173")
 # Le jeton de rafraîchissement du portail voyage dans un cookie : le portail et l'API partagent
@@ -332,6 +335,8 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 2_621_440
 if ENVIRONNEMENT not in {"developpement", "test"}:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SSL_REDIRECT", True)
+    # La sonde de santé de l'hébergeur appelle le service directement, en HTTP (1.0.3).
+    SECURE_REDIRECT_EXEMPT = [r"^api/health/$"]
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SESSION_COOKIE_SECURE = True

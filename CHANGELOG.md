@@ -2,6 +2,24 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.3] — Démonstration gratuite sur Render
+
+### Ajouté (prd.md §14.81, DEM-001)
+
+- `render-demo.yaml` : une démonstration en ligne sans frais, sur les offres gratuites de Render (portail, serveur, base), avec des données fictives seulement.
+- `preparer_demo` : au démarrage, la base vide se remplit d'elle-même de données fictives ; une base déjà remplie n'est pas touchée.
+- Guide pas à pas `docs/demo-gratuite.md` : fusion, compte Render, plan, valeurs à saisir, essai, limites.
+
+### Corrigé
+
+- La sonde de santé de l'hébergeur, qui appelle le serveur en HTTP, était redirigée vers HTTPS.
+- Le serveur ne pouvait pas écrire les pièces jointes sur son disque (dossier en lecture seule dans l'image), quand R2 n'est pas utilisé.
+- L'adresse publique donnée par Render est acceptée d'office par le serveur.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.2] — Couverture des tests imposée (NFR-014)
 
 ### Ajouté (prd.md §14.80, NFR-014)

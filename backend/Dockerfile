@@ -11,6 +11,8 @@ COPY backend/ .
 RUN python manage.py compilemessages && \
     ENVIRONNEMENT=test python manage.py collectstatic --noinput
 RUN useradd --create-home innov
+# Fichiers joints sur le disque du conteneur quand il n'y a pas de R2 (démonstration, 1.0.3).
+RUN mkdir -p /app/backend/fichiers && chown innov /app/backend/fichiers
 USER innov
 EXPOSE 8000
 # Render donne le port dans PORT (0.9.5) ; 8000 en local.

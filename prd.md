@@ -704,6 +704,13 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
+
+- **Démonstration sans frais** [D, 11 octobre 2026, responsable produit] : faute de budget pour l'instant, une démonstration tourne sur les offres gratuites de Render (`render-demo.yaml`), avec des **données fictives seulement** (DEM-001). La production reste décrite par `render.yaml` et attend les formalités CDP et un budget.
+- **Ce qui diffère de la production** : pas de Redis, de worker ni d'ordonnanceur (les tâches s'exécutent sur place, les tâches périodiques ne tournent pas) ; pas de sauvegarde ; pièces jointes sur le disque du service ; courriels dans le journal ; service endormi après un quart d'heure sans visite.
+- **Remplissage automatique** : à chaque démarrage, `preparer_demo` remplit une base vide de données fictives (10 % des volumes réels, environ 20 secondes) et ne touche jamais une base remplie. Le mot de passe des comptes vient de la configuration de Render, jamais du dépôt.
+- **Défauts corrigés en la préparant** : la sonde de santé était redirigée vers HTTPS ; le dossier des pièces jointes n'était pas accessible en écriture dans l'image ; l'adresse publique de Render n'était pas acceptée d'office.
+
 ### 14.80 Couverture des tests imposée (mise en œuvre 1.0.2)
 
 - **NFR-014** : la couverture des modules permissions, synchronisation et workflows est mesurée à chaque livraison, et la CI échoue sous 90 %. Mesure à la 1.0.2 :

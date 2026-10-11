@@ -124,3 +124,27 @@ def test_refus_hors_developpement_et_sans_confirmation(monkeypatch, settings):
     settings.ENVIRONNEMENT = "production"
     with pytest.raises(CommandError, match="production"):
         call_command("reinitialiser_demo", oui=True)
+
+
+def test_preparer_demo_remplit_une_base_vide_une_seule_fois(monkeypatch, settings):
+    """1.0.3 : la démonstration gratuite se remplit d'elle-même au premier démarrage."""
+    settings.ENVIRONNEMENT = "demonstration"
+    monkeypatch.setenv("INNOV_DEMO_MOT_DE_PASSE", "Demo-" + "x9Y" * 6)
+    monkeypatch.setenv("INNOV_DEMO_ECHELLE", "0.1")
+    call_command("preparer_demo")
+    comptes = Utilisateur.objects.count()
+    assert set(Pays.objects.values_list("code", flat=True)) == {"SN", "TG"} and comptes
+    # Redémarrage : rien n'est effacé ni recréé.
+    call_command("preparer_demo")
+    assert Utilisateur.objects.count() == comptes
+
+
+def test_preparer_demo_refuse_hors_demonstration_et_sans_mot_de_passe(monkeypatch, settings):
+    settings.ENVIRONNEMENT = "production"
+    with pytest.raises(CommandError, match="production"):
+        call_command("preparer_demo")
+    settings.ENVIRONNEMENT = "demonstration"
+    monkeypatch.setenv("INNOV_DEMO_MOT_DE_PASSE", "court")
+    with pytest.raises(CommandError, match="12 caractères"):
+        call_command("preparer_demo")
+    assert not Pays.objects.exists()
