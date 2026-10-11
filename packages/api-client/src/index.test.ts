@@ -1,0 +1,273 @@
+import { describe, expect, it, vi } from 'vitest';
+import { creerClient, ErreurApi, type StockageRafraichissement } from './index';
+
+const MOI = {
+  id: '1',
+  identifiant: 'awa.diallo',
+  prenom: 'Awa',
+  nom: 'Diallo',
+  courriel: '',
+  pays_principal: null,
+  est_siege: false,
+};
+
+function jetons(acces: string, rafraichissement: string | null) {
+  return { acces, expire_dans: 900, rafraichissement, utilisateur: MOI };
+}
+
+function reponse(statut: number, corps?: unknown) {
+  return new Response(corps === undefined ? null : JSON.stringify(corps), { status: statut });
+}
+
+function stockageMemoire(initial: string | null = null): StockageRafraichissement & {
+  valeur: string | null;
+} {
+  return {
+    valeur: initial,
+    async lire() {
+      return this.valeur;
+    },
+    async ecrire(jeton) {
+      this.valeur = jeton;
+    },
+  };
+}
+
+describe('client mobile', () => {
+  it('envoie sa version ; une version trop ancienne est refusée (0.9.6)', async () => {
+    const appel = vi.fn(async () =>
+      reponse(426, {
+        code: 'mise_a_jour_requise',
+        message: 'Mettez l’application à jour.',
+        details: { version_minimale: '0.9.6' },
+      }),
+    );
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage: stockageMemoire(),
+      versionApp: '0.9.5',
+      fetch: appel,
+    });
+    const erreur = await client.connexion('awa.diallo', `${Date.now()}`).catch((e) => e);
+    expect(erreur).toBeInstanceOf(ErreurApi);
+    expect(erreur.statut).toBe(426);
+    expect(erreur.code).toBe('mise_a_jour_requise');
+    const [, init] = appel.mock.calls[0] as unknown as [string, RequestInit];
+    expect((init.headers as Record<string, string>)['X-Version-App']).toBe('0.9.5');
+  });
+
+  it('garde le rafraîchissement dans le stockage et l’accès en mémoire', async () => {
+    const stockage = stockageMemoire();
+    const appel = vi.fn(async () => reponse(200, jetons('A1', 'R1')));
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage,
+      fetch: appel,
+    });
+    const resultat = await client.connexion('awa.diallo', `${Date.now()}`);
+    expect(resultat.etape).toBe('connecte');
+    expect(stockage.valeur).toBe('R1');
+    expect(client.estConnecte()).toBe(true);
+    const [, init] = appel.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.credentials).toBe('omit');
+    expect((init.headers as Record<string, string>)['Accept-Language']).toBe('fr');
+  });
+
+  it('annonce l’étape du code puis ouvre la session avec le code (SEC-003)', async () => {
+    const stockage = stockageMemoire();
+    const appel = vi
+      .fn()
+      .mockResolvedValueOnce(
+        reponse(202, { etape: 'code_requis', jeton_etape: 'E1', expire_dans: 300 }),
+      )
+      .mockResolvedValueOnce(reponse(200, jetons('A1', 'R1')));
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage,
+      fetch: appel,
+    });
+    const premiere = await client.connexion('awa.diallo', `${Date.now()}`);
+    expect(premiere).toEqual({ etape: 'code_requis', jetonEtape: 'E1' });
+    expect(client.estConnecte()).toBe(false);
+    await client.connexionCode('E1', '123456');
+    expect(client.estConnecte()).toBe(true);
+    const [, init] = appel.mock.calls[1] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({ jeton_etape: 'E1', code: '123456' });
+  });
+
+  it('décrit le téléphone à la connexion (USR-006)', async () => {
+    const appel = vi.fn(async () => reponse(200, jetons('A1', 'R1')));
+    const appareil = {
+      identifiant_installation: '0b7e4c1a-2f6d-4e8b-9a31-5c2d7e8f9a10',
+      plateforme: 'android' as const,
+    };
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage: stockageMemoire(),
+      appareil: async () => appareil,
+      fetch: appel,
+    });
+    await client.connexion('awa.diallo', `${Date.now()}`);
+    const [, init] = appel.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string).appareil).toEqual(appareil);
+  });
+
+  it('expose la référence de la requête dans l’erreur', async () => {
+    const appel = vi.fn(async () =>
+      reponse(404, {
+        code: 'introuvable',
+        message: 'Ressource introuvable.',
+        reference: 'abc123def4',
+      }),
+    );
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage: stockageMemoire(),
+      fetch: appel,
+    });
+    const erreur = await client.informations().catch((e: unknown) => e);
+    expect(erreur).toBeInstanceOf(ErreurApi);
+    expect((erreur as ErreurApi).reference).toBe('abc123def4');
+  });
+
+  it('signale une erreur sans jamais lever', async () => {
+    const appel = vi.fn(async () => {
+      throw new TypeError('hors ligne');
+    });
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage: stockageMemoire(),
+      fetch: appel,
+    });
+    await expect(
+      client.signalerErreur({ message: 'x', version: '0.0.7' }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('rafraîchit une seule fois sur 401 puis rejoue la requête', async () => {
+    const stockage = stockageMemoire('R1');
+    const appel = vi
+      .fn()
+      .mockResolvedValueOnce(reponse(401, { code: 'session_invalide', message: 'x' }))
+      .mockResolvedValueOnce(reponse(200, jetons('A2', 'R2')))
+      .mockResolvedValueOnce(reponse(200, MOI));
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage,
+      fetch: appel,
+    });
+    expect((await client.moi()).prenom).toBe('Awa');
+    expect(stockage.valeur).toBe('R2');
+    const derniere = appel.mock.calls[2]![1] as RequestInit;
+    expect((derniere.headers as Record<string, string>).Authorization).toBe('Bearer A2');
+  });
+
+  it('signale la session perdue et efface le stockage', async () => {
+    const stockage = stockageMemoire('R1');
+    const surSessionPerdue = vi.fn();
+    const appel = vi
+      .fn()
+      .mockResolvedValueOnce(reponse(401, { code: 'session_invalide', message: 'x' }))
+      .mockResolvedValueOnce(reponse(401, { code: 'session_expiree', message: 'Expirée' }));
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'mobile',
+      langue: () => 'fr',
+      stockage,
+      fetch: appel,
+      surSessionPerdue,
+    });
+    await expect(client.moi()).rejects.toMatchObject({ code: 'session_expiree' });
+    expect(surSessionPerdue).toHaveBeenCalledOnce();
+    expect(stockage.valeur).toBeNull();
+  });
+
+  it('exige un stockage sécurisé', () => {
+    expect(() => creerClient({ baseUrl: 'x', client: 'mobile', langue: () => 'fr' })).toThrow();
+  });
+});
+
+describe('client portail', () => {
+  it('envoie le cookie et l’en-tête client, sans jamais recevoir le rafraîchissement', async () => {
+    const appel = vi.fn(async () => reponse(200, jetons('A1', null)));
+    const client = creerClient({
+      baseUrl: 'http://api/',
+      client: 'portail',
+      langue: () => 'en',
+      fetch: appel,
+    });
+    await client.reprendre();
+    const [url, init] = appel.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('http://api/api/v1/auth/rafraichir/');
+    expect(init.credentials).toBe('include');
+    expect((init.headers as Record<string, string>)['X-Innov-Client']).toBe('portail');
+  });
+
+  it('transmet le code et le message traduits du serveur', async () => {
+    const appel = vi.fn(async () =>
+      reponse(423, { code: 'compte_verrouille', message: 'Compte verrouillé', details: {} }),
+    );
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'portail',
+      langue: () => 'fr',
+      fetch: appel,
+    });
+    const erreur = await client.connexion('a.b', 'c').catch((e: unknown) => e);
+    expect(erreur).toBeInstanceOf(ErreurApi);
+    expect(erreur).toMatchObject({
+      statut: 423,
+      code: 'compte_verrouille',
+      message: 'Compte verrouillé',
+    });
+  });
+
+  it('ne lance qu’un rafraîchissement pour des requêtes simultanées', async () => {
+    const appel = vi.fn(async (url: RequestInfo | URL) =>
+      String(url).endsWith('rafraichir/') ? reponse(200, jetons('A1', null)) : reponse(200, MOI),
+    );
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'portail',
+      langue: () => 'fr',
+      fetch: appel,
+    });
+    await Promise.all([client.reprendre(), client.reprendre()]);
+    expect(appel.mock.calls.filter(([u]) => String(u).endsWith('rafraichir/'))).toHaveLength(1);
+  });
+});
+
+describe('pays actif', () => {
+  it('envoie X-Pays une fois le pays choisi, et l’oublie à la déconnexion', async () => {
+    const appel = vi.fn(async (url: RequestInfo | URL, _init?: RequestInit) =>
+      String(url).endsWith('deconnexion/') ? reponse(204) : reponse(200, jetons('A1', null)),
+    );
+    const client = creerClient({
+      baseUrl: 'http://api',
+      client: 'portail',
+      langue: () => 'fr',
+      fetch: appel,
+    });
+    await client.connexion('awa.diallo', `${Date.now()}`);
+    client.choisirPays('TG');
+    await client.reprendre();
+    const entetes = appel.mock.calls[1]![1]!.headers as Record<string, string>;
+    expect(entetes['X-Pays']).toBe('TG');
+    await client.deconnexion();
+    expect(client.paysActif()).toBeNull();
+  });
+});

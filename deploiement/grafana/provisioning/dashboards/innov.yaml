@@ -1,0 +1,25 @@
+# Tableaux de bord d'INNOV CRM, en lecture seule (DSH-010).
+apiVersion: 1
+
+providers:
+  - name: INNOV siège
+    orgId: 1
+    folder: INNOV CRM
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/tableaux/siege
+  - name: INNOV Sénégal
+    orgId: 2
+    folder: INNOV CRM
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/tableaux/pays
+  - name: INNOV Togo
+    orgId: 3
+    folder: INNOV CRM
+    type: file
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/tableaux/pays

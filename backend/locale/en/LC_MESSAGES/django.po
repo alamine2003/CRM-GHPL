@@ -1,0 +1,1332 @@
+# Traductions anglaises du service central INNOV CRM.
+# La langue source est le français.
+msgid ""
+msgstr ""
+"Project-Id-Version: INNOV CRM\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-09 13:57+0000\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Date invalide."
+msgstr "Invalid date."
+
+msgid "La date de début suit la date de fin."
+msgstr "The start date is after the end date."
+
+msgid "INNOV CRM — réinitialisation de votre mot de passe"
+msgstr "INNOV CRM — reset your password"
+
+#, python-format
+msgid ""
+"Bonjour %(prenom)s,\n"
+"\n"
+"Pour choisir un nouveau mot de passe, ouvrez ce lien dans les %(minutes)s minutes :\n"
+"%(lien)s\n"
+"\n"
+"Le lien ne fonctionne qu'une fois. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message : votre mot de passe actuel reste valable."
+msgstr ""
+"Hello %(prenom)s,\n"
+"\n"
+"To choose a new password, open this link within %(minutes)s minutes:\n"
+"%(lien)s\n"
+"\n"
+"The link works only once. If you did not request this, ignore this message: your current password remains valid."
+
+msgid "INNOV CRM — compte verrouillé temporairement"
+msgstr "INNOV CRM — account temporarily locked"
+
+#, python-format
+msgid ""
+"Bonjour %(prenom)s,\n"
+"\n"
+"Après plusieurs mots de passe erronés, votre compte est verrouillé pour %(minutes)s minutes. Si ce n'était pas vous, prévenez votre administrateur pays."
+msgstr ""
+"Hello %(prenom)s,\n"
+"\n"
+"After several wrong passwords, your account is locked for %(minutes)s minutes. If this was not you, tell your country administrator."
+
+msgid "INNOV CRM — nouveau téléphone connecté à votre compte"
+msgstr "INNOV CRM — new phone signed in to your account"
+
+#, python-format
+msgid ""
+"Bonjour %(prenom)s,\n"
+"\n"
+"Un nouveau téléphone (%(modele)s) vient de se connecter à votre compte INNOV CRM. Si c'est vous, il n'y a rien à faire. Sinon, prévenez tout de suite votre administrateur pays : il révoquera ce téléphone, qui effacera ses données."
+msgstr ""
+"Hello %(prenom)s,\n"
+"\n"
+"A new phone (%(modele)s) has just signed in to your INNOV CRM account. If it was you, there is nothing to do. Otherwise, tell your country administrator right away: they will revoke this phone, which will erase its data."
+
+msgid "INNOV CRM — double authentification modifiée"
+msgstr "INNOV CRM — two-step verification changed"
+
+#, python-format
+msgid ""
+"Bonjour %(prenom)s,\n"
+"\n"
+"La double authentification est maintenant activée sur votre compte. Gardez vos codes de secours en lieu sûr."
+msgstr ""
+"Hello %(prenom)s,\n"
+"\n"
+"Two-step verification is now on for your account. Keep your backup codes in a safe place."
+
+#, python-format
+msgid ""
+"Bonjour %(prenom)s,\n"
+"\n"
+"La double authentification vient d'être désactivée sur votre compte. Si ce n'était pas vous, prévenez tout de suite votre administrateur pays."
+msgstr ""
+"Hello %(prenom)s,\n"
+"\n"
+"Two-step verification has just been turned off for your account. If it was not you, tell your country administrator right away."
+
+msgid "INNOV CRM — décisions en attente depuis plus de 48 heures"
+msgstr "INNOV CRM — decisions pending for more than 48 hours"
+
+#, python-format
+msgid ""
+"Bonjour %(prenom)s,\n"
+"\n"
+"%(nombre)s demande(s) attendent votre décision depuis plus de 48 heures. Ouvrez INNOV CRM pour les traiter : %(lien)s"
+msgstr ""
+"Hello %(prenom)s,\n"
+"\n"
+"%(nombre)s request(s) have been awaiting your decision for more than 48 hours. Open INNOV CRM to handle them: %(lien)s"
+
+msgid ""
+"La double authentification doit être réinitialisée par votre administrateur."
+msgstr "Two-step verification must be reset by your administrator."
+
+msgid "La double authentification est déjà active."
+msgstr "Two-step verification is already active."
+
+msgid "Commencez par afficher le QR code."
+msgstr "Start by displaying the QR code."
+
+msgid "Code incorrect ou expiré."
+msgstr "Incorrect or expired code."
+
+msgid ""
+"Votre rôle impose la double authentification : elle ne peut pas être "
+"désactivée."
+msgstr "Your role requires two-step verification: it cannot be turned off."
+
+#, python-format
+msgid "Ce mot de passe peut être compromettant : il contient « %(mot)s »."
+msgstr "This password may be compromising: it contains “%(mot)s”."
+
+msgid ""
+"Votre mot de passe ne doit contenir ni le nom de l'entreprise, ni un mot du "
+"métier, ni un nom de pays ou de ville, ni un mot de passe courant."
+msgstr ""
+"Your password must not contain the company name, a business word, a country "
+"or city name, or a common password."
+
+msgid ""
+"Ce mot de passe peut être compromettant : il figure dans des fuites de "
+"données connues. Choisissez-en un autre."
+msgstr ""
+"This password may be compromising: it appears in known data breaches. Choose"
+" another one."
+
+msgid ""
+"Votre mot de passe ne doit pas figurer dans des fuites de données connues."
+msgstr "Your password must not appear in known data breaches."
+
+msgid "Un compte nominatif a un prénom et un nom (USR-001)."
+msgstr "A named account has a first name and a last name (USR-001)."
+
+msgid "Ce compte est désactivé. Contactez votre administrateur pays."
+msgstr "This account is disabled. Contact your country administrator."
+
+#, python-format
+msgid ""
+"Le pays %(pays)s est suspendu : la connexion est momentanément impossible."
+msgstr ""
+"The country %(pays)s is suspended: sign-in is temporarily unavailable."
+
+#, python-format
+msgid "Le pays %(pays)s est archivé : la connexion n'est plus possible."
+msgstr "The country %(pays)s is archived: sign-in is no longer possible."
+
+msgid "Identifiant ou mot de passe incorrect."
+msgstr "Incorrect username or password."
+
+msgid "Trop d'essais : compte verrouillé temporairement. Réessayez plus tard."
+msgstr "Too many attempts: account temporarily locked. Try again later."
+
+msgid "L'application doit décrire le téléphone."
+msgstr "The app must describe the phone."
+
+msgid "Le délai est dépassé : reconnectez-vous."
+msgstr "Time is up: sign in again."
+
+msgid "Session invalide ou expirée."
+msgstr "Invalid or expired session."
+
+msgid "Votre session a expiré. Reconnectez-vous."
+msgstr "Your session has expired. Please sign in again."
+
+msgid "Ce téléphone a été révoqué. Contactez votre administrateur pays."
+msgstr "This phone has been revoked. Contact your country administrator."
+
+msgid "Ce téléphone est déjà révoqué."
+msgstr "This phone is already revoked."
+
+msgid ""
+"Ce lien est invalide, déjà utilisé ou expiré. Faites une nouvelle demande."
+msgstr ""
+"This link is invalid, already used or expired. Please make a new request."
+
+msgid "Le mot de passe actuel est incorrect."
+msgstr "The current password is incorrect."
+
+msgid "Rôle inconnu."
+msgstr "Unknown role."
+
+msgid "Ce rôle est réservé aux comptes du siège."
+msgstr "This role is reserved for headquarters accounts."
+
+msgid "Ce rôle s'exerce dans un pays."
+msgstr "This role is exercised in a country."
+
+msgid ""
+"Ce rôle doit porter sur le pays principal de l'utilisateur ou un pays "
+"affecté."
+msgstr ""
+"This role must apply to the user's main country or an assigned country."
+
+msgid "Ce compte est désactivé."
+msgstr "This account is disabled."
+
+msgid "Ce rôle est déjà attribué."
+msgstr "This role is already assigned."
+
+msgid "Ce rôle est déjà terminé."
+msgstr "This role has already ended."
+
+msgid "La fin doit suivre le début du rôle."
+msgstr "The end must come after the start of the role."
+
+msgid "Un compte du siège voit déjà tous les pays."
+msgstr "A headquarters account already sees every country."
+
+msgid "C'est déjà le pays principal de cet utilisateur."
+msgstr "This is already the user's main country."
+
+msgid "Ce rôle ne s'exerce pas dans un pays."
+msgstr "This role is not exercised in a country."
+
+msgid "Le motif est obligatoire."
+msgstr "A reason is required."
+
+msgid "Une affectation ne peut pas commencer dans le passé."
+msgstr "An assignment cannot start in the past."
+
+msgid "La fin doit suivre le début."
+msgstr "The end must come after the start."
+
+msgid "Une affectation dans ce pays est déjà en cours ou prévue."
+msgstr "An assignment in this country is already ongoing or planned."
+
+msgid "Cette affectation est déjà terminée."
+msgstr "This assignment has already ended."
+
+msgid "La fin ne peut pas être dans le passé."
+msgstr "The end cannot be in the past."
+
+msgid "Un compte du siège n'a pas de pays principal."
+msgstr "A headquarters account has no main country."
+
+msgid "L'utilisateur est déjà dans ce pays."
+msgstr "The user is already in this country."
+
+msgid ""
+"Votre rôle impose la double authentification : activez-la pour continuer."
+msgstr "Your role requires two-step verification: turn it on to continue."
+
+msgid "En-tête X-Innov-Client manquant."
+msgstr "Missing X-Innov-Client header."
+
+msgid "Réservé à l'application mobile."
+msgstr "Mobile app only."
+
+msgid "Opération inconnue."
+msgstr "Unknown operation."
+
+msgid "Vous ne pouvez pas suspendre votre propre compte."
+msgstr "You cannot suspend your own account."
+
+msgid "Vous ne pouvez pas retirer votre propre rôle d'administrateur."
+msgstr "You cannot remove your own administrator role."
+
+msgid "Pays inconnu ou archivé."
+msgstr "Unknown or archived country."
+
+msgid "L'archive doit contenir un seul fichier JSON."
+msgstr "The archive must contain a single JSON file."
+
+msgid "Fichier illisible : JSON ou ZIP d'export BirdNotes attendu."
+msgstr "Unreadable file: a BirdNotes JSON or ZIP export is expected."
+
+msgid "Ce fichier n'est pas un export BirdNotes (clé « donnees » absente)."
+msgstr "This file is not a BirdNotes export (\"donnees\" key missing)."
+
+msgid "Téléphone inexploitable, non repris."
+msgstr "Unusable phone number, not imported."
+
+msgid "Secteur sans nom."
+msgstr "Sector without a name."
+
+#, python-brace-format
+msgid "« {nom} » est une variante d'un secteur déjà repris : fusionné."
+msgstr "\"{nom}\" is a variant of a sector already imported: merged."
+
+msgid ""
+"Les secteurs nouveaux sont dans une zone « À répartir » : rattachez-les à "
+"leur zone dans Organisation."
+msgstr ""
+"New sectors are in a \"To be assigned\" zone: attach them to their zone in "
+"Organisation."
+
+msgid "Localité sans nom ou d'un secteur inconnu."
+msgstr "Locality without a name or in an unknown sector."
+
+msgid "Produit sans nom."
+msgstr "Product without a name."
+
+msgid "Produit inconnu."
+msgstr "Unknown product."
+
+#, python-brace-format
+msgid "{n} produits"
+msgstr "{n} products"
+
+msgid ""
+"Produits de la gamme technique « Default » seulement : rangez-les dans un "
+"portefeuille ou archivez-les."
+msgstr ""
+"Products only in the technical \"Default\" range: put them in a portfolio or"
+" archive them."
+
+msgid "Établissement sans secteur ni prospect rattaché : non repris."
+msgstr "Facility with no sector and no linked prospect: not imported."
+
+msgid "Établissement sans nom ou sans secteur connu."
+msgstr "Facility without a name or a known sector."
+
+#, python-brace-format
+msgid "{n} établissements"
+msgstr "{n} facilities"
+
+msgid ""
+"Sans secteur dans BirdNotes : secteur déduit de leurs prospects, à vérifier."
+msgstr ""
+"No sector in BirdNotes: sector inferred from their prospects, to be checked."
+
+msgid "Type non reconnu d'après le nom : classés « Autre », à préciser."
+msgstr "Type not recognised from the name: filed as \"Other\", to be specified."
+
+msgid "Prospect sans nom."
+msgstr "Prospect without a name."
+
+#, python-brace-format
+msgid "Spécialité inconnue « {libelle} »."
+msgstr "Unknown specialty \"{libelle}\"."
+
+msgid "Type de prospect introuvable."
+msgstr "Prospect type not found."
+
+msgid "Potentiel absent ou inconnu."
+msgstr "Missing or unknown potential."
+
+#, python-brace-format
+msgid "Potentiel « {brut} » ramené à « {potentiel} »."
+msgstr "Potential \"{brut}\" brought back to \"{potentiel}\"."
+
+msgid "Titre saisi à la place du prénom : prénom et nom à séparer à la main."
+msgstr ""
+"Title entered instead of the first name: first name and surname to be "
+"separated by hand."
+
+#, python-brace-format
+msgid "{n} groupes"
+msgstr "{n} groups"
+
+#, python-brace-format
+msgid ""
+"Fiches au même nom ({n}) : versées dans la file des doublons, que tranche "
+"l'administrateur pays."
+msgstr ""
+"Records sharing the same name ({n}): added to the duplicates queue, decided "
+"by the country administrator."
+
+#, python-brace-format
+msgid "{n} fiches"
+msgstr "{n} records"
+
+msgid ""
+"Localité « INTERMEDIARE » dans BirdNotes, qui n'en est pas une : secteur "
+"gardé, localité à préciser."
+msgstr ""
+"\"INTERMEDIARE\" locality in BirdNotes, which is not one: sector kept, "
+"locality to be specified."
+
+msgid ""
+"Doublons probables signalés par BirdNotes : versés dans la file des "
+"doublons, rien n'est fusionné à l'import."
+msgstr ""
+"Probable duplicates flagged by BirdNotes: added to the duplicates queue; "
+"nothing is merged on import."
+
+#, python-brace-format
+msgid "{n} demandes"
+msgstr "{n} requests"
+
+msgid ""
+"Demandes de modification en attente dans BirdNotes : non reprises, leur "
+"auteur n'a pas encore de compte ; à reproposer depuis INNOV CRM."
+msgstr ""
+"Change requests pending in BirdNotes: not imported, their author has no "
+"account yet; to be proposed again from INNOV CRM."
+
+msgid "Entité"
+msgstr "Entity"
+
+msgid "Identifiant source"
+msgstr "Source identifier"
+
+msgid "Niveau"
+msgstr "Level"
+
+msgid "Motif"
+msgstr "Reason"
+
+#, python-format
+msgid "Colonnes attendues introuvables : %(colonnes)s."
+msgstr "Expected columns not found: %(colonnes)s."
+
+msgid "Fichier illisible : classeur Excel (.xlsx) attendu."
+msgstr "Unreadable file: Excel workbook (.xlsx) expected."
+
+msgid "Aucune feuille au format du fichier d'organisation."
+msgstr "No sheet in the organisation file format."
+
+msgid "Sans gamme"
+msgstr "No range"
+
+#, python-format
+msgid "Poste « %(poste)s » déjà occupé par une autre personne : inchangé."
+msgstr "Position “%(poste)s” already held by someone else: unchanged."
+
+msgid "Poste sans superviseur dans le fichier."
+msgstr "Position without a supervisor in the file."
+
+#, python-format
+msgid "Colonne vide : %(colonnes)s."
+msgstr "Empty column: %(colonnes)s."
+
+#, python-format
+msgid "Fonction inconnue : « %(fonction)s »."
+msgstr "Unknown job: “%(fonction)s”."
+
+#, python-format
+msgid "Produit absent du référentiel (%(n)s lignes) : non ajouté."
+msgstr "Product missing from the catalogue (%(n)s rows): not added."
+
+msgid "Vous ne recevez pas cette notification."
+msgstr "You do not receive this notification."
+
+msgid "Cette notification est obligatoire : elle ne peut pas être coupée."
+msgstr "This notification is mandatory: it cannot be turned off."
+
+#, python-format
+msgid "Un planning attend votre décision."
+msgid_plural "%(n)d plannings attendent votre décision."
+msgstr[0] "A plan awaits your decision."
+msgstr[1] "%(n)d plans await your decision."
+
+#, python-format
+msgid "Votre planning est approuvé."
+msgid_plural "%(n)d plannings approuvés."
+msgstr[0] "Your plan is approved."
+msgstr[1] "%(n)d plans approved."
+
+#, python-format
+msgid "Une révision de votre planning est demandée."
+msgid_plural "%(n)d révisions de planning sont demandées."
+msgstr[0] "A revision of your plan is requested."
+msgstr[1] "%(n)d plan revisions are requested."
+
+#, python-format
+msgid "Un remplacement vous est attribué."
+msgid_plural "%(n)d remplacements vous sont attribués."
+msgstr[0] "A replacement is assigned to you."
+msgstr[1] "%(n)d replacements are assigned to you."
+
+#, python-format
+msgid "Pensez à soumettre votre planning."
+msgid_plural "Pensez à soumettre vos %(n)d plannings."
+msgstr[0] "Remember to submit your plan."
+msgstr[1] "Remember to submit your %(n)d plans."
+
+#, python-format
+msgid "Un planning en attente vous est remonté."
+msgid_plural "%(n)d plannings en attente vous sont remontés."
+msgstr[0] "A pending plan was escalated to you."
+msgstr[1] "%(n)d pending plans were escalated to you."
+
+#, python-format
+msgid "Des plannings ne sont pas encore approuvés."
+msgid_plural "Des plannings ne sont pas encore approuvés (%(n)d alertes)."
+msgstr[0] "Some plans are not approved yet."
+msgstr[1] "Some plans are not approved yet (%(n)d alerts)."
+
+#, python-format
+msgid "Une réouverture de semaine est demandée."
+msgid_plural "%(n)d réouvertures de semaine sont demandées."
+msgstr[0] "A week reopening is requested."
+msgstr[1] "%(n)d week reopenings are requested."
+
+#, python-format
+msgid "La rédaction de votre semaine est rouverte."
+msgid_plural "La rédaction de %(n)d semaines est rouverte."
+msgstr[0] "Your week is open for editing again."
+msgstr[1] "%(n)d weeks are open for editing again."
+
+#, python-format
+msgid "Une correction de rapport est demandée."
+msgid_plural "%(n)d corrections de rapport sont demandées."
+msgstr[0] "A report correction is requested."
+msgstr[1] "%(n)d report corrections are requested."
+
+#, python-format
+msgid "Un rapport corrigé attend votre décision."
+msgid_plural "%(n)d rapports corrigés attendent votre décision."
+msgstr[0] "A corrected report awaits your decision."
+msgstr[1] "%(n)d corrected reports await your decision."
+
+#, python-format
+msgid "Un de vos rapports validés est rouvert."
+msgid_plural "%(n)d de vos rapports sont rouverts."
+msgstr[0] "One of your approved reports was reopened."
+msgstr[1] "%(n)d of your reports were reopened."
+
+#, python-format
+msgid "Un rapport est en retard."
+msgid_plural "%(n)d rapports sont en retard."
+msgstr[0] "A report is late."
+msgstr[1] "%(n)d reports are late."
+
+#, python-format
+msgid "%(n)d rapport à valider."
+msgid_plural "%(n)d rapports à valider."
+msgstr[0] "%(n)d report to approve."
+msgstr[1] "%(n)d reports to approve."
+
+#, python-format
+msgid "%(n)d rapport validé."
+msgid_plural "%(n)d rapports validés."
+msgstr[0] "%(n)d report approved."
+msgstr[1] "%(n)d reports approved."
+
+#, python-format
+msgid "Pensez à soumettre votre rapport de visite."
+msgid_plural "Pensez à soumettre vos %(n)d rapports de visite."
+msgstr[0] "Remember to submit your visit report."
+msgstr[1] "Remember to submit your %(n)d visit reports."
+
+#, python-format
+msgid "Une journée de rapports vous est remontée."
+msgid_plural "%(n)d journées de rapports vous sont remontées."
+msgstr[0] "A day of reports was escalated to you."
+msgstr[1] "%(n)d days of reports were escalated to you."
+
+#, python-format
+msgid "Une nouvelle notification."
+msgid_plural "%(n)d notifications."
+msgstr[0] "A new notification."
+msgstr[1] "%(n)d notifications."
+
+msgid "Ce libellé ou ce code est déjà utilisé."
+msgstr "This label or code is already in use."
+
+msgid "Ce champ est obligatoire."
+msgstr "This field is required."
+
+msgid "Élément inconnu ou archivé dans ce pays."
+msgstr "Unknown or archived item in this country."
+
+msgid "Un élément archivé ne se modifie plus."
+msgstr "An archived item can no longer be changed."
+
+msgid "Archivez d'abord les réseaux de cette division."
+msgstr "Archive this division's networks first."
+
+msgid "Archivez d'abord les secteurs de cette zone."
+msgstr "Archive this zone's sectors first."
+
+msgid "Rattachez d'abord les établissements de ce secteur à un autre."
+msgstr "First attach this sector's institutions to another one."
+
+msgid "Terminez d'abord l'occupation de ce poste."
+msgstr "End this position's occupancy first."
+
+msgid "Type de poste inconnu."
+msgstr "Unknown position type."
+
+msgid "Ce lien est déjà terminé."
+msgstr "This link has already ended."
+
+msgid "La fin ne peut pas précéder le début."
+msgstr "The end cannot precede the start."
+
+msgid "Ce poste est archivé."
+msgstr "This position is archived."
+
+msgid "Seul un délégué ou un superviseur de ce pays peut occuper un poste."
+msgstr ""
+"Only a representative or a supervisor of this country can hold a position."
+
+msgid "Ce poste est déjà occupé à cette date."
+msgstr "This position is already held on that date."
+
+msgid "Cette personne occupe déjà ce poste."
+msgstr "This person already holds this position."
+
+msgid "Seul un superviseur ou un DM de ce pays peut être choisi."
+msgstr "Only a supervisor or a DM of this country can be chosen."
+
+msgid "Un rattachement commence déjà à cette date ou après."
+msgstr "A reporting line already starts on or after this date."
+
+msgid "Ce réseau est archivé."
+msgstr "This network is archived."
+
+msgid "Seul un DF ou un DM de ce pays a un périmètre de réseaux."
+msgstr "Only a DF or a DM of this country has a network scope."
+
+msgid "Ce réseau est déjà dans le périmètre."
+msgstr "This network is already in the scope."
+
+msgid "Un superviseur ne se remplace pas lui-même."
+msgstr "A supervisor cannot replace themselves."
+
+msgid "Le remplacé et le remplaçant sont des superviseurs de ce pays."
+msgstr ""
+"Both the replaced supervisor and the replacement must be supervisors in this"
+" country."
+
+msgid "La fin précède le début."
+msgstr "The end date is before the start date."
+
+msgid "Un remplacement commence aujourd'hui ou plus tard."
+msgstr "A replacement starts today or later."
+
+msgid ""
+"Un remplaçant est déjà désigné pour ce superviseur sur une partie de la "
+"période."
+msgstr ""
+"A replacement is already designated for this supervisor during part of this "
+"period."
+
+msgid "Choisissez d'abord un pays."
+msgstr "Choose a country first."
+
+msgid "Personne inconnue dans ce pays."
+msgstr "Unknown person in this country."
+
+msgid "Ce superviseur n'est pas dans votre périmètre."
+msgstr "This supervisor is not in your scope."
+
+msgid "Action non autorisée."
+msgstr "Action not allowed."
+
+msgid "Vous n'avez pas accès à ce pays."
+msgstr "You do not have access to this country."
+
+msgid "Délégué"
+msgstr "Rep"
+
+msgid "Poste"
+msgstr "Position"
+
+msgid "Visites prévues échues"
+msgstr "Planned visits due"
+
+msgid "Visites faites"
+msgstr "Visits made"
+
+msgid "Dont imprévues"
+msgstr "Of which unplanned"
+
+msgid "Réalisation (%)"
+msgstr "Completion (%)"
+
+msgid "Écarts"
+msgstr "Deviations"
+
+msgid "Écarts justifiés (%)"
+msgstr "Justified deviations (%)"
+
+msgid "Géolocalisées (%)"
+msgstr "Geolocated (%)"
+
+msgid "Rapports dans le délai (%)"
+msgstr "Reports on time (%)"
+
+msgid "Couverture du cycle (%)"
+msgstr "Cycle coverage (%)"
+
+msgid "Date de la visite"
+msgstr "Visit date"
+
+msgid "Prospect"
+msgstr "Prospect"
+
+msgid "Établissement"
+msgstr "Facility"
+
+msgid "Statut"
+msgstr "Status"
+
+msgid "Soumis le"
+msgstr "Submitted on"
+
+msgid "En retard"
+msgstr "Late"
+
+msgid "Validé le"
+msgstr "Validated on"
+
+msgid "Mode de validation"
+msgstr "Validation mode"
+
+msgid "Objectif prévu"
+msgstr "Planned objective"
+
+msgid "Résultat obtenu"
+msgstr "Outcome"
+
+msgid "Produits présentés"
+msgstr "Products presented"
+
+msgid "Prochaine action"
+msgstr "Next action"
+
+msgid "Échéance"
+msgstr "Due date"
+
+msgid "Résumé"
+msgstr "Summary"
+
+msgid "Oui"
+msgstr "Yes"
+
+msgid "Non"
+msgstr "No"
+
+msgid "Seuls le DM du réseau et l'administrateur pays fixent ses objectifs."
+msgstr "Only the network's DM and the country administrator set its targets."
+
+msgid "La fin vient après le début."
+msgstr "The end date must come after the start date."
+
+msgid "La cible est un nombre positif."
+msgstr "The target is a positive number."
+
+msgid "Une couverture se donne en pourcentage, 100 au plus."
+msgstr "Coverage is a percentage, 100 at most."
+
+msgid "Choisissez un produit du portefeuille du réseau."
+msgstr "Choose a product from the network's portfolio."
+
+msgid "Choisissez une date de début et une date de fin, dans l'ordre."
+msgstr "Choose a start date and an end date, in that order."
+
+msgid "Une période dure un an au plus."
+msgstr "A period lasts one year at most."
+
+msgid "Vue réservée au siège."
+msgstr "View reserved for headquarters."
+
+msgid "Rapports"
+msgstr "Reports"
+
+msgid "Indicateurs"
+msgstr "Indicators"
+
+msgid "Le planning ne peut pas être soumis : corrigez les points signalés."
+msgstr "The plan cannot be submitted: fix the points listed."
+
+#, python-format
+msgid "Ce planning ne peut pas passer de « %(de)s » à « %(vers)s »."
+msgstr "This planning cannot go from “%(de)s” to “%(vers)s”."
+
+#, python-format
+msgid "Cette visite ne peut pas passer de « %(de)s » à « %(vers)s »."
+msgstr "This visit cannot go from “%(de)s” to “%(vers)s”."
+
+msgid "Cette heure est dans le futur."
+msgstr "This time is in the future."
+
+msgid "L'heure de fin doit suivre l'heure de début de la visite."
+msgstr "The end time must come after the start time of the visit."
+
+msgid "Choisissez un motif dans la liste du pays : il est obligatoire."
+msgstr "Choose a reason from the country list: it is required."
+
+msgid "Une visite se démarre le jour prévu par le planning approuvé."
+msgstr "A visit is started on the day set by the approved planning."
+
+msgid "Cette visite n'est pas dans le planning approuvé."
+msgstr "This visit is not in the approved planning."
+
+msgid "Sa journée est passée : justifiez cette visite comme non réalisée."
+msgstr "Its day is over: record this visit as not carried out."
+
+msgid ""
+"Sa journée n'est pas finie : démarrez, annulez ou déclarez le prospect "
+"absent."
+msgstr ""
+"Its day is not over: start it, cancel it or record the prospect as absent."
+
+msgid ""
+"Choisissez un jour après celui prévu : changer l'heure dans la journée n'est"
+" pas un report."
+msgstr ""
+"Choose a day after the planned one: changing the time within the day is not "
+"a postponement."
+
+msgid ""
+"Dites pourquoi cette visite n'était pas prévue : la justification est "
+"obligatoire."
+msgstr "Say why this visit was not planned: the justification is required."
+
+msgid "Cet identifiant appartient déjà à un autre objet."
+msgstr "This identifier already belongs to another item."
+
+msgid ""
+"Votre planning de cette semaine n'est pas approuvé : une visite imprévue s'y"
+" rattache une fois le planning approuvé."
+msgstr ""
+"Your planning for this week is not approved: an unplanned visit can be added"
+" once it is."
+
+msgid "Aucun planning cette semaine."
+msgstr "No plan this week."
+
+msgid "Période inconnue."
+msgstr "Unknown period."
+
+msgid "Une indisponibilité est déjà déclarée pour cette période."
+msgstr "An unavailability is already declared for this period."
+
+msgid "L'indisponibilité imprévue se déclare le jour même, depuis la Tournée."
+msgstr ""
+"An unforeseen unavailability is declared on the day itself, from the Round "
+"screen."
+
+msgid ""
+"Un jour férié ne se modifie plus à partir de son jour : seule une date à "
+"venir peut changer."
+msgstr ""
+"A public holiday can no longer change from its own day onwards: only a "
+"future date can be changed."
+
+msgid "Ce jour est déjà férié dans ce pays."
+msgstr "This day is already a public holiday in this country."
+
+msgid "Le libellé est obligatoire."
+msgstr "The label is required."
+
+msgid "Une semaine se désigne par son lundi."
+msgstr "A week is identified by its Monday."
+
+msgid "Une semaine passée ne se planifie plus."
+msgstr "A past week can no longer be planned."
+
+msgid "Vous n'occupez aucun poste cette semaine : pas de planning à préparer."
+msgstr "You hold no position this week: there is no planning to prepare."
+
+msgid ""
+"La semaine est fermée depuis le lundi 0 h : demandez à votre superviseur de "
+"rouvrir la rédaction de votre planning."
+msgstr ""
+"The week has been closed since Monday 00:00: ask your supervisor to reopen "
+"your planning for editing."
+
+msgid "Un planning existe déjà pour cette semaine."
+msgstr "A planning already exists for this week."
+
+msgid "La semaine a commencé : le planning validé ne se modifie plus."
+msgstr "The week has started: the approved planning can no longer be changed."
+
+msgid ""
+"Une modification de ce planning attend la décision de votre superviseur : la"
+" suite attendra sa réponse."
+msgstr ""
+"A change to this planning is awaiting your supervisor's decision: further "
+"changes will wait for the answer."
+
+msgid "Ce planning n'est plus modifiable dans son état actuel."
+msgstr "This planning can no longer be changed in its current state."
+
+msgid "Cette journée est passée : son planning ne se modifie plus."
+msgstr "This day is over: its planning can no longer be changed."
+
+msgid "Cette visite a changé ailleurs depuis votre dernière synchronisation."
+msgstr "This visit was changed elsewhere since your last sync."
+
+msgid "Ce jour n'est pas un jour ouvré de la semaine du planning."
+msgstr "This day is not a working day of the planning week."
+
+msgid "Ce jour est férié : il ne se planifie pas."
+msgstr "This day is a public holiday: it cannot be planned."
+
+msgid "Ce réseau n'est pas celui d'un poste que vous occupez cette semaine."
+msgstr "This network does not belong to a position you hold this week."
+
+msgid "L'ordre doit reprendre exactement les visites de ce jour."
+msgstr "The order must list exactly the visits of that day."
+
+msgid ""
+"La semaine est fermée depuis le lundi 0 h : le superviseur doit d'abord "
+"rouvrir la rédaction du planning."
+msgstr ""
+"The week has been closed since Monday 00:00: the supervisor must first "
+"reopen the planning for editing."
+
+msgid ""
+"Votre poste n'est rattaché à aucun superviseur cette semaine : personne ne "
+"peut recevoir ce planning. Prévenez l'administrateur pays."
+msgstr ""
+"Your position has no supervisor this week: nobody can receive this plan. Let"
+" the country administrator know."
+
+msgid ""
+"Le planning ne contient aucune visite : ajoutez-en, ou déclarez vos "
+"absences."
+msgstr "The plan contains no visit: add some, or declare your absences."
+
+msgid ""
+"Seul le responsable de ce poste cette semaine-là décide de ce planning."
+msgstr ""
+"Only the person in charge of this position that week decides on this "
+"planning."
+
+msgid ""
+"Ce planning a des points bloquants : il ne peut pas être approuvé en l'état."
+msgstr ""
+"This planning has blocking issues: it cannot be approved as it stands."
+
+msgid "Chaque visite visée par la révision demande un commentaire."
+msgstr "Each visit targeted by the revision needs a comment."
+
+msgid "Expliquez ce qui est à revoir : le commentaire est obligatoire."
+msgstr "Explain what needs revising: a comment is required."
+
+msgid "Une visite visée n'appartient pas à ce planning."
+msgstr "A targeted visit does not belong to this planning."
+
+msgid ""
+"Ce planning est approuvé : chaque visite ajoutée est soumise aussitôt à "
+"votre superviseur. Ajoutez-la complète, une à une."
+msgstr ""
+"This planning is approved: each added visit is immediately submitted to your"
+" supervisor. Add complete visits, one at a time."
+
+msgid ""
+"Cette semaine a déjà des visites : la reprise ne vaut que pour une semaine "
+"vide."
+msgstr ""
+"This week already has visits: only an empty week can take over the previous "
+"one."
+
+msgid "Aucun planning la semaine précédente."
+msgstr "No plan the previous week."
+
+msgid "Un passage regroupe au moins deux visites."
+msgstr "A stop groups at least two visits."
+
+msgid ""
+"Un passage regroupe des visites du même jour, dans le même établissement."
+msgstr "A stop groups visits on the same day, at the same facility."
+
+msgid "Vous êtes absent toute cette journée : elle ne reçoit pas de visite."
+msgstr "You are absent all day: no visits can be planned on it."
+
+msgid "Précisez le motif d'une absence « autre »."
+msgstr "Give the reason for an “other” absence."
+
+msgid "Expliquez cette activité : où, avec qui, et pourquoi."
+msgstr "Explain this activity: where, with whom, and why."
+
+msgid "Une activité est déjà déclarée sur cette période."
+msgstr "An activity is already declared for this period."
+
+msgid ""
+"Des visites sont prévues ce jour-là : déplacez-les ou retirez-les d'abord."
+msgstr "Visits are planned that day: move or remove them first."
+
+msgid "Une semaine passée ne se rouvre plus."
+msgstr "A past week can no longer be reopened."
+
+msgid "Ce planning n'est pas fermé : il se prépare ou se soumet normalement."
+msgstr "This planning is not closed: prepare or submit it as usual."
+
+msgid "Cette semaine n'est pas encore fermée : préparez votre planning."
+msgstr "This week is not closed yet: prepare your planning."
+
+msgid ""
+"Votre poste n'est rattaché à aucun superviseur cette semaine : prévenez "
+"l'administrateur pays."
+msgstr ""
+"Your position has no supervisor this week: let the country administrator "
+"know."
+
+msgid ""
+"Cette semaine n'est pas encore fermée : le délégué peut encore préparer son "
+"planning."
+msgstr ""
+"This week is not closed yet: the representative can still prepare their "
+"planning."
+
+msgid "Ce délégué n'occupe aucun poste cette semaine."
+msgstr "This representative holds no position this week."
+
+msgid "Seul le responsable de ce poste cette semaine-là rouvre ce planning."
+msgstr ""
+"Only the person in charge of this position that week can reopen this "
+"planning."
+
+msgid "Ce planning n'est pas fermé : rien à rouvrir."
+msgstr "This planning is not closed: there is nothing to reopen."
+
+msgid "Année invalide."
+msgstr "Invalid year."
+
+msgid "Date invalide : format AAAA-MM-JJ attendu."
+msgstr "Invalid date: YYYY-MM-DD format expected."
+
+msgid "Fiche inconnue ou inactive dans ce pays."
+msgstr "Unknown or inactive record in this country."
+
+msgid "Réseau inconnu."
+msgstr "Unknown network."
+
+msgid "Visite inconnue dans ce planning."
+msgstr "Unknown visit in this plan."
+
+msgid "La fréquence cible va de 1 à 20 visites par cycle."
+msgstr "The target frequency ranges from 1 to 20 visits per cycle."
+
+msgid ""
+"Seuls le superviseur du poste et l'administrateur pays tiennent cette liste."
+msgstr ""
+"Only the position's supervisor and the country administrator maintain this "
+"list."
+
+msgid "Seule une fiche active du pays entre dans une liste cible."
+msgstr "Only an active record of the country can enter a target list."
+
+msgid "Ce prospect n'est plus dans la liste cible."
+msgstr "This prospect is no longer in the target list."
+
+msgid "Ces deux fiches ne peuvent pas fusionner."
+msgstr "These two records cannot be merged."
+
+msgid "Seules des fiches en cours fusionnent."
+msgstr "Only records in service can be merged."
+
+msgid "Cette fusion a déjà été défaite."
+msgstr "This merge has already been undone."
+
+msgid "Ce doublon a déjà été tranché."
+msgstr "This duplicate has already been decided."
+
+msgid "Doublon refusé"
+msgstr "Duplicate rejected"
+
+msgid "Décision inconnue."
+msgstr "Unknown decision."
+
+msgid "Cet établissement a déjà une position de référence."
+msgstr "This facility already has a reference location."
+
+msgid ""
+"Il faut trois pointages, d'au moins deux personnes, pour proposer une "
+"position."
+msgstr ""
+"A location needs three check-ins, from at least two people, before it can be"
+" suggested."
+
+msgid "Indiquez la latitude et la longitude, ou aucune des deux."
+msgstr "Enter both latitude and longitude, or neither."
+
+#, python-format
+msgid "Ce champ ne se propose pas : %(champ)s."
+msgstr "This field cannot be proposed: %(champ)s."
+
+msgid "Seule une fiche commune reçoit des propositions."
+msgstr "Only a shared record can receive proposals."
+
+msgid "Établissement inconnu dans ce pays."
+msgstr "Unknown facility in this country."
+
+msgid "La proposition ne change rien à la fiche."
+msgstr "The proposal changes nothing in the record."
+
+msgid "Cette proposition a déjà été tranchée."
+msgstr "This proposal has already been decided."
+
+msgid "La fiche n'est plus en service."
+msgstr "The record is no longer in service."
+
+msgid "Portée de recherche inconnue."
+msgstr "Unknown search scope."
+
+msgid "Choisissez un prospect ou un établissement."
+msgstr "Choose a prospect or an institution."
+
+msgid "Ce numéro de téléphone n'est pas valide."
+msgstr "This phone number is not valid."
+
+msgid "Valeur inconnue ou archivée dans ce pays."
+msgstr "Unknown or archived value in this country."
+
+msgid "Activité inconnue (hospitalier ou privé)."
+msgstr "Unknown practice (hospital or private)."
+
+msgid "Localité inconnue ou archivée dans ce pays."
+msgstr "Unknown or archived locality in this country."
+
+msgid "Cette localité n'appartient pas au secteur choisi."
+msgstr "This locality does not belong to the chosen sector."
+
+msgid "Un établissement appartient à un secteur."
+msgstr "An institution belongs to a sector."
+
+msgid "Secteur inconnu ou archivé dans ce pays."
+msgstr "Unknown or archived sector in this country."
+
+msgid "Le nom est obligatoire."
+msgstr "The last name is required."
+
+msgid "Le type de prospect est obligatoire."
+msgstr "The prospect type is required."
+
+msgid "Cette spécialité ne s'applique pas à ce type de prospect."
+msgstr "This specialty does not apply to this prospect type."
+
+msgid "La spécialité est obligatoire pour ce type."
+msgstr "The specialty is required for this type."
+
+msgid "Le potentiel est obligatoire."
+msgstr "The potential is required."
+
+msgid "Civilité inconnue."
+msgstr "Unknown title."
+
+msgid "Ce numéro d'ordre est déjà celui d'une autre fiche de ce pays."
+msgstr ""
+"This licence number already belongs to another record in this country."
+
+msgid "Une fiche archivée ne se modifie plus."
+msgstr "An archived record can no longer be edited."
+
+msgid "Cette fiche n'est pas à valider."
+msgstr "This record is not awaiting validation."
+
+msgid "Fiche archivée"
+msgstr "Record archived"
+
+msgid "Le rayon de pointage est compris entre 50 et 2 000 mètres."
+msgstr "The check-in radius is between 50 and 2,000 metres."
+
+msgid "Coordonnées GPS invalides."
+msgstr "Invalid GPS coordinates."
+
+msgid "Le type d'établissement est obligatoire."
+msgstr "The institution type is required."
+
+msgid "Un exercice relie une fiche prospect et un établissement en service."
+msgstr ""
+"A practice links a prospect record and a facility that are in service."
+
+msgid "Ce prospect exerce déjà dans cet établissement."
+msgstr "This prospect already practises in this facility."
+
+msgid "Cet exercice est terminé."
+msgstr "This practice has ended."
+
+msgid "La fin ne peut précéder le début de l'exercice."
+msgstr "The end cannot precede the start of the practice."
+
+msgid "Seul l'administrateur pays modifie une fiche commune."
+msgstr "Only the country administrator edits a shared record."
+
+msgid "Une liste propose au moins deux choix."
+msgstr "A list offers at least two choices."
+
+msgid "Le rapport s'écrit une fois la visite terminée."
+msgstr "The report is written once the visit is finished."
+
+msgid "Ce rapport est soumis : il ne se modifie plus."
+msgstr "This report is submitted: it can no longer be changed."
+
+#, python-format
+msgid "Valeur invalide pour « %(libelle)s »."
+msgstr "Invalid value for “%(libelle)s”."
+
+msgid ""
+"Seuls les produits du portefeuille du réseau de la visite se présentent."
+msgstr "Only products of the visit network's portfolio can be presented."
+
+msgid "Retour du prescripteur inconnu."
+msgstr "Unknown prescriber feedback."
+
+msgid "Nommez le produit présenté."
+msgstr "Name the product presented."
+
+msgid "Un produit se présente une seule fois."
+msgstr "A product is presented only once."
+
+msgid "Quantité attendue entre 1 et 999."
+msgstr "Quantity expected between 1 and 999."
+
+msgid "Article inconnu."
+msgstr "Unknown item."
+
+msgid "Échantillon ou cadeau attendu."
+msgstr "Sample or gift expected."
+
+msgid ""
+"Ce rapport a changé ailleurs depuis votre dernière synchronisation : ouvrez-"
+"le pour choisir la version à garder."
+msgstr ""
+"This report was changed elsewhere since your last sync: open it to choose "
+"which version to keep."
+
+msgid "Résultat inconnu."
+msgstr "Unknown result."
+
+msgid "Type d'action inconnu."
+msgstr "Unknown action type."
+
+msgid "L'échéance ne peut pas précéder la visite."
+msgstr "The due date cannot precede the visit."
+
+msgid "Ce champ n'est pas dans ce rapport."
+msgstr "This field is not in this report."
+
+msgid "Complétez le rapport avant de le soumettre."
+msgstr "Complete the report before submitting it."
+
+msgid "Un fichier ne dépasse pas 10 Mo."
+msgstr "A file cannot exceed 10 MB."
+
+msgid "Trois pièces jointes au plus par rapport."
+msgstr "Three attachments at most per report."
+
+msgid "Cet identifiant est déjà utilisé."
+msgstr "This identifier is already used."
+
+msgid "Seuls les documents PDF sont acceptés."
+msgstr "Only PDF documents are accepted."
+
+msgid "Seul un rapport soumis se valide."
+msgstr "Only a submitted report can be approved."
+
+msgid "Cette journée est déjà validée."
+msgstr "This day is already approved."
+
+#, python-format
+msgid "%(n)s rapport(s) de cette journée ne sont pas encore soumis."
+msgstr "%(n)s report(s) of this day have not been submitted yet."
+
+msgid "Seul un rapport soumis peut être renvoyé pour correction."
+msgstr "Only a submitted report can be sent back for correction."
+
+msgid "Dites au délégué ce qu'il doit corriger."
+msgstr "Tell the representative what to correct."
+
+msgid "Champ du rapport inconnu."
+msgstr "Unknown report field."
+
+msgid "Seul un rapport validé se rouvre."
+msgstr "Only an approved report can be reopened."
+
+msgid "Validé il y a plus de 30 jours : seul le DM peut le rouvrir."
+msgstr "Approved more than 30 days ago: only the DM can reopen it."
+
+msgid "Dites pourquoi vous rouvrez ce rapport."
+msgstr "Say why you are reopening this report."
+
+msgid "Ce document n'est pas encore arrivé du téléphone."
+msgstr "This document has not arrived from the phone yet."
+
+msgid "Ce libellé ou ce code est déjà utilisé dans cette liste."
+msgstr "This label or code is already used in this list."
+
+msgid "Cette liste n'a pas de valeur parente."
+msgstr "This list has no parent value."
+
+msgid "Liste inconnue."
+msgstr "Unknown list."
+
+msgid "Archivez d'abord les valeurs qui dépendent de celle-ci."
+msgstr "Archive the values that depend on this one first."
+
+msgid "Changez d'abord la classe des produits de cette classe."
+msgstr "First change the class of this class's products."
+
+msgid "Une valeur active porte déjà ce libellé ou ce code."
+msgstr "An active value already has this label or code."
+
+msgid "Authentification requise."
+msgstr "Authentication required."
+
+msgid "Ressource introuvable."
+msgstr "Resource not found."
+
+msgid "Trop de tentatives, réessayez plus tard."
+msgstr "Too many attempts, try again later."
+
+msgid "Données invalides."
+msgstr "Invalid data."
+
+#, python-format
+msgid ""
+"Une erreur inattendue s'est produite. Si elle se répète, donnez la référence"
+" %(reference)s au support."
+msgstr ""
+"An unexpected error occurred. If it happens again, give reference "
+"%(reference)s to support."
+
+msgid ""
+"Cette version de l'application n'est plus acceptée : mettez-la à jour. Vos "
+"données restent sur le téléphone."
+msgstr ""
+"This version of the app is no longer accepted: please update it. Your data "
+"stays on the phone."
+
+msgid "Bienvenue dans INNOV CRM."
+msgstr "Welcome to INNOV CRM."
+
+msgid "Français"
+msgstr "French"
+
+msgid "Anglais"
+msgstr "English"
+
+#~ msgid ""
+#~ "Des visites sont incomplètes : complétez les champs indiqués avant de "
+#~ "soumettre."
+#~ msgstr ""
+#~ "Some visits are incomplete: fill in the fields shown before submitting."

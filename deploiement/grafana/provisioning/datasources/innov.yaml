@@ -1,0 +1,45 @@
+# Sources de données Grafana d'INNOV CRM (DSH-010, architecture §25.2).
+# Une organisation Grafana par pays, chacune reliée au rôle PostgreSQL de son pays ; le siège
+# n'a que l'agrégat par pays. Aucun secret ici : hôte et mots de passe viennent de
+# l'environnement du service Grafana (voir docs/grafana.md).
+apiVersion: 1
+
+datasources:
+  - name: INNOV siège
+    uid: innov-siege
+    orgId: 1
+    type: grafana-postgresql-datasource
+    url: ${INNOV_GRAFANA_HOTE}
+    user: innov_grafana_siege
+    jsonData:
+      database: ${INNOV_GRAFANA_BASE}
+      sslmode: require
+      postgresVersion: 1600
+    secureJsonData:
+      password: ${INNOV_GRAFANA_SIEGE_MDP}
+
+  - name: INNOV Sénégal
+    uid: innov-sn
+    orgId: 2
+    type: grafana-postgresql-datasource
+    url: ${INNOV_GRAFANA_HOTE}
+    user: innov_grafana_sn
+    jsonData:
+      database: ${INNOV_GRAFANA_BASE}
+      sslmode: require
+      postgresVersion: 1600
+    secureJsonData:
+      password: ${INNOV_GRAFANA_SN_MDP}
+
+  - name: INNOV Togo
+    uid: innov-tg
+    orgId: 3
+    type: grafana-postgresql-datasource
+    url: ${INNOV_GRAFANA_HOTE}
+    user: innov_grafana_tg
+    jsonData:
+      database: ${INNOV_GRAFANA_BASE}
+      sslmode: require
+      postgresVersion: 1600
+    secureJsonData:
+      password: ${INNOV_GRAFANA_TG_MDP}

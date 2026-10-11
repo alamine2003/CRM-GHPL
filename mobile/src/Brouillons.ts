@@ -1,0 +1,427 @@
+/**
+ * Brouillons et envois en attente du planning (PLN-007, 0.2.7).
+ *
+ * - **Brouillon de saisie** : le formulaire d'une visite ou d'une absence est gardé dans la
+ *   base locale chiffrée à chaque changement ; si l'application se ferme en pleine saisie, la
+ *   semaine propose de la reprendre (CA1 : aucune visite perdue).
+ * - **Envois en attente** : sans réseau, une visite ou une absence enregistrée part dans une
+ *   file sur le téléphone, avec un identifiant tiré ici (OFF-002 CA1) ; la file se vide dès que
+ *   le réseau revient, et le serveur ne crée rien deux fois (OFF-003 CA2). Son compte est
+ *   visible sur chaque écran (OFF-003 CA1, 0.8.3) ; au-delà du délai du pays sans
+ *   synchronisation, elle est gardée et part à la synchronisation suivante (RG-054).
+ */
+import type {
+  ClientApi,
+  Rapport,
+  Demarrage,
+  Ecart,
+  Imprevue,
+  ModificationVisite,
+  PeriodeActivite,
+  Report,
+  Terminaison,
+  SaisieActivite,
+  SaisieProposition,
+  SaisieVisite,
+} from '@innov/api-client';
+import { Platform } from 'react-native';
+import { ErreurApi } from '@innov/api-client';
+import * as Crypto from 'expo-crypto';
+import { ecrire, lire, oublier } from './baseLocale';
+import { type ConflitVisite, conflitDe } from './Conflits';
+import {
+  lireBrouillonRapport,
+  marquerEnvoye,
+  oublierBrouillon as oublierBrouillonRapport,
+  oublierFichier,
+  oublierSaisie,
+  versionDeBase,
+} from './BrouillonRapport';
+
+const CLE_BROUILLON = 'planning.brouillon';
+const CLE_ATTENTE = 'planning.attente';
+
+/** Champs d'une visite en cours de saisie, tels que le formulaire les tient. */
+export type ChampsVisite = {
+  date: string;
+  heure: string;
+  prospect: {
+    id: string;
+    civilite?: string;
+    prenom?: string;
+    nom: string;
+    potentiel: string;
+    detail: string;
+  } | null;
+  lieu: { id: string; nom: string } | null;
+  reseau: string | null;
+  objectif: string;
+  note: string;
+};
+
+export type ChampsActivite = {
+  date: string;
+  type: SaisieActivite['type'] | null;
+  periode: NonNullable<SaisieActivite['periode']>;
+  commentaire: string;
+  /** Déplacement demandé par le superviseur (0.3.1) ; absent des brouillons plus anciens. */
+  demande_superviseur?: boolean;
+};
+
+export type Brouillon =
+  | { objet: 'visite'; semaine: string; visite?: string; champs: ChampsVisite }
+  | { objet: 'activite'; semaine: string; activite?: string; champs: ChampsActivite };
+
+export type Envoi =
+  | {
+      id: string;
+      type: 'ajout_visite';
+      planning: string;
+      saisie: SaisieVisite;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      type: 'modif_visite';
+      visite: string;
+      saisie: ModificationVisite;
+      resume: string;
+      erreur?: string;
+      /** OFF-004 : la visite a changé ailleurs ; le délégué choisit (RG-053). */
+      conflit?: ConflitVisite;
+    }
+  | {
+      id: string;
+      /** DC-51 : indisponibilité imprévue déclarée sans réseau, avec l'identifiant du téléphone. */
+      type: 'indisponibilite';
+      saisie: { id: string; periode: PeriodeActivite };
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      type: 'ajout_activite';
+      planning: string;
+      saisie: SaisieActivite;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Visite démarrée sans réseau (VIS-003 CA1) : l'heure et la position du moment. */
+      type: 'demarrer_visite';
+      visite: string;
+      saisie: Demarrage;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Visite terminée sans réseau (VIS-004) : l'heure et la position du moment. */
+      type: 'terminer_visite';
+      visite: string;
+      saisie: Terminaison;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Écart déclaré sans réseau : prospect absent (VIS-005), annulée (VIS-006), non
+       * réalisée (VIS-009). */
+      type: 'absent_visite' | 'annuler_visite' | 'non_realisee_visite';
+      visite: string;
+      saisie: Ecart;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Visite imprévue démarrée sans réseau (VIS-008), avec son identifiant. */
+      type: 'imprevue_visite';
+      visite: string;
+      saisie: Imprevue;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Report déclaré sans réseau (VIS-007), avec l'identifiant de la nouvelle visite. */
+      type: 'reporter_visite';
+      visite: string;
+      saisie: Report;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Brouillon du rapport saisi sans réseau (RPT-009) : la saisie est dans la base
+       * locale ; seul le rappel d'envoyer attend dans la file. */
+      type: 'brouillon_rapport';
+      visite: string;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Rapport soumis sans réseau (RPT-010) : l'heure du téléphone part avec lui ; la
+       * saisie, gardée dans la base locale, est envoyée d'abord si elle ne l'est pas. */
+      type: 'soumission_rapport';
+      visite: string;
+      soumis_le: string;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** OFF-002 : proposition de mise à jour d'une fiche faite sans réseau ; son identifiant
+       * est celui de la proposition, le serveur ne la crée qu'une fois. */
+      type: 'proposition';
+      saisie: SaisieProposition;
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** OFF-005 (0.8.7) : l'annonce d'un document (nom, taille), qui part avant le fichier
+       * pour que le rapport n'attende pas ; le serveur montre « pièce en attente ». */
+      type: 'annonce_piece';
+      visite: string;
+      saisie: { id: string; nom: string; taille: number; prise_le: string };
+      resume: string;
+      erreur?: string;
+    }
+  | {
+      id: string;
+      /** Document du rapport choisi sans réseau (RPT-007) : le fichier reste sur le
+       * téléphone, à son adresse locale, jusqu'à l'envoi. */
+      type: 'piece_jointe';
+      visite: string;
+      saisie: PieceEnAttente;
+      resume: string;
+      erreur?: string;
+    };
+
+/** Le fichier tel que l'envoi l'attend : sur le téléphone, son adresse locale ({ uri, name,
+ * type }) que React Native lit lui-même ; dans un navigateur, son contenu (Blob). */
+export async function fichierAEnvoyer(uri: string, nom: string, type: string) {
+  if (Platform.OS === 'web') return (await fetch(uri)).blob();
+  return { uri, name: nom, type };
+}
+
+export type PieceEnAttente = {
+  id: string;
+  uri: string;
+  nom: string;
+  type_mime: string;
+  taille: number;
+  prise_le: string;
+};
+
+/** Panne de réseau ou serveur indisponible : la saisie attend ; un refus métier, non. */
+export function estTransitoire(erreur: unknown) {
+  return !(erreur instanceof ErreurApi) || erreur.statut >= 500;
+}
+
+export function nouvelIdentifiant() {
+  return Crypto.randomUUID();
+}
+
+export async function lireBrouillon() {
+  return (await lire<Brouillon>(CLE_BROUILLON).catch(() => null))?.valeur ?? null;
+}
+
+export async function garderBrouillon(brouillon: Brouillon) {
+  await ecrire(CLE_BROUILLON, brouillon).catch(() => undefined);
+}
+
+export async function oublierBrouillon() {
+  await oublier(CLE_BROUILLON).catch(() => undefined);
+}
+
+export async function lireAttente() {
+  return (await lire<Envoi[]>(CLE_ATTENTE).catch(() => null))?.valeur ?? [];
+}
+
+/** OFF-003 CA1 : les écrans qui montrent le nombre d'envois en attente sont prévenus. */
+const ecouteursFile = new Set<(envois: Envoi[]) => void>();
+export function ecouterFile(ecouteur: (envois: Envoi[]) => void) {
+  ecouteursFile.add(ecouteur);
+  return () => {
+    ecouteursFile.delete(ecouteur);
+  };
+}
+
+async function garderAttente(envois: Envoi[]) {
+  if (envois.length) await ecrire(CLE_ATTENTE, envois).catch(() => undefined);
+  else await oublier(CLE_ATTENTE).catch(() => undefined);
+  ecouteursFile.forEach((e) => e(envois));
+}
+
+/**
+ * Toute écriture de la file passe ici, l'une après l'autre : elle relit la file juste avant
+ * d'écrire, pour qu'un envoi ajouté pendant un rejeu ne soit jamais écrasé (0.2.9).
+ */
+let fileOccupee: Promise<unknown> = Promise.resolve();
+function modifierFile(changer: (envois: Envoi[]) => Envoi[]): Promise<void> {
+  const suite = fileOccupee.then(async () => garderAttente(changer(await lireAttente())));
+  fileOccupee = suite.catch(() => undefined);
+  return suite;
+}
+
+/** Ajoute un envoi à la file (après un échec de réseau). */
+export async function mettreEnAttente(envoi: Envoi) {
+  await modifierFile((envois) => [...envois, envoi]);
+}
+
+export async function abandonnerEnvoi(id: string) {
+  await modifierFile((envois) => envois.filter((e) => e.id !== id));
+}
+
+/** La saisie du rapport est arrivée au serveur : son rappel d'envoi n'a plus lieu d'être. */
+export async function retirerBrouillonsRapport(visite: string) {
+  await modifierFile((envois) =>
+    envois.filter((e) => !(e.type === 'brouillon_rapport' && e.visite === visite)),
+  );
+}
+
+/** OFF-004 : la version du serveur l'emporte ; la saisie locale du rapport et ses envois
+ * en attente sont abandonnés, en connaissance de cause. */
+export async function abandonnerRapportLocal(visite: string, rapport: Rapport) {
+  await oublierSaisie(visite, rapport);
+  await modifierFile((envois) =>
+    envois.filter(
+      (e) =>
+        !(
+          (e.type === 'brouillon_rapport' || e.type === 'soumission_rapport') &&
+          e.visite === visite
+        ),
+    ),
+  );
+}
+
+/**
+ * OFF-004 : « Garder ma version » d'une visite en conflit. La modification repart des valeurs
+ * que le serveur a montrées : renvoyée, elle les remplace en connaissance de cause.
+ */
+export async function garderMaVersion(id: string) {
+  await modifierFile((envois) =>
+    envois.map((e) => {
+      if (e.id !== id || e.type !== 'modif_visite' || !e.conflit) return e;
+      const avant = { ...e.saisie.avant, ...e.conflit.serveur } as ModificationVisite['avant'];
+      return { ...e, saisie: { ...e.saisie, avant }, conflit: undefined, erreur: undefined };
+    }),
+  );
+}
+
+/**
+ * Rejoue la file dans l'ordre. Un envoi réussi en sort ; un refus du serveur reste, avec son
+ * message, pour que le délégué corrige ou abandonne ; une panne de réseau arrête tout.
+ * Un seul rejeu à la fois : un second appel reçoit la réponse du premier, sans rien renvoyer
+ * deux fois. Rend le nombre d'envois partis.
+ */
+let rejeuEnCours: Promise<number> | null = null;
+export function envoyerAttente(client: ClientApi): Promise<number> {
+  rejeuEnCours ??= rejouer(client).finally(() => {
+    rejeuEnCours = null;
+  });
+  return rejeuEnCours;
+}
+
+/** OFF-005 : les fichiers partent après tout le reste ; une rafale de documents n'empêche ni
+ * le rapport ni sa soumission d'arriver (l'ordre des autres envois est gardé). */
+function fichiersEnDernier(envois: Envoi[]) {
+  return [
+    ...envois.filter((e) => e.type !== 'piece_jointe'),
+    ...envois.filter((e) => e.type === 'piece_jointe'),
+  ];
+}
+
+async function rejouer(client: ClientApi): Promise<number> {
+  const envois = fichiersEnDernier(await lireAttente());
+  const partis = new Set<string>();
+  const refus = new Map<string, string>();
+  const conflits = new Map<string, ConflitVisite>();
+  for (const envoi of envois) {
+    try {
+      if (envoi.type === 'ajout_visite') {
+        await client.plannings.ajouterVisite(envoi.planning, envoi.saisie);
+      } else if (envoi.type === 'modif_visite') {
+        await client.visites.modifier(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'demarrer_visite') {
+        await client.visites.demarrer(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'terminer_visite') {
+        await client.visites.terminer(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'imprevue_visite') {
+        await client.visites.imprevue(envoi.saisie);
+      } else if (envoi.type === 'reporter_visite') {
+        await client.visites.reporter(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'annonce_piece') {
+        await client.visites.annoncerPiece(envoi.visite, envoi.saisie);
+      } else if (envoi.type === 'piece_jointe') {
+        const { id, uri, nom, type_mime, prise_le } = envoi.saisie;
+        await client.visites.joindrePiece(envoi.visite, {
+          id,
+          nom,
+          prise_le,
+          fichier: await fichierAEnvoyer(uri, nom, type_mime),
+        });
+        await oublierFichier(uri);
+      } else if (envoi.type === 'brouillon_rapport') {
+        const brouillon = await lireBrouillonRapport(envoi.visite);
+        if (brouillon?.saisie && !brouillon.envoye) {
+          // RG-052 : la version de base part avec la saisie ; si le rapport a changé ailleurs,
+          // le serveur refuse (conflit) et le délégué choisit en ouvrant le rapport (RG-053).
+          const rapport = await client.visites.enregistrerRapport(envoi.visite, {
+            ...brouillon.saisie,
+            version: versionDeBase(brouillon),
+          });
+          await marquerEnvoye(envoi.visite, rapport);
+        }
+      } else if (envoi.type === 'soumission_rapport') {
+        const brouillon = await lireBrouillonRapport(envoi.visite);
+        if (brouillon?.saisie && !brouillon.envoye)
+          await client.visites.enregistrerRapport(envoi.visite, {
+            ...brouillon.saisie,
+            version: versionDeBase(brouillon),
+          });
+        await client.visites.soumettreRapport(envoi.visite, envoi.soumis_le);
+        await oublierBrouillonRapport(envoi.visite);
+      } else if (envoi.type === 'proposition') {
+        await client.propositions.creer(envoi.saisie);
+      } else if (envoi.type === 'indisponibilite') {
+        await client.plannings.declarerIndisponibilite(envoi.saisie);
+      } else if (envoi.type === 'ajout_activite') {
+        await client.plannings.declarerActivite(envoi.planning, envoi.saisie);
+      } else {
+        const declarer = {
+          absent_visite: client.visites.absent,
+          annuler_visite: client.visites.annuler,
+          non_realisee_visite: client.visites.nonRealisee,
+        }[envoi.type];
+        await declarer(envoi.visite, envoi.saisie);
+      }
+      partis.add(envoi.id);
+    } catch (e) {
+      if (estTransitoire(e)) break;
+      refus.set(envoi.id, e instanceof Error ? e.message : String(e));
+      const conflit = conflitDe(e);
+      if (conflit) conflits.set(envoi.id, conflit);
+    }
+  }
+  // Seuls les envois rejoués changent ; ce qui s'est ajouté entre-temps reste tel quel.
+  await modifierFile((actuels) =>
+    actuels
+      .filter((e) => !partis.has(e.id))
+      .map((e) =>
+        refus.has(e.id)
+          ? {
+              ...e,
+              erreur: refus.get(e.id),
+              ...(conflits.has(e.id) ? { conflit: conflits.get(e.id) } : {}),
+            }
+          : e,
+      ),
+  );
+  return partis.size;
+}

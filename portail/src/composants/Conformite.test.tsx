@@ -1,0 +1,79 @@
+import type { Semaine } from '@innov/api-client';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+import { beforeEach, describe, expect, it } from 'vitest';
+import i18n from '../i18n';
+import { CarteConformite } from './Conformite';
+
+const journee = (imprecises?: number) =>
+  ({
+    conformite: [
+      {
+        date: '2026-10-13',
+        classement: 'a_verifier',
+        fige: false,
+        terminee: true,
+        ecarts: [
+          {
+            code: 'sans_gps',
+            visite: null,
+            prospect: null,
+            heure: null,
+            nombre: 3,
+            tolerees: 1,
+            ...(imprecises === undefined ? {} : { imprecises }),
+          },
+        ],
+      },
+    ],
+  }) as unknown as Semaine;
+
+beforeEach(async () => {
+  await i18n.changeLanguage('fr');
+});
+
+describe('DC-55 : positions trop imprécises dans la conformité', () => {
+  it('DC-55 : les visites sans GPS disent « dont n à la position trop imprécise »', () => {
+    render(<CarteConformite semaine={journee(2)} jourLong={(iso) => iso} />);
+    expect(
+      screen.getByText('3 visites sans GPS (tolérance : 1) dont 2 à la position trop imprécise'),
+    ).toBeInTheDocument();
+  });
+
+  it('DC-55 : sans position imprécise, la mention ne s’affiche pas', () => {
+    render(<CarteConformite semaine={journee(0)} jourLong={(iso) => iso} />);
+    expect(screen.getByText('3 visites sans GPS (tolérance : 1)')).toBeInTheDocument();
+    expect(screen.queryByText(/trop imprécise/)).toBeNull();
+  });
+});
+
+describe('RPT-016 : la journée terminée s’ouvre depuis la conformité', () => {
+  it('RPT-016 : « Ouvrir la journée » mène à la journée du délégué', () => {
+    render(
+      <MemoryRouter>
+        <CarteConformite
+          semaine={journee(0)}
+          jourLong={(iso) => iso}
+          lienJournee={(iso) => `/a-traiter/d1/${iso}`}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText('Classement figé')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Ouvrir la journée' })).toHaveAttribute(
+      'href',
+      '/a-traiter/d1/2026-10-13',
+    );
+  });
+});
+
+describe('32.A : une journée figée le dit sans se dire « validée »', () => {
+  it('32.A : « Classement figé »', () => {
+    const base = journee(0);
+    const semaine = {
+      ...base,
+      conformite: base.conformite.map((j) => ({ ...j, fige: true })),
+    } as unknown as Semaine;
+    render(<CarteConformite semaine={semaine} jourLong={(iso) => iso} />);
+    expect(screen.getByText('Classement figé')).toBeInTheDocument();
+  });
+});

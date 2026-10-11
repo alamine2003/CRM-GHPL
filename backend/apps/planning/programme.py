@@ -1,0 +1,278 @@
+"""Programme de la semaine du délégué (VIS-001, cycle 0.4).
+
+Le délégué exécute la **version approuvée** de son planning (RG-018) : la référence, avec les
+heures changées depuis son approbation. Une modification majeure qui attend la décision du
+superviseur n'y entre pas encore ; les visites qu'elle touche restent prévues comme approuvées.
+Chaque journée liste ses visites dans l'ordre ; la prochaine visite du jour est celle qui
+n'est pas encore faite, la première dans l'ordre (prd.md §12).
+
+Une visite restée prévue après la fin de sa journée est « à justifier » (VIS-009 CA1) : le
+programme la rappelle tant qu'elle n'est pas justifiée, sur la semaine et la précédente.
+"""
+
+from dataclasses import dataclass
+from datetime import date, time, timedelta
+
+from django.db.models import Q
+
+from apps.identite.models import Utilisateur
+from apps.socle.models import Pays
+from apps.socle.services import aujourdhui, valeur_parametre
+
+from .calendrier import jours_de_la_semaine, lundi
+from .etats import StatutVisite
+from .indisponibilite import couverte, du_planning
+from .models import Activite, Decision, Planning, TypeActivite, Visite
+
+
+class Etat:
+    """Ce que le programme peut dire de la semaine."""
+
+    APPROUVE = "approuve"  # une version approuvée : le programme est là
+    NON_APPROUVE = "non_approuve"  # un planning, pas encore approuvé
+    SANS_PLANNING = "sans_planning"
+    SANS_POSTE = "sans_poste"
+
+    CHOIX = ((APPROUVE, "Approuvé"), (NON_APPROUVE, "Pas encore approuvé"),
+             (SANS_PLANNING, "Sans planning"), (SANS_POSTE, "Sans poste"))  # fmt: skip
+
+
+#: Une visite encore à faire.
+A_FAIRE = (StatutVisite.PREVUE, StatutVisite.EN_COURS)
+
+
+def _ordre(visite: dict) -> tuple:
+    return (visite["date"], visite["heure"] or "99:99", visite.get("ordre") or 0)
+
+
+def _motifs(pays: Pays) -> list:
+    from apps.referentiel.models import Liste, Valeur
+
+    motifs = Valeur.objects.filter(pays=pays, liste=Liste.MOTIF_ECART, archive_le__isnull=True)
+    return list(motifs.order_by("ordre", "libelle"))
+
+
+def _visites_approuvees(planning: Planning | None, ref) -> list[Visite]:
+    """Les fiches vivantes (statut, prospect, lieu), à la date et à l'heure approuvées."""
+    from . import services
+
+    if ref is None:
+        return []
+    figees = sorted(services.contenu_effectif(ref).get("visites", []), key=_ordre)
+    en_attente = set(services.suivi_apres_approbation(planning)["en_attente"])
+    vivantes = Visite.objects.filter(pk__in=[v["id"] for v in figees]).select_related(
+        "prospect__type", "prospect__specialite", "etablissement", "reseau", "motif_ecart"
+    )
+    par_id = {str(v.pk): v for v in vivantes}
+    visites = []
+    for figee in figees:
+        visite = par_id.get(figee["id"])
+        if visite is None:
+            continue
+        visite.date = date.fromisoformat(figee["date"])
+        visite.heure = time.fromisoformat(figee["heure"]) if figee["heure"] else None
+        visite.ordre = figee.get("ordre") or visite.ordre
+        visite.modification_en_attente = figee["id"] in en_attente
+        visites.append(visite)
+    return visites
+
+
+@dataclass(slots=True)
+class LigneVisite:
+    """Une visite telle que les indicateurs la comptent (`apps.pilotage.indicateurs`) : ses
+    seules colonnes utiles, sans objet Django ; un pays de 500 délégués en lit des dizaines de
+    milliers (0.9.4, NFR-002)."""
+
+    pk: object
+    planning_id: object
+    prospect_id: object
+    motif_ecart_id: object
+    date: date
+    heure: time | None
+    ordre: int
+    statut: str
+    debut_le: object
+    sans_gps: bool
+    distance_debut_m: int | None
+    debut_precision_m: int | None
+    rayon_pointage_m: int | None  # celui de l'établissement (DC-55), s'il en a un
+    delegue_id: object = None
+
+
+#: Les colonnes de `LigneVisite`, dans l'ordre.
+COLONNES_INDICATEURS = (
+    "pk", "planning_id", "prospect_id", "motif_ecart_id", "date", "heure", "ordre", "statut",
+    "debut_le", "sans_gps", "distance_debut_m", "debut_precision_m",
+    "etablissement__rayon_pointage_m",
+)  # fmt: skip
+
+
+def lignes_visites(visites, *autres) -> list[LigneVisite]:
+    """Les visites d'une requête en `LigneVisite` ; `autres` : des colonnes de plus (le
+    délégué)."""
+    return [LigneVisite(*ligne) for ligne in visites.values_list(*COLONNES_INDICATEURS, *autres)]
+
+
+def visites_approuvees_de(plannings) -> dict:
+    """`_visites_approuvees` pour plusieurs plannings en deux requêtes (0.9.4, NFR-002) :
+    la dernière version approuvée de chacun, puis ses visites. Pour les indicateurs : sans
+    l'état des modifications en attente, en `LigneVisite`."""
+    from . import services
+    from .models import Decision, VersionPlanning
+
+    references: dict = {}
+    for version in VersionPlanning.objects.filter(
+        planning__in=plannings, decision=Decision.APPROUVE
+    ).order_by("planning_id", "-numero"):
+        references.setdefault(version.planning_id, version)
+    figees = {
+        planning_id: sorted(services.contenu_effectif(ref).get("visites", []), key=_ordre)
+        for planning_id, ref in references.items()
+    }
+    # Les visites d'une version sont celles de son planning : filtrer par planning évite une
+    # liste de milliers d'identifiants dans la requête.
+    par_id = {
+        str(v.pk): v for v in lignes_visites(Visite.objects.filter(planning_id__in=list(figees)))
+    }
+    resultat: dict = {}
+    for planning_id, liste in figees.items():
+        visites = []
+        for figee in liste:
+            visite = par_id.get(figee["id"])
+            if visite is None:
+                continue
+            visite.date = date.fromisoformat(figee["date"])
+            visite.heure = time.fromisoformat(figee["heure"]) if figee["heure"] else None
+            visite.ordre = figee.get("ordre") or visite.ordre
+            visites.append(visite)
+        resultat[planning_id] = visites
+    return resultat
+
+
+def a_justifier(pays: Pays, delegue: Utilisateur, today: date) -> list[Visite]:
+    """VIS-009 CA1 : les visites approuvées restées prévues après leur journée, sur la semaine
+    en cours et la précédente, les plus anciennes d'abord."""
+    from . import services
+
+    semaine = lundi(today)
+    # Une version approuvée suffit : une modification soumise (un report, VIS-007 CA2) laisse
+    # le planning « soumis » sans retirer ce qui a été approuvé.
+    plannings = Planning.objects.filter(
+        pays=pays, delegue=delegue, versions__decision=Decision.APPROUVE,
+        semaine__in=[semaine - timedelta(days=7), semaine],
+    ).distinct().order_by("semaine")  # fmt: skip
+    return [
+        v
+        for p in plannings
+        for indisponibles in [du_planning(p)]
+        for v in _visites_approuvees(p, services.reference(p))
+        if v.date < today
+        and v.statut == StatutVisite.PREVUE
+        and not couverte(v, indisponibles)  # DC-51 : justifiées d'un coup
+    ]
+
+
+def a_corriger(pays: Pays, delegue: Utilisateur) -> list[Visite]:
+    """RPT-014, 29.A : les visites dont le rapport est renvoyé pour correction (ou rouvert,
+    RPT-016), quelle que soit leur semaine, les plus anciennes d'abord."""
+    visites = list(
+        Visite.objects.filter(pays=pays, planning__delegue=delegue, archive_le__isnull=True,
+                              rapport__statut__in=("a_corriger", "rouvert"))
+        .select_related("prospect__type", "prospect__specialite", "etablissement", "reseau",
+                        "motif_ecart", "rapport")
+        .order_by("date", "heure", "ordre")
+    )  # fmt: skip
+    for v in visites:
+        v.modification_en_attente = False
+    return visites
+
+
+def programme(pays: Pays, delegue: Utilisateur, jour: date | None = None) -> dict:
+    """La semaine qui contient `jour` (aujourd'hui par défaut), telle qu'approuvée."""
+    from . import services
+
+    today = aujourdhui(pays)
+    semaine = lundi(jour or today)
+    planning = Planning.objects.filter(pays=pays, delegue=delegue, semaine=semaine).first()
+    ref = services.reference(planning) if planning else None
+    visites = _visites_approuvees(planning, ref)
+    if ref:
+        # Les visites imprévues (VIS-008) : faites, sans approbation, au jour réel.
+        imprevues = planning.visites.filter(archive_le__isnull=True, est_imprevue=True)
+        for v in imprevues.select_related("prospect__type", "prospect__specialite",
+                                          "etablissement", "reseau", "motif_ecart"):  # fmt: skip
+            v.modification_en_attente = False
+            visites.append(v)
+        visites.sort(key=lambda v: (v.date, v.heure or time(23, 59), v.ordre or 0))
+
+    activites = []
+    if ref:
+        ids = [a["id"] for a in services.contenu_effectif(ref).get("activites", [])]
+        # DC-51 : l'indisponibilité imprévue, déclarée le jour même, hors approbation.
+        activites = list(
+            Activite.objects.filter(Q(pk__in=ids) | Q(planning=planning, archive_le__isnull=True,
+                                                      type=TypeActivite.INDISPONIBILITE))
+            .order_by("date")
+        )  # fmt: skip
+
+    jours = [
+        {"date": j.date, "ferie": j.ferie.libelle if j.ferie else None,
+         "visites": [v for v in visites if v.date == j.date],
+         "activites": [a for a in activites if a.date == j.date]}
+        for j in jours_de_la_semaine(pays, semaine)
+    ]  # fmt: skip
+    # La visite en cours la plus récemment démarrée d'abord (une imprévue, par exemple), sinon
+    # la première prévue.
+    du_jour = [v for v in visites if v.date == today and v.statut in A_FAIRE
+              and not couverte(v, activites)]  # fmt: skip
+    en_cours = [v for v in du_jour if v.statut == StatutVisite.EN_COURS and v.debut_le]
+    prochaine = max(en_cours, key=lambda v: v.debut_le, default=None) or next(iter(du_jour), None)
+
+    if ref:
+        etat = Etat.APPROUVE
+    elif planning:
+        etat = Etat.NON_APPROUVE
+    elif services.occupe_un_poste(delegue, pays, semaine):
+        etat = Etat.SANS_PLANNING
+    else:
+        etat = Etat.SANS_POSTE
+    return {
+        "semaine": semaine,
+        "aujourdhui": today,
+        "fuseau": pays.fuseau,
+        "etat": etat,
+        "planning": planning,
+        "version": ref.numero if ref else None,
+        "jours": jours,
+        "prochaine": prochaine.pk if prochaine else None,
+        "geolocalisation": valeur_parametre(pays, "geolocalisation_active"),
+        "attente_gps_secondes": valeur_parametre(pays, "attente_gps_secondes"),
+        "verrouillage_minutes": valeur_parametre(pays, "verrouillage_minutes"),
+        "delai_hors_ligne_jours": valeur_parametre(pays, "delai_hors_ligne_jours"),
+        "motifs_ecart": _motifs(pays),
+        "a_justifier": a_justifier(pays, delegue, today),
+        "a_corriger": a_corriger(pays, delegue),
+    }
+
+
+#: Plannings dont les visites ont été prévues pour de bon : validés, puis exécutés.
+EXECUTES = ("approuve", "en_cours", "termine")
+
+
+def historique(visite: Visite, nombre: int = 3) -> list[Visite]:
+    """VIS-002 : les dernières visites du même délégué chez le même prospect, avant celle-ci,
+    dans des plannings validés ; jamais celles d'un collègue (CA1)."""
+    if visite.prospect_id is None:
+        return []
+    return list(
+        Visite.objects.filter(
+            Q(planning__statut__in=EXECUTES) | Q(planning__versions__decision=Decision.APPROUVE),
+            planning__delegue_id=visite.planning.delegue_id,
+            prospect_id=visite.prospect_id,
+            archive_le__isnull=True,
+            date__lt=visite.date,
+        )
+        .select_related("etablissement")
+        .distinct()
+        .order_by("-date", "-heure")[:nombre]
+    )

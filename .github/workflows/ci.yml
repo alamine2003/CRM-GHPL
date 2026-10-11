@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  serveur:
+    name: Serveur (Django)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          # Base jetable de CI : pas de mot de passe à versionner.
+          POSTGRES_USER: innov
+          POSTGRES_DB: innov
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U innov" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://innov@localhost:5432/innov
+      ENVIRONNEMENT: test
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Outils système
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gettext
+      - run: pip install -r requirements-dev.txt
+      - name: Convention de version et CHANGELOG
+        run: ../scripts/verifier_version.sh
+      - name: Lint
+        run: ruff check . && ruff format --check .
+      - name: Traductions
+        run: python manage.py compilemessages
+      - name: Migrations à jour
+        run: python manage.py makemigrations --check --dry-run
+      # NFR-014 (1.0.2) : la couverture des permissions et des workflows reste au moins à 90 %.
+      - name: Tests (dont schéma OpenAPI à jour) et couverture
+        run: pytest -q --cov --cov-report=term
+      # 0.9.5 (REC-20, NFR-006) : sauvegarde chiffrée, restauration dans une base jetable,
+      # contrôles et durée, sur la base migrée de la CI (docs/exploitation.md §8).
+      - name: Test de restauration
+        run: |
+          python manage.py migrate --noinput
+          SOURCE_URL="$DATABASE_URL" CIBLE_ADMIN_URL=postgres://innov@localhost:5432/postgres \
+            MANAGE="python manage.py" ../scripts/tester_restauration.sh
+      # 0.9.3 : aucune faille connue dans les dépendances du serveur (docs/revue-securite.md).
+      - name: Audit des dépendances
+        run: pip install pip-audit && pip-audit -r requirements.txt
+
+  clients:
+    name: Portail, mobile et paquets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      # 0.9.3 : aucune faille critique dans les dépendances livrées. Les alertes « élevées » de
+      # la chaîne de construction mobile (Expo, Metro, Jest) sont suivies dans
+      # docs/revue-securite.md et levées à la montée de version d'Expo.
+      - name: Audit des dépendances
+        run: npm audit --omit=dev --audit-level=critical
+      - name: Types d'API à jour avec backend/schema.yaml
+        run: npm run api:types && git diff --exit-code -- packages/api-types
+      - name: Lint et format
+        run: npm run lint
+      - name: Types TypeScript
+        run: npm run typecheck
+      - name: Tests
+        run: npm test
+      - name: Build du portail
+        run: npm run build -w portail
+      - name: Bundles mobiles Android et iOS
+        working-directory: mobile
+        run: npx expo export --platform android --platform ios --output-dir ../.export-mobile
+
+  secrets:
+    name: Analyse de secrets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  image:
+    name: Image Docker du serveur
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construire l'image
+        run: docker build -f backend/Dockerfile -t innov-backend:ci .

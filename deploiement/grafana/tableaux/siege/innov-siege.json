@@ -1,0 +1,197 @@
+{
+  "uid": "innov-siege",
+  "title": "INNOV CRM — consolidation des pays",
+  "description": "Agrégats par pays, sans aucun nom (DSH-004, DSH-010 CA2). La descente nominative se fait dans le portail, où elle est auditée.",
+  "editable": false,
+  "schemaVersion": 39,
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "refresh": "1h",
+  "tags": ["innov"],
+  "templating": {
+    "list": [
+      {
+        "name": "source",
+        "type": "datasource",
+        "query": "grafana-postgresql-datasource",
+        "current": {
+          "text": "innov-siege",
+          "value": "innov-siege"
+        },
+        "hide": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Fraîcheur des données (DSH-011)",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${source}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT max(calcule_le) AS \"Calculé le\" FROM pilotage.fraicheur"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dateTimeFromNow"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 2,
+      "title": "Réalisation (KPI-03)",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${source}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT round(100.0 * sum(visites_effectuees_prevues) / nullif(sum(visites_echues), 0)) AS \"Réalisation\" FROM pilotage.indicateurs_pays_jour WHERE $__timeFilter(jour::timestamptz)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 3,
+      "title": "Écarts justifiés (DC-50)",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${source}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT round(100.0 * sum(ecarts_justifies) / nullif(sum(ecarts), 0)) AS \"Écarts justifiés\" FROM pilotage.indicateurs_pays_jour WHERE $__timeFilter(jour::timestamptz)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "Rapports dans le délai (KPI-04)",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${source}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT round(100.0 * sum(rapports_dans_delai) / nullif(sum(rapports_soumis), 0)) AS \"Dans le délai\" FROM pilotage.indicateurs_pays_jour WHERE $__timeFilter(jour::timestamptz)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 5,
+      "title": "Visites par jour",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${source}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "time_series",
+          "rawSql": "SELECT jour::timestamptz AS time, sum(visites_echues) AS \"Prévues échues\", sum(visites_effectuees) AS \"Faites\", sum(visites_imprevues) AS \"Imprévues\" FROM pilotage.indicateurs_pays_jour WHERE $__timeFilter(jour::timestamptz) GROUP BY 1 ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Par pays (sans classement, DC-49)",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "${source}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT pays_code AS \"Pays\", sum(visites_effectuees) AS \"Visites faites\", round(100.0 * sum(visites_effectuees_prevues) / nullif(sum(visites_echues), 0)) AS \"Réalisation (%)\", round(100.0 * sum(rapports_dans_delai) / nullif(sum(rapports_soumis), 0)) AS \"Rapports dans le délai (%)\" FROM pilotage.indicateurs_pays_jour WHERE $__timeFilter(jour::timestamptz) GROUP BY pays_code ORDER BY pays_code"
+        }
+      ]
+    }
+  ]
+}

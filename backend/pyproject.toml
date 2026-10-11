@@ -1,0 +1,40 @@
+[project]
+name = "innov-crm-backend"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+testpaths = ["apps", "tests"]
+addopts = "--strict-markers"
+markers = [
+  "isolation: suite d'isolation par pays, rôle, réseau et délégué (SEC-008, make isolation)",
+]
+filterwarnings = [
+  "error",
+  # staticfiles/ n'existe qu'après collectstatic (image Docker).
+  "ignore:No directory at:UserWarning",
+]
+
+# NFR-014 (1.0.2) : couverture des permissions (perimetre) et des workflows de validation et
+# de synchronisation côté serveur (planning, rapports) au moins 90 % ; `make couverture`, CI.
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/tests/*", "*/migrations/*", "*/management/*"]
+
+[tool.coverage.report]
+include = ["apps/perimetre/*", "apps/planning/*", "apps/rapports/*"]
+fail_under = 90
+skip_covered = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+"tests/**" = ["S101"]

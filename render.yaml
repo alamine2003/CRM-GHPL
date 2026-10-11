@@ -1,0 +1,174 @@
+# Plan d'hébergement d'INNOV CRM sur Render (0.9.5, HT-05, HT-06 ; docs/exploitation.md).
+# 1.0.1 : le portail aussi est servi par Render (site statique) ; R2 garde les fichiers.
+# Région Francfort, offres payantes : base persistante avec sauvegardes quotidiennes et
+# restauration à un instant donné (PITR). Aucun secret ici : `sync: false` les fait saisir dans
+# le tableau de bord ; `generateValue` les fait tirer au hasard par Render.
+# À appliquer avec un « Blueprint » Render, puis à relire service par service (offres, région).
+databases:
+  - name: innov-base
+    plan: basic-1gb
+    region: frankfurt
+    postgresMajorVersion: '16'
+    databaseName: innov
+    user: innov
+    ipAllowList: [] # joignable seulement depuis les services Render
+
+services:
+  - type: web
+    name: innov-api
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: backend/Dockerfile
+    plan: standard
+    region: frankfurt
+    numInstances: 1
+    healthCheckPath: /api/health/
+    preDeployCommand: python manage.py migrate --noinput
+    envVars: &communs
+      - key: ENVIRONNEMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase: { name: innov-base, property: connectionString }
+      - key: REDIS_URL
+        fromService: { type: keyvalue, name: innov-file, property: connectionString }
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: JWT_SIGNING_KEY
+        generateValue: true
+      - key: INNOV_CLE_CHIFFREMENT
+        sync: false # clé de chiffrement des secrets de double authentification : à conserver
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false # ex. api.innov.exemple
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # ex. https://portail.innov.exemple
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: PORTAIL_URL
+        sync: false
+      - key: INNOV_COOKIE_SAMESITE
+        sync: false # « None » tant que portail et API sont en *.onrender.com ; vide avec un domaine
+      - key: INNOV_STOCKAGE
+        value: r2
+      - key: R2_URL
+        sync: false # https://<compte>.r2.cloudflarestorage.com
+      - key: R2_COMPARTIMENT
+        value: innov-production-pieces
+      - key: R2_CLE
+        sync: false
+      - key: R2_SECRET
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: PUSH_ACTIF
+        value: 'true'
+      - key: PUSH_EXPO_JETON
+        sync: false
+
+  # Portail : site statique servi par le réseau de diffusion de Render (1.0.1). Ni offre ni
+  # région : aucune donnée personnelle dans ces fichiers.
+  - type: web
+    name: innov-portail
+    runtime: static
+    buildCommand: npm ci && npm run build -w portail
+    staticPublishPath: portail/dist
+    buildFilter:
+      paths:
+        - portail/**
+        - packages/**
+        - package.json
+        - package-lock.json
+    envVars:
+      - key: NODE_VERSION
+        value: '22' # comme la CI
+      - key: VITE_API_URL
+        sync: false # https://innov-api.onrender.com, puis https://api.<domaine> (reconstruire)
+      - key: VITE_CONTACT_DONNEES
+        sync: false
+    # Application d'une seule page : toute adresse sans fichier sert index.html.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    # En-têtes de sécurité (docs/revue-securite.md §4). connect-src : l'API (VITE_API_URL) ;
+    # img-src : les tuiles OpenStreetMap ; style-src 'unsafe-inline' : MUI et Leaflet.
+    headers:
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://tile.openstreetmap.org; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: same-origin
+      - path: /*
+        name: Permissions-Policy
+        value: geolocation=(), camera=(), microphone=(), payment=()
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+
+  - type: worker
+    name: innov-worker
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: backend/Dockerfile
+    dockerCommand: celery -A config worker --loglevel info --concurrency 2
+    plan: standard
+    region: frankfurt
+    envVars: *communs
+
+  - type: worker
+    name: innov-beat
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: backend/Dockerfile
+    dockerCommand: celery -A config beat --loglevel info
+    plan: starter
+    region: frankfurt
+    envVars: *communs
+
+  - type: keyvalue
+    name: innov-file
+    plan: starter
+    region: frankfurt
+    ipAllowList: []
+    maxmemoryPolicy: noeviction # une file de tâches ne perd rien
+
+  # Sauvegarde logique hors de Render, chiffrée, chaque nuit (en plus du PITR de Render).
+  - type: cron
+    name: innov-sauvegarde
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: deploiement/sauvegarde/Dockerfile
+    schedule: '17 1 * * *' # 01 h 17 UTC
+    plan: starter
+    region: frankfurt
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: { name: innov-base, property: connectionString }
+      - key: R2_URL
+        sync: false
+      - key: R2_CLE
+        sync: false
+      - key: R2_SECRET
+        sync: false
+      - key: R2_COMPARTIMENT_SAUVEGARDES
+        value: innov-production-sauvegardes
+      - key: SAUVEGARDE_PHRASE
+        sync: false # phrase de chiffrement des sauvegardes : à conserver hors de Render
+
