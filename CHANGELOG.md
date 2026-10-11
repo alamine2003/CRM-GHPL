@@ -2,6 +2,17 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.4] — Base de la démonstration chez Neon
+
+### Modifié (prd.md §14.81, DEM-001)
+
+- La démonstration gratuite prend sa base chez Neon (offre gratuite, région Francfort) : Render n'accepte qu'une base gratuite par compte, et le compte en avait déjà une. L'adresse de la base se saisit dans Render (`DATABASE_URL`), jamais dans le dépôt.
+- Guide `docs/demo-gratuite.md` : création de la base chez Neon (adresse directe, sans `-pooler`, avec `sslmode=require`).
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.3] — Démonstration gratuite sur Render
 
 ### Ajouté (prd.md §14.81, DEM-001)

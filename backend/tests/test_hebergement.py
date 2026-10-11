@@ -69,7 +69,8 @@ def test_demonstration_gratuite_sur_render():
     """1.0.3 : la démonstration tient dans les offres gratuites, sans secret écrit, et ne sert
     que des données fictives (ENVIRONNEMENT=demonstration, remplissage par preparer_demo)."""
     d = yaml.safe_load((RACINE / "render-demo.yaml").read_text(encoding="utf-8"))
-    assert all(b["plan"] == "free" for b in d["databases"])
+    # 1.0.4 : la base gratuite est chez Neon ; son adresse se saisit, jamais écrite ici.
+    assert "databases" not in d
     s = {x["name"]: x for x in d["services"]}
     api, portail = s["innov-demo-api"], s["innov-demo-portail"]
     assert api["plan"] == "free" and portail["runtime"] == "static"
@@ -78,6 +79,7 @@ def test_demonstration_gratuite_sur_render():
     assert commande.index("migrate") < commande.index("preparer_demo") < commande.index("gunicorn")
     v = {x["key"]: x for x in api["envVars"]}
     assert v["ENVIRONNEMENT"]["value"] == "demonstration"
+    assert v["DATABASE_URL"].get("sync") is False and "value" not in v["DATABASE_URL"]
     assert "INNOV_STOCKAGE" not in v and "REDIS_URL" not in v
     for cle in ("DJANGO_SECRET_KEY", "JWT_SIGNING_KEY", "INNOV_CLE_CHIFFREMENT"):
         assert v[cle].get("generateValue") is True and "value" not in v[cle]
