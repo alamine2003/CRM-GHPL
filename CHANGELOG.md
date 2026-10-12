@@ -2,6 +2,16 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.1.1] — Création du premier compte sur une base neuve
+
+### Corrigé (prd.md §14.81)
+
+- `preparer_instance` crée d'abord les tables d'une base neuve ; sans `migrate` préalable, il échouait (« relation "identite_utilisateur" does not exist »).
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.1.0] — Modèle sénégalais pour les autres pays ; BirdNotes après l'organisation
 
 ### Ajouté (prd.md §14.81)

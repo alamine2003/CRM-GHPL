@@ -42,3 +42,14 @@ def test_un_mot_de_passe_trop_faible_est_refuse(monkeypatch):
     with pytest.raises(CommandError):
         call_command("preparer_instance")
     assert not Utilisateur.objects.exists()
+
+
+def test_les_tables_sont_creees_avant_le_compte(monkeypatch):
+    """1.1.1 : la commande applique les migrations avant de chercher un compte."""
+    from apps.identite.management.commands import preparer_instance
+
+    appels = []
+    monkeypatch.setattr(preparer_instance, "call_command", lambda nom, **o: appels.append(nom))
+    monkeypatch.delenv("INNOV_ADMIN_IDENTIFIANT", raising=False)
+    call_command("preparer_instance")
+    assert appels == ["migrate"]

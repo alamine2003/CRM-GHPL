@@ -11,6 +11,7 @@ plus rien. Aucune donnée fictive ; le mot de passe vient de la configuration, j
 import os
 
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.identite.models import Role, Utilisateur
@@ -21,6 +22,8 @@ class Command(BaseCommand):
     help = "Crée l'administrateur du siège d'une instance sans compte ; sinon ne fait rien."
 
     def handle(self, *args, **options):
+        # 1.1.1 : une base neuve reçoit d'abord ses tables (sinon « relation … does not exist »).
+        call_command("migrate", interactive=False, verbosity=0)
         if Utilisateur.objects.exists():
             self.stdout.write("Instance déjà prête : rien à faire.")
             return
