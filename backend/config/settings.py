@@ -30,9 +30,11 @@ DEBUG = env_bool("DJANGO_DEBUG", ENVIRONNEMENT == "developpement")
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
 if ENVIRONNEMENT in {"developpement", "test"} and not SECRET_KEY:
     SECRET_KEY = "cle-de-developpement-uniquement-jamais-utilisee-en-production"  # noqa: S105
-elif len(SECRET_KEY) < 50:
+elif len(SECRET_KEY) < 43:
     # Elle signe aussi les jetons d'accès : une clé courte affaiblit toute l'authentification.
-    raise RuntimeError("DJANGO_SECRET_KEY est obligatoire hors développement (50 caractères min.).")
+    # 43 caractères : 256 bits tirés au hasard, écrits en base64, comme les tire Render
+    # (`generateValue`, 44 caractères avec le « = » final ; 1.0.6).
+    raise RuntimeError("DJANGO_SECRET_KEY est obligatoire hors développement (43 caractères min.).")
 
 ALLOWED_HOSTS = env_liste("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 # Render donne l'adresse publique du service (1.0.3) : la démonstration gratuite n'a rien à saisir.
@@ -349,4 +351,6 @@ if ENVIRONNEMENT not in {"developpement", "test"}:
 #   et n'est lu qu'avec l'en-tête X-Innov-Client, qui impose une requête CORS autorisée.
 # - W021 : pas de préchargement HSTS tant que le domaine de production n'est pas fixé
 #   (l'inscription est très difficile à retirer).
-SILENCED_SYSTEM_CHECKS = ["security.W003", "security.W021"]
+# - W009 (1.0.6) : Django veut 50 caractères ; la clé tirée par Render en a 44 (256 bits en
+#   base64), ce qui suffit. La longueur minimale est imposée plus haut, au démarrage.
+SILENCED_SYSTEM_CHECKS = ["security.W003", "security.W009", "security.W021"]

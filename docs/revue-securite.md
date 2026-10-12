@@ -42,7 +42,7 @@ Revue de l'application avant le pilote (prd.md §21.2, condition 2 : aucun défa
 
 | Point | État | Preuve |
 |---|---|---|
-| Production : `check --deploy` sans avertissement, clé secrète obligatoire (50 caractères), jamais en débogage | Conforme (0.9.3) | `tests/test_securite.py` |
+| Production : `check --deploy` sans avertissement, clé secrète obligatoire (43 caractères, 256 bits, depuis 1.0.6), jamais en débogage | Conforme (0.9.3, 1.0.6) | `tests/test_securite.py` |
 | HTTPS forcé, HSTS un an (sous-domaines compris), cookies sécurisés | Conforme | `config/settings.py` ; préchargement HSTS volontairement différé (W021) |
 | Chaque réponse : `Content-Security-Policy` fermée, `Permissions-Policy`, `X-Frame-Options: DENY`, `Referrer-Policy: same-origin`, `nosniff` | Conforme (0.9.3) | `test_chaque_reponse_porte_les_entetes_de_securite` |
 | Pas de compression des routes d'authentification (BREACH) | Conforme | OFF-006, `test_reseau_faible.py` |

@@ -3,6 +3,7 @@
 En-têtes de chaque réponse, pièce jointe ouverte en bac à sable, configuration de production
 sans avertissement de `check --deploy`, dépendances sans faille connue (audit en CI)."""
 
+import base64
 import os
 import secrets
 import subprocess
@@ -32,11 +33,13 @@ def test_chaque_reponse_porte_les_entetes_de_securite(monde):  # noqa: F811
 
 
 def test_la_configuration_de_production_passe_check_deploy():
-    """`check --deploy` sans avertissement (hors W003 et W021, écartés et justifiés)."""
+    """`check --deploy` sans avertissement (hors W003, W009 et W021, écartés et justifiés).
+
+    1.0.6 : avec une clé comme celles que tire Render (`generateValue`, 256 bits en base64)."""
     env = {
         **os.environ,
         "ENVIRONNEMENT": "production",
-        "DJANGO_SECRET_KEY": secrets.token_urlsafe(64),
+        "DJANGO_SECRET_KEY": base64.b64encode(secrets.token_bytes(32)).decode(),
         "DJANGO_ALLOWED_HOSTS": "api.exemple.org",
     }
     r = subprocess.run(
@@ -46,8 +49,9 @@ def test_la_configuration_de_production_passe_check_deploy():
     assert r.returncode == 0, r.stderr + r.stdout
 
 
-def test_la_production_refuse_une_cle_absente_ou_courte():
-    env = {**os.environ, "ENVIRONNEMENT": "production", "DJANGO_SECRET_KEY": "courte"}
+@pytest.mark.parametrize("cle", ["", "courte", "x" * 42])
+def test_la_production_refuse_une_cle_absente_ou_courte(cle):
+    env = {**os.environ, "ENVIRONNEMENT": "production", "DJANGO_SECRET_KEY": cle}
     r = subprocess.run([sys.executable, "manage.py", "check"], cwd=RACINE, env=env,
                        capture_output=True, text=True, timeout=120)  # fmt: skip
     assert r.returncode != 0 and "DJANGO_SECRET_KEY" in r.stderr
