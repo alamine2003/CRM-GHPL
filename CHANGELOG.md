@@ -2,6 +2,16 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.2.0] — L'administrateur du siège gère chaque pays
+
+### Modifié (prd.md §14.81)
+
+- Dans le pays qu'il choisit, l'administrateur du siège a désormais tous les droits de l'administrateur pays : imports, prospects, listes cibles, jours fériés, objectifs, utilisateurs. Il gère ainsi le Sénégal, siège sans administrateur pays, et entre dans le portail de chaque pays.
+
+### Design
+
+Pas d'écran modifié : les pages d'administration d'un pays s'ouvrent pour l'administrateur du siège.
+
 ## [1.1.2] — Double authentification suspendue jusqu'à la version 2
 
 ### Modifié (prd.md §14.81, SEC-003)

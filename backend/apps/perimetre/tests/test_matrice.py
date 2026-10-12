@@ -319,7 +319,10 @@ def test_chaque_role_chaque_action(monde, role, action):
     url = url(monde) if callable(url) else url
     corps = corps(monde) if callable(corps) else corps
     reponse = getattr(client_de(compte, pays), methode)(url, corps, format="json")
-    if role in MATRICE[action]:
+    # 1.2.0 [D] : dans un pays choisi, l'administrateur du siège a aussi les droits de
+    # l'administrateur pays.
+    effectifs = {role, "admin_pays"} if role == "admin_siege" else {role}
+    if effectifs & MATRICE[action]:
         assert reponse.status_code == succes, reponse.content
     elif isinstance(REQUETES[action][1], str):
         assert reponse.status_code == 403, (role, action, reponse.status_code)
