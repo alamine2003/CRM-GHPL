@@ -9,15 +9,8 @@
 # - pièces jointes sur le disque du service, perdues à chaque redéploiement ; pas de sauvegarde ;
 # - courriels écrits dans le journal du service, pas envoyés.
 # Au démarrage : migrations, puis remplissage de la base si elle est vide (preparer_demo).
-databases:
-  - name: innov-demo-base
-    plan: free
-    region: frankfurt
-    postgresMajorVersion: '16'
-    databaseName: innov
-    user: innov
-    ipAllowList: []
-
+# 1.0.4 : la base gratuite vient de Neon (neon.tech), pas de Render, qui n'accepte qu'une base
+# gratuite par compte ; son adresse se saisit dans DATABASE_URL.
 services:
   - type: web
     name: innov-demo-api
@@ -34,7 +27,7 @@ services:
       - key: ENVIRONNEMENT
         value: demonstration
       - key: DATABASE_URL
-        fromDatabase: { name: innov-demo-base, property: connectionString }
+        sync: false # adresse « directe » de la base Neon (sans « -pooler »), avec ?sslmode=require
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: JWT_SIGNING_KEY
