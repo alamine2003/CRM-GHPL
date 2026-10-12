@@ -1647,14 +1647,14 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-     *     l'administrateur pays en fixent (CA1).
+     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+     *     en fixe (CA1).
      */
     get: operations['objectifs'];
     put?: never;
     /**
-     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-     *     l'administrateur pays en fixent (CA1).
+     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+     *     en fixe (CA1).
      */
     post: operations['objectif_creer'];
     delete?: never;
@@ -2352,7 +2352,7 @@ export interface paths {
     put?: never;
     /**
      * @description RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
-     *     après la validation, le DM du périmètre au-delà (CA1).
+     *     après la validation, l'administrateur pays au-delà (CA1).
      */
     post: operations['rapport_rouvrir'];
     delete?: never;
@@ -4061,7 +4061,10 @@ export interface components {
       ecran?: string;
       reference?: string;
     };
-    /** @description PLN-016 : le planning est arrivé au DM faute de décision du responsable du poste. */
+    /**
+     * @description PLN-016 : le planning est arrivé à l'administrateur faute de décision du responsable du
+     *     poste.
+     */
     Escalade: {
       /** Format: date-time */
       le: string;

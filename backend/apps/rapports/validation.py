@@ -11,14 +11,14 @@ Règles retenues :
 - 23.A [D, 7 octobre 2026] : le lot ne prend que les journées « conformes », sans rapport
   attendu ni horodatage douteux (RPT-013 CA1, RG-035).
 - [H] Escalade : un rapport soumis qui attend depuis plus que le délai d'escalade du pays
-  (`delai_escalade_heures_ouvrees`, celui des plannings, PLN-016) ouvre sa journée au DM du
-  périmètre ; le superviseur garde la main.
+  (`delai_escalade_heures_ouvrees`, celui des plannings, PLN-016) ouvre sa journée à
+  l'administrateur pays (1.3.0, à la place du DM) ; le superviseur garde la main.
 
 Une journée validée est figée : son classement de conformité ne bouge plus (VIS-010 CA3) et
 elle quitte « À traiter ». Valider le dernier rapport d'une journée complète la valide aussi.
 
 Réouverture (RPT-016, 0.6.6) : un rapport validé se rouvre avec un motif ; par le responsable
-(ou son remplaçant) jusqu'à 30 jours après la validation, par le DM du périmètre au-delà
+(ou son remplaçant) jusqu'à 30 jours après la validation, par l'administrateur pays au-delà
 (CA1). [D, 8 octobre 2026, 32.A] Sa journée revient dans « À traiter » jusqu'à la nouvelle
 validation ; son classement de conformité, lui, reste figé : seules les visites le fondent.
 """
@@ -281,7 +281,7 @@ def demander_correction(rapport: Rapport, par, commentaire: str, champs: list[st
     return rapport
 
 
-#: RPT-016 CA1 : au-delà, seul le DM du périmètre rouvre un rapport validé.
+#: RPT-016 CA1 : au-delà, seul l'administrateur pays rouvre un rapport validé.
 DELAI_REOUVERTURE = timedelta(days=30)
 
 
@@ -314,7 +314,8 @@ def rouvrir(rapport: Rapport, par, motif: str) -> Rapport:
                            status.HTTP_409_CONFLICT)  # fmt: skip
     if not peut_rouvrir(par, rapport, titre):
         raise ErreurMetier("delai_reouverture",
-                           _("Validé il y a plus de 30 jours : seul le DM peut le rouvrir."),
+                           _("Validé il y a plus de 30 jours : seul l'administrateur peut "
+                             "le rouvrir."),
                            status.HTTP_403_FORBIDDEN)  # fmt: skip
     texte = (motif or "").strip()
     if not texte:

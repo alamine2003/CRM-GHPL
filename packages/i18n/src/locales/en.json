@@ -455,7 +455,7 @@
       "visites_sans_gps_tolerees": "Visits without GPS allowed per day",
       "distance_pointage_m": "Check-in distance (metres)",
       "geolocalisation_active": "Visit geolocation",
-      "delai_escalade_heures_ouvrees": "Delay before escalation to the DM (working hours)",
+      "delai_escalade_heures_ouvrees": "Delay before escalation to the administrator (working hours)",
       "conservation": "Retention periods",
       "attente_gps_secondes": "Position wait (seconds)",
       "duree_visite_minutes": "Visit duration (minutes)",
@@ -1712,8 +1712,8 @@
     "versionModification": " (change, version {{version}})",
     "rappel_planning": "Your planning for week {{numero}} is not submitted yet: submit it before {{echeance}}",
     "escalade": "Escalation: {{nom}}'s planning (week {{numero}}) has awaited a decision for {{heures}} working hours",
-    "plannings_non_approuves_one": "{{count}} planning for week {{numero}} is not approved in your networks",
-    "plannings_non_approuves_other": "{{count}} plannings for week {{numero}} are not approved in your networks",
+    "plannings_non_approuves_one": "{{count}} planning for week {{numero}} is not approved in your country",
+    "plannings_non_approuves_other": "{{count}} plannings for week {{numero}} are not approved in your country",
     "reouverture_demandee": "{{nom}} asks you to reopen their planning for week {{numero}}",
     "redaction_rouverte": "{{nom}} reopened your planning for week {{numero}}",
     "centre": "Notifications",
@@ -2312,7 +2312,7 @@
     "titres": {
       "remplacement": "You are approving as the deputy of this rep's supervisor.",
       "escalade": "Escalated day: its reports have been waiting longer than the country delay. You approve it by escalation; the supervisor keeps control.",
-      "consultation": "You are viewing this day as the area DM: you can reopen an approved report; approval stays with the supervisor."
+      "consultation": "You are viewing this day as the administrator: you can reopen an approved report; approval stays with the supervisor."
     },
     "lot_one": "Approve the compliant day",
     "lot_other": "Approve the {{count}} compliant days",
@@ -2551,7 +2551,7 @@
     "tous": "Also show targets that ended over 90 days ago",
     "aucun": "No current target",
     "aucunGerer": "Set a target of visits, A and B coverage or product presentations for a network.",
-    "aucunLire": "The network's DM or the country administrator sets targets.",
+    "aucunLire": "The country administrator sets targets.",
     "colonnes": {
       "objectif": "Target",
       "periode": "Period",

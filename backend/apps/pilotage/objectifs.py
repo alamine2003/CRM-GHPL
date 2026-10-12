@@ -55,7 +55,7 @@ def _exiger_gestion(perimetre, reseau: Reseau) -> None:
     if not reseaux_geres(perimetre).filter(pk=reseau.pk).exists():
         raise ErreurMetier(
             "objectif_hors_perimetre",
-            _("Seuls le DM du réseau et l'administrateur pays fixent ses objectifs."),
+            _("Seul l'administrateur pays fixe ses objectifs."),
             status.HTTP_403_FORBIDDEN,
         )
 

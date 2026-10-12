@@ -658,7 +658,7 @@ def mode_de_decision(utilisateur, planning: Planning) -> str | None:
 
 
 def est_escalade(planning: Planning) -> bool:
-    """La version qui attend une décision a été escaladée au DM (PLN-016)."""
+    """La version qui attend une décision a été escaladée à l'administrateur (PLN-016)."""
     if planning.statut != StatutPlanning.SOUMIS:
         return False
     derniere = planning.versions.first()

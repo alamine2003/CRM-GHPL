@@ -9,7 +9,7 @@ douteux.
 
 Qui voit quoi : les délégués dont il est le responsable cette semaine-là (superviseur du
 poste, DM pour un superviseur-visiteur, RG-023), et ceux du superviseur qu'il remplace
-(ORG-013) ; le DM du périmètre, les journées en escalade (0.6.3). Jamais ses propres journées.
+(ORG-013) ; l'administrateur pays, les journées en escalade (0.6.3). Jamais ses propres journées.
 
 [D, 20.A] La file remonte sur quatre semaines (`SEMAINES`) : au-delà, une journée non validée
 relève des retards (RPT-017, 0.6.7).

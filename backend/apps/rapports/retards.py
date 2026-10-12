@@ -11,7 +11,7 @@ défaut la fin de sa journée), un rapport toujours pas soumis le prévient, une
 visites d'un même jour d'un délégué font une seule alerte, avec leur nombre. [H] Seules les
 visites des 7 derniers jours sont alertées, et la liste remonte sur 13 semaines.
 
-Qui voit quoi : le responsable du poste (ou son remplaçant) et le DM du périmètre.
+Qui voit quoi : le responsable du poste (ou son remplaçant) et l'administrateur pays.
 """
 
 from datetime import datetime, timedelta
@@ -165,7 +165,7 @@ def rappels(pays, maintenant: datetime) -> int:
 
 
 def escalades(pays, maintenant: datetime) -> int:
-    """38.A : quand une journée passe au DM du périmètre (un rapport soumis attend depuis plus
+    """38.A : quand une journée passe à l'administrateur pays (un rapport soumis attend depuis plus
     que le délai d'escalade), chaque DM est prévenu une fois, par journée."""
     from apps.identite.models import Utilisateur
     from apps.notifications.models import TypeNotification

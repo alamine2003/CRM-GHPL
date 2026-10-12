@@ -4,10 +4,10 @@
   du pays, au délégué dont la semaine suivante n'est pas encore soumise, jusqu'à la fermeture
   du lundi 0 h (décision du 6 octobre 2026).
 - Escalade (PLN-016, RG-019) : un planning soumis sans décision depuis le délai du pays, compté
-  en heures ouvrées, va au DM du périmètre, qui peut alors décider (mode `escalade`) ; un
+  en heures ouvrées, va à l'administrateur pays, qui peut alors décider (mode `escalade`) ; un
   planning fermé n'escalade plus : seule sa réouverture le remet en jeu.
 - Alerte du lundi (RG-019) : à la fermeture du lundi 0 h, les plannings de la semaine qui ne
-  sont pas approuvés sont signalés au DM.
+  sont pas approuvés sont signalés à l'administrateur.
 
 - Exécution (cycle 0.4, prd.md §17.1) : le premier jour de sa semaine, un planning approuvé
   passe « en cours » ; la semaine finie, « terminé ».
@@ -29,7 +29,7 @@ from .calendrier import feries, lundi
 from .etats import StatutPlanning
 from .models import Planning
 
-#: Statuts d'une semaine qui n'attend plus rien du DM le lundi matin.
+#: Statuts d'une semaine qui n'attend plus rien de l'administrateur le lundi matin.
 DECIDES = (StatutPlanning.APPROUVE, StatutPlanning.EN_COURS, StatutPlanning.TERMINE,
            StatutPlanning.ANNULE)  # fmt: skip
 
@@ -130,7 +130,7 @@ def recours_du_planning(planning: Planning, jour: date | None = None) -> set:
 
 @transaction.atomic
 def escalader(planning: Planning, maintenant: datetime) -> set:
-    """PLN-016 CA1 : la version en attente est marquée escaladée et le DM du périmètre est
+    """PLN-016 CA1 : la version en attente est marquée escaladée et l'administrateur pays est
     notifié ; il décidera en mode `escalade` (CA2)."""
     from apps.identite.models import Utilisateur
     from apps.notifications.models import TypeNotification

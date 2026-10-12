@@ -527,7 +527,8 @@ class RevisionSerializer(serializers.Serializer):
 
 
 class EscaladeSerializer(serializers.Serializer):
-    """PLN-016 : le planning est arrivé au DM faute de décision du responsable du poste."""
+    """PLN-016 : le planning est arrivé à l'administrateur faute de décision du responsable du
+    poste."""
 
     le = serializers.DateTimeField()
     responsables = DelegueSerializer(many=True)

@@ -455,7 +455,7 @@
       "visites_sans_gps_tolerees": "Visites sans GPS tolérées par jour",
       "distance_pointage_m": "Distance de pointage (mètres)",
       "geolocalisation_active": "Géolocalisation des visites",
-      "delai_escalade_heures_ouvrees": "Délai avant escalade au DM (heures ouvrées)",
+      "delai_escalade_heures_ouvrees": "Délai avant escalade à l'administrateur (heures ouvrées)",
       "conservation": "Durées de conservation",
       "attente_gps_secondes": "Attente de la position (secondes)",
       "duree_visite_minutes": "Durée d'une visite (minutes)",
@@ -1712,8 +1712,8 @@
     "versionModification": " (modification, version {{version}})",
     "rappel_planning": "Votre planning de la semaine {{numero}} n'est pas encore soumis : à soumettre avant le {{echeance}}",
     "escalade": "Escalade : le planning de {{nom}} (semaine {{numero}}) attend une décision depuis {{heures}} h ouvrées",
-    "plannings_non_approuves_one": "{{count}} planning de la semaine {{numero}} n'est pas approuvé dans vos réseaux",
-    "plannings_non_approuves_other": "{{count}} plannings de la semaine {{numero}} ne sont pas approuvés dans vos réseaux",
+    "plannings_non_approuves_one": "{{count}} planning de la semaine {{numero}} n'est pas approuvé dans votre pays",
+    "plannings_non_approuves_other": "{{count}} plannings de la semaine {{numero}} ne sont pas approuvés dans votre pays",
     "reouverture_demandee": "{{nom}} demande la réouverture de son planning de la semaine {{numero}}",
     "redaction_rouverte": "{{nom}} a rouvert la rédaction de votre planning de la semaine {{numero}}",
     "centre": "Notifications",
@@ -2312,7 +2312,7 @@
     "titres": {
       "remplacement": "Vous validez en remplacement du superviseur de ce délégué.",
       "escalade": "Journée escaladée : ses rapports attendent depuis plus que le délai du pays. Vous la validez par escalade ; le superviseur garde la main.",
-      "consultation": "Vous consultez cette journée en tant que DM du périmètre : vous pouvez rouvrir un rapport validé, la validation reste au superviseur."
+      "consultation": "Vous consultez cette journée en tant qu'administrateur : vous pouvez rouvrir un rapport validé, la validation reste au superviseur."
     },
     "lot_one": "Valider la journée conforme",
     "lot_other": "Valider les {{count}} journées conformes",
@@ -2551,7 +2551,7 @@
     "tous": "Afficher aussi les objectifs terminés depuis plus de 90 jours",
     "aucun": "Aucun objectif en cours",
     "aucunGerer": "Fixez un objectif de visites, de couverture des potentiels A et B ou de présentations d'un produit pour un réseau.",
-    "aucunLire": "Le DM du réseau ou l'administrateur pays fixe les objectifs.",
+    "aucunLire": "L'administrateur pays fixe les objectifs.",
     "colonnes": {
       "objectif": "Objectif",
       "periode": "Période",

@@ -250,8 +250,8 @@ class VueObjectifs(VuePerimetre):
 
 
 class ObjectifsVue(VueObjectifs):
-    """DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-    l'administrateur pays en fixent (CA1)."""
+    """DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+    en fixe (CA1)."""
 
     actions = {"GET": Action.OBJECTIFS_LIRE, "POST": Action.OBJECTIFS_GERER}
     serializer_class = s.ObjectifsReseauSerializer

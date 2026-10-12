@@ -453,7 +453,7 @@ class CorrectionRapportVue(VuePerimetre):
 
 class ReouvertureRapportVue(VuePerimetre):
     """RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
-    après la validation, le DM du périmètre au-delà (CA1)."""
+    après la validation, l'administrateur pays au-delà (CA1)."""
 
     actions = {"POST": VALIDER}
 

@@ -2,6 +2,18 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.3.1] — Le compte du DO ; textes alignés sur 1.3.0
+
+### Modifié (prd.md §14.81)
+
+- Un DO reçoit le rôle DF : il consulte, sans rien décider. Ses droits deviendront réglables plus tard.
+- Les messages ne disent plus que le DM décide : « Délai avant escalade à l'administrateur », « seul l'administrateur peut le rouvrir », « … ne sont pas approuvés dans votre pays », journée consultée « en tant qu'administrateur ».
+- Guides de l'administrateur pays et du superviseur mis à jour (escalade à l'administrateur, double authentification facultative pendant l'essai, compte du DO).
+
+### Design
+
+Pas d'écran modifié : seuls des textes changent, en français et en anglais.
+
 ## [1.3.0] — Le DM lit, l'administrateur pays décide
 
 ### Modifié (prd.md §14.81, PLN-016, RG-019, RG-023, ORG-013, DSH-009)
