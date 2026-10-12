@@ -2,6 +2,16 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.6] — Clé secrète de Render acceptée
+
+### Corrigé (prd.md §14.81, DEM-001)
+
+- Le serveur de démonstration refusait de démarrer sur Render : « DJANGO_SECRET_KEY est obligatoire hors développement ». Render tire cette clé au hasard en 44 caractères (256 bits), le serveur en exigeait 50. Il accepte désormais une clé de 43 caractères au moins, ce qui couvre celle de Render. La production (`render.yaml`) avait le même défaut.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.5] — Démarrage de la démonstration corrigé
 
 ### Corrigé (prd.md §14.81, DEM-001)
