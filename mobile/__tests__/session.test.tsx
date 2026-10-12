@@ -240,7 +240,7 @@ describe('mobile — session', () => {
         informations: jest.fn(async () => ({ environnement: 'demonstration' })),
       } as unknown as Partial<ClientApi>),
     );
-    expect(await screen.findByText('Démonstration')).toBeTruthy();
+    expect(await screen.findByText('Essai')).toBeTruthy();
   });
 
   it('affiche le message traduit du serveur en cas de refus', async () => {

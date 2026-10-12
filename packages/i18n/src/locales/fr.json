@@ -628,8 +628,8 @@
     "basculer": "Changer d'apparence"
   },
   "demonstration": {
-    "bandeau": "Démonstration",
-    "texte": "Données fictives : aucune personne ni aucun établissement réels."
+    "bandeau": "Essai",
+    "texte": "Instance d'essai, sans sauvegarde : n'y saisissez aucune donnée réelle."
   },
   "referentiel": {
     "titre": "Référentiels",

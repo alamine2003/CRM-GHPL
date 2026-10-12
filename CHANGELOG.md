@@ -2,6 +2,24 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.8] — Plus de données fictives
+
+### Retiré (prd.md §14.81, DEM-001)
+
+- Les commandes qui remplissaient une instance de données fictives : `reinitialiser_demo`, `preparer_demo` et `generer_charge`. Une instance part vide. Les données fictives ne servent plus qu'aux tests automatiques.
+
+### Ajouté
+
+- `preparer_instance` : au démarrage d'une base sans compte, crée un seul administrateur du siège à partir de `INNOV_ADMIN_IDENTIFIANT` et `INNOV_ADMIN_MOT_DE_PASSE` (Render : `render-demo.yaml`). Il crée ensuite les pays et les comptes depuis le portail.
+
+### Modifié
+
+- La mention « Démonstration » devient « Essai » : « Instance d'essai, sans sauvegarde : n'y saisissez aucune donnée réelle. »
+
+### Design
+
+- Seul le mot de la mention change (« Essai », mêmes couleur et place) ; pas d'autre écran modifié.
+
 ## [1.0.7] — Démonstration locale sur une base neuve
 
 ### Corrigé (prd.md §14.81, DEM-001)

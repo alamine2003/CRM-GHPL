@@ -1,14 +1,13 @@
 """0.9.4 : NFR-001, NFR-002, DC-56 — charge et temps de réponse.
 
-La mesure complète se fait sur une base de 500 délégués (`generer_charge`, `mesurer_charge`,
-docs/charge.md). Ici, à chaque livraison : l'outil de mesure tourne sur la démonstration, et le
+La mesure complète se fait sur une base de 500 délégués (`mesurer_charge`, docs/charge.md ;
+`generer_charge` retirée en 1.0.8). Ici, à chaque livraison : l'outil de mesure tourne sur la démonstration, et le
 nombre de requêtes des écrans qui grandissent avec le pays (pilotage) ne dépend pas du nombre
 de délégués."""
 
 from datetime import timedelta
 
 import pytest
-from django.core.management import CommandError, call_command
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 
@@ -61,9 +60,3 @@ def test_nfr001_le_pilotage_ne_fait_pas_plus_de_requetes_avec_plus_de_delegues(d
         return len(capture)
 
     assert requetes(delegues[:1]) == requetes(delegues)
-
-
-def test_la_base_de_charge_se_refuse_hors_developpement(settings):
-    settings.ENVIRONNEMENT = "production"
-    with pytest.raises(CommandError, match="Refusé"):
-        call_command("generer_charge", delegues=5, oui=True)

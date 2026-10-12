@@ -81,14 +81,14 @@ Depuis GitHub : *Actions → Builds de test mobiles → Run workflow*, après av
 
 ## Démonstration
 
-Une base de démonstration aux données **fictives** (volumes réels du Sénégal : 4 divisions, 19 réseaux, 48 secteurs, 227 postes, 207 délégués ; Togo réduit) se recrée d'une commande (DEM-001). Elle **efface toute la base** et n'est permise qu'en développement ou démonstration :
+Depuis 1.0.8, plus aucune donnée fictive n'est versée dans une instance : elle part vide (décision du 12 octobre 2026, prd.md §14.81). Le premier compte, un administrateur du siège, se crée ainsi :
 
 ```bash
 cd backend
-INNOV_DEMO_MOT_DE_PASSE='…' .venv/bin/python manage.py reinitialiser_demo --oui   # --echelle 0.2 pour une base légère
+INNOV_ADMIN_IDENTIFIANT=prenom.nom INNOV_ADMIN_MOT_DE_PASSE='…' .venv/bin/python manage.py preparer_instance
 ```
 
-La commande crée d'abord les tables d'une base neuve, puis affiche un compte par rôle (siège, responsable et administrateur pays, DF, DM, superviseur, délégué). Sans la variable, un mot de passe est tiré au hasard et affiché une fois. Les courriels finissent en `@demo.invalid` : aucun message ne peut partir vers une vraie boîte. Les comptes marqués `*` devront activer la double authentification à leur première connexion. Une instance lancée avec `ENVIRONNEMENT=demonstration` affiche un bandeau « Démonstration » sur chaque écran.
+La commande ne fait rien si un compte existe déjà. L'administrateur du siège active la double authentification à sa première connexion, crée les pays (page **Pays**), puis les comptes. Une instance lancée avec `ENVIRONNEMENT=demonstration` affiche « Essai » sur chaque écran : sans sauvegarde, elle ne reçoit aucune donnée réelle. Les données fictives ne servent plus qu'aux tests automatiques (`apps/demonstration/generateur.py`).
 
 Scénario de démonstration de fin de cycle : [`demonstration-0.0.md`](demonstration-0.0.md). Recette du cycle (exigence → test) : [`recette-0.0.md`](recette-0.0.md).
 

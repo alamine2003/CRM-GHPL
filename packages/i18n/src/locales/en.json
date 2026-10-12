@@ -628,8 +628,8 @@
     "basculer": "Change appearance"
   },
   "demonstration": {
-    "bandeau": "Demo",
-    "texte": "Fictitious data: no real people or institutions."
+    "bandeau": "Trial",
+    "texte": "Trial instance, without backups: do not enter any real data."
   },
   "referentiel": {
     "titre": "Reference data",
