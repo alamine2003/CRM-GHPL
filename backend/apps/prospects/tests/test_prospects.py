@@ -118,8 +118,9 @@ def test_la_fiche_du_delegue_est_a_valider_et_visible_par_lui_seul(monde):
 def test_seuls_l_administrateur_pays_et_le_delegue_creent(monde):
     for alias in ("sup.sn", "dm.sn", "df.sn", "resp.sn"):
         assert client_de(monde[alias]).post(URL, fiche(monde), format="json").status_code == 403
+    # 1.2.0 [D] : dans le pays choisi, l'administrateur du siège agit en administrateur pays.
     siege = client_de(monde["ada.siege"], "SN").post(URL, fiche(monde), format="json")
-    assert siege.status_code == 403  # RG-002 : le siège n'a pas de prospects
+    assert siege.status_code == 201, siege.content
 
 
 def test_recherche_tolerante_et_filtres(monde):
