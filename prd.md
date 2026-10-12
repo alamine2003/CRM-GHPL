@@ -710,6 +710,7 @@ Mise en œuvre (0.3.9) :
 - **Ce qui diffère de la production** : pas de Redis, de worker ni d'ordonnanceur (les tâches s'exécutent sur place, les tâches périodiques ne tournent pas) ; pas de sauvegarde ; pièces jointes sur le disque du service ; courriels dans le journal ; service endormi après un quart d'heure sans visite.
 - **Remplissage automatique** : à chaque démarrage, `preparer_demo` remplit une base vide de données fictives (10 % des volumes réels, environ 20 secondes) et ne touche jamais une base remplie. Le mot de passe des comptes vient de la configuration de Render, jamais du dépôt.
 - **Base chez Neon** [D, 11 octobre 2026, responsable produit ; 1.0.4] : Render n'accepte qu'une base gratuite par compte, déjà prise par un autre projet. La base de la démonstration est donc chez Neon (offre gratuite, Francfort), par son adresse directe : l'isolation par pays est réglée transaction par transaction, et les règles de sécurité des lignes s'appliquent au compte propriétaire de Neon comme ailleurs.
+- **Démarrage** (1.0.5) : la commande en une ligne `sh -c "…"` était mal transmise par Render (« not found ») ; le démarrage passe par un fichier, `backend/demarrer_demo.sh`.
 - **Défauts corrigés en la préparant** : la sonde de santé était redirigée vers HTTPS ; le dossier des pièces jointes n'était pas accessible en écriture dans l'image ; l'adresse publique de Render n'était pas acceptée d'office.
 
 ### 14.80 Couverture des tests imposée (mise en œuvre 1.0.2)
