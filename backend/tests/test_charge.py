@@ -1,9 +1,9 @@
 """0.9.4 : NFR-001, NFR-002, DC-56 — charge et temps de réponse.
 
 La mesure complète se fait sur une base de 500 délégués (`mesurer_charge`, docs/charge.md ;
-`generer_charge` retirée en 1.0.8). Ici, à chaque livraison : l'outil de mesure tourne sur la démonstration, et le
-nombre de requêtes des écrans qui grandissent avec le pays (pilotage) ne dépend pas du nombre
-de délégués."""
+`generer_charge` retirée en 1.0.8). Ici, à chaque livraison : l'outil de mesure tourne sur
+la base fictive des tests, et le nombre de requêtes des écrans qui grandissent avec le pays
+(pilotage) ne dépend pas du nombre de délégués."""
 
 from datetime import timedelta
 

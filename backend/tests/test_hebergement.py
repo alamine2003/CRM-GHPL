@@ -80,7 +80,8 @@ def test_demonstration_gratuite_sur_render():
     script = (BACKEND / "demarrer_demo.sh").read_text(encoding="utf-8")
     assert "set -e" in script and "${PORT:-8000}" in script
     commande = script.split("set -e", 1)[1]  # les instructions, sans le commentaire d'en-tête
-    assert commande.index("migrate") < commande.index("preparer_instance") < commande.index("gunicorn")
+    ordre = [commande.index(etape) for etape in ("migrate", "preparer_instance", "gunicorn")]
+    assert ordre == sorted(ordre)
     assert subprocess.run(["sh", "-n", BACKEND / "demarrer_demo.sh"]).returncode == 0  # noqa: S603, S607
     v = {x["key"]: x for x in api["envVars"]}
     assert v["ENVIRONNEMENT"]["value"] == "demonstration"

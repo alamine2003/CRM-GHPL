@@ -1,4 +1,4 @@
-"""1.0.8 : une instance vide reçoit son premier compte depuis la configuration, sans donnée fictive."""
+"""1.0.8 : une instance vide reçoit son premier compte de la configuration, sans donnée fictive."""
 
 import pytest
 from django.core.management import CommandError, call_command
