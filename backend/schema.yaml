@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.0.8
+  version: 1.0.9
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -12392,7 +12392,7 @@ components:
           readOnly: true
         libelle:
           type: string
-          maxLength: 120
+          maxLength: 200
         zone:
           type: string
           format: uuid

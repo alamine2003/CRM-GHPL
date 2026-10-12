@@ -2,6 +2,24 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.9] — Import du vrai fichier d'organisation
+
+### Corrigé (prd.md §14.81, ORG-014)
+
+- L'import du fichier d'organisation réel plantait : un secteur de 160 caractères (limite portée à 200) et une référence interne trop longue (raccourcie de façon stable : un second import ne crée aucun doublon).
+
+### Modifié
+
+- Les produits cités par le fichier et absents du référentiel sont désormais créés, au lieu d'être seulement signalés.
+
+### Ajouté
+
+- Commande `importer_organisation` : charge le fichier d'organisation sur un poste local, avec une simulation d'abord. Sur le fichier réel : 156 produits, 4 gammes, 19 réseaux, 48 secteurs, 227 postes, 245 comptes.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.8] — Plus de données fictives
 
 ### Retiré (prd.md §14.81, DEM-001)

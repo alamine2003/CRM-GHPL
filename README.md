@@ -90,6 +90,16 @@ INNOV_ADMIN_IDENTIFIANT=prenom.nom INNOV_ADMIN_MOT_DE_PASSE='…' .venv/bin/pyth
 
 La commande ne fait rien si un compte existe déjà. L'administrateur du siège active la double authentification à sa première connexion, crée les pays (page **Pays**), puis les comptes. Une instance lancée avec `ENVIRONNEMENT=demonstration` affiche « Essai » sur chaque écran : sans sauvegarde, elle ne reçoit aucune donnée réelle. Les données fictives ne servent plus qu'aux tests automatiques (`apps/demonstration/generateur.py`).
 
+Les vraies données se chargent **sur un poste local seulement**, jamais dans le dépôt ni sur l'instance gratuite (formalités CDP). Le fichier d'organisation (gammes, réseaux, produits, postes, délégués) :
+
+```bash
+cd backend
+.venv/bin/python manage.py importer_organisation ~/Downloads/ORGANISATION.xlsx --pays SN --auteur prenom.nom --simulation
+.venv/bin/python manage.py importer_organisation ~/Downloads/ORGANISATION.xlsx --pays SN --auteur prenom.nom
+```
+
+La simulation n'écrit rien ; l'import crée le pays s'il manque, puis les produits, gammes, réseaux, secteurs, postes et comptes (sans mot de passe). Un second import ne crée aucun doublon.
+
 Scénario de démonstration de fin de cycle : [`demonstration-0.0.md`](demonstration-0.0.md). Recette du cycle (exigence → test) : [`recette-0.0.md`](recette-0.0.md).
 
 ## Exploitation
