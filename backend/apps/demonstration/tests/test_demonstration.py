@@ -102,6 +102,17 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
     assert Notification.objects.filter(type="reouverture_demandee").exists()
 
 
+def test_la_reinitialisation_cree_d_abord_les_tables(monkeypatch):
+    """1.0.7 : sur une base neuve, la commande applique les migrations avant de la vider."""
+    from apps.demonstration.management.commands import reinitialiser_demo
+
+    ordre = []
+    monkeypatch.setattr(reinitialiser_demo, "call_command", lambda nom, **o: ordre.append(nom))
+    monkeypatch.setattr(reinitialiser_demo, "vider", lambda: ordre.append("vider"))
+    lancer(monkeypatch)
+    assert ordre == ["migrate", "vider"]
+
+
 def test_aucune_donnee_reelle(monkeypatch):
     """CA2 : noms tirés des listes, courriels sur un domaine qui n'existe pas."""
     lancer(monkeypatch)

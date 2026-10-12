@@ -11,6 +11,7 @@ import os
 import secrets
 
 from django.conf import settings
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.demonstration.generateur import Generateur, Volumes, vider
@@ -41,6 +42,8 @@ class Command(BaseCommand):
             "Demo-" + secrets.token_urlsafe(12)
         )
         volumes = Volumes() if echelle >= 1 else Volumes().reduits(echelle)
+        # 1.0.7 : une base neuve n'a pas encore ses tables ; les créer d'abord.
+        call_command("migrate", interactive=False, verbosity=0)
         vider()
         bilan = Generateur(mot_de_passe, graine).tout(volumes)
         self.stdout.write(self.style.SUCCESS("Démonstration prête (données fictives)."))

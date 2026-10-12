@@ -29,7 +29,7 @@ Prérequis : Python 3.12, Node.js 22.12+, PostgreSQL 16 (ou Docker), gettext.
 ```bash
 docker compose up -d db redis     # ou un PostgreSQL local (rôle innov, base innov ; sinon DATABASE_URL)
 make installer                    # environnement Python, traductions, dépendances npm
-make serveur                      # API sur http://localhost:8000 (/api/health/)
+make serveur                      # tables de la base à jour, puis API sur http://localhost:8000 (/api/health/)
 make portail                      # portail sur http://localhost:5173
 make mobile                       # Expo : ouvrir avec Expo Go ou un émulateur
 ```
@@ -88,7 +88,7 @@ cd backend
 INNOV_DEMO_MOT_DE_PASSE='…' .venv/bin/python manage.py reinitialiser_demo --oui   # --echelle 0.2 pour une base légère
 ```
 
-La commande affiche un compte par rôle (siège, responsable et administrateur pays, DF, DM, superviseur, délégué). Sans la variable, un mot de passe est tiré au hasard et affiché une fois. Les courriels finissent en `@demo.invalid` : aucun message ne peut partir vers une vraie boîte. Les comptes marqués `*` devront activer la double authentification à leur première connexion. Une instance lancée avec `ENVIRONNEMENT=demonstration` affiche un bandeau « Démonstration » sur chaque écran.
+La commande crée d'abord les tables d'une base neuve, puis affiche un compte par rôle (siège, responsable et administrateur pays, DF, DM, superviseur, délégué). Sans la variable, un mot de passe est tiré au hasard et affiché une fois. Les courriels finissent en `@demo.invalid` : aucun message ne peut partir vers une vraie boîte. Les comptes marqués `*` devront activer la double authentification à leur première connexion. Une instance lancée avec `ENVIRONNEMENT=demonstration` affiche un bandeau « Démonstration » sur chaque écran.
 
 Scénario de démonstration de fin de cycle : [`demonstration-0.0.md`](demonstration-0.0.md). Recette du cycle (exigence → test) : [`recette-0.0.md`](recette-0.0.md).
 

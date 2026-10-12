@@ -2,6 +2,16 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.7] — Démonstration locale sur une base neuve
+
+### Corrigé (prd.md §14.81, DEM-001)
+
+- Sur un ordinateur, `reinitialiser_demo` échouait sur une base neuve (« relation "identite_jourdecontact" does not exist ») : les tables n'étaient pas encore créées. La commande les crée désormais d'abord, et `make serveur` aussi avant de démarrer l'API.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.6] — Clé secrète de Render acceptée
 
 ### Corrigé (prd.md §14.81, DEM-001)
