@@ -7,6 +7,7 @@ Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `
 ### Corrigé (prd.md §14.81, DEM-001)
 
 - Le serveur de démonstration ne démarrait pas sur Render (« not found », code 127) : la commande de démarrage, écrite en une ligne avec des guillemets, était mal transmise. Elle est remplacée par un fichier, `backend/demarrer_demo.sh` (migrations, remplissage de la base vide, serveur web).
+- Les tests du serveur échouaient depuis le lundi 12 octobre 2026 : leurs terrains planifient cette semaine-là, fermée depuis ce lundi 0 h. Les tests tournent désormais sur une horloge de référence fixe (dimanche 11 octobre 2026, 19 h UTC) et ne dépendent plus du jour où on les lance (NFR-014).
 
 ### Design
 
