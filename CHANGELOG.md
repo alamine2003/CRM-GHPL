@@ -2,6 +2,16 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.1.2] — Double authentification suspendue jusqu'à la version 2
+
+### Modifié (prd.md §14.81, SEC-003)
+
+- La double authentification n'est plus imposée, dans aucun environnement : on se connecte avec l'identifiant et le mot de passe. Chacun peut encore l'activer de lui-même. Le réglage `INNOV_DOUBLE_AUTH_OBLIGATOIRE=oui` la rendra de nouveau obligatoire, sans changer le code.
+
+### Design
+
+Pas d'écran modifié : l'écran d'activation n'apparaît plus à la connexion.
+
 ## [1.1.1] — Création du premier compte sur une base neuve
 
 ### Corrigé (prd.md §14.81)

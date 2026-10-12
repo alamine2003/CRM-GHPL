@@ -188,3 +188,14 @@ def test_mon_activite_montre_les_connexions_reussies_et_echouees(api, delegue):
     activite = api.get("/api/v1/auth/activite/").json()
     assert [a["resultat"] for a in activite[:2]] == ["succes", "echec"]
     assert all(a["action"] == "connexion" for a in activite[:2])
+
+
+@pytest.mark.django_db
+def test_double_auth_suspendue_en_phase_de_test(monde, settings):  # noqa: F811
+    """1.1.2 [D] : par défaut, plus aucun rôle n'est tenu d'activer la double authentification."""
+    from apps.identite.double_auth import exige_double_auth
+
+    settings.INNOV_DOUBLE_AUTH_OBLIGATOIRE = False
+    assert not exige_double_auth(monde["admin.sn"])
+    settings.INNOV_DOUBLE_AUTH_OBLIGATOIRE = True
+    assert exige_double_auth(monde["admin.sn"])

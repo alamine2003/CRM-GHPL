@@ -48,9 +48,4 @@ class Command(BaseCommand):
         except ValidationError as erreur:
             raise CommandError("; ".join(erreur.messages)) from erreur
         attribuer_role(compte, Role.ADMIN_SIEGE, None, par=None)
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Administrateur du siège créé : {compte.username}. "
-                "Double authentification à activer à la première connexion."
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"Administrateur du siège créé : {compte.username}."))
