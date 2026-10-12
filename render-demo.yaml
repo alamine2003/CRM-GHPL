@@ -20,9 +20,7 @@ services:
     plan: free
     region: frankfurt
     healthCheckPath: /api/health/
-    dockerCommand: >-
-      sh -c "python manage.py migrate --noinput && python manage.py preparer_demo &&
-      exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2"
+    dockerCommand: sh demarrer_demo.sh # migrations, preparer_demo, gunicorn (backend/demarrer_demo.sh)
     envVars:
       - key: ENVIRONNEMENT
         value: demonstration

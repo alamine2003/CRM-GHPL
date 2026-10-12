@@ -75,8 +75,13 @@ def test_demonstration_gratuite_sur_render():
     api, portail = s["innov-demo-api"], s["innov-demo-portail"]
     assert api["plan"] == "free" and portail["runtime"] == "static"
     assert set(s) == {"innov-demo-api", "innov-demo-portail"}  # ni worker, ni Redis, ni cron
-    commande = api["dockerCommand"]
+    # 1.0.5 : un fichier de démarrage, sans guillemets dans la commande (Render les transmet mal).
+    assert api["dockerCommand"] == "sh demarrer_demo.sh"
+    script = (BACKEND / "demarrer_demo.sh").read_text(encoding="utf-8")
+    assert "set -e" in script and "${PORT:-8000}" in script
+    commande = script.split("set -e", 1)[1]  # les instructions, sans le commentaire d'en-tête
     assert commande.index("migrate") < commande.index("preparer_demo") < commande.index("gunicorn")
+    assert subprocess.run(["sh", "-n", BACKEND / "demarrer_demo.sh"]).returncode == 0  # noqa: S603, S607
     v = {x["key"]: x for x in api["envVars"]}
     assert v["ENVIRONNEMENT"]["value"] == "demonstration"
     assert v["DATABASE_URL"].get("sync") is False and "value" not in v["DATABASE_URL"]

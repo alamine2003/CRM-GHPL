@@ -2,6 +2,16 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.0.5] — Démarrage de la démonstration corrigé
+
+### Corrigé (prd.md §14.81, DEM-001)
+
+- Le serveur de démonstration ne démarrait pas sur Render (« not found », code 127) : la commande de démarrage, écrite en une ligne avec des guillemets, était mal transmise. Elle est remplacée par un fichier, `backend/demarrer_demo.sh` (migrations, remplissage de la base vide, serveur web).
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.4] — Base de la démonstration chez Neon
 
 ### Modifié (prd.md §14.81, DEM-001)
