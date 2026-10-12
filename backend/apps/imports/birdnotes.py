@@ -225,6 +225,12 @@ class ImportBirdNotes:
     # --- 2. gammes, produits, portefeuilles --------------------------------------------------
 
     def gammes_et_produits(self) -> None:
+        # 1.1.0 [D] : le fichier d'organisation, plus récent, fait foi pour les gammes, réseaux,
+        # produits et portefeuilles ; BirdNotes ne les recrée pas sous d'autres noms.
+        if ReferenceExterne.objects.filter(pays=self.pays, source=Source.ORGANISATION).exists():
+            n = len(self.d.get("Gammes", []))
+            self.rapport.compter("gammes", "ignorees_organisation_importee", n)
+            return
         divisions = {d.code: d for d in Division.objects.filter(pays=self.pays)}
         reseaux = {r.code: r for r in Reseau.objects.filter(pays=self.pays)}
 

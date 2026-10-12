@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.1.0] — Modèle sénégalais pour les autres pays ; BirdNotes après l'organisation
+
+### Ajouté (prd.md §14.81)
+
+- Commande `appliquer_modele_pays --depuis SN --vers CI TG …` : chaque pays reprend la structure commerciale du Sénégal (listes, gammes, réseaux, produits, portefeuilles, paramètres), jamais le terrain ni les personnes. Relancée, elle ne crée aucun doublon.
+
+### Modifié (PRP-013)
+
+- Après le fichier d'organisation, l'import BirdNotes ne recrée plus gammes, réseaux ni produits sous d'autres noms : il apporte secteurs, localités, établissements et prospects.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.9] — Import du vrai fichier d'organisation
 
 ### Corrigé (prd.md §14.81, ORG-014)

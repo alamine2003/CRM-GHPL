@@ -100,6 +100,19 @@ cd backend
 
 La simulation n'écrit rien ; l'import crée le pays s'il manque, puis les produits, gammes, réseaux, secteurs, postes et comptes (sans mot de passe). Un second import ne crée aucun doublon.
 
+Puis l'export BirdNotes (prospects, établissements, localités). Après le fichier d'organisation, BirdNotes ne recrée pas les gammes, réseaux ni produits : l'organisation fait foi.
+
+```bash
+.venv/bin/python manage.py importer_birdnotes ~/Downloads/Export_CRM_BirdNotes.json.zip --pays SN --auteur prenom.nom --simulation
+.venv/bin/python manage.py importer_birdnotes ~/Downloads/Export_CRM_BirdNotes.json.zip --pays SN --auteur prenom.nom
+```
+
+Enfin, le modèle sénégalais pour les autres pays (gammes, réseaux, produits, portefeuilles, listes et paramètres ; ni secteurs, ni prospects, ni personnes) :
+
+```bash
+.venv/bin/python manage.py appliquer_modele_pays --depuis SN --vers CI TG
+```
+
 Scénario de démonstration de fin de cycle : [`demonstration-0.0.md`](demonstration-0.0.md). Recette du cycle (exigence → test) : [`recette-0.0.md`](recette-0.0.md).
 
 ## Exploitation

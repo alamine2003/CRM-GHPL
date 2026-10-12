@@ -269,3 +269,23 @@ def test_api_reservee_a_l_administrateur_pays(monde):
                                              format="multipart")  # fmt: skip
         assert refus.status_code == 403
     assert client_de(monde["admin.tg"]).get(f"{URL}{lot}/").status_code == 404
+
+
+def test_apres_le_fichier_d_organisation_les_gammes_de_birdnotes_sont_ignorees(monde):
+    """1.1.0 [D] : le fichier d'organisation fait foi pour gammes, réseaux et produits ;
+    BirdNotes n'apporte plus que le terrain (secteurs, établissements, prospects)."""
+    from apps.imports import organisation
+    from apps.imports.tests.test_organisation import classeur
+    from apps.organisation.models import Reseau
+
+    sn = monde["sn"]
+    organisation.importer(sn, monde["admin.sn"], classeur(), "orga.xlsx", simulation=False)
+    reseaux = Reseau.objects.filter(pays=sn).count()
+    produits = Produit.objects.filter(pays=sn).count()
+    lot = importer(sn, monde["admin.sn"], contenu(), "export.json", simulation=False)
+    assert lot.compteurs["gammes"] == {
+        "ignorees_organisation_importee": len(export()["donnees"]["Gammes"])
+    }
+    assert Reseau.objects.filter(pays=sn).count() == reseaux
+    assert Produit.objects.filter(pays=sn).count() == produits
+    assert Prospect.objects.filter(pays=sn).exists()
