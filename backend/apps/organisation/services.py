@@ -400,13 +400,35 @@ def superviseurs_du_dm(dm: Utilisateur, pays: Pays, jour: date | None = None) ->
 
 
 def dms_des_reseaux(pays: Pays, reseaux, jour: date | None = None) -> set:
-    """DM dont le périmètre daté couvre l'un de ces réseaux (ORG-008) : ceux qui reçoivent
-    l'escalade d'un planning (PLN-016, RG-019)."""
+    """DM dont le périmètre daté couvre l'un de ces réseaux (ORG-008)."""
     jour = jour or aujourdhui(pays)
     return set(
         PerimetreReseau.objects.filter(actif_le(jour), pays=pays, reseau__in=reseaux)
         .values_list("utilisateur_id", flat=True)
         .distinct()
+    )
+
+
+def recours_du_pays(pays: Pays, jour: date | None = None) -> set:
+    """Qui décide à la place du superviseur (1.3.0 [D] : plus le DM) : les administrateurs du
+    pays ; à défaut, ceux du siège (le Sénégal, siège sans administrateur pays). Ils reçoivent
+    l'escalade d'un planning ou d'une journée de rapports (PLN-016, RG-019) et valident les
+    postes rattachés à un DM (superviseur-visiteur, RG-023)."""
+    from apps.identite.models import RoleUtilisateur
+
+    jour = jour or aujourdhui(pays)
+    actifs = RoleUtilisateur.objects.filter(
+        utilisateur__is_active=True, debut__date__lte=jour
+    ).filter(Q(fin__isnull=True) | Q(fin__date__gt=jour))
+    du_pays = set(
+        actifs.filter(role=Role.ADMIN_PAYS, pays=pays).values_list("utilisateur_id", flat=True)
+    )
+    if du_pays:
+        return du_pays
+    return set(
+        actifs.filter(role=Role.ADMIN_SIEGE, pays__isnull=True).values_list(
+            "utilisateur_id", flat=True
+        )
     )
 
 

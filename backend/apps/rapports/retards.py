@@ -37,15 +37,16 @@ NON_SOUMIS = models.Q(rapport__isnull=True) | models.Q(rapport__statut=StatutRap
 
 
 def _visibles(utilisateur, pays) -> list[Planning]:
-    """Les plannings des délégués que l'utilisateur encadre : responsable, remplaçant, DM."""
-    from apps.planning.echeances import dms_du_planning
+    """Les plannings des délégués que l'utilisateur encadre : responsable, remplaçant,
+    administrateur pays (1.3.0, à la place du DM)."""
+    from apps.planning.echeances import recours_du_planning
     from apps.planning.services import mode_de_decision
 
     debut = lundi(aujourdhui(pays)) - timedelta(weeks=SEMAINES_RETARDS - 1)
     return [
         p for p in _plannings(utilisateur, pays, depuis=debut)
         if mode_de_decision(utilisateur, p) in (ModeDecision.DIRECT, ModeDecision.REMPLACEMENT)
-        or utilisateur.pk in dms_du_planning(p)
+        or utilisateur.pk in recours_du_planning(p)
     ]  # fmt: skip
 
 
@@ -169,7 +170,7 @@ def escalades(pays, maintenant: datetime) -> int:
     from apps.identite.models import Utilisateur
     from apps.notifications.models import TypeNotification
     from apps.notifications.services import notifier_une_fois
-    from apps.planning.echeances import dms_du_planning
+    from apps.planning.echeances import recours_du_planning
 
     from .models import Rapport
     from .validation import en_escalade
@@ -189,7 +190,7 @@ def escalades(pays, maintenant: datetime) -> int:
             continue
         delegue = planning.delegue
         nom = f"{delegue.first_name} {delegue.last_name}".strip()
-        for dm in Utilisateur.objects.filter(pk__in=dms_du_planning(planning, jour)):
+        for dm in Utilisateur.objects.filter(pk__in=recours_du_planning(planning, jour)):
             envoyes += notifier_une_fois(dm, TypeNotification.JOURNEE_ESCALADEE, pays,
                                          f"escalade-journee:{planning.pk}:{jour.isoformat()}",
                                          delegue=str(delegue.pk), date=jour.isoformat(),

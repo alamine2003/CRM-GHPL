@@ -22,7 +22,7 @@ from django.db import models
 
 from apps.planning import conformite
 from apps.planning.calendrier import lundi
-from apps.planning.echeances import dms_du_planning
+from apps.planning.echeances import recours_du_planning
 from apps.planning.etats import StatutPlanning, StatutVisite
 from apps.planning.indisponibilite import du_planning
 from apps.planning.models import ConformiteJournee, ModeDecision, Planning
@@ -40,8 +40,7 @@ TRANSMIS = (StatutRapport.SOUMIS, StatutRapport.VALIDE)
 
 
 def _plannings(utilisateur, pays, depuis=None) -> list[Planning]:
-    from apps.organisation.models import PerimetreReseau, actif_le
-    from apps.organisation.services import remplaces_par
+    from apps.organisation.services import recours_du_pays, remplaces_par
 
     titulaires = [utilisateur.pk, *(r.pk for r in remplaces_par(utilisateur, pays))]
     debut = depuis or lundi(aujourdhui(pays)) - timedelta(weeks=SEMAINES - 1)
@@ -52,17 +51,13 @@ def _plannings(utilisateur, pays, depuis=None) -> list[Planning]:
     reprises = models.Q(pk__in=rouverts.values("visite__planning_id"))
     executes = Planning.objects.filter(models.Q(semaine__gte=debut) | reprises, pays=pays,
                                        statut__in=EXECUTES)  # fmt: skip
-    # Les postes rattachés (ou remplacés), et, pour l'escalade, ceux des réseaux du DM.
-    reseaux = PerimetreReseau.objects.filter(actif_le(aujourdhui(pays)), utilisateur=utilisateur)
-    candidats = (
-        executes.filter(
-            models.Q(delegue__occupations__poste__rattachements__superviseur__in=titulaires)
-            | models.Q(delegue__occupations__poste__reseaux__in=reseaux.values("reseau_id"))
+    # Les postes rattachés (ou remplacés) ; pour l'administrateur pays (1.3.0 [D], à la place du
+    # DM), tout le pays : escalade et postes rattachés à un DM, triés ensuite journée par journée.
+    if utilisateur.pk not in recours_du_pays(pays):
+        executes = executes.filter(
+            delegue__occupations__poste__rattachements__superviseur__in=titulaires
         )
-        .exclude(delegue=utilisateur)
-        .select_related("delegue", "pays")
-        .distinct()
-    )
+    candidats = executes.exclude(delegue=utilisateur).select_related("delegue", "pays").distinct()
     return list(candidats)
 
 
@@ -170,8 +165,8 @@ def journees_a_traiter(utilisateur, pays) -> list[dict]:
         # dépend de la journée (mode_pour).
         titre = mode_de_decision(utilisateur, planning)
         direct = titre in (ModeDecision.DIRECT, ModeDecision.REMPLACEMENT)
-        if not direct and utilisateur.pk not in dms_du_planning(planning):
-            continue  # ni responsable, ni remplaçant, ni DM du périmètre
+        if not direct and utilisateur.pk not in recours_du_planning(planning):
+            continue  # ni responsable, ni remplaçant, ni administrateur
         comptes = _rapports_par_jour(planning, jours)
         indisponibles = du_planning(planning)
         # Les journées encore ouvertes, leurs visites et leur conformité : lues une fois,

@@ -2,6 +2,17 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.3.0] — Le DM lit, l'administrateur pays décide
+
+### Modifié (prd.md §14.81, PLN-016, RG-019, RG-023, ORG-013, DSH-009)
+
+- Le DM ne valide plus rien : il lit les plannings, rapports, chiffres et objectifs de ses réseaux, comme le DF.
+- L'administrateur pays (le siège pour le Sénégal) prend sa place : il valide plannings et rapports des postes rattachés à un DM, reçoit les escalades et l'alerte du lundi, rouvre un rapport validé, désigne les remplaçants et fixe les objectifs.
+
+### Design
+
+Pas de nouvel écran : la file « À valider » s'ouvre pour l'administrateur pays ; pour le DM, les boutons de décision disparaissent.
+
 ## [1.2.0] — L'administrateur du siège gère chaque pays
 
 ### Modifié (prd.md §14.81)

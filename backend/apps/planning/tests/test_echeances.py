@@ -1,8 +1,9 @@
-"""0.3.8 : escalade vers le DM (PLN-016, RG-019) et rappels (NOT-006) ; 0.3.9 : rappel du
+"""0.3.8 : escalade (PLN-016, RG-019) et rappels (NOT-006) ; 0.3.9 : rappel du
 vendredi 9 h et fermeture du lundi 0 h (décision du 6 octobre 2026).
 
-PLN-016 CA1 : l'escalade notifie le DM du périmètre. CA2 : la décision du DM porte le mode
-`escalade`. RG-019 : sans planning approuvé à la fermeture du lundi 0 h, le DM est alerté.
+PLN-016 CA1 : l'escalade notifie l'administrateur pays (1.3.0 [D], à la place du DM). CA2 : sa
+décision porte le mode `escalade`. RG-019 : sans planning approuvé à la fermeture du lundi 0 h,
+il est alerté.
 NOT-006 CA1 : les heures suivent le fuseau du pays (Dakar est à UTC+0 : un test l'éprouve sur
 un fuseau décalé)."""
 
@@ -70,8 +71,8 @@ def test_heures_ouvrees_sans_le_week_end(monde):
     assert echeances.heures_ouvrees(sn, vendredi, instant("2026-10-13 17:00")) == 24
 
 
-def test_pln016_ca1_sans_decision_24_h_ouvrees_le_dm_est_notifie(monde, soumis_mardi):
-    dm = monde["dm.sn"]
+def test_pln016_ca1_sans_decision_24_h_ouvrees_l_administrateur_est_notifie(monde, soumis_mardi):
+    admin = monde["admin.sn"]
     soumis_vendredi = soumis_mardi
     with freeze_time("2026-10-07 16:59"):
         assert echeances.executer()["escalades"] == 0
@@ -79,31 +80,33 @@ def test_pln016_ca1_sans_decision_24_h_ouvrees_le_dm_est_notifie(monde, soumis_m
         assert echeances.executer()["escalades"] == 1
         # Une seule fois : la passe suivante ne répète rien.
         assert echeances.executer()["escalades"] == 0
-    notif = notifications(dm, "escalade").get()
+    notif = notifications(admin, "escalade").get()
     assert (notif.donnees["planning"], notif.donnees["heures"]) == (str(soumis_vendredi.pk), 24)
     assert soumis_vendredi.versions.first().escalade_le is not None
     assert EvenementAudit.objects.filter(action="planning.escalade").exists()
-    # Le DM le trouve dans sa file, escaladé, avec le responsable resté sans décision.
+    # L'administrateur le trouve dans sa file, escaladé, avec le responsable resté sans décision.
     with freeze_time("2026-10-07 17:05"):
-        ligne = client_de(dm).get(FILE).json()[0]
+        ligne = client_de(admin).get(FILE).json()[0]
     assert ligne["planning"]["id"] == str(soumis_vendredi.pk)
     assert [r["id"] for r in ligne["escalade"]["responsables"]] == [str(monde["sup.sn"].pk)]
 
 
-def test_pln016_ca2_la_decision_du_dm_porte_le_mode_escalade(monde, soumis_mardi):
+def test_pln016_ca2_la_decision_de_l_administrateur_porte_le_mode_escalade(monde, soumis_mardi):
     with freeze_time("2026-10-07 17:00"):
         echeances.executer()
     with freeze_time("2026-10-07 18:00"):
-        r = client_de(monde["dm.sn"]).post(f"/api/v1/plannings/{soumis_mardi.pk}/approuver/")
+        r = client_de(monde["admin.sn"]).post(f"/api/v1/plannings/{soumis_mardi.pk}/approuver/")
     assert r.status_code == 200, r.json()
     assert (r.json()["decision"]["mode"], r.json()["statut"]) == ("escalade", "approuve")
 
 
-def test_avant_l_escalade_le_dm_ne_decide_pas_et_le_superviseur_garde_la_main(monde, soumis_mardi):
+def test_avant_l_escalade_l_administrateur_ne_decide_pas_et_le_superviseur_garde_la_main(
+    monde, soumis_mardi
+):
     with freeze_time("2026-10-07 10:00"):
-        r = client_de(monde["dm.sn"]).post(f"/api/v1/plannings/{soumis_mardi.pk}/approuver/")
+        r = client_de(monde["admin.sn"]).post(f"/api/v1/plannings/{soumis_mardi.pk}/approuver/")
         assert r.status_code == 404
-        assert client_de(monde["dm.sn"]).get(FILE).json() == []
+        assert client_de(monde["admin.sn"]).get(FILE).json() == []
     with freeze_time("2026-10-07 17:00"):
         echeances.executer()
     with freeze_time("2026-10-07 18:00"):
@@ -121,9 +124,13 @@ def test_un_planning_ferme_n_escalade_pas_avant_sa_reouverture(monde, soumis_ven
         assert echeances.executer()["escalades"] == 1
 
 
-def test_rg019_a_la_fermeture_le_dm_apprend_les_plannings_non_approuves(monde, soumis_vendredi):
-    dm = monde["dm.sn"]
-    semaine_42 = notifications(dm, "plannings_non_approuves").filter(donnees__semaine="2026-10-12")
+def test_rg019_a_la_fermeture_l_administrateur_apprend_les_plannings_non_approuves(
+    monde, soumis_vendredi
+):
+    admin = monde["admin.sn"]
+    semaine_42 = notifications(admin, "plannings_non_approuves").filter(
+        donnees__semaine="2026-10-12"
+    )
     with freeze_time("2026-10-11 23:59"):
         echeances.executer()
         assert not semaine_42.exists()
@@ -133,7 +140,7 @@ def test_rg019_a_la_fermeture_le_dm_apprend_les_plannings_non_approuves(monde, s
     assert semaine_42.get().donnees["nombre"] == 1
 
 
-def test_un_planning_approuve_n_alerte_pas_le_dm(monde, soumis_vendredi):
+def test_un_planning_approuve_n_alerte_pas_l_administrateur(monde, soumis_vendredi):
     with freeze_time("2026-10-10 08:00"):
         services.approuver(soumis_vendredi, monde["sup.sn"])
     Notification.objects.all().delete()
@@ -197,6 +204,6 @@ def test_rg019_un_delegue_sans_planning_compte_dans_l_alerte(monde, perimetre):
     Planning.objects.filter(pk=perimetre["planning"].pk).delete()
     with freeze_time("2026-10-12 00:00"):
         assert echeances.executer()["alertes"] == 1
-    notif = notifications(monde["dm.sn"], "plannings_non_approuves").get(
+    notif = notifications(monde["admin.sn"], "plannings_non_approuves").get(
         donnees__semaine="2026-10-12")  # fmt: skip
     assert notif.donnees["nombre"] == 1

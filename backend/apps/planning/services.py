@@ -616,19 +616,26 @@ def postes_sans_superviseur(planning: Planning) -> list:
 
 def responsables(planning: Planning) -> set:
     """Responsables du planning cette semaine-là : le superviseur rattaché à chaque poste
-    occupé, ou le DM pour le poste d'un superviseur-visiteur (RG-023)."""
-    from apps.organisation.services import superviseur_du_poste
+    occupé. Un poste rattaché à un DM (superviseur-visiteur, RG-023) revient, depuis 1.3.0 [D],
+    aux administrateurs du pays (à défaut, du siège) : le DM ne décide plus."""
+    from apps.identite.models import Role
+    from apps.organisation.services import a_un_role_dans, recours_du_pays, superviseur_du_poste
 
-    return {
-        r.pk
-        for p in postes_de_la_semaine(planning)
-        if (r := superviseur_du_poste(p, planning.semaine)) is not None
-    }
+    titulaires: set = set()
+    for poste in postes_de_la_semaine(planning):
+        rattache = superviseur_du_poste(poste, planning.semaine)
+        if rattache is None:
+            continue
+        if a_un_role_dans(rattache, planning.pays, {Role.SUPERVISEUR}):
+            titulaires.add(rattache.pk)
+        else:
+            titulaires |= recours_du_pays(planning.pays) - {planning.delegue_id}
+    return titulaires
 
 
 def mode_de_decision(utilisateur, planning: Planning) -> str | None:
     """`direct` pour un responsable du poste, `remplacement` pour son remplaçant daté
-    aujourd'hui (ORG-013, RG-020), `escalade` pour le DM du périmètre quand la version en
+    aujourd'hui (ORG-013, RG-020), `escalade` pour les administrateurs (1.3.0) quand la version en
     attente lui a été escaladée (PLN-016, RG-019), sinon rien. Jamais sur son propre planning
     (PLN-017 CA1)."""
     from apps.organisation.services import remplaces_par
@@ -643,9 +650,9 @@ def mode_de_decision(utilisateur, planning: Planning) -> str | None:
     if any(r.pk in titulaires for r in remplaces_par(utilisateur, planning.pays)):
         return ModeDecision.REMPLACEMENT
     if est_escalade(planning):
-        from .echeances import dms_du_planning
+        from .echeances import recours_du_planning
 
-        if utilisateur.pk in dms_du_planning(planning):
+        if utilisateur.pk in recours_du_planning(planning):
             return ModeDecision.ESCALADE
     return None
 
@@ -667,7 +674,7 @@ def plannings_a_valider(superviseur, pays) -> list[Planning]:
     """PLN-011 : plannings soumis des délégués qu'il supervise cette semaine-là — et, pendant
     un remplacement, de ceux du superviseur remplacé (ORG-013 CA1) — du plus ancien au plus
     récent (CA1)."""
-    from apps.organisation.services import remplaces_par
+    from apps.organisation.services import recours_du_pays, remplaces_par
 
     titulaires = [superviseur.pk, *(r.pk for r in remplaces_par(superviseur, pays))]
     candidats = (
@@ -677,12 +684,13 @@ def plannings_a_valider(superviseur, pays) -> list[Planning]:
         .select_related("delegue")
         .distinct()
     )  # fmt: skip
-    # Escaladés à ce DM (PLN-016) : les plannings de ses réseaux restés sans décision.
+    # Escaladés (PLN-016) aux administrateurs ; et, pour eux, les postes rattachés à un DM.
+    recours = superviseur.pk in recours_du_pays(pays)
+    escalades = Planning.objects.filter(pays=pays, statut=StatutPlanning.SOUMIS)
+    if not recours:
+        escalades = escalades.filter(versions__escalade_le__isnull=False, versions__decision="")
     escalades = (
-        Planning.objects.filter(pays=pays, statut=StatutPlanning.SOUMIS,
-                                versions__escalade_le__isnull=False,
-                                versions__decision="")
-        .exclude(delegue=superviseur)
+        escalades.exclude(delegue=superviseur)
         .select_related("delegue")
         .distinct()
     )  # fmt: skip

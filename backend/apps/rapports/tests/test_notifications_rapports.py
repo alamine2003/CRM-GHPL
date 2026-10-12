@@ -63,7 +63,7 @@ def test_37a_pas_de_rappel_si_le_rapport_est_soumis(monde, effectuee, portefeuil
     assert retards.rappels(monde["sn"], datetime(2026, 10, 13, 21, 0, tzinfo=UTC)) == 0
 
 
-def test_38a_le_dm_est_prevenu_une_fois_par_journee_escaladee(
+def test_38a_l_administrateur_est_prevenu_une_fois_par_journee_escaladee(
     monde, terrain, effectuee, portefeuille
 ):
     from apps.organisation import services as org
@@ -75,7 +75,7 @@ def test_38a_le_dm_est_prevenu_une_fois_par_journee_escaladee(
     assert retards.escalades(monde["sn"], datetime(2026, 10, 21, 8, 0, tzinfo=UTC)) == 0
     (n,) = Notification.objects.filter(type="journee_escaladee")
     assert (n.destinataire, n.donnees["date"], n.donnees["delegue"]) == (
-        monde["dm.sn"], "2026-10-13", str(monde["deleg.sn"].pk))  # fmt: skip
+        monde["admin.sn"], "2026-10-13", str(monde["deleg.sn"].pk))  # fmt: skip
 
 
 def test_38a_pas_d_escalade_notifiee_pour_une_journee_de_plus_de_7_jours(
