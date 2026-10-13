@@ -130,7 +130,7 @@ describe('mobile — session', () => {
   it('se connecte avec l’identifiant et le mot de passe', async () => {
     const client = fauxClient();
     await rendre(<Connexion />, client);
-    await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
+    await fireEvent.changeText(await screen.findByLabelText('Adresse courriel'), 'awa.diallo');
     await fireEvent.changeText(screen.getByLabelText('Mot de passe'), MDP);
     await fireEvent.press(screen.getByText('Se connecter'));
     expect(client.connexion).toHaveBeenCalledWith('awa.diallo', MDP);
@@ -143,7 +143,7 @@ describe('mobile — session', () => {
       connexionCode: jest.fn(async () => JETONS),
     });
     await rendre(<Connexion />, client);
-    await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
+    await fireEvent.changeText(await screen.findByLabelText('Adresse courriel'), 'awa.diallo');
     await fireEvent.changeText(screen.getByLabelText('Mot de passe'), MDP);
     await fireEvent.press(screen.getByText('Se connecter'));
     expect(await screen.findByText('Vérification en deux étapes')).toBeTruthy();
@@ -161,7 +161,7 @@ describe('mobile — session', () => {
       })),
     });
     await rendre(<Connexion />, client);
-    await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
+    await fireEvent.changeText(await screen.findByLabelText('Adresse courriel'), 'awa.diallo');
     await fireEvent.changeText(screen.getByLabelText('Mot de passe'), MDP);
     await fireEvent.press(screen.getByText('Se connecter'));
     expect(await screen.findByText(/Activez-la depuis le portail web/)).toBeTruthy();
@@ -250,7 +250,7 @@ describe('mobile — session', () => {
       }),
     });
     await rendre(<Connexion />, client);
-    await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
+    await fireEvent.changeText(await screen.findByLabelText('Adresse courriel'), 'awa.diallo');
     await fireEvent.press(screen.getByText('Se connecter'));
     expect(await screen.findByText('Le pays Sénégal est suspendu.')).toBeTruthy();
   });
@@ -295,7 +295,7 @@ describe('mobile — session', () => {
     expect(await screen.findByText(/Aucun rôle ne vous est attribué/)).toBeTruthy();
   });
 
-  it('affiche le poste du délégué et l’absence de superviseur (ORG-006, ORG-007)', async () => {
+  it('affiche, au Profil (1.4.0), le poste du délégué et l’absence de superviseur (ORG-006, ORG-007)', async () => {
     const moi = {
       postes: [
         {
@@ -320,7 +320,7 @@ describe('mobile — session', () => {
       superviseur_manquant: true,
     };
     await rendre(
-      <Accueil />,
+      <Profil />,
       fauxClient({
         reprendre: jest.fn(async () => JETONS),
         organisation: { moi: jest.fn(async () => moi) } as unknown as ClientApi['organisation'],
@@ -331,7 +331,7 @@ describe('mobile — session', () => {
     expect(screen.getByText(/pas de superviseur/)).toBeTruthy();
   });
 
-  it('montre les produits du portefeuille de ses réseaux (ORG-004 CA3)', async () => {
+  it('montre, au Profil (1.4.0), les produits du portefeuille de ses réseaux (ORG-004 CA3)', async () => {
     const produits = Array.from({ length: 10 }, (_, i) => ({
       id: `p${i}`,
       code: `P${i}`,
@@ -339,7 +339,7 @@ describe('mobile — session', () => {
       classe_libelle: null,
     }));
     await rendre(
-      <Accueil />,
+      <Profil />,
       fauxClient({
         reprendre: jest.fn(async () => JETONS),
         referentiel: {

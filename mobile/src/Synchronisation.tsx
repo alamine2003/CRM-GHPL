@@ -24,7 +24,7 @@ import {
   garderMaVersion,
   lireAttente,
 } from './Brouillons';
-import { Alerte, Bouton, Carte, Ligne, Logo, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Icone, Ligne, Logo, Statut, Texte, usePalette } from './composants';
 import { police } from './polices';
 import { useSession } from './session';
 import {
@@ -231,28 +231,34 @@ export function LigneSynchro() {
   ]
     .filter(Boolean)
     .join(' · ');
-  const enAttente = attente.length > 0;
+  // 1.4.0 (maquette) : plus de ligne permanente sous l'en-tête ; l'état complet est au Profil.
+  // Elle ne paraît que si des envois attendent le réseau (OFF-003 CA1).
+  if (attente.length === 0) return null;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={texte}
       accessibilityHint={t('synchro.ligneAide')}
       onPress={() => routeur.push('/profil')}
-      style={[styles.ligne, { backgroundColor: p.surface, borderBottomColor: p.ligne }]}
+      style={[styles.ligne, { backgroundColor: p.attentionDoux, borderBottomColor: p.ligne }]}
     >
-      <MaterialIcons
-        name={enAttente ? 'cloud-upload' : derniere ? 'cloud-done' : 'cloud-off'}
-        size={16}
-        color={enAttente ? p.attention : p.texteSecondaire}
-      />
-      <Text
-        numberOfLines={1}
-        style={[styles.texteLigne, { color: enAttente ? p.texte : p.texteSecondaire }]}
-      >
+      <Icone nom="upload-cloud" taille={16} couleur={p.attention} />
+      <Text numberOfLines={1} style={[styles.texteLigne, { color: p.texte }]}>
         {texte}
       </Text>
     </Pressable>
   );
+}
+
+/** 1.4.0 (maquette, en-tête de la tablette) : « Synchronisé à 10:32 », pastille verte. */
+export function StatutSynchro() {
+  const { t } = useTranslation();
+  const { derniere, attente } = useEtatLocal();
+  const quand = useQuand();
+  if (attente.length > 0)
+    return <Statut ton="wa">{t('attente.titre', { count: attente.length })}</Statut>;
+  if (!derniere) return <Statut>{t('mobile.tournee.nonSynchronise')}</Statut>;
+  return <Statut ton="ok">{quand.court(derniere.le)}</Statut>;
 }
 
 /**

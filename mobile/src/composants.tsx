@@ -1,87 +1,172 @@
-import { marque, paletteClaire, paletteSombre, rayon, zoneTactileMin } from '@innov/design';
-import type { ReactNode } from 'react';
+import Feather from '@expo/vector-icons/Feather';
+import type { ComponentProps, ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   type TextInputProps,
   type TextProps,
+  type TextStyle,
   useColorScheme,
   View,
   type ViewStyle,
 } from 'react-native';
+import logoGH from '../assets/logo-gh.png';
 import { police } from './polices';
+import { RAYON, type Theme, themeClair, themeSombre } from './theme';
 
-/** Monogramme de la marque, identique dans toutes les langues. */
-const MONOGRAMME = 'IC';
-
-export function usePalette() {
-  return useColorScheme() === 'dark' ? paletteSombre : paletteClaire;
+/** Jetons de la maquette 1.4.0 (src/theme.ts), clairs ou sombres selon le téléphone. */
+export function usePalette(): Theme {
+  return useColorScheme() === 'dark' ? themeSombre : themeClair;
 }
 
 /** Couleur des liens et actions en texte : le bleu marine devient illisible sur fond sombre. */
 export function useLien() {
-  return useColorScheme() === 'dark' ? marque.bleuClair : marque.bleuMarine;
+  return usePalette().lien;
 }
 
-type Variante = 'titre' | 'sousTitre' | 'texte' | 'fort' | 'discret' | 'libelle';
+export type NomIcone = ComponentProps<typeof Feather>['name'];
 
-/** Texte typographié selon docs/design.md (Plus Jakarta Sans pour les titres, DM Sans sinon). */
+/** Icônes au trait de la maquette (famille Feather) : 20 px, 16 px en petit. */
+export function Icone({
+  nom,
+  taille = 20,
+  couleur,
+}: {
+  nom: NomIcone;
+  taille?: number;
+  couleur?: string;
+}) {
+  const p = usePalette();
+  return (
+    <Feather
+      name={nom}
+      size={taille}
+      color={couleur ?? p.texte}
+      accessibilityElementsHidden
+      importantForAccessibility="no"
+    />
+  );
+}
+
+type Variante = 'titre' | 'sousTitre' | 'texte' | 'fort' | 'discret' | 'libelle' | 'nombre';
+
+/** Texte typographié selon la maquette (Plus Jakarta Sans pour les titres, DM Sans sinon). */
 export function Texte({
   variante = 'texte',
   style,
   ...props
 }: TextProps & { variante?: Variante }) {
   const p = usePalette();
-  const styles: Record<Variante, object> = {
+  const styles: Record<Variante, TextStyle> = {
+    // .ttl
     titre: { fontFamily: police.titre, fontSize: 20, lineHeight: 28, color: p.texte },
+    // .sec-t
     sousTitre: { fontFamily: police.titre, fontSize: 15, lineHeight: 22, color: p.texte },
-    texte: { fontFamily: police.texte, fontSize: 15, lineHeight: 21, color: p.texte },
+    texte: { fontFamily: police.texte, fontSize: 14, lineHeight: 20, color: p.texte },
+    // .li .n
     fort: { fontFamily: police.texteFort, fontSize: 15, lineHeight: 21, color: p.texte },
+    // .li .m
     discret: { fontFamily: police.texte, fontSize: 13, lineHeight: 18, color: p.texteSecondaire },
+    // .lib
     libelle: {
       fontFamily: police.texteMoyen,
-      fontSize: 13,
+      fontSize: 12.5,
       lineHeight: 18,
       color: p.texteSecondaire,
     },
+    // .num
+    nombre: { fontFamily: police.titre, fontSize: 20, lineHeight: 24, color: p.texte },
   };
   return <Text {...props} style={[styles[variante], style]} />;
 }
 
-/** Marque « IC » : monogramme blanc sur orange plein. */
-export function Logo({ taille = 32 }: { taille?: number }) {
+/** La marque, identique dans toutes les langues. */
+const MARQUE = 'CRM';
+const MARQUE_LUE = 'CRM GH';
+
+/** Marque de l'entreprise : « CRM » et le logo GH (maquette 1.4.0). */
+export function Logo({
+  taille = 24,
+  mot = 14,
+  sansCadre,
+  surMarine,
+}: {
+  /** Côté du logo, en px. */
+  taille?: number;
+  /** Corps du mot « CRM ». */
+  mot?: number;
+  /** Logo nu (écran de connexion du téléphone) plutôt que posé sur un carré blanc. */
+  sansCadre?: boolean;
+  /** Sur le marine (barre latérale, volet de connexion) : le mot passe en blanc. */
+  surMarine?: boolean;
+}) {
+  const p = usePalette();
   return (
     <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={{
-        width: taille,
-        height: taille,
-        borderRadius: rayon,
-        backgroundColor: marque.orange,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+      accessible
+      accessibilityLabel={MARQUE_LUE}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: mot >= 24 ? 12 : 6 }}
     >
-      <Text style={{ color: '#FFFFFF', fontFamily: police.titre, fontSize: taille * 0.42 }}>
-        {MONOGRAMME}
+      <Text
+        style={{
+          fontFamily: police.titreFort,
+          fontSize: mot,
+          letterSpacing: mot * 0.03,
+          color: surMarine ? '#FFFFFF' : p.texte,
+        }}
+      >
+        {MARQUE}
       </Text>
+      <Image
+        source={logoGH}
+        resizeMode="contain"
+        style={[
+          { width: taille, height: taille, borderRadius: taille >= 40 ? RAYON : 4 },
+          !sansCadre && {
+            backgroundColor: '#FFFFFF',
+            borderWidth: surMarine ? 0 : 1,
+            borderColor: p.ligne,
+            padding: 2,
+          },
+        ]}
+      />
     </View>
   );
 }
 
-export function Carte({ children, style }: { children: ReactNode; style?: ViewStyle }) {
+/** Surface blanche à filet (.card) ; `marge` 16 par défaut (.pad), 0 pour une liste. */
+export function Carte({
+  children,
+  style,
+  marge = 16,
+  accent,
+}: {
+  children: ReactNode;
+  style?: ViewStyle;
+  marge?: number;
+  /** Filet de couleur à gauche (rapports à corriger, en retard, à justifier). */
+  accent?: string;
+}) {
   const p = usePalette();
   return (
-    <View style={[styles.carte, { backgroundColor: p.surface, borderColor: p.ligne }, style]}>
+    <View
+      style={[
+        styles.carte,
+        { backgroundColor: p.surface, borderColor: p.ligne, padding: marge },
+        accent ? { borderLeftWidth: 3, borderLeftColor: accent } : null,
+        style,
+      ]}
+    >
       {children}
     </View>
   );
 }
 
+/** Paire libellé · valeur (.kv). */
 export function Ligne({
   libelle,
   valeur,
@@ -93,16 +178,24 @@ export function Ligne({
 }) {
   const p = usePalette();
   return (
-    <View
-      style={[
-        styles.ligne,
-        !derniere && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: p.ligne },
-      ]}
-    >
-      <Texte variante="discret">{libelle}</Texte>
-      <Texte style={{ flexShrink: 1, textAlign: 'right', fontFamily: police.texteMoyen }}>
+    <View style={[styles.ligne, !derniere && { borderBottomWidth: 1, borderBottomColor: p.ligne }]}>
+      <Text
+        style={{ fontFamily: police.texte, fontSize: 13, lineHeight: 18, color: p.texteSecondaire }}
+      >
+        {libelle}
+      </Text>
+      <Text
+        style={{
+          flexShrink: 1,
+          textAlign: 'right',
+          fontFamily: police.texteMoyen,
+          fontSize: 14,
+          lineHeight: 20,
+          color: p.texte,
+        }}
+      >
         {valeur}
-      </Texte>
+      </Text>
     </View>
   );
 }
@@ -110,22 +203,33 @@ export function Ligne({
 export function Champ({
   libelle,
   libelleMasque,
+  action,
+  style,
   ...props
 }: TextInputProps & {
   libelle: string;
   /** Champ de recherche : le texte indicatif suffit à l'écran ; le libellé reste vocalisé. */
   libelleMasque?: boolean;
+  /** Lien à droite du libellé (« Mot de passe oublié ? »). */
+  action?: ReactNode;
 }) {
   const p = usePalette();
   return (
     <View style={{ gap: 6 }}>
-      {!libelleMasque && <Texte variante="libelle">{libelle}</Texte>}
+      {!libelleMasque && (
+        <View style={styles.enteteChamp}>
+          <Texte variante="libelle">{libelle}</Texte>
+          {action}
+        </View>
+      )}
       <TextInput
         accessibilityLabel={libelle}
         placeholderTextColor={p.texteDiscret}
         style={[
           styles.champ,
-          { borderColor: p.ligne, color: p.texte, backgroundColor: p.surface2 },
+          { borderColor: p.ligne, color: p.texte, backgroundColor: p.surface },
+          props.multiline && styles.champLong,
+          style,
         ]}
         {...props}
       />
@@ -133,51 +237,153 @@ export function Champ({
   );
 }
 
+type VarianteBouton = 'plein' | 'contour' | 'fantome' | 'clair' | 'clairContour';
+
+/**
+ * Bouton de 48 px (.btn) : plein marine, `contour` (.btn.out), `fantome` (.btn.ghost) ; sur le
+ * bandeau marine, `clair` (blanc) et `clairContour`.
+ */
 export function Bouton({
   libelle,
   onPress,
   chargement,
   secondaire,
   desactive,
+  variante,
+  icone,
+  petit,
+  style,
+  accessibilityLabel,
 }: {
-  libelle: string;
+  libelle?: string;
   onPress: () => void;
   chargement?: boolean;
+  /** Ancien nom de la variante `contour`. */
   secondaire?: boolean;
   /** Action impossible pour l'instant (rien à envoyer) : visible mais inactive. */
   desactive?: boolean;
+  variante?: VarianteBouton;
+  icone?: NomIcone;
+  /** 44 px, texte de 14 (.btn.sm). */
+  petit?: boolean;
+  style?: ViewStyle;
+  accessibilityLabel?: string;
+}) {
+  const p = usePalette();
+  const v: VarianteBouton = variante ?? (secondaire ? 'contour' : 'plein');
+  const [fond, bord, texte] = {
+    plein: [p.bouton, p.bouton, p.boutonTexte],
+    contour: ['transparent', p.ligne, p.lien],
+    fantome: ['transparent', 'transparent', p.lien],
+    clair: ['#FFFFFF', '#FFFFFF', '#1B2A5B'],
+    clairContour: ['transparent', 'rgba(255,255,255,.35)', '#FFFFFF'],
+  }[v];
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? libelle}
+      accessibilityState={{ busy: chargement, disabled: chargement || desactive }}
+      disabled={chargement || desactive}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.bouton,
+        petit && { minHeight: 44 },
+        { backgroundColor: fond, borderColor: bord },
+        (pressed || chargement) && { opacity: 0.85 },
+        desactive && { opacity: 0.5 },
+        style,
+      ]}
+    >
+      {chargement ? (
+        <ActivityIndicator color={texte} />
+      ) : (
+        <>
+          {icone && <Icone nom={icone} couleur={texte} />}
+          {libelle ? (
+            <Text
+              style={{
+                color: texte,
+                fontFamily: police.texteFort,
+                fontSize: petit ? 14 : 15,
+                lineHeight: 20,
+                textAlign: 'center',
+              }}
+            >
+              {libelle}
+            </Text>
+          ) : null}
+        </>
+      )}
+    </Pressable>
+  );
+}
+
+/** Bouton icône de 44 px (.ibtn) : cloche, fermeture. */
+export function BoutonIcone({
+  icone,
+  libelle,
+  onPress,
+  pastille,
+}: {
+  icone: NomIcone;
+  libelle: string;
+  onPress: () => void;
+  /** Nombre non lu, en orange. */
+  pastille?: number;
 }) {
   const p = usePalette();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={libelle}
-      accessibilityState={{ busy: chargement, disabled: chargement || desactive }}
-      disabled={chargement || desactive}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.bouton,
-        secondaire
-          ? { borderWidth: 1, borderColor: p.ligne, backgroundColor: p.surface }
-          : { backgroundColor: marque.bleuMarine },
-        (pressed || chargement) && { opacity: 0.8 },
-        desactive && { opacity: 0.4 },
+        styles.boutonIcone,
+        { borderColor: p.ligne, backgroundColor: p.surface },
+        pressed && { opacity: 0.7 },
       ]}
     >
-      {chargement ? (
-        <ActivityIndicator color={secondaire ? p.texte : '#FFFFFF'} />
-      ) : (
-        <Text
-          style={{
-            color: secondaire ? p.texte : '#FFFFFF',
-            fontFamily: police.texteFort,
-            fontSize: 15,
-            textAlign: 'center',
-          }}
-        >
-          {libelle}
-        </Text>
-      )}
+      <Icone nom={icone} />
+      {pastille ? (
+        <View style={styles.pastille}>
+          <Text style={styles.pastilleTexte}>{pastille > 9 ? '9+' : pastille}</Text>
+        </View>
+      ) : null}
+    </Pressable>
+  );
+}
+
+/** Lien en texte gras (.link). */
+export function Lien({
+  libelle,
+  onPress,
+  taille = 14,
+  discret,
+  style,
+}: {
+  libelle: string;
+  onPress: () => void;
+  taille?: number;
+  /** Lien secondaire (« Retour ») : gris, moins appuyé. */
+  discret?: boolean;
+  style?: TextStyle;
+}) {
+  const p = usePalette();
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} hitSlop={10}>
+      <Text
+        style={[
+          {
+            color: discret ? p.texteSecondaire : p.lien,
+            fontFamily: discret ? police.texteMoyen : police.texteFort,
+            fontSize: taille,
+            lineHeight: taille + 6,
+          },
+          style,
+        ]}
+      >
+        {libelle}
+      </Text>
     </Pressable>
   );
 }
@@ -185,9 +391,12 @@ export function Bouton({
 export function Alerte({
   children,
   type,
+  icone,
 }: {
   children: ReactNode;
   type: 'erreur' | 'info' | 'succes' | 'attention';
+  /** Icône de tête, dans la couleur du ton (.alert svg). */
+  icone?: NomIcone;
 }) {
   const p = usePalette();
   const [fond, accent] = {
@@ -199,65 +408,80 @@ export function Alerte({
   return (
     <View
       accessibilityRole={type === 'erreur' || type === 'attention' ? 'alert' : undefined}
-      style={[styles.alerte, { backgroundColor: fond, borderLeftColor: accent }]}
+      style={[styles.alerte, { backgroundColor: fond }]}
     >
-      <Texte>{children}</Texte>
+      {icone && <Icone nom={icone} couleur={accent} />}
+      <Text style={[styles.alerteTexte, { color: p.texte }]}>{children}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  carte: { borderWidth: StyleSheet.hairlineWidth, borderRadius: rayon, padding: 16 },
-  ligne: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-    minHeight: zoneTactileMin,
-  },
-  champ: {
-    minHeight: zoneTactileMin + 4,
-    borderWidth: 1,
-    borderRadius: rayon,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    fontFamily: police.texte,
-  },
-  bouton: {
-    minHeight: 48,
-    borderRadius: rayon,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  alerte: { borderLeftWidth: 3, borderRadius: rayon, padding: 12 },
-});
+/** Mot en gras dans une alerte ou une phrase. */
+export function Gras({ children }: { children: ReactNode }) {
+  return <Text style={{ fontFamily: police.texteGras }}>{children}</Text>;
+}
 
-/** Potentiel A/B/C : la seule « couleur métier » des listes (A orange, B marine, C gris). */
-export function MarquePotentiel({ valeur, libelle }: { valeur: string; libelle?: string }) {
+/** Potentiel A/B/C (.pot) : la seule « couleur métier » des listes (A orange, B marine, C gris). */
+export function MarquePotentiel({
+  valeur,
+  libelle,
+  taille = 24,
+}: {
+  valeur: string;
+  libelle?: string;
+  taille?: number;
+}) {
   const p = usePalette();
-  const lien = useLien();
-  const couleur = valeur === 'A' ? marque.orange : valeur === 'B' ? lien : p.texteSecondaire;
+  const [fond, texte] =
+    valeur === 'A'
+      ? [p.orange, '#151B30']
+      : valeur === 'B'
+        ? [p.potentielB, '#FFFFFF']
+        : [p.ligne, p.texte];
   return (
     <View
       accessibilityLabel={libelle}
       style={{
-        width: 24,
-        height: 24,
+        width: taille,
+        height: taille,
         borderRadius: 4,
-        borderWidth: 1,
-        borderColor: couleur,
+        backgroundColor: fond,
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Text style={{ color: couleur, fontFamily: police.titre, fontSize: 13 }}>{valeur}</Text>
+      <Text style={{ color: texte, fontFamily: police.titreFort, fontSize: taille / 2 }}>
+        {valeur}
+      </Text>
     </View>
   );
 }
 
-/** État en texte coloré (« À valider »…) à la place d'une pastille. */
+export type TonStatut = 'ok' | 'wa' | 'er' | 'in' | 'or' | 'neutre';
+
+/** Statut : pastille de 8 px et texte, jamais la couleur seule (.st). */
+export function Statut({ children, ton = 'neutre' }: { children: ReactNode; ton?: TonStatut }) {
+  const p = usePalette();
+  const pastille = {
+    ok: p.succes,
+    wa: p.attention,
+    er: p.erreur,
+    in: p.info,
+    or: p.orange,
+    neutre: p.texteDiscret,
+  }[ton];
+  const texte = ton === 'or' ? p.texte : ton === 'neutre' ? p.texteSecondaire : pastille;
+  return (
+    <View style={styles.statut}>
+      <View style={[styles.point, { backgroundColor: pastille }]} />
+      <Text numberOfLines={1} style={[styles.statutTexte, { color: texte }]}>
+        {children}
+      </Text>
+    </View>
+  );
+}
+
+/** État en texte coloré (« À valider »…) ; même rendu que `Statut`. */
 export function Etiquette({
   children,
   ton = 'attention',
@@ -265,16 +489,120 @@ export function Etiquette({
   children: ReactNode;
   ton?: 'attention' | 'neutre' | 'succes';
 }) {
-  const p = usePalette();
   return (
-    <Text
-      style={{
-        fontFamily: police.texteFort,
-        fontSize: 12,
-        color: ton === 'attention' ? p.attention : ton === 'succes' ? p.succes : p.texteSecondaire,
-      }}
-    >
+    <Statut ton={ton === 'attention' ? 'wa' : ton === 'succes' ? 'ok' : 'neutre'}>
       {children}
-    </Text>
+    </Statut>
   );
 }
+
+/** Barre de progression de 6 px (.bar). */
+export function Barre({ valeur, libelle }: { valeur: number; libelle: string }) {
+  const p = usePalette();
+  const part = Math.max(0, Math.min(1, valeur));
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={libelle}
+      style={[styles.barre, { backgroundColor: p.ligne }]}
+    >
+      <View style={{ width: `${part * 100}%`, height: '100%', backgroundColor: p.accentPlein }} />
+    </View>
+  );
+}
+
+/** Rangée de chiffres séparés par des filets (.stats). */
+export function Chiffres({
+  valeurs,
+}: {
+  valeurs: { libelle: string; valeur: string; couleur?: string }[];
+}) {
+  const p = usePalette();
+  return (
+    <Carte marge={0} style={{ flexDirection: 'row' }}>
+      {valeurs.map((v, i) => (
+        <View
+          key={v.libelle}
+          style={[
+            styles.chiffre,
+            i < valeurs.length - 1 && { borderRightWidth: 1, borderRightColor: p.ligne },
+          ]}
+        >
+          <Texte variante="libelle" numberOfLines={1}>
+            {v.libelle}
+          </Texte>
+          <Texte variante="nombre" style={v.couleur ? { color: v.couleur } : undefined}>
+            {v.valeur}
+          </Texte>
+        </View>
+      ))}
+    </Carte>
+  );
+}
+
+const styles = StyleSheet.create({
+  carte: { borderWidth: 1, borderRadius: RAYON },
+  ligne: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  enteteChamp: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  champ: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: RAYON,
+    paddingHorizontal: 14,
+    fontSize: 15,
+    fontFamily: police.texte,
+  },
+  champLong: { minHeight: 72, paddingTop: 12, textAlignVertical: 'top' },
+  bouton: {
+    minHeight: 48,
+    borderRadius: RAYON,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+  },
+  boutonIcone: {
+    width: 44,
+    height: 44,
+    borderRadius: RAYON,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pastille: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 3,
+    backgroundColor: '#F26B1D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pastilleTexte: { color: '#151B30', fontFamily: police.titreFort, fontSize: 10, lineHeight: 16 },
+  alerte: {
+    flexDirection: 'row',
+    gap: 10,
+    borderRadius: RAYON,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  alerteTexte: { flex: 1, fontFamily: police.texte, fontSize: 13.5, lineHeight: 19 },
+  statut: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  point: { width: 8, height: 8, borderRadius: 4 },
+  statutTexte: { fontFamily: police.texteMoyen, fontSize: 12.5, lineHeight: 18, flexShrink: 1 },
+  barre: { height: 6, borderRadius: 3, overflow: 'hidden' },
+  chiffre: { flex: 1, minWidth: 0, paddingVertical: 14, paddingHorizontal: 16, gap: 2 },
+});

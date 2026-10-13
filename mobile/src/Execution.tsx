@@ -425,41 +425,28 @@ function ActionRapport({ visite }: { visite: VisiteProgramme }) {
   return <Bouton secondaire libelle={t('rapport.voir')} onPress={ouvrir} />;
 }
 
-export function ExecutionVisite({
-  visite,
-  aujourdhui,
-  geolocalisation,
-  fuseau,
-  attenteSecondes = 60,
-  motifs = [],
-  joursOuvres = [1, 2, 3, 4, 5],
-  semaine,
-  surTerminee,
-}: {
-  visite: VisiteProgramme;
-  aujourdhui: string;
-  geolocalisation: boolean;
-  fuseau: string;
-  attenteSecondes?: number;
-  /** Motifs d'écart du pays (prd.md §12), gardés avec le programme. */
-  motifs?: { id: string; libelle: string }[];
-  /** Jours ouvrés du pays (0 = dimanche), pour proposer le nouveau jour d'un report. */
-  joursOuvres?: number[];
-  /** Lundi de la semaine du programme : un report dans cette semaine passe par le superviseur. */
-  semaine?: string;
-  /** La visite terminée quitte souvent l'écran (la suivante prend sa place) : on l'annonce. */
-  surTerminee?: (annonce: { texte: string; ton: 'info' | 'succes'; rapport?: string }) => void;
-}) {
+/**
+ * Démarrer ou terminer une visite (VIS-003, VIS-004) : heure réelle, position si le pays
+ * l'active, envoi aussitôt ou mis en file. Partagé par le bandeau « Prochaine visite » de la
+ * Tournée et le détail de la visite (1.4.0).
+ */
+export function useActionVisite(
+  visite: VisiteProgramme,
+  {
+    geolocalisation,
+    fuseau,
+    attenteSecondes = 60,
+    surTerminee,
+  }: {
+    geolocalisation: boolean;
+    fuseau: string;
+    attenteSecondes?: number;
+    surTerminee?: (annonce: { texte: string; ton: 'info' | 'succes'; rapport?: string }) => void;
+  },
+) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const [envoi, setEnvoi] = useState(false);
-  const [ecart, setEcart] = useState<{
-    type: TypeEcart;
-    motif: string | null;
-    commentaire: string;
-    date?: string | null;
-    heure?: string;
-  } | null>(null);
   const [message, setMessage] = useState<{
     ton: 'erreur' | 'info' | 'succes';
     texte: string;
@@ -475,13 +462,6 @@ export function ExecutionVisite({
       return new Date(iso).toTimeString().slice(0, 5);
     }
   };
-  const jourLisible = (iso: string, mois: 'long' | 'short' = 'long') =>
-    new Intl.DateTimeFormat(i18n.language, {
-      weekday: mois === 'long' ? 'long' : 'short',
-      day: 'numeric',
-      month: mois,
-      timeZone: 'UTC',
-    }).format(new Date(`${iso}T12:00:00Z`));
   const resume = [visite.heure, visite.prospect ? nomProspect(visite.prospect, t) : '']
     .filter(Boolean)
     .join(' · ');
@@ -534,6 +514,56 @@ export function ExecutionVisite({
     }
   }
 
+  return { envoi, setEnvoi, message, setMessage, agir, heureDe, resume };
+}
+
+export function ExecutionVisite({
+  visite,
+  aujourdhui,
+  geolocalisation,
+  fuseau,
+  attenteSecondes = 60,
+  motifs = [],
+  joursOuvres = [1, 2, 3, 4, 5],
+  semaine,
+  surTerminee,
+}: {
+  visite: VisiteProgramme;
+  aujourdhui: string;
+  geolocalisation: boolean;
+  fuseau: string;
+  attenteSecondes?: number;
+  /** Motifs d'écart du pays (prd.md §12), gardés avec le programme. */
+  motifs?: { id: string; libelle: string }[];
+  /** Jours ouvrés du pays (0 = dimanche), pour proposer le nouveau jour d'un report. */
+  joursOuvres?: number[];
+  /** Lundi de la semaine du programme : un report dans cette semaine passe par le superviseur. */
+  semaine?: string;
+  /** La visite terminée quitte souvent l'écran (la suivante prend sa place) : on l'annonce. */
+  surTerminee?: (annonce: { texte: string; ton: 'info' | 'succes'; rapport?: string }) => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const { client } = useSession();
+  const { envoi, setEnvoi, message, setMessage, agir, heureDe, resume } = useActionVisite(visite, {
+    geolocalisation,
+    fuseau,
+    attenteSecondes,
+    surTerminee,
+  });
+  const [ecart, setEcart] = useState<{
+    type: TypeEcart;
+    motif: string | null;
+    commentaire: string;
+    date?: string | null;
+    heure?: string;
+  } | null>(null);
+  const jourLisible = (iso: string, mois: 'long' | 'short' = 'long') =>
+    new Intl.DateTimeFormat(i18n.language, {
+      weekday: mois === 'long' ? 'long' : 'short',
+      day: 'numeric',
+      month: mois,
+      timeZone: 'UTC',
+    }).format(new Date(`${iso}T12:00:00Z`));
   async function confirmerEcart() {
     const motif = motifs.find((m) => m.id === ecart?.motif);
     if (!ecart || !motif) return;

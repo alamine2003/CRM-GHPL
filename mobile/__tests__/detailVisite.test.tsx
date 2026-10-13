@@ -38,6 +38,8 @@ const DETAIL = {
       statut: 'prevue',
       objectif: 'Présenter le produit du mois',
       etablissement: 'Clinique Fictive',
+      resultat: null,
+      produits: [],
     },
     {
       id: 'h2',
@@ -46,6 +48,8 @@ const DETAIL = {
       statut: 'prevue',
       objectif: 'Rappel posologie',
       etablissement: 'Clinique Fictive',
+      resultat: null,
+      produits: [],
     },
   ],
   action_precedente: null,

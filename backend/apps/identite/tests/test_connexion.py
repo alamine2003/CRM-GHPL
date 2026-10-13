@@ -41,6 +41,12 @@ def test_identifiant_insensible_a_la_casse(api, delegue):
     assert connecter(api, identifiant=" Awa.DIALLO ").status_code == 200
 
 
+def test_connexion_par_adresse_courriel(api, delegue):
+    """1.4.0 [D] : la maquette demande l'adresse courriel ; l'identifiant reste accepté."""
+    assert connecter(api, identifiant=" Awa.Diallo@EXEMPLE.org ").status_code == 200
+    assert connecter(api, identifiant="awa.diallo").status_code == 200
+
+
 def test_meme_erreur_pour_compte_inconnu_et_mauvais_mot_de_passe(api, delegue):
     inconnu = connecter(api, identifiant="personne.inconnue")
     mauvais = connecter(api, mot_de_passe=FAUX)

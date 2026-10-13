@@ -704,6 +704,19 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.82 Maquette des écrans mobile et tablette (mise en œuvre 1.4.0 et suivantes)
+
+- **La maquette fait foi** [D, 13 octobre 2026, responsable produit] : « voici la maquette à respecter à la lettre » — maquette « CRM GHPL – Écrans mobile et tablette » (32 écrans, chacun en téléphone 390 × 844 et en tablette 1180 × 820, thème clair et sombre). Elle garde la direction « registre » (marine, orange réservé à ce qui compte, filets, pas d'ombre) avec des statuts plus contrastés. Livraison par étapes : 1.4.0 (fondations, connexion, Tournée), puis visite et absence, rapport, semaine, prospects, chiffres et profil, écrans secondaires.
+- **1.4.0** : couleurs et typographie de la maquette ; marque « CRM » et logo **GH** (Generic Healthcare) ; en-tête du téléphone avec la marque ; onglets à repère orange de 3 px ; sur tablette, barre latérale marine de 92 px et écrans à deux volets ; connexion, mot de passe oublié et vérification en deux étapes (six cases) ; Tournée (avancement, bandeau « Prochaine visite », frise du jour ; rapports à corriger ou en retard en tête ; sur tablette, chiffres du jour, dernière visite, « À traiter »).
+- **Connexion par adresse courriel** [D, 1.4.0] : la maquette demande « Adresse courriel » ; l'identifiant (prenom.nom) reste accepté pour les comptes sans courriel.
+- **Ce que la maquette ne dessine pas** [D, délégation, 1.4.0] : rien ne se perd.
+  - Synchronisation : plus de ligne permanente sous l'en-tête du téléphone ; elle ne paraît que si des envois attendent le réseau (OFF-003 CA1). La tablette montre « Synchronisé à … » dans l'en-tête de la Tournée ; le détail reste au Profil.
+  - Prospect absent, report, annulation : depuis le détail de la visite (l'écran « Le prospect est absent » de la maquette arrive à l'étape suivante) ; visite hors planning et indisponibilité : sous la frise du jour.
+  - « Mon poste » et « Mes produits » passent au Profil, les décisions sur mes propositions à l'onglet Prospects ; « Le reste de la semaine » laisse place à l'onglet Semaine.
+  - La distance « à 4,2 km » n'est pas affichée sur la Tournée : la position n'est prise qu'au début et à la fin d'une visite, comme le promet la demande d'autorisation. Le bouton « Itinéraire » ouvre l'application de cartes vers le lieu.
+  - Le lien « Politique de confidentialité » reste sous le pied de la connexion (exigence des magasins).
+  - La tablette se tourne librement (la maquette la dessine à l'horizontale).
+
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 
 - **Démonstration sans frais** [D, 11 octobre 2026, responsable produit] : faute de budget pour l'instant, une démonstration tourne sur les offres gratuites de Render (`render-demo.yaml`), avec des **données fictives seulement** (DEM-001). La production reste décrite par `render.yaml` et attend les formalités CDP et un budget.

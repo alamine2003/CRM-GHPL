@@ -25,6 +25,7 @@ import { Ecran } from '../src/Ecran';
 import { FormulaireEtablissement, LigneEtablissement, Pilule } from '../src/Etablissements';
 import { lire } from '../src/baseLocale';
 import { MaListeCible } from '../src/MaListe';
+import { MesPropositions } from '../src/MesPropositions';
 import { normaliserNom, ressemblantesLocales } from '../src/ressemblances';
 import { messageErreur, useSession } from '../src/session';
 
@@ -311,6 +312,8 @@ export default function EcranProspects() {
           : undefined
       }
     >
+      {/* 1.4.0 : les décisions sur mes propositions quittent la Tournée de la maquette. */}
+      <MesPropositions />
       <View style={styles.segments}>
         <Pilule
           libelle={t('ciblage.mobile.segment')}

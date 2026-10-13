@@ -6,6 +6,8 @@ import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { identifiantInstallation } from '../src/appareil';
 import { Bouton, Carte, Ligne, Texte, useLien, usePalette } from '../src/composants';
 import { Ecran } from '../src/Ecran';
+import { MesProduits } from '../src/MesProduits';
+import { MonPoste } from '../src/MonPoste';
 import { police } from '../src/polices';
 import { CartePreferences } from '../src/Preferences';
 import { CarteSynchro } from '../src/Synchronisation';
@@ -28,6 +30,9 @@ export default function Profil() {
 
   return (
     <Ecran titre={t('navigation.profil')} surTitre={u ? `${u.prenom} ${u.nom}` : undefined}>
+      {/* 1.4.0 : quittent la Tournée de la maquette ; le Profil les garde jusqu'à son tour. */}
+      <MonPoste />
+      <MesProduits />
       <Carte>
         <Ligne libelle={t('profil.identifiant')} valeur={u?.identifiant ?? '—'} />
         <Ligne libelle={t('profil.courriel')} valeur={u?.courriel || t('profil.nonRenseigne')} />

@@ -6404,6 +6404,8 @@ export interface components {
       statut: string;
       objectif: string;
       etablissement?: string | null;
+      readonly resultat: string | null;
+      readonly produits: string[];
     };
     VisitePoint: {
       /** Format: uuid */

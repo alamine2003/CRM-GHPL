@@ -2,6 +2,19 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.0] — La maquette mobile et tablette : fondations, connexion, Tournée
+
+### Modifié (prd.md §14.82, VIS-001, USR-001)
+
+- L'application suit désormais la maquette fournie par le responsable produit : nouvelles couleurs, marque « CRM » et logo GH, nouveaux en-têtes et onglets, et une vraie disposition tablette (barre latérale, deux volets).
+- Connexion avec l'adresse courriel (l'identifiant reste accepté) ; écrans « Mot de passe oublié » et « Vérification en deux étapes » refaits.
+- Tournée refaite : avancement du jour, bandeau « Prochaine visite » (démarrer, terminer, itinéraire), frise des visites ; les rapports à corriger ou en retard passent en tête. Sur tablette : chiffres du jour, dernière visite (date, résultat, prochaine action) et « À traiter ».
+- « Mon poste » et « Mes produits » sont au Profil ; les décisions sur mes propositions, à l'onglet Prospects.
+
+### Design
+
+Fondations de la maquette appliquées à tous les écrans (couleurs, boutons, champs, alertes, cartes, statuts, potentiel) ; Connexion et Tournée refaites à l'identique, téléphone et tablette. Les autres écrans suivront, un groupe par version.
+
 ## [1.3.1] — Le compte du DO ; textes alignés sur 1.3.0
 
 ### Modifié (prd.md §14.81)

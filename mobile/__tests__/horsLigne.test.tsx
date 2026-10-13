@@ -10,7 +10,7 @@ import { lireAttente, mettreEnAttente } from '../src/Brouillons';
 import { FournisseurSession } from '../src/FournisseurSession';
 import i18n from '../src/i18n';
 import { ContexteSession, type Session } from '../src/session';
-import { GardeHorsLigne, LigneSynchro, SynchroAuto } from '../src/Synchronisation';
+import { GardeHorsLigne, LigneSynchro, StatutSynchro, SynchroAuto } from '../src/Synchronisation';
 import { CLE_SYNCHRO, horsDelai } from '../src/synchro';
 import { horloge } from '../src/Verrou';
 
@@ -115,21 +115,28 @@ beforeEach(async () => {
 
 afterEach(() => horlogeFigee.mockRestore());
 
-test('OFF-003 CA1 : sur chaque écran, la dernière synchronisation et la file en attente', async () => {
+test('OFF-003 CA1 : dès qu’un envoi attend, chaque écran le dit (1.4.0 : seulement alors)', async () => {
   synchroniseIlYa(0);
   await render(<LigneSynchro />);
-  expect(await screen.findByText(/^Synchronisé à \d/)).toBeTruthy();
+  // Maquette 1.4.0 : plus de ligne permanente sous l'en-tête quand tout est parti.
+  expect(screen.queryByText(/^Synchronisé à \d/)).toBeNull();
   await act(async () => {
     await mettreEnAttente(envoi('e1'));
     await mettreEnAttente(envoi('e2'));
   });
-  expect(await screen.findByText(/· 2 envois en attente$/)).toBeTruthy();
+  expect(await screen.findByText(/^Synchronisé à \d.* · 2 envois en attente$/)).toBeTruthy();
   fireEvent.press(screen.getByRole('button'));
   expect(mockPousser).toHaveBeenCalledWith('/profil');
 });
 
+test('OFF-003 CA1 : l’en-tête de la tablette dit la dernière synchronisation (1.4.0)', async () => {
+  synchroniseIlYa(0);
+  await render(<StatutSynchro />);
+  expect(await screen.findByText(/^Synchronisé à \d/)).toBeTruthy();
+});
+
 test('OFF-003 CA1 : un téléphone jamais synchronisé le dit aussi', async () => {
-  await render(<LigneSynchro />);
+  await render(<StatutSynchro />);
   expect(await screen.findByText('Pas encore synchronisé')).toBeTruthy();
 });
 

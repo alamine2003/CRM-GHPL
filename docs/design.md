@@ -83,9 +83,12 @@ Pas de capitales espacées hors des en-têtes de colonnes de tableau.
 
 ## 4. Mobile
 
-- En-tête de 56 px : titre de l'écran à gauche, action à droite ; aucune bannière.
-- Onglets du bas à 5 entrées, libellés courts, zone de 56 px.
-- Listes pleine largeur, séparées par des filets ; boutons de 48 px de haut.
+Depuis 1.4.0, la maquette « CRM GHPL – Écrans mobile et tablette » fait foi (prd.md §14.82) ; ses jetons sont dans `mobile/src/theme.ts`.
+
+- Téléphone : la marque « CRM » et le logo GH en tête, puis le titre (20/28) et son contexte ; action à droite (bouton de 44 px) ; aucune bannière.
+- Onglets du bas à 5 entrées, libellés courts, zone de 56 px, repère orange de 3 px au-dessus de l'onglet actif.
+- Tablette (à partir de 900 px) : barre latérale marine de 92 px, en-tête de 68 px, liste à gauche (430 px) et détail à droite.
+- Listes pleine largeur, séparées par des filets ; boutons de 48 px de haut ; statuts en pastille et texte, jamais la couleur seule ; potentiel A/B/C en carré plein (orange, marine, gris).
 
 ## 5. Grille de revue (obligatoire à chaque version)
 
