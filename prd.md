@@ -723,6 +723,13 @@ Mise en œuvre (0.3.9) :
   - Sous ce que dessine la maquette restent l'objectif et la note de la visite, ses contrôles (PLN-004, PLN-013), « Préparer ma visite », les téléphones, l'historique des trois dernières visites et « Modifier la visite » (PLN-015) ; la visite imprévue garde sa justification (VIS-008).
   - L'en-tête de la tablette dit le statut réel du planning (« Planning en cours · version 1 », « Planning approuvé · version 2 »).
   - Une visite imprévue porte l'étiquette « Imprévue » dans la frise de la Tournée (VIS-008 CA2) ; un rapport rouvert s'y dit « Rapport rouvert » parmi les rapports à corriger (RPT-016).
+- **1.4.2** : écrans du **rapport** — à rédiger (avancement « 4 champs sur 5 remplis » et heure limite, produits en pastilles numérotées, résultat en segments, résumé, prochaine action ; téléphone : « Enregistrer » et « Soumettre le rapport » collés en bas avec ce qui manque ; tablette : « Avant de soumettre » à droite), **soumis** (cartes en lecture ; tablette : synthèse à droite) et **à corriger** (la demande du superviseur en tête, seules les parties à revoir s'écrivent, le reste sous « Reste inchangé »).
+- **Ce que la maquette ne dessine pas sur le rapport** [D, délégation, 1.4.2] :
+  - Restent dans le formulaire, sous ce que dessine la maquette : l'objectif prévu (RPT-003 CA1), l'action notée à la visite précédente (RPT-006 CA1), le retour du prescripteur sur chaque produit (RPT-004), la précision du résultat, le type et l'échéance de la prochaine action (RPT-006), les échantillons et cadeaux (RPT-005), les documents (RPT-007) et les champs du pays (RPT-008).
+  - « Enregistrer » envoie aussitôt ce qui a changé ; l'enregistrement automatique reste (RPT-009). Sans changement, l'écran le dit et n'envoie rien.
+  - L'avancement compte les six parties du socle (dont le type de prochaine action) et les champs obligatoires du pays.
+  - Un rapport à corriger sans parties désignées, ou rouvert (RPT-016), garde le formulaire entier avec la demande en tête.
+  - Plus de quatre résultats proposés par le pays : des pastilles à la place des segments.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

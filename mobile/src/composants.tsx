@@ -180,7 +180,13 @@ export function Ligne({
   return (
     <View style={[styles.ligne, !derniere && { borderBottomWidth: 1, borderBottomColor: p.ligne }]}>
       <Text
-        style={{ fontFamily: police.texte, fontSize: 13, lineHeight: 18, color: p.texteSecondaire }}
+        style={{
+          maxWidth: '50%',
+          fontFamily: police.texte,
+          fontSize: 13,
+          lineHeight: 18,
+          color: p.texteSecondaire,
+        }}
       >
         {libelle}
       </Text>
@@ -204,6 +210,9 @@ export function Champ({
   libelle,
   libelleMasque,
   action,
+  titre,
+  aide,
+  erreur,
   style,
   ...props
 }: TextInputProps & {
@@ -212,16 +221,27 @@ export function Champ({
   libelleMasque?: boolean;
   /** Lien à droite du libellé (« Mot de passe oublié ? »). */
   action?: ReactNode;
+  /** Libellé en titre de section (.sec-t), pour les grands champs d'un formulaire. */
+  titre?: boolean;
+  /** Une ligne d'aide sous le libellé (.lib). */
+  aide?: string;
+  /** Champ à revoir : filet rouge doublé (correction demandée). */
+  erreur?: boolean;
 }) {
   const p = usePalette();
   return (
     <View style={{ gap: 6 }}>
       {!libelleMasque && (
         <View style={styles.enteteChamp}>
-          <Texte variante="libelle">{libelle}</Texte>
+          <Texte variante={titre ? 'sousTitre' : 'libelle'}>{libelle}</Texte>
           {action}
         </View>
       )}
+      {aide ? (
+        <Texte variante="libelle" style={{ marginTop: -2 }}>
+          {aide}
+        </Texte>
+      ) : null}
       <TextInput
         accessibilityLabel={libelle}
         placeholderTextColor={p.texteDiscret}
@@ -229,10 +249,69 @@ export function Champ({
           styles.champ,
           { borderColor: p.ligne, color: p.texte, backgroundColor: p.surface },
           props.multiline && styles.champLong,
+          erreur && { borderColor: p.erreur, borderWidth: 2 },
           style,
         ]}
         {...props}
       />
+    </View>
+  );
+}
+
+/**
+ * Choix unique en segments côte à côte (.seg) : le segment choisi est plein. Un second appui
+ * sur lui le signale aussi : à l'écran de décider s'il le retire.
+ */
+export function Segments<T extends string>({
+  libelle,
+  options,
+  valeur,
+  surChoix,
+  style,
+}: {
+  libelle: string;
+  options: { cle: T; libelle: string }[];
+  valeur: T | null;
+  surChoix: (cle: T) => void;
+  style?: ViewStyle;
+}) {
+  const p = usePalette();
+  return (
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={libelle}
+      style={[styles.segments, { borderColor: p.ligne, backgroundColor: p.surface }, style]}
+    >
+      {options.map((o, i) => {
+        const actif = o.cle === valeur;
+        return (
+          <Pressable
+            key={o.cle}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: actif }}
+            accessibilityLabel={o.libelle}
+            onPress={() => surChoix(o.cle)}
+            style={({ pressed }) => [
+              styles.segment,
+              i < options.length - 1 && { borderRightWidth: 1, borderRightColor: p.ligne },
+              actif && { backgroundColor: p.accentPlein },
+              pressed && !actif && { backgroundColor: p.surface2 },
+            ]}
+          >
+            <Text
+              style={{
+                fontFamily: police.texteFort,
+                fontSize: 14,
+                lineHeight: 20,
+                textAlign: 'center',
+                color: actif ? p.accentTexte : p.texteSecondaire,
+              }}
+            >
+              {o.libelle}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -567,6 +646,14 @@ export function Chiffres({
 
 const styles = StyleSheet.create({
   carte: { borderWidth: 1, borderRadius: RAYON },
+  segments: { flexDirection: 'row', borderWidth: 1, borderRadius: RAYON, overflow: 'hidden' },
+  segment: {
+    flex: 1,
+    minHeight: 44,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   puce: {
     alignSelf: 'flex-start',
     paddingHorizontal: 6,

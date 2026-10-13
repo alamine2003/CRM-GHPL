@@ -326,6 +326,36 @@
       "objectif": "Objective",
       "note": "Note",
       "reseau": "Network {{reseau}}"
+    },
+    "rapport": {
+      "champsRemplis_one": "{{count}} of {{total}} fields completed",
+      "champsRemplis_other": "{{count}} of {{total}} fields completed",
+      "aRendre": "Due before {{heure}}",
+      "enRetard": "Late",
+      "enregistrer": "Save",
+      "dejaEnregistre": "Nothing new: the report is already saved.",
+      "avantDeSoumettre": "Before submitting",
+      "fait": "Done",
+      "manquant": "Missing",
+      "aCompleter": "To complete before submitting:",
+      "noteSoumission": "Report due the same day before {{heure}}. Once submitted, it can no longer be changed.",
+      "noteSoumis": "A correction requested by your supervisor would reopen this report.",
+      "noteCorrection": "Once corrected, the report goes back to your supervisor; it can no longer be changed once submitted.",
+      "soumisA": "Submitted at {{heure}}",
+      "resteInchange": "Unchanged",
+      "retourPrescripteur": "Prescriber feedback",
+      "prochaineActionIndice": "For example: bring the clinical study",
+      "echeance": "Due date",
+      "echeanceLue": "by {{date}}",
+      "documents": "Documents",
+      "controles": {
+        "produits": "Products presented",
+        "retours": "Feedback on each product",
+        "resultat": "Outcome",
+        "resume": "Summary of the discussion",
+        "prochaine_action_type": "Type of next action",
+        "prochaine_action": "Next action"
+      }
     }
   },
   "roles": {
@@ -2293,7 +2323,8 @@
     "horsLigne": "No network: the file is kept on the phone and will be sent automatically when the network is back.",
     "tropLourde": "This document is over 10 MB.",
     "maximum": "{{n}} attachments at most: remove one to add another.",
-    "enAttenteAilleurs": "Announced, waiting for the file"
+    "enAttenteAilleurs": "Announced, waiting for the file",
+    "envoye": "Sent"
   },
   "chronologie": {
     "titre": "Previous visits",

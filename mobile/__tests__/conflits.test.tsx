@@ -10,6 +10,7 @@ import { envoyerAttente, garderMaVersion, lireAttente, mettreEnAttente } from '.
 import i18n from '../src/i18n';
 import { FormulaireRapport } from '../src/Rapport';
 import { ContexteSession, type Session } from '../src/session';
+import type { ReactNode } from 'react';
 
 const mockMemoire = new Map<string, { valeur: unknown; maj: string }>();
 jest.mock('../src/baseLocale', () => ({
@@ -23,6 +24,31 @@ jest.mock('../src/baseLocale', () => ({
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
 jest.mock('expo-location', () => ({}));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'envoi-1' }));
+// Le gabarit (en-tête, onglets) est testé ailleurs : ici, son titre, son statut, le contenu et
+// les boutons collés en bas.
+jest.mock('../src/Ecran', () => ({
+  Ecran: ({
+    surTitre,
+    action,
+    children,
+    pied,
+  }: {
+    surTitre?: string;
+    action?: ReactNode;
+    children: ReactNode;
+    pied?: ReactNode;
+  }) => {
+    const { Text } = jest.requireActual('react-native');
+    return (
+      <>
+        <Text>{surTitre}</Text>
+        {action}
+        {children}
+        {pied}
+      </>
+    );
+  },
+}));
 
 const SERVEUR: Rapport = {
   id: 'r1',

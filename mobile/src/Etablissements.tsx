@@ -1,5 +1,5 @@
 import type { Etablissement, SaisieEtablissement, SecteurSaisie } from '@innov/api-client';
-import { marque, rayon } from '@innov/design';
+import { rayon } from '@innov/design';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
@@ -13,25 +13,36 @@ export function Pilule({
   libelle,
   actif,
   onPress,
+  rang,
 }: {
   libelle: string;
   actif: boolean;
   onPress: () => void;
+  /** Rang de présentation, en carré orange devant le libellé (produits du rapport). */
+  rang?: number;
 }) {
   const p = usePalette();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: actif }}
+      accessibilityLabel={rang ? `${rang}. ${libelle}` : libelle}
       onPress={onPress}
       style={[
         styles.pilule,
         actif
-          ? { backgroundColor: marque.bleuMarine, borderColor: marque.bleuMarine }
+          ? { backgroundColor: p.accentPlein, borderColor: p.accentPlein }
           : { borderColor: p.ligne, backgroundColor: p.surface },
       ]}
     >
-      <Text style={[styles.piluleTexte, { color: actif ? '#FFFFFF' : p.texte }]}>{libelle}</Text>
+      {rang ? (
+        <View style={[styles.rang, { backgroundColor: p.orange }]}>
+          <Text style={styles.rangTexte}>{rang}</Text>
+        </View>
+      ) : null}
+      <Text style={[styles.piluleTexte, { color: actif ? p.accentTexte : p.texte }]}>
+        {libelle}
+      </Text>
     </Pressable>
   );
 }
@@ -216,12 +227,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   pilules: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  // .pill de la maquette : 44 px, texte de 14.
   pilule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     borderWidth: 1,
     borderRadius: rayon,
-    paddingHorizontal: 12,
-    minHeight: 40,
-    justifyContent: 'center',
+    paddingHorizontal: 14,
+    minHeight: 44,
   },
-  piluleTexte: { fontFamily: police.texteFort, fontSize: 13 },
+  piluleTexte: { fontFamily: police.texteMoyen, fontSize: 14, lineHeight: 20 },
+  rang: { width: 20, height: 20, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
+  rangTexte: { color: '#151B30', fontFamily: police.titreFort, fontSize: 12 },
 });

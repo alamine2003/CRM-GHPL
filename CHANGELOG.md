@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.2] — La maquette : les écrans du rapport
+
+### Modifié (prd.md §14.82, RPT-001 à RPT-016)
+
+- Rapport à rédiger : l'avancement (« 4 champs sur 5 remplis ») et l'heure limite en tête ; les produits en pastilles numérotées dans l'ordre de présentation ; le résultat en segments. Sur téléphone, « Enregistrer » et « Soumettre le rapport » sont collés en bas, avec ce qui manque encore ; sur tablette, « Avant de soumettre » coche ce qui est fait.
+- Nouveau bouton « Enregistrer » : il envoie tout de suite ; l'enregistrement automatique continue.
+- Rapport soumis : des cartes faciles à lire (synthèse, produits et retours, échantillons et cadeaux, documents) ; sur tablette, la synthèse à droite.
+- Rapport à corriger : la demande du superviseur en tête ; seules les parties à revoir se modifient, le reste se lit sous « Reste inchangé ».
+- Les pastilles de choix de toute l'application prennent les mesures de la maquette (44 px, texte de 14).
+
+### Design
+
+Écrans « Rapport de visite » (à rédiger, soumis, à corriger) refaits selon la maquette, téléphone et tablette, clair et sombre ; ce que la maquette ne dessine pas (objectif, retours, échéance, échantillons, documents, champs du pays) reste dans le formulaire.
+
 ## [1.4.1] — La maquette : l'écran Visite et « Le prospect est absent »
 
 ### Modifié (prd.md §14.82, VIS-002 à VIS-009)

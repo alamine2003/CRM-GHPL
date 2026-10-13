@@ -326,6 +326,36 @@
       "objectif": "Objectif",
       "note": "Note",
       "reseau": "Réseau {{reseau}}"
+    },
+    "rapport": {
+      "champsRemplis_one": "{{count}} champ sur {{total}} rempli",
+      "champsRemplis_other": "{{count}} champs sur {{total}} remplis",
+      "aRendre": "À rendre avant {{heure}}",
+      "enRetard": "En retard",
+      "enregistrer": "Enregistrer",
+      "dejaEnregistre": "Rien de nouveau : le rapport est déjà enregistré.",
+      "avantDeSoumettre": "Avant de soumettre",
+      "fait": "Fait",
+      "manquant": "Manquant",
+      "aCompleter": "À compléter avant de soumettre :",
+      "noteSoumission": "Rapport attendu le jour même avant {{heure}}. Une fois soumis, il ne se modifie plus.",
+      "noteSoumis": "Une correction demandée par votre superviseur rouvrirait ce rapport.",
+      "noteCorrection": "Après correction, le rapport repart chez votre superviseur ; il ne se modifie plus une fois soumis.",
+      "soumisA": "Soumis à {{heure}}",
+      "resteInchange": "Reste inchangé",
+      "retourPrescripteur": "Retour du prescripteur",
+      "prochaineActionIndice": "Par exemple : apporter l'étude clinique",
+      "echeance": "Échéance",
+      "echeanceLue": "d'ici le {{date}}",
+      "documents": "Documents",
+      "controles": {
+        "produits": "Produits présentés",
+        "retours": "Retour sur chaque produit",
+        "resultat": "Résultat obtenu",
+        "resume": "Résumé de l'échange",
+        "prochaine_action_type": "Type de prochaine action",
+        "prochaine_action": "Prochaine action"
+      }
     }
   },
   "roles": {
@@ -2293,7 +2323,8 @@
     "horsLigne": "Pas de réseau : la pièce est gardée sur le téléphone et partira toute seule au retour du réseau.",
     "tropLourde": "Ce document dépasse 10 Mo.",
     "maximum": "{{n}} pièces jointes au plus : retirez-en une pour en ajouter une autre.",
-    "enAttenteAilleurs": "Annoncée, en attente du fichier"
+    "enAttenteAilleurs": "Annoncée, en attente du fichier",
+    "envoye": "Envoyé"
   },
   "chronologie": {
     "titre": "Visites précédentes",
