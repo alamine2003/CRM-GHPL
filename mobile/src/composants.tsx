@@ -460,7 +460,16 @@ export function MarquePotentiel({
 export type TonStatut = 'ok' | 'wa' | 'er' | 'in' | 'or' | 'neutre';
 
 /** Statut : pastille de 8 px et texte, jamais la couleur seule (.st). */
-export function Statut({ children, ton = 'neutre' }: { children: ReactNode; ton?: TonStatut }) {
+export function Statut({
+  children,
+  ton = 'neutre',
+  lignes = 1,
+}: {
+  children: ReactNode;
+  ton?: TonStatut;
+  /** Une case étroite (chiffres de la visite) laisse le statut passer à la ligne. */
+  lignes?: number;
+}) {
   const p = usePalette();
   const pastille = {
     ok: p.succes,
@@ -474,7 +483,7 @@ export function Statut({ children, ton = 'neutre' }: { children: ReactNode; ton?
   return (
     <View style={styles.statut}>
       <View style={[styles.point, { backgroundColor: pastille }]} />
-      <Text numberOfLines={1} style={[styles.statutTexte, { color: texte }]}>
+      <Text numberOfLines={lignes} style={[styles.statutTexte, { color: texte }]}>
         {children}
       </Text>
     </View>
@@ -493,6 +502,21 @@ export function Etiquette({
     <Statut ton={ton === 'attention' ? 'wa' : ton === 'succes' ? 'ok' : 'neutre'}>
       {children}
     </Statut>
+  );
+}
+
+/** Petite étiquette grise à filet (.tag) : « Imprévue », un code, un rang. */
+export function Puce({ children }: { children: ReactNode }) {
+  const p = usePalette();
+  return (
+    <Text
+      style={[
+        styles.puce,
+        { backgroundColor: p.surface2, borderColor: p.ligne, color: p.texteSecondaire },
+      ]}
+    >
+      {children}
+    </Text>
   );
 }
 
@@ -543,6 +567,16 @@ export function Chiffres({
 
 const styles = StyleSheet.create({
   carte: { borderWidth: 1, borderRadius: RAYON },
+  puce: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderRadius: 4,
+    overflow: 'hidden',
+    fontFamily: police.texteMoyen,
+    fontSize: 12,
+    lineHeight: 18,
+  },
   ligne: {
     flexDirection: 'row',
     justifyContent: 'space-between',

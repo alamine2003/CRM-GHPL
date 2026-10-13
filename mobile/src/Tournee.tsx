@@ -28,6 +28,7 @@ import {
   Icone,
   Ligne,
   MarquePotentiel,
+  Puce,
   Statut,
   Texte,
   type TonStatut,
@@ -99,7 +100,8 @@ export function useTournee() {
 
   if (!programme || programme.etat === 'sans_poste') return null;
   const aujourdhui = programme.jours.find((j) => j.date === programme.aujourdhui) ?? null;
-  const visites = aujourdhui?.visites ?? [];
+  // Sans version approuvée, pas de programme : rien à démarrer (VIS-001).
+  const visites = programme.etat === 'approuve' ? (aujourdhui?.visites ?? []) : [];
   // La prochaine : la visite en cours la plus récemment démarrée, sinon la première prévue que
   // ne couvre pas une indisponibilité déclarée (DC-51).
   const prochaine =
@@ -148,9 +150,9 @@ export function useTournee() {
 export type EtatTournee = NonNullable<ReturnType<typeof useTournee>>;
 
 /** Où en est une visite de la frise : son statut et sa pastille. */
-function statutDe(
-  v: VisiteProgramme,
-  prochaine: VisiteProgramme | null,
+export function statutDe(
+  v: Pick<VisiteProgramme, 'id' | 'statut' | 'rapport_statut'>,
+  prochaine: { id: string } | null,
 ): { cle: string; ton: TonStatut; autre?: boolean } {
   if (v.statut === 'en_cours') return { cle: 'en_cours', ton: 'or' };
   if (v.id === prochaine?.id) return { cle: 'prochaine', ton: 'or' };
@@ -164,7 +166,7 @@ function statutDe(
   return { cle: v.statut ?? 'prevue', ton: 'neutre', autre: true };
 }
 
-function libelleStatut(s: ReturnType<typeof statutDe>, t: Traduire, court: boolean) {
+export function libelleStatut(s: ReturnType<typeof statutDe>, t: Traduire, court: boolean) {
   if (s.autre) return t(`visites.statuts.${s.cle}`);
   return t(`mobile.tournee.${court ? 'statutsCourts' : 'statuts'}.${s.cle}`);
 }
@@ -289,9 +291,14 @@ export function Frise({ etat, tablette }: { etat: EtatTournee; tablette?: boolea
                       {v.etablissement?.nom ?? ''}
                     </Texte>
                   ) : (
-                    <Statut ton={s.ton}>{libelleStatut(s, t, false)}</Statut>
+                    <View style={styles.statutFrise}>
+                      <Statut ton={s.ton}>{libelleStatut(s, t, false)}</Statut>
+                      {/* VIS-008 CA2 : une visite imprévue se lit comme telle. */}
+                      {v.est_imprevue && <Puce>{t('visites.imprevue')}</Puce>}
+                    </View>
                   )}
                 </View>
+                {tablette && v.est_imprevue && <Puce>{t('visites.imprevue')}</Puce>}
                 {tablette && <Statut ton={s.ton}>{libelleStatut(s, t, true)}</Statut>}
               </Pressable>
             </View>
@@ -309,6 +316,12 @@ export function Avancement({ etat }: { etat: EtatTournee }) {
   const { t } = useTranslation();
   const p = usePalette();
   const total = etat.visites.length;
+  if (!total)
+    return (
+      <Texte variante="sousTitre" accessibilityRole="header">
+        {t('programme.titre')}
+      </Texte>
+    );
   return (
     <View style={{ gap: 8 }}>
       <View style={styles.entreDeux}>
@@ -615,7 +628,13 @@ export function Alertes({ etat }: { etat: EtatTournee }) {
               key={v.id}
               avant={v.prospect && <MarquePotentiel valeur={v.prospect.potentiel} />}
               titre={nom(v, t)}
-              meta={dateLongue(v)}
+              // RPT-016 : un rapport rouvert par le superviseur se distingue d'une correction.
+              meta={[
+                dateLongue(v),
+                v.rapport_statut === 'rouvert' ? t('mobile.tournee.statuts.rouvert') : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
               onPress={() => rapport(v)}
             />
           ))}
@@ -1087,6 +1106,7 @@ export function TourneeTablette({ etat, annonce, surAnnonce }: Proprietes) {
 }
 
 const styles = StyleSheet.create({
+  statutFrise: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   entreDeux: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   item: { flexDirection: 'row', gap: 12 },
   heure: { width: 46, fontFamily: police.titre, fontSize: 14, lineHeight: 20, paddingTop: 14 },

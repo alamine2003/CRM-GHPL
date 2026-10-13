@@ -711,11 +711,18 @@ Mise en œuvre (0.3.9) :
 - **Connexion par adresse courriel** [D, 1.4.0] : la maquette demande « Adresse courriel » ; l'identifiant (prenom.nom) reste accepté pour les comptes sans courriel.
 - **Ce que la maquette ne dessine pas** [D, délégation, 1.4.0] : rien ne se perd.
   - Synchronisation : plus de ligne permanente sous l'en-tête du téléphone ; elle ne paraît que si des envois attendent le réseau (OFF-003 CA1). La tablette montre « Synchronisé à … » dans l'en-tête de la Tournée ; le détail reste au Profil.
-  - Prospect absent, report, annulation : depuis le détail de la visite (l'écran « Le prospect est absent » de la maquette arrive à l'étape suivante) ; visite hors planning et indisponibilité : sous la frise du jour.
+  - Prospect absent, report, annulation : depuis l'écran de la visite (1.4.1) ; visite hors planning et indisponibilité : sous la frise du jour.
   - « Mon poste » et « Mes produits » passent au Profil, les décisions sur mes propositions à l'onglet Prospects ; « Le reste de la semaine » laisse place à l'onglet Semaine.
   - La distance « à 4,2 km » n'est pas affichée sur la Tournée : la position n'est prise qu'au début et à la fin d'une visite, comme le promet la demande d'autorisation. Le bouton « Itinéraire » ouvre l'application de cartes vers le lieu.
   - Le lien « Politique de confidentialité » reste sous le pied de la connexion (exigence des magasins).
   - La tablette se tourne librement (la maquette la dessine à l'horizontale).
+- **1.4.1** : écran **Visite** (téléphone : le prospect et son lieu, les deux fiches, la dernière visite chez ce prospect, la note sur la position, les actions collées en bas ; tablette : les visites du jour à gauche, le prospect en grand, ses chiffres — quand, statut, distance, dernière visite —, la dernière visite et la position) et écran **« Le prospect est absent »** (motifs à cocher, commentaire facultatif, Retour / Confirmer ; sur tablette, en fenêtre sur la journée).
+- **Ce que la maquette ne dessine pas sur la visite** [D, délégation, 1.4.1] :
+  - Les actions du bas suivent l'état de la visite : « Prospect absent » et « Démarrer » (prévue aujourd'hui), « Prospect absent » et « Terminer » (en cours), le rapport (effectuée : rédiger, reprendre ou voir), « Justifier » (restée prévue après sa journée, VIS-009), « Annuler » et « Reporter » (un autre jour, VIS-006, VIS-007). Reporter et annuler une visite du jour restent possibles, en liens sous la visite. Report, annulation et justification s'ouvrent sur le même écran que l'absence, chacun avec son titre ; le report y ajoute le nouveau jour et l'heure.
+  - La « Distance » est celle depuis l'arrêt précédent, estimée à vol d'oiseau (PLN-010) : jamais la position du délégué, qui n'est prise qu'au début et à la fin de la visite. Sans estimation, « — ».
+  - Sous ce que dessine la maquette restent l'objectif et la note de la visite, ses contrôles (PLN-004, PLN-013), « Préparer ma visite », les téléphones, l'historique des trois dernières visites et « Modifier la visite » (PLN-015) ; la visite imprévue garde sa justification (VIS-008).
+  - L'en-tête de la tablette dit le statut réel du planning (« Planning en cours · version 1 », « Planning approuvé · version 2 »).
+  - Une visite imprévue porte l'étiquette « Imprévue » dans la frise de la Tournée (VIS-008 CA2) ; un rapport rouvert s'y dit « Rapport rouvert » parmi les rapports à corriger (RPT-016).
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

@@ -3,7 +3,7 @@
  *
  * - Jour : l'itinéraire dans l'ordre de la journée, numéroté, avec la distance d'un arrêt à
  *   l'autre (à vol d'oiseau [H]) ; un passage compte pour un arrêt.
- * - Détail : une visite, avec ses fiches (prospect, lieu) et ce qui reste à faire.
+ * - Détail : une visite, avec ses fiches (prospect, lieu) et ce qui reste à faire (src/Visite.tsx).
  * Aucune des deux ne montre de montant (PLN-010 CA2).
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -13,13 +13,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LigneActivite } from './Activites';
-import { Alerte, Bouton, Carte, MarquePotentiel, Texte, useLien, usePalette } from './composants';
-import { alertesDeVisite, remarquesDeRevision } from './Controles';
+import { Alerte, Bouton, Carte, Texte, useLien, usePalette } from './composants';
 import { nomProspect } from './Fiches';
 import { unitesDuJour } from './Journee';
 import { police } from './polices';
-import { CoordonneesEtHistorique } from './DetailVisite';
-import { ExecutionDepuisProgramme, useVisiteDuProgramme } from './Execution';
 import { BandeauHorsLigne } from './Attente';
 import { estTransitoire } from './Brouillons';
 import { garderSemaine, jourIso, semaineGardee } from './semaineLocale';
@@ -34,7 +31,7 @@ export function kilometres(km: number, langue: string) {
  * Semaine qui contient ce jour, relue à l'ouverture de l'écran. Sans réseau, la dernière
  * semaine gardée sur le téléphone la remplace (PLN-007), avec l'heure de sa mise à jour.
  */
-function useSemaineDu(jour: string) {
+export function useSemaineDu(jour: string) {
   const { t } = useTranslation();
   const { client } = useSession();
   const [semaine, setSemaine] = useState<Semaine | null>(null);
@@ -234,121 +231,6 @@ function LigneItineraire({
   );
 }
 
-export function VueDetail({ id, jour }: { id: string; jour: string }) {
-  const { t, i18n } = useTranslation();
-  const p = usePalette();
-  const routeur = useRouter();
-  const { semaine, erreur, horsLigne } = useSemaineDu(jour);
-  // Démarrée, terminée ou justifiée sur le téléphone : le programme gardé le sait déjà.
-  const duProgramme = useVisiteDuProgramme(id).visite;
-
-  if (erreur) return <Alerte type="erreur">{erreur}</Alerte>;
-  if (!semaine) return <Texte variante="discret">{t('session.chargement')}</Texte>;
-  const visite = semaine.visites.find((v) => v.id === id);
-  if (!visite) return <Alerte type="attention">{t('detail.introuvable')}</Alerte>;
-  const statut = duProgramme?.statut ?? visite.statut;
-
-  const alertes = alertesDeVisite(
-    semaine.controles,
-    visite.id,
-    t,
-    false,
-    remarquesDeRevision(semaine.planning)[visite.id],
-  );
-  const passage = visite.passage ? semaine.passages.find((x) => x.id === visite.passage) : null;
-  const ligne = (libelle: string, valeur?: string | null) =>
-    valeur ? (
-      <View style={styles.champ}>
-        <Texte variante="libelle">{libelle}</Texte>
-        <Texte>{valeur}</Texte>
-      </View>
-    ) : null;
-
-  return (
-    <>
-      {horsLigne && <BandeauHorsLigne maj={horsLigne} />}
-      <Carte style={{ gap: 12 }}>
-        <View style={styles.entete}>
-          {visite.prospect && <MarquePotentiel valeur={visite.prospect.potentiel} />}
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[styles.titre, { color: p.texte }]}>
-              {visite.prospect ? nomProspect(visite.prospect, t) : t('visites.sansProspect')}
-            </Text>
-            {visite.prospect && (
-              <Texte variante="discret">
-                {visite.prospect.specialite_libelle || visite.prospect.type_libelle}
-              </Texte>
-            )}
-          </View>
-        </View>
-        {ligne(
-          t('detail.quand'),
-          [dateLongue(visite.date, i18n.language), visite.heure].filter(Boolean).join(' · '),
-        )}
-        {ligne(
-          t('visites.champs.etablissement'),
-          passage
-            ? t('passages.ligne', {
-                lieu: passage.etablissement.nom,
-                count: passage.visites.length,
-              })
-            : visite.etablissement?.nom,
-        )}
-        {ligne(t('visites.champs.objectif'), visite.objectif)}
-        {ligne(t('visites.champs.reseau'), visite.reseau?.libelle)}
-        {ligne(t('visites.champs.note'), visite.note)}
-        {visite.est_imprevue &&
-          ligne(t('execution.justificationLue'), visite.justification || t('visites.imprevue'))}
-        {ligne(t('detail.statut'), t(`visites.statuts.${statut ?? 'prevue'}`))}
-        {visite.manquants.length > 0 && (
-          <Text style={[styles.manque, { color: p.attention }]}>
-            {t('visites.aCompleter', {
-              champs: visite.manquants.map((c) => t(`visites.champs.${c}`)).join(', '),
-            })}
-          </Text>
-        )}
-        {alertes.map((a) => (
-          <Text
-            key={a.texte}
-            style={[
-              styles.manque,
-              { color: a.ton === 'erreur' ? p.erreur : a.ton === 'info' ? p.info : p.attention },
-            ]}
-          >
-            {a.texte}
-          </Text>
-        ))}
-      </Carte>
-      <ExecutionDepuisProgramme id={visite.id} />
-      <CoordonneesEtHistorique id={visite.id} horsLigneDit={!!horsLigne} />
-      {visite.prospect && (
-        <Bouton
-          secondaire
-          libelle={t('detail.ficheProspect')}
-          onPress={() => routeur.push(`/fiche/${visite.prospect!.id}`)}
-        />
-      )}
-      {visite.etablissement && (
-        <Bouton
-          secondaire
-          libelle={t('detail.ficheLieu')}
-          onPress={() => routeur.push(`/lieu/${visite.etablissement!.id}`)}
-        />
-      )}
-      {/* Approuvé, une visite à venir se modifie encore (PLN-015). */}
-      {(semaine.modifiable ||
-        (semaine.approbation?.modifiable && visite.date >= jourIso(new Date()))) && (
-        <Bouton
-          libelle={t('visites.modifier')}
-          onPress={() =>
-            routeur.navigate({ pathname: '/semaine', params: { jour, modifier: visite.id } })
-          }
-        />
-      )}
-    </>
-  );
-}
-
 const styles = StyleSheet.create({
   trajet: { fontFamily: police.texte, fontSize: 13, paddingLeft: 44, paddingVertical: 2 },
   arret: { flexDirection: 'row', gap: 12, paddingVertical: 8 },
@@ -367,7 +249,4 @@ const styles = StyleSheet.create({
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, borderRadius: 6 },
   nom: { fontFamily: police.texteFort, fontSize: 15 },
   manque: { fontFamily: police.texteFort, fontSize: 12 },
-  champ: { gap: 2 },
-  entete: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  titre: { fontFamily: police.titre, fontSize: 18 },
 });

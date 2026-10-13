@@ -1,10 +1,10 @@
-import type { ClientApi, Rapport, VisiteProgramme } from '@innov/api-client';
+import type { ClientApi, Programme, Rapport, VisiteProgramme } from '@innov/api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { lireAttente } from '../src/Brouillons';
-import { ExecutionVisite } from '../src/Execution';
 import i18n from '../src/i18n';
 import { FormulaireRapport, manquantsDe } from '../src/Rapport';
 import { ContexteSession, type Session } from '../src/session';
+import { ActionsVisite } from '../src/Visite';
 
 // RPT-001, RPT-002, RPT-008 (0.5.1) : le rapport de la visite effectuée, socle commun et
 // champs du pays ; soumis seulement une fois complet.
@@ -287,11 +287,17 @@ test.each([
   mockPush.mockClear();
   await render(
     <ContexteSession.Provider value={{ client: {} } as unknown as Session}>
-      <ExecutionVisite
+      <ActionsVisite
         visite={{ ...EFFECTUEE, rapport_statut: statut }}
-        aujourdhui="2026-10-13"
-        geolocalisation={false}
-        fuseau="UTC"
+        programme={
+          {
+            aujourdhui: '2026-10-13',
+            geolocalisation: false,
+            fuseau: 'UTC',
+            attente_gps_secondes: 60,
+          } as Programme
+        }
+        surEcart={jest.fn()}
       />
     </ContexteSession.Provider>,
   );

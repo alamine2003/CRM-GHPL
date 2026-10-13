@@ -3,8 +3,9 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as Location from 'expo-location';
 import { lireAttente } from '../src/Brouillons';
 import i18n from '../src/i18n';
-import { ProgrammeDuJour } from '../src/Programme';
 import { ContexteSession, type Session } from '../src/session';
+import { useState } from 'react';
+import { type Annonce, TourneeTelephone, useTournee } from '../src/Tournee';
 
 // VIS-008 (0.4.8) : visite imprévue, justifiée (CA1), qui démarre aussitôt au jour réel ;
 // marquée « imprévue » (CA2). Sans réseau, elle attend dans la file.
@@ -103,6 +104,13 @@ const CIBLES = [
     ],
   },
 ];
+
+/** La Tournée du téléphone, telle que l'écran d'accueil la compose (1.4.0). */
+function ProgrammeDuJour() {
+  const etat = useTournee();
+  const [annonce, setAnnonce] = useState<Annonce | null>(null);
+  return etat ? <TourneeTelephone etat={etat} annonce={annonce} surAnnonce={setAnnonce} /> : null;
+}
 
 async function rendre(imprevue: jest.Mock) {
   const session = {

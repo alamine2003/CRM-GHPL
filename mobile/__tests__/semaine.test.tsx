@@ -4,7 +4,8 @@ import type { ReactNode } from 'react';
 import EcranSemaine from '../app/semaine';
 import i18n from '../src/i18n';
 import { ContexteSession, type Session } from '../src/session';
-import { VueDetail, VueJour } from '../src/Itineraire';
+import { VueJour } from '../src/Itineraire';
+import { EcranVisite } from '../src/Visite';
 import { lireHeure } from '../src/Visites';
 
 // La base chiffrée (SQLCipher) n'existe que sur le téléphone : une mémoire la remplace ici.
@@ -28,11 +29,20 @@ jest.mock('expo-router', () => ({
 
 // Le gabarit (en-tête, onglets) est testé ailleurs : ici, le contenu de la semaine.
 jest.mock('../src/Ecran', () => ({
-  Ecran: ({ children, surTitre }: { children: ReactNode; surTitre?: string }) => {
+  Ecran: ({
+    children,
+    surTitre,
+    action,
+  }: {
+    children: ReactNode;
+    surTitre?: string;
+    action?: ReactNode;
+  }) => {
     const { Text } = jest.requireActual('react-native');
     return (
       <>
         <Text>{surTitre}</Text>
+        {action}
         {children}
       </>
     );
@@ -710,9 +720,9 @@ test('PLN-006 : la vue jour suit l’itinéraire, arrêt par arrêt', async () =
 });
 
 test('PLN-006 : le détail d’une visite mène à ses fiches et à sa modification', async () => {
-  await rendreVue(<VueDetail id="v1" jour="2026-10-27" />, EN_PREPARATION);
+  await rendreVue(<EcranVisite id="v1" jour="2026-10-27" />, EN_PREPARATION);
   expect(await screen.findByText('Dr Awa FICTIF')).toBeTruthy();
-  expect(screen.getByText('Cardiologie')).toBeTruthy();
+  expect(screen.getByText('Cardiologie · Réseau Cardio')).toBeTruthy();
   expect(screen.getByText('Prévue')).toBeTruthy();
   expect(screen.getByText('À compléter : Heure, Objectif')).toBeTruthy();
   mockPousser.mockClear();
@@ -994,7 +1004,7 @@ test('PLN-007 : sans réseau, la journée et le détail restent lisibles', async
   expect(screen.getByText('Dr Moussa EXEMPLE')).toBeTruthy();
   await vue.rerender(
     <ContexteSession.Provider value={horsReseau}>
-      <VueDetail id="v2" jour="2026-10-27" />
+      <EcranVisite id="v2" jour="2026-10-27" />
     </ContexteSession.Provider>,
   );
   expect(await screen.findByText('Échantillons')).toBeTruthy();
@@ -1145,7 +1155,7 @@ test('VIS-008 CA2 : la visite imprévue se lit « Imprévue » dans la semaine e
   await rendre({ semaine: jest.fn(async () => semaine) });
   expect(await screen.findByText('Imprévue')).toBeTruthy();
   expect(screen.queryByText(/À compléter/)).toBeNull();
-  await rendreVue(<VueDetail id="v9" jour="2026-10-27" />, semaine);
+  await rendreVue(<EcranVisite id="v9" jour="2026-10-27" />, semaine);
   expect(await screen.findByText('Justification de la visite imprévue')).toBeTruthy();
   expect(screen.getByText('Croisé à la pharmacie')).toBeTruthy();
 });

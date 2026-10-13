@@ -1,8 +1,9 @@
 import type { ClientApi, Programme, VisiteProgramme } from '@innov/api-client';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import i18n from '../src/i18n';
-import { ProgrammeDuJour } from '../src/Programme';
 import { ContexteSession, type Session } from '../src/session';
+import { useState } from 'react';
+import { type Annonce, TourneeTelephone, useTournee } from '../src/Tournee';
 
 // VIS-001 (0.4.1) : le programme du jour, ordonné, la prochaine visite en tête ; CA1 : en mode
 // avion, le programme du jour et de la semaine s'affiche.
@@ -110,6 +111,13 @@ const PROGRAMME: Programme = {
   ],
 };
 
+/** La Tournée du téléphone, telle que l'écran d'accueil la compose (1.4.0). */
+function ProgrammeDuJour() {
+  const etat = useTournee();
+  const [annonce, setAnnonce] = useState<Annonce | null>(null);
+  return etat ? <TourneeTelephone etat={etat} annonce={annonce} surAnnonce={setAnnonce} /> : null;
+}
+
 async function rendre(programme: jest.Mock) {
   const session = {
     etat: { statut: 'connecte' },
@@ -130,24 +138,20 @@ beforeEach(async () => {
   await i18n.changeLanguage('fr');
 });
 
-test('VIS-001 : le programme du jour, la prochaine visite en tête, puis la semaine', async () => {
+test('VIS-001 : le programme du jour, la prochaine visite en tête, puis la frise du jour', async () => {
   await rendre(jest.fn(async () => PROGRAMME));
-  expect(await screen.findByText('Prochaine visite')).toBeTruthy();
-  expect(screen.getByText("2 visites aujourd'hui · Selon la version 1 approuvée")).toBeTruthy();
+  expect(await screen.findByText('Démarrer la visite')).toBeTruthy();
+  expect(screen.getByLabelText('0 visites faites sur 2')).toBeTruthy();
+  // Le bandeau « Prochaine visite », puis la frise dans l'ordre du jour. Le reste de la semaine
+  // se lit dans l'onglet Semaine, l'objectif sur l'écran de la visite (1.4.0, 1.4.1).
   const noms = screen.getAllByText(/^Dr Awa /).map((n) => n.props.children);
-  expect(noms).toEqual(['Dr Awa PREMIER', 'Dr Awa SECOND']);
-  expect(screen.getByText('Présenter le produit du mois')).toBeTruthy();
-  // Le reste de la semaine : les visites, le jour férié, la formation.
-  expect(screen.getByText('Mercredi 14')).toBeTruthy();
-  expect(screen.getByText('1 visite')).toBeTruthy();
-  expect(screen.getByText('Férié · Fête fictive')).toBeTruthy();
-  expect(screen.getByText('Aucune visite · Formation')).toBeTruthy();
+  expect(noms).toEqual(['Dr Awa PREMIER', 'Dr Awa PREMIER', 'Dr Awa SECOND']);
   // Gardé sur le téléphone pour le mode avion (CA1).
   expect(mockMemoire.get('programme.courant')?.valeur).toEqual(PROGRAMME);
-  await fireEvent.press(screen.getByText('Dr Awa PREMIER'));
+  await fireEvent.press(screen.getByLabelText('11:00 · Dr Awa SECOND · Prévue'));
   expect(mockPousser).toHaveBeenCalledWith({
     pathname: '/visite/[id]',
-    params: { id: 'v1', jour: '2026-10-13' },
+    params: { id: 'v2', jour: '2026-10-13' },
   });
 });
 
@@ -159,14 +163,16 @@ test('VIS-001 CA1 : en mode avion, le dernier programme lu s’affiche', async (
   });
   await rendre(horsReseau);
   expect(await screen.findByText(/^Hors ligne : programme tel qu'au /)).toBeTruthy();
-  expect(screen.getByText('Dr Awa PREMIER')).toBeTruthy();
-  expect(screen.getByText('Mercredi 14')).toBeTruthy();
+  expect(screen.getAllByText('Dr Awa PREMIER')).toHaveLength(2);
+  expect(screen.getByText('Dr Awa SECOND')).toBeTruthy();
 });
 
 test('sans version approuvée, le programme le dit', async () => {
   await rendre(jest.fn(async () => ({ ...PROGRAMME, etat: 'non_approuve', prochaine: null })));
   expect(await screen.findByText(/pas encore approuvé : pas de programme/)).toBeTruthy();
   expect(screen.queryByText('Prochaine visite')).toBeNull();
+  expect(screen.queryByText('Démarrer la visite')).toBeNull();
+  expect(screen.queryByText('Dr Awa PREMIER')).toBeNull();
 });
 
 test('toutes les visites du jour faites : plus de prochaine', async () => {
@@ -175,8 +181,9 @@ test('toutes les visites du jour faites : plus de prochaine', async () => {
     visites: j.visites.map((v) => ({ ...v, statut: 'effectuee' as const })),
   }));
   await rendre(jest.fn(async () => ({ ...PROGRAMME, prochaine: null, jours: faites })));
-  expect(await screen.findByText("Plus de visite à faire aujourd'hui.")).toBeTruthy();
-  expect(screen.getAllByText('Effectuée')).toHaveLength(2);
+  expect(await screen.findByLabelText('2 visites faites sur 2')).toBeTruthy();
+  expect(screen.queryByText('Démarrer la visite')).toBeNull();
+  expect(screen.getAllByText('Rapport à rédiger')).toHaveLength(2);
 });
 
 test('RG-032 : un rapport de la veille non soumis remonte en tête, « en retard »', async () => {
@@ -211,7 +218,7 @@ test('RPT-014, 29.A : les rapports à corriger, même d’une semaine passée, o
   };
   await rendre(jest.fn(async () => ({ ...PROGRAMME, a_corriger: [aCorriger, resoumis, rouvert] })));
   expect(await screen.findByText('Rapports à corriger (2)')).toBeTruthy();
-  expect(screen.getByText('Rapport rouvert')).toBeTruthy();
+  expect(screen.getByText(/Rapport rouvert/)).toBeTruthy();
   expect(screen.queryByText('Rapports en retard (1)')).toBeNull();
   expect(screen.getByText(/lundi 21 septembre/i)).toBeTruthy();
   await fireEvent.press(screen.getByText(/REVOIR/));
@@ -244,7 +251,7 @@ test('DC-51 : « Je suis indisponible aujourd’hui » justifie la journée sans
       <ProgrammeDuJour />
     </ContexteSession.Provider>,
   );
-  expect(await screen.findByText('Prochaine visite')).toBeTruthy();
+  expect(await screen.findByText('Démarrer la visite')).toBeTruthy();
   await fireEvent.press(screen.getByText(/Je suis indisponible aujourd.hui/));
   expect(screen.getByText(/Aucun motif n'est demandé/)).toBeTruthy();
   await fireEvent.press(screen.getByText(/Déclarer l.indisponibilité/));
@@ -252,7 +259,7 @@ test('DC-51 : « Je suis indisponible aujourd’hui » justifie la journée sans
     expect.objectContaining({ periode: 'journee' }),
   );
   expect(await screen.findByText(/Indisponibilité déclarée/)).toBeTruthy();
-  expect(screen.queryByText('Prochaine visite')).toBeNull();
+  expect(screen.queryByText('Démarrer la visite')).toBeNull();
 });
 
 test.each([
@@ -315,8 +322,7 @@ test('DC-51 : sans réseau, l’indisponibilité déclarée attend dans la file'
       <ProgrammeDuJour />
     </ContexteSession.Provider>,
   );
-  expect(await screen.findByText('Prochaine visite')).toBeTruthy();
-  expect(screen.getByLabelText(/^Prochaine visite : .*PREMIER/)).toBeTruthy();
+  expect(await screen.findByLabelText(/PREMIER · Prochaine visite$/)).toBeTruthy();
   await fireEvent.press(screen.getByText(/Je suis indisponible aujourd.hui/));
   await fireEvent.press(screen.getByText('Le matin'));
   await fireEvent.press(screen.getByText(/Déclarer l.indisponibilité/));
@@ -332,6 +338,6 @@ test('DC-51 : sans réseau, l’indisponibilité déclarée attend dans la file'
     }),
   ]);
   // La visite du matin est justifiée sur le téléphone : la prochaine passe à celle de l'après-midi.
-  expect(screen.getByLabelText(/^Prochaine visite : .*SECOND/)).toBeTruthy();
-  expect(screen.queryByLabelText(/^Prochaine visite : .*PREMIER/)).toBeNull();
+  expect(screen.getByLabelText(/SECOND · Prochaine visite$/)).toBeTruthy();
+  expect(screen.queryByLabelText(/PREMIER · Prochaine visite$/)).toBeNull();
 });

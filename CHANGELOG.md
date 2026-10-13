@@ -2,6 +2,24 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.1] — La maquette : l'écran Visite et « Le prospect est absent »
+
+### Modifié (prd.md §14.82, VIS-002 à VIS-009)
+
+- Nouvel écran de la visite : le prospect et son lieu, les fiches, la dernière visite chez ce prospect (résultat, produits présentés, prochaine action) ; les actions du moment sont collées en bas (« Prospect absent » et « Démarrer la visite », puis « Terminer », puis le rapport).
+- Sur tablette : les visites du jour à gauche, la visite ouverte à droite avec ses chiffres (quand, statut, distance depuis l'arrêt précédent, dernière visite) et sa position.
+- « Le prospect est absent » a son écran : motifs à cocher, commentaire facultatif, Retour / Confirmer l'absence. Sur tablette, il s'ouvre en fenêtre. Report, annulation et justification d'une visite passent par le même écran.
+- Dans la Tournée, une visite imprévue porte l'étiquette « Imprévue » et un rapport rouvert se dit « Rapport rouvert ».
+
+### Corrigé
+
+- La Tournée proposait « Démarrer la visite » alors que le planning de la semaine n'était pas encore approuvé ; elle dit de nouveau qu'il n'y a pas de programme à suivre.
+- Un détail de visite gardé sur le téléphone par une version précédente ne fait plus échouer l'écran de la visite.
+
+### Design
+
+Écrans Visite et « Le prospect est absent » refaits à l'identique de la maquette, téléphone et tablette, clair et sombre ; ce que la maquette ne dessine pas (objectif, contrôles, coordonnées, historique) reste sous la visite.
+
 ## [1.4.0] — La maquette mobile et tablette : fondations, connexion, Tournée
 
 ### Modifié (prd.md §14.82, VIS-001, USR-001)

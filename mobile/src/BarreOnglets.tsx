@@ -20,7 +20,7 @@ function estActif(cle: string, cheminOnglet: string, chemin: string) {
   return (
     chemin === cheminOnglet ||
     (cle === 'prospects' && /^\/(fiche|lieu)\//.test(chemin)) ||
-    (cle === 'semaine' && /^\/(jour|visite|versions)\//.test(chemin)) ||
+    (cle === 'semaine' && /^\/(jour|visite|ecart|versions)\//.test(chemin)) ||
     (cle === 'profil' && chemin === '/notifications')
   );
 }
