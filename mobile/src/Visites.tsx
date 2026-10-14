@@ -122,6 +122,7 @@ export function LigneVisite({
           {visite.heure ?? '--:--'}
         </Text>
       )}
+      {visite.prospect && <MarquePotentiel valeur={visite.prospect.potentiel} />}
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text
           numberOfLines={1}
@@ -159,7 +160,7 @@ export function LigneVisite({
           </Text>
         ))}
       </View>
-      {onPress && <MaterialIcons name="chevron-right" size={22} color={p.texteDiscret} />}
+      {onPress && <MaterialIcons name="chevron-right" size={20} color={p.texteDiscret} />}
     </Pressable>
   );
 }
@@ -831,18 +832,23 @@ export function ChoixLieu({
 }
 
 const styles = StyleSheet.create({
+  // .li de la maquette : heure (40), potentiel, nom et lieu.
   visite: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    minHeight: 48,
-    paddingVertical: 8,
-    paddingLeft: 4,
-    borderRadius: 6,
+    minHeight: 56,
+    paddingVertical: 12,
   },
   retrait: { width: 14 },
-  heure: { fontFamily: police.texteFort, fontSize: 14, width: 48, fontVariant: ['tabular-nums'] },
-  nom: { fontFamily: police.texteFort, fontSize: 15 },
+  heure: {
+    fontFamily: police.texteGras,
+    fontSize: 12.5,
+    lineHeight: 18,
+    width: 40,
+    fontVariant: ['tabular-nums'],
+  },
+  nom: { fontFamily: police.texteFort, fontSize: 15, lineHeight: 21 },
   manquants: { fontFamily: police.texteFort, fontSize: 12 },
   ajouter: {
     flexDirection: 'row',

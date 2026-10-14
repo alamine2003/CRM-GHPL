@@ -89,6 +89,7 @@ Depuis 1.4.0, la maquette « CRM GHPL – Écrans mobile et tablette » fait foi
 - Onglets du bas à 5 entrées, libellés courts, zone de 56 px, repère orange de 3 px au-dessus de l'onglet actif.
 - Tablette (à partir de 900 px) : barre latérale marine de 92 px, en-tête de 68 px, liste à gauche (430 px) et détail à droite.
 - Listes pleine largeur, séparées par des filets ; boutons de 48 px de haut ; statuts en pastille et texte, jamais la couleur seule ; potentiel A/B/C en carré plein (orange, marine, gris).
+- Semaine (1.4.3) : navigation en segments, jours en pastilles (jour choisi en marine, filet orange) sur le téléphone, en colonnes sur la tablette (jour choisi encadré d'une barre orange) ; itinéraire en ronds marine numérotés de 28 px, distance entre deux arrêts sur un filet pointillé ; version choisie marquée d'un filet orange à gauche.
 - Formulaire (1.4.2) : titres de champ en `.sec-t`, aide en `.lib` sous le titre ; choix unique court en segments (`.seg`, 44 px) ; une partie à revoir a un filet rouge doublé.
 - Actions d'un écran de détail (1.4.1) : collées en bas du téléphone, l'action principale deux fois plus large que la secondaire ; en ligne sous l'objet sur la tablette, l'action principale d'abord (240 px au moins). Un choix obligatoire se fait par des ronds à cocher de 20 px (liste sur le téléphone, deux colonnes en fenêtre sur la tablette).
 

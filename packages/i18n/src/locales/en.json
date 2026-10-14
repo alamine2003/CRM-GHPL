@@ -356,6 +356,42 @@
         "prochaine_action_type": "Type of next action",
         "prochaine_action": "Next action"
       }
+    },
+    "semaine": {
+      "titre": "Week",
+      "precedente": "Previous",
+      "courante": "This week",
+      "suivante": "Next",
+      "periode": "From {{debut}} to {{fin}}",
+      "periodeLongue": "Week from {{debut}} to {{fin}}",
+      "visitesCourt": "{{count}} vis.",
+      "ferieCourt": "Holiday",
+      "visitesPlanifiees_one": "{{count}} visit planned",
+      "visitesPlanifiees_other": "{{count}} visits planned",
+      "statutVersion": "{{statut}} · version {{numero}}",
+      "fermee": "Closed",
+      "aucunPlanningValide": "no validated plan",
+      "fermeeNote": "No visit can be added while the week is closed.",
+      "fermeeNoteTablette": "While the week is closed, no visit can be added. Your supervisor will receive your reopening request.",
+      "aucuneVisite": "No visit.",
+      "joursSemaine": "Days of the week",
+      "jourChoisi": "{{jour}}, {{visites}}"
+    },
+    "journee": {
+      "titre": "Day",
+      "visites": "Visits",
+      "objectif": "Target",
+      "objectifValeur": "{{min}} to {{max}}",
+      "volOiseau": "As the crow flies",
+      "volOiseauLong": "Distance as the crow flies",
+      "kmEnviron": "≈ {{km}} km",
+      "sansCoordonnees": "Places without coordinates",
+      "itineraire": "Route",
+      "activites": "Activities",
+      "sansCoordonneesAlerte_one": "{{count}} place without coordinates",
+      "sansCoordonneesAlerte_other": "{{count}} places without coordinates",
+      "sansCoordonneesSuite_one": "is not counted in the estimated distance.",
+      "sansCoordonneesSuite_other": "are not counted in the estimated distance."
     }
   },
   "roles": {
@@ -2019,7 +2055,16 @@
     "motifs": {
       "revision": "After revision",
       "modification": "Change after approval"
-    }
+    },
+    "soumiseHeure": "Submitted on {{date}} at {{heure}}",
+    "soumiseCourte": "Submitted on {{date}}, {{heure}}",
+    "decideeCourt": {
+      "approuve": "approved on {{date}} by {{par}}",
+      "a_reviser": "revision requested on {{date}} by {{par}}"
+    },
+    "figee": "each submission creates a frozen version",
+    "enAttente": "A pending version is being reviewed by your supervisor.",
+    "enAttenteSuivie": "A pending version is being reviewed by your supervisor; version {{numero}} remains the one to follow until then."
   },
   "apresApprobation": {
     "regle": "Planning approved. Changing a visit's time within its day remains free; any other change (day, prospect, place, objective, addition, removal) is submitted to your supervisor.",

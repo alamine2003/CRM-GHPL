@@ -356,6 +356,42 @@
         "prochaine_action_type": "Type de prochaine action",
         "prochaine_action": "Prochaine action"
       }
+    },
+    "semaine": {
+      "titre": "Semaine",
+      "precedente": "Précédente",
+      "courante": "Cette semaine",
+      "suivante": "Suivante",
+      "periode": "Du {{debut}} au {{fin}}",
+      "periodeLongue": "Semaine du {{debut}} au {{fin}}",
+      "visitesCourt": "{{count}} vis.",
+      "ferieCourt": "Férié",
+      "visitesPlanifiees_one": "{{count}} visite planifiée",
+      "visitesPlanifiees_other": "{{count}} visites planifiées",
+      "statutVersion": "{{statut}} · version {{numero}}",
+      "fermee": "Fermée",
+      "aucunPlanningValide": "aucun planning validé",
+      "fermeeNote": "Aucune visite ne peut être ajoutée tant que la semaine est fermée.",
+      "fermeeNoteTablette": "Pendant que la semaine est fermée, aucune visite ne peut être ajoutée. Votre superviseur recevra votre demande de réouverture.",
+      "aucuneVisite": "Aucune visite.",
+      "joursSemaine": "Jours de la semaine",
+      "jourChoisi": "{{jour}}, {{visites}}"
+    },
+    "journee": {
+      "titre": "Journée",
+      "visites": "Visites",
+      "objectif": "Objectif",
+      "objectifValeur": "{{min}} à {{max}}",
+      "volOiseau": "À vol d’oiseau",
+      "volOiseauLong": "Distance à vol d’oiseau",
+      "kmEnviron": "≈ {{km}} km",
+      "sansCoordonnees": "Lieux sans coordonnées",
+      "itineraire": "Itinéraire",
+      "activites": "Activités",
+      "sansCoordonneesAlerte_one": "{{count}} lieu sans coordonnées",
+      "sansCoordonneesAlerte_other": "{{count}} lieux sans coordonnées",
+      "sansCoordonneesSuite_one": "n’est pas compté dans la distance estimée.",
+      "sansCoordonneesSuite_other": "ne sont pas comptés dans la distance estimée."
     }
   },
   "roles": {
@@ -2019,7 +2055,16 @@
     "motifs": {
       "revision": "Après révision",
       "modification": "Modification après approbation"
-    }
+    },
+    "soumiseHeure": "Soumise le {{date}} à {{heure}}",
+    "soumiseCourte": "Soumise le {{date}}, {{heure}}",
+    "decideeCourt": {
+      "approuve": "approuvée le {{date}} par {{par}}",
+      "a_reviser": "révision demandée le {{date}} par {{par}}"
+    },
+    "figee": "chaque soumission crée une version figée",
+    "enAttente": "Une version en attente est examinée par votre superviseur.",
+    "enAttenteSuivie": "Une version en attente est examinée par votre superviseur ; la version {{numero}} reste celle à suivre jusque-là."
   },
   "apresApprobation": {
     "regle": "Planning approuvé. Changer l'heure d'une visite dans sa journée reste libre ; tout autre changement (jour, prospect, lieu, objectif, ajout, retrait) est soumis à votre superviseur.",

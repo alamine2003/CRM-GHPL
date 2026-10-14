@@ -270,7 +270,8 @@ export function Segments<T extends string>({
   style,
 }: {
   libelle: string;
-  options: { cle: T; libelle: string }[];
+  /** `lu` : le libellé vocalisé, quand l'écran en montre un plus court. */
+  options: { cle: T; libelle: string; lu?: string }[];
   valeur: T | null;
   surChoix: (cle: T) => void;
   style?: ViewStyle;
@@ -289,7 +290,7 @@ export function Segments<T extends string>({
             key={o.cle}
             accessibilityRole="radio"
             accessibilityState={{ checked: actif }}
-            accessibilityLabel={o.libelle}
+            accessibilityLabel={o.lu ?? o.libelle}
             onPress={() => surChoix(o.cle)}
             style={({ pressed }) => [
               styles.segment,
@@ -650,7 +651,7 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     minHeight: 44,
-    paddingHorizontal: 6,
+    paddingHorizontal: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

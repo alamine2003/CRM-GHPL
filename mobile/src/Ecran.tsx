@@ -33,6 +33,7 @@ export function Ecran({
   gauche,
   droite,
   largeurDroite = 440,
+  largeurGauche = 430,
   enteteTablette,
   children,
 }: {
@@ -57,6 +58,8 @@ export function Ecran({
   droite?: ReactNode;
   /** Largeur du volet de droite (340 pour « Avant de soumettre », 380 pour une synthèse). */
   largeurDroite?: number;
+  /** Largeur du volet de gauche (400 pour la liste des versions). */
+  largeurGauche?: number;
   /** Tablette : titre, contexte et actions propres à l'en-tête large. */
   enteteTablette?: { titre?: string; surTitre?: string; action?: ReactNode };
   children: ReactNode;
@@ -149,7 +152,7 @@ export function Ecran({
               <ScrollView
                 style={[
                   styles.voletGauche,
-                  { backgroundColor: p.surface, borderRightColor: p.ligne },
+                  { width: largeurGauche, backgroundColor: p.surface, borderRightColor: p.ligne },
                 ]}
               >
                 {gauche}

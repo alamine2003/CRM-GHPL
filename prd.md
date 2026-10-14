@@ -730,6 +730,14 @@ Mise en œuvre (0.3.9) :
   - L'avancement compte les six parties du socle (dont le type de prochaine action) et les champs obligatoires du pays.
   - Un rapport à corriger sans parties désignées, ou rouvert (RPT-016), garde le formulaire entier avec la demande en tête.
   - Plus de quatre résultats proposés par le pays : des pastilles à la place des segments.
+- **1.4.3** : écrans **Semaine** (téléphone : navigation Précédente / Cette semaine / Suivante, pastilles des jours avec leur nombre de visites, le jour choisi et ses visites, « Ajouter une visite » collé en bas ; tablette : la semaine en colonnes, le statut et la navigation dans l'en-tête), **Journée** (chiffres du jour, itinéraire numéroté avec la distance d'un arrêt à l'autre ; tablette : activités et lieux sans coordonnées à droite), **Semaine fermée** (la carte « Demander la réouverture », les jours grisés) et **Versions** (téléphone : une carte par version, la plus récente dépliée ; tablette : la liste à gauche, la version choisie à droite).
+- **Ce que la maquette ne dessine pas sur la semaine** [D, délégation, 1.4.3] :
+  - La semaine s'ouvre sur le jour demandé, sinon aujourd'hui, sinon le premier jour qui a des visites, sinon le premier jour planifiable.
+  - Le bas du téléphone porte « Ajouter une visite » tant que le planning se modifie ; « Modifier dans la semaine » reste sur la Journée, quand le jour peut encore changer (PLN-015 : pas un jour passé).
+  - Un planning approuvé, en cours ou terminé se consulte sans la carte « Planning » : son statut est dans l'en-tête. En rédaction, en révision ou soumis, la carte reste avec ses contrôles (PLN-004) et « Soumettre » (PLN-008).
+  - Sous la journée restent les jours fériés, la règle des modifications après approbation, la semaine commencée, les kilomètres de la semaine et l'historique des versions.
+  - La distance du jour s'affiche au kilomètre près à partir de 10 km (« ≈ 31 km ») : c'est une estimation à vol d'oiseau (PLN-010).
+  - Versions : la ligne d'une version décidée dit qui l'a décidée et quand (PLN-014 CA2) ; le commentaire du superviseur et ses remarques se lisent au détail. « Modification après approbation » se lit au détail, « Après révision » dans le résumé. L'alerte « version en attente » nomme la dernière version approuvée, celle à suivre en attendant (PLN-015).
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

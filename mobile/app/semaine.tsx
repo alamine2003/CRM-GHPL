@@ -1,13 +1,11 @@
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { Activite, Semaine, Visite } from '@innov/api-client';
-import { marque } from '@innov/design';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, type ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Alerte, Bouton, Carte, Texte, useLien, usePalette } from '../src/composants';
+import { Pressable, type ScrollView, StyleSheet, View } from 'react-native';
+import { Alerte, Bouton, Carte, Texte } from '../src/composants';
+import { useTablette } from '../src/disposition';
 import { Ecran } from '../src/Ecran';
-import { police } from '../src/polices';
 import { messageErreur, useSession } from '../src/session';
 import { FormulaireActivite } from '../src/Activites';
 import { BandeauBrouillon, BandeauHorsLigne, CarteAttente } from '../src/Attente';
@@ -26,13 +24,21 @@ import {
 } from '../src/Brouillons';
 import { kilometres } from '../src/Itineraire';
 import { PoserDepuisCible } from '../src/Pose';
-import { CarteControles, ObjectifDuJour, remarquesDeRevision } from '../src/Controles';
-import { Journee } from '../src/Journee';
+import { CarteControles, remarquesDeRevision } from '../src/Controles';
+import { absentToutLeJour, Journee } from '../src/Journee';
 import { garderSemaine, jourIso, semaineGardee } from '../src/semaineLocale';
-import { CarteSoumission, dateHeure, EtatSoumission, SemaineFermee } from '../src/Soumission';
+import {
+  ChoixJours,
+  GrilleSemaine,
+  JoursFermes,
+  jourLong,
+  NavigationSemaine,
+  periodeDe,
+  SemaineFermee,
+  StatutPlanning,
+} from '../src/Semaine';
+import { CarteSoumission, dateHeure, EtatSoumission } from '../src/Soumission';
 import { FormulaireVisite, LienAction } from '../src/Visites';
-
-const majuscule = (texte: string) => texte.charAt(0).toUpperCase() + texte.slice(1);
 
 /**
  * Une saisie interrompue ne se reprend que sur un planning modifiable, et seulement si ce
@@ -61,13 +67,14 @@ function empechementBrouillon(
  */
 export default function EcranSemaine() {
   const { t, i18n } = useTranslation();
-  const p = usePalette();
-  const lien = useLien();
-  const { client } = useSession();
+  const tablette = useTablette();
+  const { client, etat } = useSession();
   const routeur = useRouter();
   // Arrivée depuis la vue jour ou le détail : la semaine de ce jour, et la visite à modifier.
   const parametres = useLocalSearchParams<{ jour?: string; modifier?: string }>();
   const [jour, setJour] = useState<string | undefined>(parametres.jour);
+  /** Le jour dont les visites se lisent (téléphone) ou se préparent (tablette). */
+  const [choisi, setChoisi] = useState<string | null>(parametres.jour ?? null);
   const aModifier = useRef<string | undefined>(parametres.modifier);
   const [semaine, setSemaine] = useState<Semaine | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -149,6 +156,7 @@ export default function EcranSemaine() {
       if (!actif || !parametres.jour) return;
       aModifier.current = parametres.modifier;
       setJour(parametres.jour);
+      setChoisi(parametres.jour);
     });
     return () => {
       actif = false;
@@ -238,14 +246,8 @@ export default function EcranSemaine() {
     }
   }
 
-  const fin = semaine?.jours.at(-1)?.date;
-  const periode =
-    semaine && fin
-      ? t('semaine.periode', {
-          debut: date(semaine.semaine, { day: 'numeric', month: 'short' }),
-          fin: date(fin, { day: 'numeric', month: 'short' }),
-        })
-      : undefined;
+  const pays = etat.statut === 'connecte' ? etat.perimetre.pays_actif?.nom : undefined;
+  const periode = semaine ? periodeDe(semaine, t, i18n.language) : undefined;
   const feries = semaine?.jours.filter((j) => j.ferie).length ?? 0;
   const visites = semaine?.visites ?? [];
   const aCompleter = visites.filter((v) => v.manquants.length > 0).length;
@@ -274,6 +276,47 @@ export default function EcranSemaine() {
     setMessage(texte);
     if (semaine) void charger(semaine.semaine);
   };
+
+  // Le jour lu : celui demandé, sinon aujourd'hui s'il est dans la semaine, sinon le premier
+  // jour qui a des visites, sinon le premier jour planifiable.
+  const jourChoisi =
+    (semaine &&
+      ((choisi && semaine.jours.some((j) => j.date === choisi) ? choisi : null) ??
+        semaine.jours.find((j) => j.date === aujourdhui)?.date ??
+        semaine.jours.find((j) => semaine.visites.some((v) => v.date === j.date))?.date ??
+        semaine.jours.find((j) => j.planifiable)?.date ??
+        semaine.jours[0]?.date)) ||
+    null;
+  const jourSemaine = semaine?.jours.find((j) => j.date === jourChoisi) ?? null;
+  /** Le jour choisi reçoit encore des visites : en préparation, ou approuvé et à venir. */
+  const ajoutPossible =
+    !!jourSemaine &&
+    jourSemaine.planifiable &&
+    (modifiable || (apresApprobation && jourSemaine.date >= aujourdhui)) &&
+    !absentToutLeJour(semaine!.activites.filter((a) => a.date === jourSemaine.date));
+  const changerSemaine = (lundi: string | undefined) => {
+    setMessage(null);
+    setChoisi(null);
+    setJour(lundi);
+  };
+  /** Un planning soumis se consulte : la visite s'ouvre en détail (PLN-006). Approuvé, une
+   * visite à venir se modifie encore (PLN-015). */
+  const ouvrirVisite = (v: Visite) => {
+    setMessage(null);
+    if (modifiable || (apresApprobation && v.date >= aujourdhui))
+      setEdition({ objet: 'visite', jour: v.date, visite: v });
+    else routeur.push({ pathname: '/visite/[id]', params: { id: v.id, jour: v.date } });
+  };
+  const objectifSemaine = [...objectifs.values()].reduce(
+    (o, x) => ({ min: o.min + x.min, max: o.max + x.max }),
+    { min: 0, max: 0 },
+  );
+  // Rien à faire sur ce planning : la semaine se lit, sans la carte du planning (maquette).
+  const consultation =
+    ['approuve', 'en_cours', 'termine'].includes(semaine?.planning?.statut ?? '') &&
+    !modifiable &&
+    !enDecision &&
+    !semaine?.fermee;
 
   if (semaine && edition) {
     return (
@@ -309,42 +352,262 @@ export default function EcranSemaine() {
     );
   }
 
+  const jourSection = semaine && jourSemaine && (
+    <SectionJour
+      semaine={semaine}
+      jour={jourSemaine.date}
+      titre={jourLong(jourSemaine.date, i18n.language)}
+      detail={
+        jourSemaine.ferie
+          ? t('semaine.ferie', { libelle: jourSemaine.ferie })
+          : [
+              t('jour.visites', {
+                count: visites.filter((v) => v.date === jourSemaine.date).length,
+              }),
+              objectifs.get(jourSemaine.date)
+                ? t('jour.objectif', {
+                    min: objectifs.get(jourSemaine.date)!.min,
+                    max: objectifs.get(jourSemaine.date)!.max,
+                  })
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')
+      }
+      surOuvrir={semaine.planning ? () => routeur.push(`/jour/${jourSemaine.date}`) : undefined}
+    >
+      {visites.some((v) => v.date === jourSemaine.date) ||
+      semaine.activites.some((a) => a.date === jourSemaine.date) ||
+      ajoutPossible ? (
+        <Journee
+          jour={jourSemaine}
+          visites={visites.filter((v) => v.date === jourSemaine.date)}
+          passages={semaine.passages.filter((x) => x.date === jourSemaine.date)}
+          activites={semaine.activites.filter((a) => a.date === jourSemaine.date)}
+          modifiable={modifiable}
+          reordonner={reordonner === jourSemaine.date}
+          controles={semaine.controles}
+          remarques={remarques}
+          apresApprobation={apresApprobation && jourSemaine.date >= aujourdhui}
+          enAttente={enAttente}
+          libelleJour={date(jourSemaine.date, { weekday: 'long', day: 'numeric', month: 'long' })}
+          ajoutAilleurs={!tablette}
+          surVisite={ouvrirVisite}
+          surAjouterVisite={() => {
+            setMessage(null);
+            setEdition({ objet: 'visite', jour: jourSemaine.date });
+          }}
+          surActivite={(a) => {
+            setMessage(null);
+            setEdition({ objet: 'activite', jour: jourSemaine.date, activite: a });
+          }}
+          surDeclarerActivite={() => {
+            setMessage(null);
+            setEdition({ objet: 'activite', jour: jourSemaine.date });
+          }}
+          surRegrouper={(liste) =>
+            void executer(
+              () =>
+                client.plannings.regrouper(
+                  planningId,
+                  liste.map((v) => v.id),
+                ),
+              t('passages.regroupe'),
+            )
+          }
+          surDissocier={(passage) =>
+            void executer(() => client.passages.dissocier(passage.id), t('passages.dissocie'))
+          }
+          surReordonner={(actif) => {
+            setMessage(null);
+            setReordonner(actif ? jourSemaine.date : null);
+          }}
+          surOrdonner={(ids) =>
+            void executer(() => client.plannings.ordonner(planningId, jourSemaine.date, ids))
+          }
+        />
+      ) : (
+        <Texte variante="discret" style={{ padding: 16 }}>
+          {t('jour.vide')}
+        </Texte>
+      )}
+    </SectionJour>
+  );
+
+  const planningCarte = semaine && !consultation && !(semaine.fermee && !semaine.planning) && (
+    <Carte style={{ gap: 8 }}>
+      <Texte variante="sousTitre">{t('semaine.planning')}</Texte>
+      {semaine.planning ? (
+        <>
+          <EtatSoumission
+            planning={semaine.planning}
+            modifiable={modifiable}
+            fuseau={semaine.fuseau}
+          />
+          <SemaineFermee semaine={semaine} surDemande={terminer} />
+          {enDecision && <Alerte type="info">{t('apresApprobation.attente')}</Alerte>}
+          {enDecision && suivi && suivi.retraits.length > 0 && (
+            <Texte variante="discret">
+              {t('apresApprobation.retraits', {
+                count: suivi.retraits.length,
+                liste: suivi.retraits
+                  .map(
+                    (v) =>
+                      `${date(v.date, { weekday: 'short', day: 'numeric' })}${
+                        v.heure ? ` ${v.heure}` : ''
+                      } · ${v.prospect?.nom ?? t('visites.sansProspect')}`,
+                  )
+                  .join(', '),
+              })}
+            </Texte>
+          )}
+          <Texte variante="discret">
+            {visites.length === 0
+              ? modifiable
+                ? t('visites.aucuneEncore')
+                : t('visites.aucune')
+              : aCompleter > 0
+                ? t('visites.bilanACompleter', { count: visites.length, aCompleter })
+                : t('visites.bilan', { count: visites.length })}
+          </Texte>
+          {modifiable && semaine.reprenables > 0 && (
+            <Texte variante="discret">
+              {t('pose.reprenables', { count: semaine.reprenables })}
+            </Texte>
+          )}
+          {modifiable && semaine.reprenables > 0 && (
+            <Bouton
+              secondaire
+              libelle={t('pose.reprendre', { count: semaine.reprenables })}
+              chargement={reprise}
+              onPress={() => void reprendre()}
+            />
+          )}
+          {modifiable && (
+            <Bouton
+              secondaire
+              libelle={t('pose.depuisListe')}
+              onPress={() => {
+                setMessage(null);
+                setEdition({ objet: 'cible', jour: premierJour });
+              }}
+            />
+          )}
+        </>
+      ) : semaine.peut_creer ? (
+        <>
+          <Texte variante="discret">{t('semaine.aPreparer')}</Texte>
+          <Bouton
+            libelle={t('semaine.preparer')}
+            chargement={creation}
+            onPress={() => void preparer()}
+          />
+        </>
+      ) : (
+        <Texte variante="discret">
+          {semaine.suivante <= aujourdhui ? t('semaine.passee') : t('semaine.sansPoste')}
+        </Texte>
+      )}
+    </Carte>
+  );
+
+  /** Sous la semaine : la règle après approbation, les kilomètres, l'historique des versions. */
+  const complements = semaine && (
+    <>
+      {feries > 0 && (
+        <Texte variante="libelle">{t('semaine.feriesExclus', { count: feries })}</Texte>
+      )}
+      {semaine.planning && apresApprobation && (
+        <Texte variante="libelle">{t('apresApprobation.regleCourte')}</Texte>
+      )}
+      {suivi && !suivi.modifiable && semaine.planning?.statut === 'approuve' && (
+        <Texte variante="libelle">{t('fermeture.semaineCommencee')}</Texte>
+      )}
+      {semaine.planning && semaine.kilometrage && semaine.kilometrage.total_km > 0 && (
+        <Texte variante="libelle">
+          {t('km.semaine', {
+            km: kilometres(semaine.kilometrage.total_km, i18n.language),
+          })}
+          {semaine.kilometrage.sans_coordonnees > 0
+            ? ` ${t('km.partiel', { count: semaine.kilometrage.sans_coordonnees })}`
+            : ''}
+        </Texte>
+      )}
+      {(semaine.planning?.numero_version ?? 0) > 1 && (
+        <LienAction
+          icone="history"
+          libelle={t('versions.voirHistorique', {
+            count: semaine.planning!.numero_version ?? 0,
+          })}
+          onPress={() =>
+            routeur.push({
+              pathname: '/versions/[id]',
+              params: {
+                id: semaine.planning!.id,
+                fuseau: semaine.fuseau,
+                semaine: semaine.semaine,
+                nombre: String(semaine.planning!.numero_version ?? 2),
+              },
+            })
+          }
+        />
+      )}
+    </>
+  );
+
+  const fermee = !!semaine?.fermee && !semaine.planning;
+
   return (
     <Ecran
       key="semaine"
-      titre={t('mobile.onglets.semaine')}
-      surTitre={periode}
+      titre={t('mobile.semaine.titre')}
+      surTitre={[periode, pays].filter(Boolean).join(' · ')}
+      action={semaine ? <StatutPlanning semaine={semaine} /> : undefined}
+      enteteTablette={{
+        titre: semaine ? periodeDe(semaine, t, i18n.language, true) : t('mobile.semaine.titre'),
+        surTitre: semaine
+          ? [
+              pays,
+              fermee
+                ? t('mobile.semaine.aucunPlanningValide')
+                : t('mobile.semaine.visitesPlanifiees', { count: visites.length }),
+              !fermee && objectifSemaine.max > 0
+                ? t('jour.objectif', { min: objectifSemaine.min, max: objectifSemaine.max })
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          : undefined,
+        action: (
+          <>
+            {semaine && <StatutPlanning semaine={semaine} long />}
+            <NavigationSemaine
+              semaine={semaine}
+              surSemaine={changerSemaine}
+              style={{ width: 330 }}
+            />
+          </>
+        ),
+      }}
       defilement={defilement}
+      pied={
+        !tablette && ajoutPossible && !reordonner ? (
+          <Bouton
+            variante="contour"
+            libelle={t('visites.ajouter')}
+            accessibilityLabel={t('visites.ajouterLe', {
+              jour: date(jourChoisi!, { weekday: 'long', day: 'numeric', month: 'long' }),
+            })}
+            onPress={() => {
+              setMessage(null);
+              setEdition({ objet: 'visite', jour: jourChoisi! });
+            }}
+            style={{ flex: 1 }}
+          />
+        ) : undefined
+      }
     >
-      <View style={styles.navigation}>
-        <Fleche
-          sens="precedente"
-          libelle={t('semaine.precedente')}
-          onPress={() => {
-            setMessage(null);
-            if (semaine) setJour(semaine.precedente);
-          }}
-        />
-        <Pressable
-          accessibilityRole="button"
-          disabled={!semaine || semaine.courante}
-          onPress={() => setJour(undefined)}
-          style={styles.centre}
-        >
-          <Text style={[styles.reperes, { color: semaine?.courante ? p.texteSecondaire : lien }]}>
-            {semaine?.courante ? t('semaine.cetteSemaine') : t('semaine.revenir')}
-          </Text>
-        </Pressable>
-        <Fleche
-          sens="suivante"
-          libelle={t('semaine.suivante')}
-          onPress={() => {
-            setMessage(null);
-            if (semaine) setJour(semaine.suivante);
-          }}
-        />
-      </View>
-
+      {!tablette && <NavigationSemaine semaine={semaine} surSemaine={changerSemaine} />}
       {erreur && <Alerte type="erreur">{erreur}</Alerte>}
       {horsLigne && <BandeauHorsLigne maj={horsLigne} />}
       {brouillon && semaine && (
@@ -396,266 +659,78 @@ export default function EcranSemaine() {
                 .join('\n')}
             </Alerte>
           )}
-          <Carte style={{ gap: 8 }}>
-            <Texte variante="sousTitre">{t('semaine.planning')}</Texte>
-            {semaine.planning ? (
-              <>
-                <Texte>{t(`semaine.statuts.${semaine.planning.statut}`)}</Texte>
-                <EtatSoumission
-                  planning={semaine.planning}
-                  modifiable={modifiable}
-                  fuseau={semaine.fuseau}
+          {fermee ? (
+            <>
+              <SemaineFermee semaine={semaine} surDemande={terminer} tablette={tablette} />
+              {tablette ? (
+                <GrilleSemaine
+                  semaine={semaine}
+                  choisi={null}
+                  surJour={() => undefined}
+                  surVisite={() => undefined}
+                  attenue
                 />
-                {apresApprobation && (
-                  <Texte variante="discret">{t('apresApprobation.regleCourte')}</Texte>
-                )}
-                {suivi && !suivi.modifiable && semaine.planning.statut === 'approuve' && (
-                  <Texte variante="discret">{t('fermeture.semaineCommencee')}</Texte>
-                )}
-                <SemaineFermee semaine={semaine} surDemande={terminer} />
-                {enDecision && <Alerte type="info">{t('apresApprobation.attente')}</Alerte>}
-                {enDecision && suivi && suivi.retraits.length > 0 && (
-                  <Texte variante="discret">
-                    {t('apresApprobation.retraits', {
-                      count: suivi.retraits.length,
-                      liste: suivi.retraits
-                        .map(
-                          (v) =>
-                            `${date(v.date, { weekday: 'short', day: 'numeric' })}${
-                              v.heure ? ` ${v.heure}` : ''
-                            } · ${v.prospect?.nom ?? t('visites.sansProspect')}`,
-                        )
-                        .join(', '),
-                    })}
-                  </Texte>
-                )}
-                {(semaine.planning.numero_version ?? 0) > 1 && (
-                  <LienAction
-                    icone="history"
-                    libelle={t('versions.voirHistorique', {
-                      count: semaine.planning.numero_version ?? 0,
-                    })}
-                    onPress={() =>
-                      routeur.push({
-                        pathname: '/versions/[id]',
-                        params: { id: semaine.planning!.id, fuseau: semaine.fuseau },
-                      })
-                    }
-                  />
-                )}
-                <Texte variante="discret">
-                  {visites.length === 0
-                    ? modifiable
-                      ? t('visites.aucuneEncore')
-                      : t('visites.aucune')
-                    : aCompleter > 0
-                      ? t('visites.bilanACompleter', { count: visites.length, aCompleter })
-                      : t('visites.bilan', { count: visites.length })}
-                </Texte>
-                {semaine.kilometrage && semaine.kilometrage.total_km > 0 && (
-                  <Texte variante="discret">
-                    {t('km.semaine', {
-                      km: kilometres(semaine.kilometrage.total_km, i18n.language),
-                    })}
-                    {semaine.kilometrage.sans_coordonnees > 0
-                      ? ` ${t('km.partiel', { count: semaine.kilometrage.sans_coordonnees })}`
-                      : ''}
-                  </Texte>
-                )}
-                {modifiable && semaine.reprenables > 0 && (
-                  <Texte variante="discret">
-                    {t('pose.reprenables', { count: semaine.reprenables })}
-                  </Texte>
-                )}
-                {modifiable && semaine.reprenables > 0 && (
-                  <Bouton
-                    secondaire
-                    libelle={t('pose.reprendre', { count: semaine.reprenables })}
-                    chargement={reprise}
-                    onPress={() => void reprendre()}
-                  />
-                )}
-                {modifiable && (
-                  <Bouton
-                    secondaire
-                    libelle={t('pose.depuisListe')}
-                    onPress={() => {
-                      setMessage(null);
-                      setEdition({ objet: 'cible', jour: premierJour });
-                    }}
-                  />
-                )}
-              </>
-            ) : semaine.peut_creer ? (
-              <>
-                <Texte variante="discret">{t('semaine.aPreparer')}</Texte>
-                <Bouton
-                  libelle={t('semaine.preparer')}
-                  chargement={creation}
-                  onPress={() => void preparer()}
+              ) : (
+                <JoursFermes semaine={semaine} />
+              )}
+              {tablette ? (
+                <Alerte type="info">{t('mobile.semaine.fermeeNoteTablette')}</Alerte>
+              ) : (
+                <Texte variante="libelle">{t('mobile.semaine.fermeeNote')}</Texte>
+              )}
+            </>
+          ) : (
+            <>
+              {planningCarte}
+              {semaine.controles && modifiable && (
+                <CarteControles
+                  controles={semaine.controles}
+                  jourCourt={(iso) => date(iso, { weekday: 'short', day: 'numeric' })}
+                  surVisite={(id) => {
+                    const v = visites.find((x) => x.id === id);
+                    if (!v) return;
+                    setMessage(null);
+                    setEdition({ objet: 'visite', jour: v.date, visite: v });
+                  }}
                 />
-              </>
-            ) : semaine.fermee ? (
-              <SemaineFermee semaine={semaine} surDemande={terminer} />
-            ) : (
-              <Texte variante="discret">
-                {semaine.suivante <= aujourdhui ? t('semaine.passee') : t('semaine.sansPoste')}
-              </Texte>
-            )}
-          </Carte>
-
-          {semaine.controles && modifiable && (
-            <CarteControles
-              controles={semaine.controles}
-              jourCourt={(iso) => date(iso, { weekday: 'short', day: 'numeric' })}
-              surVisite={(id) => {
-                const v = visites.find((x) => x.id === id);
-                if (!v) return;
-                setMessage(null);
-                setEdition({ objet: 'visite', jour: v.date, visite: v });
-              }}
-            />
-          )}
-          <Carte style={{ paddingVertical: 4 }}>
-            {semaine.jours.map((j, i) => {
-              const estAujourdhui = j.date === aujourdhui;
-              const duJour = visites.filter((v) => v.date === j.date);
-              return (
-                <View
-                  key={j.date}
-                  style={[
-                    styles.bloc,
-                    i < semaine.jours.length - 1 && {
-                      borderBottomWidth: StyleSheet.hairlineWidth,
-                      borderBottomColor: p.ligne,
-                    },
-                  ]}
-                >
-                  <Pressable
-                    accessibilityRole={semaine.planning ? 'button' : undefined}
-                    accessibilityHint={semaine.planning ? t('jour.ouvrir') : undefined}
-                    disabled={!semaine.planning}
-                    onPress={() => routeur.push(`/jour/${j.date}`)}
-                    style={({ pressed }) => [styles.jour, pressed && { opacity: 0.7 }]}
-                  >
-                    <Text
-                      style={[styles.date, { color: j.planifiable ? p.texte : p.texteSecondaire }]}
-                    >
-                      <Text style={styles.nomJour}>
-                        {majuscule(date(j.date, { weekday: 'long' }))}
-                      </Text>{' '}
-                      {date(j.date, { day: 'numeric', month: 'short' })}
-                    </Text>
-                    <View style={{ flex: 1, minWidth: 0 }}>
-                      {j.ferie ? (
-                        <Texte variante="discret" numberOfLines={1}>
-                          {t('semaine.ferie', { libelle: j.ferie })}
-                        </Texte>
-                      ) : null}
-                    </View>
-                    {objectifs.get(j.date) ? (
-                      <ObjectifDuJour objectif={objectifs.get(j.date)!} />
-                    ) : semaine.planning && j.planifiable ? (
-                      // Sans seuil connu, le nombre de visites du jour seul (PLN-006 CA1).
-                      <Text style={[styles.aujourdhui, { color: p.texteSecondaire }]}>
-                        {t('jour.nombre', {
-                          count: visites.filter((v) => v.date === j.date).length,
-                        })}
-                      </Text>
-                    ) : null}
-                    {estAujourdhui && (
-                      <Text style={[styles.aujourdhui, { color: marque.orange }]}>
-                        {t('semaine.aujourdhui')}
-                      </Text>
-                    )}
-                    {semaine.planning && (
-                      <MaterialIcons name="chevron-right" size={20} color={p.texteDiscret} />
-                    )}
-                  </Pressable>
-                  <Journee
-                    jour={j}
-                    visites={duJour}
-                    passages={semaine.passages.filter((x) => x.date === j.date)}
-                    activites={semaine.activites.filter((a) => a.date === j.date)}
-                    modifiable={modifiable}
-                    reordonner={reordonner === j.date}
-                    controles={semaine.controles}
-                    remarques={remarques}
-                    apresApprobation={apresApprobation && j.date >= aujourdhui}
-                    enAttente={enAttente}
-                    libelleJour={date(j.date, { weekday: 'long', day: 'numeric', month: 'long' })}
-                    surVisite={(v) => {
-                      setMessage(null);
-                      // Un planning soumis se consulte : la visite s'ouvre en détail (PLN-006).
-                      // Approuvé, une visite à venir se modifie encore (PLN-015).
-                      if (modifiable || (apresApprobation && j.date >= aujourdhui))
-                        setEdition({ objet: 'visite', jour: j.date, visite: v });
-                      else
-                        routeur.push({
-                          pathname: '/visite/[id]',
-                          params: { id: v.id, jour: j.date },
-                        });
-                    }}
-                    surAjouterVisite={() => {
-                      setMessage(null);
-                      setEdition({ objet: 'visite', jour: j.date });
-                    }}
-                    surActivite={(a) => {
-                      setMessage(null);
-                      setEdition({ objet: 'activite', jour: j.date, activite: a });
-                    }}
-                    surDeclarerActivite={() => {
-                      setMessage(null);
-                      setEdition({ objet: 'activite', jour: j.date });
-                    }}
-                    surRegrouper={(liste) =>
-                      void executer(
-                        () =>
-                          client.plannings.regrouper(
-                            planningId,
-                            liste.map((v) => v.id),
-                          ),
-                        t('passages.regroupe'),
-                      )
-                    }
-                    surDissocier={(passage) =>
-                      void executer(
-                        () => client.passages.dissocier(passage.id),
-                        t('passages.dissocie'),
-                      )
-                    }
-                    surReordonner={(actif) => {
-                      setMessage(null);
-                      setReordonner(actif ? j.date : null);
-                    }}
-                    surOrdonner={(ids) =>
-                      void executer(() => client.plannings.ordonner(planningId, j.date, ids))
-                    }
-                  />
-                </View>
-              );
-            })}
-          </Carte>
-          {feries > 0 && (
-            <Texte variante="discret">{t('semaine.feriesExclus', { count: feries })}</Texte>
-          )}
-          {modifiable && (
-            <CarteSoumission
-              semaine={semaine}
-              surSoumis={(texte) => {
-                setTonMessage('succes');
-                setMessage(texte);
-                // Le message et « Soumis le … » sont en haut : la page y remonte.
-                defilement.current?.scrollTo({ y: 0, animated: true });
-                void charger(semaine.semaine);
-              }}
-              surCorriger={(id) => {
-                const v = visites.find((x) => x.id === id);
-                if (!v) return;
-                setMessage(null);
-                setEdition({ objet: 'visite', jour: v.date, visite: v });
-              }}
-            />
+              )}
+              {tablette ? (
+                <GrilleSemaine
+                  semaine={semaine}
+                  choisi={jourChoisi}
+                  surJour={(d) =>
+                    // En préparation, la colonne choisit le jour à préparer ; sinon elle ouvre
+                    // la journée.
+                    modifiable || apresApprobation
+                      ? setChoisi(d)
+                      : semaine.planning && routeur.push(`/jour/${d}`)
+                  }
+                  surVisite={ouvrirVisite}
+                />
+              ) : (
+                <ChoixJours semaine={semaine} choisi={jourChoisi} surChoix={setChoisi} />
+              )}
+              {(!tablette || modifiable || apresApprobation) && jourSection}
+              {complements}
+              {modifiable && (
+                <CarteSoumission
+                  semaine={semaine}
+                  surSoumis={(texte) => {
+                    setTonMessage('succes');
+                    setMessage(texte);
+                    // Le message et « Soumis le … » sont en haut : la page y remonte.
+                    defilement.current?.scrollTo({ y: 0, animated: true });
+                    void charger(semaine.semaine);
+                  }}
+                  surCorriger={(id) => {
+                    const v = visites.find((x) => x.id === id);
+                    if (!v) return;
+                    setMessage(null);
+                    setEdition({ objet: 'visite', jour: v.date, visite: v });
+                  }}
+                />
+              )}
+            </>
           )}
         </>
       )}
@@ -663,51 +738,50 @@ export default function EcranSemaine() {
   );
 }
 
-function Fleche({
-  sens,
-  libelle,
-  onPress,
+/** Le jour choisi : son titre (qui ouvre la journée), son bilan, puis ses lignes en carte. */
+function SectionJour({
+  semaine,
+  jour,
+  titre,
+  detail,
+  surOuvrir,
+  children,
 }: {
-  sens: 'precedente' | 'suivante';
-  libelle: string;
-  onPress: () => void;
+  semaine: Semaine;
+  jour: string;
+  titre: string;
+  detail: string;
+  surOuvrir?: () => void;
+  children: ReactNode;
 }) {
-  const p = usePalette();
+  const { t } = useTranslation();
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={libelle}
-      hitSlop={6}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.fleche,
-        { borderColor: p.ligne, backgroundColor: pressed ? p.fond : p.surface },
-      ]}
-    >
-      <MaterialIcons
-        name={sens === 'precedente' ? 'chevron-left' : 'chevron-right'}
-        size={24}
-        color={p.texte}
-      />
-    </Pressable>
+    <View accessibilityLabel={titre} style={{ gap: 10 }} key={`${semaine.semaine}-${jour}`}>
+      <Pressable
+        accessibilityRole={surOuvrir ? 'button' : undefined}
+        accessibilityHint={surOuvrir ? t('jour.ouvrir') : undefined}
+        disabled={!surOuvrir}
+        onPress={surOuvrir}
+        style={({ pressed }) => [styles.enteteJour, pressed && { opacity: 0.7 }]}
+      >
+        <Texte variante="sousTitre" accessibilityRole="header" style={{ flexShrink: 1 }}>
+          {titre}
+        </Texte>
+        <Texte variante="libelle">{detail}</Texte>
+      </Pressable>
+      <Carte marge={0} style={{ overflow: 'hidden' }}>
+        {children}
+      </Carte>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  navigation: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 44 },
-  reperes: { fontFamily: police.texteFort, fontSize: 14 },
-  fleche: {
-    width: 44,
-    height: 44,
-    borderWidth: 1,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
+  enteteJour: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 12,
+    minHeight: 32,
   },
-  bloc: { paddingVertical: 4 },
-  jour: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 44, paddingVertical: 4 },
-  date: { fontFamily: police.texte, fontSize: 15, width: 132 },
-  nomJour: { fontFamily: police.texteFort },
-  aujourdhui: { fontFamily: police.texteFort, fontSize: 12 },
 });

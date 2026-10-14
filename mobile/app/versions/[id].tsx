@@ -1,15 +1,20 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { Ecran } from '../../src/Ecran';
 import { VueVersions } from '../../src/Versions';
 
-/** Historique des versions d'un planning (PLN-014). */
+/** Historique des versions d'un planning (PLN-014), selon la maquette 1.4.3. */
 export default function EcranVersions() {
-  const { t } = useTranslation();
-  const { id, fuseau } = useLocalSearchParams<{ id: string; fuseau?: string }>();
+  const { id, fuseau, semaine, nombre } = useLocalSearchParams<{
+    id: string;
+    fuseau?: string;
+    semaine?: string;
+    nombre?: string;
+  }>();
   return (
-    <Ecran titre={t('versions.titre', { count: 2 })} retour>
-      <VueVersions planning={id} fuseau={fuseau} />
-    </Ecran>
+    <VueVersions
+      planning={id}
+      fuseau={fuseau}
+      semaine={semaine}
+      nombre={nombre ? Number(nombre) : undefined}
+    />
   );
 }

@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.3] — La maquette : la semaine, la journée et les versions
+
+### Modifié (prd.md §14.82, PLN-001 à PLN-016)
+
+- Semaine : on passe d'une semaine à l'autre par « Précédente », « Cette semaine », « Suivante » ; les jours sont des pastilles qui disent leur nombre de visites ; le jour choisi montre ses visites. Sur téléphone, « Ajouter une visite » est collé en bas ; sur tablette, la semaine se lit en colonnes.
+- Un planning approuvé se consulte sans la carte « Planning » : son statut est en haut de l'écran.
+- Journée : ses chiffres (visites, objectif, distance), puis l'itinéraire arrêt par arrêt avec la distance de l'un à l'autre ; sur tablette, les activités et les lieux sans coordonnées à droite.
+- Semaine fermée : la carte « Demander la réouverture » en tête, les jours grisés.
+- Versions : sur téléphone, une carte par version, la plus récente ouverte ; sur tablette, la liste à gauche et la version choisie à droite, avec ses changements et, si elle attend, la version à suivre en attendant.
+
+### Design
+
+Écrans « Semaine », « Journée », « Semaine fermée » et « Versions » refaits selon la maquette, téléphone et tablette, clair et sombre ; ce que la maquette ne dessine pas (contrôles, jours fériés, règle après approbation, kilomètres de la semaine, commentaire du superviseur) reste sous la semaine ou au détail.
+
 ## [1.4.2] — La maquette : les écrans du rapport
 
 ### Modifié (prd.md §14.82, RPT-001 à RPT-016)
