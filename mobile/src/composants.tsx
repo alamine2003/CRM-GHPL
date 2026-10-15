@@ -1,5 +1,6 @@
 import Feather from '@expo/vector-icons/Feather';
-import type { ComponentProps, ReactNode } from 'react';
+import { type ComponentProps, type ReactNode, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Image,
@@ -254,6 +255,78 @@ export function Champ({
         ]}
         {...props}
       />
+    </View>
+  );
+}
+
+/** Choix dans une liste, présenté comme un champ (.inp) qui se déplie. */
+export function ListeDeroulante({
+  libelle,
+  valeur,
+  options,
+  surChoix,
+  indice,
+}: {
+  libelle: string;
+  /** Texte indicatif tant que rien n'est choisi (« Choisir… » par défaut). */
+  indice?: string;
+  valeur: string | null | undefined;
+  options: { id: string; libelle: string }[];
+  surChoix: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  const p = usePalette();
+  const [ouvert, setOuvert] = useState(false);
+  const choisi = options.find((o) => o.id === valeur);
+  return (
+    <View style={{ gap: 6, flex: 1, minWidth: 0 }}>
+      <Texte variante="libelle">{libelle}</Texte>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${libelle} : ${choisi?.libelle ?? indice ?? t('mobile.choisir')}`}
+        accessibilityState={{ expanded: ouvert }}
+        onPress={() => setOuvert(!ouvert)}
+        style={[
+          styles.champ,
+          styles.deroulant,
+          { borderColor: p.ligne, backgroundColor: p.surface },
+        ]}
+      >
+        <Text
+          numberOfLines={1}
+          style={[styles.deroulantValeur, { color: choisi ? p.texte : p.texteDiscret }]}
+        >
+          {choisi?.libelle ?? indice ?? t('mobile.choisir')}
+        </Text>
+        <Icone
+          nom={ouvert ? 'chevron-up' : 'chevron-down'}
+          taille={20}
+          couleur={p.texteSecondaire}
+        />
+      </Pressable>
+      {ouvert && (
+        <Carte marge={0}>
+          {options.map((o, i) => (
+            <Pressable
+              key={o.id}
+              accessibilityRole="button"
+              accessibilityState={{ selected: o.id === valeur }}
+              onPress={() => {
+                surChoix(o.id);
+                setOuvert(false);
+              }}
+              style={({ pressed }) => [
+                styles.deroulantOption,
+                i > 0 && { borderTopWidth: 1, borderTopColor: p.ligne },
+                pressed && { backgroundColor: p.fond },
+              ]}
+            >
+              <Text style={[styles.deroulantValeur, { color: p.texte }]}>{o.libelle}</Text>
+              {o.id === valeur && <Icone nom="check" taille={18} couleur={p.lien} />}
+            </Pressable>
+          ))}
+        </Carte>
+      )}
     </View>
   );
 }
@@ -713,6 +786,15 @@ const styles = StyleSheet.create({
     fontFamily: police.texte,
   },
   recherche: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  deroulant: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  deroulantValeur: { flex: 1, fontFamily: police.texte, fontSize: 15 },
+  deroulantOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 48,
+    paddingHorizontal: 14,
+  },
   rechercheTexte: { flex: 1, minHeight: 46, fontSize: 15, fontFamily: police.texte },
   champLong: { minHeight: 72, paddingTop: 12, textAlignVertical: 'top' },
   bouton: {

@@ -422,7 +422,6 @@
     },
     "nouveauProspect": {
       "titre": "New prospect",
-      "choisir": "Choose…",
       "etablissement": "Practice facility",
       "indiceEtablissement": "Name, locality or phone",
       "ajouterEtablissement": "Add a facility",
@@ -431,7 +430,8 @@
       "ressemblantesAide": "This prospect may already exist: open their record rather than creating a second one.",
       "aucuneRessemblante": "No similar record yet: they appear as soon as a name is entered.",
       "verifies": "Duplicates are checked when saving."
-    }
+    },
+    "choisir": "Choose…"
   },
   "roles": {
     "titre": "Roles",
@@ -1111,7 +1111,10 @@
       "segmentEtablissements": "Institutions",
       "creer": "Create institution",
       "creee": "Institution created: awaiting validation by the country administrator.",
-      "positionEnregistree": "Position saved ({{metres}} m)"
+      "positionEnregistree": "Position saved ({{metres}} m)",
+      "precision": "Accuracy",
+      "metres": "{{metres}} m",
+      "indiceLocalite": "Neighbourhood or town"
     },
     "vue": "View",
     "vues": {
@@ -1547,7 +1550,11 @@
     "derniereVisite": "Last visit",
     "reseau": "Network",
     "mobile": "Mobile",
-    "pro": "Work phone"
+    "pro": "Work phone",
+    "secteur": "Sector {{secteur}}",
+    "positionReference": "Reference GPS position",
+    "sansPosition": "No reference GPS position",
+    "derniereVisiteLe": "Last visit: {{date}}"
   },
   "joursFeries": {
     "titre": "Public holidays",

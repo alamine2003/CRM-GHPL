@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -236,16 +238,22 @@ class ExerciceSerializer(serializers.ModelSerializer):
     prospect = ProspectResumeSerializer()
     etablissement = EtablissementResumeSerializer()
     actif = serializers.SerializerMethodField()
+    derniere_visite = serializers.SerializerMethodField()
 
     class Meta:
         model = Exercice
         fields = ["id", "prospect", "etablissement", "debut", "fin", "actif", "principal",
-                  "presence", "cree_le"]  # fmt: skip
+                  "presence", "cree_le", "derniere_visite"]  # fmt: skip
 
     def get_actif(self, exercice) -> bool:
         from apps.socle.services import aujourdhui
 
         return exercice.actif_le(aujourdhui(exercice.pays))
+
+    def get_derniere_visite(self, exercice) -> date | None:
+        """La dernière visite effectuée par le lecteur chez ce prospect (« Qui exerce ici »,
+        1.4.5) ; connue seulement de la liste d'un établissement."""
+        return (self.context.get("dernieres_visites") or {}).get(exercice.prospect_id)
 
 
 class SaisieExerciceSerializer(serializers.Serializer):

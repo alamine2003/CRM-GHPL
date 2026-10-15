@@ -7,6 +7,7 @@ import Accueil from '../app/index';
 import Profil from '../app/profil';
 import NouveauProspect from '../app/prospect/nouveau';
 import EcranProspects from '../app/prospects';
+import { EcranNouvelEtablissement } from '../src/NouvelEtablissement';
 import { lire } from '../src/baseLocale';
 import { FournisseurSession } from '../src/FournisseurSession';
 import i18n from '../src/i18n';
@@ -504,7 +505,7 @@ describe('mobile — session', () => {
       creer: jest.fn(async () => ({})),
     };
     await rendre(
-      <EcranProspects />,
+      <EcranNouvelEtablissement />,
       fauxClient({
         reprendre: jest.fn(async () => JETONS),
         perimetre: jest.fn(async () => ({
@@ -528,13 +529,14 @@ describe('mobile — session', () => {
         },
       } as unknown as Partial<ClientApi>),
     );
-    await fireEvent.press(await screen.findByText('Établissements'));
-    await fireEvent.press(await screen.findByLabelText('Nouvel établissement'));
     await fireEvent.changeText(
       await screen.findByLabelText("Nom de l'établissement"),
       'Pharmacie Médina',
     );
+    // Le type, puis le secteur, se choisissent dans leur liste.
+    await fireEvent.press(screen.getAllByText('Choisir…')[0]!);
     await fireEvent.press(await screen.findByText('Pharmacie'));
+    await fireEvent.press(screen.getAllByText('Choisir…')[0]!);
     await fireEvent.press(await screen.findByText('Plateau'));
     await fireEvent.press(screen.getByText('Utiliser ma position'));
     expect(await screen.findByText('Position enregistrée (9 m)')).toBeTruthy();
@@ -548,7 +550,6 @@ describe('mobile — session', () => {
         longitude: -17.45002,
       }),
     );
-    expect(await screen.findByText(/Établissement créé/)).toBeTruthy();
   });
 
   it('bascule en anglais et mémorise la langue sur le compte (USR-004)', async () => {

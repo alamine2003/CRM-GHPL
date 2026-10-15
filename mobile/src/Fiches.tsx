@@ -51,45 +51,6 @@ function itineraire(destination: string) {
     : `https://www.google.com/maps/dir/?api=1&destination=${adresse}`;
 }
 
-/** Action de contact : une ligne de 56 px, le geste principal du terrain. */
-function Action({
-  icone,
-  libelle,
-  detail,
-  lien,
-  derniere,
-}: {
-  icone: 'call' | 'mail' | 'directions';
-  libelle: string;
-  detail: string;
-  lien: string;
-  derniere?: boolean;
-}) {
-  const p = usePalette();
-  return (
-    <Pressable
-      accessibilityRole="link"
-      accessibilityLabel={`${libelle} ${detail}`}
-      onPress={() => void Linking.openURL(lien)}
-      style={({ pressed }) => [
-        styles.action,
-        derniere && { borderBottomWidth: 0 },
-        { borderColor: p.ligne, backgroundColor: pressed ? p.fond : 'transparent' },
-      ]}
-    >
-      <MaterialIcons name={icone} size={22} color={p.texte} />
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Texte variante="fort">{libelle}</Texte>
-        <Texte variante="discret" numberOfLines={1}>
-          {detail}
-        </Texte>
-      </View>
-    </Pressable>
-  );
-}
-
-/** Ligne touchable menant à une autre fiche. */
-
 // ---------------------------------------------------------------------------------------------
 // Annonces : la décision sur une fiche qui vient d'être créée (PRP-008), lue en tête de la fiche
 
@@ -122,6 +83,7 @@ function Lien({
   marque,
   onPress,
   derniere,
+  droite,
 }: {
   titre: string;
   puce?: string;
@@ -129,6 +91,8 @@ function Lien({
   marque?: React.ReactNode;
   onPress: () => void;
   derniere?: boolean;
+  /** À droite, avant le chevron (« Dernière visite : 12 oct. »). */
+  droite?: string;
 }) {
   const p = usePalette();
   return (
@@ -149,6 +113,7 @@ function Lien({
         </View>
         {detail ? <Text style={[styles.meta, { color: p.texteSecondaire }]}>{detail}</Text> : null}
       </View>
+      {droite ? <Text style={[styles.droite, { color: p.texteSecondaire }]}>{droite}</Text> : null}
       <MaterialIcons name="chevron-right" size={20} color={p.texteDiscret} />
     </Pressable>
   );
@@ -538,9 +503,25 @@ export function FicheProspect({ id }: { id: string }) {
   );
 }
 
-export function FicheEtablissement({ id }: { id: string }) {
+/** Fiche d'un établissement (PRP-003), écran entier selon la maquette 1.4.5. */
+export function EcranLieu({ id }: { id: string }) {
   const { t } = useTranslation();
+  return (
+    <Ecran titre={t('fiche.titreEtablissement')} retour>
+      <FicheEtablissement id={id} />
+    </Ecran>
+  );
+}
+
+/**
+ * Où aller, qui appeler, qui y exerce : le nom, l'adresse et la position de référence, Appeler
+ * et Itinéraire, puis les prospects du lieu (sur la tablette, ma dernière visite chez chacun).
+ */
+export function FicheEtablissement({ id }: { id: string }) {
+  const { t, i18n } = useTranslation();
+  const p = usePalette();
   const routeur = useRouter();
+  const tablette = useTablette();
   const { client } = useSession();
   const [fiche, setFiche] = useState<Etablissement | null>(null);
   const [exercent, setExercent] = useState<Exercice[] | null>(null);
@@ -563,50 +544,89 @@ export function FicheEtablissement({ id }: { id: string }) {
   if (erreur) return <Alerte type="attention">{t('fiche.lieuHorsLigne')}</Alerte>;
   if (!fiche) return <Texte variante="discret">{t('session.chargement')}</Texte>;
 
-  const ou = [fiche.adresse, fiche.localite?.libelle, fiche.secteur.libelle]
+  const adresse = [fiche.adresse, fiche.localite?.libelle].filter(Boolean).join(', ');
+  const sousTitre = [
+    fiche.type_libelle,
+    adresse,
+    tablette || !adresse ? t('fiche.secteur', { secteur: fiche.secteur.libelle }) : '',
+  ]
     .filter(Boolean)
-    .join(', ');
-  const destination =
-    fiche.latitude !== null && fiche.longitude !== null
-      ? `${fiche.latitude},${fiche.longitude}`
-      : [fiche.nom, ou].join(', ');
+    .join(' · ');
+  const gps = fiche.latitude !== null && fiche.longitude !== null;
+  const destination = gps
+    ? `${fiche.latitude},${fiche.longitude}`
+    : [fiche.nom, adresse, fiche.secteur.libelle].filter(Boolean).join(', ');
+  const position = gps ? (
+    <Statut ton="ok">{t('fiche.positionReference')}</Statut>
+  ) : (
+    <Statut ton="wa">{t('fiche.sansPosition')}</Statut>
+  );
+  const boutons = [
+    <Bouton
+      key="appeler"
+      petit
+      variante="contour"
+      icone="phone"
+      libelle={t('fiche.appeler')}
+      accessibilityLabel={
+        fiche.telephone ? `${t('fiche.appeler')} ${fiche.telephone}` : t('fiche.appeler')
+      }
+      desactive={!fiche.telephone}
+      onPress={() => void Linking.openURL(`tel:${(fiche.telephone ?? '').replace(/\s/g, '')}`)}
+      style={tablette ? { paddingHorizontal: 14 } : { flex: 1, paddingHorizontal: 0 }}
+    />,
+    <Bouton
+      key="itineraire"
+      petit
+      variante={tablette ? 'plein' : 'contour'}
+      icone="navigation"
+      libelle={t('fiche.itineraire')}
+      onPress={() => void Linking.openURL(itineraire(destination))}
+      style={tablette ? { paddingHorizontal: 14 } : { flex: 1, paddingHorizontal: 0 }}
+    />,
+  ];
+  const derniere = (iso?: string | null) =>
+    iso
+      ? t('fiche.derniereVisiteLe', {
+          date: new Intl.DateTimeFormat(i18n.language, {
+            day: 'numeric',
+            month: 'short',
+            timeZone: 'UTC',
+          }).format(new Date(`${iso}T12:00:00Z`)),
+        })
+      : undefined;
 
   return (
     <>
-      <View style={styles.ficheLieu}>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Texte variante="titre">{fiche.nom}</Texte>
-          <Texte variante="discret">{[fiche.type_libelle, ou].filter(Boolean).join(' · ')}</Texte>
+      <AnnonceFiche id={id} />
+      <Carte style={tablette ? styles.enteteLieuTablette : styles.entete}>
+        <View style={tablette ? styles.identite : { gap: 2 }}>
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+            <Text
+              accessibilityRole="header"
+              style={[tablette ? styles.nomTablette : styles.nom, { color: p.texte }]}
+            >
+              {fiche.nom}
+            </Text>
+            <Text style={[styles.meta, tablette && { fontSize: 14 }, { color: p.texteSecondaire }]}>
+              {sousTitre}
+            </Text>
+            {!tablette && <View style={{ marginTop: 6, flexDirection: 'row' }}>{position}</View>}
+            {fiche.statut === 'a_valider' && (
+              <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                <Etiquette>{t('prospect.statuts.a_valider')}</Etiquette>
+              </View>
+            )}
+          </View>
+          {tablette && (
+            <>
+              {position}
+              <View style={styles.actionsTablette}>{boutons}</View>
+            </>
+          )}
         </View>
-        {fiche.statut === 'a_valider' && <Etiquette>{t('prospect.statuts.a_valider')}</Etiquette>}
-      </View>
-
-      <Carte style={styles.bloc}>
-        {fiche.telephone ? (
-          <Action
-            icone="call"
-            libelle={t('fiche.appeler')}
-            detail={fiche.telephone}
-            lien={`tel:${fiche.telephone.replace(/\s/g, '')}`}
-          />
-        ) : null}
-        <Action
-          icone="directions"
-          libelle={t('fiche.itineraire')}
-          detail={fiche.latitude !== null ? t('fiche.positionGps') : ou || fiche.nom}
-          lien={itineraire(destination)}
-          derniere
-        />
+        {!tablette && <View style={styles.actions}>{boutons}</View>}
       </Carte>
-
-      {fiche.statut === 'actif' && (
-        <ProposerCorrection
-          objet="etablissement"
-          id={fiche.id}
-          nom={fiche.nom}
-          actuels={{ adresse: fiche.adresse, telephone: fiche.telephone }}
-        />
-      )}
 
       <Carte marge={0}>
         <Titre>{t('fiche.quiExerceIci')}</Titre>
@@ -626,12 +646,28 @@ export function FicheEtablissement({ id }: { id: string }) {
                 />
               }
               titre={nomProspect(x.prospect, t)}
-              detail={[x.prospect.specialite_libelle, x.presence ?? ''].filter(Boolean).join(' · ')}
+              detail={[
+                x.prospect.specialite_libelle,
+                x.principal ? t('fiche.principal') : '',
+                x.presence ?? '',
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+              droite={tablette ? derniere(x.derniere_visite) : undefined}
               onPress={() => routeur.push(`/fiche/${x.prospect.id}`)}
             />
           ))
         )}
       </Carte>
+
+      {fiche.statut === 'actif' && (
+        <ProposerCorrection
+          objet="etablissement"
+          id={fiche.id}
+          nom={fiche.nom}
+          actuels={{ adresse: fiche.adresse, telephone: fiche.telephone }}
+        />
+      )}
     </>
   );
 }
@@ -639,6 +675,8 @@ export function FicheEtablissement({ id }: { id: string }) {
 const styles = StyleSheet.create({
   entete: { gap: 16 },
   enteteTablette: { padding: 24 },
+  enteteLieuTablette: { padding: 24 },
+  droite: { fontFamily: police.texteMoyen, fontSize: 13 },
   identite: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   actions: { flexDirection: 'row', gap: 8 },
   actionsTablette: { flexDirection: 'row', gap: 10, marginLeft: 6 },
@@ -662,15 +700,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
   },
   ficheLieu: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  bloc: { paddingVertical: 4, gap: 0 },
-  action: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    minHeight: 56,
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
   lien: {
     flexDirection: 'row',
     alignItems: 'center',

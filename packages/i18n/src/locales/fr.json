@@ -422,7 +422,6 @@
     },
     "nouveauProspect": {
       "titre": "Nouveau prospect",
-      "choisir": "Choisir…",
       "etablissement": "Établissement d’exercice",
       "indiceEtablissement": "Nom, localité ou téléphone",
       "ajouterEtablissement": "Ajouter un établissement",
@@ -431,7 +430,8 @@
       "ressemblantesAide": "Ce prospect existe peut-être déjà : ouvrez sa fiche plutôt que d’en créer une seconde.",
       "aucuneRessemblante": "Aucune fiche ressemblante pour l’instant : elles s’affichent dès le nom saisi.",
       "verifies": "Les doublons sont vérifiés à l’enregistrement."
-    }
+    },
+    "choisir": "Choisir…"
   },
   "roles": {
     "titre": "Rôles",
@@ -1111,7 +1111,10 @@
       "segmentEtablissements": "Établissements",
       "creer": "Créer l'établissement",
       "creee": "Établissement créé : à valider par l'administrateur pays.",
-      "positionEnregistree": "Position enregistrée ({{metres}} m)"
+      "positionEnregistree": "Position enregistrée ({{metres}} m)",
+      "precision": "Précision",
+      "metres": "{{metres}} m",
+      "indiceLocalite": "Quartier ou ville"
     },
     "vue": "Affichage",
     "vues": {
@@ -1547,7 +1550,11 @@
     "derniereVisite": "Dernière visite",
     "reseau": "Réseau",
     "mobile": "Mobile",
-    "pro": "Professionnel"
+    "pro": "Professionnel",
+    "secteur": "Secteur {{secteur}}",
+    "positionReference": "Position GPS de référence",
+    "sansPosition": "Sans position GPS de référence",
+    "derniereVisiteLe": "Dernière visite : {{date}}"
   },
   "joursFeries": {
     "titre": "Jours fériés",

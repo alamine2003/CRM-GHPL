@@ -2,6 +2,18 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.5] — La maquette : les établissements
+
+### Modifié (prd.md §14.82, PRP-003, PRP-004)
+
+- Fiche d'un établissement : son nom, son type et son adresse, s'il a une position GPS de référence, deux boutons Appeler et Itinéraire, puis qui y exerce. Sur tablette, la date de ma dernière visite chez chacun.
+- Nouvel établissement : un écran à part. Type et secteur se choisissent dans une liste ; la position du téléphone s'enregistre d'un geste (sur tablette, avec la latitude, la longitude et la précision). Depuis « Nouveau prospect », l'établissement créé revient déjà choisi.
+- Serveur : les prospects d'un établissement viennent avec la date de ma dernière visite chez eux.
+
+### Design
+
+Écrans « Établissement » et « Nouvel établissement » refaits selon la maquette, téléphone et tablette, clair et sombre ; « Proposer une correction » reste sous la fiche en attendant son propre écran.
+
 ## [1.4.4] — La maquette : les prospects
 
 ### Modifié (prd.md §14.82, PRP-002 à PRP-011, RPT-011)

@@ -153,3 +153,30 @@ def test_les_prospects_qui_exercent_dans_un_etablissement(fiches):
     togo = client_de(fiches["admin.tg"])
     assert togo.get(f"/api/v1/etablissements/{clinique.pk}/exercices/").status_code == 404
     assert togo.get(url(m)).status_code == 404
+
+
+def test_qui_exerce_ici_dit_ma_derniere_visite(fiches):
+    """1.4.5 (maquette) : « Dernière visite : 12 oct. » — la dernière visite effectuée par le
+    lecteur chez chacun ; une visite prévue ou d'un autre délégué ne compte pas."""
+    from datetime import date
+
+    from apps.planning.models import Planning, Visite
+
+    m, clinique, sn = fiches["medecin"], fiches["clinique"], fiches["sn"]
+    services.creer_exercice(m, clinique, fiches["admin.sn"])
+    sien = Planning.objects.create(pays=sn, delegue=fiches["deleg.sn"], semaine=date(2026, 9, 28))
+    autre = Planning.objects.create(
+        pays=sn, delegue=fiches["sansrole.sn"], semaine=date(2026, 10, 5)
+    )
+    Visite.objects.create(pays=sn, planning=sien, prospect=m, date=date(2026, 9, 29),
+                          statut="effectuee")  # fmt: skip
+    Visite.objects.create(pays=sn, planning=sien, prospect=m, date=date(2026, 9, 30),
+                          statut="prevue")  # fmt: skip
+    Visite.objects.create(pays=sn, planning=autre, prospect=m, date=date(2026, 10, 6),
+                          statut="effectuee")  # fmt: skip
+    url_lieu = f"/api/v1/etablissements/{clinique.pk}/exercices/"
+    lue = client_de(fiches["deleg.sn"]).get(url_lieu).json()
+    assert [e["derniere_visite"] for e in lue] == ["2026-09-29"]
+    assert [e["derniere_visite"] for e in client_de(fiches["admin.sn"]).get(url_lieu).json()] == [
+        None
+    ]

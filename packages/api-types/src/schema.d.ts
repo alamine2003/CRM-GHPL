@@ -4196,6 +4196,12 @@ export interface components {
       presence?: string;
       /** Format: date-time */
       readonly cree_le: string;
+      /**
+       * Format: date
+       * @description La dernière visite effectuée par le lecteur chez ce prospect (« Qui exerce ici »,
+       *     1.4.5) ; connue seulement de la liste d'un établissement.
+       */
+      readonly derniere_visite: string | null;
     };
     Fin: {
       /** Format: date */

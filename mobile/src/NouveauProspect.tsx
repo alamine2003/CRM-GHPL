@@ -23,6 +23,7 @@ import {
   Champ,
   ChampRecherche,
   Icone,
+  ListeDeroulante,
   MarquePotentiel,
   Segments,
   Texte,
@@ -30,8 +31,8 @@ import {
 } from './composants';
 import { useTablette } from './disposition';
 import { Ecran } from './Ecran';
-import { FormulaireEtablissement } from './Etablissements';
 import { annoncerFiche, nomProspect } from './Fiches';
+import { suivreEtablissementCree } from './NouvelEtablissement';
 import { police } from './polices';
 import { normaliserNom, ressemblantesLocales } from './ressemblances';
 import { messageErreur, useSession } from './session';
@@ -142,71 +143,6 @@ function LigneRessemblante({
   );
 }
 
-/** Choix dans une liste, présenté comme un champ (.inp) qui se déplie. */
-function Choix({
-  libelle,
-  valeur,
-  options,
-  surChoix,
-}: {
-  libelle: string;
-  valeur: string | null | undefined;
-  options: { id: string; libelle: string }[];
-  surChoix: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-  const p = usePalette();
-  const [ouvert, setOuvert] = useState(false);
-  const choisi = options.find((o) => o.id === valeur);
-  return (
-    <View style={{ gap: 6, flex: 1, minWidth: 0 }}>
-      <Texte variante="libelle">{libelle}</Texte>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${libelle} : ${choisi?.libelle ?? t('mobile.nouveauProspect.choisir')}`}
-        accessibilityState={{ expanded: ouvert }}
-        onPress={() => setOuvert(!ouvert)}
-        style={[styles.champ, { borderColor: p.ligne, backgroundColor: p.surface }]}
-      >
-        <Text
-          numberOfLines={1}
-          style={[styles.valeur, { color: choisi ? p.texte : p.texteDiscret }]}
-        >
-          {choisi?.libelle ?? t('mobile.nouveauProspect.choisir')}
-        </Text>
-        <Icone
-          nom={ouvert ? 'chevron-up' : 'chevron-down'}
-          taille={20}
-          couleur={p.texteSecondaire}
-        />
-      </Pressable>
-      {ouvert && (
-        <Carte marge={0}>
-          {options.map((o, i) => (
-            <Pressable
-              key={o.id}
-              accessibilityRole="button"
-              accessibilityState={{ selected: o.id === valeur }}
-              onPress={() => {
-                surChoix(o.id);
-                setOuvert(false);
-              }}
-              style={({ pressed }) => [
-                styles.option,
-                i > 0 && { borderTopWidth: 1, borderTopColor: p.ligne },
-                pressed && { backgroundColor: p.fond },
-              ]}
-            >
-              <Text style={[styles.valeur, { color: p.texte }]}>{o.libelle}</Text>
-              {o.id === valeur && <Icone nom="check" taille={18} couleur={p.lien} />}
-            </Pressable>
-          ))}
-        </Carte>
-      )}
-    </View>
-  );
-}
-
 /** L'établissement d'exercice : recherche dans les lieux du pays, ou création sur place. */
 function ChoixEtablissement({
   choisi,
@@ -221,7 +157,10 @@ function ChoixEtablissement({
   const { client } = useSession();
   const [saisie, setSaisie] = useState('');
   const [resultats, setResultats] = useState<Etablissement[]>([]);
-  const [creation, setCreation] = useState(false);
+  const routeur = useRouter();
+
+  // L'établissement créé sur l'écran « Nouvel établissement » revient ici, choisi.
+  useEffect(() => suivreEtablissementCree(surChoix), [surChoix]);
 
   useEffect(() => {
     let actif = true;
@@ -264,32 +203,13 @@ function ChoixEtablissement({
       </View>
     );
   }
-  if (creation) {
-    return (
-      <View style={{ gap: 10 }}>
-        {titre}
-        <FormulaireEtablissement
-          surTermine={(e) => {
-            setCreation(false);
-            surChoix(e);
-          }}
-        />
-        <Bouton
-          variante="contour"
-          petit
-          libelle={t('prospect.mobile.retour')}
-          onPress={() => setCreation(false)}
-        />
-      </View>
-    );
-  }
   const ajouter = (
     <Bouton
       variante="contour"
       petit={!tablette}
       icone="plus"
       libelle={t('mobile.nouveauProspect.ajouterEtablissement')}
-      onPress={() => setCreation(true)}
+      onPress={() => routeur.push('/etablissement/nouveau?pour=prospect')}
       style={tablette ? undefined : { alignSelf: 'stretch', justifyContent: 'flex-start' }}
     />
   );
@@ -515,7 +435,7 @@ export function EcranNouveauProspect() {
     />
   );
   const type = (
-    <Choix
+    <ListeDeroulante
       libelle={t('prospect.champs.type')}
       valeur={typeChoisi}
       options={types}
@@ -524,7 +444,7 @@ export function EcranNouveauProspect() {
   );
   const specialite =
     specialites.length > 0 ? (
-      <Choix
+      <ListeDeroulante
         libelle={t('prospect.champs.specialite')}
         valeur={f.specialite}
         options={specialites}

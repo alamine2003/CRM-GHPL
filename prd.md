@@ -745,6 +745,12 @@ Mise en œuvre (0.3.9) :
   - « Nouveau prospect » (ou « Nouvel établissement ») s'ouvre par le bouton « + » de l'en-tête. Les décisions sur mes propositions (PRP-014) restent en tête de l'onglet.
   - Fiche : « Écrire » ouvre un courriel s'il est connu, sinon un message au mobile ; « Itinéraire » mène au lieu principal, par sa position quand il en a une. Restent sous ce que dessine la maquette : le téléphone professionnel, le numéro d'ordre, l'activité, le secteur et « Proposer une correction » (PRP-014). L'historique (RPT-011) se déplie visite par visite (retours, résumé, suite).
   - Nouveau prospect : le premier type du pays est proposé d'office ; l'établissement choisi devient le lieu d'exercice principal de la fiche créée, sauf si la saisie rejoint une fiche existante (doublon certain, PRP-008). La décision du détecteur s'affiche en tête de la fiche ouverte après la création. L'indicatif du pays sert d'aide dans le champ du mobile.
+- **1.4.5** : écrans **Établissement** (nom, type et adresse, « Position GPS de référence », Appeler / Itinéraire, « Qui exerce ici » ; tablette : ma dernière visite chez chacun) et **Nouvel établissement** (fiche « à valider », nom, type, secteur, localité, position de référence ; tablette : la position à droite avec latitude, longitude et précision).
+- **Ce que la maquette ne dessine pas sur les établissements** [D, délégation, 1.4.5] :
+  - « Dernière visite » : la dernière visite effectuée par le lecteur chez ce prospect ; le serveur la donne avec les prospects de l'établissement (`derniere_visite`). Sans visite, rien ne s'affiche.
+  - Sans position de référence, la fiche le dit (« Sans position GPS de référence ») et l'itinéraire part du nom et de l'adresse. Sans téléphone, « Appeler » est grisé.
+  - « Proposer une correction » reste sous la fiche, sur le téléphone comme sur la tablette, jusqu'à l'écran de correction de la maquette.
+  - Nouvel établissement : un écran à part, ouvert par « + » (filtre Établissements) ou par « Ajouter un établissement » (Nouveau prospect). Ouvert depuis Nouveau prospect, il y revient avec l'établissement créé déjà choisi ; sinon il mène à la fiche créée. Type et secteur sont obligatoires ; la localité se choisit parmi celles du secteur.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import type { ReactNode } from 'react';
 import i18n from '../src/i18n';
 import { EcranNouveauProspect } from '../src/NouveauProspect';
+import { EcranNouvelEtablissement } from '../src/NouvelEtablissement';
 import { ContexteSession, type Session } from '../src/session';
 
 // PRP-006, PRP-007, PRP-008 (maquette 1.4.4) : le délégué crée une fiche, voit celles qui lui
@@ -10,8 +11,9 @@ import { ContexteSession, type Session } from '../src/session';
 
 const mockRemplacer = jest.fn();
 const mockPousser = jest.fn();
+const mockRetour = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ replace: mockRemplacer, push: mockPousser, back: jest.fn() }),
+  useRouter: () => ({ replace: mockRemplacer, push: mockPousser, back: mockRetour }),
 }));
 jest.mock('expo-location', () => ({}));
 jest.mock('../src/baseLocale', () => ({
@@ -45,7 +47,7 @@ const VALEURS = [
   { id: 'sp1', liste: 'specialite', libelle: 'Cardiologie', parent: 't1', archive: false },
 ];
 
-function rendre(client: Partial<ClientApi>) {
+function rendre(client: Partial<ClientApi>, element = <EcranNouveauProspect />) {
   const session = {
     etat: {
       statut: 'connecte',
@@ -53,11 +55,7 @@ function rendre(client: Partial<ClientApi>) {
     },
     client: client as ClientApi,
   } as unknown as Session;
-  return render(
-    <ContexteSession.Provider value={session}>
-      <EcranNouveauProspect />
-    </ContexteSession.Provider>,
-  );
+  return render(<ContexteSession.Provider value={session}>{element}</ContexteSession.Provider>);
 }
 
 beforeEach(async () => {
@@ -156,4 +154,52 @@ test('PRP-008 : une saisie rattachée à une fiche existante ne touche pas ses l
   await fireEvent.press(screen.getByText('Créer la fiche'));
   await waitFor(() => expect(mockRemplacer).toHaveBeenCalledWith('/fiche/p1'));
   expect(ajouter).not.toHaveBeenCalled();
+});
+
+test('PRP-003 : l’établissement créé depuis « Nouveau prospect » y revient, choisi', async () => {
+  const creer = jest.fn(async () => ({
+    id: 'e7',
+    nom: 'Cabinet FICTIF',
+    type_libelle: 'Cabinet',
+    secteur: { id: 's1', libelle: 'Plateau' },
+    localite: null,
+  }));
+  await rendre(
+    {
+      referentiel: {
+        valeurs: jest.fn(async (liste?: string) =>
+          liste === 'type_etablissement'
+            ? [{ id: 'c1', liste, libelle: 'Cabinet', parent: null, archive: false }]
+            : VALEURS,
+        ),
+      },
+      prospects: { ressemblants: jest.fn(async () => []) },
+      etablissements: {
+        creer,
+        secteurs: jest.fn(async () => [
+          { id: 's1', libelle: 'Plateau', zone: 'Dakar', localites: [] },
+        ]),
+        liste: jest.fn(async () => ({ total: 0, resultats: [] })),
+      },
+    } as unknown as Partial<ClientApi>,
+    <>
+      <EcranNouveauProspect />
+      <EcranNouvelEtablissement pour="prospect" />
+    </>,
+  );
+  await fireEvent.press(await screen.findByText('Ajouter un établissement'));
+  expect(mockPousser).toHaveBeenCalledWith('/etablissement/nouveau?pour=prospect');
+  await fireEvent.changeText(screen.getByLabelText("Nom de l'établissement"), 'Cabinet FICTIF');
+  await fireEvent.press(screen.getByLabelText("Type d'établissement : Choisir…"));
+  await fireEvent.press(await screen.findByText('Cabinet'));
+  await fireEvent.press(screen.getByLabelText('Secteur : Choisir…'));
+  await fireEvent.press(await screen.findByText('Plateau'));
+  await fireEvent.press(screen.getByText("Créer l'établissement"));
+  await waitFor(() => expect(mockRetour).toHaveBeenCalled());
+  expect(creer).toHaveBeenCalledWith(
+    expect.objectContaining({ nom: 'Cabinet FICTIF', type: 'c1', secteur: 's1' }),
+  );
+  // Revenu sur « Nouveau prospect », l'établissement est choisi.
+  expect(await screen.findByText('Changer')).toBeTruthy();
+  expect(screen.getByText('Cabinet · Plateau')).toBeTruthy();
 });

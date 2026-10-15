@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.4.4
+  version: 1.4.5
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -8200,10 +8200,19 @@ components:
           type: string
           format: date-time
           readOnly: true
+        derniere_visite:
+          type: string
+          format: date
+          nullable: true
+          description: |-
+            La dernière visite effectuée par le lecteur chez ce prospect (« Qui exerce ici »,
+            1.4.5) ; connue seulement de la liste d'un établissement.
+          readOnly: true
       required:
       - actif
       - cree_le
       - debut
+      - derniere_visite
       - etablissement
       - id
       - prospect

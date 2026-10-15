@@ -22,7 +22,7 @@ import {
 } from './composants';
 import { useTablette } from './disposition';
 import { Ecran } from './Ecran';
-import { FormulaireEtablissement, LigneEtablissement, Pilule } from './Etablissements';
+import { LigneEtablissement, Pilule } from './Etablissements';
 import { nomProspect } from './Fiches';
 import { type CibleDeListe, ciblesDe, correspond, useMaListe } from './MaListe';
 import { MesPropositions } from './MesPropositions';
@@ -118,9 +118,6 @@ export function EcranProspects() {
   // Pages de 20 (PRP-005 CA3) : « Voir plus » ajoute la suivante.
   const [page, setPage] = useState(1);
   const [suite, setSuite] = useState(false);
-  const [creationLieu, setCreationLieu] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [version, setVersion] = useState(0);
   const pays = etat.statut === 'connecte' ? etat.perimetre.pays_actif?.nom : undefined;
   const peutCreer =
     etat.statut === 'connecte' && etat.perimetre.actions.includes('prospects.creer');
@@ -151,14 +148,12 @@ export function EcranProspects() {
       actif = false;
       clearTimeout(minuteur);
     };
-  }, [client, saisie, version, mode, page, potentiel]);
+  }, [client, saisie, mode, page, potentiel]);
 
   const changerMode = (m: Mode) => {
     setMode(m);
     setPage(1);
     setChoix(null);
-    setCreationLieu(false);
-    setMessage(null);
   };
 
   // Ma liste : une ligne par prospect, filtrée sur le téléphone.
@@ -205,9 +200,7 @@ export function EcranProspects() {
       icone="plus"
       libelle={mode === 'lieux' ? t('etablissement.nouveau') : t('mobile.prospects.nouveau')}
       onPress={() => {
-        setMessage(null);
-        if (mode === 'lieux') setCreationLieu(true);
-        else routeur.push('/prospect/nouveau');
+        routeur.push(mode === 'lieux' ? '/etablissement/nouveau' : '/prospect/nouveau');
       }}
     />
   ) : null;
@@ -315,22 +308,7 @@ export function EcranProspects() {
 
   let contenu;
   if (mode === 'lieux') {
-    contenu = creationLieu ? (
-      <>
-        <FormulaireEtablissement
-          surTermine={() => {
-            setCreationLieu(false);
-            setMessage(t('etablissement.mobile.creee'));
-            setVersion((v) => v + 1);
-          }}
-        />
-        <Bouton
-          variante="contour"
-          libelle={t('prospect.mobile.retour')}
-          onPress={() => setCreationLieu(false)}
-        />
-      </>
-    ) : (
+    contenu = (
       <>
         <Carte marge={0} style={{ paddingHorizontal: 16 }}>
           {lieux?.length === 0 && (
@@ -446,7 +424,6 @@ export function EcranProspects() {
           {t('ciblage.mobile.horsLigne', { date: dateCourte(horsLigneDepuis, i18n.language) })}
         </Alerte>
       )}
-      {message && <Alerte type="succes">{message}</Alerte>}
       {!tablette && recherche}
       {filtresVue}
       {contenu}

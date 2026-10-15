@@ -9,6 +9,8 @@ import { ContexteSession, type Session } from '../src/session';
 
 const mockPousser = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPousser }) }));
+const mockTablette = { valeur: false };
+jest.mock('../src/disposition', () => ({ useTablette: () => mockTablette.valeur }));
 jest.mock('../src/baseLocale', () => ({
   lire: jest.fn(async () => null),
   ecrire: jest.fn(async () => undefined),
@@ -89,6 +91,7 @@ beforeEach(async () => {
     );
   jest.mocked(ecrire).mockReset().mockResolvedValue(undefined);
   mockPousser.mockClear();
+  mockTablette.valeur = false;
   jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
 });
 
@@ -158,11 +161,43 @@ test("la fiche d'un établissement donne l'itinéraire et qui y exerce (PRP-003)
     } as unknown as Partial<ClientApi>,
     <FicheEtablissement id="e1" />,
   );
-  expect(await screen.findByText('Clinique · Rue 10, Plateau')).toBeTruthy();
+  expect(await screen.findByText('Clinique · Rue 10')).toBeTruthy();
+  expect(screen.getByText('Position GPS de référence')).toBeTruthy();
+  expect(screen.getByText('Cardiologie · principal · Lundi et jeudi matin')).toBeTruthy();
+  await fireEvent.press(screen.getByText('Appeler'));
+  expect(Linking.openURL).toHaveBeenCalledWith('tel:338000000');
   await fireEvent.press(screen.getByText('Itinéraire'));
   expect(Linking.openURL).toHaveBeenCalledWith(expect.stringContaining('14.67%2C-17.43'));
   await fireEvent.press(screen.getByText('Dr Aïssatou NDIAYE'));
   expect(mockPousser).toHaveBeenCalledWith('/fiche/p1');
+});
+
+test('1.4.5 : sur la tablette, qui exerce ici dit ma dernière visite', async () => {
+  mockTablette.valeur = true;
+  const etablissement = {
+    id: 'e1',
+    nom: 'Clinique du Cap',
+    type_libelle: 'Clinique',
+    adresse: '',
+    secteur: { id: 's1', libelle: 'Plateau' },
+    localite: null,
+    telephone: '',
+    latitude: null,
+    longitude: null,
+    statut: 'actif',
+  } as unknown as Etablissement;
+  await rendre(
+    {
+      etablissements: { detail: jest.fn(async () => etablissement) },
+      exercices: {
+        deLEtablissement: jest.fn(async () => [{ ...EXERCICE, derniere_visite: '2026-10-12' }]),
+      },
+    } as unknown as Partial<ClientApi>,
+    <FicheEtablissement id="e1" />,
+  );
+  expect(await screen.findByText('Clinique · Secteur Plateau')).toBeTruthy();
+  expect(screen.getByText('Sans position GPS de référence')).toBeTruthy();
+  expect(screen.getByText('Dernière visite : 12 oct.')).toBeTruthy();
 });
 
 test('PRP-014 : le délégué propose une correction ; seuls les champs changés partent', async () => {
