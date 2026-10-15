@@ -431,7 +431,8 @@
       "aucuneRessemblante": "Aucune fiche ressemblante pour l’instant : elles s’affichent dès le nom saisi.",
       "verifies": "Les doublons sont vérifiés à l’enregistrement."
     },
-    "choisir": "Choisir…"
+    "choisir": "Choisir…",
+    "cetteTablette": "Cette tablette"
   },
   "roles": {
     "titre": "Rôles",
@@ -569,7 +570,8 @@
     "nouveau": "Nouveau mot de passe",
     "change": "Mot de passe changé. Vos autres sessions ont été fermées.",
     "mesRoles": "Mes rôles",
-    "paysPrincipal": "Pays principal"
+    "paysPrincipal": "Pays principal",
+    "compte": "Compte"
   },
   "equipe": {
     "titre": "Équipe",
@@ -2906,7 +2908,8 @@
       "attente_other": "{{count}} envois en attente sont gardés sur le téléphone : ils partiront à la synchronisation."
     },
     "ligneHeure": "Synchronisé à {{heure}}",
-    "ligneJour": "Synchronisé le {{jour}}"
+    "ligneJour": "Synchronisé le {{jour}}",
+    "aideTablette": "La tablette garde votre semaine, la suivante, votre liste cible et les trois dernières visites de chaque prospect : vous pouvez travailler sans réseau."
   },
   "conflits": {
     "visiteGardee": "Cette visite a changé ailleurs entre-temps : choisissez la version à garder (profil ou semaine, « envois en attente »).",

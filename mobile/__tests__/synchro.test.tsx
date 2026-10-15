@@ -124,7 +124,8 @@ test('le profil montre la dernière synchronisation et la relance', async () => 
   fireEvent.press(screen.getByRole('button', { name: 'Synchroniser maintenant' }));
   expect(await screen.findByText('Prospects de la liste cible')).toBeTruthy();
   expect(screen.getByText('Visites de la semaine et de la suivante')).toBeTruthy();
-  expect(screen.getByText('Dernière synchronisation')).toBeTruthy();
+  // Maquette 1.5.0 : au téléphone, l'heure en pastille à côté du titre.
+  expect(screen.getByText(/^Synchronisé à /)).toBeTruthy();
   await waitFor(() =>
     expect(
       screen.getByRole('button', { name: 'Synchroniser maintenant' }).props.accessibilityState

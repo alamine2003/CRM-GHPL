@@ -119,14 +119,25 @@ function Lien({
   );
 }
 
-/** Les initiales du prospect, dans un rond marine (.avatar.lg). */
-function Avatar({ prenom, nom, grand }: { prenom?: string; nom: string; grand?: boolean }) {
+/** Les initiales du prospect (ou de l'utilisateur, au Profil), dans un rond marine (.avatar.lg). */
+export function Avatar({
+  prenom,
+  nom,
+  grand,
+  taille: tailleImposee,
+}: {
+  prenom?: string;
+  nom: string;
+  grand?: boolean;
+  /** Profil : 64 px. */
+  taille?: number;
+}) {
   const p = usePalette();
   const initiales = [prenom, nom]
     .map((x) => (x ?? '').trim()[0] ?? '')
     .join('')
     .toLocaleUpperCase();
-  const taille = grand ? 76 : 56;
+  const taille = tailleImposee ?? (grand ? 76 : 56);
   return (
     <View
       accessibilityElementsHidden
@@ -136,7 +147,14 @@ function Avatar({ prenom, nom, grand }: { prenom?: string; nom: string; grand?: 
         { width: taille, height: taille, borderRadius: taille / 2, backgroundColor: p.marine },
       ]}
     >
-      <Text style={[styles.avatarTexte, { fontSize: grand ? 26 : 20 }]}>{initiales}</Text>
+      <Text
+        style={[
+          styles.avatarTexte,
+          { fontSize: tailleImposee ? Math.round(taille * 0.34) : grand ? 26 : 20 },
+        ]}
+      >
+        {initiales}
+      </Text>
     </View>
   );
 }

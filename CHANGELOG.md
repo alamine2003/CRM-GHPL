@@ -2,6 +2,19 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.0] — La maquette : mon profil
+
+### Modifié (prd.md §14.82, USR-004, USR-006, OFF-001)
+
+- Mon profil suit la maquette : mes initiales, mon nom, mon rôle et mon pays ; les données gardées pour travailler sans réseau, avec l'heure de la dernière synchronisation et « Synchroniser maintenant » ; la langue en deux boutons ; ce téléphone ; « Se déconnecter ».
+- Sur tablette : le compte, la langue et la tablette à gauche, les données hors connexion à droite (dont les rapports prêts à écrire sans réseau), « Se déconnecter » en haut.
+- Mon poste, mes produits, le choix des notifications (téléphone) et le lien vers la politique de confidentialité restent au profil.
+- Les lignes « libellé — valeur » ne coupent plus leur libellé à mi-largeur.
+
+### Design
+
+Écran « Mon profil » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.4.9] — La maquette : les notifications
 
 ### Modifié (prd.md §14.82, NOT-001, NOT-005)

@@ -431,7 +431,8 @@
       "aucuneRessemblante": "No similar record yet: they appear as soon as a name is entered.",
       "verifies": "Duplicates are checked when saving."
     },
-    "choisir": "Choose…"
+    "choisir": "Choose…",
+    "cetteTablette": "This tablet"
   },
   "roles": {
     "titre": "Roles",
@@ -569,7 +570,8 @@
     "nouveau": "New password",
     "change": "Password changed. Your other sessions were closed.",
     "mesRoles": "My roles",
-    "paysPrincipal": "Main country"
+    "paysPrincipal": "Main country",
+    "compte": "Account"
   },
   "equipe": {
     "titre": "Team",
@@ -2906,7 +2908,8 @@
       "attente_other": "{{count}} items waiting to send are kept on this phone: they will go out when you sync."
     },
     "ligneHeure": "Synced at {{heure}}",
-    "ligneJour": "Synced on {{jour}}"
+    "ligneJour": "Synced on {{jour}}",
+    "aideTablette": "The tablet keeps your week, the next one, your target list and the last three visits to each prospect: you can work without a network."
   },
   "conflits": {
     "visiteGardee": "This visit was changed elsewhere in the meantime: choose which version to keep (profile or week, “waiting to send”).",

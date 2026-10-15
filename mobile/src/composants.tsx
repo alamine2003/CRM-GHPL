@@ -182,7 +182,7 @@ export function Ligne({
     <View style={[styles.ligne, !derniere && { borderBottomWidth: 1, borderBottomColor: p.ligne }]}>
       <Text
         style={{
-          maxWidth: '50%',
+          flexShrink: 1,
           fontFamily: police.texte,
           fontSize: 13,
           lineHeight: 18,
@@ -193,7 +193,8 @@ export function Ligne({
       </Text>
       <Text
         style={{
-          flexShrink: 1,
+          // Le libellé prend la place dont il a besoin (.kv) ; une longue valeur passe à la ligne.
+          maxWidth: '60%',
           textAlign: 'right',
           fontFamily: police.texteMoyen,
           fontSize: 14,

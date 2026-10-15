@@ -778,6 +778,13 @@ Mise en œuvre (0.3.9) :
   - Les notifications vont avec l'onglet Tournée (on y arrive par la cloche), et non plus avec Profil.
   - Les réglages gardent toutes les notifications que reçoit la personne, avec « Obligatoire » sous celles qui ne se coupent pas ; l'interrupteur obligatoire est grisé. Sur le téléphone, ils restent dans Profil.
   - Les dates des textes prennent le jour de la semaine (« votre rapport du vendredi 9 octobre ») et une période dans un seul mois s'écrit « du 19 au 23 octobre ».
+- **1.5.0** : écran **Mon profil** (USR-004, USR-006, OFF-001 : les initiales, le nom, le rôle, le pays et l'identifiant ; les données hors connexion avec l'heure de la dernière synchronisation et « Synchroniser maintenant » ; la langue en deux segments ; l'appareil ; « Se déconnecter » ; tablette : le compte, la langue et l'appareil à gauche, les données hors connexion à droite, « Se déconnecter » dans l'en-tête).
+- **Ce que la maquette ne dessine pas sur le profil** [D, délégation, 1.5.0] :
+  - Restent sous les cartes de la maquette : mon poste et mon superviseur (ORG-006, ORG-007), mes produits (ORG-004 CA3), et sur le téléphone le choix des notifications (NOT-005 ; sur la tablette, il est à droite du centre de notifications).
+  - Sous l'appareil restent la phrase sur sa révocation et le lien vers la politique de confidentialité (1.0.0).
+  - La file d'envoi détaillée (OFF-003) reste sous les données hors connexion quand des envois attendent, jusqu'à l'écran « Envois » de la maquette. Une synchronisation incomplète s'y signale par une ligne de plus.
+  - Le rôle affiché est le premier rôle de la personne ; « Rôles » les donne tous.
+  - Les lignes « libellé — valeur » laissent le libellé prendre la place qu'il lui faut ; une valeur longue passe à la ligne (tous les écrans).
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

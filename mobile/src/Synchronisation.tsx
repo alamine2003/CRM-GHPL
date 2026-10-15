@@ -137,8 +137,13 @@ export function SynchroAuto() {
   return null;
 }
 
-/** L'état de la dernière synchronisation, la file d'envoi et le bouton pour relancer. */
-export function CarteSynchro() {
+/**
+ * L'état de la dernière synchronisation, la file d'envoi et le bouton pour relancer (maquette
+ * 1.5.0, « Données hors connexion »). Téléphone : l'heure en pastille à côté du titre, trois
+ * comptes, un bouton à contour ; tablette : l'aide, la date en clair, les rapports prêts et un
+ * bouton plein.
+ */
+export function CarteSynchro({ tablette }: { tablette?: boolean }) {
   const { t } = useTranslation();
   const { client } = useSession();
   const { derniere: etat, attente } = useEtatLocal();
@@ -156,47 +161,49 @@ export function CarteSynchro() {
       .finally(() => setEnvoi(false));
   };
 
+  const lignes = etat
+    ? [
+        tablette && { libelle: t('synchro.derniere'), valeur: quand.long(etat.le) },
+        { libelle: t('synchro.enAttente'), valeur: String(attente.length) },
+        { libelle: t('synchro.visites'), valeur: String(etat.visites) },
+        { libelle: t('synchro.prospects'), valeur: String(etat.prospects) },
+        tablette && { libelle: t('synchro.rapports'), valeur: String(etat.rapports ?? 0) },
+        etat.echecs > 0 && {
+          libelle: t('synchro.incomplete'),
+          valeur: t('synchro.echecs', { count: etat.echecs }),
+        },
+      ].filter((x): x is { libelle: string; valeur: string } => !!x)
+    : [];
+
   return (
     <>
-      <Carte>
-        <Texte variante="sousTitre" style={{ marginBottom: 6 }}>
-          {t('synchro.titre')}
-        </Texte>
-        <Texte variante="discret" style={{ marginBottom: 8 }}>
-          {t('synchro.aide')}
-        </Texte>
+      <Carte marge={0}>
+        <View style={styles.enTeteCarte}>
+          <Texte variante="sousTitre" accessibilityRole="header" style={{ flexShrink: 1 }}>
+            {t('synchro.titre')}
+          </Texte>
+          {!tablette && <StatutSynchro />}
+        </View>
+        {tablette && (
+          <Texte variante="libelle" style={styles.aide}>
+            {t('synchro.aideTablette')}
+          </Texte>
+        )}
         {etat ? (
-          <>
-            <Ligne libelle={t('synchro.derniere')} valeur={quand.long(etat.le)} />
-            <Ligne libelle={t('synchro.enAttente')} valeur={String(attente.length)} />
-            <Ligne libelle={t('synchro.visites')} valeur={String(etat.visites)} />
-            <Ligne libelle={t('synchro.prospects')} valeur={String(etat.prospects)} />
-            <Ligne libelle={t('synchro.historiques')} valeur={String(etat.historiques)} />
-            <Ligne
-              libelle={t('synchro.rapports')}
-              valeur={String(etat.rapports ?? 0)}
-              derniere={!etat.echecs}
-            />
-            {etat.echecs > 0 && (
-              <Ligne
-                libelle={t('synchro.incomplete')}
-                valeur={t('synchro.echecs', { count: etat.echecs })}
-                derniere
-              />
-            )}
-          </>
+          lignes.map((l) => <Ligne key={l.libelle} libelle={l.libelle} valeur={l.valeur} />)
         ) : (
-          <Texte>{t('synchro.jamais')}</Texte>
+          <Texte style={styles.aide}>{t('synchro.jamais')}</Texte>
         )}
         {echec && (
-          <Texte variante="discret" style={{ marginTop: 8 }}>
+          <Texte variante="discret" style={styles.aide}>
             {t('synchro.sansReseau')}
           </Texte>
         )}
-        <View style={{ marginTop: 12 }}>
+        <View style={styles.bouton}>
           <Bouton
             libelle={t('synchro.maintenant')}
-            secondaire
+            variante={tablette ? undefined : 'contour'}
+            petit={!tablette}
             chargement={envoi}
             onPress={relancer}
           />
@@ -345,6 +352,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   texteLigne: { flex: 1, fontFamily: police.texte, fontSize: 13, lineHeight: 18 },
+  enTeteCarte: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 12,
+    paddingTop: 14,
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+  },
+  aide: { paddingHorizontal: 16, paddingBottom: 8 },
+  bouton: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 16 },
   garde: { flex: 1, alignItems: 'center', paddingHorizontal: 16, gap: 24 },
   titreGarde: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });
