@@ -2,6 +2,18 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.8] — La maquette : mes chiffres
+
+### Modifié (prd.md §14.82, DSH-001)
+
+- « Mes chiffres » suit la maquette : la semaine en sous-titre et les flèches dans l'en-tête ; le nombre de visites faites au-dessus des barres des jours (prévues en gris, faites en orange) ; réalisation, écarts justifiés et géolocalisation avec leur barre ; rapports dans le délai, validés, en retard.
+- Sur tablette : une synthèse en quatre chiffres, les visites par jour à côté de la qualité de l'activité, puis la liste cible sur une ligne.
+- La liste cible du cycle et la variation en points restent sur le téléphone ; le dimanche vide ne s'affiche plus.
+
+### Design
+
+Écran « Mes chiffres » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.4.7] — La maquette : proposer une correction
 
 ### Modifié (prd.md §14.82, PRP-014)

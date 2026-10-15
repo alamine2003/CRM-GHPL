@@ -1,11 +1,37 @@
 import type { ClientApi, MesChiffres } from '@innov/api-client';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
 import i18n from '../src/i18n';
 import { ecartPoints, EcranMesChiffres } from '../src/MesChiffres';
 import { ContexteSession, type Session } from '../src/session';
 
-// DSH-001 (0.7.1) : les chiffres du délégué ; CA1 : sans réseau, les derniers chiffres lus
-// s'affichent avec l'heure de leur calcul.
+// DSH-001 (0.7.1, maquette 1.4.8) : les chiffres du délégué ; CA1 : sans réseau, les derniers
+// chiffres lus s'affichent avec l'heure de leur calcul.
+
+let mockTablette = false;
+jest.mock('../src/disposition', () => ({ useTablette: () => mockTablette }));
+jest.mock('../src/Ecran', () => ({
+  Ecran: ({
+    surTitre,
+    action,
+    enteteTablette,
+    children,
+  }: {
+    surTitre?: string;
+    action?: ReactNode;
+    enteteTablette?: { surTitre?: string };
+    children: ReactNode;
+  }) => {
+    const { Text } = jest.requireActual('react-native');
+    return (
+      <>
+        <Text>{enteteTablette?.surTitre ?? surTitre}</Text>
+        {action}
+        {children}
+      </>
+    );
+  },
+}));
 
 const mockMemoire = new Map<string, { valeur: unknown; maj: string }>();
 jest.mock('../src/baseLocale', () => ({
@@ -111,6 +137,7 @@ async function rendre(mesChiffres: jest.Mock) {
 }
 
 beforeEach(async () => {
+  mockTablette = false;
   mockMemoire.clear();
   await i18n.changeLanguage('fr');
 });
@@ -119,6 +146,7 @@ test('DSH-001 : les chiffres de la semaine, sans note ni classement', async () =
   const lire = jest.fn(async () => CHIFFRES);
   await rendre(lire);
   expect(await screen.findByText('visites faites')).toBeTruthy();
+  expect(screen.getByText('Semaine du 12 au 18 octobre')).toBeTruthy();
   expect(screen.getByText('dont 1 imprévue')).toBeTruthy();
   expect(screen.getByText('1 sur 3 visites prévues échues')).toBeTruthy();
   expect(screen.getByText('+8 pts')).toBeTruthy(); // 33 % contre 25 % la semaine précédente
@@ -126,8 +154,11 @@ test('DSH-001 : les chiffres de la semaine, sans note ni classement', async () =
     screen.getByText('1 visite prévue reste à venir : elle ne compte pas encore.'),
   ).toBeTruthy();
   expect(screen.getByText('1 visite passée attend sa justification (Tournée).')).toBeTruthy();
-  expect(screen.getByText('Sur le cycle de 4 semaines, du 21 sept. au 18 oct.')).toBeTruthy();
-  expect(screen.getByText(/^Vos chiffres, sans note ni classement/)).toBeTruthy();
+  // Les rapports, puis la liste cible sur le cycle.
+  expect(screen.getByText('Dans le délai')).toBeTruthy();
+  expect(screen.getByText('En retard')).toBeTruthy();
+  expect(screen.getByText('Cycle de 4 semaines, du 21 sept. au 18 oct.')).toBeTruthy();
+  expect(screen.getAllByText('1 sur 2')).toHaveLength(2);
   // Gardés pour le mode avion (CA1).
   expect(mockMemoire.get('mes-chiffres')?.valeur).toEqual(CHIFFRES);
   // La semaine précédente se demande par son lundi ; la suivante n'existe pas encore.
@@ -151,6 +182,23 @@ test('DSH-001 CA1 : sans réseau, les derniers chiffres et leur heure', async ()
   expect(screen.queryByText('visites faites')).toBeNull();
   await fireEvent.press(screen.getByText('Revenir à la semaine en cours'));
   expect(await screen.findByText('visites faites')).toBeTruthy();
+});
+
+test('DSH-001 : tablette — la synthèse, les visites par jour, la qualité, la liste cible', async () => {
+  mockTablette = true;
+  await rendre(jest.fn(async () => CHIFFRES));
+  expect(
+    await screen.findByText('Semaine du 12 au 18 octobre · vos chiffres, sans note ni classement'),
+  ).toBeTruthy();
+  expect(screen.getByText('Visites faites')).toBeTruthy();
+  expect(screen.getByText('Rapports soumis dans le délai')).toBeTruthy();
+  expect(screen.getByText('0 validé')).toBeTruthy();
+  expect(screen.getByText('à soumettre')).toBeTruthy();
+  // L'écart de la réalisation n'apparaît qu'une fois, dans la synthèse.
+  expect(screen.getAllByText('+8 pts')).toHaveLength(1);
+  expect(screen.getByText('Visites par jour')).toBeTruthy();
+  expect(screen.getByText('Qualité de l’activité')).toBeTruthy();
+  expect(screen.getByText('Potentiels A et B visités')).toBeTruthy();
 });
 
 test('DSH-012 CA2 : sans visite, « Aucune activité »', async () => {

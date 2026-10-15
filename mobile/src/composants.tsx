@@ -511,23 +511,29 @@ export function BoutonIcone({
   libelle,
   onPress,
   pastille,
+  desactive,
 }: {
   icone: NomIcone;
   libelle: string;
   onPress: () => void;
   /** Nombre non lu, en orange. */
   pastille?: number;
+  /** Grisé (« Semaine suivante » sur la semaine en cours). */
+  desactive?: boolean;
 }) {
   const p = usePalette();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={libelle}
+      accessibilityState={{ disabled: !!desactive }}
+      disabled={desactive}
       onPress={onPress}
       style={({ pressed }) => [
         styles.boutonIcone,
         { borderColor: p.ligne, backgroundColor: p.surface },
         pressed && { opacity: 0.7 },
+        desactive && { opacity: 0.4 },
       ]}
     >
       <Icone nom={icone} />

@@ -763,6 +763,13 @@ Mise en œuvre (0.3.9) :
   - Le commentaire facultatif (PRP-014) reste sous les champs, même si la maquette ne le montre pas : il aide le superviseur à décider.
   - Le champ modifié se reconnaît à son contour appuyé ; « Envoyer la proposition » reste grisé tant que rien ne change. Un champ vidé s'affiche « (effacé) » dans ce qui change.
   - Après l'envoi, on revient à la fiche, qui dit « Proposition envoyée » ; sans réseau, elle dit que la proposition partira au retour du réseau (OFF-002).
+- **1.4.8** : écran **Mes chiffres** (DSH-001 : la semaine choisie aux flèches de l'en-tête ; le nombre de visites faites et les visites prévues et faites jour par jour ; réalisation, écarts justifiés et géolocalisation avec leur barre ; rapports dans le délai, validés, en retard ; tablette : synthèse en quatre chiffres, visites par jour à côté de la qualité de l'activité, puis la liste cible).
+- **Ce que la maquette ne dessine pas sur Mes chiffres** [D, délégation, 1.4.8] :
+  - La liste cible du cycle (DSH-001) reste aussi sur le téléphone, sous les rapports : trois lignes « 74 sur 128 ».
+  - La variation en points par rapport à la semaine précédente reste sous le taux (« ● +3 pts ») : en vert quand il monte, en gris sinon, sans autre appréciation (DC-49). Sur la tablette, celle de la réalisation est dans la synthèse ; celle des rapports dans le délai n'est plus affichée.
+  - Les visites encore à venir et celles qui attendent leur justification restent signalées sous les indicateurs.
+  - Le dimanche n'apparaît dans les barres que s'il compte une visite. Les visites faites restent orange en mode sombre.
+  - Hors connexion, l'heure du calcul s'affiche dans l'alerte (CA1) ; connecté, elle ne s'affiche plus. La phrase « sans note ni classement » passe dans l'en-tête de la tablette.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 
