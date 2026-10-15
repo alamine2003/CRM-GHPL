@@ -1778,7 +1778,19 @@
     "ignorees_one": "{{count}} visit not taken over ({{jours}}: holiday or absence).",
     "ignorees_other": "{{count}} visits not taken over ({{jours}}: holiday or absence).",
     "reprenables_one": "Last week had {{count}} visit: take it over day for day.",
-    "reprenables_other": "Last week had {{count}} visits: take them over day for day."
+    "reprenables_other": "Last week had {{count}} visits: take them over day for day.",
+    "aideCourte": "Tick prospects, then place them on a day: each visit takes the prospect and their main place.",
+    "chercher": "Name, specialty or place",
+    "surUnJour": "Place on a day",
+    "dejaPrevues": "Already planned",
+    "apres": "After placing",
+    "objectif": "Daily target: {{min}} to {{max}} visits.",
+    "limiteHaute": "You are at the upper limit.",
+    "auDela": "You are above the upper limit.",
+    "manque_one": "{{count}} more visit to reach it.",
+    "manque_other": "{{count}} more visits to reach it.",
+    "nombre_one": "Not yet planned · {{count}} prospect",
+    "nombre_other": "Not yet planned · {{count}} prospects"
   },
   "jour": {
     "titre": "Day",

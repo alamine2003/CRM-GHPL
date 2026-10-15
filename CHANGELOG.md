@@ -2,6 +2,17 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.6] — La maquette : depuis ma liste cible
+
+### Modifié (prd.md §14.82, PLN-005)
+
+- « Depuis ma liste cible » devient un écran entier : les prospects pas encore prévus cette semaine, à cocher, puis un seul bouton « Poser 2 visites le mardi 13 ». Sur téléphone, le jour est celui choisi dans la semaine.
+- Sur tablette : le cycle de chaque prospect (« 0 / 2 »), et à droite le choix du jour, les visites déjà prévues et après la pose, et l'objectif de la journée (ce qui manque, ou la limite haute atteinte).
+
+### Design
+
+Écran « Depuis ma liste cible » refait selon la maquette, téléphone et tablette, clair et sombre ; cases à cocher de 22 px.
+
 ## [1.4.5] — La maquette : les établissements
 
 ### Modifié (prd.md §14.82, PRP-003, PRP-004)

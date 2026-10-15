@@ -618,18 +618,18 @@ test('PLN-005 CA1 : des prospects de la liste cible se posent sur un jour', asyn
     } as unknown as Partial<ClientApi['plannings']>,
     { ciblage: { mesListes: jest.fn(async () => MES_LISTES) } },
   );
+  // Le jour choisi dans la semaine est celui de la pose (maquette 1.4.6).
+  await choisirJour(/^Jeudi 29/);
   await fireEvent.press(await screen.findByText('Ajouter depuis ma liste cible'));
-  // Awa est déjà prévue mardi : masquée tant que « Pas encore prévus » est actif.
+  // Awa est déjà prévue mardi : seuls les prospects pas encore prévus se posent d'ici.
   expect(await screen.findByText('Dr Moussa EXEMPLE')).toBeTruthy();
+  expect(screen.getByText('Pas encore prévus · 1 prospect')).toBeTruthy();
   expect(screen.queryByText('Dr Awa FICTIF')).toBeNull();
-  await fireEvent.press(screen.getByText('Pas encore prévus'));
-  expect(screen.getByText('Déjà prévu : mar. 27')).toBeTruthy();
-  await fireEvent.press(screen.getByText('jeu. 29'));
-  await fireEvent.press(screen.getByText('Dr Moussa EXEMPLE'));
-  await fireEvent.press(screen.getByText('Dr Awa FICTIF'));
-  await fireEvent.press(screen.getByText('Poser 2 visites le jeudi 29'));
-  expect(poser).toHaveBeenCalledWith('pl1', '2026-10-29', ['p2', 'p1']);
-  expect(await screen.findByText(/2 visites posées le jeudi 29/)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('checkbox', { name: /Dr Moussa EXEMPLE/ }));
+  expect(screen.getByRole('checkbox', { name: /Dr Moussa EXEMPLE/ })).toBeChecked();
+  await fireEvent.press(screen.getByText('Poser 1 visite le jeudi 29'));
+  expect(poser).toHaveBeenCalledWith('pl1', '2026-10-29', ['p2']);
+  expect(await screen.findByText(/1 visite posée le jeudi 29/)).toBeTruthy();
 });
 
 test('PLN-005 CA2 : une semaine vide reprend la précédente', async () => {

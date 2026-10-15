@@ -26,6 +26,7 @@ export function Ecran({
   surTitre,
   action,
   retour,
+  surRetour,
   fermer,
   defilement,
   onglets = true,
@@ -44,6 +45,8 @@ export function Ecran({
   action?: ReactNode;
   /** Écran de détail : flèche de retour avant le titre. */
   retour?: boolean;
+  /** Retour vers un état de l'écran plutôt qu'à l'écran précédent (sous-écran). */
+  surRetour?: () => void;
   /** Formulaire : croix de fermeture avant le titre, sans onglets. */
   fermer?: boolean;
   /** Pour remonter en haut de page après une action (soumission du planning). */
@@ -78,7 +81,8 @@ export function Ecran({
     );
   }
   if (etat.statut === 'anonyme') return <Redirect href="/connexion" />;
-  const revenir = () => (routeur.canGoBack() ? routeur.back() : routeur.replace('/'));
+  const revenir = () =>
+    surRetour ? surRetour() : routeur.canGoBack() ? routeur.back() : routeur.replace('/');
   const boutonRetour = (retour || fermer) && (
     <Pressable
       accessibilityRole="button"

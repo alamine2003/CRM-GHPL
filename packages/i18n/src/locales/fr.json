@@ -1778,7 +1778,19 @@
     "ignorees_one": "{{count}} visite non reprise ({{jours}} : jour férié ou d'absence).",
     "ignorees_other": "{{count}} visites non reprises ({{jours}} : jour férié ou d'absence).",
     "reprenables_one": "La semaine précédente comptait {{count}} visite : reprenez-la jour pour jour.",
-    "reprenables_other": "La semaine précédente comptait {{count}} visites : reprenez-les jour pour jour."
+    "reprenables_other": "La semaine précédente comptait {{count}} visites : reprenez-les jour pour jour.",
+    "aideCourte": "Cochez les prospects puis posez-les sur un jour : chaque visite reprend le prospect et son lieu principal.",
+    "chercher": "Nom, spécialité ou lieu",
+    "surUnJour": "Poser sur un jour",
+    "dejaPrevues": "Déjà prévues",
+    "apres": "Après la pose",
+    "objectif": "Objectif de la journée : {{min}} à {{max}} visites.",
+    "limiteHaute": "Vous êtes à la limite haute.",
+    "auDela": "Vous dépassez la limite haute.",
+    "manque_one": "Encore {{count}} visite pour l’atteindre.",
+    "manque_other": "Encore {{count}} visites pour l’atteindre.",
+    "nombre_one": "Pas encore prévus · {{count}} prospect",
+    "nombre_other": "Pas encore prévus · {{count}} prospects"
   },
   "jour": {
     "titre": "Journée",

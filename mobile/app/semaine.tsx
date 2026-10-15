@@ -318,6 +318,19 @@ export default function EcranSemaine() {
     !enDecision &&
     !semaine?.fermee;
 
+  // « Depuis ma liste cible » est un écran entier (maquette 1.4.6) ; son retour revient ici.
+  if (semaine && edition?.objet === 'cible') {
+    return (
+      <PoserDepuisCible
+        key="pose"
+        semaine={semaine}
+        jour={edition.jour}
+        surAnnuler={() => setEdition(null)}
+        surTermine={terminer}
+      />
+    );
+  }
+
   if (semaine && edition) {
     return (
       // Une clé propre : le formulaire s'ouvre en haut de page, pas au défilement de la semaine.
@@ -331,14 +344,7 @@ export default function EcranSemaine() {
             surAnnuler={() => setEdition(null)}
             surTermine={terminer}
           />
-        ) : edition.objet === 'cible' ? (
-          <PoserDepuisCible
-            semaine={semaine}
-            jour={edition.jour}
-            surAnnuler={() => setEdition(null)}
-            surTermine={terminer}
-          />
-        ) : (
+        ) : edition.objet === 'activite' ? (
           <FormulaireActivite
             semaine={semaine}
             jour={edition.jour}
@@ -347,7 +353,7 @@ export default function EcranSemaine() {
             surAnnuler={() => setEdition(null)}
             surTermine={terminer}
           />
-        )}
+        ) : null}
       </Ecran>
     );
   }
@@ -489,7 +495,10 @@ export default function EcranSemaine() {
               libelle={t('pose.depuisListe')}
               onPress={() => {
                 setMessage(null);
-                setEdition({ objet: 'cible', jour: premierJour });
+                setEdition({
+                  objet: 'cible',
+                  jour: ajoutPossible && jourChoisi ? jourChoisi : premierJour,
+                });
               }}
             />
           )}

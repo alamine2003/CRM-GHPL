@@ -751,6 +751,12 @@ Mise en œuvre (0.3.9) :
   - Sans position de référence, la fiche le dit (« Sans position GPS de référence ») et l'itinéraire part du nom et de l'adresse. Sans téléphone, « Appeler » est grisé.
   - « Proposer une correction » reste sous la fiche, sur le téléphone comme sur la tablette, jusqu'à l'écran de correction de la maquette.
   - Nouvel établissement : un écran à part, ouvert par « + » (filtre Établissements) ou par « Ajouter un établissement » (Nouveau prospect). Ouvert depuis Nouveau prospect, il y revient avec l'établissement créé déjà choisi ; sinon il mène à la fiche créée. Type et secteur sont obligatoires ; la localité se choisit parmi celles du secteur.
+- **1.4.6** : écran **Depuis ma liste cible** (PLN-005 CA1 : les prospects pas encore prévus cette semaine, à cocher, puis « Poser N visites le mardi 13 » ; tablette : le cycle de chacun, et à droite le jour, les visites déjà prévues et après la pose, l'objectif de la journée).
+- **Ce que la maquette ne dessine pas sur la pose** [D, délégation, 1.4.6] :
+  - Sur le téléphone, le jour de la pose est celui choisi dans la semaine (sinon le premier jour planifiable) ; pour en changer, on revient à la semaine. Sur la tablette, il se choisit à droite.
+  - Ne s'affichent que les prospects pas encore prévus cette semaine (le filtre « Pas encore prévus » et les pastilles de potentiel disparaissent) ; une seconde visite au même prospect se copie depuis la semaine (PLN-005).
+  - L'alerte d'objectif dit la fourchette du jour et, selon le compte après la pose, ce qui manque, la limite haute atteinte ou dépassée (RG-016).
+  - Le retour ramène à la semaine, sans poser.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 
