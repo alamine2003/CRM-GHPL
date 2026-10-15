@@ -1,14 +1,39 @@
 import type { ClientApi, Etablissement, Exercice, ListeCible, Prospect } from '@innov/api-client';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 import { ecrire, lire } from '../src/baseLocale';
 import { VisitesPrecedentes } from '../src/Chronologie';
 import { FicheEtablissement, FicheProspect } from '../src/Fiches';
+import { EcranCorrection } from '../src/Proposition';
 import i18n from '../src/i18n';
 import { ContexteSession, type Session } from '../src/session';
 
 const mockPousser = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPousser }) }));
+const mockRetour = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPousser, back: mockRetour }) }));
+jest.mock('../src/Ecran', () => ({
+  Ecran: ({
+    surTitre,
+    children,
+    pied,
+    droite,
+  }: {
+    surTitre?: string;
+    children: React.ReactNode;
+    pied?: React.ReactNode;
+    droite?: React.ReactNode;
+  }) => {
+    const { Text } = jest.requireActual('react-native');
+    return (
+      <>
+        <Text>{surTitre}</Text>
+        {children}
+        {pied}
+        {droite}
+      </>
+    );
+  },
+}));
 const mockTablette = { valeur: false };
 jest.mock('../src/disposition', () => ({ useTablette: () => mockTablette.valeur }));
 jest.mock('../src/baseLocale', () => ({
@@ -202,27 +227,59 @@ test('1.4.5 : sur la tablette, qui exerce ici dit ma dernière visite', async ()
 
 test('PRP-014 : le délégué propose une correction ; seuls les champs changés partent', async () => {
   const creer = jest.fn(async () => ({}));
-  await rendre(
-    {
-      prospects: { detail: jest.fn(async () => PROSPECT), rapports: jest.fn(async () => []) },
-      exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
-      propositions: { creer },
-    } as unknown as Partial<ClientApi>,
-    <FicheProspect id="p1" />,
-    ['propositions.creer'],
-  );
+  const client = {
+    prospects: { detail: jest.fn(async () => PROSPECT), rapports: jest.fn(async () => []) },
+    exercices: { duProspect: jest.fn(async () => [EXERCICE]) },
+    propositions: { creer },
+  } as unknown as Partial<ClientApi>;
+  const fiche = await rendre(client, <FicheProspect id="p1" />, ['propositions.creer']);
+  // La fiche ouvre l'écran de correction (maquette 1.4.7).
   await fireEvent.press(await screen.findByText('Proposer une correction'));
+  expect(mockPousser).toHaveBeenCalledWith('/correction/prospect/p1');
+  await fiche.unmount();
+
+  const ecran = await rendre(client, <EcranCorrection objet="prospect" id="p1" />, [
+    'propositions.creer',
+  ]);
+  expect(await screen.findByText('Dr Aïssatou NDIAYE')).toBeTruthy();
+  expect(screen.getByText(/La fiche est commune/)).toBeTruthy();
   // Rien de changé : l'envoi reste impossible.
-  expect(screen.getByText(/Modifiez au moins un champ/)).toBeTruthy();
+  expect(
+    screen.getByRole('button', { name: 'Envoyer la proposition' }).props.accessibilityState
+      ?.disabled,
+  ).toBe(true);
   await fireEvent.changeText(screen.getByLabelText('Téléphone mobile'), '+221 77 999 99 99');
   await fireEvent.changeText(screen.getByLabelText('Commentaire (facultatif)'), 'Nouveau numéro');
   await fireEvent.press(screen.getByText('Envoyer la proposition'));
-  expect(creer).toHaveBeenCalledWith({
-    prospect: 'p1',
-    changements: { telephone_mobile: '+221 77 999 99 99' },
-    commentaire: 'Nouveau numéro',
-  });
+  await waitFor(() => expect(mockRetour).toHaveBeenCalled());
+  expect(creer).toHaveBeenCalledWith(
+    expect.objectContaining({
+      prospect: 'p1',
+      changements: { telephone_mobile: '+221 77 999 99 99' },
+      commentaire: 'Nouveau numéro',
+    }),
+  );
+  await ecran.unmount();
+  // De retour sur la fiche, la proposition est annoncée.
+  await rendre(client, <FicheProspect id="p1" />, ['propositions.creer']);
   expect(await screen.findByText(/Proposition envoyée/)).toBeTruthy();
+});
+
+test('PRP-014 : sur la tablette, « Ce qui change » montre l’ancienne et la nouvelle valeur', async () => {
+  mockTablette.valeur = true;
+  await rendre(
+    {
+      prospects: { detail: jest.fn(async () => PROSPECT) },
+      propositions: { creer: jest.fn() },
+    } as unknown as Partial<ClientApi>,
+    <EcranCorrection objet="prospect" id="p1" />,
+    ['propositions.creer'],
+  );
+  expect(await screen.findByText('Ce qui change')).toBeTruthy();
+  expect(screen.getByText(/Modifiez au moins un champ/)).toBeTruthy();
+  await fireEvent.changeText(screen.getByLabelText('Téléphone mobile'), '+221 77 999 99 99');
+  expect(screen.getByText('+221 77 000 00 01')).toBeTruthy();
+  expect(screen.getByText('+221 77 999 99 99')).toBeTruthy();
 });
 
 test('sans le droit de proposer, la fiche ne montre pas le bouton', async () => {

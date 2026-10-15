@@ -29,7 +29,7 @@ import { useTablette } from './disposition';
 import { Ecran } from './Ecran';
 import { cibleEnregistree, ciblesDe, useMaListe } from './MaListe';
 import { police } from './polices';
-import { ProposerCorrection } from './Proposition';
+import { BoutonCorrection } from './Proposition';
 import { useSession } from './session';
 import type { Annonce } from './Tournee';
 
@@ -486,19 +486,7 @@ export function FicheProspect({ id }: { id: string }) {
         </>
       )}
       <VisitesPrecedentes prospect={id} chronologie={chronologie} />
-      {fiche?.statut === 'actif' && (
-        <ProposerCorrection
-          objet="prospect"
-          id={fiche.id}
-          nom={nomProspect(fiche, t)}
-          actuels={{
-            telephone_mobile: fiche.telephone_mobile,
-            telephone_pro: fiche.telephone_pro,
-            courriel: fiche.courriel,
-            numero_ordre: fiche.numero_ordre,
-          }}
-        />
-      )}
+      {fiche?.statut === 'actif' && <BoutonCorrection objet="prospect" id={fiche.id} />}
     </>
   );
 }
@@ -507,7 +495,11 @@ export function FicheProspect({ id }: { id: string }) {
 export function EcranLieu({ id }: { id: string }) {
   const { t } = useTranslation();
   return (
-    <Ecran titre={t('fiche.titreEtablissement')} retour>
+    <Ecran
+      titre={t('fiche.titreEtablissement')}
+      retour
+      enteteTablette={{ action: <BoutonCorrection objet="etablissement" id={id} petit /> }}
+    >
       <FicheEtablissement id={id} />
     </Ecran>
   );
@@ -660,13 +652,9 @@ export function FicheEtablissement({ id }: { id: string }) {
         )}
       </Carte>
 
-      {fiche.statut === 'actif' && (
-        <ProposerCorrection
-          objet="etablissement"
-          id={fiche.id}
-          nom={fiche.nom}
-          actuels={{ adresse: fiche.adresse, telephone: fiche.telephone }}
-        />
+      {/* Sur la tablette, le bouton est dans l'en-tête (maquette). */}
+      {!tablette && fiche.statut === 'actif' && (
+        <BoutonCorrection objet="etablissement" id={fiche.id} />
       )}
     </>
   );

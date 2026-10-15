@@ -2,6 +2,18 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.7] — La maquette : proposer une correction
+
+### Modifié (prd.md §14.82, PRP-014)
+
+- « Proposer une correction » ouvre un écran à part : les champs de la fiche, préremplis (« Non renseigné » s'ils sont vides), un commentaire facultatif, puis « Envoyer la proposition ». Le champ modifié se voit à son contour.
+- Sur tablette : les champs sur deux colonnes, et à droite ce qui change (l'ancienne valeur barrée, la nouvelle en dessous). Sur la fiche d'un établissement, le bouton passe dans l'en-tête.
+- Après l'envoi, on revient à la fiche, qui dit « Proposition envoyée » ; sans réseau, la proposition attend et part seule au retour du réseau.
+
+### Design
+
+Écran « Proposer une correction » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.4.6] — La maquette : depuis ma liste cible
 
 ### Modifié (prd.md §14.82, PLN-005)

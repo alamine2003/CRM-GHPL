@@ -1499,7 +1499,11 @@
       "envoyee": "Proposal sent: the record will change once your supervisor or the country administrator agrees. The decision will appear on your home screen.",
       "aucunChangement": "Change at least one field to send the proposal.",
       "horsLigne": "No network: your proposal is kept on the phone and will be sent automatically when the network returns.",
-      "enAttente": "Record update proposal"
+      "enAttente": "Record update proposal",
+      "nonRenseigne": "Not filled in",
+      "ceQuiChange": "What changes",
+      "efface": "(cleared)",
+      "suite": "The decision will appear on your home screen. Without network, the proposal is kept on the device and is sent automatically when the network returns."
     }
   },
   "qualite": {

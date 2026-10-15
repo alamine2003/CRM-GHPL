@@ -749,7 +749,7 @@ Mise en œuvre (0.3.9) :
 - **Ce que la maquette ne dessine pas sur les établissements** [D, délégation, 1.4.5] :
   - « Dernière visite » : la dernière visite effectuée par le lecteur chez ce prospect ; le serveur la donne avec les prospects de l'établissement (`derniere_visite`). Sans visite, rien ne s'affiche.
   - Sans position de référence, la fiche le dit (« Sans position GPS de référence ») et l'itinéraire part du nom et de l'adresse. Sans téléphone, « Appeler » est grisé.
-  - « Proposer une correction » reste sous la fiche, sur le téléphone comme sur la tablette, jusqu'à l'écran de correction de la maquette.
+  - « Proposer une correction » reste sous la fiche sur le téléphone ; sur la tablette, il passe dans l'en-tête (1.4.7).
   - Nouvel établissement : un écran à part, ouvert par « + » (filtre Établissements) ou par « Ajouter un établissement » (Nouveau prospect). Ouvert depuis Nouveau prospect, il y revient avec l'établissement créé déjà choisi ; sinon il mène à la fiche créée. Type et secteur sont obligatoires ; la localité se choisit parmi celles du secteur.
 - **1.4.6** : écran **Depuis ma liste cible** (PLN-005 CA1 : les prospects pas encore prévus cette semaine, à cocher, puis « Poser N visites le mardi 13 » ; tablette : le cycle de chacun, et à droite le jour, les visites déjà prévues et après la pose, l'objectif de la journée).
 - **Ce que la maquette ne dessine pas sur la pose** [D, délégation, 1.4.6] :
@@ -757,6 +757,12 @@ Mise en œuvre (0.3.9) :
   - Ne s'affichent que les prospects pas encore prévus cette semaine (le filtre « Pas encore prévus » et les pastilles de potentiel disparaissent) ; une seconde visite au même prospect se copie depuis la semaine (PLN-005).
   - L'alerte d'objectif dit la fourchette du jour et, selon le compte après la pose, ce qui manque, la limite haute atteinte ou dépassée (RG-016).
   - Le retour ramène à la semaine, sans poser.
+- **1.4.7** : écran **Proposer une correction** (PRP-014 : les champs de la fiche commune, préremplis, « Non renseigné » quand ils sont vides, puis « Envoyer la proposition » ; tablette : les champs sur deux colonnes et, à droite, ce qui change, l'ancienne valeur barrée au-dessus de la nouvelle).
+- **Ce que la maquette ne dessine pas sur la correction** [D, délégation, 1.4.7] :
+  - Un écran à part (`/correction/prospect/…` ou `/correction/etablissement/…`), ouvert par « Proposer une correction » : sous la fiche d'un prospect ; sous la fiche d'un établissement sur le téléphone, dans son en-tête sur la tablette.
+  - Le commentaire facultatif (PRP-014) reste sous les champs, même si la maquette ne le montre pas : il aide le superviseur à décider.
+  - Le champ modifié se reconnaît à son contour appuyé ; « Envoyer la proposition » reste grisé tant que rien ne change. Un champ vidé s'affiche « (effacé) » dans ce qui change.
+  - Après l'envoi, on revient à la fiche, qui dit « Proposition envoyée » ; sans réseau, elle dit que la proposition partira au retour du réseau (OFF-002).
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

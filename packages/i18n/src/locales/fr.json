@@ -1499,7 +1499,11 @@
       "envoyee": "Proposition envoyée : la fiche changera après l'accord de votre superviseur ou de l'administrateur pays. La décision s'affichera sur votre accueil.",
       "aucunChangement": "Modifiez au moins un champ pour envoyer la proposition.",
       "horsLigne": "Pas de réseau : votre proposition est gardée sur le téléphone et partira toute seule au retour du réseau.",
-      "enAttente": "Proposition de mise à jour de fiche"
+      "enAttente": "Proposition de mise à jour de fiche",
+      "nonRenseigne": "Non renseigné",
+      "ceQuiChange": "Ce qui change",
+      "efface": "(effacé)",
+      "suite": "La décision s’affichera sur votre accueil. Sans réseau, la proposition est gardée sur l’appareil et part toute seule au retour du réseau."
     }
   },
   "qualite": {

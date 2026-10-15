@@ -214,6 +214,7 @@ export function Champ({
   titre,
   aide,
   erreur,
+  modifie,
   style,
   ...props
 }: TextInputProps & {
@@ -228,6 +229,8 @@ export function Champ({
   aide?: string;
   /** Champ à revoir : filet rouge doublé (correction demandée). */
   erreur?: boolean;
+  /** Valeur changée par rapport à la fiche : filet d'accent doublé (correction proposée). */
+  modifie?: boolean;
 }) {
   const p = usePalette();
   return (
@@ -251,6 +254,7 @@ export function Champ({
           { borderColor: p.ligne, color: p.texte, backgroundColor: p.surface },
           props.multiline && styles.champLong,
           erreur && { borderColor: p.erreur, borderWidth: 2 },
+          modifie && !erreur && { borderColor: p.accentPlein, borderWidth: 2 },
           style,
         ]}
         {...props}
