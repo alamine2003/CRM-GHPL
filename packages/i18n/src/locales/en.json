@@ -1997,7 +1997,15 @@
     "rapports_valides_other": "{{count}} reports approved",
     "rappel_rapport_one": "Today's visit report to submit before midnight",
     "rappel_rapport_other": "{{count}} of today's reports to submit before midnight",
-    "journee_escaladee": "{{nom}}, day of {{jour}}: to approve by escalation"
+    "journee_escaladee": "{{nom}}, day of {{jour}}: to approve by escalation",
+    "nonLues_one": "{{count}} unread",
+    "nonLues_other": "{{count}} unread",
+    "toutLu": "All read",
+    "groupes": {
+      "cetteSemaine": "This week",
+      "semaineDerniere": "Last week",
+      "plusTot": "Earlier"
+    }
   },
   "revision": {
     "demander": "Request a revision",
@@ -2959,7 +2967,9 @@
       "rapports_valides": "Reports approved",
       "rappel_rapport": "Reminder: report to submit",
       "journee_escaladee": "Day escalated"
-    }
+    },
+    "titreTablette": "Notifications on this tablet",
+    "aideIci": "Choose what arrives as a notification. Everything stays visible here."
   },
   "audit": {
     "titre": "Audit log",

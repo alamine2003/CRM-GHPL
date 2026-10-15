@@ -12,12 +12,13 @@ type Traduire = ReturnType<typeof useTranslation>['t'];
 type Palette = ReturnType<typeof usePalette>;
 
 export function texteNotification(n: Notification, t: Traduire, langue: string, fuseau?: string) {
+  // « vendredi 9 octobre » ; une période dans un seul mois : « du 19 au 23 octobre ».
+  const date = (iso: string, options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(langue, options).format(new Date(`${iso}T12:00:00`));
   const jour = (iso?: string) =>
-    iso
-      ? new Intl.DateTimeFormat(langue, { day: 'numeric', month: 'long' }).format(
-          new Date(`${iso}T12:00:00`),
-        )
-      : '';
+    iso ? date(iso, { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+  const { debut, fin } = n.donnees;
+  const memeMois = !!debut && !!fin && debut.slice(0, 7) === fin.slice(0, 7);
   const echeance = n.donnees.echeance
     ? new Intl.DateTimeFormat(langue, {
         weekday: 'long',
@@ -31,8 +32,10 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
   return t(`notifications.${n.type}`, {
     numero: n.donnees.numero_semaine,
     nom: n.donnees.nom,
-    debut: jour(n.donnees.debut),
-    fin: jour(n.donnees.fin),
+    debut: debut
+      ? date(debut, memeMois ? { day: 'numeric' } : { day: 'numeric', month: 'long' })
+      : '',
+    fin: fin ? date(fin, { day: 'numeric', month: 'long' }) : '',
     jour: jour(n.donnees.date),
     heures: n.donnees.heures,
     count: n.donnees.nombre ?? 0,
@@ -73,6 +76,36 @@ export function iconeNotification(
       return { nom: 'assignment-turned-in', couleur: p.info };
     default:
       return { nom: 'check-circle', couleur: p.succes };
+  }
+}
+
+/**
+ * Couleur de la pastille (maquette 1.4.9) : orange quand on vous demande de reprendre quelque
+ * chose, vert pour une bonne nouvelle ou un rappel du jour, bleu pour une information, ambre
+ * pour une échéance qui approche, rouge pour une escalade.
+ */
+export function couleurNotification(n: Notification, p: Palette): string {
+  switch (n.type) {
+    case 'revision_demandee':
+    case 'correction_demandee':
+    case 'rapport_rouvert':
+      return p.orange;
+    case 'remplacement_attribue':
+    case 'planning_soumis':
+    case 'redaction_rouverte':
+    case 'rapports_soumis':
+    case 'rapport_corrige':
+      return p.info;
+    case 'rappel_planning':
+    case 'plannings_non_approuves':
+    case 'reouverture_demandee':
+    case 'rapport_en_retard':
+      return p.attention;
+    case 'escalade':
+    case 'journee_escaladee':
+      return p.erreur;
+    default:
+      return p.succes;
   }
 }
 

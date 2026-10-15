@@ -1997,7 +1997,15 @@
     "rapports_valides_other": "{{count}} rapports validés",
     "rappel_rapport_one": "Rapport de la visite du jour à soumettre avant minuit",
     "rappel_rapport_other": "{{count}} rapports du jour à soumettre avant minuit",
-    "journee_escaladee": "{{nom}}, journée du {{jour}} : à valider par escalade"
+    "journee_escaladee": "{{nom}}, journée du {{jour}} : à valider par escalade",
+    "nonLues_one": "{{count}} non lue",
+    "nonLues_other": "{{count}} non lues",
+    "toutLu": "Tout est lu",
+    "groupes": {
+      "cetteSemaine": "Cette semaine",
+      "semaineDerniere": "La semaine dernière",
+      "plusTot": "Plus tôt"
+    }
   },
   "revision": {
     "demander": "Demander une révision",
@@ -2959,7 +2967,9 @@
       "rapports_valides": "Rapports validés",
       "rappel_rapport": "Rappel : rapport à soumettre",
       "journee_escaladee": "Journée remontée (escalade)"
-    }
+    },
+    "titreTablette": "Notifications sur cette tablette",
+    "aideIci": "Choisissez ce qui arrive en notification. Tout reste visible ici."
   },
   "audit": {
     "titre": "Journal d'audit",

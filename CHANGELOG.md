@@ -2,6 +2,19 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.9] — La maquette : les notifications
+
+### Modifié (prd.md §14.82, NOT-001, NOT-005)
+
+- Notifications : le nombre de non lues sous le titre, « Tout marquer comme lu », puis une ligne par notification avec une pastille de couleur (pleine et sur fond teinté tant qu'elle n'est pas lue) et sa date suivie de l'heure.
+- Sur tablette : les notifications groupées par semaine, une flèche quand elles ouvrent un écran, et à droite le choix de ce qui arrive en notification sur la tablette.
+- Les notifications vont désormais avec l'onglet Tournée. Les interrupteurs suivent la maquette, dans Profil aussi.
+- Les textes disent le jour de la semaine (« votre rapport du vendredi 9 octobre ») et « du 19 au 23 octobre ».
+
+### Design
+
+Écran « Notifications » refait selon la maquette, téléphone et tablette, clair et sombre ; interrupteur de la maquette.
+
 ## [1.4.8] — La maquette : mes chiffres
 
 ### Modifié (prd.md §14.82, DSH-001)

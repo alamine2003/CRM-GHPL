@@ -505,6 +505,44 @@ export function Bouton({
   );
 }
 
+/**
+ * Interrupteur de la maquette (1.4.9) : piste de 44 × 26, marine allumée, couleur de ligne
+ * éteinte, bouton blanc de 20 px. Grisé quand il ne se change pas (notification obligatoire).
+ */
+export function Interrupteur({
+  valeur,
+  surChangement,
+  libelle,
+  aide,
+  desactive,
+}: {
+  valeur: boolean;
+  surChangement: (valeur: boolean) => void;
+  libelle: string;
+  aide?: string;
+  desactive?: boolean;
+}) {
+  const p = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={libelle}
+      accessibilityHint={aide}
+      accessibilityState={{ checked: valeur, disabled: !!desactive }}
+      disabled={desactive}
+      onPress={() => surChangement(!valeur)}
+      hitSlop={10}
+      style={[
+        styles.interrupteur,
+        { backgroundColor: valeur ? p.accentPlein : p.ligne },
+        desactive && { opacity: 0.6 },
+      ]}
+    >
+      <View style={[styles.bouton20, valeur ? { right: 3 } : { left: 3 }]} />
+    </Pressable>
+  );
+}
+
 /** Bouton icône de 44 px (.ibtn) : cloche, fermeture. */
 export function BoutonIcone({
   icone,
@@ -816,6 +854,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     paddingHorizontal: 18,
+  },
+  interrupteur: { width: 44, height: 26, borderRadius: 13 },
+  bouton20: {
+    position: 'absolute',
+    top: 3,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
   },
   boutonIcone: {
     width: 44,

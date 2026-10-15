@@ -15,13 +15,16 @@ export const ONGLETS: readonly { cle: string; icone: NomIcone; chemin: string }[
   { cle: 'profil', icone: 'user', chemin: '/profil' },
 ] as const;
 
-/** L'onglet d'un écran : les fiches vont avec Prospects ; la journée et la visite, avec Semaine. */
+/**
+ * L'onglet d'un écran : les fiches vont avec Prospects ; la journée et la visite, avec Semaine ;
+ * les notifications, ouvertes par la cloche de la Tournée, avec Tournée (maquette 1.4.9).
+ */
 function estActif(cle: string, cheminOnglet: string, chemin: string) {
   return (
     chemin === cheminOnglet ||
     (cle === 'prospects' && /^\/(fiche|lieu|prospect|etablissement|correction)\//.test(chemin)) ||
     (cle === 'semaine' && /^\/(jour|visite|ecart|versions)\//.test(chemin)) ||
-    (cle === 'profil' && chemin === '/notifications')
+    (cle === 'tournee' && chemin === '/notifications')
   );
 }
 

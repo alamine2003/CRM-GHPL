@@ -1,16 +1,33 @@
 /**
  * NOT-005 (0.8.6) : les notifications que la personne reçoit sur ce téléphone. Chacune se coupe
  * ou se rétablit ; les obligatoires (révision, correction, escalade, et celles du pays) restent.
- * Le centre de notifications, lui, les garde toutes.
+ * Le centre de notifications, lui, les garde toutes. Maquette 1.4.9 : la liste se pose dans une
+ * carte (Profil) ou dans le volet droit du centre de notifications (tablette).
  */
 import type { PreferenceNotification } from '@innov/api-client';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
-import { Carte, Etiquette, Texte, usePalette } from './composants';
+import { StyleSheet, Text, View } from 'react-native';
+import { Carte, Interrupteur, Texte, usePalette } from './composants';
+import { useTablette } from './disposition';
+import { police } from './polices';
 import { messageErreur, useSession } from './session';
 
 export function CartePreferences() {
+  const { t } = useTranslation();
+  const tablette = useTablette();
+  return (
+    <Carte>
+      <ListePreferences
+        titre={t(tablette ? 'preferences.titreTablette' : 'preferences.titre')}
+        aide={t('preferences.aide')}
+      />
+    </Carte>
+  );
+}
+
+/** Titre, aide, puis une ligne par type de notification avec son interrupteur. */
+export function ListePreferences({ titre, aide }: { titre: string; aide: string }) {
   const { t } = useTranslation();
   const p = usePalette();
   const { client } = useSession();
@@ -47,48 +64,38 @@ export function CartePreferences() {
   };
 
   return (
-    <Carte>
-      <Texte variante="sousTitre" style={{ marginBottom: 6 }}>
-        {t('preferences.titre')}
+    <View style={{ gap: 8 }}>
+      <Texte variante="sousTitre" accessibilityRole="header">
+        {titre}
       </Texte>
-      <Texte variante="discret" style={{ marginBottom: 8 }}>
-        {t('preferences.aide')}
-      </Texte>
-      {erreur && (
-        <Texte variante="discret" style={{ marginBottom: 8 }}>
-          {erreur}
-        </Texte>
-      )}
-      {liste?.map((x, i) => (
-        <View
-          key={x.type}
-          style={[
-            styles.ligne,
-            { borderBottomColor: p.ligne },
-            i === liste.length - 1 && { borderBottomWidth: 0 },
-          ]}
-        >
-          <View style={{ flex: 1, gap: 4 }}>
-            <Texte>{t(`preferences.types.${x.type}`)}</Texte>
-            {x.obligatoire && (
-              <View style={{ flexDirection: 'row' }}>
-                <Etiquette ton="neutre">{t('preferences.obligatoire')}</Etiquette>
-              </View>
-            )}
+      <Texte variante="libelle">{aide}</Texte>
+      {erreur && <Texte variante="discret">{erreur}</Texte>}
+      <View>
+        {liste?.map((x, i) => (
+          <View
+            key={x.type}
+            style={[
+              styles.ligne,
+              i < liste.length - 1 && { borderBottomWidth: 1, borderBottomColor: p.ligne },
+            ]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.nom, { color: p.texte }]}>
+                {t(`preferences.types.${x.type}`)}
+              </Text>
+              {x.obligatoire && <Texte variante="discret">{t('preferences.obligatoire')}</Texte>}
+            </View>
+            <Interrupteur
+              libelle={t(`preferences.types.${x.type}`)}
+              aide={x.obligatoire ? t('preferences.obligatoireAide') : undefined}
+              valeur={x.push}
+              desactive={x.obligatoire}
+              surChangement={(push) => basculer(x.type, push)}
+            />
           </View>
-          <Switch
-            accessibilityLabel={t(`preferences.types.${x.type}`)}
-            accessibilityHint={x.obligatoire ? t('preferences.obligatoireAide') : undefined}
-            value={x.push}
-            disabled={x.obligatoire}
-            onValueChange={(push) => basculer(x.type, push)}
-            // Coupée, la piste reste visible (gris) ; le bouton est blanc dans les deux états.
-            trackColor={{ false: p.texteSecondaire, true: p.succes }}
-            thumbColor="#FFFFFF"
-          />
-        </View>
-      ))}
-    </Carte>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -97,8 +104,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    minHeight: 52,
-    paddingVertical: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    minHeight: 56,
+    paddingVertical: 12,
   },
+  nom: { fontFamily: police.texteFort, fontSize: 14, lineHeight: 20 },
 });

@@ -770,6 +770,14 @@ Mise en œuvre (0.3.9) :
   - Les visites encore à venir et celles qui attendent leur justification restent signalées sous les indicateurs.
   - Le dimanche n'apparaît dans les barres que s'il compte une visite. Les visites faites restent orange en mode sombre.
   - Hors connexion, l'heure du calcul s'affiche dans l'alerte (CA1) ; connecté, elle ne s'affiche plus. La phrase « sans note ni classement » passe dans l'en-tête de la tablette.
+- **1.4.9** : écran **Notifications** (NOT-001 : « 3 non lues » sous le titre, « Tout marquer comme lu », une ligne par notification avec sa pastille de couleur, pleine et sur fond teinté tant qu'elle n'est pas lue, la date puis l'heure ; tablette : la liste groupée par semaine avec une flèche quand elle ouvre un écran, et à droite les réglages de ce qui arrive en notification sur la tablette, NOT-005).
+- **Ce que la maquette ne dessine pas sur les notifications** [D, délégation, 1.4.9] :
+  - Couleur de la pastille : orange quand on vous demande de reprendre quelque chose (révision, correction, rapport rouvert) ; vert pour une bonne nouvelle ou un rappel du jour ; bleu pour une information (remplacement, planning soumis, semaine rouverte) ; ambre pour une échéance (rappel de planning, rapport en retard) ; rouge pour une escalade.
+  - Groupes sur la tablette : « Cette semaine », « La semaine dernière », « Plus tôt » (semaines du lundi au dimanche). Le téléphone garde une seule liste, comme la maquette.
+  - Quand tout est lu, le sous-titre dit « Tout est lu » et « Tout marquer comme lu » disparaît.
+  - Les notifications vont avec l'onglet Tournée (on y arrive par la cloche), et non plus avec Profil.
+  - Les réglages gardent toutes les notifications que reçoit la personne, avec « Obligatoire » sous celles qui ne se coupent pas ; l'interrupteur obligatoire est grisé. Sur le téléphone, ils restent dans Profil.
+  - Les dates des textes prennent le jour de la semaine (« votre rapport du vendredi 9 octobre ») et une période dans un seul mois s'écrit « du 19 au 23 octobre ».
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 
