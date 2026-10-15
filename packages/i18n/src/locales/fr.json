@@ -2909,10 +2909,14 @@
     "ligneAide": "Ouvre les envois en attente",
     "garde": {
       "titre": "Synchronisation nécessaire",
-      "aide_one": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jour sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
-      "aide_other": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jours sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
-      "attente_one": "{{count}} envoi en attente est gardé sur le téléphone : il partira à la synchronisation.",
-      "attente_other": "{{count}} envois en attente sont gardés sur le téléphone : ils partiront à la synchronisation."
+      "aide_telephone_one": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jour sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
+      "aide_telephone_other": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jours sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
+      "aide_tablette_one": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jour sans synchronisation, les données de la tablette sont masquées. Trouvez du réseau, puis synchronisez.",
+      "aide_tablette_other": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jours sans synchronisation, les données de la tablette sont masquées. Trouvez du réseau, puis synchronisez.",
+      "attenteSuite_one": "envoi en attente est gardé sur le téléphone : il partira à la synchronisation.",
+      "attenteSuite_other": "envois en attente sont gardés sur le téléphone : ils partiront à la synchronisation.",
+      "attenteTablette": "Les envois en attente sont gardés sur la tablette : ils partiront à la synchronisation.",
+      "rapports": "Rapports gardés"
     },
     "ligneHeure": "Synchronisé à {{heure}}",
     "ligneJour": "Synchronisé le {{jour}}",

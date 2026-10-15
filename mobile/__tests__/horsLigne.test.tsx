@@ -15,6 +15,8 @@ import { CLE_SYNCHRO, horsDelai } from '../src/synchro';
 import { horloge } from '../src/Verrou';
 
 const mockPousser = jest.fn();
+let mockTablette = false;
+jest.mock('../src/disposition', () => ({ useTablette: () => mockTablette }));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPousser, replace: jest.fn() }),
   usePathname: () => '/',
@@ -161,8 +163,34 @@ test('OFF-007 CA1 : au 8ᵉ jour sans synchronisation, les données ne s’affic
     ),
   );
   expect(await screen.findByText('Synchronisation nécessaire')).toBeTruthy();
-  expect(screen.getByText(/Au-delà de 7 jours sans synchronisation/)).toBeTruthy();
+  expect(
+    screen.getByText(
+      'Dernière synchronisation il y a 8 jours. Au-delà de 7 jours sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.',
+    ),
+  ).toBeTruthy();
   expect(screen.queryByText('Ma semaine')).toBeNull();
+});
+
+test('OFF-007 (maquette 1.5.2) : tablette — depuis quand, la file, les rapports gardés', async () => {
+  mockTablette = true;
+  try {
+    synchroniseIlYa(8);
+    await mettreEnAttente(envoi('e1'));
+    await render(
+      avecSession(
+        client(false),
+        <GardeHorsLigne>
+          <Text>Ma semaine</Text>
+        </GardeHorsLigne>,
+      ),
+    );
+    expect(await screen.findByText(/les données de la tablette sont masquées/)).toBeTruthy();
+    expect(screen.getByText('il y a 8 jours')).toBeTruthy();
+    expect(screen.getByText('Rapports gardés')).toBeTruthy();
+    expect(screen.getByText(/gardés sur la tablette : ils partiront/)).toBeTruthy();
+  } finally {
+    mockTablette = false;
+  }
 });
 
 test('OFF-007 : avant le délai, rien n’est masqué', async () => {
@@ -206,7 +234,7 @@ test('OFF-007 CA2 : la file est gardée et part à la synchronisation qui rend l
       </GardeHorsLigne>,
     ),
   );
-  expect(await screen.findByText(/1 envoi en attente est gardé sur le téléphone/)).toBeTruthy();
+  expect(await screen.findByText(/envoi en attente est gardé sur le téléphone/)).toBeTruthy();
   fireEvent.press(screen.getByText('Synchroniser maintenant'));
   expect(await screen.findByText('Ma semaine')).toBeTruthy();
   expect(api.propositions.creer).toHaveBeenCalledTimes(1);

@@ -2909,10 +2909,14 @@
     "ligneAide": "Opens the pending items",
     "garde": {
       "titre": "Sync required",
-      "aide_one": "Last sync {{quand}}. After {{count}} day without syncing, the data on this phone is hidden. Find a network, then sync.",
-      "aide_other": "Last sync {{quand}}. After {{count}} days without syncing, the data on this phone is hidden. Find a network, then sync.",
-      "attente_one": "{{count}} item waiting to send is kept on this phone: it will go out when you sync.",
-      "attente_other": "{{count}} items waiting to send are kept on this phone: they will go out when you sync."
+      "aide_telephone_one": "Last synchronisation {{quand}}. After {{count}} day without synchronisation, the phone's data is hidden. Find a network, then synchronise.",
+      "aide_telephone_other": "Last synchronisation {{quand}}. After {{count}} days without synchronisation, the phone's data is hidden. Find a network, then synchronise.",
+      "aide_tablette_one": "Last synchronisation {{quand}}. After {{count}} day without synchronisation, the tablet's data is hidden. Find a network, then synchronise.",
+      "aide_tablette_other": "Last synchronisation {{quand}}. After {{count}} days without synchronisation, the tablet's data is hidden. Find a network, then synchronise.",
+      "attenteSuite_one": "pending item is kept on the phone: it will leave at synchronisation.",
+      "attenteSuite_other": "pending items are kept on the phone: they will leave at synchronisation.",
+      "attenteTablette": "Pending items are kept on the tablet: they will leave at synchronisation.",
+      "rapports": "Reports kept"
     },
     "ligneHeure": "Synced at {{heure}}",
     "ligneJour": "Synced on {{jour}}",

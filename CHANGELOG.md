@@ -2,6 +2,17 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.2] — La maquette : synchronisation nécessaire
+
+### Modifié (prd.md §14.82, OFF-007)
+
+- Après trop de jours sans synchronisation, l'écran qui masque les données suit la maquette : depuis quand (« il y a 8 jours »), le délai du pays, le nombre d'envois gardés sur le téléphone et « Synchroniser maintenant ».
+- Sur tablette : la dernière synchronisation, les envois en attente et les rapports gardés en trois chiffres.
+
+### Design
+
+Écran « Synchronisation nécessaire » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.5.1] — La maquette : les envois en attente
 
 ### Modifié (prd.md §14.82, OFF-003, OFF-004)

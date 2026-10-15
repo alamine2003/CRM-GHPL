@@ -793,6 +793,12 @@ Mise en œuvre (0.3.9) :
   - « Pas de réseau » vient du dernier essai d'envoi : il s'affiche quand un envoi n'a pas pu partir faute de réseau et s'efface quand le serveur répond. L'heure de saisie est gardée avec chaque envoi à partir de cette version ; les envois plus anciens n'en ont pas.
   - Après « Envoyer maintenant » : « Réseau retrouvé : n envois sont partis », ou « Pas de réseau… Réessayez plus tard ». File vide : « Rien n'attend : tout est parti. »
   - La semaine garde sa propre carte d'envois en attente, sous la semaine (PLN-007).
+- **1.5.2** : écran **Synchronisation nécessaire** (OFF-007, RG-054 : un filet orange en haut, l'icône de synchronisation, « Synchronisation nécessaire », depuis quand (« il y a 8 jours ») et le délai du pays ; le nombre d'envois gardés ; « Synchroniser maintenant » ; tablette : la dernière synchronisation, les envois en attente et les rapports gardés en trois chiffres).
+- **Ce que la maquette ne dessine pas sur la synchronisation nécessaire** [D, délégation, 1.5.2] :
+  - « Il y a n jours » compte les jours entiers depuis la dernière synchronisation ; le délai reste celui du pays (DC-54).
+  - Sans envoi en attente, la carte des envois (téléphone) et la phrase sur leur garde (tablette) ne s'affichent pas ; sur la tablette, le chiffre « 0 » reste.
+  - « Rapports gardés » : les rapports prêts à écrire sans réseau gardés à la dernière synchronisation.
+  - Une synchronisation qui échoue faute de réseau le dit sous les chiffres, sans quitter l'écran.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

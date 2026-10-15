@@ -8,8 +8,6 @@
  * du délai du pays sans synchronisation, les données sont masquées jusqu'à la prochaine
  * synchronisation réussie, la file restant gardée (OFF-007, RG-054).
  */
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { marque } from '@innov/design';
 import { usePathname, useRouter } from 'expo-router';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,14 +18,15 @@ import {
   Alerte,
   Bouton,
   Carte,
+  Chiffres,
   Icone,
   Lien,
   Ligne,
-  Logo,
   Statut,
   Texte,
   usePalette,
 } from './composants';
+import { useTablette } from './disposition';
 import { police } from './polices';
 import { useSession } from './session';
 import {
@@ -279,12 +278,12 @@ export function StatutSynchro() {
  * synchronisation qui lève la garde.
  */
 export function GardeHorsLigne({ children }: { children: ReactNode }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const p = usePalette();
+  const tablette = useTablette();
   const marges = useSafeAreaInsets();
   const { etat, client } = useSession();
   const { derniere, attente, charge } = useEtatLocal();
-  const quand = useQuand();
   const [delai, setDelai] = useState<number | null>(null);
   const [, setTic] = useState(0);
   const [envoi, setEnvoi] = useState(false);
@@ -308,40 +307,92 @@ export function GardeHorsLigne({ children }: { children: ReactNode }) {
   if (!charge || delai === null) return null;
   if (!derniere || !horsDelai(derniere, delai, horloge.maintenant())) return <>{children}</>;
 
+  // Maquette 1.5.2 : « il y a 8 jours », pour dire d'un coup d'œil depuis quand.
+  const jours = Math.floor((horloge.maintenant() - Date.parse(derniere.le)) / 86_400_000);
+  const ilYA = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' }).format(
+    -jours,
+    'day',
+  );
+  const appareil = tablette ? 'tablette' : 'telephone';
+  const synchroniser = (
+    <Bouton
+      libelle={t('synchro.maintenant')}
+      chargement={envoi}
+      style={tablette ? { alignSelf: 'flex-start', minWidth: 280 } : undefined}
+      onPress={() => {
+        setEnvoi(true);
+        setEchec(false);
+        envoyerAttente(client)
+          .catch(() => 0)
+          .then(() => lancer(client))
+          .catch(() => setEchec(true))
+          .finally(() => setEnvoi(false));
+      }}
+    />
+  );
+
   return (
     <View
       style={[
         styles.garde,
-        { backgroundColor: p.fond, paddingTop: marges.top + 32, paddingBottom: marges.bottom },
+        { backgroundColor: p.surface, paddingTop: marges.top, paddingBottom: marges.bottom },
       ]}
     >
-      <Logo taille={40} />
-      <Carte style={{ gap: 12, alignSelf: 'stretch' }}>
-        <View style={styles.titreGarde}>
-          <MaterialIcons name="cloud-off" size={24} color={marque.orange} />
-          <Texte variante="sousTitre" style={{ flex: 1 }}>
-            {t('synchro.garde.titre')}
-          </Texte>
+      <View style={[styles.filet, { backgroundColor: p.orange, top: marges.top }]} />
+      <View style={tablette ? styles.gardeLarge : styles.gardeEtroite}>
+        <View
+          style={[
+            tablette ? styles.iconeLarge : styles.icone,
+            { backgroundColor: p.attentionDoux },
+          ]}
+        >
+          <Icone nom="refresh-cw" taille={tablette ? 32 : 28} couleur={p.attention} />
         </View>
-        <Texte>{t('synchro.garde.aide', { count: delai, quand: quand.long(derniere.le) })}</Texte>
-        {attente.length > 0 && (
-          <Alerte type="info">{t('synchro.garde.attente', { count: attente.length })}</Alerte>
+        <View>
+          <Text
+            accessibilityRole="header"
+            style={[tablette ? styles.titreLarge : styles.titreGarde, { color: p.texte }]}
+          >
+            {t('synchro.garde.titre')}
+          </Text>
+          <Text
+            style={[tablette ? styles.aideLarge : styles.aideGarde, { color: p.texteSecondaire }]}
+          >
+            {t(`synchro.garde.aide_${appareil}`, { count: delai, quand: ilYA })}
+          </Text>
+        </View>
+        {tablette ? (
+          <>
+            <Chiffres
+              valeurs={[
+                { libelle: t('synchro.derniere'), valeur: ilYA },
+                {
+                  libelle: t('synchro.enAttente'),
+                  valeur: String(attente.length),
+                  couleur: attente.length ? p.orange : undefined,
+                },
+                { libelle: t('synchro.garde.rapports'), valeur: String(derniere.rapports ?? 0) },
+              ]}
+            />
+            {attente.length > 0 && (
+              <Texte variante="libelle">{t('synchro.garde.attenteTablette')}</Texte>
+            )}
+          </>
+        ) : (
+          attente.length > 0 && (
+            <View style={[styles.attente, { backgroundColor: p.surface2, borderColor: p.ligne }]}>
+              <Texte variante="nombre" style={{ color: p.orange }}>
+                {attente.length}
+              </Texte>
+              <Text style={[styles.attenteTexte, { color: p.texteSecondaire }]}>
+                {t('synchro.garde.attenteSuite', { count: attente.length })}
+              </Text>
+            </View>
+          )
         )}
         {echec && <Alerte type="attention">{t('synchro.sansReseau')}</Alerte>}
-        <Bouton
-          libelle={t('synchro.maintenant')}
-          chargement={envoi}
-          onPress={() => {
-            setEnvoi(true);
-            setEchec(false);
-            envoyerAttente(client)
-              .catch(() => 0)
-              .then(() => lancer(client))
-              .catch(() => setEchec(true))
-              .finally(() => setEnvoi(false));
-          }}
-        />
-      </Carte>
+        {synchroniser}
+      </View>
     </View>
   );
 }
@@ -368,6 +419,30 @@ const styles = StyleSheet.create({
   },
   aide: { paddingHorizontal: 16, paddingBottom: 8 },
   bouton: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 16 },
-  garde: { flex: 1, alignItems: 'center', paddingHorizontal: 16, gap: 24 },
-  titreGarde: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  garde: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  filet: { position: 'absolute', left: 0, right: 0, height: 3 },
+  gardeEtroite: { alignSelf: 'stretch', paddingHorizontal: 24, paddingBottom: 32, gap: 24 },
+  gardeLarge: { width: 560, maxWidth: '100%', gap: 26 },
+  icone: { width: 56, height: 56, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  iconeLarge: {
+    width: 64,
+    height: 64,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titreGarde: { fontFamily: police.titreFort, fontSize: 28, lineHeight: 34, letterSpacing: -0.6 },
+  titreLarge: { fontFamily: police.titreFort, fontSize: 34, lineHeight: 40, letterSpacing: -0.7 },
+  aideGarde: { fontFamily: police.texte, fontSize: 16, lineHeight: 24, marginTop: 10 },
+  aideLarge: { fontFamily: police.texte, fontSize: 17, lineHeight: 26, marginTop: 12 },
+  attente: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 6,
+  },
+  attenteTexte: { flex: 1, fontFamily: police.texte, fontSize: 14, lineHeight: 20 },
 });
