@@ -171,8 +171,12 @@ def test_la_liste_du_delegue_dit_ses_visites_du_cycle_et_son_reseau(terrain):
     )  # fmt: skip
     planning = Planning.objects.create(pays=sn, delegue=terrain["deleg.sn"],
                                        semaine=date(2026, 10, 5))  # fmt: skip
-    for jour, statut in [(date(2026, 10, 6), "effectuee"), (date(2026, 9, 29), "effectuee"),
-                         (date(2026, 10, 7), "prevue"), (date(2026, 8, 25), "effectuee")]:
+    for jour, statut in [
+        (date(2026, 10, 6), "effectuee"),
+        (date(2026, 9, 29), "effectuee"),
+        (date(2026, 10, 7), "prevue"),
+        (date(2026, 8, 25), "effectuee"),
+    ]:
         Visite.objects.create(pays=sn, planning=planning, prospect=plateau, date=jour,
                               statut=statut)  # fmt: skip
     mes = client_de(terrain["deleg.sn"]).get(f"{API}/moi/").json()
