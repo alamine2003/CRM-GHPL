@@ -17,6 +17,7 @@ import { horloge } from '../src/Verrou';
 const mockPousser = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPousser, replace: jest.fn() }),
+  usePathname: () => '/',
   Redirect: () => null,
 }));
 jest.mock('expo-location', () => ({}));
@@ -126,7 +127,7 @@ test('OFF-003 CA1 : dès qu’un envoi attend, chaque écran le dit (1.4.0 : seu
   });
   expect(await screen.findByText(/^Synchronisé à \d.* · 2 envois en attente$/)).toBeTruthy();
   fireEvent.press(screen.getByRole('button'));
-  expect(mockPousser).toHaveBeenCalledWith('/profil');
+  expect(mockPousser).toHaveBeenCalledWith('/envois');
 });
 
 test('OFF-003 CA1 : l’en-tête de la tablette dit la dernière synchronisation (1.4.0)', async () => {

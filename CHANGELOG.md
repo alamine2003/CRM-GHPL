@@ -2,6 +2,19 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.1] — La maquette : les envois en attente
+
+### Modifié (prd.md §14.82, OFF-003, OFF-004)
+
+- Les envois en attente ont leur écran : ce qui attend le réseau, pour qui, à quelle heure, avec « Abandonner » et « Envoyer maintenant ». On y arrive par la bande « n envois en attente » ou par le Profil.
+- Abandonner un envoi pas encore parti demande confirmation ; un envoi refusé s'abandonne d'un geste ; une visite en conflit montre les deux versions.
+- « Pas de réseau » s'affiche quand un envoi n'a pas pu partir faute de réseau. Après un envoi : « Réseau retrouvé : n envois sont partis ».
+- Sur tablette : l'heure de saisie à droite de chaque envoi, et les données hors connexion dans le volet droit.
+
+### Design
+
+Écran « Envois en attente » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.5.0] — La maquette : mon profil
 
 ### Modifié (prd.md §14.82, USR-004, USR-006, OFF-001)

@@ -10,21 +10,24 @@
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { marque } from '@innov/design';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CarteAttente } from './Attente';
+import { ecouterFile, type Envoi, envoyerAttente, lireAttente } from './Brouillons';
 import {
-  abandonnerEnvoi,
-  ecouterFile,
-  type Envoi,
-  envoyerAttente,
-  garderMaVersion,
-  lireAttente,
-} from './Brouillons';
-import { Alerte, Bouton, Carte, Icone, Ligne, Logo, Statut, Texte, usePalette } from './composants';
+  Alerte,
+  Bouton,
+  Carte,
+  Icone,
+  Lien,
+  Ligne,
+  Logo,
+  Statut,
+  Texte,
+  usePalette,
+} from './composants';
 import { police } from './polices';
 import { useSession } from './session';
 import {
@@ -74,7 +77,7 @@ export function useEtatLocal() {
   return { derniere, attente, charge };
 }
 
-function useQuand() {
+export function useQuand() {
   const { t, i18n } = useTranslation();
   const heure = (date: Date) =>
     new Intl.DateTimeFormat(i18n.language, { hour: '2-digit', minute: '2-digit' }).format(date);
@@ -143,14 +146,11 @@ export function SynchroAuto() {
  * comptes, un bouton à contour ; tablette : l'aide, la date en clair, les rapports prêts et un
  * bouton plein.
  */
-export function CarteSynchro({ tablette }: { tablette?: boolean }) {
-  const { t } = useTranslation();
+/** « Synchroniser maintenant » : la file part d'abord, puis la synchronisation. */
+export function useRelance() {
   const { client } = useSession();
-  const { derniere: etat, attente } = useEtatLocal();
-  const quand = useQuand();
   const [envoi, setEnvoi] = useState(false);
   const [echec, setEchec] = useState(false);
-
   const relancer = () => {
     setEnvoi(true);
     setEchec(false);
@@ -160,6 +160,15 @@ export function CarteSynchro({ tablette }: { tablette?: boolean }) {
       .catch(() => setEchec(true))
       .finally(() => setEnvoi(false));
   };
+  return { relancer, envoi, echec };
+}
+
+export function CarteSynchro({ tablette }: { tablette?: boolean }) {
+  const { t } = useTranslation();
+  const routeur = useRouter();
+  const { derniere: etat, attente } = useEtatLocal();
+  const quand = useQuand();
+  const { relancer, envoi, echec } = useRelance();
 
   const lignes = etat
     ? [
@@ -176,49 +185,43 @@ export function CarteSynchro({ tablette }: { tablette?: boolean }) {
     : [];
 
   return (
-    <>
-      <Carte marge={0}>
-        <View style={styles.enTeteCarte}>
-          <Texte variante="sousTitre" accessibilityRole="header" style={{ flexShrink: 1 }}>
-            {t('synchro.titre')}
-          </Texte>
-          {!tablette && <StatutSynchro />}
-        </View>
-        {tablette && (
-          <Texte variante="libelle" style={styles.aide}>
-            {t('synchro.aideTablette')}
-          </Texte>
-        )}
-        {etat ? (
-          lignes.map((l) => <Ligne key={l.libelle} libelle={l.libelle} valeur={l.valeur} />)
-        ) : (
-          <Texte style={styles.aide}>{t('synchro.jamais')}</Texte>
-        )}
-        {echec && (
-          <Texte variante="discret" style={styles.aide}>
-            {t('synchro.sansReseau')}
-          </Texte>
-        )}
-        <View style={styles.bouton}>
-          <Bouton
-            libelle={t('synchro.maintenant')}
-            variante={tablette ? undefined : 'contour'}
-            petit={!tablette}
-            chargement={envoi}
-            onPress={relancer}
-          />
-        </View>
-      </Carte>
-      {attente.length > 0 && (
-        <CarteAttente
-          envois={attente}
-          envoi={envoi}
-          surEnvoyer={relancer}
-          surAbandonner={(id) => void abandonnerEnvoi(id)}
-          surGarderMienne={(id) => void garderMaVersion(id).then(relancer)}
-        />
+    <Carte marge={0}>
+      <View style={styles.enTeteCarte}>
+        <Texte variante="sousTitre" accessibilityRole="header" style={{ flexShrink: 1 }}>
+          {t('synchro.titre')}
+        </Texte>
+        {!tablette && <StatutSynchro />}
+      </View>
+      {tablette && (
+        <Texte variante="libelle" style={styles.aide}>
+          {t('synchro.aideTablette')}
+        </Texte>
       )}
-    </>
+      {etat ? (
+        lignes.map((l) => <Ligne key={l.libelle} libelle={l.libelle} valeur={l.valeur} />)
+      ) : (
+        <Texte style={styles.aide}>{t('synchro.jamais')}</Texte>
+      )}
+      {echec && (
+        <Texte variante="discret" style={styles.aide}>
+          {t('synchro.sansReseau')}
+        </Texte>
+      )}
+      {attente.length > 0 && (
+        <View style={styles.aide}>
+          <Lien libelle={t('attente.voir')} onPress={() => routeur.push('/envois')} />
+        </View>
+      )}
+      <View style={styles.bouton}>
+        <Bouton
+          libelle={t('synchro.maintenant')}
+          variante={tablette ? undefined : 'contour'}
+          petit={!tablette}
+          chargement={envoi}
+          onPress={relancer}
+        />
+      </View>
+    </Carte>
   );
 }
 
@@ -230,6 +233,7 @@ export function LigneSynchro() {
   const { t } = useTranslation();
   const p = usePalette();
   const routeur = useRouter();
+  const chemin = usePathname();
   const { derniere, attente } = useEtatLocal();
   const quand = useQuand();
   const texte = [
@@ -239,14 +243,15 @@ export function LigneSynchro() {
     .filter(Boolean)
     .join(' · ');
   // 1.4.0 (maquette) : plus de ligne permanente sous l'en-tête ; l'état complet est au Profil.
-  // Elle ne paraît que si des envois attendent le réseau (OFF-003 CA1).
-  if (attente.length === 0) return null;
+  // Elle ne paraît que si des envois attendent le réseau (OFF-003 CA1), hors de l'écran qui
+  // les détaille (1.5.1).
+  if (attente.length === 0 || chemin === '/envois') return null;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={texte}
       accessibilityHint={t('synchro.ligneAide')}
-      onPress={() => routeur.push('/profil')}
+      onPress={() => routeur.push('/envois')}
       style={[styles.ligne, { backgroundColor: p.attentionDoux, borderBottomColor: p.ligne }]}
     >
       <Icone nom="upload-cloud" taille={16} couleur={p.attention} />

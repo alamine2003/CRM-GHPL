@@ -24,7 +24,8 @@ function estActif(cle: string, cheminOnglet: string, chemin: string) {
     chemin === cheminOnglet ||
     (cle === 'prospects' && /^\/(fiche|lieu|prospect|etablissement|correction)\//.test(chemin)) ||
     (cle === 'semaine' && /^\/(jour|visite|ecart|versions)\//.test(chemin)) ||
-    (cle === 'tournee' && chemin === '/notifications')
+    (cle === 'tournee' && chemin === '/notifications') ||
+    (cle === 'profil' && chemin === '/envois')
   );
 }
 

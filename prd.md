@@ -785,6 +785,14 @@ Mise en œuvre (0.3.9) :
   - La file d'envoi détaillée (OFF-003) reste sous les données hors connexion quand des envois attendent, jusqu'à l'écran « Envois » de la maquette. Une synchronisation incomplète s'y signale par une ligne de plus.
   - Le rôle affiché est le premier rôle de la personne ; « Rôles » les donne tous.
   - Les lignes « libellé — valeur » laissent le libellé prendre la place qu'il lui faut ; une valeur longue passe à la ligne (tous les écrans).
+- **1.5.1** : écran **Envois en attente** (OFF-003, OFF-004 : le nombre d'envois en titre, « Pas de réseau » et l'heure de la tentative ; chaque envoi avec ce qu'il est, pour qui et l'heure de saisie, et « Abandonner » ; « Envoyer maintenant » ; tablette : la liste avec l'heure à droite, la phrase « C'est l'heure de saisie qui compte », et à droite les données hors connexion avec « Synchroniser maintenant »).
+- **Ce que la maquette ne dessine pas sur les envois** [D, délégation, 1.5.1] :
+  - Un écran à part (`/envois`), ouvert par la bande « n envois en attente » qui paraît sous l'en-tête de chaque écran, et par « Voir les envois en attente » au Profil. Il va avec l'onglet Profil. La bande ne s'affiche pas sur cet écran.
+  - « Abandonner » un envoi refusé par le serveur l'efface d'un geste, comme avant. Un envoi pas encore parti demande une confirmation (« Cet envoi n'est pas encore parti : l'abandonner l'efface de cet appareil », « Le garder » / « Abandonner »), car il serait perdu.
+  - Un envoi refusé montre le message du serveur sous sa ligne ; une visite modifiée en conflit montre les deux versions et « Garder ma version » / « Garder la version du serveur » (OFF-004), à la place d'« Abandonner ».
+  - « Pas de réseau » vient du dernier essai d'envoi : il s'affiche quand un envoi n'a pas pu partir faute de réseau et s'efface quand le serveur répond. L'heure de saisie est gardée avec chaque envoi à partir de cette version ; les envois plus anciens n'en ont pas.
+  - Après « Envoyer maintenant » : « Réseau retrouvé : n envois sont partis », ou « Pas de réseau… Réessayez plus tard ». File vide : « Rien n'attend : tout est parti. »
+  - La semaine garde sa propre carte d'envois en attente, sous la semaine (PLN-007).
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

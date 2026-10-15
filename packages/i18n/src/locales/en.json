@@ -1869,7 +1869,14 @@
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
     "envoyes_one": "Network back: {{count}} item sent.",
-    "envoyes_other": "Network back: {{count}} items sent."
+    "envoyes_other": "Network back: {{count}} items sent.",
+    "voir": "See pending items",
+    "sansReseau": "No network",
+    "surTablette": "Saved on this tablet without network",
+    "heureSaisie": "They leave on their own when the network returns. The time entered on the tablet counts, not the time sent.",
+    "vide": "Nothing is waiting: everything has been sent.",
+    "confirmer": "This item has not been sent yet: abandoning it erases it from this device.",
+    "garder": "Keep it"
   },
   "brouillon": {
     "visite": "A new visit was not saved.",
@@ -2899,7 +2906,7 @@
     "leJour": "on {{jour}} at {{heure}}",
     "enAttente": "Items waiting to send",
     "ligneJamais": "Not synced yet",
-    "ligneAide": "Opens your profile, to sync or send now",
+    "ligneAide": "Opens the pending items",
     "garde": {
       "titre": "Sync required",
       "aide_one": "Last sync {{quand}}. After {{count}} day without syncing, the data on this phone is hidden. Find a network, then sync.",
@@ -2909,7 +2916,8 @@
     },
     "ligneHeure": "Synced at {{heure}}",
     "ligneJour": "Synced on {{jour}}",
-    "aideTablette": "The tablet keeps your week, the next one, your target list and the last three visits to each prospect: you can work without a network."
+    "aideTablette": "The tablet keeps your week, the next one, your target list and the last three visits to each prospect: you can work without a network.",
+    "rapportsCourt": "Reports ready offline"
   },
   "conflits": {
     "visiteGardee": "This visit was changed elsewhere in the meantime: choose which version to keep (profile or week, “waiting to send”).",

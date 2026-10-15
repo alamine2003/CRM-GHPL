@@ -1869,7 +1869,14 @@
     "aide_one": "Enregistré sur ce téléphone sans réseau ; il part de lui-même au retour du réseau.",
     "aide_other": "Enregistrés sur ce téléphone sans réseau ; ils partent d'eux-mêmes au retour du réseau.",
     "envoyes_one": "Réseau retrouvé : {{count}} envoi est parti.",
-    "envoyes_other": "Réseau retrouvé : {{count}} envois sont partis."
+    "envoyes_other": "Réseau retrouvé : {{count}} envois sont partis.",
+    "voir": "Voir les envois en attente",
+    "sansReseau": "Pas de réseau",
+    "surTablette": "Enregistrés sur cette tablette sans réseau",
+    "heureSaisie": "Ils partent d’eux-mêmes au retour du réseau. C’est l’heure de saisie sur la tablette qui compte, pas l’heure d’envoi.",
+    "vide": "Rien n’attend : tout est parti.",
+    "confirmer": "Cet envoi n’est pas encore parti : l’abandonner l’efface de cet appareil.",
+    "garder": "Le garder"
   },
   "brouillon": {
     "visite": "Une nouvelle visite n'a pas été enregistrée.",
@@ -2899,7 +2906,7 @@
     "leJour": "le {{jour}} à {{heure}}",
     "enAttente": "Envois en attente",
     "ligneJamais": "Pas encore synchronisé",
-    "ligneAide": "Ouvre le profil, pour synchroniser ou envoyer maintenant",
+    "ligneAide": "Ouvre les envois en attente",
     "garde": {
       "titre": "Synchronisation nécessaire",
       "aide_one": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jour sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
@@ -2909,7 +2916,8 @@
     },
     "ligneHeure": "Synchronisé à {{heure}}",
     "ligneJour": "Synchronisé le {{jour}}",
-    "aideTablette": "La tablette garde votre semaine, la suivante, votre liste cible et les trois dernières visites de chaque prospect : vous pouvez travailler sans réseau."
+    "aideTablette": "La tablette garde votre semaine, la suivante, votre liste cible et les trois dernières visites de chaque prospect : vous pouvez travailler sans réseau.",
+    "rapportsCourt": "Rapports prêts sans réseau"
   },
   "conflits": {
     "visiteGardee": "Cette visite a changé ailleurs entre-temps : choisissez la version à garder (profil ou semaine, « envois en attente »).",
