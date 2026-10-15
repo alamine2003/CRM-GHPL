@@ -392,6 +392,45 @@
       "sansCoordonneesAlerte_other": "{{count}} places without coordinates",
       "sansCoordonneesSuite_one": "is not counted in the estimated distance.",
       "sansCoordonneesSuite_other": "are not counted in the estimated distance."
+    },
+    "prospects": {
+      "maListe_one": "My list · {{count}} prospect",
+      "maListe_other": "My list · {{count}} prospects",
+      "tous_one": "All records · {{count}} prospect",
+      "tous_other": "All records · {{count}} prospects",
+      "nouveau": "New prospect",
+      "rechercher": "Search for a prospect",
+      "indice": "Name, facility, area…",
+      "segmentTous": "All",
+      "potentiel": "Potential {{valeur}}",
+      "filtres": {
+        "specialite": "Specialty",
+        "zone": "Area",
+        "specialiteToutes": "All specialties",
+        "zoneToutes": "All areas"
+      },
+      "colonnes": {
+        "prospect": "Prospect",
+        "specialite": "Specialty",
+        "etablissement": "Facility",
+        "zone": "Area",
+        "cycle": "Cycle"
+      },
+      "cycle": "{{faites}} / {{frequence}}",
+      "cycleLong_one": "{{faites}} of {{count}} visit this cycle",
+      "cycleLong_other": "{{faites}} of {{count}} visits this cycle"
+    },
+    "nouveauProspect": {
+      "titre": "New prospect",
+      "choisir": "Choose…",
+      "etablissement": "Practice facility",
+      "indiceEtablissement": "Name, locality or phone",
+      "ajouterEtablissement": "Add a facility",
+      "changer": "Change",
+      "ressemblantes": "Similar records",
+      "ressemblantesAide": "This prospect may already exist: open their record rather than creating a second one.",
+      "aucuneRessemblante": "No similar record yet: they appear as soon as a name is entered.",
+      "verifies": "Duplicates are checked when saving."
     }
   },
   "roles": {
@@ -1499,7 +1538,16 @@
     "lieuHorsLigne": "This record is not available offline.",
     "quiExerceIci": "Who practises here",
     "personne": "No prospect currently practises here.",
-    "lieux": "Places of practice"
+    "lieux": "Places of practice",
+    "ecrireCourt": "Write",
+    "ecrireSms": "Send a message",
+    "frequence": "Frequency",
+    "parCycle_one": "{{count}} visit per cycle",
+    "parCycle_other": "{{count}} visits per cycle",
+    "derniereVisite": "Last visit",
+    "reseau": "Network",
+    "mobile": "Mobile",
+    "pro": "Work phone"
   },
   "joursFeries": {
     "titre": "Public holidays",
@@ -2372,7 +2420,7 @@
     "envoye": "Sent"
   },
   "chronologie": {
-    "titre": "Previous visits",
+    "titre": "Visit history",
     "aucune": "No visit report yet.",
     "horsLigne": "No network: the last list read.",
     "enRetard": "Submitted late",
@@ -2380,7 +2428,8 @@
     "plus_one": "See the older visit",
     "plus_other": "See the {{count}} older visits",
     "moins": "See less",
-    "journee": "Open the day"
+    "journee": "Open the day",
+    "sansDetail": "Visit without details"
   },
   "indisponibilite": {
     "ouvrir": "I am unavailable today",

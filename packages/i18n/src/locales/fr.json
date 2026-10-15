@@ -392,6 +392,45 @@
       "sansCoordonneesAlerte_other": "{{count}} lieux sans coordonnées",
       "sansCoordonneesSuite_one": "n’est pas compté dans la distance estimée.",
       "sansCoordonneesSuite_other": "ne sont pas comptés dans la distance estimée."
+    },
+    "prospects": {
+      "maListe_one": "Ma liste · {{count}} prospect",
+      "maListe_other": "Ma liste · {{count}} prospects",
+      "tous_one": "Toutes les fiches · {{count}} prospect",
+      "tous_other": "Toutes les fiches · {{count}} prospects",
+      "nouveau": "Nouveau prospect",
+      "rechercher": "Chercher un prospect",
+      "indice": "Nom, établissement, zone…",
+      "segmentTous": "Tous",
+      "potentiel": "Potentiel {{valeur}}",
+      "filtres": {
+        "specialite": "Spécialité",
+        "zone": "Zone",
+        "specialiteToutes": "Toutes les spécialités",
+        "zoneToutes": "Toutes les zones"
+      },
+      "colonnes": {
+        "prospect": "Prospect",
+        "specialite": "Spécialité",
+        "etablissement": "Établissement",
+        "zone": "Zone",
+        "cycle": "Cycle"
+      },
+      "cycle": "{{faites}} / {{frequence}}",
+      "cycleLong_one": "{{faites}} sur {{count}} visite ce cycle",
+      "cycleLong_other": "{{faites}} sur {{count}} visites ce cycle"
+    },
+    "nouveauProspect": {
+      "titre": "Nouveau prospect",
+      "choisir": "Choisir…",
+      "etablissement": "Établissement d’exercice",
+      "indiceEtablissement": "Nom, localité ou téléphone",
+      "ajouterEtablissement": "Ajouter un établissement",
+      "changer": "Changer",
+      "ressemblantes": "Fiches ressemblantes",
+      "ressemblantesAide": "Ce prospect existe peut-être déjà : ouvrez sa fiche plutôt que d’en créer une seconde.",
+      "aucuneRessemblante": "Aucune fiche ressemblante pour l’instant : elles s’affichent dès le nom saisi.",
+      "verifies": "Les doublons sont vérifiés à l’enregistrement."
     }
   },
   "roles": {
@@ -1499,7 +1538,16 @@
     "lieuHorsLigne": "Cette fiche n'est pas disponible sans réseau.",
     "quiExerceIci": "Qui exerce ici",
     "personne": "Aucun prospect n'y exerce actuellement.",
-    "lieux": "Lieux d'exercice"
+    "lieux": "Lieux d'exercice",
+    "ecrireCourt": "Écrire",
+    "ecrireSms": "Écrire un message",
+    "frequence": "Fréquence",
+    "parCycle_one": "{{count}} visite par cycle",
+    "parCycle_other": "{{count}} visites par cycle",
+    "derniereVisite": "Dernière visite",
+    "reseau": "Réseau",
+    "mobile": "Mobile",
+    "pro": "Professionnel"
   },
   "joursFeries": {
     "titre": "Jours fériés",
@@ -2372,7 +2420,7 @@
     "envoye": "Envoyé"
   },
   "chronologie": {
-    "titre": "Visites précédentes",
+    "titre": "Historique des visites",
     "aucune": "Aucun rapport de visite pour l'instant.",
     "horsLigne": "Sans réseau : la dernière liste lue.",
     "enRetard": "Soumis en retard",
@@ -2380,7 +2428,8 @@
     "plus_one": "Voir la visite plus ancienne",
     "plus_other": "Voir les {{count}} visites plus anciennes",
     "moins": "Voir moins",
-    "journee": "Ouvrir la journée"
+    "journee": "Ouvrir la journée",
+    "sansDetail": "Visite sans détail"
   },
   "indisponibilite": {
     "ouvrir": "Je suis indisponible aujourd'hui",

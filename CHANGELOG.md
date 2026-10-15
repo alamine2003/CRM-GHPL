@@ -2,6 +2,19 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.4.4] — La maquette : les prospects
+
+### Modifié (prd.md §14.82, PRP-002 à PRP-011, RPT-011)
+
+- Prospects : une recherche, puis des filtres « Ma liste », « Tous », « Établissements », le potentiel, la spécialité et la zone. Chaque prospect de ma liste dit ses visites du cycle (« 2 / 3 »). Sur tablette, un tableau : prospect, spécialité, établissement, zone, cycle.
+- Fiche d'un prospect : ses initiales, « Dans ma liste », trois boutons Appeler / Écrire / Itinéraire, ses informations, ses lieux d'exercice et l'historique des visites ; sur tablette, ma liste à gauche pour passer d'une fiche à l'autre.
+- Nouveau prospect : un écran à part, ouvert par « + ». Les fiches qui ressemblent s'affichent pendant la saisie ; l'établissement d'exercice se choisit (ou se crée) tout de suite.
+- Serveur : ma liste donne les visites du cycle de chaque prospect et le réseau du poste.
+
+### Design
+
+Écrans « Prospects », « Fiche » et « Nouveau prospect » refaits selon la maquette, téléphone et tablette, clair et sombre ; ce que la maquette ne dessine pas (établissements, propositions de correction, numéro d'ordre, détail de chaque visite) reste dans l'onglet ou sur la fiche.
+
 ## [1.4.3] — La maquette : la semaine, la journée et les versions
 
 ### Modifié (prd.md §14.82, PLN-001 à PLN-016)

@@ -3452,6 +3452,11 @@ export interface components {
       fin?: string | null;
       readonly en_cours: boolean;
       readonly hors_secteur: boolean;
+      /**
+       * @description Visites effectuées chez ce prospect sur le cycle en cours (« 2 / 3 », 1.4.4) ;
+       *     connues seulement de la liste du délégué lui-même.
+       */
+      readonly visites_cycle: number | null;
     };
     /**
      * @description * `dr` - Dr
@@ -5129,6 +5134,7 @@ export interface components {
       type_poste: string;
       occupant: string | null;
       secteurs: components['schemas']['Lieu'][];
+      reseaux: string[];
       gerable: boolean;
       synthese: components['schemas']['SyntheseCible'];
     };

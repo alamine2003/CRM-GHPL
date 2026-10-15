@@ -19,7 +19,7 @@ export const ONGLETS: readonly { cle: string; icone: NomIcone; chemin: string }[
 function estActif(cle: string, cheminOnglet: string, chemin: string) {
   return (
     chemin === cheminOnglet ||
-    (cle === 'prospects' && /^\/(fiche|lieu)\//.test(chemin)) ||
+    (cle === 'prospects' && /^\/(fiche|lieu|prospect)\//.test(chemin)) ||
     (cle === 'semaine' && /^\/(jour|visite|ecart|versions)\//.test(chemin)) ||
     (cle === 'profil' && chemin === '/notifications')
   );

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.4.3
+  version: 1.4.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -6364,6 +6364,13 @@ components:
         hors_secteur:
           type: boolean
           readOnly: true
+        visites_cycle:
+          type: integer
+          nullable: true
+          description: |-
+            Visites effectuées chez ce prospect sur le cycle en cours (« 2 / 3 », 1.4.4) ;
+            connues seulement de la liste du délégué lui-même.
+          readOnly: true
       required:
       - debut
       - en_cours
@@ -6372,6 +6379,7 @@ components:
       - id
       - poste
       - prospect
+      - visites_cycle
     CiviliteEnum:
       enum:
       - dr
@@ -10385,6 +10393,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Lieu'
+        reseaux:
+          type: array
+          items:
+            type: string
         gerable:
           type: boolean
         synthese:
@@ -10394,6 +10406,7 @@ components:
       - id
       - libelle
       - occupant
+      - reseaux
       - secteurs
       - synthese
       - type_poste

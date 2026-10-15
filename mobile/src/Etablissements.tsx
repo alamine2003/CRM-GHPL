@@ -2,7 +2,7 @@ import type { Etablissement, SaisieEtablissement, SecteurSaisie } from '@innov/a
 import { rayon } from '@innov/design';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Location from 'expo-location';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Alerte, Bouton, Carte, Champ, Etiquette, Texte, usePalette } from './composants';
@@ -14,12 +14,15 @@ export function Pilule({
   actif,
   onPress,
   rang,
+  marque,
 }: {
   libelle: string;
   actif: boolean;
   onPress: () => void;
   /** Rang de présentation, en carré orange devant le libellé (produits du rapport). */
   rang?: number;
+  /** Devant le libellé : le carré du potentiel (filtres des prospects). */
+  marque?: ReactNode;
 }) {
   const p = usePalette();
   return (
@@ -40,6 +43,7 @@ export function Pilule({
           <Text style={styles.rangTexte}>{rang}</Text>
         </View>
       ) : null}
+      {marque}
       <Text style={[styles.piluleTexte, { color: actif ? p.accentTexte : p.texte }]}>
         {libelle}
       </Text>
@@ -79,7 +83,12 @@ export function LigneEtablissement({ etablissement }: { etablissement: Etablisse
  * Création d'un établissement depuis le téléphone (PRP-003) : le délégué, devant la porte,
  * enregistre la position de référence qui servira au contrôle de distance des visites.
  */
-export function FormulaireEtablissement({ surTermine }: { surTermine: () => void }) {
+export function FormulaireEtablissement({
+  surTermine,
+}: {
+  /** L'établissement créé : la création d'un prospect le reprend comme lieu d'exercice. */
+  surTermine: (cree: Etablissement) => void;
+}) {
   const { t } = useTranslation();
   const { client } = useSession();
   const [types, setTypes] = useState<{ id: string; libelle: string }[]>([]);
@@ -132,8 +141,7 @@ export function FormulaireEtablissement({ surTermine }: { surTermine: () => void
     setErreur(null);
     setEnvoi(true);
     try {
-      await client.etablissements.creer(f);
-      surTermine();
+      surTermine(await client.etablissements.creer(f));
     } catch (e) {
       setErreur(messageErreur(e, t('erreurs.reseau')));
     } finally {

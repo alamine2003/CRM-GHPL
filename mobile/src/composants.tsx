@@ -258,6 +258,36 @@ export function Champ({
   );
 }
 
+/** Champ de recherche (.inp avec loupe) : le texte indicatif suffit, le libellé est vocalisé. */
+export function ChampRecherche({
+  libelle,
+  style,
+  ...props
+}: TextInputProps & { libelle: string; style?: ViewStyle }) {
+  const p = usePalette();
+  return (
+    <View
+      style={[
+        styles.champ,
+        styles.recherche,
+        { borderColor: p.ligne, backgroundColor: p.surface },
+        style,
+      ]}
+    >
+      <Icone nom="search" taille={20} couleur={p.texteSecondaire} />
+      <TextInput
+        accessibilityLabel={libelle}
+        placeholderTextColor={p.texteDiscret}
+        autoCorrect={false}
+        returnKeyType="search"
+        clearButtonMode="while-editing"
+        style={[styles.rechercheTexte, { color: p.texte }]}
+        {...props}
+      />
+    </View>
+  );
+}
+
 /**
  * Choix unique en segments côte à côte (.seg) : le segment choisi est plein. Un second appui
  * sur lui le signale aussi : à l'écran de décider s'il le retire.
@@ -682,6 +712,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: police.texte,
   },
+  recherche: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  rechercheTexte: { flex: 1, minHeight: 46, fontSize: 15, fontFamily: police.texte },
   champLong: { minHeight: 72, paddingTop: 12, textAlignVertical: 'top' },
   bouton: {
     minHeight: 48,

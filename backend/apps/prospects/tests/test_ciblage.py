@@ -156,6 +156,32 @@ def test_le_delegue_emporte_sa_liste(terrain):
     assert deleg.get(f"{API}/postes/{terrain['autre'].pk}/").status_code == 404
 
 
+def test_la_liste_du_delegue_dit_ses_visites_du_cycle_et_son_reseau(terrain):
+    """1.4.4 (maquette) : « 2 / 3 » — les visites effectuées chez chaque prospect sur le cycle
+    qui finit aujourd'hui, et le réseau du poste. Une visite prévue ou d'avant le cycle ne
+    compte pas ; la liste lue par le superviseur ne les porte pas."""
+    from datetime import date
+
+    from apps.planning.models import Planning, Visite
+
+    sn, plateau = terrain["sn"], terrain["plateau"]
+    Cible.objects.create(
+        pays=sn, poste=terrain["poste"], prospect=plateau, frequence=3, debut="2026-01-01",
+        ajoute_par=terrain["admin.sn"],
+    )  # fmt: skip
+    planning = Planning.objects.create(pays=sn, delegue=terrain["deleg.sn"],
+                                       semaine=date(2026, 10, 5))  # fmt: skip
+    for jour, statut in [(date(2026, 10, 6), "effectuee"), (date(2026, 9, 29), "effectuee"),
+                         (date(2026, 10, 7), "prevue"), (date(2026, 8, 25), "effectuee")]:
+        Visite.objects.create(pays=sn, planning=planning, prospect=plateau, date=jour,
+                              statut=statut)  # fmt: skip
+    mes = client_de(terrain["deleg.sn"]).get(f"{API}/moi/").json()
+    assert mes[0]["poste"]["reseaux"] == ["Réseau un"]
+    assert [c["visites_cycle"] for c in mes[0]["cibles"]] == [2]
+    lue = liste(client_de(terrain["sup.sn"]), terrain["poste"])
+    assert [c["visites_cycle"] for c in lue["cibles"]] == [None]
+
+
 def test_un_prospect_archive_sort_des_listes(terrain):
     poste, prospect = terrain["poste"], terrain["plateau"]
     from apps.prospects import ciblage

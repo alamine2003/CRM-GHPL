@@ -1,15 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useTranslation } from 'react-i18next';
-import { Ecran } from '../../src/Ecran';
-import { FicheProspect } from '../../src/Fiches';
+import { EcranFiche } from '../../src/Fiches';
 
-/** Fiche d'un prospect consultée par le délégué. */
+/** Fiche d'un prospect consultée par le délégué (maquette 1.4.4). */
 export default function EcranFicheProspect() {
-  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
-  return (
-    <Ecran titre={t('fiche.titreProspect')} retour>
-      <FicheProspect id={id} />
-    </Ecran>
-  );
+  return <EcranFiche id={id} />;
 }
