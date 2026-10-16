@@ -18,7 +18,13 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import status
 
-from apps.identite.models import ROLES_SANS_PAYS, AffectationPays, RoleUtilisateur, Utilisateur
+from apps.identite.models import (
+    ROLES_SANS_PAYS,
+    AffectationPays,
+    Role,
+    RoleUtilisateur,
+    Utilisateur,
+)
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
 from apps.socle.services import aujourdhui
@@ -110,4 +116,8 @@ def calculer_perimetre(utilisateur: Utilisateur, code_pays: str | None = None) -
     roles = set(roles_sans_pays)
     if pays_actif is not None:
         roles |= {r.role for r in actifs if r.pays_id == pays_actif.pk}
+        # 1.2.0 [D] : l'administrateur du siège « entre dans le portail » d'un pays avec tous
+        # les droits de son administrateur ; il gère ainsi le Sénégal, siège sans admin pays.
+        if Role.ADMIN_SIEGE in roles_sans_pays:
+            roles.add(Role.ADMIN_PAYS)
     return Perimetre(utilisateur, pays_actif, frozenset(roles), accessibles)

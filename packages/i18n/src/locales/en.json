@@ -200,10 +200,240 @@
       "texte": "For security, the app locks after {{minutes}} minutes in the background.",
       "deverrouiller": "Unlock",
       "invite": "Unlock INNOV CRM",
-      "sansProtection": "This phone has no passcode or biometrics: sign in again."
+      "sansProtection": "This phone has no passcode or biometrics: sign in again.",
+      "note": "Unlock CRM GH with your code or biometrics."
     },
     "identifiantInstallation": "ID",
-    "effacement": "This phone was revoked or your account deactivated: its data has been erased. Contact your country administrator."
+    "effacement": "This phone was revoked or your account deactivated: its data has been erased. Contact your country administrator.",
+    "connexion": {
+      "courriel": "Email address",
+      "appareilTelephone": "This phone",
+      "appareilTablette": "This tablet",
+      "enregistre": "Registered",
+      "enregistree": "Registered",
+      "noteTelephone": "Registered at sign-in; your country administrator can revoke it if it is lost.",
+      "noteTablette": "Registered at sign-in; your country administrator can revoke it if it is lost.",
+      "pied": "CRM GH · Generic Healthcare",
+      "accroche": "Proof of field activity, visit after visit.",
+      "accrocheTexte": "The week's plan, visits, reports: everything you need in the field, even without network.",
+      "atoutHorsLigne": "Works offline, sends as soon as the network is back",
+      "atoutChiffre": "Data encrypted on the device",
+      "oubliAccroche": "We'll get you back on track.",
+      "oubliTexte": "The reset link is valid for 30 minutes and can be used once.",
+      "codeAccroche": "A second proof that it's really you.",
+      "codeTexte": "Your role requires two-step verification. It protects the country's shared records and your reports.",
+      "codeCases": "6-digit code"
+    },
+    "tournee": {
+      "faitesSur": "done of {{total}}",
+      "faitesSurLu": "{{faites}} visits done of {{total}}",
+      "dansMinutes": "in {{n}} min",
+      "dansHeures": "in {{h}} h {{m}}",
+      "enCoursDepuis": "In progress since {{heure}}",
+      "visiteEnCours": "Visit in progress",
+      "itineraire": "Directions",
+      "ficheProspect": "Prospect record",
+      "aJustifier_one": "{{count}} visit still planned after its day: choose a reason.",
+      "aJustifier_other": "{{count}} visits still planned after their day: choose a reason.",
+      "aJustifierTitre": "To justify.",
+      "statuts": {
+        "attendu": "Report to write",
+        "brouillon": "Report in draft",
+        "soumis": "Report submitted",
+        "valide": "Report approved",
+        "a_corriger": "Report to correct",
+        "rouvert": "Report reopened",
+        "prochaine": "Next visit",
+        "en_cours": "In progress",
+        "prevue": "Planned"
+      },
+      "statutsCourts": {
+        "attendu": "To write",
+        "brouillon": "Draft",
+        "soumis": "Submitted",
+        "valide": "Approved",
+        "a_corriger": "To correct",
+        "rouvert": "Reopened",
+        "prochaine": "Next",
+        "en_cours": "In progress",
+        "prevue": "Planned"
+      },
+      "visitesAujourdhui": "Visits today",
+      "rapportsARediger": "Reports to write",
+      "semaine": "Week",
+      "kmJour": "Today's mileage",
+      "km": "{{km}} km",
+      "derniereVisite": "Last visit",
+      "date": "Date",
+      "resultat": "Outcome",
+      "prochaineAction": "Next action",
+      "premiereVisite": "First visit to this prospect.",
+      "aTraiter": "To do",
+      "rien": "Nothing to do.",
+      "rediger": "Write",
+      "corriger": "Correct",
+      "justifier": "Justify",
+      "rapportARediger": "Report to write",
+      "rapportACorriger": "Report to correct",
+      "visitesAJustifier_one": "{{count}} visit to justify",
+      "visitesAJustifier_other": "{{count}} visits to justify",
+      "resteePrevue": "Still planned after its day",
+      "aCorrigerCourt": "To correct",
+      "enRetardCourt": "Late",
+      "aJustifierCourt": "To justify",
+      "pointsATraiter_one": "{{count}} item to do",
+      "pointsATraiter_other": "{{count}} items to do",
+      "versionCourte": "version {{numero}}",
+      "synchronise": "Synced at {{heure}}",
+      "nonSynchronise": "Not synced yet",
+      "notifications": "Notifications",
+      "notificationsNonLues_one": "Notifications, {{count}} unread",
+      "notificationsNonLues_other": "Notifications, {{count}} unread",
+      "roleDelegue": "Medical rep",
+      "imprevue": "Visit outside the plan",
+      "indisponibilite": "Unexpected unavailability",
+      "programmeSemaine": "Rest of the week"
+    },
+    "visite": {
+      "derniereVisiteDu": "Last visit · {{date}}",
+      "derniereVisite": "Last visit",
+      "resultat": "Outcome",
+      "produits": "Products presented",
+      "prochaineAction": "Next action",
+      "premiereVisite": "First visit to this prospect.",
+      "aucunResultat": "—",
+      "noteGps": "Starting records your location once; ending the visit does too. Without GPS or network, the visit starts anyway.",
+      "noteSansGps": "Starting and ending the visit use the phone's time. Without network, the visit starts anyway.",
+      "notePosition": "Your location is recorded only at the start and end of the visit. Without GPS or network, the visit starts anyway.",
+      "position": "Location",
+      "lieu": "Place",
+      "adresse": "Address",
+      "quand": "When",
+      "statut": "Status",
+      "distance": "Distance",
+      "distanceLue": "{{km}} km from the previous stop",
+      "visitesDuJour": "Visits of the day",
+      "detailVisite": "Visit detail",
+      "planning": "Plan {{statut}}",
+      "planningVersion": "Plan {{statut}} · version {{numero}}",
+      "aJustifier": "To justify",
+      "justifier": "Justify",
+      "deroulement": "Progress",
+      "demarreeA": "Started at {{heure}}",
+      "effectueeDe": "{{debut}} – {{fin}} · {{duree}}",
+      "commentaireIndice": "Details for your supervisor",
+      "ecartContexte": "{{nom}} · {{heure}}",
+      "preparation": "Preparation",
+      "objectif": "Objective",
+      "note": "Note",
+      "reseau": "Network {{reseau}}"
+    },
+    "rapport": {
+      "champsRemplis_one": "{{count}} of {{total}} fields completed",
+      "champsRemplis_other": "{{count}} of {{total}} fields completed",
+      "aRendre": "Due before {{heure}}",
+      "enRetard": "Late",
+      "enregistrer": "Save",
+      "dejaEnregistre": "Nothing new: the report is already saved.",
+      "avantDeSoumettre": "Before submitting",
+      "fait": "Done",
+      "manquant": "Missing",
+      "aCompleter": "To complete before submitting:",
+      "noteSoumission": "Report due the same day before {{heure}}. Once submitted, it can no longer be changed.",
+      "noteSoumis": "A correction requested by your supervisor would reopen this report.",
+      "noteCorrection": "Once corrected, the report goes back to your supervisor; it can no longer be changed once submitted.",
+      "soumisA": "Submitted at {{heure}}",
+      "resteInchange": "Unchanged",
+      "retourPrescripteur": "Prescriber feedback",
+      "prochaineActionIndice": "For example: bring the clinical study",
+      "echeance": "Due date",
+      "echeanceLue": "by {{date}}",
+      "documents": "Documents",
+      "controles": {
+        "produits": "Products presented",
+        "retours": "Feedback on each product",
+        "resultat": "Outcome",
+        "resume": "Summary of the discussion",
+        "prochaine_action_type": "Type of next action",
+        "prochaine_action": "Next action"
+      }
+    },
+    "semaine": {
+      "titre": "Week",
+      "precedente": "Previous",
+      "courante": "This week",
+      "suivante": "Next",
+      "periode": "From {{debut}} to {{fin}}",
+      "periodeLongue": "Week from {{debut}} to {{fin}}",
+      "visitesCourt": "{{count}} vis.",
+      "ferieCourt": "Holiday",
+      "visitesPlanifiees_one": "{{count}} visit planned",
+      "visitesPlanifiees_other": "{{count}} visits planned",
+      "statutVersion": "{{statut}} · version {{numero}}",
+      "fermee": "Closed",
+      "aucunPlanningValide": "no validated plan",
+      "fermeeNote": "No visit can be added while the week is closed.",
+      "fermeeNoteTablette": "While the week is closed, no visit can be added. Your supervisor will receive your reopening request.",
+      "aucuneVisite": "No visit.",
+      "joursSemaine": "Days of the week",
+      "jourChoisi": "{{jour}}, {{visites}}"
+    },
+    "journee": {
+      "titre": "Day",
+      "visites": "Visits",
+      "objectif": "Target",
+      "objectifValeur": "{{min}} to {{max}}",
+      "volOiseau": "As the crow flies",
+      "volOiseauLong": "Distance as the crow flies",
+      "kmEnviron": "≈ {{km}} km",
+      "sansCoordonnees": "Places without coordinates",
+      "itineraire": "Route",
+      "activites": "Activities",
+      "sansCoordonneesAlerte_one": "{{count}} place without coordinates",
+      "sansCoordonneesAlerte_other": "{{count}} places without coordinates",
+      "sansCoordonneesSuite_one": "is not counted in the estimated distance.",
+      "sansCoordonneesSuite_other": "are not counted in the estimated distance."
+    },
+    "prospects": {
+      "maListe_one": "My list · {{count}} prospect",
+      "maListe_other": "My list · {{count}} prospects",
+      "tous_one": "All records · {{count}} prospect",
+      "tous_other": "All records · {{count}} prospects",
+      "nouveau": "New prospect",
+      "rechercher": "Search for a prospect",
+      "indice": "Name, facility, area…",
+      "segmentTous": "All",
+      "potentiel": "Potential {{valeur}}",
+      "filtres": {
+        "specialite": "Specialty",
+        "zone": "Area",
+        "specialiteToutes": "All specialties",
+        "zoneToutes": "All areas"
+      },
+      "colonnes": {
+        "prospect": "Prospect",
+        "specialite": "Specialty",
+        "etablissement": "Facility",
+        "zone": "Area",
+        "cycle": "Cycle"
+      },
+      "cycle": "{{faites}} / {{frequence}}",
+      "cycleLong_one": "{{faites}} of {{count}} visit this cycle",
+      "cycleLong_other": "{{faites}} of {{count}} visits this cycle"
+    },
+    "nouveauProspect": {
+      "titre": "New prospect",
+      "etablissement": "Practice facility",
+      "indiceEtablissement": "Name, locality or phone",
+      "ajouterEtablissement": "Add a facility",
+      "changer": "Change",
+      "ressemblantes": "Similar records",
+      "ressemblantesAide": "This prospect may already exist: open their record rather than creating a second one.",
+      "aucuneRessemblante": "No similar record yet: they appear as soon as a name is entered.",
+      "verifies": "Duplicates are checked when saving."
+    },
+    "choisir": "Choose…",
+    "cetteTablette": "This tablet"
   },
   "roles": {
     "titre": "Roles",
@@ -341,7 +571,8 @@
     "nouveau": "New password",
     "change": "Password changed. Your other sessions were closed.",
     "mesRoles": "My roles",
-    "paysPrincipal": "Main country"
+    "paysPrincipal": "Main country",
+    "compte": "Account"
   },
   "equipe": {
     "titre": "Team",
@@ -455,7 +686,7 @@
       "visites_sans_gps_tolerees": "Visits without GPS allowed per day",
       "distance_pointage_m": "Check-in distance (metres)",
       "geolocalisation_active": "Visit geolocation",
-      "delai_escalade_heures_ouvrees": "Delay before escalation to the DM (working hours)",
+      "delai_escalade_heures_ouvrees": "Delay before escalation to the administrator (working hours)",
       "conservation": "Retention periods",
       "attente_gps_secondes": "Position wait (seconds)",
       "duree_visite_minutes": "Visit duration (minutes)",
@@ -628,8 +859,8 @@
     "basculer": "Change appearance"
   },
   "demonstration": {
-    "bandeau": "Demo",
-    "texte": "Fictitious data: no real people or institutions."
+    "bandeau": "Trial",
+    "texte": "Trial instance, without backups: do not enter any real data."
   },
   "referentiel": {
     "titre": "Reference data",
@@ -883,7 +1114,10 @@
       "segmentEtablissements": "Institutions",
       "creer": "Create institution",
       "creee": "Institution created: awaiting validation by the country administrator.",
-      "positionEnregistree": "Position saved ({{metres}} m)"
+      "positionEnregistree": "Position saved ({{metres}} m)",
+      "precision": "Accuracy",
+      "metres": "{{metres}} m",
+      "indiceLocalite": "Neighbourhood or town"
     },
     "vue": "View",
     "vues": {
@@ -1268,7 +1502,11 @@
       "envoyee": "Proposal sent: the record will change once your supervisor or the country administrator agrees. The decision will appear on your home screen.",
       "aucunChangement": "Change at least one field to send the proposal.",
       "horsLigne": "No network: your proposal is kept on the phone and will be sent automatically when the network returns.",
-      "enAttente": "Record update proposal"
+      "enAttente": "Record update proposal",
+      "nonRenseigne": "Not filled in",
+      "ceQuiChange": "What changes",
+      "efface": "(cleared)",
+      "suite": "The decision will appear on your home screen. Without network, the proposal is kept on the device and is sent automatically when the network returns."
     }
   },
   "qualite": {
@@ -1310,7 +1548,20 @@
     "lieuHorsLigne": "This record is not available offline.",
     "quiExerceIci": "Who practises here",
     "personne": "No prospect currently practises here.",
-    "lieux": "Places of practice"
+    "lieux": "Places of practice",
+    "ecrireCourt": "Write",
+    "ecrireSms": "Send a message",
+    "frequence": "Frequency",
+    "parCycle_one": "{{count}} visit per cycle",
+    "parCycle_other": "{{count}} visits per cycle",
+    "derniereVisite": "Last visit",
+    "reseau": "Network",
+    "mobile": "Mobile",
+    "pro": "Work phone",
+    "secteur": "Sector {{secteur}}",
+    "positionReference": "Reference GPS position",
+    "sansPosition": "No reference GPS position",
+    "derniereVisiteLe": "Last visit: {{date}}"
   },
   "joursFeries": {
     "titre": "Public holidays",
@@ -1377,6 +1628,13 @@
     "aucunePartout": "No record matches.",
     "chercherPartout": "Search “{{saisie}}” in all records",
     "sansLieu": "No known place of practice for this prospect.",
+    "completerPlusTard": "Everything can be completed later",
+    "nouvelle_marque": "new",
+    "modifiee_marque": "edited",
+    "placeeDansLaJournee": "This visit will be placed in the day: the time and the objective can be completed afterwards.",
+    "indiceNote": "Optional",
+    "sansReseau": "No network",
+    "lieuAChoisir": "Choose a place",
     "indiceHeure": "For example 9:30",
     "heureIllisible": "Time not recognised: write for example 9:30 or 14:00.",
     "indiceObjectif": "E.g. present the product of the month",
@@ -1454,6 +1712,8 @@
       "apres_midi": "Afternoon"
     },
     "ligne": "{{type}} · {{periode}}",
+    "indiceCommentaire": "Details for your supervisor",
+    "visitesRestent": "The visits of this day stay in the planning; your supervisor sees the activity next to them.",
     "commentaire": "Comment (optional)",
     "motif": "Give the reason",
     "motifRequis": "An “Other” absence needs a reason.",
@@ -1534,7 +1794,19 @@
     "ignorees_one": "{{count}} visit not taken over ({{jours}}: holiday or absence).",
     "ignorees_other": "{{count}} visits not taken over ({{jours}}: holiday or absence).",
     "reprenables_one": "Last week had {{count}} visit: take it over day for day.",
-    "reprenables_other": "Last week had {{count}} visits: take them over day for day."
+    "reprenables_other": "Last week had {{count}} visits: take them over day for day.",
+    "aideCourte": "Tick prospects, then place them on a day: each visit takes the prospect and their main place.",
+    "chercher": "Name, specialty or place",
+    "surUnJour": "Place on a day",
+    "dejaPrevues": "Already planned",
+    "apres": "After placing",
+    "objectif": "Daily target: {{min}} to {{max}} visits.",
+    "limiteHaute": "You are at the upper limit.",
+    "auDela": "You are above the upper limit.",
+    "manque_one": "{{count}} more visit to reach it.",
+    "manque_other": "{{count}} more visits to reach it.",
+    "nombre_one": "Not yet planned · {{count}} prospect",
+    "nombre_other": "Not yet planned · {{count}} prospects"
   },
   "jour": {
     "titre": "Day",
@@ -1607,7 +1879,14 @@
     "aide_one": "Saved on this phone without network; it is sent automatically when the network is back.",
     "aide_other": "Saved on this phone without network; they are sent automatically when the network is back.",
     "envoyes_one": "Network back: {{count}} item sent.",
-    "envoyes_other": "Network back: {{count}} items sent."
+    "envoyes_other": "Network back: {{count}} items sent.",
+    "voir": "See pending items",
+    "sansReseau": "No network",
+    "surTablette": "Saved on this tablet without network",
+    "heureSaisie": "They leave on their own when the network returns. The time entered on the tablet counts, not the time sent.",
+    "vide": "Nothing is waiting: everything has been sent.",
+    "confirmer": "This item has not been sent yet: abandoning it erases it from this device.",
+    "garder": "Keep it"
   },
   "brouillon": {
     "visite": "A new visit was not saved.",
@@ -1712,8 +1991,8 @@
     "versionModification": " (change, version {{version}})",
     "rappel_planning": "Your planning for week {{numero}} is not submitted yet: submit it before {{echeance}}",
     "escalade": "Escalation: {{nom}}'s planning (week {{numero}}) has awaited a decision for {{heures}} working hours",
-    "plannings_non_approuves_one": "{{count}} planning for week {{numero}} is not approved in your networks",
-    "plannings_non_approuves_other": "{{count}} plannings for week {{numero}} are not approved in your networks",
+    "plannings_non_approuves_one": "{{count}} planning for week {{numero}} is not approved in your country",
+    "plannings_non_approuves_other": "{{count}} plannings for week {{numero}} are not approved in your country",
     "reouverture_demandee": "{{nom}} asks you to reopen their planning for week {{numero}}",
     "redaction_rouverte": "{{nom}} reopened your planning for week {{numero}}",
     "centre": "Notifications",
@@ -1737,7 +2016,15 @@
     "rapports_valides_other": "{{count}} reports approved",
     "rappel_rapport_one": "Today's visit report to submit before midnight",
     "rappel_rapport_other": "{{count}} of today's reports to submit before midnight",
-    "journee_escaladee": "{{nom}}, day of {{jour}}: to approve by escalation"
+    "journee_escaladee": "{{nom}}, day of {{jour}}: to approve by escalation",
+    "nonLues_one": "{{count}} unread",
+    "nonLues_other": "{{count}} unread",
+    "toutLu": "All read",
+    "groupes": {
+      "cetteSemaine": "This week",
+      "semaineDerniere": "Last week",
+      "plusTot": "Earlier"
+    }
   },
   "revision": {
     "demander": "Request a revision",
@@ -1866,7 +2153,16 @@
     "motifs": {
       "revision": "After revision",
       "modification": "Change after approval"
-    }
+    },
+    "soumiseHeure": "Submitted on {{date}} at {{heure}}",
+    "soumiseCourte": "Submitted on {{date}}, {{heure}}",
+    "decideeCourt": {
+      "approuve": "approved on {{date}} by {{par}}",
+      "a_reviser": "revision requested on {{date}} by {{par}}"
+    },
+    "figee": "each submission creates a frozen version",
+    "enAttente": "A pending version is being reviewed by your supervisor.",
+    "enAttenteSuivie": "A pending version is being reviewed by your supervisor; version {{numero}} remains the one to follow until then."
   },
   "apresApprobation": {
     "regle": "Planning approved. Changing a visit's time within its day remains free; any other change (day, prospect, place, objective, addition, removal) is submitted to your supervisor.",
@@ -2170,10 +2466,11 @@
     "horsLigne": "No network: the file is kept on the phone and will be sent automatically when the network is back.",
     "tropLourde": "This document is over 10 MB.",
     "maximum": "{{n}} attachments at most: remove one to add another.",
-    "enAttenteAilleurs": "Announced, waiting for the file"
+    "enAttenteAilleurs": "Announced, waiting for the file",
+    "envoye": "Sent"
   },
   "chronologie": {
-    "titre": "Previous visits",
+    "titre": "Visit history",
     "aucune": "No visit report yet.",
     "horsLigne": "No network: the last list read.",
     "enRetard": "Submitted late",
@@ -2181,12 +2478,14 @@
     "plus_one": "See the older visit",
     "plus_other": "See the {{count}} older visits",
     "moins": "See less",
-    "journee": "Open the day"
+    "journee": "Open the day",
+    "sansDetail": "Visit without details"
   },
   "indisponibilite": {
     "ouvrir": "I am unavailable today",
     "titre": "Unforeseen unavailability",
     "aide": "No reason is asked. The visits of the period are justified at once; your supervisor sees it.",
+    "periode": "Period",
     "confirmer": "Declare unavailability",
     "declaree": "Unavailability declared: the visits of the period are justified.",
     "enAttente": "No network: the unavailability is kept on the phone and will be sent automatically.",
@@ -2194,7 +2493,16 @@
       "journee": "The whole day",
       "matin": "The morning",
       "apres_midi": "The afternoon"
-    }
+    },
+    "restantes_one": "{{count}} visit left",
+    "restantes_other": "{{count}} visits left",
+    "concernees_one": "{{count}} visit affected",
+    "concernees_other": "{{count}} visits affected",
+    "faitesAucune_one": "{{count}} visit already done: none affected",
+    "faitesAucune_other": "{{count}} visits already done: none affected",
+    "aucuneRestante": "No visit left",
+    "aucuneConcernee": "No visit affected",
+    "dejaDeclaree": "Already declared"
   },
   "preparer": {
     "titre": "Prepare my visit",
@@ -2312,7 +2620,7 @@
     "titres": {
       "remplacement": "You are approving as the deputy of this rep's supervisor.",
       "escalade": "Escalated day: its reports have been waiting longer than the country delay. You approve it by escalation; the supervisor keeps control.",
-      "consultation": "You are viewing this day as the area DM: you can reopen an approved report; approval stays with the supervisor."
+      "consultation": "You are viewing this day as the administrator: you can reopen an approved report; approval stays with the supervisor."
     },
     "lot_one": "Approve the compliant day",
     "lot_other": "Approve the {{count}} compliant days",
@@ -2349,7 +2657,6 @@
   },
   "chiffres": {
     "semaine": "Week of {{debut}} to {{fin}}",
-    "calcule": "Figures as of {{date}}",
     "precedente": "Previous week",
     "suivante": "Next week",
     "horsLigne": "Offline: figures saved on {{date}}.",
@@ -2374,15 +2681,12 @@
     "aVenir_other": "{{count}} planned visits are still ahead: they do not count yet.",
     "aJustifier_one": "{{count}} past visit awaits its justification (Round).",
     "aJustifier_other": "{{count}} past visits await their justification (Round).",
-    "rapports": "Reports",
-    "dansLeDelai": "Submitted on time",
-    "surDus_one": "{{n}} of {{count}} report due",
-    "surDus_other": "{{n}} of {{count}} reports due",
-    "valides": "Reports approved",
-    "enRetard": "Late reports",
+    "dansLeDelai": "On time",
+    "valides": "Approved",
+    "enRetard": "Late",
     "couverture": "My target list",
-    "cycle_one": "Over {{count}} week, {{debut}} to {{fin}}",
-    "cycle_other": "Over the {{count}}-week cycle, {{debut}} to {{fin}}",
+    "cycle_one": "One-week cycle, {{debut}} to {{fin}}",
+    "cycle_other": "{{count}}-week cycle, {{debut}} to {{fin}}",
     "sansListe": "No target list for this period.",
     "listeVisitee": "Prospects visited",
     "surCibles": "{{n}} of {{total}}",
@@ -2393,8 +2697,16 @@
     "jourCourbe": "{{date}}: {{prevues}} planned, {{effectuees}} made",
     "ecartPoints_one": "{{signe}}{{count}} pt",
     "ecartPoints_other": "{{signe}}{{count}} pts",
-    "note": "Your figures, with no score or ranking. Point changes compare with the previous week.",
-    "revenir": "Back to the current week"
+    "revenir": "Back to the current week",
+    "enRetardTitre": "Late reports",
+    "sansNote": "your figures, with no score or ranking",
+    "visitesFaitesTitre": "Visits made",
+    "rapportsDansLeDelai": "Reports submitted on time",
+    "validesCompte_one": "{{count}} approved",
+    "validesCompte_other": "{{count}} approved",
+    "aSoumettre": "to submit",
+    "parJour": "Visits per day",
+    "qualite": "Activity quality"
   },
   "pilotage": {
     "semaine": "Week of {{debut}} to {{fin}}",
@@ -2551,7 +2863,7 @@
     "tous": "Also show targets that ended over 90 days ago",
     "aucun": "No current target",
     "aucunGerer": "Set a target of visits, A and B coverage or product presentations for a network.",
-    "aucunLire": "The network's DM or the country administrator sets targets.",
+    "aucunLire": "The country administrator sets targets.",
     "colonnes": {
       "objectif": "Target",
       "periode": "Period",
@@ -2614,26 +2926,40 @@
     "leJour": "on {{jour}} at {{heure}}",
     "enAttente": "Items waiting to send",
     "ligneJamais": "Not synced yet",
-    "ligneAide": "Opens your profile, to sync or send now",
+    "ligneAide": "Opens the pending items",
     "garde": {
       "titre": "Sync required",
-      "aide_one": "Last sync {{quand}}. After {{count}} day without syncing, the data on this phone is hidden. Find a network, then sync.",
-      "aide_other": "Last sync {{quand}}. After {{count}} days without syncing, the data on this phone is hidden. Find a network, then sync.",
-      "attente_one": "{{count}} item waiting to send is kept on this phone: it will go out when you sync.",
-      "attente_other": "{{count}} items waiting to send are kept on this phone: they will go out when you sync."
+      "aide_telephone_one": "Last synchronisation {{quand}}. After {{count}} day without synchronisation, the phone's data is hidden. Find a network, then synchronise.",
+      "aide_telephone_other": "Last synchronisation {{quand}}. After {{count}} days without synchronisation, the phone's data is hidden. Find a network, then synchronise.",
+      "aide_tablette_one": "Last synchronisation {{quand}}. After {{count}} day without synchronisation, the tablet's data is hidden. Find a network, then synchronise.",
+      "aide_tablette_other": "Last synchronisation {{quand}}. After {{count}} days without synchronisation, the tablet's data is hidden. Find a network, then synchronise.",
+      "attenteSuite_one": "pending item is kept on the phone: it will leave at synchronisation.",
+      "attenteSuite_other": "pending items are kept on the phone: they will leave at synchronisation.",
+      "attenteTablette": "Pending items are kept on the tablet: they will leave at synchronisation.",
+      "rapports": "Reports kept"
     },
     "ligneHeure": "Synced at {{heure}}",
-    "ligneJour": "Synced on {{jour}}"
+    "ligneJour": "Synced on {{jour}}",
+    "aideTablette": "The tablet keeps your week, the next one, your target list and the last three visits to each prospect: you can work without a network.",
+    "rapportsCourt": "Reports ready offline"
   },
   "conflits": {
     "visiteGardee": "This visit was changed elsewhere in the meantime: choose which version to keep (profile or week, “waiting to send”).",
     "autre": "another value",
-    "vide": "(empty)",
+    "vide": "Not provided",
+    "rienRemplace": "Nothing has been replaced:",
+    "choisir": "choose the version to keep.",
+    "ceTelephone": "this phone",
+    "cetteTablette": "this tablet",
+    "surCeTelephone": "On this phone",
+    "surCetteTablette": "On this tablet",
+    "surLeServeur": "On the server",
+    "visiteDu": "visit of {{date}}",
     "telephone": "On this phone",
     "serveur": "On the server",
     "aucuneDifference": "Both versions are the same.",
     "rapportTitre": "This report was changed elsewhere",
-    "rapportAide": "Your input, kept on this phone, and the report saved on the server in the meantime differ. Nothing was replaced: choose which version to keep.",
+    "rapportAide": "Your entry, kept on {{appareil}}, and the report saved on the server in the meantime differ.",
     "decision": "Your supervisor {{statut}} this report in the meantime: their decision stands. Here is what was left on this phone, unsent.",
     "statuts": {
       "soumis": "received",
@@ -2684,7 +3010,9 @@
       "rapports_valides": "Reports approved",
       "rappel_rapport": "Reminder: report to submit",
       "journee_escaladee": "Day escalated"
-    }
+    },
+    "titreTablette": "Notifications on this tablet",
+    "aideIci": "Choose what arrives as a notification. Everything stays visible here."
   },
   "audit": {
     "titre": "Audit log",

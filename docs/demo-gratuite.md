@@ -1,6 +1,6 @@
 # Démonstration gratuite sur Render et Neon (versions 1.0.3 et 1.0.4)
 
-Ce guide met en ligne une **démonstration** d'INNOV CRM, sans payer : le portail web et le serveur chez Render, la base de données chez Neon, avec des données fictives. Il suit le plan `render-demo.yaml`.
+Ce guide met en ligne une **démonstration** d'INNOV CRM, sans payer : le portail web et le serveur chez Render, la base de données chez Neon, sans aucune donnée au départ (1.0.8 : plus de données fictives). Il suit le plan `render-demo.yaml`.
 
 Pourquoi Neon : Render n'accepte qu'une base gratuite par compte, et l'efface au bout d'un mois. La base gratuite de Neon n'a pas cette limite.
 
@@ -62,7 +62,8 @@ Render lit le plan dans la branche `main`.
 | Valeur | Ce que vous écrivez |
 |---|---|
 | `DATABASE_URL` | L'adresse de connexion copiée chez Neon (étape 2) |
-| `INNOV_DEMO_MOT_DE_PASSE` | Votre mot de passe de démonstration (12 caractères au moins) |
+| `INNOV_ADMIN_IDENTIFIANT` | Votre identifiant d'administrateur du siège, au format `prenom.nom` |
+| `INNOV_ADMIN_MOT_DE_PASSE` | Son mot de passe (12 caractères au moins) |
 | `CORS_ALLOWED_ORIGINS` | `https://innov-demo-portail.onrender.com` |
 | `CSRF_TRUSTED_ORIGINS` | `https://innov-demo-portail.onrender.com` |
 | `PORTAIL_URL` | `https://innov-demo-portail.onrender.com` |
@@ -82,9 +83,9 @@ Si un nom est déjà pris chez Render, il ajoute un suffixe, par exemple `innov-
 ## Étape 6 — Essayer
 
 1. Ouvrez `https://innov-demo-api.onrender.com/api/health/`. La page doit afficher `"statut": "ok"` et `"environnement": "demonstration"`. Si elle tarde, attendez une minute : le serveur se réveille.
-2. Retrouvez les comptes : **innov-demo-api → Logs**, cherchez la ligne **« Démonstration prête (données fictives) »**. En dessous, chaque rôle avec son identifiant (au format `prenom.nom`).
+2. Au premier démarrage, **innov-demo-api → Logs** affiche **« Administrateur du siège créé »**.
 3. Ouvrez le portail `https://innov-demo-portail.onrender.com`. Connectez-vous, par exemple avec le compte **superviseur (SN)** ou **delegue (SN)**, et votre mot de passe de démonstration.
-4. Un bandeau « Démonstration » rappelle que les données sont fictives.
+4. Connectez-vous avec cet identifiant : activez la double authentification, puis créez vos pays (page **Pays**) et les comptes. La mention « Essai » rappelle qu'il n'y a pas de sauvegarde : aucune donnée réelle ici.
 
 ## Limites connues des navigateurs
 
@@ -96,7 +97,7 @@ Pour remettre la démonstration à zéro :
 
 1. Chez Neon, dans le projet `innov-demo`, supprimez la branche de données et recréez-en une (ou créez un nouveau projet), puis copiez la nouvelle adresse.
 2. Dans Render, **innov-demo-api → Environment**, remplacez `DATABASE_URL`, puis **« Save Changes »**.
-3. Au redémarrage, le serveur remplit de nouveau la base de données fictives, avec le même mot de passe.
+3. Au redémarrage, le serveur recrée seulement l'administrateur du siège, avec le même identifiant et le même mot de passe.
 
 La base gratuite de Neon s'endort quand personne ne s'en sert, et se réveille en une seconde environ.
 

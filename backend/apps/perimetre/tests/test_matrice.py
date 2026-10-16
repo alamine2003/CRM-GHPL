@@ -16,10 +16,10 @@ ATTENDU = {
     Action.PROPOSITIONS_TRANCHER: {"admin_pays", "superviseur"},
     Action.JOURS_FERIES_GERER: {"admin_pays"},
     Action.PLANNINGS_PREPARER: {"superviseur", "delegue"},
-    Action.PLANNINGS_VALIDER: {"dm", "superviseur"},
+    Action.PLANNINGS_VALIDER: {"admin_pays", "superviseur"},
     Action.RAPPORTS_REDIGER: {"superviseur", "delegue"},
     Action.RAPPORTS_LIRE: {"responsable_pays", "df", "dm", "superviseur", "delegue"},
-    Action.RAPPORTS_VALIDER: {"dm", "superviseur"},
+    Action.RAPPORTS_VALIDER: {"admin_pays", "superviseur"},
     Action.INDICATEURS_LIRE: {"superviseur", "delegue"},
     Action.PILOTAGE_LIRE: {
         "admin_siege",
@@ -46,10 +46,10 @@ ATTENDU = {
         "dm",
         "superviseur",
     },
-    Action.OBJECTIFS_GERER: {"admin_pays", "dm"},
+    Action.OBJECTIFS_GERER: {"admin_pays"},
     # prd.md §6.3, « Consulter le journal d'audit » : siège ; son pays pour le pays.
     Action.AUDIT_LIRE: {"admin_siege", "direction_siege", "responsable_pays", "admin_pays"},
-    Action.REMPLACEMENTS_GERER: {"admin_pays", "dm", "superviseur"},
+    Action.REMPLACEMENTS_GERER: {"admin_pays", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -319,7 +319,10 @@ def test_chaque_role_chaque_action(monde, role, action):
     url = url(monde) if callable(url) else url
     corps = corps(monde) if callable(corps) else corps
     reponse = getattr(client_de(compte, pays), methode)(url, corps, format="json")
-    if role in MATRICE[action]:
+    # 1.2.0 [D] : dans un pays choisi, l'administrateur du siège a aussi les droits de
+    # l'administrateur pays.
+    effectifs = {role, "admin_pays"} if role == "admin_siege" else {role}
+    if effectifs & MATRICE[action]:
         assert reponse.status_code == succes, reponse.content
     elif isinstance(REQUETES[action][1], str):
         assert reponse.status_code == 403, (role, action, reponse.status_code)

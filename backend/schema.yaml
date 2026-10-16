@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.0.6
+  version: 1.5.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -2954,8 +2954,8 @@ paths:
     get:
       operationId: objectifs
       description: |-
-        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-        l'administrateur pays en fixent (CA1).
+        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+        en fixe (CA1).
       parameters:
       - in: query
         name: tous
@@ -2975,8 +2975,8 @@ paths:
     post:
       operationId: objectif_creer
       description: |-
-        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-        l'administrateur pays en fixent (CA1).
+        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+        en fixe (CA1).
       tags:
       - pilotage
       requestBody:
@@ -4264,7 +4264,7 @@ paths:
       operationId: rapport_rouvrir
       description: |-
         RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
-        après la validation, le DM du périmètre au-delà (CA1).
+        après la validation, l'administrateur pays au-delà (CA1).
       parameters:
       - in: path
         name: id
@@ -6364,6 +6364,13 @@ components:
         hors_secteur:
           type: boolean
           readOnly: true
+        visites_cycle:
+          type: integer
+          nullable: true
+          description: |-
+            Visites effectuées chez ce prospect sur le cycle en cours (« 2 / 3 », 1.4.4) ;
+            connues seulement de la liste du délégué lui-même.
+          readOnly: true
       required:
       - debut
       - en_cours
@@ -6372,6 +6379,7 @@ components:
       - id
       - poste
       - prospect
+      - visites_cycle
     CiviliteEnum:
       enum:
       - dr
@@ -7862,8 +7870,9 @@ components:
       - version
     Escalade:
       type: object
-      description: 'PLN-016 : le planning est arrivé au DM faute de décision du responsable
-        du poste.'
+      description: |-
+        PLN-016 : le planning est arrivé à l'administrateur faute de décision du responsable du
+        poste.
       properties:
         le:
           type: string
@@ -8191,10 +8200,19 @@ components:
           type: string
           format: date-time
           readOnly: true
+        derniere_visite:
+          type: string
+          format: date
+          nullable: true
+          description: |-
+            La dernière visite effectuée par le lecteur chez ce prospect (« Qui exerce ici »,
+            1.4.5) ; connue seulement de la liste d'un établissement.
+          readOnly: true
       required:
       - actif
       - cree_le
       - debut
+      - derniere_visite
       - etablissement
       - id
       - prospect
@@ -10384,6 +10402,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Lieu'
+        reseaux:
+          type: array
+          items:
+            type: string
         gerable:
           type: boolean
         synthese:
@@ -10393,6 +10415,7 @@ components:
       - id
       - libelle
       - occupant
+      - reseaux
       - secteurs
       - synthese
       - type_poste
@@ -11189,6 +11212,10 @@ components:
         horodatage_douteux:
           type: boolean
           readOnly: true
+        modifie_le:
+          type: string
+          format: date-time
+          readOnly: true
         manquants:
           type: array
           items:
@@ -11240,6 +11267,7 @@ components:
       - id
       - justification
       - manquants
+      - modifie_le
       - objectif_prevu
       - pieces_jointes
       - presentations
@@ -12392,7 +12420,7 @@ components:
           readOnly: true
         libelle:
           type: string
-          maxLength: 120
+          maxLength: 200
         zone:
           type: string
           format: uuid
@@ -13604,11 +13632,22 @@ components:
         etablissement:
           type: string
           nullable: true
+        resultat:
+          type: string
+          nullable: true
+          readOnly: true
+        produits:
+          type: array
+          items:
+            type: string
+          readOnly: true
       required:
       - date
       - heure
       - id
       - objectif
+      - produits
+      - resultat
       - statut
     VisitePoint:
       type: object

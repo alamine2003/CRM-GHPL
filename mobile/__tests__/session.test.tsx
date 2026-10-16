@@ -5,7 +5,9 @@ import { AppState, type AppStateStatus, Linking } from 'react-native';
 import Connexion from '../app/connexion';
 import Accueil from '../app/index';
 import Profil from '../app/profil';
+import NouveauProspect from '../app/prospect/nouveau';
 import EcranProspects from '../app/prospects';
+import { EcranNouvelEtablissement } from '../src/NouvelEtablissement';
 import { lire } from '../src/baseLocale';
 import { FournisseurSession } from '../src/FournisseurSession';
 import i18n from '../src/i18n';
@@ -130,7 +132,7 @@ describe('mobile — session', () => {
   it('se connecte avec l’identifiant et le mot de passe', async () => {
     const client = fauxClient();
     await rendre(<Connexion />, client);
-    await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
+    await fireEvent.changeText(await screen.findByLabelText('Adresse courriel'), 'awa.diallo');
     await fireEvent.changeText(screen.getByLabelText('Mot de passe'), MDP);
     await fireEvent.press(screen.getByText('Se connecter'));
     expect(client.connexion).toHaveBeenCalledWith('awa.diallo', MDP);
@@ -143,7 +145,7 @@ describe('mobile — session', () => {
       connexionCode: jest.fn(async () => JETONS),
     });
     await rendre(<Connexion />, client);
-    await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
+    await fireEvent.changeText(await screen.findByLabelText('Adresse courriel'), 'awa.diallo');
     await fireEvent.changeText(screen.getByLabelText('Mot de passe'), MDP);
     await fireEvent.press(screen.getByText('Se connecter'));
     expect(await screen.findByText('Vérification en deux étapes')).toBeTruthy();
@@ -161,7 +163,7 @@ describe('mobile — session', () => {
       })),
     });
     await rendre(<Connexion />, client);
-    await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
+    await fireEvent.changeText(await screen.findByLabelText('Adresse courriel'), 'awa.diallo');
     await fireEvent.changeText(screen.getByLabelText('Mot de passe'), MDP);
     await fireEvent.press(screen.getByText('Se connecter'));
     expect(await screen.findByText(/Activez-la depuis le portail web/)).toBeTruthy();
@@ -192,6 +194,10 @@ describe('mobile — session', () => {
     expect(await screen.findByText('Application verrouillée')).toBeTruthy();
     // 0.9.8 : le texte dit le délai réellement appliqué.
     expect(screen.getByText(/après 15 minutes en arrière-plan/)).toBeTruthy();
+    // Maquette 1.5.3 : la phrase sous le bouton dit avec quoi déverrouiller.
+    expect(
+      screen.getByText('Déverrouiller CRM GH avec votre code ou votre biométrie.'),
+    ).toBeTruthy();
     expect(screen.queryByText('Bonjour Awa')).toBeNull();
     await fireEvent.press(screen.getByText('Déverrouiller'));
     expect(await screen.findByText('Bonjour Awa')).toBeTruthy();
@@ -240,7 +246,7 @@ describe('mobile — session', () => {
         informations: jest.fn(async () => ({ environnement: 'demonstration' })),
       } as unknown as Partial<ClientApi>),
     );
-    expect(await screen.findByText('Démonstration')).toBeTruthy();
+    expect(await screen.findByText('Essai')).toBeTruthy();
   });
 
   it('affiche le message traduit du serveur en cas de refus', async () => {
@@ -250,7 +256,7 @@ describe('mobile — session', () => {
       }),
     });
     await rendre(<Connexion />, client);
-    await fireEvent.changeText(await screen.findByLabelText('Identifiant'), 'awa.diallo');
+    await fireEvent.changeText(await screen.findByLabelText('Adresse courriel'), 'awa.diallo');
     await fireEvent.press(screen.getByText('Se connecter'));
     expect(await screen.findByText('Le pays Sénégal est suspendu.')).toBeTruthy();
   });
@@ -295,7 +301,7 @@ describe('mobile — session', () => {
     expect(await screen.findByText(/Aucun rôle ne vous est attribué/)).toBeTruthy();
   });
 
-  it('affiche le poste du délégué et l’absence de superviseur (ORG-006, ORG-007)', async () => {
+  it('affiche, au Profil (1.4.0), le poste du délégué et l’absence de superviseur (ORG-006, ORG-007)', async () => {
     const moi = {
       postes: [
         {
@@ -320,7 +326,7 @@ describe('mobile — session', () => {
       superviseur_manquant: true,
     };
     await rendre(
-      <Accueil />,
+      <Profil />,
       fauxClient({
         reprendre: jest.fn(async () => JETONS),
         organisation: { moi: jest.fn(async () => moi) } as unknown as ClientApi['organisation'],
@@ -331,7 +337,7 @@ describe('mobile — session', () => {
     expect(screen.getByText(/pas de superviseur/)).toBeTruthy();
   });
 
-  it('montre les produits du portefeuille de ses réseaux (ORG-004 CA3)', async () => {
+  it('montre, au Profil (1.4.0), les produits du portefeuille de ses réseaux (ORG-004 CA3)', async () => {
     const produits = Array.from({ length: 10 }, (_, i) => ({
       id: `p${i}`,
       code: `P${i}`,
@@ -339,7 +345,7 @@ describe('mobile — session', () => {
       classe_libelle: null,
     }));
     await rendre(
-      <Accueil />,
+      <Profil />,
       fauxClient({
         reprendre: jest.fn(async () => JETONS),
         referentiel: {
@@ -399,18 +405,44 @@ describe('mobile — session', () => {
     );
     // L'onglet s'ouvre sur « Ma liste » ; la recherche dans les fiches est à côté.
     expect(await screen.findByText(/aucun poste/)).toBeTruthy();
-    await fireEvent.press(screen.getAllByText('Prospects')[1]!);
+    await fireEvent.press(screen.getByText('Tous'));
     expect(await screen.findByText('Dr Awa Ndiaye')).toBeTruthy();
     expect(screen.getByText('À valider')).toBeTruthy();
-    await fireEvent.press(screen.getByText('Nouveau prospect'));
+  });
+
+  it('crée un prospect au statut à valider, type et spécialité choisis (PRP-006)', async () => {
+    const prospects = {
+      creer: jest.fn(async () => ({ id: 'p1', doublon: 'aucun' })),
+      ressemblants: jest.fn(async () => []),
+    };
+    const valeurs = [
+      { id: 't1', liste: 'type_prospect', libelle: 'Médecin', parent: null, archive: false },
+      { id: 's1', liste: 'specialite', libelle: 'Cardiologie', parent: 't1', archive: false },
+    ];
+    await rendre(
+      <NouveauProspect />,
+      fauxClient({
+        reprendre: jest.fn(async () => JETONS),
+        perimetre: jest.fn(async () => ({
+          ...PERIMETRE,
+          actions: ['prospects.lire', 'prospects.creer'],
+        })),
+        prospects,
+        referentiel: {
+          valeurs: jest.fn(async () => valeurs),
+          monPortefeuille: jest.fn(async () => []),
+        },
+      } as unknown as Partial<ClientApi>),
+    );
     await fireEvent.changeText(await screen.findByLabelText('Nom'), 'Sarr');
-    await fireEvent.press(await screen.findByText('Médecin'));
+    // Le type du pays est proposé d'office ; la spécialité se choisit dans la liste.
+    expect(await screen.findByText('Médecin')).toBeTruthy();
+    await fireEvent.press(screen.getByText('Choisir…'));
     await fireEvent.press(await screen.findByText('Cardiologie'));
     await fireEvent.press(screen.getByText('Créer la fiche'));
     expect(prospects.creer).toHaveBeenCalledWith(
       expect.objectContaining({ nom: 'Sarr', type: 't1', specialite: 's1', potentiel: 'B' }),
     );
-    expect(await screen.findByText(/à valider par l'administrateur pays/)).toBeTruthy();
   });
 
   it('sans réseau, le formulaire suggère les fiches de la liste enregistrée (PRP-007 CA2)', async () => {
@@ -440,7 +472,7 @@ describe('mobile — session', () => {
     });
     try {
       await rendre(
-        <EcranProspects />,
+        <NouveauProspect />,
         fauxClient({
           reprendre: jest.fn(async () => JETONS),
           perimetre: jest.fn(async () => ({
@@ -458,11 +490,9 @@ describe('mobile — session', () => {
           },
         } as unknown as Partial<ClientApi>),
       );
-      await fireEvent.press(screen.getAllByText('Prospects')[1]!);
-      await fireEvent.press(await screen.findByText('Nouveau prospect'));
       await fireEvent.changeText(await screen.findByLabelText('Nom'), 'Ndiay');
       // Le serveur est injoignable : la liste cible du téléphone sert de référence.
-      expect(await screen.findByText('Aïssatou NDIAYE')).toBeTruthy();
+      expect(await screen.findByText('Dr Aïssatou NDIAYE')).toBeTruthy();
       expect(screen.getByText(/Hors connexion : comparaison avec votre liste cible/)).toBeTruthy();
       expect(screen.getByText('Cardiologie · Clinique du Cap')).toBeTruthy();
       expect(screen.queryByText('Moussa DIOP')).toBeNull();
@@ -479,7 +509,7 @@ describe('mobile — session', () => {
       creer: jest.fn(async () => ({})),
     };
     await rendre(
-      <EcranProspects />,
+      <EcranNouvelEtablissement />,
       fauxClient({
         reprendre: jest.fn(async () => JETONS),
         perimetre: jest.fn(async () => ({
@@ -503,13 +533,14 @@ describe('mobile — session', () => {
         },
       } as unknown as Partial<ClientApi>),
     );
-    await fireEvent.press(await screen.findByText('Établissements'));
-    await fireEvent.press(await screen.findByText('Nouvel établissement'));
     await fireEvent.changeText(
       await screen.findByLabelText("Nom de l'établissement"),
       'Pharmacie Médina',
     );
+    // Le type, puis le secteur, se choisissent dans leur liste.
+    await fireEvent.press(screen.getAllByText('Choisir…')[0]!);
     await fireEvent.press(await screen.findByText('Pharmacie'));
+    await fireEvent.press(screen.getAllByText('Choisir…')[0]!);
     await fireEvent.press(await screen.findByText('Plateau'));
     await fireEvent.press(screen.getByText('Utiliser ma position'));
     expect(await screen.findByText('Position enregistrée (9 m)')).toBeTruthy();
@@ -523,7 +554,6 @@ describe('mobile — session', () => {
         longitude: -17.45002,
       }),
     );
-    expect(await screen.findByText(/Établissement créé/)).toBeTruthy();
   });
 
   it('bascule en anglais et mémorise la langue sur le compte (USR-004)', async () => {

@@ -8,23 +8,25 @@
  * du délai du pays sans synchronisation, les données sont masquées jusqu'à la prochaine
  * synchronisation réussie, la file restant gardée (OFF-007, RG-054).
  */
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { marque } from '@innov/design';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CarteAttente } from './Attente';
+import { ecouterFile, type Envoi, envoyerAttente, lireAttente } from './Brouillons';
 import {
-  abandonnerEnvoi,
-  ecouterFile,
-  type Envoi,
-  envoyerAttente,
-  garderMaVersion,
-  lireAttente,
-} from './Brouillons';
-import { Alerte, Bouton, Carte, Ligne, Logo, Texte, usePalette } from './composants';
+  Alerte,
+  Bouton,
+  Carte,
+  Chiffres,
+  Icone,
+  Lien,
+  Ligne,
+  Statut,
+  Texte,
+  usePalette,
+} from './composants';
+import { useTablette } from './disposition';
 import { police } from './polices';
 import { useSession } from './session';
 import {
@@ -74,7 +76,7 @@ export function useEtatLocal() {
   return { derniere, attente, charge };
 }
 
-function useQuand() {
+export function useQuand() {
   const { t, i18n } = useTranslation();
   const heure = (date: Date) =>
     new Intl.DateTimeFormat(i18n.language, { hour: '2-digit', minute: '2-digit' }).format(date);
@@ -137,15 +139,17 @@ export function SynchroAuto() {
   return null;
 }
 
-/** L'état de la dernière synchronisation, la file d'envoi et le bouton pour relancer. */
-export function CarteSynchro() {
-  const { t } = useTranslation();
+/**
+ * L'état de la dernière synchronisation, la file d'envoi et le bouton pour relancer (maquette
+ * 1.5.0, « Données hors connexion »). Téléphone : l'heure en pastille à côté du titre, trois
+ * comptes, un bouton à contour ; tablette : l'aide, la date en clair, les rapports prêts et un
+ * bouton plein.
+ */
+/** « Synchroniser maintenant » : la file part d'abord, puis la synchronisation. */
+export function useRelance() {
   const { client } = useSession();
-  const { derniere: etat, attente } = useEtatLocal();
-  const quand = useQuand();
   const [envoi, setEnvoi] = useState(false);
   const [echec, setEchec] = useState(false);
-
   const relancer = () => {
     setEnvoi(true);
     setEchec(false);
@@ -155,63 +159,68 @@ export function CarteSynchro() {
       .catch(() => setEchec(true))
       .finally(() => setEnvoi(false));
   };
+  return { relancer, envoi, echec };
+}
+
+export function CarteSynchro({ tablette }: { tablette?: boolean }) {
+  const { t } = useTranslation();
+  const routeur = useRouter();
+  const { derniere: etat, attente } = useEtatLocal();
+  const quand = useQuand();
+  const { relancer, envoi, echec } = useRelance();
+
+  const lignes = etat
+    ? [
+        tablette && { libelle: t('synchro.derniere'), valeur: quand.long(etat.le) },
+        { libelle: t('synchro.enAttente'), valeur: String(attente.length) },
+        { libelle: t('synchro.visites'), valeur: String(etat.visites) },
+        { libelle: t('synchro.prospects'), valeur: String(etat.prospects) },
+        tablette && { libelle: t('synchro.rapports'), valeur: String(etat.rapports ?? 0) },
+        etat.echecs > 0 && {
+          libelle: t('synchro.incomplete'),
+          valeur: t('synchro.echecs', { count: etat.echecs }),
+        },
+      ].filter((x): x is { libelle: string; valeur: string } => !!x)
+    : [];
 
   return (
-    <>
-      <Carte>
-        <Texte variante="sousTitre" style={{ marginBottom: 6 }}>
+    <Carte marge={0}>
+      <View style={styles.enTeteCarte}>
+        <Texte variante="sousTitre" accessibilityRole="header" style={{ flexShrink: 1 }}>
           {t('synchro.titre')}
         </Texte>
-        <Texte variante="discret" style={{ marginBottom: 8 }}>
-          {t('synchro.aide')}
+        {!tablette && <StatutSynchro />}
+      </View>
+      {tablette && (
+        <Texte variante="libelle" style={styles.aide}>
+          {t('synchro.aideTablette')}
         </Texte>
-        {etat ? (
-          <>
-            <Ligne libelle={t('synchro.derniere')} valeur={quand.long(etat.le)} />
-            <Ligne libelle={t('synchro.enAttente')} valeur={String(attente.length)} />
-            <Ligne libelle={t('synchro.visites')} valeur={String(etat.visites)} />
-            <Ligne libelle={t('synchro.prospects')} valeur={String(etat.prospects)} />
-            <Ligne libelle={t('synchro.historiques')} valeur={String(etat.historiques)} />
-            <Ligne
-              libelle={t('synchro.rapports')}
-              valeur={String(etat.rapports ?? 0)}
-              derniere={!etat.echecs}
-            />
-            {etat.echecs > 0 && (
-              <Ligne
-                libelle={t('synchro.incomplete')}
-                valeur={t('synchro.echecs', { count: etat.echecs })}
-                derniere
-              />
-            )}
-          </>
-        ) : (
-          <Texte>{t('synchro.jamais')}</Texte>
-        )}
-        {echec && (
-          <Texte variante="discret" style={{ marginTop: 8 }}>
-            {t('synchro.sansReseau')}
-          </Texte>
-        )}
-        <View style={{ marginTop: 12 }}>
-          <Bouton
-            libelle={t('synchro.maintenant')}
-            secondaire
-            chargement={envoi}
-            onPress={relancer}
-          />
-        </View>
-      </Carte>
-      {attente.length > 0 && (
-        <CarteAttente
-          envois={attente}
-          envoi={envoi}
-          surEnvoyer={relancer}
-          surAbandonner={(id) => void abandonnerEnvoi(id)}
-          surGarderMienne={(id) => void garderMaVersion(id).then(relancer)}
-        />
       )}
-    </>
+      {etat ? (
+        lignes.map((l) => <Ligne key={l.libelle} libelle={l.libelle} valeur={l.valeur} />)
+      ) : (
+        <Texte style={styles.aide}>{t('synchro.jamais')}</Texte>
+      )}
+      {echec && (
+        <Texte variante="discret" style={styles.aide}>
+          {t('synchro.sansReseau')}
+        </Texte>
+      )}
+      {attente.length > 0 && (
+        <View style={styles.aide}>
+          <Lien libelle={t('attente.voir')} onPress={() => routeur.push('/envois')} />
+        </View>
+      )}
+      <View style={styles.bouton}>
+        <Bouton
+          libelle={t('synchro.maintenant')}
+          variante={tablette ? undefined : 'contour'}
+          petit={!tablette}
+          chargement={envoi}
+          onPress={relancer}
+        />
+      </View>
+    </Carte>
   );
 }
 
@@ -223,6 +232,7 @@ export function LigneSynchro() {
   const { t } = useTranslation();
   const p = usePalette();
   const routeur = useRouter();
+  const chemin = usePathname();
   const { derniere, attente } = useEtatLocal();
   const quand = useQuand();
   const texte = [
@@ -231,28 +241,35 @@ export function LigneSynchro() {
   ]
     .filter(Boolean)
     .join(' · ');
-  const enAttente = attente.length > 0;
+  // 1.4.0 (maquette) : plus de ligne permanente sous l'en-tête ; l'état complet est au Profil.
+  // Elle ne paraît que si des envois attendent le réseau (OFF-003 CA1), hors de l'écran qui
+  // les détaille (1.5.1).
+  if (attente.length === 0 || chemin === '/envois') return null;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={texte}
       accessibilityHint={t('synchro.ligneAide')}
-      onPress={() => routeur.push('/profil')}
-      style={[styles.ligne, { backgroundColor: p.surface, borderBottomColor: p.ligne }]}
+      onPress={() => routeur.push('/envois')}
+      style={[styles.ligne, { backgroundColor: p.attentionDoux, borderBottomColor: p.ligne }]}
     >
-      <MaterialIcons
-        name={enAttente ? 'cloud-upload' : derniere ? 'cloud-done' : 'cloud-off'}
-        size={16}
-        color={enAttente ? p.attention : p.texteSecondaire}
-      />
-      <Text
-        numberOfLines={1}
-        style={[styles.texteLigne, { color: enAttente ? p.texte : p.texteSecondaire }]}
-      >
+      <Icone nom="upload-cloud" taille={16} couleur={p.attention} />
+      <Text numberOfLines={1} style={[styles.texteLigne, { color: p.texte }]}>
         {texte}
       </Text>
     </Pressable>
   );
+}
+
+/** 1.4.0 (maquette, en-tête de la tablette) : « Synchronisé à 10:32 », pastille verte. */
+export function StatutSynchro() {
+  const { t } = useTranslation();
+  const { derniere, attente } = useEtatLocal();
+  const quand = useQuand();
+  if (attente.length > 0)
+    return <Statut ton="wa">{t('attente.titre', { count: attente.length })}</Statut>;
+  if (!derniere) return <Statut>{t('mobile.tournee.nonSynchronise')}</Statut>;
+  return <Statut ton="ok">{quand.court(derniere.le)}</Statut>;
 }
 
 /**
@@ -261,12 +278,12 @@ export function LigneSynchro() {
  * synchronisation qui lève la garde.
  */
 export function GardeHorsLigne({ children }: { children: ReactNode }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const p = usePalette();
+  const tablette = useTablette();
   const marges = useSafeAreaInsets();
   const { etat, client } = useSession();
   const { derniere, attente, charge } = useEtatLocal();
-  const quand = useQuand();
   const [delai, setDelai] = useState<number | null>(null);
   const [, setTic] = useState(0);
   const [envoi, setEnvoi] = useState(false);
@@ -290,40 +307,92 @@ export function GardeHorsLigne({ children }: { children: ReactNode }) {
   if (!charge || delai === null) return null;
   if (!derniere || !horsDelai(derniere, delai, horloge.maintenant())) return <>{children}</>;
 
+  // Maquette 1.5.2 : « il y a 8 jours », pour dire d'un coup d'œil depuis quand.
+  const jours = Math.floor((horloge.maintenant() - Date.parse(derniere.le)) / 86_400_000);
+  const ilYA = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' }).format(
+    -jours,
+    'day',
+  );
+  const appareil = tablette ? 'tablette' : 'telephone';
+  const synchroniser = (
+    <Bouton
+      libelle={t('synchro.maintenant')}
+      chargement={envoi}
+      style={tablette ? { alignSelf: 'flex-start', minWidth: 280 } : undefined}
+      onPress={() => {
+        setEnvoi(true);
+        setEchec(false);
+        envoyerAttente(client)
+          .catch(() => 0)
+          .then(() => lancer(client))
+          .catch(() => setEchec(true))
+          .finally(() => setEnvoi(false));
+      }}
+    />
+  );
+
   return (
     <View
       style={[
         styles.garde,
-        { backgroundColor: p.fond, paddingTop: marges.top + 32, paddingBottom: marges.bottom },
+        { backgroundColor: p.surface, paddingTop: marges.top, paddingBottom: marges.bottom },
       ]}
     >
-      <Logo taille={40} />
-      <Carte style={{ gap: 12, alignSelf: 'stretch' }}>
-        <View style={styles.titreGarde}>
-          <MaterialIcons name="cloud-off" size={24} color={marque.orange} />
-          <Texte variante="sousTitre" style={{ flex: 1 }}>
-            {t('synchro.garde.titre')}
-          </Texte>
+      <View style={[styles.filet, { backgroundColor: p.orange, top: marges.top }]} />
+      <View style={tablette ? styles.gardeLarge : styles.gardeEtroite}>
+        <View
+          style={[
+            tablette ? styles.iconeLarge : styles.icone,
+            { backgroundColor: p.attentionDoux },
+          ]}
+        >
+          <Icone nom="refresh-cw" taille={tablette ? 32 : 28} couleur={p.attention} />
         </View>
-        <Texte>{t('synchro.garde.aide', { count: delai, quand: quand.long(derniere.le) })}</Texte>
-        {attente.length > 0 && (
-          <Alerte type="info">{t('synchro.garde.attente', { count: attente.length })}</Alerte>
+        <View>
+          <Text
+            accessibilityRole="header"
+            style={[tablette ? styles.titreLarge : styles.titreGarde, { color: p.texte }]}
+          >
+            {t('synchro.garde.titre')}
+          </Text>
+          <Text
+            style={[tablette ? styles.aideLarge : styles.aideGarde, { color: p.texteSecondaire }]}
+          >
+            {t(`synchro.garde.aide_${appareil}`, { count: delai, quand: ilYA })}
+          </Text>
+        </View>
+        {tablette ? (
+          <>
+            <Chiffres
+              valeurs={[
+                { libelle: t('synchro.derniere'), valeur: ilYA },
+                {
+                  libelle: t('synchro.enAttente'),
+                  valeur: String(attente.length),
+                  couleur: attente.length ? p.orange : undefined,
+                },
+                { libelle: t('synchro.garde.rapports'), valeur: String(derniere.rapports ?? 0) },
+              ]}
+            />
+            {attente.length > 0 && (
+              <Texte variante="libelle">{t('synchro.garde.attenteTablette')}</Texte>
+            )}
+          </>
+        ) : (
+          attente.length > 0 && (
+            <View style={[styles.attente, { backgroundColor: p.surface2, borderColor: p.ligne }]}>
+              <Texte variante="nombre" style={{ color: p.orange }}>
+                {attente.length}
+              </Texte>
+              <Text style={[styles.attenteTexte, { color: p.texteSecondaire }]}>
+                {t('synchro.garde.attenteSuite', { count: attente.length })}
+              </Text>
+            </View>
+          )
         )}
         {echec && <Alerte type="attention">{t('synchro.sansReseau')}</Alerte>}
-        <Bouton
-          libelle={t('synchro.maintenant')}
-          chargement={envoi}
-          onPress={() => {
-            setEnvoi(true);
-            setEchec(false);
-            envoyerAttente(client)
-              .catch(() => 0)
-              .then(() => lancer(client))
-              .catch(() => setEchec(true))
-              .finally(() => setEnvoi(false));
-          }}
-        />
-      </Carte>
+        {synchroniser}
+      </View>
     </View>
   );
 }
@@ -339,6 +408,41 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   texteLigne: { flex: 1, fontFamily: police.texte, fontSize: 13, lineHeight: 18 },
-  garde: { flex: 1, alignItems: 'center', paddingHorizontal: 16, gap: 24 },
-  titreGarde: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  enTeteCarte: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: 12,
+    paddingTop: 14,
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+  },
+  aide: { paddingHorizontal: 16, paddingBottom: 8 },
+  bouton: { paddingTop: 12, paddingHorizontal: 16, paddingBottom: 16 },
+  garde: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  filet: { position: 'absolute', left: 0, right: 0, height: 3 },
+  gardeEtroite: { alignSelf: 'stretch', paddingHorizontal: 24, paddingBottom: 32, gap: 24 },
+  gardeLarge: { width: 560, maxWidth: '100%', gap: 26 },
+  icone: { width: 56, height: 56, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  iconeLarge: {
+    width: 64,
+    height: 64,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titreGarde: { fontFamily: police.titreFort, fontSize: 28, lineHeight: 34, letterSpacing: -0.6 },
+  titreLarge: { fontFamily: police.titreFort, fontSize: 34, lineHeight: 40, letterSpacing: -0.7 },
+  aideGarde: { fontFamily: police.texte, fontSize: 16, lineHeight: 24, marginTop: 10 },
+  aideLarge: { fontFamily: police.texte, fontSize: 17, lineHeight: 26, marginTop: 12 },
+  attente: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 6,
+  },
+  attenteTexte: { flex: 1, fontFamily: police.texte, fontSize: 14, lineHeight: 20 },
 });

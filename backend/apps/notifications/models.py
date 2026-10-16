@@ -33,7 +33,8 @@ class TypeNotification(models.TextChoices):
     #: RPT-017, 34.A (0.6.7) : un rapport toujours pas soumis 48 h après la visite.
     RAPPORT_EN_RETARD = "rapport_en_retard", "Rapport en retard"
     #: prd.md §18 (0.6.8) : rapports soumis au superviseur, validés au délégué (regroupés par
-    #: jour) ; rappel de 18 h au délégué (NOT-006, 37.A) ; journée escaladée au DM (38.A).
+    #: jour) ; rappel de 18 h au délégué (NOT-006, 37.A) ; journée escaladée à l'administrateur
+    #: (38.A).
     RAPPORTS_SOUMIS = "rapports_soumis", "Rapports soumis"
     RAPPORTS_VALIDES = "rapports_valides", "Rapports validés"
     RAPPEL_RAPPORT = "rappel_rapport", "Rapport à soumettre"

@@ -163,20 +163,20 @@ def test_rpt018_le_remplacant_valide_en_mode_remplacement(monde, effectuee, port
         assert (r.status_code, r.json()["mode_validation"]) == (200, "remplacement"), r.content
 
 
-def test_rpt018_le_dm_valide_par_escalade_apres_le_delai(monde, terrain, effectuee, portefeuille):  # noqa: F811
-    from apps.organisation import services as org
-
+def test_rpt018_l_administrateur_valide_par_escalade(monde, terrain, effectuee, portefeuille):  # noqa: F811
+    """1.3.0 [D] : l'escalade revient à l'administrateur pays, à la place du DM."""
     rapport = soumettre(monde, effectuee, portefeuille[:1])
-    org.ajouter_reseau_au_perimetre(monde["dm.sn"], terrain["cardio"], date(2026, 1, 1))
-    dm = client_de
+    file, valider = "/api/v1/rapports/a-traiter/", f"/api/v1/rapports/{rapport.pk}/valider/"
     with freeze_time("2026-10-14 08:00"):
         # Moins de 24 heures ouvrées : la journée reste au superviseur.
-        assert dm(monde["dm.sn"]).get("/api/v1/rapports/a-traiter/").json()["delegues"] == []
-        assert dm(monde["dm.sn"]).post(f"/api/v1/rapports/{rapport.pk}/valider/").status_code == 404
+        admin = client_de(monde["admin.sn"])
+        assert admin.get(file).json()["delegues"] == []
+        assert admin.post(valider).status_code == 404
     with freeze_time("2026-10-19 08:00"):
-        (ligne,) = dm(monde["dm.sn"]).get("/api/v1/rapports/a-traiter/").json()["delegues"]
+        admin = client_de(monde["admin.sn"])
+        (ligne,) = admin.get(file).json()["delegues"]
         assert ligne["journees"][0]["escalade"] is True
-        r = dm(monde["dm.sn"]).post(f"/api/v1/rapports/{rapport.pk}/valider/")
+        r = admin.post(valider)
         assert (r.status_code, r.json()["mode_validation"]) == (200, "escalade"), r.content
 
 

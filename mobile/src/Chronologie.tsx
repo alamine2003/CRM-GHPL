@@ -6,9 +6,10 @@
 import type { RapportChronologie } from '@innov/api-client';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ecrire, lire } from './baseLocale';
-import { Carte, Etiquette, Texte, useLien, usePalette } from './composants';
+import { Carte, Etiquette, Statut, type TonStatut, Texte, useLien, usePalette } from './composants';
+import { police } from './polices';
 import { useSession } from './session';
 
 /** Au-delà, « Voir les visites plus anciennes ». */
@@ -16,16 +17,35 @@ const VISIBLES = 3;
 
 const cle = (prospect: string) => `chronologie.${prospect}`;
 
+/** Le statut d'un rapport, comme dans la Tournée : le brouillon est un rapport à rédiger. */
+const STATUTS: Record<string, [string, TonStatut]> = {
+  brouillon: ['attendu', 'wa'],
+  soumis: ['soumis', 'ok'],
+  valide: ['valide', 'ok'],
+  a_corriger: ['a_corriger', 'er'],
+  rouvert: ['rouvert', 'wa'],
+};
+
+/** « 12 octobre » ; l'année seulement quand ce n'est pas la courante. */
+export function dateVisite(date: string, langue: string) {
+  const jour = new Date(`${date}T12:00:00Z`);
+  return new Intl.DateTimeFormat(langue, {
+    day: 'numeric',
+    month: 'long',
+    ...(jour.getUTCFullYear() !== new Date().getUTCFullYear() ? { year: 'numeric' } : {}),
+    timeZone: 'UTC',
+  }).format(jour);
+}
+
+/** Une visite (.li) : la date, ce qui s'est dit, le statut du rapport ; le détail se déplie. */
 function Visite({ rapport, premiere }: { rapport: RapportChronologie; premiere: boolean }) {
   const { t, i18n } = useTranslation();
   const p = usePalette();
-  const date = new Intl.DateTimeFormat(i18n.language, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${rapport.date}T12:00:00Z`));
+  const [ouverte, setOuverte] = useState(false);
+  const [statut, ton] = STATUTS[rapport.statut] ?? ['soumis', 'ok'];
+  const resume = [rapport.presentations.map((x) => x.libelle).join(', '), rapport.resultat ?? '']
+    .filter(Boolean)
+    .join(' · ');
   const produits = rapport.presentations
     .map((x) => (x.retour ? `${x.libelle} — ${t(`rapport.retours.${x.retour}`)}` : x.libelle))
     .join('\n');
@@ -33,51 +53,55 @@ function Visite({ rapport, premiere }: { rapport: RapportChronologie; premiere: 
     .filter(Boolean)
     .join(' — ');
   return (
-    <View
-      style={{
-        gap: 4,
-        paddingVertical: 12,
-        borderTopWidth: premiere ? 0 : 1,
-        borderTopColor: p.ligne,
-      }}
-    >
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
-        <Texte variante="fort">{date}</Texte>
-        {rapport.statut === 'brouillon' && <Etiquette>{t('rapport.statuts.brouillon')}</Etiquette>}
-        {rapport.en_retard && rapport.statut !== 'brouillon' && (
-          <Etiquette>{t('chronologie.enRetard')}</Etiquette>
-        )}
-      </View>
-      <Texte variante="discret">
-        {[rapport.heure, rapport.etablissement, rapport.de_moi ? '' : rapport.delegue_nom]
-          .filter(Boolean)
-          .join(' · ')}
-      </Texte>
-      {rapport.resultat ? (
-        <Texte>{[rapport.resultat, rapport.resultat_obtenu].filter(Boolean).join(' — ')}</Texte>
-      ) : null}
-      {produits ? <Texte>{produits}</Texte> : null}
-      {rapport.resume ? <Texte variante="discret">{rapport.resume}</Texte> : null}
-      {action ? (
-        <Texte>
-          <Texte variante="fort">{`${t('chronologie.suite')} `}</Texte>
-          {action}
-        </Texte>
-      ) : null}
+    <View style={!premiere && { borderTopWidth: 1, borderTopColor: p.ligne }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded: ouverte }}
+        onPress={() => setOuverte(!ouverte)}
+        style={({ pressed }) => [styles.ligne, pressed && { backgroundColor: p.fond }]}
+      >
+        <Text style={[styles.date, { color: p.texte }]}>
+          {dateVisite(rapport.date, i18n.language)}
+        </Text>
+        <Text numberOfLines={ouverte ? undefined : 1} style={[styles.resume, { color: p.texte }]}>
+          {resume || rapport.etablissement || t('chronologie.sansDetail')}
+        </Text>
+        <Statut ton={ton}>{t(`mobile.tournee.statuts.${statut}`)}</Statut>
+      </Pressable>
+      {ouverte && (
+        <View style={styles.detail}>
+          {rapport.en_retard && rapport.statut !== 'brouillon' && (
+            <Etiquette>{t('chronologie.enRetard')}</Etiquette>
+          )}
+          <Texte variante="discret">
+            {[rapport.heure, rapport.etablissement, rapport.de_moi ? '' : rapport.delegue_nom]
+              .filter(Boolean)
+              .join(' · ')}
+          </Texte>
+          {rapport.resultat_obtenu ? <Texte>{rapport.resultat_obtenu}</Texte> : null}
+          {produits ? <Texte>{produits}</Texte> : null}
+          {rapport.resume ? <Texte variante="discret">{rapport.resume}</Texte> : null}
+          {action ? (
+            <Texte>
+              <Texte variante="fort">{`${t('chronologie.suite')} `}</Texte>
+              {action}
+            </Texte>
+          ) : null}
+        </View>
+      )}
     </View>
   );
 }
 
-export function VisitesPrecedentes({ prospect }: { prospect: string }) {
-  const { t } = useTranslation();
+/** Les rapports d'un prospect ; la dernière liste lue reste sur le téléphone. */
+export function useChronologie(prospect: string | null) {
   const { client } = useSession();
-  const lien = useLien();
   const [rapports, setRapports] = useState<RapportChronologie[] | null>(null);
   const [horsLigne, setHorsLigne] = useState(false);
-  const [tout, setTout] = useState(false);
 
   useEffect(() => {
     let actif = true;
+    if (!prospect) return;
     // Promesse d'abord : une erreur, même immédiate, passe par le repli hors ligne.
     void Promise.resolve()
       .then(() => client.prospects.rapports(prospect))
@@ -96,16 +120,41 @@ export function VisitesPrecedentes({ prospect }: { prospect: string }) {
     };
   }, [client, prospect]);
 
+  return { rapports, horsLigne };
+}
+
+export function VisitesPrecedentes({
+  prospect,
+  chronologie,
+}: {
+  prospect: string;
+  /** Déjà lue par la fiche (sa dernière visite) : pas de seconde lecture. */
+  chronologie?: ReturnType<typeof useChronologie>;
+}) {
+  const propre = useChronologie(chronologie ? null : prospect);
+  const { rapports, horsLigne } = chronologie ?? propre;
+  const { t } = useTranslation();
+  const lien = useLien();
+  const [tout, setTout] = useState(false);
+
   if (rapports === null) return null;
   const affiches = tout ? rapports : rapports.slice(0, VISIBLES);
   return (
-    <Carte style={{ paddingVertical: 4, gap: 0 }}>
-      <Texte variante="libelle" style={{ paddingTop: 8 }}>
+    <Carte marge={0}>
+      <Texte
+        variante="sousTitre"
+        accessibilityRole="header"
+        style={{ paddingTop: 14, paddingHorizontal: 16, paddingBottom: 4 }}
+      >
         {t('chronologie.titre')}
       </Texte>
-      {horsLigne && <Texte variante="discret">{t('chronologie.horsLigne')}</Texte>}
+      {horsLigne && (
+        <Texte variante="discret" style={{ paddingHorizontal: 16 }}>
+          {t('chronologie.horsLigne')}
+        </Texte>
+      )}
       {rapports.length === 0 ? (
-        <Texte variante="discret" style={{ paddingVertical: 8 }}>
+        <Texte variante="discret" style={{ padding: 16, paddingTop: 8 }}>
           {t('chronologie.aucune')}
         </Texte>
       ) : (
@@ -115,7 +164,7 @@ export function VisitesPrecedentes({ prospect }: { prospect: string }) {
         <Pressable
           accessibilityRole="button"
           onPress={() => setTout(!tout)}
-          style={{ minHeight: 44, justifyContent: 'center' }}
+          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 16 }}
         >
           <Texte style={{ color: lien, fontWeight: '600' }}>
             {tout
@@ -127,3 +176,17 @@ export function VisitesPrecedentes({ prospect }: { prospect: string }) {
     </Carte>
   );
 }
+
+const styles = StyleSheet.create({
+  ligne: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  date: { width: 92, fontFamily: police.texteFort, fontSize: 12.5, lineHeight: 18 },
+  resume: { flex: 1, minWidth: 0, fontFamily: police.texteFort, fontSize: 14, lineHeight: 20 },
+  detail: { gap: 4, paddingHorizontal: 16, paddingBottom: 14, paddingLeft: 120 },
+});

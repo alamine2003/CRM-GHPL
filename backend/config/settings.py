@@ -133,6 +133,11 @@ INNOV_AUTH = {
 # est dérivée de DJANGO_SECRET_KEY.
 INNOV_CLE_CHIFFREMENT = os.environ.get("INNOV_CLE_CHIFFREMENT", "")
 
+# 1.1.2 [D, 12 octobre 2026, responsable produit] : la double authentification n'est plus
+# imposée, dans aucun environnement, jusqu'à la version 2 (SEC-003 suspendue). Elle reste
+# possible pour qui l'active ; INNOV_DOUBLE_AUTH_OBLIGATOIRE=oui la rend de nouveau obligatoire.
+INNOV_DOUBLE_AUTH_OBLIGATOIRE = env_bool("INNOV_DOUBLE_AUTH_OBLIGATOIRE", False)
+
 MIDDLEWARE = [
     "apps.socle.journalisation.ReferenceRequete",
     "django.middleware.security.SecurityMiddleware",

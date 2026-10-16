@@ -19,7 +19,7 @@ Les libellés entre « … » sont ceux de l'écran, en français. Les « … »
 
 1. **Installer la version.** Suivez docs/mise-a-jour.md §2, étapes 1 à 4 : CI verte, étiquette, sauvegarde vérifiée, déploiement en préproduction. `/api/health/` doit afficher la version jouée.
 2. **Vérifier les services** (docs/exploitation.md §1 et §5) : API, worker, ordonnanceur, base, file. Sans worker, les rappels et escalades ne partent pas. Vous pouvez alors lancer la passe à la main : `python manage.py executer_echeances`.
-3. **Remplir la base de données fictives.** La commande `python manage.py reinitialiser_demo --oui` existe (backend/apps/demonstration/management/commands/reinitialiser_demo.py). Attention :
+3. **Remplir la base de données fictives** (jusqu'à 1.0.7 ; depuis 1.0.8 la commande est retirée et l'instance part vide, prd.md §14.81). La commande `python manage.py reinitialiser_demo --oui` existe (backend/apps/demonstration/management/commands/reinitialiser_demo.py). Attention :
    - elle **efface toute la base** ;
    - elle **refuse** de tourner si l'instance n'est pas lancée avec `ENVIRONNEMENT` égal à `developpement`, `demonstration` ou `test`. Pour la recette, lancez donc l'instance de préproduction avec `ENVIRONNEMENT=demonstration` (un bandeau « Démonstration » s'affiche alors sur chaque écran), ou utilisez une instance de recette dédiée ;
    - le mot de passe commun des comptes vient de la variable `INNOV_DEMO_MOT_DE_PASSE`, saisie sur le serveur. Sans elle, il est tiré au hasard et affiché une fois. Ne l'écrivez nulle part ailleurs que dans le coffre.

@@ -129,12 +129,13 @@ MATRICE: dict[Action, frozenset[str]] = {
     # (vérifié par le service, PLN-001).
     Action.PLANNINGS_PREPARER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
     # « Approuver ou faire réviser un planning » : le superviseur, sur les postes qui lui sont
-    # rattachés (PLN-011) ; le DM sur le poste d'un superviseur-visiteur, qui lui est rattaché
-    # (PLN-017, RG-023). Escalade et remplacement en 0.3.4 et 0.3.8.
-    Action.PLANNINGS_VALIDER: frozenset({Role.DM, Role.SUPERVISEUR}),
-    # « Désigner un remplaçant de superviseur » (ORG-013) : l'administrateur pays, le DM pour
-    # les superviseurs de ses réseaux, le superviseur pour lui-même (périmètre dans la vue).
-    Action.REMPLACEMENTS_GERER: frozenset({Role.ADMIN_PAYS, Role.DM, Role.SUPERVISEUR}),
+    # rattachés (PLN-011) ; 1.3.0 [D] : l'administrateur pays (le siège au Sénégal) à la place
+    # du DM, sur le poste d'un superviseur-visiteur (PLN-017, RG-023) et en escalade (PLN-016).
+    # Le DM, comme le DF, ne fait plus que lire. Remplacement en 0.3.8.
+    Action.PLANNINGS_VALIDER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
+    # « Désigner un remplaçant de superviseur » (ORG-013) : l'administrateur pays, le
+    # superviseur pour lui-même (périmètre dans la vue).
+    Action.REMPLACEMENTS_GERER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
     # « Réaliser une visite, rédiger un rapport » : le délégué, le superviseur s'il occupe un
     # poste ; chacun ses propres visites (RPT-001).
     Action.RAPPORTS_REDIGER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
@@ -146,9 +147,10 @@ MATRICE: dict[Action, frozenset[str]] = {
         {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
     ),
     # « Valider un rapport ou demander une correction » (RPT-012 à RPT-014) : le superviseur
-    # sur les postes rattachés, le DM pour un superviseur-visiteur (RG-023), en escalade ou en
-    # remplacement ; le périmètre est vérifié par le service.
-    Action.RAPPORTS_VALIDER: frozenset({Role.DM, Role.SUPERVISEUR}),
+    # sur les postes rattachés, l'administrateur pays (1.3.0, à la place du DM) pour un
+    # superviseur-visiteur (RG-023) et en escalade ; le remplaçant ; le périmètre est vérifié
+    # par le service.
+    Action.RAPPORTS_VALIDER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
     # Indicateurs de pilotage (cycle 0.7) : en 0.7.1, chacun les siens (DSH-001), le délégué
     # et le superviseur qui occupe un poste ; l'encadrement s'ajoute avec ses vues (0.7.2 à
     # 0.7.4).
@@ -164,12 +166,12 @@ MATRICE: dict[Action, frozenset[str]] = {
     Action.PILOTAGE_EXPORTER: frozenset(
         SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
-    # DSH-009 : objectifs par réseau, fixés par le DM du réseau ou l'administrateur pays
+    # DSH-009 : objectifs par réseau, fixés par l'administrateur pays (1.3.0 : plus le DM)
     # (périmètre vérifié par le service) ; lus par l'encadrement de ces réseaux et le pays.
     Action.OBJECTIFS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
-    Action.OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS, Role.DM}),
+    Action.OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS}),
     # AUD-002 : « Consulter le journal d'audit » (prd.md §6.3) : le siège, tous les pays ; le
     # responsable et l'administrateur pays, leur pays seulement (filtre de la vue).
     Action.AUDIT_LIRE: frozenset(SIEGE | PAYS_CONSULTATION),

@@ -896,8 +896,8 @@ describe('portail — démonstration et apparence (0.0.9)', () => {
         informations: vi.fn(async () => ({ ...INFOS, environnement: 'demonstration' })),
       }),
     );
-    expect(await screen.findByText('Démonstration')).toBeInTheDocument();
-    expect(screen.getByText(/Données fictives/)).toBeInTheDocument();
+    expect(await screen.findByText('Essai')).toBeInTheDocument();
+    expect(screen.getByText(/aucune donnée réelle/)).toBeInTheDocument();
   });
 
   it('la production n’affiche pas le bandeau de démonstration', async () => {
@@ -909,7 +909,7 @@ describe('portail — démonstration et apparence (0.0.9)', () => {
     );
     await screen.findByRole('heading', { name: 'Bonjour Awa' });
     await act(async () => new Promise((r) => setTimeout(r, 20)));
-    expect(screen.queryByText('Démonstration')).not.toBeInTheDocument();
+    expect(screen.queryByText('Essai')).not.toBeInTheDocument();
   });
 
   it('l’apparence choisie est mémorisée sur ce navigateur, « système » par défaut', () => {

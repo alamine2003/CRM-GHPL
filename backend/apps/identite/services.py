@@ -13,6 +13,7 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.hashers import check_password, make_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import status
@@ -225,11 +226,13 @@ DUREE_ETAPE = 300
 
 
 def _verifier_identifiants(identifiant: str, mot_de_passe: str) -> Utilisateur:
+    """1.4.0 [D] : l'identifiant (prenom.nom) ou l'adresse courriel, unique quand elle existe."""
+    valeur = identifiant.strip().lower()
     with transaction.atomic():
         utilisateur = (
             Utilisateur.objects.select_for_update(of=("self",))
             .select_related("pays_principal")
-            .filter(username=identifiant.strip().lower())
+            .filter(Q(username=valeur) | (Q(email__iexact=valeur) & ~Q(email="")))
             .first()
         )
         if utilisateur is None:

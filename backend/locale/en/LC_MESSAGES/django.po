@@ -731,8 +731,8 @@ msgstr "Yes"
 msgid "Non"
 msgstr "No"
 
-msgid "Seuls le DM du réseau et l'administrateur pays fixent ses objectifs."
-msgstr "Only the network's DM and the country administrator set its targets."
+msgid "Seul l'administrateur pays fixe ses objectifs."
+msgstr "Only the country administrator sets its targets."
 
 msgid "La fin vient après le début."
 msgstr "The end date must come after the start date."
@@ -1262,8 +1262,8 @@ msgstr "Unknown report field."
 msgid "Seul un rapport validé se rouvre."
 msgstr "Only an approved report can be reopened."
 
-msgid "Validé il y a plus de 30 jours : seul le DM peut le rouvrir."
-msgstr "Approved more than 30 days ago: only the DM can reopen it."
+msgid "Validé il y a plus de 30 jours : seul l'administrateur peut le rouvrir."
+msgstr "Approved more than 30 days ago: only the administrator can reopen it."
 
 msgid "Dites pourquoi vous rouvrez ce rapport."
 msgstr "Say why you are reopening this report."

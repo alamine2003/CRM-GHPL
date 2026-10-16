@@ -1647,14 +1647,14 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-     *     l'administrateur pays en fixent (CA1).
+     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+     *     en fixe (CA1).
      */
     get: operations['objectifs'];
     put?: never;
     /**
-     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-     *     l'administrateur pays en fixent (CA1).
+     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+     *     en fixe (CA1).
      */
     post: operations['objectif_creer'];
     delete?: never;
@@ -2352,7 +2352,7 @@ export interface paths {
     put?: never;
     /**
      * @description RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
-     *     après la validation, le DM du périmètre au-delà (CA1).
+     *     après la validation, l'administrateur pays au-delà (CA1).
      */
     post: operations['rapport_rouvrir'];
     delete?: never;
@@ -3452,6 +3452,11 @@ export interface components {
       fin?: string | null;
       readonly en_cours: boolean;
       readonly hors_secteur: boolean;
+      /**
+       * @description Visites effectuées chez ce prospect sur le cycle en cours (« 2 / 3 », 1.4.4) ;
+       *     connues seulement de la liste du délégué lui-même.
+       */
+      readonly visites_cycle: number | null;
     };
     /**
      * @description * `dr` - Dr
@@ -4061,7 +4066,10 @@ export interface components {
       ecran?: string;
       reference?: string;
     };
-    /** @description PLN-016 : le planning est arrivé au DM faute de décision du responsable du poste. */
+    /**
+     * @description PLN-016 : le planning est arrivé à l'administrateur faute de décision du responsable du
+     *     poste.
+     */
     Escalade: {
       /** Format: date-time */
       le: string;
@@ -4188,6 +4196,12 @@ export interface components {
       presence?: string;
       /** Format: date-time */
       readonly cree_le: string;
+      /**
+       * Format: date
+       * @description La dernière visite effectuée par le lecteur chez ce prospect (« Qui exerce ici »,
+       *     1.4.5) ; connue seulement de la liste d'un établissement.
+       */
+      readonly derniere_visite: string | null;
     };
     Fin: {
       /** Format: date */
@@ -5126,6 +5140,7 @@ export interface components {
       type_poste: string;
       occupant: string | null;
       secteurs: components['schemas']['Lieu'][];
+      reseaux: string[];
       gerable: boolean;
       synthese: components['schemas']['SyntheseCible'];
     };
@@ -5422,6 +5437,8 @@ export interface components {
       readonly echeance: string;
       readonly en_retard: boolean;
       readonly horodatage_douteux: boolean;
+      /** Format: date-time */
+      readonly modifie_le: string;
       readonly manquants: string[];
       readonly produits_proposes: components['schemas']['Resume'][];
       readonly produit_autre_autorise: boolean;
@@ -6401,6 +6418,8 @@ export interface components {
       statut: string;
       objectif: string;
       etablissement?: string | null;
+      readonly resultat: string | null;
+      readonly produits: string[];
     };
     VisitePoint: {
       /** Format: uuid */

@@ -77,7 +77,8 @@ class Secteur(ModeleDePays):
     """Un secteur appartient à une seule zone (ORG-003 CA1)."""
 
     zone = models.ForeignKey(Zone, on_delete=models.PROTECT, related_name="secteurs")
-    libelle = models.CharField(max_length=120)
+    # 1.0.9 : 200 caractères ; le fichier d'organisation réel nomme des secteurs « ville / ville… ».
+    libelle = models.CharField(max_length=200)
 
     class Meta:
         ordering = ["libelle"]

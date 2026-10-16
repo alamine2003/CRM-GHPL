@@ -1,6 +1,7 @@
 import type { Notification } from '@innov/api-client';
 import i18n from '../src/i18n';
 import {
+  couleurNotification,
   semaineDeNotification,
   texteNotification,
   visiteDeNotification,
@@ -50,7 +51,7 @@ test('RPT-014 : la correction demandée ouvre le rapport, sans nom de prospect',
     lue_le: null,
   } as Notification;
   expect(texteNotification(n, i18n.t, 'fr')).toBe(
-    'Kossi GUEYE demande une correction de votre rapport du 13 octobre',
+    'Kossi GUEYE demande une correction de votre rapport du mardi 13 octobre',
   );
   expect(visiteDeNotification(n)).toBe('v1');
   expect(semaineDeNotification(n)).toBeUndefined();
@@ -65,7 +66,7 @@ test('RPT-016 : la réouverture ouvre le rapport à reprendre', () => {
     lue_le: null,
   } as Notification;
   expect(texteNotification(n, i18n.t, 'fr')).toBe(
-    'Kossi GUEYE a rouvert votre rapport du 13 octobre',
+    'Kossi GUEYE a rouvert votre rapport du mardi 13 octobre',
   );
   expect(visiteDeNotification(n)).toBe('v1');
 });
@@ -83,4 +84,28 @@ test('0.6.8, 37.A : le rappel de 18 h et les rapports validés se lisent au tél
   );
   const valides = { ...rappel, type: 'rapports_valides', donnees: { nombre: 1 } } as Notification;
   expect(texteNotification(valides, i18n.t, 'fr')).toBe('1 rapport validé');
+});
+
+test('maquette 1.4.9 : une période dans un seul mois, et la couleur de la pastille', () => {
+  const p = { orange: 'or', info: 'in', attention: 'wa', erreur: 'er', succes: 'ok' };
+  const remplacement = {
+    ...notif('remplacement_attribue'),
+    donnees: { nom: 'Awa FICTIVE', debut: '2026-10-19', fin: '2026-10-23' },
+  } as Notification;
+  expect(texteNotification(remplacement, i18n.t, 'fr')).toBe(
+    'Vous remplacez Awa FICTIVE du 19 au 23 octobre',
+  );
+  const aCheval = {
+    ...remplacement,
+    donnees: { nom: 'Awa FICTIVE', debut: '2026-10-29', fin: '2026-11-02' },
+  } as Notification;
+  expect(texteNotification(aCheval, i18n.t, 'fr')).toBe(
+    'Vous remplacez Awa FICTIVE du 29 octobre au 2 novembre',
+  );
+  const couleur = (type: Notification['type']) =>
+    couleurNotification(notif(type), p as unknown as Parameters<typeof couleurNotification>[1]);
+  expect(couleur('correction_demandee')).toBe('or');
+  expect(couleur('remplacement_attribue')).toBe('in');
+  expect(couleur('rappel_planning')).toBe('wa');
+  expect(couleur('planning_approuve')).toBe('ok');
 });

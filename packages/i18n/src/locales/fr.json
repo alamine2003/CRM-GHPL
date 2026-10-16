@@ -200,10 +200,240 @@
       "texte": "Par sécurité, l'application se verrouille après {{minutes}} minutes en arrière-plan.",
       "deverrouiller": "Déverrouiller",
       "invite": "Déverrouiller INNOV CRM",
-      "sansProtection": "Ce téléphone n'a ni code ni biométrie : reconnectez-vous."
+      "sansProtection": "Ce téléphone n'a ni code ni biométrie : reconnectez-vous.",
+      "note": "Déverrouiller CRM GH avec votre code ou votre biométrie."
     },
     "identifiantInstallation": "Identifiant",
-    "effacement": "Ce téléphone a été révoqué ou votre compte désactivé : ses données ont été effacées. Contactez votre administrateur pays."
+    "effacement": "Ce téléphone a été révoqué ou votre compte désactivé : ses données ont été effacées. Contactez votre administrateur pays.",
+    "connexion": {
+      "courriel": "Adresse courriel",
+      "appareilTelephone": "Ce téléphone",
+      "appareilTablette": "Cette tablette",
+      "enregistre": "Enregistré",
+      "enregistree": "Enregistrée",
+      "noteTelephone": "Enregistré à la connexion ; votre administrateur pays peut le révoquer s’il est perdu.",
+      "noteTablette": "Enregistrée à la connexion ; votre administrateur pays peut la révoquer si elle est perdue.",
+      "pied": "CRM GH · Generic Healthcare",
+      "accroche": "La preuve de l’activité terrain, visite après visite.",
+      "accrocheTexte": "Planning de la semaine, visites, rapports : tout ce qu’il vous faut sur le terrain, même sans réseau.",
+      "atoutHorsLigne": "Fonctionne hors ligne, envoi dès le retour du réseau",
+      "atoutChiffre": "Données chiffrées sur l’appareil",
+      "oubliAccroche": "On vous renvoie sur la bonne route.",
+      "oubliTexte": "Le lien de réinitialisation est valable 30 minutes et ne sert qu’une fois.",
+      "codeAccroche": "Une seconde preuve que c’est bien vous.",
+      "codeTexte": "Votre rôle impose la double authentification. Elle protège les fiches communes du pays et vos rapports.",
+      "codeCases": "Code à 6 chiffres"
+    },
+    "tournee": {
+      "faitesSur": "faites sur {{total}}",
+      "faitesSurLu": "{{faites}} visites faites sur {{total}}",
+      "dansMinutes": "dans {{n}} min",
+      "dansHeures": "dans {{h}} h {{m}}",
+      "enCoursDepuis": "En cours depuis {{heure}}",
+      "visiteEnCours": "Visite en cours",
+      "itineraire": "Itinéraire",
+      "ficheProspect": "Fiche du prospect",
+      "aJustifier_one": "{{count}} visite restée prévue après sa journée : choisissez un motif.",
+      "aJustifier_other": "{{count}} visites restées prévues après leur journée : choisissez un motif.",
+      "aJustifierTitre": "À justifier.",
+      "statuts": {
+        "attendu": "Rapport à rédiger",
+        "brouillon": "Rapport en brouillon",
+        "soumis": "Rapport soumis",
+        "valide": "Rapport validé",
+        "a_corriger": "Rapport à corriger",
+        "rouvert": "Rapport rouvert",
+        "prochaine": "Prochaine visite",
+        "en_cours": "En cours",
+        "prevue": "Prévue"
+      },
+      "statutsCourts": {
+        "attendu": "À rédiger",
+        "brouillon": "Brouillon",
+        "soumis": "Soumis",
+        "valide": "Validé",
+        "a_corriger": "À corriger",
+        "rouvert": "Rouvert",
+        "prochaine": "Prochaine",
+        "en_cours": "En cours",
+        "prevue": "Prévue"
+      },
+      "visitesAujourdhui": "Visites aujourd’hui",
+      "rapportsARediger": "Rapports à rédiger",
+      "semaine": "Semaine",
+      "kmJour": "Kilométrage du jour",
+      "km": "{{km}} km",
+      "derniereVisite": "Dernière visite",
+      "date": "Date",
+      "resultat": "Résultat",
+      "prochaineAction": "Prochaine action",
+      "premiereVisite": "Première visite chez ce prospect.",
+      "aTraiter": "À traiter",
+      "rien": "Rien à traiter.",
+      "rediger": "Rédiger",
+      "corriger": "Corriger",
+      "justifier": "Justifier",
+      "rapportARediger": "Rapport à rédiger",
+      "rapportACorriger": "Rapport à corriger",
+      "visitesAJustifier_one": "{{count}} visite à justifier",
+      "visitesAJustifier_other": "{{count}} visites à justifier",
+      "resteePrevue": "Restée prévue après sa journée",
+      "aCorrigerCourt": "À corriger",
+      "enRetardCourt": "En retard",
+      "aJustifierCourt": "À justifier",
+      "pointsATraiter_one": "{{count}} point à traiter",
+      "pointsATraiter_other": "{{count}} points à traiter",
+      "versionCourte": "version {{numero}}",
+      "synchronise": "Synchronisé à {{heure}}",
+      "nonSynchronise": "Pas encore synchronisé",
+      "notifications": "Notifications",
+      "notificationsNonLues_one": "Notifications, {{count}} non lue",
+      "notificationsNonLues_other": "Notifications, {{count}} non lues",
+      "roleDelegue": "Délégué VM",
+      "imprevue": "Visite hors du planning",
+      "indisponibilite": "Indisponibilité imprévue",
+      "programmeSemaine": "Le reste de la semaine"
+    },
+    "visite": {
+      "derniereVisiteDu": "Dernière visite · {{date}}",
+      "derniereVisite": "Dernière visite",
+      "resultat": "Résultat",
+      "produits": "Produits présentés",
+      "prochaineAction": "Prochaine action",
+      "premiereVisite": "Première visite chez ce prospect.",
+      "aucunResultat": "—",
+      "noteGps": "Le démarrage enregistre votre position une seule fois ; la fin de visite aussi. Sans GPS ou sans réseau, la visite démarre quand même.",
+      "noteSansGps": "Le démarrage et la fin de visite prennent l'heure du téléphone. Sans réseau, la visite démarre quand même.",
+      "notePosition": "La position est enregistrée au début et à la fin de la visite seulement. Sans GPS ou sans réseau, la visite démarre quand même.",
+      "position": "Position",
+      "lieu": "Lieu",
+      "adresse": "Adresse",
+      "quand": "Quand",
+      "statut": "Statut",
+      "distance": "Distance",
+      "distanceLue": "{{km}} km depuis l'arrêt précédent",
+      "visitesDuJour": "Visites du jour",
+      "detailVisite": "Détail de la visite",
+      "planning": "Planning {{statut}}",
+      "planningVersion": "Planning {{statut}} · version {{numero}}",
+      "aJustifier": "À justifier",
+      "justifier": "Justifier",
+      "deroulement": "Déroulement",
+      "demarreeA": "Démarrée à {{heure}}",
+      "effectueeDe": "{{debut}} – {{fin}} · {{duree}}",
+      "commentaireIndice": "Précisions pour votre superviseur",
+      "ecartContexte": "{{nom}} · {{heure}}",
+      "preparation": "Préparation",
+      "objectif": "Objectif",
+      "note": "Note",
+      "reseau": "Réseau {{reseau}}"
+    },
+    "rapport": {
+      "champsRemplis_one": "{{count}} champ sur {{total}} rempli",
+      "champsRemplis_other": "{{count}} champs sur {{total}} remplis",
+      "aRendre": "À rendre avant {{heure}}",
+      "enRetard": "En retard",
+      "enregistrer": "Enregistrer",
+      "dejaEnregistre": "Rien de nouveau : le rapport est déjà enregistré.",
+      "avantDeSoumettre": "Avant de soumettre",
+      "fait": "Fait",
+      "manquant": "Manquant",
+      "aCompleter": "À compléter avant de soumettre :",
+      "noteSoumission": "Rapport attendu le jour même avant {{heure}}. Une fois soumis, il ne se modifie plus.",
+      "noteSoumis": "Une correction demandée par votre superviseur rouvrirait ce rapport.",
+      "noteCorrection": "Après correction, le rapport repart chez votre superviseur ; il ne se modifie plus une fois soumis.",
+      "soumisA": "Soumis à {{heure}}",
+      "resteInchange": "Reste inchangé",
+      "retourPrescripteur": "Retour du prescripteur",
+      "prochaineActionIndice": "Par exemple : apporter l'étude clinique",
+      "echeance": "Échéance",
+      "echeanceLue": "d'ici le {{date}}",
+      "documents": "Documents",
+      "controles": {
+        "produits": "Produits présentés",
+        "retours": "Retour sur chaque produit",
+        "resultat": "Résultat obtenu",
+        "resume": "Résumé de l'échange",
+        "prochaine_action_type": "Type de prochaine action",
+        "prochaine_action": "Prochaine action"
+      }
+    },
+    "semaine": {
+      "titre": "Semaine",
+      "precedente": "Précédente",
+      "courante": "Cette semaine",
+      "suivante": "Suivante",
+      "periode": "Du {{debut}} au {{fin}}",
+      "periodeLongue": "Semaine du {{debut}} au {{fin}}",
+      "visitesCourt": "{{count}} vis.",
+      "ferieCourt": "Férié",
+      "visitesPlanifiees_one": "{{count}} visite planifiée",
+      "visitesPlanifiees_other": "{{count}} visites planifiées",
+      "statutVersion": "{{statut}} · version {{numero}}",
+      "fermee": "Fermée",
+      "aucunPlanningValide": "aucun planning validé",
+      "fermeeNote": "Aucune visite ne peut être ajoutée tant que la semaine est fermée.",
+      "fermeeNoteTablette": "Pendant que la semaine est fermée, aucune visite ne peut être ajoutée. Votre superviseur recevra votre demande de réouverture.",
+      "aucuneVisite": "Aucune visite.",
+      "joursSemaine": "Jours de la semaine",
+      "jourChoisi": "{{jour}}, {{visites}}"
+    },
+    "journee": {
+      "titre": "Journée",
+      "visites": "Visites",
+      "objectif": "Objectif",
+      "objectifValeur": "{{min}} à {{max}}",
+      "volOiseau": "À vol d’oiseau",
+      "volOiseauLong": "Distance à vol d’oiseau",
+      "kmEnviron": "≈ {{km}} km",
+      "sansCoordonnees": "Lieux sans coordonnées",
+      "itineraire": "Itinéraire",
+      "activites": "Activités",
+      "sansCoordonneesAlerte_one": "{{count}} lieu sans coordonnées",
+      "sansCoordonneesAlerte_other": "{{count}} lieux sans coordonnées",
+      "sansCoordonneesSuite_one": "n’est pas compté dans la distance estimée.",
+      "sansCoordonneesSuite_other": "ne sont pas comptés dans la distance estimée."
+    },
+    "prospects": {
+      "maListe_one": "Ma liste · {{count}} prospect",
+      "maListe_other": "Ma liste · {{count}} prospects",
+      "tous_one": "Toutes les fiches · {{count}} prospect",
+      "tous_other": "Toutes les fiches · {{count}} prospects",
+      "nouveau": "Nouveau prospect",
+      "rechercher": "Chercher un prospect",
+      "indice": "Nom, établissement, zone…",
+      "segmentTous": "Tous",
+      "potentiel": "Potentiel {{valeur}}",
+      "filtres": {
+        "specialite": "Spécialité",
+        "zone": "Zone",
+        "specialiteToutes": "Toutes les spécialités",
+        "zoneToutes": "Toutes les zones"
+      },
+      "colonnes": {
+        "prospect": "Prospect",
+        "specialite": "Spécialité",
+        "etablissement": "Établissement",
+        "zone": "Zone",
+        "cycle": "Cycle"
+      },
+      "cycle": "{{faites}} / {{frequence}}",
+      "cycleLong_one": "{{faites}} sur {{count}} visite ce cycle",
+      "cycleLong_other": "{{faites}} sur {{count}} visites ce cycle"
+    },
+    "nouveauProspect": {
+      "titre": "Nouveau prospect",
+      "etablissement": "Établissement d’exercice",
+      "indiceEtablissement": "Nom, localité ou téléphone",
+      "ajouterEtablissement": "Ajouter un établissement",
+      "changer": "Changer",
+      "ressemblantes": "Fiches ressemblantes",
+      "ressemblantesAide": "Ce prospect existe peut-être déjà : ouvrez sa fiche plutôt que d’en créer une seconde.",
+      "aucuneRessemblante": "Aucune fiche ressemblante pour l’instant : elles s’affichent dès le nom saisi.",
+      "verifies": "Les doublons sont vérifiés à l’enregistrement."
+    },
+    "choisir": "Choisir…",
+    "cetteTablette": "Cette tablette"
   },
   "roles": {
     "titre": "Rôles",
@@ -341,7 +571,8 @@
     "nouveau": "Nouveau mot de passe",
     "change": "Mot de passe changé. Vos autres sessions ont été fermées.",
     "mesRoles": "Mes rôles",
-    "paysPrincipal": "Pays principal"
+    "paysPrincipal": "Pays principal",
+    "compte": "Compte"
   },
   "equipe": {
     "titre": "Équipe",
@@ -455,7 +686,7 @@
       "visites_sans_gps_tolerees": "Visites sans GPS tolérées par jour",
       "distance_pointage_m": "Distance de pointage (mètres)",
       "geolocalisation_active": "Géolocalisation des visites",
-      "delai_escalade_heures_ouvrees": "Délai avant escalade au DM (heures ouvrées)",
+      "delai_escalade_heures_ouvrees": "Délai avant escalade à l'administrateur (heures ouvrées)",
       "conservation": "Durées de conservation",
       "attente_gps_secondes": "Attente de la position (secondes)",
       "duree_visite_minutes": "Durée d'une visite (minutes)",
@@ -628,8 +859,8 @@
     "basculer": "Changer d'apparence"
   },
   "demonstration": {
-    "bandeau": "Démonstration",
-    "texte": "Données fictives : aucune personne ni aucun établissement réels."
+    "bandeau": "Essai",
+    "texte": "Instance d'essai, sans sauvegarde : n'y saisissez aucune donnée réelle."
   },
   "referentiel": {
     "titre": "Référentiels",
@@ -883,7 +1114,10 @@
       "segmentEtablissements": "Établissements",
       "creer": "Créer l'établissement",
       "creee": "Établissement créé : à valider par l'administrateur pays.",
-      "positionEnregistree": "Position enregistrée ({{metres}} m)"
+      "positionEnregistree": "Position enregistrée ({{metres}} m)",
+      "precision": "Précision",
+      "metres": "{{metres}} m",
+      "indiceLocalite": "Quartier ou ville"
     },
     "vue": "Affichage",
     "vues": {
@@ -1268,7 +1502,11 @@
       "envoyee": "Proposition envoyée : la fiche changera après l'accord de votre superviseur ou de l'administrateur pays. La décision s'affichera sur votre accueil.",
       "aucunChangement": "Modifiez au moins un champ pour envoyer la proposition.",
       "horsLigne": "Pas de réseau : votre proposition est gardée sur le téléphone et partira toute seule au retour du réseau.",
-      "enAttente": "Proposition de mise à jour de fiche"
+      "enAttente": "Proposition de mise à jour de fiche",
+      "nonRenseigne": "Non renseigné",
+      "ceQuiChange": "Ce qui change",
+      "efface": "(effacé)",
+      "suite": "La décision s’affichera sur votre accueil. Sans réseau, la proposition est gardée sur l’appareil et part toute seule au retour du réseau."
     }
   },
   "qualite": {
@@ -1310,7 +1548,20 @@
     "lieuHorsLigne": "Cette fiche n'est pas disponible sans réseau.",
     "quiExerceIci": "Qui exerce ici",
     "personne": "Aucun prospect n'y exerce actuellement.",
-    "lieux": "Lieux d'exercice"
+    "lieux": "Lieux d'exercice",
+    "ecrireCourt": "Écrire",
+    "ecrireSms": "Écrire un message",
+    "frequence": "Fréquence",
+    "parCycle_one": "{{count}} visite par cycle",
+    "parCycle_other": "{{count}} visites par cycle",
+    "derniereVisite": "Dernière visite",
+    "reseau": "Réseau",
+    "mobile": "Mobile",
+    "pro": "Professionnel",
+    "secteur": "Secteur {{secteur}}",
+    "positionReference": "Position GPS de référence",
+    "sansPosition": "Sans position GPS de référence",
+    "derniereVisiteLe": "Dernière visite : {{date}}"
   },
   "joursFeries": {
     "titre": "Jours fériés",
@@ -1377,6 +1628,13 @@
     "aucunePartout": "Aucune fiche ne correspond.",
     "chercherPartout": "Chercher « {{saisie}} » dans toutes les fiches",
     "sansLieu": "Aucun lieu d'exercice connu pour ce prospect.",
+    "completerPlusTard": "Tout peut se compléter plus tard",
+    "nouvelle_marque": "nouvelle",
+    "modifiee_marque": "modifiée",
+    "placeeDansLaJournee": "Cette visite se placera dans la journée : l’heure et l’objectif se complètent ensuite.",
+    "indiceNote": "Facultatif",
+    "sansReseau": "Aucun réseau",
+    "lieuAChoisir": "Choisir un lieu",
     "indiceHeure": "Par exemple 9h30",
     "heureIllisible": "Heure non reconnue : écrivez par exemple 9h30 ou 14:00.",
     "indiceObjectif": "Ex. : présenter le produit du mois",
@@ -1454,6 +1712,8 @@
       "apres_midi": "Après-midi"
     },
     "ligne": "{{type}} · {{periode}}",
+    "indiceCommentaire": "Précisions pour votre superviseur",
+    "visitesRestent": "Les visites de ce jour restent dans le planning ; votre superviseur voit l’activité à côté d’elles.",
     "commentaire": "Commentaire (facultatif)",
     "motif": "Précisez le motif",
     "motifRequis": "Une absence « Autre » demande un motif.",
@@ -1534,7 +1794,19 @@
     "ignorees_one": "{{count}} visite non reprise ({{jours}} : jour férié ou d'absence).",
     "ignorees_other": "{{count}} visites non reprises ({{jours}} : jour férié ou d'absence).",
     "reprenables_one": "La semaine précédente comptait {{count}} visite : reprenez-la jour pour jour.",
-    "reprenables_other": "La semaine précédente comptait {{count}} visites : reprenez-les jour pour jour."
+    "reprenables_other": "La semaine précédente comptait {{count}} visites : reprenez-les jour pour jour.",
+    "aideCourte": "Cochez les prospects puis posez-les sur un jour : chaque visite reprend le prospect et son lieu principal.",
+    "chercher": "Nom, spécialité ou lieu",
+    "surUnJour": "Poser sur un jour",
+    "dejaPrevues": "Déjà prévues",
+    "apres": "Après la pose",
+    "objectif": "Objectif de la journée : {{min}} à {{max}} visites.",
+    "limiteHaute": "Vous êtes à la limite haute.",
+    "auDela": "Vous dépassez la limite haute.",
+    "manque_one": "Encore {{count}} visite pour l’atteindre.",
+    "manque_other": "Encore {{count}} visites pour l’atteindre.",
+    "nombre_one": "Pas encore prévus · {{count}} prospect",
+    "nombre_other": "Pas encore prévus · {{count}} prospects"
   },
   "jour": {
     "titre": "Journée",
@@ -1607,7 +1879,14 @@
     "aide_one": "Enregistré sur ce téléphone sans réseau ; il part de lui-même au retour du réseau.",
     "aide_other": "Enregistrés sur ce téléphone sans réseau ; ils partent d'eux-mêmes au retour du réseau.",
     "envoyes_one": "Réseau retrouvé : {{count}} envoi est parti.",
-    "envoyes_other": "Réseau retrouvé : {{count}} envois sont partis."
+    "envoyes_other": "Réseau retrouvé : {{count}} envois sont partis.",
+    "voir": "Voir les envois en attente",
+    "sansReseau": "Pas de réseau",
+    "surTablette": "Enregistrés sur cette tablette sans réseau",
+    "heureSaisie": "Ils partent d’eux-mêmes au retour du réseau. C’est l’heure de saisie sur la tablette qui compte, pas l’heure d’envoi.",
+    "vide": "Rien n’attend : tout est parti.",
+    "confirmer": "Cet envoi n’est pas encore parti : l’abandonner l’efface de cet appareil.",
+    "garder": "Le garder"
   },
   "brouillon": {
     "visite": "Une nouvelle visite n'a pas été enregistrée.",
@@ -1712,8 +1991,8 @@
     "versionModification": " (modification, version {{version}})",
     "rappel_planning": "Votre planning de la semaine {{numero}} n'est pas encore soumis : à soumettre avant le {{echeance}}",
     "escalade": "Escalade : le planning de {{nom}} (semaine {{numero}}) attend une décision depuis {{heures}} h ouvrées",
-    "plannings_non_approuves_one": "{{count}} planning de la semaine {{numero}} n'est pas approuvé dans vos réseaux",
-    "plannings_non_approuves_other": "{{count}} plannings de la semaine {{numero}} ne sont pas approuvés dans vos réseaux",
+    "plannings_non_approuves_one": "{{count}} planning de la semaine {{numero}} n'est pas approuvé dans votre pays",
+    "plannings_non_approuves_other": "{{count}} plannings de la semaine {{numero}} ne sont pas approuvés dans votre pays",
     "reouverture_demandee": "{{nom}} demande la réouverture de son planning de la semaine {{numero}}",
     "redaction_rouverte": "{{nom}} a rouvert la rédaction de votre planning de la semaine {{numero}}",
     "centre": "Notifications",
@@ -1737,7 +2016,15 @@
     "rapports_valides_other": "{{count}} rapports validés",
     "rappel_rapport_one": "Rapport de la visite du jour à soumettre avant minuit",
     "rappel_rapport_other": "{{count}} rapports du jour à soumettre avant minuit",
-    "journee_escaladee": "{{nom}}, journée du {{jour}} : à valider par escalade"
+    "journee_escaladee": "{{nom}}, journée du {{jour}} : à valider par escalade",
+    "nonLues_one": "{{count}} non lue",
+    "nonLues_other": "{{count}} non lues",
+    "toutLu": "Tout est lu",
+    "groupes": {
+      "cetteSemaine": "Cette semaine",
+      "semaineDerniere": "La semaine dernière",
+      "plusTot": "Plus tôt"
+    }
   },
   "revision": {
     "demander": "Demander une révision",
@@ -1866,7 +2153,16 @@
     "motifs": {
       "revision": "Après révision",
       "modification": "Modification après approbation"
-    }
+    },
+    "soumiseHeure": "Soumise le {{date}} à {{heure}}",
+    "soumiseCourte": "Soumise le {{date}}, {{heure}}",
+    "decideeCourt": {
+      "approuve": "approuvée le {{date}} par {{par}}",
+      "a_reviser": "révision demandée le {{date}} par {{par}}"
+    },
+    "figee": "chaque soumission crée une version figée",
+    "enAttente": "Une version en attente est examinée par votre superviseur.",
+    "enAttenteSuivie": "Une version en attente est examinée par votre superviseur ; la version {{numero}} reste celle à suivre jusque-là."
   },
   "apresApprobation": {
     "regle": "Planning approuvé. Changer l'heure d'une visite dans sa journée reste libre ; tout autre changement (jour, prospect, lieu, objectif, ajout, retrait) est soumis à votre superviseur.",
@@ -2170,10 +2466,11 @@
     "horsLigne": "Pas de réseau : la pièce est gardée sur le téléphone et partira toute seule au retour du réseau.",
     "tropLourde": "Ce document dépasse 10 Mo.",
     "maximum": "{{n}} pièces jointes au plus : retirez-en une pour en ajouter une autre.",
-    "enAttenteAilleurs": "Annoncée, en attente du fichier"
+    "enAttenteAilleurs": "Annoncée, en attente du fichier",
+    "envoye": "Envoyé"
   },
   "chronologie": {
-    "titre": "Visites précédentes",
+    "titre": "Historique des visites",
     "aucune": "Aucun rapport de visite pour l'instant.",
     "horsLigne": "Sans réseau : la dernière liste lue.",
     "enRetard": "Soumis en retard",
@@ -2181,20 +2478,31 @@
     "plus_one": "Voir la visite plus ancienne",
     "plus_other": "Voir les {{count}} visites plus anciennes",
     "moins": "Voir moins",
-    "journee": "Ouvrir la journée"
+    "journee": "Ouvrir la journée",
+    "sansDetail": "Visite sans détail"
   },
   "indisponibilite": {
     "ouvrir": "Je suis indisponible aujourd'hui",
     "titre": "Indisponibilité imprévue",
-    "aide": "Aucun motif n'est demandé. Les visites de la période sont justifiées d'un coup ; votre superviseur le voit.",
-    "confirmer": "Déclarer l'indisponibilité",
+    "aide": "Aucun motif n’est demandé. Les visites de la période sont justifiées d’un coup ; votre superviseur le voit.",
+    "periode": "Période",
+    "confirmer": "Déclarer l’indisponibilité",
     "declaree": "Indisponibilité déclarée : les visites de la période sont justifiées.",
     "enAttente": "Pas de réseau : l'indisponibilité est gardée sur le téléphone et partira toute seule.",
     "periodes": {
       "journee": "Toute la journée",
       "matin": "Le matin",
-      "apres_midi": "L'après-midi"
-    }
+      "apres_midi": "L’après-midi"
+    },
+    "restantes_one": "{{count}} visite restante",
+    "restantes_other": "{{count}} visites restantes",
+    "concernees_one": "{{count}} visite concernée",
+    "concernees_other": "{{count}} visites concernées",
+    "faitesAucune_one": "{{count}} visite déjà faite : aucune concernée",
+    "faitesAucune_other": "{{count}} visites déjà faites : aucune concernée",
+    "aucuneRestante": "Aucune visite restante",
+    "aucuneConcernee": "Aucune visite concernée",
+    "dejaDeclaree": "Déjà déclarée"
   },
   "preparer": {
     "titre": "Préparer ma visite",
@@ -2312,7 +2620,7 @@
     "titres": {
       "remplacement": "Vous validez en remplacement du superviseur de ce délégué.",
       "escalade": "Journée escaladée : ses rapports attendent depuis plus que le délai du pays. Vous la validez par escalade ; le superviseur garde la main.",
-      "consultation": "Vous consultez cette journée en tant que DM du périmètre : vous pouvez rouvrir un rapport validé, la validation reste au superviseur."
+      "consultation": "Vous consultez cette journée en tant qu'administrateur : vous pouvez rouvrir un rapport validé, la validation reste au superviseur."
     },
     "lot_one": "Valider la journée conforme",
     "lot_other": "Valider les {{count}} journées conformes",
@@ -2349,7 +2657,6 @@
   },
   "chiffres": {
     "semaine": "Semaine du {{debut}} au {{fin}}",
-    "calcule": "Chiffres du {{date}}",
     "precedente": "Semaine précédente",
     "suivante": "Semaine suivante",
     "horsLigne": "Hors connexion : chiffres gardés du {{date}}.",
@@ -2374,15 +2681,12 @@
     "aVenir_other": "{{count}} visites prévues restent à venir : elles ne comptent pas encore.",
     "aJustifier_one": "{{count}} visite passée attend sa justification (Tournée).",
     "aJustifier_other": "{{count}} visites passées attendent leur justification (Tournée).",
-    "rapports": "Rapports",
-    "dansLeDelai": "Soumis dans le délai",
-    "surDus_one": "{{n}} sur {{count}} rapport dû",
-    "surDus_other": "{{n}} sur {{count}} rapports dus",
-    "valides": "Rapports validés",
-    "enRetard": "Rapports en retard",
+    "dansLeDelai": "Dans le délai",
+    "valides": "Validés",
+    "enRetard": "En retard",
     "couverture": "Ma liste cible",
-    "cycle_one": "Sur {{count}} semaine, du {{debut}} au {{fin}}",
-    "cycle_other": "Sur le cycle de {{count}} semaines, du {{debut}} au {{fin}}",
+    "cycle_one": "Cycle d’une semaine, du {{debut}} au {{fin}}",
+    "cycle_other": "Cycle de {{count}} semaines, du {{debut}} au {{fin}}",
     "sansListe": "Aucune liste cible sur cette période.",
     "listeVisitee": "Prospects visités",
     "surCibles": "{{n}} sur {{total}}",
@@ -2393,8 +2697,16 @@
     "jourCourbe": "{{date}} : {{prevues}} prévues, {{effectuees}} faites",
     "ecartPoints_one": "{{signe}}{{count}} pt",
     "ecartPoints_other": "{{signe}}{{count}} pts",
-    "note": "Vos chiffres, sans note ni classement. Les écarts en points comparent à la semaine précédente.",
-    "revenir": "Revenir à la semaine en cours"
+    "revenir": "Revenir à la semaine en cours",
+    "enRetardTitre": "Rapports en retard",
+    "sansNote": "vos chiffres, sans note ni classement",
+    "visitesFaitesTitre": "Visites faites",
+    "rapportsDansLeDelai": "Rapports soumis dans le délai",
+    "validesCompte_one": "{{count}} validé",
+    "validesCompte_other": "{{count}} validés",
+    "aSoumettre": "à soumettre",
+    "parJour": "Visites par jour",
+    "qualite": "Qualité de l’activité"
   },
   "pilotage": {
     "semaine": "Semaine du {{debut}} au {{fin}}",
@@ -2551,7 +2863,7 @@
     "tous": "Afficher aussi les objectifs terminés depuis plus de 90 jours",
     "aucun": "Aucun objectif en cours",
     "aucunGerer": "Fixez un objectif de visites, de couverture des potentiels A et B ou de présentations d'un produit pour un réseau.",
-    "aucunLire": "Le DM du réseau ou l'administrateur pays fixe les objectifs.",
+    "aucunLire": "L'administrateur pays fixe les objectifs.",
     "colonnes": {
       "objectif": "Objectif",
       "periode": "Période",
@@ -2614,26 +2926,40 @@
     "leJour": "le {{jour}} à {{heure}}",
     "enAttente": "Envois en attente",
     "ligneJamais": "Pas encore synchronisé",
-    "ligneAide": "Ouvre le profil, pour synchroniser ou envoyer maintenant",
+    "ligneAide": "Ouvre les envois en attente",
     "garde": {
       "titre": "Synchronisation nécessaire",
-      "aide_one": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jour sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
-      "aide_other": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jours sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
-      "attente_one": "{{count}} envoi en attente est gardé sur le téléphone : il partira à la synchronisation.",
-      "attente_other": "{{count}} envois en attente sont gardés sur le téléphone : ils partiront à la synchronisation."
+      "aide_telephone_one": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jour sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
+      "aide_telephone_other": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jours sans synchronisation, les données du téléphone sont masquées. Trouvez du réseau, puis synchronisez.",
+      "aide_tablette_one": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jour sans synchronisation, les données de la tablette sont masquées. Trouvez du réseau, puis synchronisez.",
+      "aide_tablette_other": "Dernière synchronisation {{quand}}. Au-delà de {{count}} jours sans synchronisation, les données de la tablette sont masquées. Trouvez du réseau, puis synchronisez.",
+      "attenteSuite_one": "envoi en attente est gardé sur le téléphone : il partira à la synchronisation.",
+      "attenteSuite_other": "envois en attente sont gardés sur le téléphone : ils partiront à la synchronisation.",
+      "attenteTablette": "Les envois en attente sont gardés sur la tablette : ils partiront à la synchronisation.",
+      "rapports": "Rapports gardés"
     },
     "ligneHeure": "Synchronisé à {{heure}}",
-    "ligneJour": "Synchronisé le {{jour}}"
+    "ligneJour": "Synchronisé le {{jour}}",
+    "aideTablette": "La tablette garde votre semaine, la suivante, votre liste cible et les trois dernières visites de chaque prospect : vous pouvez travailler sans réseau.",
+    "rapportsCourt": "Rapports prêts sans réseau"
   },
   "conflits": {
     "visiteGardee": "Cette visite a changé ailleurs entre-temps : choisissez la version à garder (profil ou semaine, « envois en attente »).",
     "autre": "une autre valeur",
-    "vide": "(vide)",
+    "vide": "Non renseignée",
+    "rienRemplace": "Rien n’a été remplacé :",
+    "choisir": "choisissez la version à garder.",
+    "ceTelephone": "ce téléphone",
+    "cetteTablette": "cette tablette",
+    "surCeTelephone": "Sur ce téléphone",
+    "surCetteTablette": "Sur cette tablette",
+    "surLeServeur": "Sur le serveur",
+    "visiteDu": "visite du {{date}}",
     "telephone": "Sur ce téléphone",
     "serveur": "Sur le serveur",
     "aucuneDifference": "Les deux versions sont identiques.",
     "rapportTitre": "Ce rapport a changé ailleurs",
-    "rapportAide": "Votre saisie, restée sur ce téléphone, et le rapport enregistré entre-temps sur le serveur diffèrent. Rien n'a été remplacé : choisissez la version à garder.",
+    "rapportAide": "Votre saisie, restée sur {{appareil}}, et le rapport enregistré entre-temps sur le serveur diffèrent.",
     "decision": "Votre superviseur a {{statut}} ce rapport entre-temps : sa décision l'emporte. Voici ce qui restait sur ce téléphone, non envoyé.",
     "statuts": {
       "soumis": "reçu",
@@ -2684,7 +3010,9 @@
       "rapports_valides": "Rapports validés",
       "rappel_rapport": "Rappel : rapport à soumettre",
       "journee_escaladee": "Journée remontée (escalade)"
-    }
+    },
+    "titreTablette": "Notifications sur cette tablette",
+    "aideIci": "Choisissez ce qui arrive en notification. Tout reste visible ici."
   },
   "audit": {
     "titre": "Journal d'audit",

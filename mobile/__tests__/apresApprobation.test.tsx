@@ -22,7 +22,12 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
 }));
 jest.mock('../src/Ecran', () => ({
-  Ecran: ({ children }: { children: ReactNode }) => children,
+  Ecran: ({ children, pied }: { children: ReactNode; pied?: ReactNode }) => (
+    <>
+      {children}
+      {pied}
+    </>
+  ),
 }));
 // Aujourd'hui : le mardi 13 octobre ; le lundi 12 est passé, donc verrouillé.
 jest.mock('../src/semaineLocale', () => ({
@@ -138,11 +143,19 @@ beforeEach(async () => {
   await i18n.changeLanguage('fr');
 });
 
+/** 1.4.3 : la semaine s'ouvre sur aujourd'hui ; la visite est le mercredi. */
+async function choisirJour(debut: RegExp) {
+  await fireEvent.press(await screen.findByRole('tab', { name: debut }));
+}
+
 test('PLN-015 CA1 : changer l’heure reste libre, le planning reste approuvé', async () => {
   const modifier = await rendre(APPROUVEE);
   expect(await screen.findByText(/Changer l'heure reste libre/)).toBeTruthy();
   // Une journée à venir propose encore l'ajout ; le lundi passé, non.
-  expect(screen.getAllByText('Ajouter une visite')).toHaveLength(4);
+  expect(screen.getByText('Ajouter une visite')).toBeTruthy();
+  await choisirJour(/^Lundi 12 octobre/);
+  expect(screen.queryByText('Ajouter une visite')).toBeNull();
+  await choisirJour(/^Mercredi 14 octobre/);
   await fireEvent.press(screen.getByText('Dr Awa FICTIF'));
   expect(await screen.findByText(/Planning approuvé\. Changer l'heure/)).toBeTruthy();
   // Le lundi passé n'est plus proposé comme jour de la visite.
@@ -158,6 +171,7 @@ test('PLN-015 CA1 : changer l’heure reste libre, le planning reste approuvé',
 
 test('PLN-015 CA2 : tout autre changement se dit soumis au superviseur', async () => {
   await rendre(APPROUVEE);
+  await choisirJour(/^Mercredi 14 octobre/);
   await fireEvent.press(await screen.findByText('Dr Awa FICTIF'));
   fireEvent.changeText(await screen.findByDisplayValue('Vasculor'), 'Cardiolor');
   expect(await screen.findByText(/Ce changement sera soumis à votre superviseur/)).toBeTruthy();
@@ -190,6 +204,7 @@ test('PLN-015 CA2 : pendant la décision, la visite concernée est « en attente
     },
   });
   expect(await screen.findByText(/Modification soumise : elle attend la décision/)).toBeTruthy();
+  await choisirJour(/^Mercredi 14 octobre/);
   expect(screen.getByText("En attente d'approbation")).toBeTruthy();
   expect(screen.getByText('Retrait en attente : jeu. 15 11:00 · Moussa FICTIF')).toBeTruthy();
   expect(screen.queryByText('Ajouter une visite')).toBeNull();

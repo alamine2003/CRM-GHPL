@@ -32,3 +32,10 @@ def _cache_vide():
     cache.clear()
     yield
     cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def _double_auth_imposee(settings):
+    """Les tests vérifient la double authentification imposée, telle qu'elle reviendra en
+    version 2 (suspendue par défaut depuis 1.1.2) ; un test peut la remettre à False."""
+    settings.INNOV_DOUBLE_AUTH_OBLIGATOIRE = True

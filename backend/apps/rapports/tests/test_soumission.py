@@ -107,3 +107,11 @@ def test_rpt010_rejeu_du_meme_envoi_sans_seconde_version(monde, effectuee, porte
     assert (r.json()["en_retard"], VersionRapport.objects.count()) == (False, 1)
     r = soumettre(client_de(monde["deleg.sn"]), effectuee, "2026-10-14T08:01:00Z")
     assert (r.status_code, r.json()["code"]) == (409, "rapport_non_modifiable")
+
+
+def test_off004_le_rapport_dit_quand_il_a_ete_enregistre(monde, effectuee, portefeuille):  # noqa: F811
+    """Maquette 1.5.8 : l'écran de conflit place l'heure de la version du serveur."""
+    with freeze_time("2026-10-13 10:40"):
+        c = rediger(monde, effectuee, portefeuille[:1])
+        corps = c.get(url(effectuee)).json()
+    assert corps["modifie_le"].startswith("2026-10-13T10:40")

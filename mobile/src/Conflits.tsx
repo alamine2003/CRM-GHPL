@@ -7,10 +7,11 @@
 import type { Rapport, Visite } from '@innov/api-client';
 import { ErreurApi } from '@innov/api-client';
 import type { TFunction } from 'i18next';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { SaisieLocale } from './BrouillonRapport';
-import { Alerte, Bouton, Carte, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Gras, Texte, usePalette } from './composants';
 import { police } from './polices';
 
 /** Ce que le serveur dit d'un conflit sur une visite : les champs, et sa valeur de chacun. */
@@ -81,6 +82,8 @@ export function differencesRapport(
   telephone: SaisieLocale,
   rapport: Rapport,
   t: TFunction,
+  /** Aussi les champs identiques et renseignés (maquette 1.5.8, tablette). */
+  tout = false,
 ): Difference[] {
   const produits = (s: Pick<Rapport, 'presentations'>) =>
     s.presentations
@@ -89,7 +92,7 @@ export function differencesRapport(
       .join(', ');
   const lignes: Difference[] = [];
   const ajouter = (cle: string, a: string, b: string) => {
-    if (a.trim() !== b.trim())
+    if (a.trim() !== b.trim() || (tout && a.trim()))
       lignes.push({
         libelle: t(`conflits.champs.${cle}`),
         telephone: a.trim() || t('conflits.vide'),
@@ -119,7 +122,8 @@ export function differencesRapport(
   for (const d of rapport.definitions) {
     const a = telephone.champs[d.code];
     const b = champs[d.code];
-    if (JSON.stringify(a ?? null) !== JSON.stringify(b ?? null))
+    const renseigne = a != null && a !== '';
+    if (JSON.stringify(a ?? null) !== JSON.stringify(b ?? null) || (tout && renseigne))
       lignes.push({
         libelle: d.libelle,
         telephone: a == null || a === '' ? t('conflits.vide') : String(a),
@@ -157,42 +161,155 @@ export function TableauDifferences({ lignes }: { lignes: Difference[] }) {
   );
 }
 
+/** « 10:12 », à l'heure du pays. */
+function heureDe(iso: string | null | undefined, fuseau: string | undefined) {
+  if (!iso) return null;
+  try {
+    return new Intl.DateTimeFormat('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+      timeZone: fuseau,
+    }).format(new Date(iso));
+  } catch {
+    return new Date(iso).toTimeString().slice(0, 5);
+  }
+}
+
+/** Une version du rapport (maquette 1.5.8) : d'où elle vient, à quelle heure, ses champs, son choix. */
+function VersionRapport({
+  titre,
+  heure,
+  lignes,
+  choisie,
+  etire,
+  pied,
+}: {
+  titre: string;
+  heure: string | null;
+  lignes: { libelle: string; valeur: string }[];
+  /** La version mise en avant : filet marine. */
+  choisie: boolean;
+  /** Tablette : les deux versions ont la même hauteur, le choix en bas. */
+  etire: boolean;
+  pied: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const p = usePalette();
+  return (
+    <Carte
+      style={{
+        ...styles.version,
+        ...(etire ? { flex: 1, minWidth: 0 } : null),
+        ...(choisie ? { borderColor: p.accentPlein } : null),
+      }}
+    >
+      <View style={styles.enteteVersion}>
+        <Texte variante="sousTitre" accessibilityRole="header">
+          {titre}
+        </Texte>
+        {heure ? <Texte variante="libelle">{heure}</Texte> : null}
+      </View>
+      {lignes.map((l) => (
+        <View key={l.libelle} style={{ gap: 2 }}>
+          <Texte variante="libelle">{l.libelle}</Texte>
+          <Text
+            style={[
+              styles.valeurVersion,
+              { color: l.valeur === t('conflits.vide') ? p.texteDiscret : p.texte },
+            ]}
+          >
+            {l.valeur}
+          </Text>
+        </View>
+      ))}
+      {etire ? <View style={{ flex: 1 }} /> : null}
+      {pied}
+    </Carte>
+  );
+}
+
 /**
  * Le rapport a changé ailleurs pendant que le téléphone gardait une saisie (RG-053), ou le
- * superviseur a décidé entre-temps (RG-050) : les deux versions, et le choix.
+ * superviseur a décidé entre-temps (RG-050) : les deux versions, côte à côte sur la tablette,
+ * l'une sous l'autre sur le téléphone, et le choix (maquette 1.5.8).
  */
 export function ConflitRapport({
   rapport,
   telephone,
+  telephoneLe,
+  fuseau,
+  tablette,
   surGarderTelephone,
   surGarderServeur,
 }: {
   rapport: Rapport;
   telephone: SaisieLocale;
+  /** Quand la saisie a été gardée sur l'appareil. */
+  telephoneLe?: string | null;
+  fuseau?: string;
+  tablette?: boolean;
   surGarderTelephone: () => void;
   surGarderServeur: () => void;
 }) {
   const { t } = useTranslation();
-  const p = usePalette();
   const decision = !['brouillon', 'a_corriger', 'rouvert'].includes(rapport.statut);
+  const appareil = t(tablette ? 'conflits.cetteTablette' : 'conflits.ceTelephone');
+  // Téléphone : ce qui diffère ; tablette : aussi ce qui est identique, pour se repérer.
+  const lignes = differencesRapport(telephone, rapport, t, !!tablette);
+  const sienne = lignes.map((l) => ({ libelle: l.libelle, valeur: l.telephone }));
+  const serveur = lignes.map((l) => ({ libelle: l.libelle, valeur: l.serveur }));
+  const pasDeDifference = !lignes.length;
   return (
-    <Carte style={{ gap: 12, borderLeftWidth: 3, borderLeftColor: p.attention }}>
-      <Texte variante="sousTitre">{t('conflits.rapportTitre')}</Texte>
-      {decision ? (
-        <Alerte type="attention">
-          {t('conflits.decision', { statut: t(`conflits.statuts.${rapport.statut}`) })}
-        </Alerte>
-      ) : (
-        <Texte>{t('conflits.rapportAide')}</Texte>
-      )}
-      <TableauDifferences lignes={differencesRapport(telephone, rapport, t)} />
-      {!decision && <Bouton libelle={t('conflits.garderTelephone')} onPress={surGarderTelephone} />}
-      <Bouton
-        secondaire
-        libelle={t(decision ? 'conflits.abandonnerTelephone' : 'conflits.garderServeur')}
-        onPress={surGarderServeur}
-      />
-    </Carte>
+    <View style={{ gap: tablette ? 18 : 14 }}>
+      <Alerte type="attention">
+        {decision ? (
+          t('conflits.decision', { statut: t(`conflits.statuts.${rapport.statut}`) })
+        ) : (
+          <>
+            {t('conflits.rapportAide', { appareil })} <Gras>{t('conflits.rienRemplace')}</Gras>{' '}
+            {t('conflits.choisir')}
+          </>
+        )}
+      </Alerte>
+      {pasDeDifference ? <Texte variante="discret">{t('conflits.aucuneDifference')}</Texte> : null}
+      <View style={tablette ? styles.cote : { gap: 14 }}>
+        <VersionRapport
+          titre={t(tablette ? 'conflits.surCetteTablette' : 'conflits.surCeTelephone')}
+          heure={heureDe(telephoneLe, fuseau)}
+          lignes={sienne}
+          choisie={!decision}
+          etire={!!tablette}
+          pied={
+            decision ? (
+              <Bouton
+                variante="contour"
+                libelle={t('conflits.abandonnerTelephone')}
+                onPress={surGarderServeur}
+              />
+            ) : (
+              <Bouton libelle={t('conflits.garderTelephone')} onPress={surGarderTelephone} />
+            )
+          }
+        />
+        <VersionRapport
+          titre={t('conflits.surLeServeur')}
+          heure={heureDe(rapport.modifie_le, fuseau)}
+          lignes={serveur}
+          choisie={false}
+          etire={!!tablette}
+          pied={
+            decision ? null : (
+              <Bouton
+                variante="contour"
+                libelle={t('conflits.garderServeur')}
+                onPress={surGarderServeur}
+              />
+            )
+          }
+        />
+      </View>
+    </View>
   );
 }
 
@@ -201,4 +318,8 @@ const styles = StyleSheet.create({
   libelle: { fontFamily: police.texteFort, fontSize: 14 },
   valeur: { fontFamily: police.texte, fontSize: 14, lineHeight: 20 },
   ou: { fontFamily: police.texte, fontSize: 13 },
+  version: { gap: 12, borderWidth: 1 },
+  enteteVersion: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  valeurVersion: { fontFamily: police.texte, fontSize: 15, lineHeight: 21 },
+  cote: { flexDirection: 'row', gap: 16, alignItems: 'stretch' },
 });

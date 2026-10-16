@@ -336,7 +336,9 @@ describe('0.6.2 : consultation d’une journée par le superviseur', () => {
     rendre({ ...JOURNEE, mode: 'consultation', visites } as unknown as Journee);
     expect(await screen.findByText(/Rouvert le .* par Awa FICTIVE/)).toBeInTheDocument();
     expect(screen.getByText('« Échantillons à recompter. »')).toBeInTheDocument();
-    expect(screen.getByText(/Vous consultez cette journée en tant que DM/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Vous consultez cette journée en tant qu'administrateur/),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Valider la journée' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Consulter la semaine' })).toBeNull();
   });

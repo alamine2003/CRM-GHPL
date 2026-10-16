@@ -11,14 +11,14 @@ Règles retenues :
 - 23.A [D, 7 octobre 2026] : le lot ne prend que les journées « conformes », sans rapport
   attendu ni horodatage douteux (RPT-013 CA1, RG-035).
 - [H] Escalade : un rapport soumis qui attend depuis plus que le délai d'escalade du pays
-  (`delai_escalade_heures_ouvrees`, celui des plannings, PLN-016) ouvre sa journée au DM du
-  périmètre ; le superviseur garde la main.
+  (`delai_escalade_heures_ouvrees`, celui des plannings, PLN-016) ouvre sa journée à
+  l'administrateur pays (1.3.0, à la place du DM) ; le superviseur garde la main.
 
 Une journée validée est figée : son classement de conformité ne bouge plus (VIS-010 CA3) et
 elle quitte « À traiter ». Valider le dernier rapport d'une journée complète la valide aussi.
 
 Réouverture (RPT-016, 0.6.6) : un rapport validé se rouvre avec un motif ; par le responsable
-(ou son remplaçant) jusqu'à 30 jours après la validation, par le DM du périmètre au-delà
+(ou son remplaçant) jusqu'à 30 jours après la validation, par l'administrateur pays au-delà
 (CA1). [D, 8 octobre 2026, 32.A] Sa journée revient dans « À traiter » jusqu'à la nouvelle
 validation ; son classement de conformité, lui, reste figé : seules les visites le fondent.
 """
@@ -82,26 +82,27 @@ def en_escalade(planning: Planning, jour: date, maintenant=None) -> bool:
 
 def mode_pour(utilisateur, planning: Planning, jour: date) -> str | None:
     """Qui peut valider cette journée, et à quel titre : `direct` (responsable du poste),
-    `remplacement` (son remplaçant daté) ou `escalade` (DM du périmètre, journée en retard)."""
-    from apps.planning.echeances import dms_du_planning
+    `remplacement` (son remplaçant daté) ou `escalade` (administrateurs, journée en retard)."""
+    from apps.planning.echeances import recours_du_planning
 
     mode = mode_de_decision(utilisateur, planning)
     if mode in (ModeDecision.DIRECT, ModeDecision.REMPLACEMENT):
         return mode
-    if utilisateur.pk in dms_du_planning(planning) and en_escalade(planning, jour):
+    if utilisateur.pk in recours_du_planning(planning) and en_escalade(planning, jour):
         return ModeDecision.ESCALADE
     return None
 
 
-#: RPT-016 : le DM du périmètre lit une journée hors escalade, pour en rouvrir un rapport.
+#: RPT-016 : l'administrateur (1.3.0, à la place du DM) lit une journée hors escalade, pour
+#: en rouvrir un rapport.
 CONSULTATION = "consultation"
 
 
 def planning_du_jour(utilisateur, pays, delegue_id, jour: date,
                      consultation: bool = False) -> tuple[Planning, str]:  # fmt: skip
     """Le planning de la journée et le titre de l'utilisateur ; ailleurs, la journée n'existe
-    pas pour lui (404). En `consultation`, le DM du périmètre la lit aussi."""
-    from apps.planning.echeances import dms_du_planning
+    pas pour lui (404). En `consultation`, l'administrateur la lit aussi."""
+    from apps.planning.echeances import recours_du_planning
 
     planning = (
         Planning.objects.filter(pays=pays, delegue_id=delegue_id, semaine=lundi(jour))
@@ -110,7 +111,7 @@ def planning_du_jour(utilisateur, pays, delegue_id, jour: date,
     )
     mode = mode_pour(utilisateur, planning, jour) if planning is not None else None
     if mode is None and consultation and planning is not None:
-        if utilisateur.pk in dms_du_planning(planning):
+        if utilisateur.pk in recours_du_planning(planning):
             mode = CONSULTATION
     if mode is None:
         raise Http404
@@ -280,18 +281,18 @@ def demander_correction(rapport: Rapport, par, commentaire: str, champs: list[st
     return rapport
 
 
-#: RPT-016 CA1 : au-delà, seul le DM du périmètre rouvre un rapport validé.
+#: RPT-016 CA1 : au-delà, seul l'administrateur pays rouvre un rapport validé.
 DELAI_REOUVERTURE = timedelta(days=30)
 
 
 def peut_rouvrir(utilisateur, rapport: Rapport, titre: str) -> bool:
-    """Le responsable (ou son remplaçant) jusqu'à 30 jours après la validation ; le DM du
-    périmètre, toujours."""
-    from apps.planning.echeances import dms_du_planning
+    """Le responsable (ou son remplaçant) jusqu'à 30 jours après la validation ;
+    l'administrateur pays (1.3.0, à la place du DM), toujours."""
+    from apps.planning.echeances import recours_du_planning
 
     if rapport.statut != StatutRapport.VALIDE or rapport.valide_le is None:
         return False
-    if utilisateur.pk in dms_du_planning(rapport.visite.planning):
+    if utilisateur.pk in recours_du_planning(rapport.visite.planning):
         return True
     recent = timezone.now() - rapport.valide_le <= DELAI_REOUVERTURE
     return titre in (ModeDecision.DIRECT, ModeDecision.REMPLACEMENT) and recent
@@ -313,7 +314,8 @@ def rouvrir(rapport: Rapport, par, motif: str) -> Rapport:
                            status.HTTP_409_CONFLICT)  # fmt: skip
     if not peut_rouvrir(par, rapport, titre):
         raise ErreurMetier("delai_reouverture",
-                           _("Validé il y a plus de 30 jours : seul le DM peut le rouvrir."),
+                           _("Validé il y a plus de 30 jours : seul l'administrateur peut "
+                             "le rouvrir."),
                            status.HTTP_403_FORBIDDEN)  # fmt: skip
     texte = (motif or "").strip()
     if not texte:

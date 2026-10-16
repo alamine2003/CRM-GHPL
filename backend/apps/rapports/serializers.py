@@ -261,7 +261,7 @@ class RapportSerializer(serializers.ModelSerializer):
                   "presentations", "resultat", "resultat_obtenu", "resume", "prochaine_action",
                   "prochaine_action_type", "prochaine_action_echeance", "visite_proposee",
                   "remises", "champs", "definitions", "soumis_le", "echeance", "en_retard",
-                  "horodatage_douteux", "manquants",
+                  "horodatage_douteux", "modifie_le", "manquants",
                   "produits_proposes", "produit_autre_autorise", "resultats_proposes",
                   "articles_proposes", "types_action_proposes", "action_precedente",
                   "pieces_jointes"]  # fmt: skip

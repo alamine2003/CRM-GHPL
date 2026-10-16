@@ -4,10 +4,10 @@
   du pays, au délégué dont la semaine suivante n'est pas encore soumise, jusqu'à la fermeture
   du lundi 0 h (décision du 6 octobre 2026).
 - Escalade (PLN-016, RG-019) : un planning soumis sans décision depuis le délai du pays, compté
-  en heures ouvrées, va au DM du périmètre, qui peut alors décider (mode `escalade`) ; un
+  en heures ouvrées, va à l'administrateur pays, qui peut alors décider (mode `escalade`) ; un
   planning fermé n'escalade plus : seule sa réouverture le remet en jeu.
 - Alerte du lundi (RG-019) : à la fermeture du lundi 0 h, les plannings de la semaine qui ne
-  sont pas approuvés sont signalés au DM.
+  sont pas approuvés sont signalés à l'administrateur.
 
 - Exécution (cycle 0.4, prd.md §17.1) : le premier jour de sa semaine, un planning approuvé
   passe « en cours » ; la semaine finie, « terminé ».
@@ -29,7 +29,7 @@ from .calendrier import feries, lundi
 from .etats import StatutPlanning
 from .models import Planning
 
-#: Statuts d'une semaine qui n'attend plus rien du DM le lundi matin.
+#: Statuts d'une semaine qui n'attend plus rien de l'administrateur le lundi matin.
 DECIDES = (StatutPlanning.APPROUVE, StatutPlanning.EN_COURS, StatutPlanning.TERMINE,
            StatutPlanning.ANNULE)  # fmt: skip
 
@@ -120,19 +120,17 @@ def rappels(pays: Pays, maintenant: datetime) -> int:
     return envoyes
 
 
-def dms_du_planning(planning: Planning, jour: date | None = None) -> set:
-    """DM du périmètre d'un planning : ceux dont les réseaux couvrent ses postes (PLN-016)."""
-    from apps.organisation.services import dms_des_reseaux
+def recours_du_planning(planning: Planning, jour: date | None = None) -> set:
+    """Qui reçoit l'escalade d'un planning (PLN-016) : 1.3.0 [D], à la place du DM, les
+    administrateurs du pays ou, à défaut, du siège."""
+    from apps.organisation.services import recours_du_pays
 
-    from .services import postes_de_la_semaine
-
-    reseaux = {r.pk for p in postes_de_la_semaine(planning) for r in p.reseaux.all()}
-    return dms_des_reseaux(planning.pays, reseaux, jour) - {planning.delegue_id}
+    return recours_du_pays(planning.pays, jour) - {planning.delegue_id}
 
 
 @transaction.atomic
 def escalader(planning: Planning, maintenant: datetime) -> set:
-    """PLN-016 CA1 : la version en attente est marquée escaladée et le DM du périmètre est
+    """PLN-016 CA1 : la version en attente est marquée escaladée et l'administrateur pays est
     notifié ; il décidera en mode `escalade` (CA2)."""
     from apps.identite.models import Utilisateur
     from apps.notifications.models import TypeNotification
@@ -143,7 +141,7 @@ def escalader(planning: Planning, maintenant: datetime) -> set:
     version = planning.versions.first()
     version.escalade_le = maintenant
     version.save(update_fields=["escalade_le", "modifie_le"])
-    dms = dms_du_planning(planning, _aujourdhui(planning.pays, maintenant))
+    dms = recours_du_planning(planning, _aujourdhui(planning.pays, maintenant))
     delai = valeur_parametre(planning.pays, "delai_escalade_heures_ouvrees")
     for dm in Utilisateur.objects.filter(pk__in=dms):
         notifier(dm, TypeNotification.ESCALADE, planning.pays, **_semaine_notifiee(planning),
@@ -175,12 +173,13 @@ def escalades(pays: Pays, maintenant: datetime) -> int:
 
 
 def alertes_non_approuves(pays: Pays, maintenant: datetime) -> int:
-    """RG-019 : à la fermeture du lundi 0 h (par défaut), chaque DM apprend combien de
-    plannings de la semaine, dans ses réseaux, ne sont pas approuvés — absents compris."""
+    """RG-019 : à la fermeture du lundi 0 h (par défaut), les administrateurs (1.3.0, à la
+    place du DM) apprennent combien de plannings de la semaine ne sont pas approuvés — absents
+    compris."""
     from apps.identite.models import Utilisateur
     from apps.notifications.models import TypeNotification
     from apps.notifications.services import notifier_une_fois
-    from apps.organisation.services import dms_des_reseaux
+    from apps.organisation.services import recours_du_pays
 
     semaine = lundi(_aujourdhui(pays, maintenant))
     if maintenant < _moment(pays, semaine, "alerte_planning_non_approuve"):
@@ -191,10 +190,11 @@ def alertes_non_approuves(pays: Pays, maintenant: datetime) -> int:
         )
     )
     par_dm: dict = {}
-    for delegue, reseaux in _occupants(pays, semaine).items():
+    recours = recours_du_pays(pays, semaine)
+    for delegue in _occupants(pays, semaine):
         if delegue.pk in decides:
             continue
-        for dm in dms_des_reseaux(pays, reseaux, semaine) - {delegue.pk}:
+        for dm in recours - {delegue.pk}:
             par_dm.setdefault(dm, []).append(delegue)
     envoyes = 0
     for dm in Utilisateur.objects.filter(pk__in=par_dm):

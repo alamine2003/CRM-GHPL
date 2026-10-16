@@ -2,7 +2,7 @@ import type { ClientApi } from '@innov/api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { envoyerAttente, lireAttente } from '../src/Brouillons';
 import i18n from '../src/i18n';
-import { ProposerCorrection } from '../src/Proposition';
+import { FormulaireCorrection } from '../src/Proposition';
 import { ContexteSession, type Session } from '../src/session';
 
 // OFF-002 (0.8.2) : une proposition de mise à jour faite sans réseau attend dans la file, avec
@@ -16,6 +16,15 @@ jest.mock('../src/baseLocale', () => ({
   oublier: jest.fn(async (cle: string) => mockMemoire.delete(cle)),
 }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'id-du-telephone' }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn() }) }));
+jest.mock('../src/Ecran', () => ({
+  Ecran: ({ children, pied }: { children: React.ReactNode; pied?: React.ReactNode }) => (
+    <>
+      {children}
+      {pied}
+    </>
+  ),
+}));
 jest.mock('expo-file-system/legacy', () => ({}));
 
 test('OFF-002 CA1 : sans réseau, la proposition attend avec son identifiant', async () => {
@@ -28,12 +37,17 @@ test('OFF-002 CA1 : sans réseau, la proposition attend avec son identifiant', a
     etat: { statut: 'connecte', perimetre: { actions: ['propositions.creer'] } },
     client: { propositions: { creer } } as unknown as ClientApi,
   } as unknown as Session;
+  const surEnvoyee = jest.fn();
   await render(
     <ContexteSession.Provider value={session}>
-      <ProposerCorrection objet="prospect" id="p1" actuels={{ telephone_mobile: '' }} />
+      <FormulaireCorrection
+        objet="prospect"
+        id="p1"
+        actuels={{ telephone_mobile: '' }}
+        surEnvoyee={surEnvoyee}
+      />
     </ContexteSession.Provider>,
   );
-  fireEvent.press(screen.getByRole('button', { name: 'Proposer une correction' }));
   fireEvent.changeText(await screen.findByLabelText('Téléphone mobile'), '77 999 88 77');
   await waitFor(() =>
     expect(
@@ -43,7 +57,8 @@ test('OFF-002 CA1 : sans réseau, la proposition attend avec son identifiant', a
   );
   fireEvent.press(screen.getByRole('button', { name: 'Envoyer la proposition' }));
   await waitFor(() => expect(creer).toHaveBeenCalledTimes(1));
-  expect(await screen.findByText(/votre proposition est gardée sur le téléphone/)).toBeTruthy();
+  // La fiche l'annonce : gardée sur le téléphone, elle partira au retour du réseau.
+  await waitFor(() => expect(surEnvoyee).toHaveBeenCalledWith('attente'));
   const [envoi] = await lireAttente();
   expect(envoi).toMatchObject({ id: 'id-du-telephone', type: 'proposition' });
   // Au retour du réseau, elle part avec le même identifiant, une seule fois.

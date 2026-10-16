@@ -51,7 +51,9 @@ def test_rpt016_ca1_le_superviseur_rouvre_jusqu_a_30_jours(monde, effectuee, por
             "rouvert", "Le résultat ne correspond pas à l'échange.")  # fmt: skip
 
 
-def test_rpt016_ca1_a_31_jours_seul_le_dm_rouvre(monde, terrain, effectuee, portefeuille):
+def test_rpt016_ca1_a_31_jours_seul_l_administrateur_rouvre(
+    monde, terrain, effectuee, portefeuille
+):
     rapport = valide(monde, effectuee, portefeuille[:1])
     dm_du_perimetre(monde, terrain)
     with freeze_time("2026-11-14 09:00"):  # 31 jours après la validation
@@ -60,10 +62,10 @@ def test_rpt016_ca1_a_31_jours_seul_le_dm_rouvre(monde, terrain, effectuee, port
         # La journée le dit : le bouton n'est plus proposé au superviseur…
         j = client_de(monde["sup.sn"]).get("/api/v1/rapports/journee/", journee(monde)).json()
         assert j["visites"][0]["rapport"]["rouvrable"] is False
-        # … mais l'est au DM, qui lit la journée en consultation.
-        j = client_de(monde["dm.sn"]).get("/api/v1/rapports/journee/", journee(monde)).json()
+        # … mais l'est à l'administrateur pays (1.3.0), qui lit la journée en consultation.
+        j = client_de(monde["admin.sn"]).get("/api/v1/rapports/journee/", journee(monde)).json()
         assert (j["mode"], j["visites"][0]["rapport"]["rouvrable"]) == ("consultation", True)
-        assert rouvrir(monde["dm.sn"], rapport).status_code == 200
+        assert rouvrir(monde["admin.sn"], rapport).status_code == 200
 
 
 def test_rpt016_motif_obligatoire_et_rapport_valide_seulement(monde, effectuee, portefeuille):
@@ -92,11 +94,13 @@ def test_rpt016_ca2_auditee_et_notifiee(monde, terrain, effectuee, portefeuille)
         "visite": str(effectuee.pk), "date": "2026-10-13", "nom": "Nicolas Sn"})  # fmt: skip
 
 
-def test_31a_quand_le_dm_rouvre_le_superviseur_est_prevenu(monde, terrain, effectuee, portefeuille):
+def test_31a_quand_l_administrateur_rouvre_le_superviseur_est_prevenu(
+    monde, terrain, effectuee, portefeuille
+):
     rapport = valide(monde, effectuee, portefeuille[:1])
     dm_du_perimetre(monde, terrain)
     with freeze_time("2026-11-20 08:00"):
-        assert rouvrir(monde["dm.sn"], rapport).status_code == 200
+        assert rouvrir(monde["admin.sn"], rapport).status_code == 200
     destinataires = set(Notification.objects.filter(type="rapport_rouvert")
                         .values_list("destinataire", flat=True))  # fmt: skip
     assert destinataires == {monde["deleg.sn"].pk, monde["sup.sn"].pk}

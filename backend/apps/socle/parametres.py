@@ -257,7 +257,7 @@ CATALOGUE: dict[str, DefinitionParametre] = {
         ),
         DefinitionParametre(
             "alerte_planning_non_approuve",
-            "Alerte au DM des plannings non approuvés, jour de la semaine (RG-019)",
+            "Alerte à l'administrateur des plannings non approuvés, jour de la semaine (RG-019)",
             {"jour": 1, "heure": "00:00"},
             _echeance,
         ),
