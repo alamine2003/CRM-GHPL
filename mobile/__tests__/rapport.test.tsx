@@ -96,6 +96,7 @@ const BROUILLON: Rapport = {
   echeance: '2099-01-01T00:00:00Z',
   en_retard: false,
   horodatage_douteux: false,
+  modifie_le: '2026-10-12T10:40:00.000Z',
   manquants: ['produits', 'resultat', 'resume', 'prochaine_action', 'patients'],
   produit_autre_autorise: false,
   articles_proposes: [{ id: 'stylo', libelle: 'Stylo' }],

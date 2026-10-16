@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.5.7
+  version: 1.5.8
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -11212,6 +11212,10 @@ components:
         horodatage_douteux:
           type: boolean
           readOnly: true
+        modifie_le:
+          type: string
+          format: date-time
+          readOnly: true
         manquants:
           type: array
           items:
@@ -11263,6 +11267,7 @@ components:
       - id
       - justification
       - manquants
+      - modifie_le
       - objectif_prevu
       - pieces_jointes
       - presentations

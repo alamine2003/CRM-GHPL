@@ -828,6 +828,13 @@ Mise en œuvre (0.3.9) :
   - L'écran sert aussi à modifier une activité (« Modifier l'activité », « Retirer cette activité » sous les champs).
   - Un déplacement demande « Qui l'a décidé ? » (justifié par moi, demandé par mon superviseur) en deux segments ; un commando, un déplacement ou un accompagnement exige une explication, une absence « Autre » un motif, comme avant.
   - La logique ne change pas : brouillon gardé à chaque frappe (PLN-007), identifiant tiré sur le téléphone, envoi mis dans la file sans réseau.
+- **1.5.8** : écran **Ce rapport a changé ailleurs** (OFF-004, RG-050 à RG-053 : titre « Ce rapport a changé ailleurs » avec le prospect et le jour de la visite ; encadré ambre « Votre saisie, restée sur ce téléphone, et le rapport enregistré entre-temps sur le serveur diffèrent. **Rien n'a été remplacé :** choisissez la version à garder » ; deux cartes, « Sur ce téléphone » (filet marine, « Garder ma version ») et « Sur le serveur » (« Garder la version du serveur »), chacune avec l'heure de sa version et ses champs ; tablette : les deux cartes côte à côte, de même hauteur, le choix en bas).
+- **Ce que la maquette ne dessine pas sur le conflit** [D, délégation, 1.5.8] :
+  - Le téléphone ne montre que les champs qui diffèrent ; la tablette montre aussi les champs identiques et renseignés, pour se repérer, comme la maquette (« Résultat obtenu » des deux côtés).
+  - Un champ vide se lit « Non renseignée », en gris, des deux côtés (aussi pour une visite en conflit dans les envois en attente).
+  - Quand le superviseur a décidé entre-temps (RG-050), sa décision l'emporte : l'encadré le dit, la carte du téléphone propose « J'ai lu : abandonner ma version », et le serveur n'a pas de bouton.
+  - L'heure de la version du serveur vient du rapport (`modifie_le`, nouveau champ en lecture seule) ; celle du téléphone, de la dernière saisie gardée. Heures à l'heure du pays.
+  - La logique ne change pas : rien n'est remplacé en silence (RG-053), garder sa version repart de la version du serveur qu'on vient de voir.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

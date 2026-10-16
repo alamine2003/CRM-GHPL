@@ -480,6 +480,8 @@ function useRapport(id: string) {
   const [soumisLocal, setSoumisLocal] = useState<string | null>(null);
   /** OFF-004 : la saisie du téléphone, quand le rapport a changé ailleurs entre-temps. */
   const [conflit, setConflit] = useState<SaisieLocale | null>(null);
+  /** Quand cette saisie a été gardée sur l'appareil (maquette 1.5.8). */
+  const [conflitLe, setConflitLe] = useState<string | null>(null);
   const modifie = useRef(false);
   const minuteur = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // L'heure d'ouverture de l'écran suffit pour dire si l'échéance est passée.
@@ -504,6 +506,7 @@ function useRapport(id: string) {
           (!MODIFIABLES.has(r.statut) || r.version > Math.max(versionDeBase(local) ?? 0, 1));
         const enCours = !!nonEnvoyee && !change;
         setConflit(change ? nonEnvoyee : null);
+        setConflitLe(change ? (local?.modifie_le ?? null) : null);
         setRapport(r);
         setSaisie(enCours && nonEnvoyee ? nonEnvoyee : saisieDe(r));
         setRepris(!!enCours);
@@ -692,6 +695,7 @@ function useRapport(id: string) {
     horsLigne,
     soumisLocal,
     conflit,
+    conflitLe,
     manquants,
     enRetard,
     changer,
@@ -1181,6 +1185,9 @@ export function FormulaireRapport({ id }: { id: string }) {
       <ConflitRapport
         rapport={rapport}
         telephone={e.conflit}
+        telephoneLe={e.conflitLe}
+        fuseau={fuseau}
+        tablette={tablette}
         surGarderTelephone={() => void e.garderTelephone()}
         surGarderServeur={() => void e.garderServeur()}
       />
@@ -1250,19 +1257,30 @@ export function FormulaireRapport({ id }: { id: string }) {
     }
   }
 
+  // Maquette 1.5.8 : le conflit a son propre titre, sans statut ni bouton dans l'en-tête.
+  const enConflit = !!rapport && !!e.conflit;
+  const nomVisite = visite?.prospect ? nomProspect(visite.prospect, t) : t('visites.sansProspect');
   return (
     <Ecran
-      titre={t('rapport.titre')}
-      surTitre={contexteVisite(visite, fuseau, t, {
-        date: !!parties,
-        duree: !lu,
-      })}
+      titre={enConflit ? t('conflits.rapportTitre') : t('rapport.titre')}
+      surTitre={
+        enConflit && visite
+          ? `${nomVisite} · ${dateLongue(visite.date, false)}`
+          : contexteVisite(visite, fuseau, t, {
+              date: !!parties,
+              duree: !lu,
+            })
+      }
       retour
       onglets={false}
-      action={court ? <Statut ton={court.ton}>{court.texte}</Statut> : undefined}
+      action={court && !enConflit ? <Statut ton={court.ton}>{court.texte}</Statut> : undefined}
       enteteTablette={{
-        surTitre: contexteVisite(visite, fuseau, t, { lieu: true, date: !!parties }),
-        action: (
+        titre: enConflit ? t('conflits.rapportTitre') : undefined,
+        surTitre:
+          enConflit && visite
+            ? `${nomVisite} · ${t('conflits.visiteDu', { date: dateLongue(visite.date, false) })}`
+            : contexteVisite(visite, fuseau, t, { lieu: true, date: !!parties }),
+        action: enConflit ? undefined : (
           <>
             {long && <Statut ton={long.ton}>{long.texte}</Statut>}
             {boutonEnregistrer}

@@ -5437,6 +5437,8 @@ export interface components {
       readonly echeance: string;
       readonly en_retard: boolean;
       readonly horodatage_douteux: boolean;
+      /** Format: date-time */
+      readonly modifie_le: string;
       readonly manquants: string[];
       readonly produits_proposes: components['schemas']['Resume'][];
       readonly produit_autre_autorise: boolean;

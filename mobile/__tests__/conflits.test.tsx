@@ -5,6 +5,7 @@
 import { type ClientApi, ErreurApi, type Rapport } from '@innov/api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { CarteAttente } from '../src/Attente';
+import { ConflitRapport } from '../src/Conflits';
 import { lireBrouillonRapport } from '../src/BrouillonRapport';
 import { envoyerAttente, garderMaVersion, lireAttente, mettreEnAttente } from '../src/Brouillons';
 import i18n from '../src/i18n';
@@ -28,11 +29,13 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => 'envoi-1' }));
 // les boutons collés en bas.
 jest.mock('../src/Ecran', () => ({
   Ecran: ({
+    titre,
     surTitre,
     action,
     children,
     pied,
   }: {
+    titre?: string;
     surTitre?: string;
     action?: ReactNode;
     children: ReactNode;
@@ -41,6 +44,7 @@ jest.mock('../src/Ecran', () => ({
     const { Text } = jest.requireActual('react-native');
     return (
       <>
+        <Text>{titre}</Text>
         <Text>{surTitre}</Text>
         {action}
         {children}
@@ -75,6 +79,7 @@ const SERVEUR: Rapport = {
   echeance: '2099-01-01T00:00:00Z',
   en_retard: false,
   horodatage_douteux: false,
+  modifie_le: '2026-10-12T10:40:00.000Z',
   manquants: [],
   produit_autre_autorise: false,
   articles_proposes: [],
@@ -143,8 +148,15 @@ test('OFF-004 CA2 : le rapport changé ailleurs montre les deux versions ; le d�
   const enregistrerRapport = jest.fn(async () => ({ ...SERVEUR, version: 4 }));
   await rendre({ rapport: jest.fn(async () => SERVEUR), enregistrerRapport });
   expect(await screen.findByText('Ce rapport a changé ailleurs')).toBeTruthy();
-  expect(screen.getByText(/: Écrit sans réseau$/)).toBeTruthy();
-  expect(screen.getByText(/: Écrit sur un autre appareil$/)).toBeTruthy();
+  // Maquette 1.5.8 : la visite et son jour en sous-titre, puis les deux versions avec leur heure.
+  expect(screen.getByText('Prospect à choisir · 13 octobre')).toBeTruthy();
+  expect(screen.getByText('Sur ce téléphone')).toBeTruthy();
+  expect(screen.getByText('09:00')).toBeTruthy();
+  expect(screen.getByText('Sur le serveur')).toBeTruthy();
+  expect(screen.getByText('10:40')).toBeTruthy();
+  expect(screen.getByText('Écrit sans réseau')).toBeTruthy();
+  expect(screen.getByText('Écrit sur un autre appareil')).toBeTruthy();
+  expect(screen.getByText('Rien n’a été remplacé :')).toBeTruthy();
   // Rien n'est parti en silence.
   expect(enregistrerRapport).not.toHaveBeenCalled();
   await fireEvent.press(screen.getByText('Garder ma version'));
@@ -177,7 +189,7 @@ test('OFF-004 CA1 : une décision du superviseur l’emporte ; la version locale
     enregistrerRapport,
   });
   expect(await screen.findByText(/Votre superviseur a validé ce rapport/)).toBeTruthy();
-  expect(screen.getByText(/: Écrit sans réseau$/)).toBeTruthy();
+  expect(screen.getByText('Écrit sans réseau')).toBeTruthy();
   expect(screen.queryByText('Garder ma version')).toBeNull();
   await fireEvent.press(screen.getByText("J'ai lu : abandonner ma version"));
   await waitFor(async () => expect((await lireBrouillonRapport('v1'))?.saisie).toBeNull());
@@ -279,4 +291,33 @@ test('1.0.2 : les champs propres au pays entrent dans la comparaison des deux ve
     { libelle: 'Patients vus', telephone: i18n.t('conflits.vide'), serveur: '12' },
     { libelle: 'Stock constaté', telephone: 'faible', serveur: i18n.t('conflits.vide') },
   ]);
+});
+
+test('maquette 1.5.8, tablette : les deux versions côte à côte, avec ce qui est identique', async () => {
+  const rapport = { ...SERVEUR, resultat_obtenu: 'Intéressée', resume: 'Intéressée ; étude' };
+  const garder = jest.fn();
+  const abandonner = jest.fn();
+  await render(
+    <ConflitRapport
+      rapport={rapport}
+      telephone={{ ...SAISIE_TELEPHONE, resultat_obtenu: 'Intéressée', prochaine_action: 'Étude' }}
+      telephoneLe="2026-10-12T10:12:00.000Z"
+      fuseau="UTC"
+      tablette
+      surGarderTelephone={garder}
+      surGarderServeur={abandonner}
+    />,
+  );
+  expect(screen.getByText('Sur cette tablette')).toBeTruthy();
+  expect(screen.getByText(/restée sur cette tablette/)).toBeTruthy();
+  // « Résultat obtenu » est identique des deux côtés : il se lit quand même, deux fois.
+  expect(screen.getAllByText('Résultat obtenu')).toHaveLength(2);
+  expect(screen.getAllByText('Intéressée')).toHaveLength(2);
+  // La prochaine action n'existe que sur la tablette : le serveur dit « Non renseignée ».
+  expect(screen.getByText('Étude')).toBeTruthy();
+  expect(screen.getAllByText('Non renseignée').length).toBeGreaterThan(0);
+  await fireEvent.press(screen.getByText('Garder ma version'));
+  expect(garder).toHaveBeenCalled();
+  await fireEvent.press(screen.getByText('Garder la version du serveur'));
+  expect(abandonner).toHaveBeenCalled();
 });

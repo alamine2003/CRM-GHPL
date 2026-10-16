@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.8] — La maquette : le conflit
+
+### Modifié (prd.md §14.82, OFF-004)
+
+- « Ce rapport a changé ailleurs » a son écran : le prospect et le jour de la visite en sous-titre, l'encadré « Rien n'a été remplacé », puis la version du téléphone et celle du serveur, chacune avec son heure et ses champs, et le choix « Garder ma version » ou « Garder la version du serveur ».
+- Sur tablette : les deux versions côte à côte, avec aussi les champs identiques.
+- Un champ vide se lit « Non renseignée ».
+- Le rapport indique maintenant l'heure de son dernier enregistrement (`modifie_le`, lecture seule).
+- La décision du superviseur l'emporte toujours ; rien n'est remplacé en silence.
+
+### Design
+
+Écran « Ce rapport a changé ailleurs » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.5.7] — La maquette : l'activité
 
 ### Modifié (prd.md §14.82, PLN-009, PLN-018)
