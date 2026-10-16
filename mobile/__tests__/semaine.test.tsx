@@ -31,11 +31,13 @@ jest.mock('expo-router', () => ({
 jest.mock('../src/Ecran', () => ({
   Ecran: ({
     children,
+    titre,
     surTitre,
     action,
     pied,
   }: {
     children: ReactNode;
+    titre?: string;
     surTitre?: string;
     action?: ReactNode;
     pied?: ReactNode;
@@ -43,6 +45,7 @@ jest.mock('../src/Ecran', () => ({
     const { Text } = jest.requireActual('react-native');
     return (
       <>
+        <Text>{titre}</Text>
         <Text>{surTitre}</Text>
         {action}
         {children}
@@ -659,8 +662,7 @@ test('PLN-005 : une visite se copie sur un autre jour', async () => {
   );
   await fireEvent.press(await screen.findByText('Dr Awa FICTIF'));
   expect(await screen.findByText('Copier vers')).toBeTruthy();
-  // La première pilule « jeu. 29 » choisit le jour de la visite ; la seconde copie.
-  await fireEvent.press(screen.getAllByText('jeu. 29')[1]!);
+  await fireEvent.press(screen.getByText('jeu. 29'));
   expect(copier).toHaveBeenCalledWith('v1', '2026-10-29');
   expect(await screen.findByText('Visite copiée le jeu. 29.')).toBeTruthy();
 });

@@ -29,6 +29,7 @@ import {
   Bouton,
   Carte,
   Champ,
+  ListeDeroulante,
   MarquePotentiel,
   Texte,
   useLien,
@@ -36,11 +37,15 @@ import {
 } from './composants';
 import { avantDe, conflitDe } from './Conflits';
 import type { Alerte as AlerteVisite } from './Controles';
+import { useTablette } from './disposition';
+import { Ecran } from './Ecran';
 import { Pilule } from './Etablissements';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
+import { jourLong } from './Semaine';
 import { messageErreur, useSession } from './session';
 import { jourIso } from './semaineLocale';
+import { RAYON } from './theme';
 
 const CLE_PROPOSEES = 'visites.proposees';
 
@@ -218,7 +223,6 @@ export function FormulaireVisite({
 }) {
   const { t, i18n } = useTranslation();
   const p = usePalette();
-  const lien = useLien();
   const { client } = useSession();
   // Une journée entière d'absence ne reçoit pas de visite (PLN-009).
   const absents = new Set(
@@ -395,72 +399,44 @@ export function FormulaireVisite({
     }
   }
 
-  return (
-    <View style={{ gap: 16 }}>
-      <Texte variante="sousTitre">{visite ? t('visites.modifier') : t('visites.nouvelle')}</Texte>
-      <Texte variante="discret">
-        {apresApprobation ? t('apresApprobation.regle') : t('visites.aide')}
-      </Texte>
-      {erreur && <Alerte type="erreur">{erreur}</Alerte>}
+  const tablette = useTablette();
+  const detail = prospect?.detail.split(' · ')[0];
 
-      <Section titre={t('visites.champs.date')}>
-        <View style={styles.pilules}>
-          {jours.map((j) => (
-            <Pilule
-              key={j.date}
-              libelle={libelleJour(j)}
-              actif={date === j.date}
-              onPress={() => setDate(j.date)}
-            />
-          ))}
-        </View>
-      </Section>
+  const boutons = (
+    <>
+      <Bouton
+        variante="contour"
+        petit={tablette}
+        libelle={t('commun.annuler')}
+        onPress={annuler}
+        style={tablette ? undefined : { flex: 1 }}
+      />
+      <Bouton
+        petit={tablette}
+        libelle={majeure ? t('apresApprobation.soumettre') : t('commun.enregistrer')}
+        chargement={envoi === 'enregistrer'}
+        desactive={heureIllisible || envoi === 'retirer'}
+        onPress={() => void enregistrer()}
+        style={tablette ? { minWidth: 140 } : { flex: 2 }}
+      />
+    </>
+  );
 
-      <Section titre={t('visites.champs.prospect')}>
-        {prospect ? (
-          <Carte style={{ gap: 4, paddingVertical: 12 }}>
-            <View style={styles.choisi}>
-              <MarquePotentiel valeur={prospect.potentiel} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text numberOfLines={1} style={[styles.nom, { color: p.texte }]}>
-                  {nomProspect(prospect, t)}
-                </Text>
-                {prospect.detail ? (
-                  <Texte variante="discret" numberOfLines={1}>
-                    {prospect.detail}
-                  </Texte>
-                ) : null}
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => {
-                  setProspect(null);
-                  setLieu(null);
-                }}
-                hitSlop={8}
-                style={styles.changer}
-              >
-                <Text style={[styles.ajouterTexte, { color: lien }]}>{t('visites.changer')}</Text>
-              </Pressable>
-            </View>
-          </Carte>
-        ) : (
-          <ChoixProspect
-            client={client}
-            surChoix={(c) => {
-              setProspect(c);
-              setLieu(null);
-            }}
-          />
-        )}
-      </Section>
-
-      {prospect && (
-        <Section titre={t('visites.champs.etablissement')}>
-          <ChoixLieu client={client} prospect={prospect.id} lieu={lieu} surChoix={setLieu} />
-        </Section>
-      )}
-
+  const optionsJours = jours.map((j) => ({ id: j.date, libelle: jourLong(j.date, i18n.language) }));
+  const champJour = (
+    <ListeDeroulante
+      libelle={t('visites.champs.date')}
+      valeur={date}
+      options={
+        optionsJours.some((o) => o.id === date)
+          ? optionsJours
+          : [{ id: date, libelle: jourLong(date, i18n.language) }, ...optionsJours]
+      }
+      surChoix={setDate}
+    />
+  );
+  const champHeure = (
+    <View style={{ flex: 1, minWidth: 0 }}>
       <Champ
         libelle={t('visites.champs.heure')}
         placeholder={t('visites.indiceHeure')}
@@ -471,43 +447,73 @@ export function FormulaireVisite({
         maxLength={5}
         autoCorrect={false}
       />
+    </View>
+  );
+  const champReseau =
+    semaine.reseaux.length > 0 ? (
+      <ListeDeroulante
+        libelle={t('visites.champs.reseau')}
+        valeur={reseau}
+        indice={t('visites.sansReseau')}
+        options={semaine.reseaux.map((r) => ({ id: r.id, libelle: r.libelle }))}
+        surChoix={setReseau}
+      />
+    ) : null;
+  const champProspect = (
+    <View style={{ gap: 6 }}>
+      <Texte variante="libelle">{t('visites.champs.prospect')}</Texte>
+      {prospect ? (
+        <ChoixFait
+          libelle={[nomProspect(prospect, t), tablette ? detail : null].filter(Boolean).join(' · ')}
+          gauche={<MarquePotentiel valeur={prospect.potentiel} />}
+          droite={t('visites.changer')}
+          surAppui={() => {
+            setProspect(null);
+            setLieu(null);
+          }}
+        />
+      ) : (
+        <ChoixProspect
+          client={client}
+          surChoix={(c) => {
+            setProspect(c);
+            setLieu(null);
+          }}
+        />
+      )}
+    </View>
+  );
+  const champLieu = prospect ? (
+    <ChampLieu client={client} prospect={prospect.id} lieu={lieu} surChoix={setLieu} />
+  ) : null;
+  const champObjectif = (
+    <Champ
+      libelle={t('visites.champs.objectif')}
+      placeholder={t('visites.indiceObjectif')}
+      value={objectif}
+      onChangeText={setObjectif}
+      maxLength={200}
+    />
+  );
+  const champNote = (
+    <Champ
+      libelle={t('visites.champs.note')}
+      placeholder={t('visites.indiceNote')}
+      value={note}
+      onChangeText={setNote}
+      maxLength={500}
+      multiline
+      style={{ minHeight: tablette ? 110 : 72 }}
+    />
+  );
+  const avertissements = (
+    <>
       {heureIllisible && <Texte variante="discret">{t('visites.heureIllisible')}</Texte>}
       {passage && !heureIllisible && (
         <Texte variante="discret">
           {t('passages.heureCommune', { count: passage.visites.length })}
         </Texte>
       )}
-
-      {semaine.reseaux.length > 1 && (
-        <Section titre={t('visites.champs.reseau')}>
-          <View style={styles.pilules}>
-            {semaine.reseaux.map((r) => (
-              <Pilule
-                key={r.id}
-                libelle={r.libelle}
-                actif={reseau === r.id}
-                onPress={() => setReseau(r.id)}
-              />
-            ))}
-          </View>
-        </Section>
-      )}
-
-      <Champ
-        libelle={t('visites.champs.objectif')}
-        placeholder={t('visites.indiceObjectif')}
-        value={objectif}
-        onChangeText={setObjectif}
-        maxLength={200}
-      />
-      <Champ
-        libelle={t('visites.champs.note')}
-        value={note}
-        onChangeText={setNote}
-        maxLength={500}
-        multiline
-      />
-
       {apresApprobation && visite && (
         <Alerte type={majeure ? 'attention' : 'info'}>
           {majeure ? t('apresApprobation.majeure') : t('apresApprobation.mineure')}
@@ -516,13 +522,10 @@ export function FormulaireVisite({
       {apresApprobation && !visite && (
         <Alerte type="attention">{t('apresApprobation.majeure')}</Alerte>
       )}
-      <Bouton
-        libelle={majeure ? t('apresApprobation.soumettre') : t('commun.enregistrer')}
-        chargement={envoi === 'enregistrer'}
-        desactive={heureIllisible || envoi === 'retirer'}
-        onPress={() => void enregistrer()}
-      />
-      <Bouton secondaire libelle={t('commun.annuler')} onPress={annuler} />
+    </>
+  );
+  const autresActions = (
+    <>
       {/* Après approbation, une copie serait un ajout soumis sans qu'on le voie venir. */}
       {visite && !apresApprobation && jours.length > 1 && (
         <Section titre={t('visites.copierVers')}>
@@ -557,6 +560,275 @@ export function FormulaireVisite({
           </Text>
         </Pressable>
       )}
+    </>
+  );
+
+  const titre = visite ? t('visites.modifier') : t('visites.nouvelle');
+  const jourEntier = jourLong(date, i18n.language);
+
+  if (tablette) {
+    return (
+      <Ecran
+        titre={titre}
+        fermer
+        surRetour={annuler}
+        onglets={false}
+        enteteTablette={{
+          surTitre: apresApprobation
+            ? jourEntier
+            : `${jourEntier} · ${t('visites.completerPlusTard')}`,
+          action: <View style={styles.actionsEntete}>{boutons}</View>,
+        }}
+        droite={
+          <JourDuFormulaire
+            semaine={semaine}
+            date={date}
+            ecarte={visite?.id}
+            nouvelle={
+              prospect
+                ? {
+                    heure: heureLue,
+                    potentiel: prospect.potentiel,
+                    nom: `${nomProspect(prospect, t)} (${t(visite ? 'visites.modifiee_marque' : 'visites.nouvelle_marque')})`,
+                  }
+                : null
+            }
+          />
+        }
+        largeurDroite={380}
+      >
+        {erreur && <Alerte type="erreur">{erreur}</Alerte>}
+        <View style={styles.deuxColonnes}>
+          {champJour}
+          {champHeure}
+        </View>
+        {champProspect}
+        <View style={styles.deuxColonnes}>
+          {champLieu ?? champReseau ?? <View style={{ flex: 1 }} />}
+          {champLieu ? (champReseau ?? <View style={{ flex: 1 }} />) : <View style={{ flex: 1 }} />}
+        </View>
+        {champObjectif}
+        {champNote}
+        {avertissements}
+        {autresActions}
+      </Ecran>
+    );
+  }
+
+  return (
+    <Ecran
+      titre={titre}
+      surTitre={jourEntier}
+      fermer
+      surRetour={annuler}
+      onglets={false}
+      pied={boutons}
+    >
+      <Texte variante="libelle">
+        {apresApprobation ? t('apresApprobation.regle') : t('visites.aide')}
+      </Texte>
+      {erreur && <Alerte type="erreur">{erreur}</Alerte>}
+      {champJour}
+      {champProspect}
+      {champLieu}
+      <View style={styles.deuxColonnes}>
+        {champHeure}
+        {champReseau}
+      </View>
+      {champObjectif}
+      {champNote}
+      {avertissements}
+      {autresActions}
+    </Ecran>
+  );
+}
+
+/** Un choix déjà fait, dans un cadre de champ de 48 px : marque, nom, « Changer » à droite. */
+export function ChoixFait({
+  libelle,
+  gauche,
+  droite,
+  surAppui,
+}: {
+  libelle: string;
+  gauche?: ReactNode;
+  droite?: string;
+  surAppui: () => void;
+}) {
+  const p = usePalette();
+  const lien = useLien();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={droite ? `${libelle}, ${droite}` : libelle}
+      onPress={surAppui}
+      style={({ pressed }) => [
+        styles.choisiChamp,
+        { backgroundColor: p.surface, borderColor: p.ligne },
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      {gauche}
+      <Text numberOfLines={1} style={[styles.choisiTexte, { color: p.texte }]}>
+        {libelle}
+      </Text>
+      {droite ? <Text style={[styles.changerTexte, { color: lien }]}>{droite}</Text> : null}
+    </Pressable>
+  );
+}
+
+/** Les lieux d'exercice actifs du prospect, le principal d'abord ; un seul est retenu d'office. */
+function useLieux(
+  client: ClientApi,
+  prospect: string,
+  lieu: Lieu | null,
+  surChoix: (l: Lieu) => void,
+) {
+  const [lieux, setLieux] = useState<Lieu[] | null>(null);
+  useEffect(() => {
+    let actif = true;
+    client.exercices
+      .duProspect(prospect)
+      .then((exercices) => {
+        if (!actif) return;
+        const trouves = exercices
+          .filter((e) => e.actif)
+          .sort((a, b) => Number(!!b.principal) - Number(!!a.principal))
+          .map((e) => ({ id: e.etablissement.id, nom: e.etablissement.nom }));
+        setLieux(trouves);
+        if (trouves[0] && trouves.length === 1 && !lieu) surChoix(trouves[0]);
+      })
+      .catch(() => actif && setLieux([]));
+    return () => {
+      actif = false;
+    };
+    // Le lieu choisi ne relance pas la lecture : seul le prospect compte.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client, prospect]);
+  // Le lieu déjà enregistré reste proposé, même s'il n'est plus un lieu d'exercice actif.
+  return lieux && lieu && !lieux.some((l) => l.id === lieu.id) ? [lieu, ...lieux] : lieux;
+}
+
+/** Le lieu de la visite, présenté comme un champ ; « Changer » est la liste des lieux du prospect. */
+function ChampLieu({
+  client,
+  prospect,
+  lieu,
+  surChoix,
+}: {
+  client: ClientApi;
+  prospect: string;
+  lieu: Lieu | null;
+  surChoix: (l: Lieu) => void;
+}) {
+  const { t } = useTranslation();
+  const lieux = useLieux(client, prospect, lieu, surChoix);
+  if (!lieux)
+    return (
+      <View style={{ flex: 1, gap: 6 }}>
+        <Texte variante="libelle">{t('visites.champs.etablissement')}</Texte>
+        <Texte variante="discret">{t('session.chargement')}</Texte>
+      </View>
+    );
+  if (lieux.length === 0)
+    return (
+      <View style={{ flex: 1, gap: 6 }}>
+        <Texte variante="libelle">{t('visites.champs.etablissement')}</Texte>
+        <Texte variante="discret">{t('visites.sansLieu')}</Texte>
+      </View>
+    );
+  return (
+    <ListeDeroulante
+      libelle={t('visites.champs.etablissement')}
+      valeur={lieu?.id}
+      indice={t('visites.lieuAChoisir')}
+      options={lieux.map((l) => ({ id: l.id, libelle: l.nom }))}
+      surChoix={(id) => {
+        const l = lieux.find((x) => x.id === id);
+        if (l) surChoix(l);
+      }}
+    />
+  );
+}
+
+/**
+ * Tablette, à droite : la journée de la visite — ses visites à leur heure, la nouvelle à sa place
+ * (« --:-- » tant que l'heure n'est pas donnée), et ce que l'objectif du jour demande.
+ */
+function JourDuFormulaire({
+  semaine,
+  date,
+  ecarte,
+  nouvelle,
+}: {
+  semaine: Semaine;
+  date: string;
+  /** La visite en cours de modification : elle est remplacée par sa saisie. */
+  ecarte?: string;
+  nouvelle: { heure: string | null; potentiel: string; nom: string } | null;
+}) {
+  const { t, i18n } = useTranslation();
+  const p = usePalette();
+  const lignes = [
+    ...semaine.visites
+      .filter((v) => v.date === date && v.id !== ecarte)
+      .map((v) => ({
+        cle: v.id,
+        heure: v.heure,
+        potentiel: v.prospect?.potentiel ?? null,
+        nom: v.prospect
+          ? [
+              v.prospect.civilite ? t(`prospect.civilites.${v.prospect.civilite}`) : '',
+              v.prospect.nom,
+            ]
+              .filter(Boolean)
+              .join(' ')
+          : t('visites.sansProspect'),
+        neuve: false,
+      })),
+    ...(nouvelle
+      ? [
+          {
+            cle: 'nouvelle',
+            heure: nouvelle.heure,
+            potentiel: nouvelle.potentiel,
+            nom: nouvelle.nom,
+            neuve: true,
+          },
+        ]
+      : []),
+  ].sort((a, b) => (a.heure ?? '99:99').localeCompare(b.heure ?? '99:99'));
+  const objectif = semaine.controles?.objectifs.find((o) => o.date === date);
+  return (
+    <View style={{ padding: 24, gap: 12 }}>
+      <Texte variante="sousTitre" accessibilityRole="header">
+        {jourLong(date, i18n.language)}
+      </Texte>
+      <Texte variante="libelle">
+        {[
+          t('jour.visites', { count: lignes.length }),
+          objectif ? t('jour.objectif', { min: objectif.min, max: objectif.max }) : null,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+      </Texte>
+      {lignes.length > 0 && (
+        <Carte marge={0} style={{ overflow: 'hidden' }}>
+          {lignes.map((l, i) => (
+            <View
+              key={l.cle}
+              style={[styles.ligneJour, i > 0 && { borderTopWidth: 1, borderTopColor: p.ligne }]}
+            >
+              <Text style={[styles.heureJour, { color: p.texte }]}>{l.heure ?? '--:--'}</Text>
+              {l.potentiel ? <MarquePotentiel valeur={l.potentiel} /> : null}
+              <Text numberOfLines={1} style={[styles.nomJour, { color: p.texte }]}>
+                {l.nom}
+              </Text>
+            </View>
+          ))}
+        </Carte>
+      )}
+      <Alerte type="info">{t('visites.placeeDansLaJournee')}</Alerte>
     </View>
   );
 }
@@ -795,32 +1067,8 @@ export function ChoixLieu({
   surChoix: (l: Lieu) => void;
 }) {
   const { t } = useTranslation();
-  const [lieux, setLieux] = useState<Lieu[] | null>(null);
-
-  useEffect(() => {
-    let actif = true;
-    client.exercices
-      .duProspect(prospect)
-      .then((exercices) => {
-        if (!actif) return;
-        const trouves = exercices
-          .filter((e) => e.actif)
-          .sort((a, b) => Number(!!b.principal) - Number(!!a.principal))
-          .map((e) => ({ id: e.etablissement.id, nom: e.etablissement.nom }));
-        setLieux(trouves);
-        if (trouves[0] && trouves.length === 1 && !lieu) surChoix(trouves[0]);
-      })
-      .catch(() => actif && setLieux([]));
-    return () => {
-      actif = false;
-    };
-    // Le lieu choisi ne relance pas la lecture : seul le prospect compte.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, prospect]);
-
-  if (!lieux) return <Texte variante="discret">{t('session.chargement')}</Texte>;
-  // Le lieu déjà enregistré reste proposé, même s'il n'est plus un lieu d'exercice actif.
-  const proposes = lieu && !lieux.some((l) => l.id === lieu.id) ? [lieu, ...lieux] : lieux;
+  const proposes = useLieux(client, prospect, lieu, surChoix);
+  if (!proposes) return <Texte variante="discret">{t('session.chargement')}</Texte>;
   if (proposes.length === 0) return <Texte variante="discret">{t('visites.sansLieu')}</Texte>;
   return (
     <View style={styles.pilules}>
@@ -873,4 +1121,27 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   retirer: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  deuxColonnes: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  actionsEntete: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  choisiChamp: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: RAYON,
+    paddingHorizontal: 14,
+  },
+  choisiTexte: { flex: 1, minWidth: 0, fontFamily: police.texteFort, fontSize: 15 },
+  changerTexte: { fontFamily: police.texteFort, fontSize: 14 },
+  ligneJour: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  heureJour: { width: 44, fontFamily: police.texteGras, fontSize: 13, lineHeight: 18 },
+  nomJour: { flex: 1, minWidth: 0, fontFamily: police.texteFort, fontSize: 14 },
 });

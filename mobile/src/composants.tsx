@@ -283,13 +283,16 @@ export function ListeDeroulante({
   const p = usePalette();
   const [ouvert, setOuvert] = useState(false);
   const choisi = options.find((o) => o.id === valeur);
+  // Un seul choix possible : le champ se lit, sans flèche ni liste (maquette 1.5.6).
+  const unique = options.length <= 1 && !!choisi;
   return (
     <View style={{ gap: 6, flex: 1, minWidth: 0 }}>
       <Texte variante="libelle">{libelle}</Texte>
       <Pressable
-        accessibilityRole="button"
+        accessibilityRole={unique ? 'text' : 'button'}
         accessibilityLabel={`${libelle} : ${choisi?.libelle ?? indice ?? t('mobile.choisir')}`}
-        accessibilityState={{ expanded: ouvert }}
+        accessibilityState={unique ? undefined : { expanded: ouvert }}
+        disabled={unique}
         onPress={() => setOuvert(!ouvert)}
         style={[
           styles.champ,
@@ -303,13 +306,15 @@ export function ListeDeroulante({
         >
           {choisi?.libelle ?? indice ?? t('mobile.choisir')}
         </Text>
-        <Icone
-          nom={ouvert ? 'chevron-up' : 'chevron-down'}
-          taille={20}
-          couleur={p.texteSecondaire}
-        />
+        {!unique && (
+          <Icone
+            nom={ouvert ? 'chevron-up' : 'chevron-down'}
+            taille={20}
+            couleur={p.texteSecondaire}
+          />
+        )}
       </Pressable>
-      {ouvert && (
+      {ouvert && !unique && (
         <Carte marge={0}>
           {options.map((o, i) => (
             <Pressable

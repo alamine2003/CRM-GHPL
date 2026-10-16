@@ -331,20 +331,26 @@ export default function EcranSemaine() {
     );
   }
 
+  // « Nouvelle visite » est un écran entier (maquette 1.5.6) ; son retour revient ici.
+  if (semaine && edition?.objet === 'visite') {
+    return (
+      <FormulaireVisite
+        key="visite"
+        semaine={semaine}
+        jour={edition.jour}
+        visite={edition.visite}
+        brouillon={edition.brouillon}
+        surAnnuler={() => setEdition(null)}
+        surTermine={terminer}
+      />
+    );
+  }
+
   if (semaine && edition) {
     return (
       // Une clé propre : le formulaire s'ouvre en haut de page, pas au défilement de la semaine.
       <Ecran key="edition" titre={t('mobile.onglets.semaine')} surTitre={periode}>
-        {edition.objet === 'visite' ? (
-          <FormulaireVisite
-            semaine={semaine}
-            jour={edition.jour}
-            visite={edition.visite}
-            brouillon={edition.brouillon}
-            surAnnuler={() => setEdition(null)}
-            surTermine={terminer}
-          />
-        ) : edition.objet === 'activite' ? (
+        {edition.objet === 'activite' ? (
           <FormulaireActivite
             semaine={semaine}
             jour={edition.jour}

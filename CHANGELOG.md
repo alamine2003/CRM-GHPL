@@ -2,6 +2,19 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.6] — La maquette : la nouvelle visite
+
+### Modifié (prd.md §14.82, PLN-002)
+
+- « Nouvelle visite » (et « Modifier la visite ») a son écran : le jour en sous-titre, la phrase « Tout peut se compléter plus tard », puis Jour, Prospect avec « Changer », Lieu, Heure et Réseau côte à côte, Objectif et Note ; « Annuler » et « Enregistrer » restent collés en bas.
+- Sur tablette : les boutons passent dans l'en-tête, et à droite la journée montre ses visites à leur heure, avec la nouvelle à sa place (« --:-- » tant qu'elle n'a pas d'heure).
+- Un lieu ou un réseau unique se lit sans liste à ouvrir.
+- La saisie, le brouillon, l'envoi sans réseau et les conflits ne changent pas.
+
+### Design
+
+Écran « Nouvelle visite » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.5.5] — La maquette : l'indisponibilité imprévue
 
 ### Modifié (prd.md §14.82, PLN-009)

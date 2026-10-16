@@ -6,20 +6,18 @@
  */
 import type { ClientApi, Programme, VisiteProgramme } from '@innov/api-client';
 import { useRouter } from 'expo-router';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { estTransitoire, mettreEnAttente, nouvelIdentifiant } from './Brouillons';
-import { Alerte, Bouton, Champ, MarquePotentiel, Texte, useLien, usePalette } from './composants';
+import { Alerte, Bouton, Champ, MarquePotentiel, Texte } from './composants';
 import { useTablette } from './disposition';
 import { Ecran } from './Ecran';
 import { CorpsFenetre, EnteteFenetre, Fenetre, PiedFenetre } from './Fenetre';
 import { ajouterAuProgramme, prendrePosition, useProgrammeGarde } from './Execution';
 import { nomProspect } from './Fiches';
-import { police } from './polices';
 import { messageErreur, useSession } from './session';
-import { RAYON } from './theme';
-import { type Choix, ChoixLieu, ChoixProspect, type Lieu } from './Visites';
+import { type Choix, ChoixFait, ChoixLieu, ChoixProspect, type Lieu } from './Visites';
 
 /** L'heure du moment dans le fuseau du pays, « HH:MM ». */
 function heureLocale(iso: string, fuseau: string) {
@@ -203,40 +201,6 @@ function useImprevue(programme: Programme, surFin: () => void, surAnnonce: (a: A
 }
 
 type Imprevue = ReturnType<typeof useImprevue>;
-
-/** Une valeur choisie, dans un cadre de champ (.card) : le prospect, ou le lieu. */
-function ChoixFait({
-  libelle,
-  gauche,
-  droite,
-  surAppui,
-}: {
-  libelle: string;
-  gauche?: ReactNode;
-  droite?: string;
-  surAppui: () => void;
-}) {
-  const p = usePalette();
-  const lien = useLien();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={droite ? `${libelle}, ${droite}` : libelle}
-      onPress={surAppui}
-      style={({ pressed }) => [
-        styles.choisi,
-        { backgroundColor: p.surface, borderColor: p.ligne },
-        pressed && { opacity: 0.7 },
-      ]}
-    >
-      {gauche}
-      <Text numberOfLines={1} style={[styles.choisiTexte, { color: p.texte }]}>
-        {libelle}
-      </Text>
-      {droite ? <Text style={[styles.changer, { color: lien }]}>{droite}</Text> : null}
-    </Pressable>
-  );
-}
 
 function ChampsImprevue({ imprevue: i, tablette }: { imprevue: Imprevue; tablette?: boolean }) {
   const { t } = useTranslation();
@@ -451,17 +415,3 @@ export function VisiteImprevue({
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  choisi: {
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderRadius: RAYON,
-    paddingHorizontal: 14,
-  },
-  choisiTexte: { flex: 1, minWidth: 0, fontFamily: police.texteFort, fontSize: 15 },
-  changer: { fontFamily: police.texteFort, fontSize: 14 },
-});

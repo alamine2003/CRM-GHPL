@@ -815,6 +815,13 @@ Mise en œuvre (0.3.9) :
   - Sous chaque période, on lit les visites encore prévues qu'elle justifierait d'un coup (« 4 visites concernées ») ; pour la journée, « n visites restantes » ; pour le matin ou l'après-midi sans visite à justifier, les visites déjà faites (« 2 visites déjà faites : aucune concernée »), sinon « Aucune visite concernée ». La limite du matin et de l'après-midi reste 13 h.
   - Une période déjà déclarée aujourd'hui est grisée (« Déjà déclarée ») et ne se coche plus, comme le serveur la refuserait ; la période proposée d'office est la première encore possible, la journée tant que rien n'est déclaré.
   - La logique ne change pas : identifiant tiré sur le téléphone, envoi mis dans la file sans réseau (OFF-003), visites de la période justifiées et plus proposées.
+- **1.5.6** : écran **Nouvelle visite** (PLN-002, PLN-015 : « Nouvelle visite » avec le jour en sous-titre ; la phrase « Tout peut se compléter plus tard : seule la soumission du planning exigera chaque champ » ; Jour, Prospect avec « Changer », Lieu, Heure et Réseau côte à côte, Objectif, Note ; « Annuler » et « Enregistrer » collés en bas ; tablette : Jour et Heure côte à côte, Lieu et Réseau côte à côte, boutons dans l'en-tête, et à droite la journée avec ses visites à leur heure, la nouvelle marquée « (nouvelle) » et l'encadré « Cette visite se placera dans la journée »).
+- **Ce que la maquette ne dessine pas sur la nouvelle visite** [D, délégation, 1.5.6] :
+  - L'écran sert aussi à modifier une visite (« Modifier la visite », « Copier vers… » et « Retirer cette visite » sous les champs) ; après approbation, l'heure change librement et le reste est soumis, comme avant.
+  - Jour, Lieu et Réseau sont des champs qui se déplient quand il y a plusieurs choix ; avec un seul choix (un lieu d'exercice, un réseau), ils se lisent sans flèche, comme sur la maquette.
+  - Tant qu'aucun prospect n'est choisi, la recherche et ma liste cible s'affichent à sa place ; le lieu se propose parmi ceux d'exercice du prospect, le principal d'office.
+  - À droite (tablette), la visite en cours de modification est remplacée par sa saisie ; sans heure, elle se place en dernier sous « --:-- ».
+  - La logique ne change pas : brouillon gardé à chaque frappe (PLN-007), identifiant tiré sur le téléphone, envoi mis dans la file sans réseau, conflits (OFF-004).
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 
