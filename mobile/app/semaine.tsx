@@ -346,21 +346,18 @@ export default function EcranSemaine() {
     );
   }
 
-  if (semaine && edition) {
+  // « Nouvelle activité » est aussi un écran entier (maquette 1.5.7).
+  if (semaine && edition?.objet === 'activite') {
     return (
-      // Une clé propre : le formulaire s'ouvre en haut de page, pas au défilement de la semaine.
-      <Ecran key="edition" titre={t('mobile.onglets.semaine')} surTitre={periode}>
-        {edition.objet === 'activite' ? (
-          <FormulaireActivite
-            semaine={semaine}
-            jour={edition.jour}
-            activite={edition.activite}
-            brouillon={edition.brouillon}
-            surAnnuler={() => setEdition(null)}
-            surTermine={terminer}
-          />
-        ) : null}
-      </Ecran>
+      <FormulaireActivite
+        key="activite"
+        semaine={semaine}
+        jour={edition.jour}
+        activite={edition.activite}
+        brouillon={edition.brouillon}
+        surAnnuler={() => setEdition(null)}
+        surTermine={terminer}
+      />
     );
   }
 

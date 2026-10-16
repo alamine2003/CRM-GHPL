@@ -2,6 +2,19 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.7] — La maquette : l'activité
+
+### Modifié (prd.md §14.82, PLN-009, PLN-018)
+
+- « Nouvelle activité » (et « Modifier l'activité ») a son écran : le jour en sous-titre, le type en pastilles, la période en trois segments, le commentaire ; « Annuler » et « Enregistrer » restent collés en bas.
+- Sur tablette : une colonne centrée, le jour et la période côte à côte, les boutons dans l'en-tête et l'encadré « Les visites de ce jour restent dans le planning ».
+- Un déplacement demande toujours qui l'a décidé, en deux segments.
+- La saisie, le brouillon et l'envoi sans réseau ne changent pas.
+
+### Design
+
+Écran « Nouvelle activité » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.5.6] — La maquette : la nouvelle visite
 
 ### Modifié (prd.md §14.82, PLN-002)

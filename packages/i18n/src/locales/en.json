@@ -1712,6 +1712,8 @@
       "apres_midi": "Afternoon"
     },
     "ligne": "{{type}} · {{periode}}",
+    "indiceCommentaire": "Details for your supervisor",
+    "visitesRestent": "The visits of this day stay in the planning; your supervisor sees the activity next to them.",
     "commentaire": "Comment (optional)",
     "motif": "Give the reason",
     "motifRequis": "An “Other” absence needs a reason.",

@@ -1712,6 +1712,8 @@
       "apres_midi": "Après-midi"
     },
     "ligne": "{{type}} · {{periode}}",
+    "indiceCommentaire": "Précisions pour votre superviseur",
+    "visitesRestent": "Les visites de ce jour restent dans le planning ; votre superviseur voit l’activité à côté d’elles.",
     "commentaire": "Commentaire (facultatif)",
     "motif": "Précisez le motif",
     "motifRequis": "Une absence « Autre » demande un motif.",

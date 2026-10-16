@@ -822,6 +822,12 @@ Mise en œuvre (0.3.9) :
   - Tant qu'aucun prospect n'est choisi, la recherche et ma liste cible s'affichent à sa place ; le lieu se propose parmi ceux d'exercice du prospect, le principal d'office.
   - À droite (tablette), la visite en cours de modification est remplacée par sa saisie ; sans heure, elle se place en dernier sous « --:-- ».
   - La logique ne change pas : brouillon gardé à chaque frappe (PLN-007), identifiant tiré sur le téléphone, envoi mis dans la file sans réseau, conflits (OFF-004).
+- **1.5.7** : écran **Nouvelle activité** (PLN-009, PLN-018 : « Nouvelle activité » avec le jour en sous-titre ; Jour ; Type en pastilles (Congé, Formation, Réunion, Commando, Déplacement, Accompagnement du superviseur, Autre) ; Période en trois segments (Journée, Matin, Après-midi) ; Commentaire facultatif (« Précisions pour votre superviseur ») ; « Annuler » et « Enregistrer » collés en bas ; tablette : colonne centrée de 680 px avec Jour et Période côte à côte, boutons dans l'en-tête et l'encadré « Les visites de ce jour restent dans le planning ; votre superviseur voit l'activité à côté d'elles »).
+- **Ce que la maquette ne dessine pas sur l'activité** [D, délégation, 1.5.7] :
+  - « Indisponibilité imprévue » figure sur la maquette parmi les types, mais ne s'y propose pas : elle se déclare le jour même depuis la Tournée (DC-51, 1.5.5), et le serveur refuse de la planifier.
+  - L'écran sert aussi à modifier une activité (« Modifier l'activité », « Retirer cette activité » sous les champs).
+  - Un déplacement demande « Qui l'a décidé ? » (justifié par moi, demandé par mon superviseur) en deux segments ; un commando, un déplacement ou un accompagnement exige une explication, une absence « Autre » un motif, comme avant.
+  - La logique ne change pas : brouillon gardé à chaque frappe (PLN-007), identifiant tiré sur le téléphone, envoi mis dans la file sans réseau.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 
