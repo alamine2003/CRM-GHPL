@@ -194,6 +194,10 @@ describe('mobile — session', () => {
     expect(await screen.findByText('Application verrouillée')).toBeTruthy();
     // 0.9.8 : le texte dit le délai réellement appliqué.
     expect(screen.getByText(/après 15 minutes en arrière-plan/)).toBeTruthy();
+    // Maquette 1.5.3 : la phrase sous le bouton dit avec quoi déverrouiller.
+    expect(
+      screen.getByText('Déverrouiller CRM GH avec votre code ou votre biométrie.'),
+    ).toBeTruthy();
     expect(screen.queryByText('Bonjour Awa')).toBeNull();
     await fireEvent.press(screen.getByText('Déverrouiller'));
     expect(await screen.findByText('Bonjour Awa')).toBeTruthy();

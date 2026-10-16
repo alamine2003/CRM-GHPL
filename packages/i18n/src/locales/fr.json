@@ -200,7 +200,8 @@
       "texte": "Par sécurité, l'application se verrouille après {{minutes}} minutes en arrière-plan.",
       "deverrouiller": "Déverrouiller",
       "invite": "Déverrouiller INNOV CRM",
-      "sansProtection": "Ce téléphone n'a ni code ni biométrie : reconnectez-vous."
+      "sansProtection": "Ce téléphone n'a ni code ni biométrie : reconnectez-vous.",
+      "note": "Déverrouiller CRM GH avec votre code ou votre biométrie."
     },
     "identifiantInstallation": "Identifiant",
     "effacement": "Ce téléphone a été révoqué ou votre compte désactivé : ses données ont été effacées. Contactez votre administrateur pays.",

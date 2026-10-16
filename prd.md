@@ -799,6 +799,11 @@ Mise en œuvre (0.3.9) :
   - Sans envoi en attente, la carte des envois (téléphone) et la phrase sur leur garde (tablette) ne s'affichent pas ; sur la tablette, le chiffre « 0 » reste.
   - « Rapports gardés » : les rapports prêts à écrire sans réseau gardés à la dernière synchronisation.
   - Une synchronisation qui échoue faute de réseau le dit sous les chiffres, sans quitter l'écran.
+- **1.5.3** : écran **Application verrouillée** (SEC-004, DC-59 : un écran marine plein avec le filet orange en haut, un cadenas, « Application verrouillée », « Par sécurité, l'application se verrouille après 15 minutes en arrière-plan », le bouton blanc « Déverrouiller » et la phrase « Déverrouiller CRM GH avec votre code ou votre biométrie. » ; la tablette agrandit le cadenas, le titre et le texte, sur une colonne de 440 px).
+- **Ce que la maquette ne dessine pas sur le verrou** [D, délégation, 1.5.3] :
+  - « Se déconnecter » reste, en bouton discret sous la phrase : sans lui, un téléphone dont le code a été perdu ne pourrait que fermer l'application.
+  - Un téléphone sans code ni biométrie ne peut pas se déverrouiller : un message le dit et « Se déconnecter » devient le seul geste (SEC-004).
+  - Le délai affiché est celui du pays (5 à 30 minutes, DC-59) ; la maquette montre 5.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

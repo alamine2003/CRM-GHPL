@@ -200,7 +200,8 @@
       "texte": "For security, the app locks after {{minutes}} minutes in the background.",
       "deverrouiller": "Unlock",
       "invite": "Unlock INNOV CRM",
-      "sansProtection": "This phone has no passcode or biometrics: sign in again."
+      "sansProtection": "This phone has no passcode or biometrics: sign in again.",
+      "note": "Unlock CRM GH with your code or biometrics."
     },
     "identifiantInstallation": "ID",
     "effacement": "This phone was revoked or your account deactivated: its data has been erased. Contact your country administrator.",

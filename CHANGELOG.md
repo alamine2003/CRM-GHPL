@@ -2,6 +2,18 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.3] — La maquette : l'application verrouillée
+
+### Modifié (prd.md §14.82, SEC-004, DC-59)
+
+- L'écran de verrouillage suit la maquette : fond marine avec un filet orange, un cadenas, « Application verrouillée », le délai du pays, « Déverrouiller » en blanc et la phrase « Déverrouiller CRM GH avec votre code ou votre biométrie. »
+- Sur tablette : cadenas, titre et texte agrandis, sur une colonne centrée.
+- « Se déconnecter » reste, en bouton discret ; un téléphone sans code ni biométrie ne peut que se déconnecter.
+
+### Design
+
+Écran « Application verrouillée » refait selon la maquette, téléphone et tablette.
+
 ## [1.5.2] — La maquette : synchronisation nécessaire
 
 ### Modifié (prd.md §14.82, OFF-007)
