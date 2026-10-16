@@ -809,6 +809,12 @@ Mise en œuvre (0.3.9) :
   - Sur le téléphone, c'est un écran à part (`/imprevue`), ouvert par « Visite imprévue » au bas de la Tournée ; à la fin, on revient à la Tournée, qui annonce « Visite imprévue chez … démarrée à … » (ou « Sans réseau : l'envoi partira… »).
   - Tant qu'aucun prospect n'est choisi, la recherche et ma liste cible s'affichent à sa place, comme avant ; le lieu se choisit parmi ceux d'exercice du prospect, le principal d'office, et se change d'un appui sur le champ.
   - La logique ne change pas : position prise au démarrage, identifiant tiré sur le téléphone, envoi mis dans la file sans réseau (OFF-003), visite marquée « Imprévue » (CA2), sans passage par le superviseur.
+- **1.5.5** : écran **Indisponibilité imprévue** (PLN-009, DC-51 : « Indisponibilité imprévue » avec le jour réel en sous-titre ; l'encadré « Aucun motif n'est demandé. Les visites de la période sont justifiées d'un coup ; votre superviseur le voit » ; « Période » en trois choix à cocher, « Toute la journée », « Le matin », « L'après-midi », chacun avec ce qu'il concerne ; « Annuler » et « Déclarer l'indisponibilité » ; tablette : une fenêtre sur la Tournée).
+- **Ce que la maquette ne dessine pas sur l'indisponibilité** [D, délégation, 1.5.5] :
+  - Sur le téléphone, c'est un écran à part (`/indisponibilite`), ouvert par « Je suis indisponible aujourd'hui » au bas de la Tournée ; à la fin, on revient à la Tournée, qui annonce « Indisponibilité déclarée… » (ou « Pas de réseau : l'indisponibilité est gardée… »).
+  - Sous chaque période, on lit les visites encore prévues qu'elle justifierait d'un coup (« 4 visites concernées ») ; pour la journée, « n visites restantes » ; pour le matin ou l'après-midi sans visite à justifier, les visites déjà faites (« 2 visites déjà faites : aucune concernée »), sinon « Aucune visite concernée ». La limite du matin et de l'après-midi reste 13 h.
+  - Une période déjà déclarée aujourd'hui est grisée (« Déjà déclarée ») et ne se coche plus, comme le serveur la refuserait ; la période proposée d'office est la première encore possible, la journée tant que rien n'est déclaré.
+  - La logique ne change pas : identifiant tiré sur le téléphone, envoi mis dans la file sans réseau (OFF-003), visites de la période justifiées et plus proposées.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

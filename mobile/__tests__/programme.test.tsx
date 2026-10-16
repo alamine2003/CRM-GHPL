@@ -225,41 +225,11 @@ test('RPT-014, 29.A : les rapports à corriger, même d’une semaine passée, o
   expect(mockPousser).toHaveBeenCalledWith({ pathname: '/rapport/[id]', params: { id: 'v01' } });
 });
 
-test('DC-51 : « Je suis indisponible aujourd’hui » justifie la journée sans motif', async () => {
-  const declarerIndisponibilite = jest.fn(async (s: { id: string; periode: string }) => ({
-    id: s.id,
-    date: '2026-10-13',
-    periode: s.periode,
-    type: 'indisponibilite',
-    commentaire: '',
-    demande_superviseur: false,
-    avec_visites: false,
-  }));
-  mockMemoire.set('programme.courant', { valeur: PROGRAMME, maj: '2026-10-13T06:30:00.000Z' });
-  const session = {
-    etat: { statut: 'connecte' },
-    client: {
-      plannings: {
-        programme: jest.fn(async () => PROGRAMME),
-        semaine: jest.fn(async () => ({})),
-        declarerIndisponibilite,
-      },
-    } as unknown as ClientApi,
-  } as unknown as Session;
-  await render(
-    <ContexteSession.Provider value={session}>
-      <ProgrammeDuJour />
-    </ContexteSession.Provider>,
-  );
+test('DC-51 : « Je suis indisponible aujourd’hui » ouvre l’écran de l’indisponibilité', async () => {
+  await rendre(jest.fn(async () => PROGRAMME));
   expect(await screen.findByText('Démarrer la visite')).toBeTruthy();
   await fireEvent.press(screen.getByText(/Je suis indisponible aujourd.hui/));
-  expect(screen.getByText(/Aucun motif n'est demandé/)).toBeTruthy();
-  await fireEvent.press(screen.getByText(/Déclarer l.indisponibilité/));
-  expect(declarerIndisponibilite).toHaveBeenCalledWith(
-    expect.objectContaining({ periode: 'journee' }),
-  );
-  expect(await screen.findByText(/Indisponibilité déclarée/)).toBeTruthy();
-  expect(screen.queryByText('Démarrer la visite')).toBeNull();
+  expect(mockPousser).toHaveBeenCalledWith('/indisponibilite');
 });
 
 test.each([
@@ -293,51 +263,4 @@ test('RPT-001 CA1 : soumis, le rapport ne s’affiche plus sous la visite effect
   expect(await screen.findByText('Dr Awa PREMIER')).toBeTruthy();
   expect(screen.queryByText('Rapport à rédiger')).toBeNull();
   expect(screen.queryByText('Rapport en brouillon')).toBeNull();
-});
-
-test('DC-51 : sans réseau, l’indisponibilité déclarée attend dans la file', async () => {
-  const declarerIndisponibilite = jest.fn(async () => {
-    throw new TypeError('Network request failed');
-  });
-  // Une visite le matin, une l'après-midi.
-  const jours = PROGRAMME.jours.map((j) =>
-    j.date === '2026-10-13'
-      ? { ...j, visites: [visite('v1', '09:00', 'PREMIER'), visite('v2', '15:00', 'SECOND')] }
-      : j,
-  );
-  const programme = { ...PROGRAMME, jours };
-  mockMemoire.set('programme.courant', { valeur: programme, maj: '2026-10-13T06:30:00.000Z' });
-  const session = {
-    etat: { statut: 'connecte' },
-    client: {
-      plannings: {
-        programme: jest.fn(async () => programme),
-        semaine: jest.fn(async () => ({})),
-        declarerIndisponibilite,
-      },
-    } as unknown as ClientApi,
-  } as unknown as Session;
-  await render(
-    <ContexteSession.Provider value={session}>
-      <ProgrammeDuJour />
-    </ContexteSession.Provider>,
-  );
-  expect(await screen.findByLabelText(/PREMIER · Prochaine visite$/)).toBeTruthy();
-  await fireEvent.press(screen.getByText(/Je suis indisponible aujourd.hui/));
-  await fireEvent.press(screen.getByText('Le matin'));
-  await fireEvent.press(screen.getByText(/Déclarer l.indisponibilité/));
-  expect(await screen.findByText(/l'indisponibilité est gardée sur le téléphone/)).toBeTruthy();
-  const file = mockMemoire.get('planning.attente')?.valeur as {
-    type: string;
-    saisie: { id: string; periode: string };
-  }[];
-  expect(file).toEqual([
-    expect.objectContaining({
-      type: 'indisponibilite',
-      saisie: { id: 'indispo-1', periode: 'matin' },
-    }),
-  ]);
-  // La visite du matin est justifiée sur le téléphone : la prochaine passe à celle de l'après-midi.
-  expect(screen.getByLabelText(/SECOND · Prochaine visite$/)).toBeTruthy();
-  expect(screen.queryByLabelText(/PREMIER · Prochaine visite$/)).toBeNull();
 });

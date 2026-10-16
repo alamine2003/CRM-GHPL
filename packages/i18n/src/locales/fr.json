@@ -2475,15 +2475,25 @@
   "indisponibilite": {
     "ouvrir": "Je suis indisponible aujourd'hui",
     "titre": "Indisponibilité imprévue",
-    "aide": "Aucun motif n'est demandé. Les visites de la période sont justifiées d'un coup ; votre superviseur le voit.",
-    "confirmer": "Déclarer l'indisponibilité",
+    "aide": "Aucun motif n’est demandé. Les visites de la période sont justifiées d’un coup ; votre superviseur le voit.",
+    "periode": "Période",
+    "confirmer": "Déclarer l’indisponibilité",
     "declaree": "Indisponibilité déclarée : les visites de la période sont justifiées.",
     "enAttente": "Pas de réseau : l'indisponibilité est gardée sur le téléphone et partira toute seule.",
     "periodes": {
       "journee": "Toute la journée",
       "matin": "Le matin",
-      "apres_midi": "L'après-midi"
-    }
+      "apres_midi": "L’après-midi"
+    },
+    "restantes_one": "{{count}} visite restante",
+    "restantes_other": "{{count}} visites restantes",
+    "concernees_one": "{{count}} visite concernée",
+    "concernees_other": "{{count}} visites concernées",
+    "faitesAucune_one": "{{count}} visite déjà faite : aucune concernée",
+    "faitesAucune_other": "{{count}} visites déjà faites : aucune concernée",
+    "aucuneRestante": "Aucune visite restante",
+    "aucuneConcernee": "Aucune visite concernée",
+    "dejaDeclaree": "Déjà déclarée"
   },
   "preparer": {
     "titre": "Préparer ma visite",

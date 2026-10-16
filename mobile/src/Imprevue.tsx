@@ -8,11 +8,12 @@ import type { ClientApi, Programme, VisiteProgramme } from '@innov/api-client';
 import { useRouter } from 'expo-router';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { estTransitoire, mettreEnAttente, nouvelIdentifiant } from './Brouillons';
 import { Alerte, Bouton, Champ, MarquePotentiel, Texte, useLien, usePalette } from './composants';
 import { useTablette } from './disposition';
 import { Ecran } from './Ecran';
+import { CorpsFenetre, EnteteFenetre, Fenetre, PiedFenetre } from './Fenetre';
 import { ajouterAuProgramme, prendrePosition, useProgrammeGarde } from './Execution';
 import { nomProspect } from './Fiches';
 import { police } from './polices';
@@ -114,17 +115,17 @@ export async function declarerImprevue(
 // Le formulaire (maquette 1.5.4) : un écran sur le téléphone, une fenêtre sur la tablette
 
 /** Annonce laissée par l'écran du téléphone ; la Tournée la reprend à son retour. */
-type Annonce = { texte: string; ton: 'info' | 'succes' };
+export type Annonce = { texte: string; ton: 'info' | 'succes' };
 let annonceEnAttente: Annonce | null = null;
 const ecouteurs = new Set<() => void>();
 
-function laisserAnnonce(a: Annonce) {
+export function laisserAnnonce(a: Annonce) {
   annonceEnAttente = a;
   ecouteurs.forEach((e) => e());
 }
 
-/** La Tournée reprend l'annonce laissée par l'écran « Visite hors du planning ». */
-function useAnnonceLaissee(surAnnonce: (a: Annonce) => void) {
+/** La Tournée reprend l'annonce laissée par un écran du téléphone (visite hors du planning, indisponibilité). */
+export function useAnnonceLaissee(surAnnonce: (a: Annonce) => void) {
   const reprise = useRef(surAnnonce);
   useEffect(() => {
     reprise.current = surAnnonce;
@@ -325,7 +326,7 @@ function BoutonsImprevue({
 }
 
 /** « Lundi 12 octobre » : le jour réel auquel la visite sera rattachée. */
-function jourDuProgramme(programme: Programme, langue: string) {
+export function jourDuProgramme(programme: Programme, langue: string) {
   const long = new Intl.DateTimeFormat(langue, {
     weekday: 'long',
     day: 'numeric',
@@ -390,17 +391,13 @@ function ImprevueEnFenetre({
   const imprevue = useImprevue(programme, surFin, surAnnonce);
   return (
     <View>
-      <View style={styles.enteteFenetre}>
-        <Texte variante="titre" accessibilityRole="header">
-          {t('execution.imprevueTitre')}
-        </Texte>
-      </View>
-      <View style={styles.corpsFenetre}>
+      <EnteteFenetre titre={t('execution.imprevueTitre')} />
+      <CorpsFenetre>
         <ChampsImprevue imprevue={imprevue} tablette />
-      </View>
-      <View style={styles.piedFenetre}>
+      </CorpsFenetre>
+      <PiedFenetre>
         <BoutonsImprevue imprevue={imprevue} surFin={surFin} tablette />
-      </View>
+      </PiedFenetre>
     </View>
   );
 }
@@ -416,20 +413,10 @@ function FenetreImprevue({
   surFin: () => void;
   surAnnonce: (a: Annonce) => void;
 }) {
-  const p = usePalette();
   return (
-    <Modal transparent visible={ouverte} animationType="fade" onRequestClose={surFin}>
-      <View style={styles.voile}>
-        {ouverte && (
-          <View
-            accessibilityViewIsModal
-            style={[styles.fenetre, { backgroundColor: p.surface, borderColor: p.ligne }]}
-          >
-            <ImprevueEnFenetre programme={programme} surFin={surFin} surAnnonce={surAnnonce} />
-          </View>
-        )}
-      </View>
-    </Modal>
+    <Fenetre ouverte={ouverte} surFin={surFin}>
+      <ImprevueEnFenetre programme={programme} surFin={surFin} surAnnonce={surAnnonce} />
+    </Fenetre>
   );
 }
 
@@ -477,32 +464,4 @@ const styles = StyleSheet.create({
   },
   choisiTexte: { flex: 1, minWidth: 0, fontFamily: police.texteFort, fontSize: 15 },
   changer: { fontFamily: police.texteFort, fontSize: 14 },
-  voile: {
-    flex: 1,
-    backgroundColor: 'rgba(15,26,61,.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  fenetre: {
-    width: 560,
-    maxWidth: '100%',
-    borderWidth: 1,
-    borderRadius: RAYON,
-    shadowColor: '#0F1A3D',
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  },
-  enteteFenetre: { paddingTop: 22, paddingHorizontal: 24, paddingBottom: 8 },
-  corpsFenetre: { paddingTop: 8, paddingHorizontal: 24, paddingBottom: 4 },
-  piedFenetre: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    paddingTop: 20,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-  },
 });

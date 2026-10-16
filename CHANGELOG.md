@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.5] — La maquette : l'indisponibilité imprévue
+
+### Modifié (prd.md §14.82, PLN-009)
+
+- « Je suis indisponible aujourd'hui » ouvre un écran à part sur le téléphone, avec le jour réel en sous-titre : l'encadré « Aucun motif n'est demandé », la période à cocher, « Annuler » et « Déclarer l'indisponibilité ».
+- Chaque période dit ce qu'elle concerne : « 4 visites restantes », « 4 visites concernées », « 2 visites déjà faites : aucune concernée ».
+- Une période déjà déclarée aujourd'hui est grisée (« Déjà déclarée »).
+- Sur tablette : le même choix dans une fenêtre sur la Tournée ; la fenêtre est maintenant partagée avec la visite imprévue.
+- À la fin, la Tournée annonce l'indisponibilité ; sans réseau, elle attend dans la file comme avant.
+
+### Design
+
+Écran « Indisponibilité imprévue » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.5.4] — La maquette : la visite imprévue
 
 ### Modifié (prd.md §14.82, VIS-008)
