@@ -804,6 +804,11 @@ Mise en œuvre (0.3.9) :
   - « Se déconnecter » reste, en bouton discret sous la phrase : sans lui, un téléphone dont le code a été perdu ne pourrait que fermer l'application.
   - Un téléphone sans code ni biométrie ne peut pas se déverrouiller : un message le dit et « Se déconnecter » devient le seul geste (SEC-004).
   - Le délai affiché est celui du pays (5 à 30 minutes, DC-59) ; la maquette montre 5.
+- **1.5.4** : écran **Visite hors du planning** (VIS-008, RG-027 : « Visite hors du planning » avec le jour réel en sous-titre ; l'encadré « Vous rencontrez un prospect qui n'était pas prévu : la visite démarre maintenant, rattachée à aujourd'hui » ; le prospect (obligatoire) et « Changer » ; le lieu ; la justification (obligatoire) ; « Annuler » et « Démarrer la visite imprévue », grisé tant que le prospect ou la justification manque ; tablette : une fenêtre sur la Tournée, avec la spécialité à côté du nom).
+- **Ce que la maquette ne dessine pas sur la visite imprévue** [D, délégation, 1.5.4] :
+  - Sur le téléphone, c'est un écran à part (`/imprevue`), ouvert par « Visite imprévue » au bas de la Tournée ; à la fin, on revient à la Tournée, qui annonce « Visite imprévue chez … démarrée à … » (ou « Sans réseau : l'envoi partira… »).
+  - Tant qu'aucun prospect n'est choisi, la recherche et ma liste cible s'affichent à sa place, comme avant ; le lieu se choisit parmi ceux d'exercice du prospect, le principal d'office, et se change d'un appui sur le champ.
+  - La logique ne change pas : position prise au démarrage, identifiant tiré sur le téléphone, envoi mis dans la file sans réseau (OFF-003), visite marquée « Imprévue » (CA2), sans passage par le superviseur.
 
 ### 14.81 Démonstration gratuite sur Render (mise en œuvre 1.0.3)
 

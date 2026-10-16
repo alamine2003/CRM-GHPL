@@ -2,6 +2,18 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.4] — La maquette : la visite imprévue
+
+### Modifié (prd.md §14.82, VIS-008)
+
+- « Visite imprévue » a son écran sur le téléphone, avec le jour réel en sous-titre : l'encadré qui explique, le prospect et « Changer », le lieu, la justification, « Annuler » et « Démarrer la visite imprévue ».
+- Sur tablette : le même formulaire dans une fenêtre sur la Tournée.
+- À la fin, la Tournée annonce la visite démarrée ; sans réseau, elle attend dans la file comme avant.
+
+### Design
+
+Écran « Visite hors du planning » refait selon la maquette, téléphone et tablette, clair et sombre.
+
 ## [1.5.3] — La maquette : l'application verrouillée
 
 ### Modifié (prd.md §14.82, SEC-004, DC-59)

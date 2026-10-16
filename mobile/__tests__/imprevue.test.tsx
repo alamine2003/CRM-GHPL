@@ -1,11 +1,12 @@
 import type { ClientApi, Programme, VisiteProgramme } from '@innov/api-client';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
 import * as Location from 'expo-location';
 import { lireAttente } from '../src/Brouillons';
 import i18n from '../src/i18n';
 import { ContexteSession, type Session } from '../src/session';
-import { useState } from 'react';
-import { type Annonce, TourneeTelephone, useTournee } from '../src/Tournee';
+import { EcranImprevue, FormulaireImprevue, VisiteImprevue } from '../src/Imprevue';
+import { type Annonce } from '../src/Tournee';
 
 // VIS-008 (0.4.8) : visite imprévue, justifiée (CA1), qui démarre aussitôt au jour réel ;
 // marquée « imprévue » (CA2). Sans réseau, elle attend dans la file.
@@ -19,7 +20,35 @@ jest.mock('../src/baseLocale', () => ({
   oublier: jest.fn(async (cle: string) => mockMemoire.delete(cle)),
   effacer: jest.fn(),
 }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+const mockPousser = jest.fn();
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPousser, back: jest.fn(), canGoBack: () => true }),
+}));
+jest.mock('../src/disposition', () => ({ useTablette: () => false }));
+// L'écran est testé sans son cadre : seuls le titre, le jour et les boutons comptent ici.
+jest.mock('../src/Ecran', () => ({
+  Ecran: ({
+    titre,
+    surTitre,
+    pied,
+    children,
+  }: {
+    titre: string;
+    surTitre?: string;
+    pied?: ReactNode;
+    children: ReactNode;
+  }) => {
+    const { Text } = jest.requireActual('react-native');
+    return (
+      <>
+        <Text>{titre}</Text>
+        <Text>{surTitre}</Text>
+        {children}
+        {pied}
+      </>
+    );
+  },
+}));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'envoi-1' }));
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(),
@@ -105,23 +134,15 @@ const CIBLES = [
   },
 ];
 
-/** La Tournée du téléphone, telle que l'écran d'accueil la compose (1.4.0). */
-function ProgrammeDuJour() {
-  const etat = useTournee();
-  const [annonce, setAnnonce] = useState<Annonce | null>(null);
-  return etat ? <TourneeTelephone etat={etat} annonce={annonce} surAnnonce={setAnnonce} /> : null;
-}
+const annonces: Annonce[] = [];
+const fin = jest.fn();
 
 async function rendre(imprevue: jest.Mock) {
+  mockMemoire.set('programme.courant', { valeur: PROGRAMME, maj: '' });
   const session = {
     etat: { statut: 'connecte' },
     client: {
-      plannings: { programme: jest.fn(async () => PROGRAMME), semaine: jest.fn(async () => ({})) },
-      visites: {
-        imprevue,
-        demarrer: jest.fn(),
-        detail: jest.fn(async () => Promise.reject(new TypeError('x'))),
-      },
+      visites: { imprevue },
       ciblage: { mesListes: jest.fn(async () => CIBLES) },
       exercices: {
         duProspect: jest.fn(async () => [
@@ -132,13 +153,15 @@ async function rendre(imprevue: jest.Mock) {
   } as unknown as Session;
   await render(
     <ContexteSession.Provider value={session}>
-      <ProgrammeDuJour />
+      <FormulaireImprevue programme={PROGRAMME} surFin={fin} surAnnonce={(a) => annonces.push(a)} />
     </ContexteSession.Provider>,
   );
 }
 
 beforeEach(async () => {
   mockMemoire.clear();
+  annonces.length = 0;
+  fin.mockReset();
   permission.mockReset().mockResolvedValue({ status: 'granted' });
   position
     .mockReset()
@@ -147,8 +170,9 @@ beforeEach(async () => {
 });
 
 async function remplir(justification = 'Croisé à la pharmacie') {
-  await fireEvent.press(await screen.findByText('Visite imprévue'));
+  // Maquette 1.5.4 : un écran à part, avec le jour auquel la visite sera rattachée.
   expect(screen.getByText('Visite hors du planning')).toBeTruthy();
+  expect(screen.getByText('Mardi 13 octobre')).toBeTruthy();
   await fireEvent.press(await screen.findByText('Dr Fatou EXEMPLE'));
   // Un seul lieu d'exercice : il est retenu d'office.
   expect(await screen.findByText('Pharmacie Fictive')).toBeTruthy();
@@ -187,11 +211,14 @@ test('VIS-008 : justifiée, elle démarre, passe en tête et se lit « Imprévue
       latitude: 14.7,
     }),
   );
-  expect(
-    await screen.findByText('Visite imprévue chez Dr Fatou EXEMPLE démarrée à 11:40.'),
-  ).toBeTruthy();
-  expect(screen.getByText('Imprévue')).toBeTruthy();
-  expect(screen.getByText('Terminer la visite')).toBeTruthy();
+  await waitFor(() => expect(fin).toHaveBeenCalled());
+  expect(annonces).toEqual([
+    { texte: 'Visite imprévue chez Dr Fatou EXEMPLE démarrée à 11:40.', ton: 'succes' },
+  ]);
+  // Elle est déjà dans le programme gardé, marquée « imprévue » (CA2).
+  const garde = mockMemoire.get('programme.courant')?.valeur as Programme;
+  const imprevues = garde.jours.flatMap((j) => j.visites).filter((v) => v.est_imprevue);
+  expect(imprevues).toHaveLength(1);
 });
 
 test('VIS-008 : sans réseau, la visite imprévue attend dans la file et apparaît déjà', async () => {
@@ -202,11 +229,56 @@ test('VIS-008 : sans réseau, la visite imprévue attend dans la file et appara�
   );
   await remplir();
   await fireEvent.press(screen.getByText('Démarrer la visite imprévue'));
-  expect(await screen.findByText(/Sans réseau : l'envoi partira/)).toBeTruthy();
+  await waitFor(() => expect(fin).toHaveBeenCalled());
+  expect(annonces[0]?.texte).toMatch(/Sans réseau : l'envoi partira/);
+  expect(annonces[0]?.ton).toBe('info');
   const [envoi] = await lireAttente();
   expect(envoi).toMatchObject({
     type: 'imprevue_visite',
     saisie: { prospect: 'p9', etablissement: 'e9', justification: 'Croisé à la pharmacie' },
   });
-  expect(screen.getByText('Imprévue')).toBeTruthy();
+});
+
+test('1.5.4 : sur le téléphone, le bouton ouvre l’écran, qui laisse son annonce à la Tournée', async () => {
+  mockMemoire.set('programme.courant', { valeur: PROGRAMME, maj: '' });
+  const surAnnonce = jest.fn();
+  const imprevue = jest.fn(async (s: { id: string; le: string }) => ({
+    ...VISITE,
+    id: s.id,
+    heure: '11:40',
+    statut: 'en_cours',
+    est_imprevue: true,
+  }));
+  const session = {
+    etat: { statut: 'connecte' },
+    client: {
+      visites: { imprevue },
+      ciblage: { mesListes: jest.fn(async () => CIBLES) },
+      exercices: {
+        duProspect: jest.fn(async () => [
+          { actif: true, principal: true, etablissement: { id: 'e9', nom: 'Pharmacie Fictive' } },
+        ]),
+      },
+    } as unknown as ClientApi,
+  } as unknown as Session;
+  await render(
+    <ContexteSession.Provider value={session}>
+      <VisiteImprevue programme={PROGRAMME} surAnnonce={surAnnonce} />
+      <EcranImprevue />
+    </ContexteSession.Provider>,
+  );
+  await fireEvent.press(screen.getByText('Visite imprévue'));
+  expect(mockPousser).toHaveBeenCalledWith('/imprevue');
+  await fireEvent.press(await screen.findByText('Dr Fatou EXEMPLE'));
+  await fireEvent.changeText(
+    await screen.findByLabelText('Justification (obligatoire)'),
+    'Croisé à la pharmacie',
+  );
+  await fireEvent.press(screen.getByText('Démarrer la visite imprévue'));
+  await waitFor(() =>
+    expect(surAnnonce).toHaveBeenCalledWith({
+      texte: 'Visite imprévue chez Dr Fatou EXEMPLE démarrée à 11:40.',
+      ton: 'succes',
+    }),
+  );
 });

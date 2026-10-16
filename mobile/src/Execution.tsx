@@ -493,8 +493,8 @@ export function useActionVisite(
   return { envoi, setEnvoi, message, setMessage, agir, heureDe, resume };
 }
 
-/** La visite telle que le programme gardé sur le téléphone la connaît, à jour des actions. */
-export function useVisiteDuProgramme(id: string) {
+/** Le programme gardé sur le téléphone, à jour des actions (écrans qui s'ouvrent à part). */
+export function useProgrammeGarde() {
   const [programme, setProgramme] = useState<Programme | null>(null);
   useEffect(() => {
     let actif = true;
@@ -507,6 +507,12 @@ export function useVisiteDuProgramme(id: string) {
       arreter();
     };
   }, []);
+  return programme;
+}
+
+/** La visite telle que le programme gardé sur le téléphone la connaît, à jour des actions. */
+export function useVisiteDuProgramme(id: string) {
+  const programme = useProgrammeGarde();
   const visite = [
     ...(programme?.jours.flatMap((j) => j.visites) ?? []),
     ...(programme?.a_justifier ?? []),
