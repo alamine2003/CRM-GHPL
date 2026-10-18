@@ -2,6 +2,13 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.5.9] — Revue de l'application face à la maquette ; le DO
+
+### Modifié (prd.md §14.82, §14.83)
+
+- Revue de tous les écrans, téléphone et tablette, face à la maquette : aucun écart de mise en page trouvé ; un écran de visite ouvert par une adresse sans jour (notification, adresse tapée) plantait : il s'ouvre maintenant sur la journée d'aujourd'hui.
+- Décision du 18 octobre 2026 consignée : le siège seul règle les droits du DO, qui observe et analyse les ventes des délégués (ventes éclatées, YTD, mensuelles). La source des ventes reste à décider avant de construire (§14.83).
+
 ## [1.5.8] — La maquette : le conflit
 
 ### Modifié (prd.md §14.82, OFF-004)
