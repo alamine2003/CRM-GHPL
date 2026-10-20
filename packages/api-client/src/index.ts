@@ -39,6 +39,15 @@ import type {
   Prescription,
   HistoriqueSynchro,
   ModelesRapport,
+  SyntheseVentes,
+  OptionsVentes,
+  LigneVente,
+  PageLignesVentes,
+  SaisieVente,
+  ClientVente,
+  SaisieClientVente,
+  TypeClientVente,
+  RegroupementVentes,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -200,6 +209,17 @@ export type {
   ModelesRapport,
   TendanceProduit,
   PointAttention,
+  SyntheseVentes,
+  GroupeVentes,
+  MoisVentes,
+  OptionsVentes,
+  LigneVente,
+  PageLignesVentes,
+  SaisieVente,
+  ClientVente,
+  SaisieClientVente,
+  TypeClientVente,
+  RegroupementVentes,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -494,6 +514,38 @@ interface OptionsRequete {
 
 const ORG = '/api/v1/organisation';
 const REF = '/api/v1/referentiel';
+
+/** Filtres de la synthèse des ventes (tous facultatifs ; ils se combinent). */
+export interface FiltresVentes {
+  annee?: number;
+  mois_fin?: number;
+  par?: RegroupementVentes;
+  delegue?: string;
+  produit?: string;
+  classe?: string;
+  reseau?: string;
+  zone?: string;
+  client?: string;
+  type_client?: TypeClientVente;
+}
+
+export interface FiltresLignesVentes {
+  mois?: string;
+  delegue?: string;
+  produit?: string;
+  client?: string;
+  page?: number;
+  taille?: number;
+}
+
+/** Chaîne de requête sans les valeurs vides. */
+function requeteVentes(filtres: object): string {
+  const params = new URLSearchParams();
+  for (const [cle, valeur] of Object.entries(filtres))
+    if (valeur !== undefined && valeur !== null && valeur !== '') params.set(cle, String(valeur));
+  const texte = params.toString();
+  return texte ? `?${texte}` : '';
+}
 
 export function creerClient(options: OptionsClient) {
   const base = options.baseUrl.replace(/\/$/, '');
@@ -1222,6 +1274,33 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { motif },
         }),
+    },
+    /** Suivi des ventes (1.6.0) : synthèse, lignes mensuelles, clients, import Excel. */
+    ventes: {
+      synthese: (filtres: FiltresVentes = {}) =>
+        requete<SyntheseVentes>(`/api/v1/ventes/synthese/${requeteVentes(filtres)}`),
+      options: () => requete<OptionsVentes>('/api/v1/ventes/options/'),
+      lignes: (filtres: FiltresLignesVentes = {}) =>
+        requete<PageLignesVentes>(`/api/v1/ventes/lignes/${requeteVentes(filtres)}`),
+      saisir: (saisie: SaisieVente) =>
+        requete<LigneVente>('/api/v1/ventes/lignes/', { methode: 'POST', corps: saisie }),
+      corriger: (id: string, champs: { quantite?: string; montant_ttc?: string }) =>
+        requete<LigneVente>(`/api/v1/ventes/lignes/${id}/`, { methode: 'PATCH', corps: champs }),
+      archiver: (id: string) =>
+        requete<void>(`/api/v1/ventes/lignes/${id}/archiver/`, { methode: 'POST' }),
+      clients: (q = '', type?: TypeClientVente) =>
+        requete<ClientVente[]>(`/api/v1/ventes/clients/${requeteVentes({ q, type })}`),
+      creerClient: (saisie: SaisieClientVente) =>
+        requete<ClientVente>('/api/v1/ventes/clients/', { methode: 'POST', corps: saisie }),
+      importer: (fichier: Blob, nom: string, simulation: boolean) => {
+        const formulaire = new FormData();
+        formulaire.append('fichier', fichier, nom);
+        formulaire.append('simulation', simulation ? 'true' : 'false');
+        return requete<DetailLot>('/api/v1/ventes/import/', {
+          methode: 'POST',
+          corps: formulaire,
+        });
+      },
     },
     /** Imports contrôlés (PRP-013) : simulation, import, rapport d'anomalies. */
     imports: {

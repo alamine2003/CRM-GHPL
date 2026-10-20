@@ -50,6 +50,13 @@ def test_le_generateur_redonne_la_meme_base(monkeypatch):
 
     assert DoublonProbable.objects.filter(pays__code="SN", statut="en_attente").count() >= 2
     assert Proposition.objects.filter(pays__code="SN", statut="en_attente").count() == 1
+    # Le suivi des ventes (1.6.0) : vingt-sept mois de ventes fictives, des clients par zone.
+    from apps.ventes.models import Client, Vente
+
+    assert Vente.objects.filter(pays__code="SN").count() > 100
+    assert Vente.objects.values("mois").distinct().count() == 27
+    assert Client.objects.filter(pays__code="SN", type="grossiste").exists()
+    assert not Vente.objects.filter(poste__isnull=True).exists()
     # Calendrier des jours fériés à date certaine (ORG-012), deux années.
     from apps.planning.models import JourFerie
 

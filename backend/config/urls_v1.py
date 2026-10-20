@@ -20,6 +20,7 @@ from apps.referentiel import vues as ref
 from apps.socle import vues_exploitation as exploitation
 from apps.socle import vues_pays as pays
 from apps.socle.views import InformationsView
+from apps.ventes import vues as ven
 
 urlpatterns = [
     path("auth/", include("apps.identite.urls")),
@@ -415,6 +416,18 @@ urlpatterns = [
     path("imports/<uuid:id>/", imp.LotVue.as_view(), name="import"),
     path("imports/<uuid:id>/rapport/", imp.RapportLotVue.as_view(), name="import-rapport"),
     # DSH-001 : les indicateurs du délégué (cycle 0.7)
+    # Suivi des ventes (1.6.0, prd.md §14.84).
+    path("ventes/synthese/", ven.SyntheseVentesVue.as_view(), name="ventes-synthese"),
+    path("ventes/options/", ven.OptionsVentesVue.as_view(), name="ventes-options"),
+    path("ventes/lignes/", ven.LignesVentesVue.as_view(), name="ventes-lignes"),
+    path("ventes/lignes/<uuid:id>/", ven.LigneVenteVue.as_view(), name="ventes-ligne"),
+    path(
+        "ventes/lignes/<uuid:id>/archiver/",
+        ven.ArchiverLigneVenteVue.as_view(),
+        name="ventes-ligne-archiver",
+    ),
+    path("ventes/clients/", ven.ClientsVentesVue.as_view(), name="ventes-clients"),
+    path("ventes/import/", ven.ImportVentesVue.as_view(), name="ventes-import"),
     path("pilotage/mes-chiffres/", pil.MesChiffresVue.as_view(), name="mes-chiffres"),
     # DSH-002, DSH-012 : le tableau de l'équipe du superviseur
     path("pilotage/equipe/", pil.EquipeVue.as_view(), name="pilotage-equipe"),

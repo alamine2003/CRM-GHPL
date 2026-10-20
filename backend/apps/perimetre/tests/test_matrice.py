@@ -49,6 +49,17 @@ ATTENDU = {
     Action.OBJECTIFS_GERER: {"admin_pays"},
     # prd.md §6.3, « Consulter le journal d'audit » : siège ; son pays pour le pays.
     Action.AUDIT_LIRE: {"admin_siege", "direction_siege", "responsable_pays", "admin_pays"},
+    # 1.6.0 : le suivi des ventes (prd.md §14.84).
+    Action.VENTES_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+    },
+    Action.VENTES_GERER: {"admin_pays"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",
@@ -232,6 +243,9 @@ REQUETES = {
     # Sans corps : l'action passe, la saisie est refusée.
     Action.OBJECTIFS_GERER: ("post", "/api/v1/pilotage/objectifs/", {}, 400),
     Action.AUDIT_LIRE: ("get", "/api/v1/audit/", {}, 200),
+    Action.VENTES_LIRE: ("get", "/api/v1/ventes/synthese/", None, 200),
+    # Sans corps : l'action passe, la saisie est refusée.
+    Action.VENTES_GERER: ("post", "/api/v1/ventes/lignes/", {}, 400),
 }  # fmt: skip
 
 

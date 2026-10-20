@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.5.9
+  version: 1.6.0
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5313,6 +5313,313 @@ paths:
               schema:
                 $ref: '#/components/schemas/Transfert'
           description: ''
+  /api/v1/ventes/clients/:
+    get:
+      operationId: ventes_clients
+      description: |-
+        Les clients (pharmacies, parapharmacies, grossistes) : la recherche aide à choisir celui
+        d'une ligne ; l'administrateur pays en crée.
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+          description: ''
+    post:
+      operationId: ventes_client_creer
+      description: |-
+        Les clients (pharmacies, parapharmacies, grossistes) : la recherche aide à choisir celui
+        d'une ligne ; l'administrateur pays en crée.
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieClient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieClient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieClient'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+  /api/v1/ventes/import/:
+    post:
+      operationId: import_ventes
+      description: Simuler puis importer le fichier de ventes (classeur Excel).
+      tags:
+      - ventes
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportBirdNotes'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailLot'
+          description: ''
+  /api/v1/ventes/lignes/:
+    get:
+      operationId: ventes_lignes
+      description: Les lignes mensuelles (une page à la fois) ; l'administrateur pays
+        en saisit.
+      parameters:
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: mois
+        schema:
+          type: string
+        description: AAAA-MM
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: produit
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: taille
+        schema:
+          type: integer
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageLignes'
+          description: ''
+    post:
+      operationId: ventes_saisir
+      description: Les lignes mensuelles (une page à la fois) ; l'administrateur pays
+        en saisit.
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieVente'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieVente'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieVente'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LigneVenteRendu'
+          description: ''
+  /api/v1/ventes/lignes/{id}/:
+    patch:
+      operationId: ventes_corriger
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVente'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVente'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVente'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LigneVenteRendu'
+          description: ''
+  /api/v1/ventes/lignes/{id}/archiver/:
+    post:
+      operationId: ventes_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/ventes/options/:
+    get:
+      operationId: ventes_options
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptionsVentes'
+          description: ''
+  /api/v1/ventes/synthese/:
+    get:
+      operationId: ventes_synthese
+      description: |-
+        Le cumul de l'année (YTD) face à l'an passé, les ventes mois par mois, et la ventilation
+        éclatée selon `par`, avec tous les filtres.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: classe
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      - in: query
+        name: par
+        schema:
+          enum:
+          - delegue
+          - produit
+          - classe
+          - reseau
+          - zone
+          - client
+          - type_client
+          type: string
+          default: produit
+          minLength: 1
+        description: |-
+          * `delegue` - delegue
+          * `produit` - produit
+          * `classe` - classe
+          * `reseau` - reseau
+          * `zone` - zone
+          * `client` - client
+          * `type_client` - type_client
+      - in: query
+        name: produit
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: reseau
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: type_client
+        schema:
+          enum:
+          - pharmacie
+          - parapharmacie
+          - grossiste
+          type: string
+          minLength: 1
+        description: |-
+          * `pharmacie` - Pharmacie
+          * `parapharmacie` - Parapharmacie
+          * `grossiste` - Grossiste
+      - in: query
+        name: zone
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheseVentes'
+          description: ''
   /api/v1/visites/{id}/:
     patch:
       operationId: visite_modifier
@@ -6335,6 +6642,16 @@ components:
           maxItems: 30
       required:
       - coupes
+    ChoixTypeClient:
+      type: object
+      properties:
+        valeur:
+          type: string
+        libelle:
+          type: string
+      required:
+      - libelle
+      - valeur
     Cible:
       type: object
       properties:
@@ -6400,6 +6717,25 @@ components:
       description: |-
         * `conforme` - Conforme
         * `a_verifier` - À vérifier
+    Client:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/TypeClientVenteEnum'
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+        zone:
+          allOf:
+          - $ref: '#/components/schemas/Element'
+          nullable: true
+      required:
+      - id
+      - nom
+      - type
+      - zone
     ClientEnum:
       enum:
       - portail
@@ -7370,6 +7706,17 @@ components:
       required:
       - delegue
       - journees
+    DelegueVente:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+      required:
+      - id
+      - nom
     DemandeCorrection:
       type: object
       description: 'RPT-014 CA1 : commentaire obligatoire ; champs concernés facultatifs.'
@@ -7470,7 +7817,7 @@ components:
           type: string
           readOnly: true
         source:
-          $ref: '#/components/schemas/SourceEnum'
+          $ref: '#/components/schemas/SourceImportEnum'
         fichier:
           type: string
           maxLength: 200
@@ -7844,6 +8191,17 @@ components:
       required:
       - libelle
       - quantite
+    Element:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+      required:
+      - id
+      - libelle
     ErreurClient:
       type: object
       properties:
@@ -8308,6 +8666,44 @@ components:
       - id
       - libelle
       - total
+    GroupeVentes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+        cle:
+          type: string
+        libelle:
+          type: string
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        part:
+          type: number
+          format: double
+          nullable: true
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        evolution:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - cle
+      - evolution
+      - id
+      - libelle
+      - montant_ttc
+      - part
+      - precedent_montant_ttc
+      - quantite
     HistoriqueProspect:
       type: object
       description: 'OFF-001 : les derniers rapports d''un prospect de la liste cible.'
@@ -8909,6 +9305,52 @@ components:
       - delegues
       - pays
       - total
+    LigneVenteRendu:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mois:
+          type: string
+          description: AAAA-MM
+        delegue:
+          $ref: '#/components/schemas/DelegueVente'
+        produit:
+          $ref: '#/components/schemas/Element'
+        client:
+          $ref: '#/components/schemas/Client'
+        reseau:
+          allOf:
+          - $ref: '#/components/schemas/Element'
+          nullable: true
+        zone:
+          allOf:
+          - $ref: '#/components/schemas/Element'
+          nullable: true
+        quantite:
+          type: integer
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        source:
+          $ref: '#/components/schemas/SourceVenteEnum'
+        modifie_le:
+          type: string
+          format: date-time
+      required:
+      - client
+      - delegue
+      - id
+      - modifie_le
+      - mois
+      - montant_ttc
+      - produit
+      - quantite
+      - reseau
+      - source
+      - zone
     ListeCible:
       type: object
       properties:
@@ -9017,7 +9459,7 @@ components:
           type: string
           readOnly: true
         source:
-          $ref: '#/components/schemas/SourceEnum'
+          $ref: '#/components/schemas/SourceImportEnum'
         fichier:
           type: string
           maxLength: 200
@@ -9225,6 +9667,30 @@ components:
       - nom
       - pays_principal
       - prenom
+    MoisVentes:
+      type: object
+      properties:
+        mois:
+          type: string
+          description: AAAA-MM
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        precedent_quantite:
+          type: integer
+      required:
+      - mois
+      - montant_ttc
+      - precedent_montant_ttc
+      - precedent_quantite
+      - quantite
     Moment:
       type: object
       properties:
@@ -9525,6 +9991,53 @@ components:
       - secteurs
       - superviseurs
       - zones
+    OptionsVentes:
+      type: object
+      description: 'Ce que les filtres proposent : seulement ce qui apparaît dans
+        les ventes visibles.'
+      properties:
+        annees:
+          type: array
+          items:
+            type: integer
+        aujourdhui_annee:
+          type: integer
+        aujourdhui_mois:
+          type: integer
+        delegues:
+          type: array
+          items:
+            $ref: '#/components/schemas/DelegueVente'
+        produits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        classes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        reseaux:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        types_client:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChoixTypeClient'
+      required:
+      - annees
+      - aujourdhui_annee
+      - aujourdhui_mois
+      - classes
+      - delegues
+      - produits
+      - reseaux
+      - types_client
+      - zones
     Ordre:
       type: object
       properties:
@@ -9548,18 +10061,24 @@ components:
           maxLength: 254
       required:
       - identifiant
-    ParEnum:
-      enum:
-      - delegue
-      - reseau
-      - zone
-      - secteur
-      type: string
-      description: |-
-        * `delegue` - delegue
-        * `reseau` - reseau
-        * `zone` - zone
-        * `secteur` - secteur
+    PageLignes:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        taille:
+          type: integer
+        resultats:
+          type: array
+          items:
+            $ref: '#/components/schemas/LigneVenteRendu'
+      required:
+      - page
+      - resultats
+      - taille
+      - total
     Parametre:
       type: object
       properties:
@@ -9746,6 +10265,13 @@ components:
           type: string
           format: uuid
           nullable: true
+    PatchedModificationVente:
+      type: object
+      properties:
+        quantite:
+          type: string
+        montant_ttc:
+          type: string
     PatchedModificationVisite:
       type: object
       properties:
@@ -12135,6 +12661,21 @@ components:
       required:
       - libelle
       - type
+    SaisieClient:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/TypeClientVenteEnum'
+        nom:
+          type: string
+          maxLength: 160
+        zone:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - nom
+      - type
     SaisieEtablissement:
       type: object
       properties:
@@ -12375,6 +12916,33 @@ components:
         version:
           type: integer
           minimum: 0
+    SaisieVente:
+      type: object
+      properties:
+        mois:
+          type: string
+          description: AAAA-MM
+          pattern: ^\d{4}-(0[1-9]|1[0-2])$
+        delegue:
+          type: string
+          format: uuid
+        produit:
+          type: string
+          format: uuid
+        client:
+          type: string
+          format: uuid
+        quantite:
+          type: string
+        montant_ttc:
+          type: string
+      required:
+      - client
+      - delegue
+      - mois
+      - montant_ttc
+      - produit
+      - quantite
     SaisieVisite:
       type: object
       properties:
@@ -12649,14 +13217,24 @@ components:
           nullable: true
       required:
       - soumis_le
-    SourceEnum:
+    SourceImportEnum:
       enum:
       - birdnotes
       - organisation
+      - ventes
       type: string
       description: |-
         * `birdnotes` - BirdNotes
         * `organisation` - Fichier d'organisation
+        * `ventes` - Fichier de ventes
+    SourceVenteEnum:
+      enum:
+      - import
+      - saisie
+      type: string
+      description: |-
+        * `import` - Fichier importé
+        * `saisie` - Saisie
     StatutEnum:
       enum:
       - actif
@@ -12876,6 +13454,54 @@ components:
       - mes_a_valider
       - potentiels
       - sans_lieu
+    SyntheseVentes:
+      type: object
+      properties:
+        devise:
+          type: string
+          description: 'Code ISO 4217 du pays : tous les montants s''y lisent.'
+        annee:
+          type: integer
+        mois_fin:
+          type: integer
+        par:
+          $ref: '#/components/schemas/SyntheseVentesParEnum'
+        ytd:
+          $ref: '#/components/schemas/TotauxVentes'
+        mensuel:
+          type: array
+          items:
+            $ref: '#/components/schemas/MoisVentes'
+        ventilation:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupeVentes'
+      required:
+      - annee
+      - devise
+      - mensuel
+      - mois_fin
+      - par
+      - ventilation
+      - ytd
+    SyntheseVentesParEnum:
+      enum:
+      - delegue
+      - produit
+      - classe
+      - reseau
+      - zone
+      - client
+      - type_client
+      type: string
+      description: |-
+        * `delegue` - delegue
+        * `produit` - produit
+        * `classe` - classe
+        * `reseau` - reseau
+        * `zone` - zone
+        * `client` - client
+        * `type_client` - type_client
     TableauEquipe:
       type: object
       description: |-
@@ -12899,7 +13525,7 @@ components:
         cycle:
           $ref: '#/components/schemas/CyclePeriode'
         par:
-          $ref: '#/components/schemas/ParEnum'
+          $ref: '#/components/schemas/TableauEquipeParEnum'
         options:
           $ref: '#/components/schemas/OptionsPilotage'
         delegues:
@@ -12927,6 +13553,18 @@ components:
       - par
       - periode
       - total
+    TableauEquipeParEnum:
+      enum:
+      - delegue
+      - reseau
+      - zone
+      - secteur
+      type: string
+      description: |-
+        * `delegue` - delegue
+        * `reseau` - reseau
+        * `zone` - zone
+        * `secteur` - secteur
     TableauSiege:
       type: object
       description: 'DSH-004 : la consolidation du siège, par pays, et le total de
@@ -13073,6 +13711,34 @@ components:
       required:
       - cycle
       - semaine
+    TotauxVentes:
+      type: object
+      properties:
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        precedent_quantite:
+          type: integer
+        lignes:
+          type: integer
+        evolution:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - evolution
+      - lignes
+      - montant_ttc
+      - precedent_montant_ttc
+      - precedent_quantite
+      - quantite
     Transfert:
       type: object
       properties:
@@ -13143,6 +13809,16 @@ components:
         * `nombre` - Nombre
         * `liste` - Liste
         * `case` - Case à cocher
+    TypeClientVenteEnum:
+      enum:
+      - pharmacie
+      - parapharmacie
+      - grossiste
+      type: string
+      description: |-
+        * `pharmacie` - Pharmacie
+        * `parapharmacie` - Parapharmacie
+        * `grossiste` - Grossiste
     TypePosteEnum:
       enum:
       - vm

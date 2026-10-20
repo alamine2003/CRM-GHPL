@@ -171,6 +171,8 @@ Tous les types de poste suivent **le même workflow** planning → visite → ra
 | Rouvrir un rapport validé | Non | Non | Non | Non | Non | Oui (> 30 jours, périm.) | Oui (≤ 30 jours, périm.) | Non |
 | Désigner un remplaçant de superviseur | Non | Non | Non | Oui | Non | Oui (périm.) | Oui (pour lui-même) | Non |
 | Consulter les indicateurs | Global agrégé, nominatif audité | Global agrégé, nominatif audité | Pays nominatif | Non (§14.76) | Réseaux nominatif | Réseaux nominatif | Délégués rattachés | Personnels |
+| Consulter les ventes des délégués (§14.84) | Un pays choisi, nominatif audité | Un pays choisi, nominatif audité | Pays | Pays | Oui (périm.) | Oui (périm.) | Oui (périm.) | Non |
+| Importer ou saisir les ventes (§14.84) | Un pays choisi | Non | Non | Oui | Non | Non | Non | Non |
 | Consulter le journal d'audit | Oui | Oui | Son pays | Son pays | Non | Non | Non | Non |
 | Exporter | Oui (audité) | Oui (audité) | Oui (audité) | Non (§14.58) | Oui (audité) | Oui (audité) | Oui (audité) | Non |
 | Effacer à distance un appareil | Oui | Non | Non | Oui | Non | Non | Non | Non |
@@ -269,6 +271,7 @@ Voir `ORG-001` à `ORG-014` (section 15.1).
 | Supervision | Remplaçant daté, escalade vers le DM |
 | Notifications | Push qui ouvre l'action, centre de notifications, courriel de sécurité |
 | Pilotage | Tableaux de bord délégué, superviseur, DM/DF, pays, siège ; objectifs par réseau ; exports audités ; Grafana |
+| Ventes (1.6.0, §14.84) | Suivi des ventes des délégués : import Excel ou saisie, cumul de l'année (YTD), ventes mensuelles, ventes éclatées avec tous les filtres, au portail |
 | Mobile | Android et iOS, hors connexion 7 jours, chiffrement local, effacement à distance |
 | Exploitation | Audit, sauvegardes, supervision, environnements, instance de démonstration |
 | Langues | Français et anglais |
@@ -704,14 +707,33 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
-### 14.83 Le DO observe et analyse les ventes (décision du 18 octobre 2026 ; à construire)
+### 14.84 Suivi des ventes des délégués (décision du 20 octobre 2026 ; mise en œuvre 1.6.0)
+
+- **Une plateforme de suivi des ventes** [D, 20 octobre 2026, responsable produit] : « on doit créer une plateforme de suivi des ventes ». Elle vit **dans le portail web du CRM**, avec les mêmes comptes et les mêmes pays, sous l'entrée « Ventes ».
+- **Comment les ventes y entrent** [D, 20 octobre 2026] : « soit par import de fichier Excel, soit en saisissant aussi ». Les deux se complètent ; aucune liaison avec un autre logiciel pour l'instant.
+- **Ce qu'on voit** [D, 20 octobre 2026] : « tous les filtres », et les ventes **éclatées** par **délégué**, par **produit** ou **classe thérapeutique**, par **pharmacie / grossiste** (le client) et par **zone / réseau**.
+- **Hypothèses retenues faute de précision** [H, 20 octobre 2026, à confirmer] :
+  - une ligne de vente est un **total mensuel** pour un délégué, un produit et un client ; elle porte la **quantité** et le **chiffre d'affaires TTC** ;
+  - les montants sont dans la **devise du pays** (`ParametrePays` : `devise`) ;
+  - un client est une **pharmacie**, une **parapharmacie** ou un **grossiste**, avec une zone facultative ;
+  - le **réseau** d'une ligne est celui dont le portefeuille porte le produit (celui du poste du délégué si plusieurs) ; la **zone** est celle du client ; le poste est celui que le délégué occupait ce mois-là. Ces liens sont fixés à l'enregistrement : changer l'organisation ensuite ne réécrit pas l'histoire ;
+  - le **délégué** n'a pas accès à la plateforme ; le superviseur ne voit que les postes qui lui sont rattachés, le DM et le DF (rôle du DO) que les postes de leurs réseaux, le responsable et l'administrateur pays tout leur pays, le siège **un pays à la fois** ;
+  - l'**administrateur pays** (et le siège dans un pays choisi) importe et saisit ; les autres rôles consultent seulement.
+- **VNT-001 — Importer un fichier de ventes** : classeur Excel (.xlsx) aux colonnes `MOIS`, `DELEGUE`, `PRODUIT`, `CLIENT`, `TYPE CLIENT`, `ZONE` (facultative), `QUANTITE`, `CA TTC`. Une **simulation** compte ce qui serait créé ou remplacé sans rien écrire. *CA1* : chaque ligne écartée a son motif (mois illisible, délégué inconnu, produit inconnu, type de client inconnu, nombre invalide). *CA2* : un produit absent du référentiel **n'est jamais créé**. *CA3* : un réimport remplace les lignes déjà là, il n'en ajoute pas. *CA4* : plusieurs lignes du fichier pour la même clé s'additionnent. L'import est audité (`import.ventes`) ; le fichier n'est pas conservé.
+- **VNT-002 — Saisir, corriger, archiver une ligne** : une seule ligne par mois, délégué, produit et client ; une ligne qui existe se corrige (quantité et montant), elle ne se double pas. L'archivage sort la ligne des totaux et la garde dans l'historique (RG-005). Saisie, correction et archivage sont audités.
+- **VNT-003 — Cumul de l'année, ventes mensuelles** : le cumul de l'année (YTD) jusqu'au mois choisi (par défaut le mois en cours) face à la même période de l'an passé, avec l'évolution en pourcentage ; les douze mois de l'année face à l'an passé, en graphique et en tableau. Le signe de l'évolution est écrit (« + », « − »), jamais indiqué par la seule couleur.
+- **VNT-004 — Ventes éclatées et filtres** : le même cumul réparti par délégué, produit, classe thérapeutique, réseau, zone, client ou type de client, avec la part de chaque groupe et son évolution. Les filtres (délégué, produit, classe, réseau, zone, client, type de client, année, mois) se combinent ; un clic sur un groupe le prend comme filtre.
+- **VNT-005 — Périmètre et audit** : chaque réponse est limitée au périmètre de celui qui demande (isolation testée comme le reste, SEC-008) ; une route d'un objet d'un autre pays répond 404. Toute consultation **nominative** du siège (par délégué) est auditée (`ventes.consultation_nominative`), comme au pilotage (DSH-004).
+- **Démonstration** : l'instance de démonstration reçoit vingt-sept mois de ventes **fictives** par délégué (jamais de donnée réelle).
+- **Ce qui reste à construire** : le réglage des droits du DO par le siège seul (§14.83) ; l'export des ventes (audité) ; les objectifs de ventes ; la consolidation de tous les pays pour le siège ; le rapprochement des ventes et des visites (chiffre d'affaires moyen par visite). La source (fichier Excel ou saisie) pourra être remplacée plus tard par une liaison directe, sans changer les vues.
+
+### 14.83 Le DO observe et analyse les ventes (décision du 18 octobre 2026 ; construit en 1.6.0, §14.84)
 
 Ce que le responsable produit a décidé le 18 octobre 2026, en réponse à la question laissée ouverte en 1.3.1 :
 
-- **Qui règle les droits du DO** [D, 18 octobre 2026] : **le siège seulement**. Ni l'administrateur pays ni un autre rôle ne les change.
-- **Ce que fait le DO** [D, 18 octobre 2026] : il **observe et analyse les ventes des délégués**, sans rien décider ni valider. Les vues demandées : les **ventes éclatées** (ventilées), les **ventes cumulées de l'année (YTD)**, les **ventes mensuelles**, « et tout » ce qui s'en déduit.
-- **Ce qui reste vrai en attendant** : le DO garde le rôle DF (lecture seule du pilotage, des plannings et des rapports de son périmètre, 1.3.1).
-- **Ce qui manque pour construire** : le CRM ne reçoit aucune donnée de vente (voir « Hors périmètre actuel » du §14.18 : chiffre d’affaires). Avant de construire les vues, il faut décider **d'où viennent les ventes** (fichier importé, ERP, autre), **à quel grain** (par délégué, par produit, par gamme, par pharmacie ou grossiste, par zone, par mois), **en quelle mesure** (chiffre d'affaires TTC, quantités) et **qui y a accès** (le DO d'un pays ou de tous). Ces points sont posés au responsable produit ; rien n'est construit tant qu'ils ne sont pas tranchés.
+- **Qui règle les droits du DO** [D, 18 octobre 2026] : **le siège seulement**. Ni l'administrateur pays ni un autre rôle ne les change. *Pas encore construit : le réglage des droits du DO reste à faire (voir §14.84, « Ce qui reste à construire »).*
+- **Ce que fait le DO** [D, 18 octobre 2026] : il **observe et analyse les ventes des délégués**, sans rien décider ni valider. Les vues demandées : les **ventes éclatées** (ventilées), les **ventes cumulées de l'année (YTD)**, les **ventes mensuelles**, « et tout » ce qui s'en déduit. Construit en 1.6.0 (§14.84).
+- **Ce qui reste vrai en attendant** : le DO garde le rôle DF (lecture seule du pilotage, des plannings et des rapports de son périmètre, 1.3.1) ; c'est ce rôle qui ouvre la page « Ventes ».
 
 ### 14.82 Maquette des écrans mobile et tablette (mise en œuvre 1.4.0 et suivantes)
 
@@ -1382,7 +1404,7 @@ Modèle fourni par le métier le 5 octobre 2026 [D] (exemple d'une semaine, form
 - **Périodes** [D, 5 octobre 2026] : toutes, de 24 heures à 1 an (24 h, 7 jours, 30 jours, 90 jours, 6 mois, 1 an, ou dates choisies), avec la comparaison à la période précédente (variation en % ou en points).
 - **Méthode** : score pondéré (version hebdomadaire, la plus récente) [H] ; le classement par priorité de la version mensuelle n'est pas repris sauf demande.
 - **Profil du délégué** (modèle : tableau de bord BirdNotes « Profil délégué — Vue Insight V2 ») : filtres supérieur, délégué et période ; visites réalisées, prospects planifiés, taux de réalisation du planning (planifiés visités / planifiés) ; planifiés vs visités (visités planifiés, visités non planifiés, planifiés non visités) ; visites géolocalisées et non géolocalisées ; taux de couverture du portefeuille ; chaque indicateur avec la période précédente et sa variation ; courbe des visites planifiées et réalisées par jour ; fréquence des prospects visités (potentiel, nombre de visites, adresse, secteur, localité, spécialité, activité H/P) ; prospects non visités avec leur date de dernière visite. Les échantillons remis viennent des rapports (RG-038, cycle 0.5).
-- **Hors périmètre actuel** : le chiffre d'affaires (CA TTC pharmacie/parapharmacie, grossistes, par gamme, moyen par visite) suppose des données de vente que le CRM ne reçoit pas ; à décider avec leur source.
+- **Chiffre d'affaires** : construit en 1.6.0 par le suivi des ventes (§14.84) — CA TTC par pharmacie, parapharmacie ou grossiste, par classe thérapeutique et par réseau. Reste hors périmètre : le chiffre d'affaires moyen par visite, qui demande de rapprocher ventes et visites.
 
 ## 15. Exigences fonctionnelles
 

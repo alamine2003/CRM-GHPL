@@ -20,6 +20,7 @@ import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import PublicRounded from '@mui/icons-material/PublicRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded';
+import TrendingUpRounded from '@mui/icons-material/TrendingUpRounded';
 import type { ReactNode } from 'react';
 
 export type Section = 'activite' | 'administration';
@@ -116,6 +117,14 @@ export const ENTREES: Entree[] = [
     section: 'activite',
     chemin: '/objectifs',
     visible: peut('objectifs.lire'),
+  },
+  {
+    // 1.6.0 : le suivi des ventes (le DO, le siège, le pays, l'encadrement dans leur périmètre).
+    cle: 'ventes',
+    icone: <TrendingUpRounded />,
+    section: 'activite',
+    chemin: '/ventes',
+    visible: peut('ventes.lire'),
   },
   {
     cle: 'organisation',

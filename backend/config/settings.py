@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "apps.rapports",
     "apps.notifications",
     "apps.pilotage",
+    "apps.ventes",
     "apps.demonstration",
     "apps.audit",
 ]
@@ -319,6 +320,9 @@ SPECTACULAR_SETTINGS = {
         "TypeRemiseEnum": "apps.rapports.models.TypeRemise",
         "StatutFicheEnum": "apps.prospects.models.StatutFiche",
         "StatutLotEnum": "apps.imports.models.LotImport.Statut",
+        "SourceImportEnum": "apps.imports.models.Source",
+        "TypeClientVenteEnum": "apps.ventes.models.TypeClient",
+        "SourceVenteEnum": "apps.ventes.models.SourceVente",
         "TypeActiviteEnum": "apps.planning.models.TypeActivite",
         "PeriodeActiviteEnum": "apps.planning.models.Periode",
         "CodeControleEnum": "apps.planning.controles.CODES",

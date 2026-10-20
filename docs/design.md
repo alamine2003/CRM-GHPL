@@ -123,3 +123,5 @@ avant et après défilement, puis noté :
 
 Les défauts relevés (écran, problème, impact, correction) et leur résolution sont consignés
 dans le journal des versions.
+
+- **1.6.0, page « Ventes » du portail** : cumul de l'année dans la barre de chiffres, graphique mensuel (barres de l'année, trait pointillé et losanges pour l'an passé, légende écrite, équivalent en tableau), ventilation en tableau avec part en barre fine et évolution écrite avec son signe ; les filtres tiennent sur une ligne qui passe à la suivante sur petit écran, les colonnes secondaires se masquent sur téléphone ; orange réservé aux actions.

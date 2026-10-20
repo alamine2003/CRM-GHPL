@@ -2,6 +2,26 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.6.0] — Le suivi des ventes
+
+### Ajouté (prd.md §14.84, VNT-001 à VNT-005)
+
+- Une plateforme de suivi des ventes des délégués, dans le portail (entrée « Ventes »).
+- Les ventes entrent par un **fichier Excel** (simulation avant import, motif de chaque ligne écartée, réimport sans doublon) ou par **saisie** ; une ligne se corrige ou s'archive.
+- Le **cumul de l'année (YTD)** face à l'an passé, les **ventes mensuelles** (graphique et tableau) et les **ventes éclatées** par délégué, produit, classe thérapeutique, réseau, zone, client ou type de client, avec tous les filtres ; un clic sur un groupe le prend comme filtre.
+- Chacun ne voit que son périmètre : le pays entier (responsable et administrateur pays), les réseaux (DF, c'est-à-dire le DO, et DM), les postes rattachés (superviseur) ; le siège, un pays à la fois, avec audit de la vue par délégué. Le délégué n'y a pas accès.
+- Tables `ventes_client` et `ventes_vente` sous sécurité au niveau des lignes ; actions `ventes.lire` et `ventes.gerer` dans la matrice.
+- L'instance de démonstration reçoit vingt-sept mois de ventes fictives.
+
+### Modifié
+
+- La page Imports propose une troisième source, « Ventes », pour l'administrateur pays.
+- `prd.md` : §14.83 (le DO) renvoie au §14.84 ; le réglage des droits du DO par le siège seul reste à construire.
+
+### Design
+
+Page « Ventes » du portail, clair et sombre, téléphone et ordinateur.
+
 ## [1.5.9] — Revue de l'application face à la maquette ; le DO
 
 ### Modifié (prd.md §14.82, §14.83)

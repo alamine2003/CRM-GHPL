@@ -139,7 +139,8 @@
     "notifications": "Notifications",
     "aTraiter": "To review",
     "objectifs": "Targets",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "ventes": "Sales"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -1193,7 +1194,12 @@
       "anomalies_other": "{{count}} anomalies in the report",
       "postes": "Positions created",
       "vacants": "Vacant positions",
-      "comptes": "Accounts created"
+      "comptes": "Accounts created",
+      "ventes": "Sales lines created",
+      "remplacees_one": "{{count}} replaced",
+      "remplacees_other": "{{count}} replaced",
+      "clients": "Customers created",
+      "rejetees": "Rows set aside"
     },
     "detail": "Details by data",
     "anomalies": "Anomalies",
@@ -1217,7 +1223,9 @@
       "postes": "Positions",
       "occupations": "Assignments",
       "rattachements": "Supervision links",
-      "lignes": "Rows"
+      "lignes": "Rows",
+      "ventes": "Sales",
+      "clients": "Customers"
     },
     "actions": {
       "crees": "created",
@@ -1238,7 +1246,8 @@
       "creees": "created",
       "existantes": "already present",
       "attribues": "granted",
-      "importees": "imported"
+      "importees": "imported",
+      "remplacees": "replaced"
     },
     "niveaux": {
       "rejet": "Row set aside",
@@ -1258,20 +1267,24 @@
     "confirmerTexte": "{{prospects}} prospects and {{etablissements}} facilities will be created, as in the simulation. Imported records remain editable and archivable; they are never deleted.",
     "sources": {
       "birdnotes": "BirdNotes export",
-      "organisation": "Organisation file"
+      "organisation": "Organisation file",
+      "ventes": "Sales file"
     },
     "sourcesCourtes": {
       "birdnotes": "BirdNotes",
-      "organisation": "Organisation"
+      "organisation": "Organisation",
+      "ventes": "Sales"
     },
     "source": "Source",
     "deposerSource": {
       "birdnotes": "Drop the BirdNotes export here",
-      "organisation": "Drop the organisation file here"
+      "organisation": "Drop the organisation file here",
+      "ventes": "Drop the sales file here"
     },
     "formatsSource": {
       "birdnotes": "Extraction JSON file, or its ZIP archive",
-      "organisation": "Excel workbook (.xlsx), “ORGANISATION” sheet"
+      "organisation": "Excel workbook (.xlsx), “ORGANISATION” sheet",
+      "ventes": "Excel workbook (.xlsx): MOIS, DELEGUE, PRODUIT, CLIENT, TYPE CLIENT, ZONE (optional), QUANTITE, CA TTC"
     }
   },
   "exercice": {
@@ -3140,5 +3153,102 @@
     "version": "INNOV CRM version {{version}}.",
     "lien": "Privacy policy",
     "retour": "Back to sign-in"
+  },
+  "ventes": {
+    "choisirPays": "Choose a country first to see its sales.",
+    "sousTitre": "Year to date, monthly sales and sales breakdown",
+    "importer": "Import a file",
+    "saisir": "Enter a sale",
+    "onglets": {
+      "synthese": "Summary",
+      "lignes": "Lines"
+    },
+    "filtres": {
+      "annee": "Year",
+      "jusquau": "Up to the month of",
+      "tous": "All",
+      "delegue": "Representative",
+      "produit": "Product",
+      "classe": "Therapeutic class",
+      "reseau": "Network",
+      "zone": "Zone",
+      "client": "Customer",
+      "typeClient": "Customer type",
+      "reinitialiser_one": "Reset ({{count}} filter)",
+      "reinitialiser_other": "Reset ({{count}} filters)"
+    },
+    "types": {
+      "pharmacie": "Pharmacy",
+      "parapharmacie": "Parapharmacy",
+      "grossiste": "Wholesaler"
+    },
+    "sources": {
+      "import": "Imported file",
+      "saisie": "Entered"
+    },
+    "par": {
+      "delegue": "Representative",
+      "produit": "Product",
+      "classe": "Therapeutic class",
+      "reseau": "Network",
+      "zone": "Zone",
+      "client": "Customer",
+      "type_client": "Customer type"
+    },
+    "chiffres": {
+      "ytd": "Year to date, end of {{periode}}",
+      "vsAnneePrecedente": "vs {{annee}}",
+      "anneePrecedente": "Same period in {{annee}}",
+      "quantite": "Units sold",
+      "lignes": "Sales lines"
+    },
+    "mensuel": {
+      "titre": "Monthly sales {{annee}}",
+      "detail": "Monthly detail {{annee}}",
+      "mois": "Month"
+    },
+    "graphique": {
+      "aria": "Monthly sales {{annee}} against the previous year; total {{total}}."
+    },
+    "colonnes": {
+      "ca": "Sales incl. tax",
+      "quantite": "Units",
+      "part": "Share",
+      "precedent": "{{annee}}",
+      "evolution": "Change"
+    },
+    "ventilation": {
+      "titre": "Sales breakdown",
+      "par": "Break down by",
+      "filtrer": "Filter on {{libelle}}"
+    },
+    "nominatif": "Named view of representatives: every consultation is recorded in the audit log.",
+    "vide": {
+      "titre": "No sales in this period",
+      "gerer": "Import an Excel sales file or enter a first line.",
+      "lire": "The country administrator imports or enters sales. No sales are visible in your scope for these filters."
+    },
+    "lignes": {
+      "titre": "Sales lines",
+      "aucune": "No line for these filters",
+      "source": "Origin",
+      "corriger": "Correct",
+      "archiver": "Archive",
+      "archiverAide": "{{delegue}}'s line for {{produit}} leaves the totals. It stays kept in the history.",
+      "pagination": "Sales line pages"
+    },
+    "saisie": {
+      "titre": "Enter a sale",
+      "aide": "One total per month, representative, product and customer. To change an existing line, correct it in the Lines tab.",
+      "enregistrer": "Save the sale",
+      "mois": "Month",
+      "quantite": "Quantity",
+      "montant": "Sales incl. tax",
+      "nouveauClient": "The customer is not listed: create it",
+      "choisirClient": "Choose an existing customer",
+      "nomClient": "Customer name",
+      "sansZone": "No zone",
+      "aucunClient": "No customer found"
+    }
   }
 }

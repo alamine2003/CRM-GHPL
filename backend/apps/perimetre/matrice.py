@@ -53,6 +53,8 @@ class Action(StrEnum):
     OBJECTIFS_LIRE = "objectifs.lire"
     OBJECTIFS_GERER = "objectifs.gerer"
     AUDIT_LIRE = "audit.lire"
+    VENTES_LIRE = "ventes.lire"
+    VENTES_GERER = "ventes.gerer"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -175,6 +177,11 @@ MATRICE: dict[Action, frozenset[str]] = {
     # AUD-002 : « Consulter le journal d'audit » (prd.md §6.3) : le siège, tous les pays ; le
     # responsable et l'administrateur pays, leur pays seulement (filtre de la vue).
     Action.AUDIT_LIRE: frozenset(SIEGE | PAYS_CONSULTATION),
+    # 1.6.0 [D, 20 octobre 2026] Suivi des ventes : le siège, le pays, le DF (qui porte le rôle du
+    # DO), le DM et le superviseur les observent dans leur périmètre ; l'administrateur pays les
+    # importe ou les saisit. Le délégué ne voit pas cette plateforme.
+    Action.VENTES_LIRE: frozenset(SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}),
+    Action.VENTES_GERER: frozenset({Role.ADMIN_PAYS}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}

@@ -139,7 +139,8 @@
     "notifications": "Notifications",
     "aTraiter": "À traiter",
     "objectifs": "Objectifs",
-    "audit": "Journal d'audit"
+    "audit": "Journal d'audit",
+    "ventes": "Ventes"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -1193,7 +1194,12 @@
       "anomalies_other": "{{count}} anomalies au rapport",
       "postes": "Postes créés",
       "vacants": "Postes vacants",
-      "comptes": "Comptes créés"
+      "comptes": "Comptes créés",
+      "ventes": "Lignes de ventes créées",
+      "remplacees_one": "{{count}} remplacée",
+      "remplacees_other": "{{count}} remplacées",
+      "clients": "Clients créés",
+      "rejetees": "Lignes écartées"
     },
     "detail": "Détail par donnée",
     "anomalies": "Anomalies",
@@ -1217,7 +1223,9 @@
       "postes": "Postes",
       "occupations": "Occupations",
       "rattachements": "Rattachements",
-      "lignes": "Lignes"
+      "lignes": "Lignes",
+      "ventes": "Ventes",
+      "clients": "Clients"
     },
     "actions": {
       "crees": "créés",
@@ -1238,7 +1246,8 @@
       "creees": "créées",
       "existantes": "déjà présentes",
       "attribues": "attribués",
-      "importees": "importées"
+      "importees": "importées",
+      "remplacees": "remplacées"
     },
     "niveaux": {
       "rejet": "Ligne écartée",
@@ -1258,20 +1267,24 @@
     "confirmerTexte": "{{prospects}} prospects et {{etablissements}} établissements seront créés, comme dans la simulation. Les fiches reprises restent modifiables et archivables ; elles ne se suppriment pas.",
     "sources": {
       "birdnotes": "Export BirdNotes",
-      "organisation": "Fichier d'organisation"
+      "organisation": "Fichier d'organisation",
+      "ventes": "Fichier de ventes"
     },
     "sourcesCourtes": {
       "birdnotes": "BirdNotes",
-      "organisation": "Organisation"
+      "organisation": "Organisation",
+      "ventes": "Ventes"
     },
     "source": "Source",
     "deposerSource": {
       "birdnotes": "Déposez ici l'export BirdNotes",
-      "organisation": "Déposez ici le fichier d'organisation"
+      "organisation": "Déposez ici le fichier d'organisation",
+      "ventes": "Déposez ici le fichier de ventes"
     },
     "formatsSource": {
       "birdnotes": "Fichier JSON de l'extraction, ou son archive ZIP",
-      "organisation": "Classeur Excel (.xlsx), feuille « ORGANISATION »"
+      "organisation": "Classeur Excel (.xlsx), feuille « ORGANISATION »",
+      "ventes": "Classeur Excel (.xlsx) : MOIS, DELEGUE, PRODUIT, CLIENT, TYPE CLIENT, ZONE (facultative), QUANTITE, CA TTC"
     }
   },
   "exercice": {
@@ -3140,5 +3153,102 @@
     "version": "Version {{version}} d'INNOV CRM.",
     "lien": "Politique de confidentialité",
     "retour": "Retour à la connexion"
+  },
+  "ventes": {
+    "choisirPays": "Choisissez d'abord un pays pour consulter ses ventes.",
+    "sousTitre": "Cumul de l'année, ventes mensuelles et ventes éclatées",
+    "importer": "Importer un fichier",
+    "saisir": "Saisir une vente",
+    "onglets": {
+      "synthese": "Synthèse",
+      "lignes": "Lignes"
+    },
+    "filtres": {
+      "annee": "Année",
+      "jusquau": "Jusqu'au mois de",
+      "tous": "Tous",
+      "delegue": "Délégué",
+      "produit": "Produit",
+      "classe": "Classe thérapeutique",
+      "reseau": "Réseau",
+      "zone": "Zone",
+      "client": "Client",
+      "typeClient": "Type de client",
+      "reinitialiser_one": "Réinitialiser ({{count}} filtre)",
+      "reinitialiser_other": "Réinitialiser ({{count}} filtres)"
+    },
+    "types": {
+      "pharmacie": "Pharmacie",
+      "parapharmacie": "Parapharmacie",
+      "grossiste": "Grossiste"
+    },
+    "sources": {
+      "import": "Fichier importé",
+      "saisie": "Saisie"
+    },
+    "par": {
+      "delegue": "Délégué",
+      "produit": "Produit",
+      "classe": "Classe thérapeutique",
+      "reseau": "Réseau",
+      "zone": "Zone",
+      "client": "Client",
+      "type_client": "Type de client"
+    },
+    "chiffres": {
+      "ytd": "Cumul de l'année à fin {{periode}}",
+      "vsAnneePrecedente": "face à {{annee}}",
+      "anneePrecedente": "Même période en {{annee}}",
+      "quantite": "Quantités vendues",
+      "lignes": "Lignes de vente"
+    },
+    "mensuel": {
+      "titre": "Ventes mensuelles {{annee}}",
+      "detail": "Détail mensuel {{annee}}",
+      "mois": "Mois"
+    },
+    "graphique": {
+      "aria": "Ventes mensuelles {{annee}} face à l'année précédente ; cumul {{total}}."
+    },
+    "colonnes": {
+      "ca": "CA TTC",
+      "quantite": "Quantités",
+      "part": "Part",
+      "precedent": "{{annee}}",
+      "evolution": "Évolution"
+    },
+    "ventilation": {
+      "titre": "Ventes éclatées",
+      "par": "Éclater par",
+      "filtrer": "Filtrer sur {{libelle}}"
+    },
+    "nominatif": "Vue nominative des délégués : chaque consultation est enregistrée au journal d'audit.",
+    "vide": {
+      "titre": "Aucune vente sur cette période",
+      "gerer": "Importez un fichier Excel de ventes ou saisissez une première ligne.",
+      "lire": "L'administrateur pays importe ou saisit les ventes. Aucune vente n'est visible dans votre périmètre pour ces filtres."
+    },
+    "lignes": {
+      "titre": "Lignes de vente",
+      "aucune": "Aucune ligne pour ces filtres",
+      "source": "Origine",
+      "corriger": "Corriger",
+      "archiver": "Archiver",
+      "archiverAide": "La ligne de {{delegue}} pour {{produit}} sort des totaux. Elle reste conservée dans l'historique.",
+      "pagination": "Pages des lignes de vente"
+    },
+    "saisie": {
+      "titre": "Saisir une vente",
+      "aide": "Un total par mois, délégué, produit et client. Pour une ligne qui existe déjà, corrigez-la dans l'onglet Lignes.",
+      "enregistrer": "Enregistrer la vente",
+      "mois": "Mois",
+      "quantite": "Quantité",
+      "montant": "Chiffre d'affaires TTC",
+      "nouveauClient": "Le client n'est pas dans la liste : le créer",
+      "choisirClient": "Choisir un client existant",
+      "nomClient": "Nom du client",
+      "sansZone": "Sans zone",
+      "aucunClient": "Aucun client trouvé"
+    }
   }
 }
