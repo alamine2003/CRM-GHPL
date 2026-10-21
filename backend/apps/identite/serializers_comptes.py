@@ -126,3 +126,28 @@ class AppareilSerializer(serializers.ModelSerializer):
         fields = ["id", "identifiant", "prenom", "nom", "plateforme", "plateforme_libelle",
                   "systeme", "modele", "version_app", "cree_le", "dernier_contact", "revoque",
                   "revoque_le"]  # fmt: skip
+
+
+class DroitsDOSerializer(serializers.Serializer):
+    """Les groupes de droits d'un DO : vrai quand ils sont ouverts (1.6.1)."""
+
+    ventes = serializers.BooleanField()
+    pilotage = serializers.BooleanField()
+    rapports = serializers.BooleanField()
+    prospects = serializers.BooleanField()
+
+
+class CompteDOSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    identifiant = serializers.CharField()
+    prenom = serializers.CharField()
+    nom = serializers.CharField()
+    pays = PaysResumeSerializer(allow_null=True)
+    droits = DroitsDOSerializer()
+
+
+class ModificationDroitsDOSerializer(serializers.Serializer):
+    ventes = serializers.BooleanField(required=False)
+    pilotage = serializers.BooleanField(required=False)
+    rapports = serializers.BooleanField(required=False)
+    prospects = serializers.BooleanField(required=False)

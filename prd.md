@@ -173,6 +173,7 @@ Tous les types de poste suivent **le même workflow** planning → visite → ra
 | Consulter les indicateurs | Global agrégé, nominatif audité | Global agrégé, nominatif audité | Pays nominatif | Non (§14.76) | Réseaux nominatif | Réseaux nominatif | Délégués rattachés | Personnels |
 | Consulter les ventes des délégués (§14.84) | Un pays choisi, nominatif audité | Un pays choisi, nominatif audité | Pays | Pays | Oui (périm.) | Oui (périm.) | Oui (périm.) | Non |
 | Importer ou saisir les ventes (§14.84) | Un pays choisi | Non | Non | Oui | Non | Non | Non | Non |
+| Régler les droits du DO (§14.85) | Oui | Non | Non | Non | Non | Non | Non | Non |
 | Consulter le journal d'audit | Oui | Oui | Son pays | Son pays | Non | Non | Non | Non |
 | Exporter | Oui (audité) | Oui (audité) | Oui (audité) | Non (§14.58) | Oui (audité) | Oui (audité) | Oui (audité) | Non |
 | Effacer à distance un appareil | Oui | Non | Non | Oui | Non | Non | Non | Non |
@@ -707,6 +708,21 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.85 Les droits du DO, réglés par le siège seul (mise en œuvre 1.6.1)
+
+- **Qui règle** [D, 18 octobre 2026, responsable produit] : « seulement le siège ». Dans l'application, c'est l'**administrateur du siège** (`admin_siege`). Ni la direction du siège (lecture seule), ni l'administrateur pays — y compris quand l'administrateur du siège « entre » dans un pays avec les droits de l'administrateur pays (1.2.0) — ne règlent ces droits. L'action `droits_do.regler` de la matrice (§6.3) est la sienne seule.
+- **Le DO** : un compte au rôle **DF** (1.3.1) ; aucun nouveau rôle. Le réglage porte sur **le compte**, pas sur le rôle : deux DO d'un même pays peuvent avoir des droits différents.
+- **Ce qui se règle** [H, 21 octobre 2026, à confirmer] : quatre groupes de droits, que le siège ouvre ou ferme pour chaque compte DF :
+  - **Ventes** (consulter les ventes, §14.84) ;
+  - **Pilotage et objectifs** (indicateurs du pilotage, exports du pilotage, objectifs des réseaux) ;
+  - **Rapports de visite** (lire les rapports de son périmètre) ;
+  - **Prospects et listes cibles** (fiches, établissements, listes cibles).
+  Le reste du rôle (pays, organisation, notifications) ne se règle pas : l'application en a besoin pour fonctionner.
+- **Par défaut, tout est ouvert** : un compte jamais réglé garde exactement les droits du DF (1.3.1). Le périmètre de réseaux du DO continue de se régler comme celui d'un DF (ORG-008), par l'administrateur pays.
+- **DOR-001 — Régler** : une page « Droits du DO » (administration, réservée à l'administrateur du siège) liste les comptes DF — de tous les pays pour le siège sans pays choisi, du pays choisi sinon — avec un interrupteur par groupe. *CA1* : un changement s'applique tout de suite ; le serveur refuse la route fermée (403) et la retire des actions du compte, donc de son menu. *CA2* : le réglage ne touche que le rôle DF du compte ; un compte qui tient aussi un autre rôle garde ce que cet autre rôle lui donne. *CA3* : un compte qui perd le rôle DF n'est plus concerné par le réglage. *CA4* : un compte sans rôle DF répond 404.
+- **DOR-002 — Audit** : chaque réglage qui change quelque chose est inscrit au journal d'audit (`droits_do.modification`, avec l'état avant et après) ; un réglage qui ne change rien n'ajoute rien.
+- **Ce qui reste à décider** : les groupes de droits dont le siège a besoin au-delà de ces quatre ; un périmètre de réseaux ou de pays propre au DO ; le prêt de ce réglage à une direction régionale.
+
 ### 14.84 Suivi des ventes des délégués (décision du 20 octobre 2026 ; mise en œuvre 1.6.0)
 
 - **Une plateforme de suivi des ventes** [D, 20 octobre 2026, responsable produit] : « on doit créer une plateforme de suivi des ventes ». Elle vit **dans le portail web du CRM**, avec les mêmes comptes et les mêmes pays, sous l'entrée « Ventes ».
@@ -725,13 +741,13 @@ Mise en œuvre (0.3.9) :
 - **VNT-004 — Ventes éclatées et filtres** : le même cumul réparti par délégué, produit, classe thérapeutique, réseau, zone, client ou type de client, avec la part de chaque groupe et son évolution. Les filtres (délégué, produit, classe, réseau, zone, client, type de client, année, mois) se combinent ; un clic sur un groupe le prend comme filtre.
 - **VNT-005 — Périmètre et audit** : chaque réponse est limitée au périmètre de celui qui demande (isolation testée comme le reste, SEC-008) ; une route d'un objet d'un autre pays répond 404. Toute consultation **nominative** du siège (par délégué) est auditée (`ventes.consultation_nominative`), comme au pilotage (DSH-004).
 - **Démonstration** : l'instance de démonstration reçoit vingt-sept mois de ventes **fictives** par délégué (jamais de donnée réelle).
-- **Ce qui reste à construire** : le réglage des droits du DO par le siège seul (§14.83) ; l'export des ventes (audité) ; les objectifs de ventes ; la consolidation de tous les pays pour le siège ; le rapprochement des ventes et des visites (chiffre d'affaires moyen par visite). La source (fichier Excel ou saisie) pourra être remplacée plus tard par une liaison directe, sans changer les vues.
+- **Ce qui reste à construire** : l'export des ventes (audité) ; les objectifs de ventes ; la consolidation de tous les pays pour le siège ; le rapprochement des ventes et des visites (chiffre d'affaires moyen par visite). La source (fichier Excel ou saisie) pourra être remplacée plus tard par une liaison directe, sans changer les vues.
 
-### 14.83 Le DO observe et analyse les ventes (décision du 18 octobre 2026 ; construit en 1.6.0, §14.84)
+### 14.83 Le DO observe et analyse les ventes (décision du 18 octobre 2026 ; construit en 1.6.0 et 1.6.1, §14.84 et §14.85)
 
 Ce que le responsable produit a décidé le 18 octobre 2026, en réponse à la question laissée ouverte en 1.3.1 :
 
-- **Qui règle les droits du DO** [D, 18 octobre 2026] : **le siège seulement**. Ni l'administrateur pays ni un autre rôle ne les change. *Pas encore construit : le réglage des droits du DO reste à faire (voir §14.84, « Ce qui reste à construire »).*
+- **Qui règle les droits du DO** [D, 18 octobre 2026] : **le siège seulement**. Ni l'administrateur pays ni un autre rôle ne les change. Construit en 1.6.1 (§14.85).
 - **Ce que fait le DO** [D, 18 octobre 2026] : il **observe et analyse les ventes des délégués**, sans rien décider ni valider. Les vues demandées : les **ventes éclatées** (ventilées), les **ventes cumulées de l'année (YTD)**, les **ventes mensuelles**, « et tout » ce qui s'en déduit. Construit en 1.6.0 (§14.84).
 - **Ce qui reste vrai en attendant** : le DO garde le rôle DF (lecture seule du pilotage, des plannings et des rapports de son périmètre, 1.3.1) ; c'est ce rôle qui ouvre la page « Ventes ».
 

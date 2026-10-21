@@ -39,6 +39,8 @@ import type {
   Prescription,
   HistoriqueSynchro,
   ModelesRapport,
+  CompteDO,
+  DroitsDO,
   SyntheseVentes,
   OptionsVentes,
   LigneVente,
@@ -209,6 +211,8 @@ export type {
   ModelesRapport,
   TendanceProduit,
   PointAttention,
+  CompteDO,
+  DroitsDO,
   SyntheseVentes,
   GroupeVentes,
   MoisVentes,
@@ -1274,6 +1278,12 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { motif },
         }),
+    },
+    /** Droits du DO : le siège seul les ouvre ou les ferme, groupe par groupe (1.6.1). */
+    droitsDo: {
+      liste: () => requete<CompteDO[]>('/api/v1/droits-do/'),
+      regler: (id: string, droits: Partial<DroitsDO>) =>
+        requete<CompteDO>(`/api/v1/droits-do/${id}/`, { methode: 'PATCH', corps: droits }),
     },
     /** Suivi des ventes (1.6.0) : synthèse, lignes mensuelles, clients, import Excel. */
     ventes: {

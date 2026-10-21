@@ -20,6 +20,7 @@ import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import PublicRounded from '@mui/icons-material/PublicRounded';
 import SettingsRounded from '@mui/icons-material/SettingsRounded';
 import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded';
+import AdminPanelSettingsRounded from '@mui/icons-material/AdminPanelSettingsRounded';
 import TrendingUpRounded from '@mui/icons-material/TrendingUpRounded';
 import type { ReactNode } from 'react';
 
@@ -125,6 +126,14 @@ export const ENTREES: Entree[] = [
     section: 'activite',
     chemin: '/ventes',
     visible: peut('ventes.lire'),
+  },
+  {
+    // 1.6.1 : le siège seul règle les droits du DO.
+    cle: 'droitsDo',
+    icone: <AdminPanelSettingsRounded />,
+    section: 'administration',
+    chemin: '/droits-do',
+    visible: peut('droits_do.regler'),
   },
   {
     cle: 'organisation',

@@ -572,6 +572,39 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/droits-do/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Les comptes DF (les DO) avec leurs droits ; le siège sans pays choisi les voit tous. */
+    get: operations['droits_do_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/droits-do/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['droits_do_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['droits_do_regler'];
+    trace?: never;
+  };
   '/api/v1/erreurs-clients/': {
     parameters: {
       query?: never;
@@ -3682,6 +3715,15 @@ export interface components {
       deplacees: components['schemas']['Deplacement'][];
       modifiees: components['schemas']['Modification'][];
     };
+    CompteDO: {
+      /** Format: uuid */
+      id: string;
+      identifiant: string;
+      prenom: string;
+      nom: string;
+      pays: components['schemas']['PaysResume'] | null;
+      droits: components['schemas']['DroitsDO'];
+    };
     ComptesCouverture: {
       cibles: number;
       visitees: number;
@@ -4150,6 +4192,13 @@ export interface components {
      * @enum {string}
      */
     DoublonEnum: 'certain' | 'probable' | 'aucun';
+    /** @description Les groupes de droits d'un DO : vrai quand ils sont ouverts (1.6.1). */
+    DroitsDO: {
+      ventes: boolean;
+      pilotage: boolean;
+      rapports: boolean;
+      prospects: boolean;
+    };
     /**
      * @description Un écart déclaré par le délégué (VIS-005) : le moment, le motif obligatoire de la liste
      *     du pays, un commentaire facultatif.
@@ -5040,6 +5089,12 @@ export interface components {
       options?: string[];
       obligatoire?: boolean;
       ordre?: number;
+    };
+    PatchedModificationDroitsDO: {
+      ventes?: boolean;
+      pilotage?: boolean;
+      rapports?: boolean;
+      prospects?: boolean;
     };
     PatchedModificationExercice: {
       principal?: boolean;
@@ -7659,6 +7714,73 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Doublon'];
+        };
+      };
+    };
+  };
+  droits_do_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompteDO'][];
+        };
+      };
+    };
+  };
+  droits_do_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompteDO'];
+        };
+      };
+    };
+  };
+  droits_do_regler: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationDroitsDO'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationDroitsDO'];
+        'multipart/form-data': components['schemas']['PatchedModificationDroitsDO'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompteDO'];
         };
       };
     };

@@ -38,6 +38,8 @@ class Perimetre:
     pays_actif: Pays | None
     roles: frozenset[str]
     pays_accessibles: tuple[Pays, ...] = field(default_factory=tuple)
+    #: Actions que le siège a fermées au rôle DF de cet utilisateur (1.6.1, `droits_do`).
+    restreintes: frozenset[Action] = frozenset()
 
     @property
     def est_siege(self) -> bool:
@@ -49,7 +51,8 @@ class Perimetre:
         return self.est_siege and self.pays_actif is None
 
     def peut(self, action: Action) -> bool:
-        return bool(self.roles & MATRICE[action])
+        roles = self.roles - {Role.DF} if action in self.restreintes else self.roles
+        return bool(roles & MATRICE[action])
 
     def actions(self) -> list[str]:
         return sorted(action.value for action in Action if self.peut(action))
@@ -120,4 +123,9 @@ def calculer_perimetre(utilisateur: Utilisateur, code_pays: str | None = None) -
         # les droits de son administrateur ; il gère ainsi le Sénégal, siège sans admin pays.
         if Role.ADMIN_SIEGE in roles_sans_pays:
             roles.add(Role.ADMIN_PAYS)
-    return Perimetre(utilisateur, pays_actif, frozenset(roles), accessibles)
+    restreintes = frozenset()
+    if Role.DF in roles:
+        from apps.identite.droits_do import actions_fermees
+
+        restreintes = actions_fermees(utilisateur)
+    return Perimetre(utilisateur, pays_actif, frozenset(roles), accessibles, restreintes)

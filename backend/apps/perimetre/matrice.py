@@ -55,6 +55,7 @@ class Action(StrEnum):
     AUDIT_LIRE = "audit.lire"
     VENTES_LIRE = "ventes.lire"
     VENTES_GERER = "ventes.gerer"
+    DROITS_DO_REGLER = "droits_do.regler"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -182,6 +183,10 @@ MATRICE: dict[Action, frozenset[str]] = {
     # importe ou les saisit. Le délégué ne voit pas cette plateforme.
     Action.VENTES_LIRE: frozenset(SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}),
     Action.VENTES_GERER: frozenset({Role.ADMIN_PAYS}),
+    # 1.6.1 [D, 18 octobre 2026] : le siège seul règle les droits du DO (compte au rôle DF). Ni
+    # l'administrateur pays (même quand l'administrateur du siège entre dans un pays) ni la
+    # direction du siège.
+    Action.DROITS_DO_REGLER: frozenset({Role.ADMIN_SIEGE}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
@@ -190,3 +195,13 @@ MATRICE: dict[Action, frozenset[str]] = {
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.
 ACTIONS_TECHNIQUES = frozenset({Action.EXPLOITATION_LIRE})
+
+#: Les droits que le siège ouvre ou ferme pour un compte DF (le DO), par groupe : ce que le
+#: groupe donne. Tout est ouvert par défaut ; le reste du rôle (pays, organisation,
+#: notifications) ne se règle pas, l'application en a besoin pour fonctionner.
+GROUPES_DROITS_DO: dict[str, frozenset[Action]] = {
+    "ventes": frozenset({Action.VENTES_LIRE}),
+    "pilotage": frozenset({Action.PILOTAGE_LIRE, Action.PILOTAGE_EXPORTER, Action.OBJECTIFS_LIRE}),
+    "rapports": frozenset({Action.RAPPORTS_LIRE}),
+    "prospects": frozenset({Action.PROSPECTS_LIRE, Action.CIBLES_LIRE}),
+}

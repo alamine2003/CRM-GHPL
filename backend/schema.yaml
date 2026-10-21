@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.6.0
+  version: 1.6.1
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -896,6 +896,76 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Doublon'
+          description: ''
+  /api/v1/droits-do/:
+    get:
+      operationId: droits_do_liste
+      description: Les comptes DF (les DO) avec leurs droits ; le siège sans pays
+        choisi les voit tous.
+      tags:
+      - droits-do
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompteDO'
+          description: ''
+  /api/v1/droits-do/{id}/:
+    get:
+      operationId: droits_do_detail
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - droits-do
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompteDO'
+          description: ''
+    patch:
+      operationId: droits_do_regler
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - droits-do
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationDroitsDO'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationDroitsDO'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationDroitsDO'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompteDO'
           description: ''
   /api/v1/erreurs-clients/:
     post:
@@ -6888,6 +6958,31 @@ components:
       - deplacees
       - modifiees
       - retirees
+    CompteDO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        identifiant:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+        pays:
+          allOf:
+          - $ref: '#/components/schemas/PaysResume'
+          nullable: true
+        droits:
+          $ref: '#/components/schemas/DroitsDO'
+      required:
+      - droits
+      - id
+      - identifiant
+      - nom
+      - pays
+      - prenom
     ComptesCouverture:
       type: object
       properties:
@@ -8101,6 +8196,23 @@ components:
         * `certain` - certain
         * `probable` - probable
         * `aucun` - aucun
+    DroitsDO:
+      type: object
+      description: 'Les groupes de droits d''un DO : vrai quand ils sont ouverts (1.6.1).'
+      properties:
+        ventes:
+          type: boolean
+        pilotage:
+          type: boolean
+        rapports:
+          type: boolean
+        prospects:
+          type: boolean
+      required:
+      - pilotage
+      - prospects
+      - rapports
+      - ventes
     Ecart:
       type: object
       description: |-
@@ -10178,6 +10290,17 @@ components:
         ordre:
           type: integer
           minimum: 0
+    PatchedModificationDroitsDO:
+      type: object
+      properties:
+        ventes:
+          type: boolean
+        pilotage:
+          type: boolean
+        rapports:
+          type: boolean
+        prospects:
+          type: boolean
     PatchedModificationExercice:
       type: object
       properties:

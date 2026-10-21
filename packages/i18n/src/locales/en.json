@@ -140,7 +140,8 @@
     "aTraiter": "To review",
     "objectifs": "Targets",
     "audit": "Audit log",
-    "ventes": "Sales"
+    "ventes": "Sales",
+    "droitsDo": "DO rights"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -3249,6 +3250,19 @@
       "nomClient": "Customer name",
       "sansZone": "No zone",
       "aucunClient": "No customer found"
+    }
+  },
+  "droitsDo": {
+    "sousTitre": "What each DO can view",
+    "aide": "The DO is a DF account: it views without deciding. Only headquarters opens or closes its rights; everything is open until changed. A change applies immediately and is recorded in the audit log.",
+    "aucun": "No DF account",
+    "aucunAide": "Accounts holding the DF role appear here, by country.",
+    "enregistre": "Rights saved.",
+    "groupes": {
+      "ventes": "Sales",
+      "pilotage": "Monitoring and targets",
+      "rapports": "Visit reports",
+      "prospects": "Prospects and target lists"
     }
   }
 }

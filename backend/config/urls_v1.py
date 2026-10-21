@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularAPIView
 
 from apps.audit import vues as aud
 from apps.identite import vues_comptes as comptes
+from apps.identite import vues_droits_do as droits_do
 from apps.imports import vues as imp
 from apps.notifications import vues as ntf
 from apps.organisation import vues as org
@@ -38,6 +39,12 @@ urlpatterns = [
     # Comptes et rôles (USR-003, ORG-002)
     path("utilisateurs/", comptes.UtilisateursVue.as_view(), name="utilisateurs"),
     path("utilisateurs/<uuid:id>/", comptes.UtilisateurVue.as_view(), name="utilisateur"),
+    path("droits-do/", droits_do.DroitsDOVue.as_view(), name="droits-do"),
+    path(
+        "droits-do/<uuid:id>/",
+        droits_do.DroitsDOCompteVue.as_view(),
+        name="droits-do-compte",
+    ),
     path("utilisateurs/<uuid:id>/roles/", comptes.RolesUtilisateurVue.as_view(), name="roles"),
     # Affectations multi-pays et transferts (ORG-009, ORG-010)
     path(

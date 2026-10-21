@@ -174,6 +174,9 @@ export type PointAttention = Schemas['PointAttention'];
 export type Objectifs = Schemas['ObjectifsReseau'];
 export type Objectif = Schemas['ObjectifReseau'];
 export type SaisieObjectif = Schemas['SaisieObjectifReseau'];
+/** Droits du DO (compte DF) réglés par le siège (1.6.1). */
+export type CompteDO = Schemas['CompteDO'];
+export type DroitsDO = Schemas['DroitsDO'];
 /** Suivi des ventes (1.6.0) : cumul de l'année, ventes mensuelles, ventilation éclatée. */
 export type SyntheseVentes = Schemas['SyntheseVentes'];
 export type GroupeVentes = Schemas['GroupeVentes'];

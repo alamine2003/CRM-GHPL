@@ -2,6 +2,23 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.6.1] — Les droits du DO, réglés par le siège
+
+### Ajouté (prd.md §14.85, DOR-001, DOR-002)
+
+- Le siège seul règle les droits du DO (décision du 18 octobre 2026) : la page « Droits du DO » du portail, réservée à l'administrateur du siège, liste les comptes DF et propose, pour chacun, quatre interrupteurs — ventes, pilotage et objectifs, rapports de visite, prospects et listes cibles.
+- Le serveur applique le réglage : une route fermée répond 403 et l'action disparaît des actions du compte, donc de son menu. Tout est ouvert par défaut : un compte jamais réglé ne change pas.
+- Chaque réglage qui change quelque chose est inscrit au journal d'audit (`droits_do.modification`).
+- Action `droits_do.regler` dans la matrice (administrateur du siège seulement) ; table `identite_reglagedo`.
+
+### Modifié
+
+- `prd.md` : §14.83 et §14.84 renvoient au §14.85 ; la matrice §6.3 gagne la ligne « Régler les droits du DO ».
+
+### Design
+
+Page « Droits du DO » du portail, clair et sombre.
+
 ## [1.6.0] — Le suivi des ventes
 
 ### Ajouté (prd.md §14.84, VNT-001 à VNT-005)

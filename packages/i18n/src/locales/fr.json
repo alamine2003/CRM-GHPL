@@ -140,7 +140,8 @@
     "aTraiter": "À traiter",
     "objectifs": "Objectifs",
     "audit": "Journal d'audit",
-    "ventes": "Ventes"
+    "ventes": "Ventes",
+    "droitsDo": "Droits du DO"
   },
   "marque": {
     "organisation": "Generic Healthcare",
@@ -3249,6 +3250,19 @@
       "nomClient": "Nom du client",
       "sansZone": "Sans zone",
       "aucunClient": "Aucun client trouvé"
+    }
+  },
+  "droitsDo": {
+    "sousTitre": "Ce que chaque DO peut consulter",
+    "aide": "Le DO est un compte DF : il consulte sans rien décider. Seul le siège ouvre ou ferme ses droits ; tout est ouvert tant qu'on n'y touche pas. Le réglage s'applique tout de suite et s'inscrit au journal d'audit.",
+    "aucun": "Aucun compte DF",
+    "aucunAide": "Les comptes qui ont le rôle DF apparaissent ici, par pays.",
+    "enregistre": "Droits enregistrés.",
+    "groupes": {
+      "ventes": "Ventes",
+      "pilotage": "Pilotage et objectifs",
+      "rapports": "Rapports de visite",
+      "prospects": "Prospects et listes cibles"
     }
   }
 }

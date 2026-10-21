@@ -129,6 +129,7 @@ def senegal(monde):
     )  # fmt: skip
     return {
         "ventes-ligne": vente.pk, "ventes-ligne-archiver": vente.pk,
+        "droits-do-compte": monde["df.sn"].pk,
         "objectif": objectif.pk, "objectif-archiver": objectif.pk,
         "prospect-historique": prospect.pk, "etablissement-historique": etab.pk,
         "prospect-rapports": prospect.pk,
