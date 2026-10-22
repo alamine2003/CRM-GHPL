@@ -47,6 +47,15 @@ def _groupe(lignes: QuerySet, par: str) -> QuerySet:
     return lignes.annotate(cle=F("client__type"), libelle=F("client__type"))
 
 
+def libelle_regroupement(par: str) -> str:
+    """Le nom d'un regroupement, en tête de la colonne qu'il ouvre (écran et export)."""
+    return {
+        "delegue": _("Délégué"), "produit": _("Produit"), "classe": _("Classe thérapeutique"),
+        "reseau": _("Réseau"), "zone": _("Zone"), "client": _("Client"),
+        "type_client": _("Type de client"),
+    }[par]  # fmt: skip
+
+
 def _sans(par: str) -> str:
     return {
         "classe": _("Sans classe thérapeutique"),
@@ -64,6 +73,12 @@ def filtrer(lignes: QuerySet, params: dict) -> QuerySet:
                                    champ="type_client")  # fmt: skip
             lignes = lignes.filter(**{champ: valeur})
     return lignes
+
+
+def lignes_du_cumul(lignes: QuerySet, *, annee: int, mois_fin: int, params: dict) -> QuerySet:
+    """Les lignes que le cumul de l'année additionne : janvier au mois choisi, avec les filtres."""
+    debut, fin = date(annee, 1, 1), date(annee, mois_fin, 1)
+    return filtrer(lignes, params).filter(mois__gte=debut, mois__lte=fin)
 
 
 def _totaux(lignes: QuerySet) -> dict:

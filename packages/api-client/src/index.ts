@@ -1302,6 +1302,12 @@ export function creerClient(options: OptionsClient) {
         requete<ClientVente[]>(`/api/v1/ventes/clients/${requeteVentes({ q, type })}`),
       creerClient: (saisie: SaisieClientVente) =>
         requete<ClientVente>('/api/v1/ventes/clients/', { methode: 'POST', corps: saisie }),
+      /**
+       * VNT-006 : ce que la synthèse montre (`contenu` : ventilation, mensuel ou lignes), en
+       * `fichier` csv ou xlsx, avec la même période et les mêmes filtres. Audité.
+       */
+      exporter: (filtres: FiltresVentes & { contenu: string; fichier: string }) =>
+        requete<Blob>(`/api/v1/ventes/export/${requeteVentes(filtres)}`, { binaire: true }),
       importer: (fichier: Blob, nom: string, simulation: boolean) => {
         const formulaire = new FormData();
         formulaire.append('fichier', fichier, nom);

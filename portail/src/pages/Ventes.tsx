@@ -40,6 +40,7 @@ import DialogueFormulaire from '../composants/Dialogue';
 import { BarreChiffres, Chiffre, EnTeteCarte, EnTetePage, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { evolution, montant, montantCompact, nomDuMois, nombre } from '../composants/formatsVentes';
+import ExportVentes from '../composants/ExportVentes';
 import GraphiqueVentes from '../composants/GraphiqueVentes';
 import {
   ChoixClient,
@@ -133,18 +134,33 @@ export default function Ventes({ perimetre }: { perimetre: Perimetre }) {
         <Alert severity="info">{t('ventes.choisirPays')}</Alert>
       </Stack>
     );
-  const actions = gere && (
+  const exporte = perimetre.actions.includes('ventes.exporter') && synthese.data;
+  const actions = (gere || exporte) && (
     <>
-      <Button
-        variant="outlined"
-        startIcon={<CloudUploadRounded />}
-        onClick={() => void navigate('/imports')}
-      >
-        {t('ventes.importer')}
-      </Button>
-      <Button variant="contained" startIcon={<AddRounded />} onClick={() => setSaisie(true)}>
-        {t('ventes.saisir')}
-      </Button>
+      {exporte && (
+        <ExportVentes
+          demande={{
+            ...filtres,
+            annee: synthese.data.annee,
+            mois_fin: synthese.data.mois_fin,
+            par,
+          }}
+        />
+      )}
+      {gere && (
+        <>
+          <Button
+            variant="outlined"
+            startIcon={<CloudUploadRounded />}
+            onClick={() => void navigate('/imports')}
+          >
+            {t('ventes.importer')}
+          </Button>
+          <Button variant="contained" startIcon={<AddRounded />} onClick={() => setSaisie(true)}>
+            {t('ventes.saisir')}
+          </Button>
+        </>
+      )}
     </>
   );
   const nbFiltres = Object.values(filtres).filter(Boolean).length;

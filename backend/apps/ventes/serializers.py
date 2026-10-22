@@ -105,6 +105,15 @@ class ChoixSyntheseSerializer(serializers.Serializer):
     type_client = serializers.ChoiceField(choices=TypeClient.choices, required=False)
 
 
+class ChoixExportVentesSerializer(ChoixSyntheseSerializer):
+    """Ce qu'on exporte (`contenu`) et comment (`fichier`), avec la période et les filtres de la
+    synthèse affichée."""
+
+    contenu = serializers.ChoiceField(choices=["ventilation", "mensuel", "lignes"],
+                                      default="ventilation")  # fmt: skip
+    fichier = serializers.ChoiceField(choices=["csv", "xlsx"], default="xlsx")
+
+
 class TotauxVentesSerializer(serializers.Serializer):
     montant_ttc = serializers.DecimalField(max_digits=16, decimal_places=2)
     quantite = serializers.IntegerField()

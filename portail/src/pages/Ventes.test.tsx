@@ -83,6 +83,7 @@ function perimetre(actions: string[], roles = ['admin_pays']): Perimetre {
 }
 
 function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
+  const exporter = vi.fn(async () => new Blob(['x']));
   const syntheseFn = vi.fn(async () => synthese);
   const saisir = vi.fn(async () => ({}));
   const session = {
@@ -94,6 +95,7 @@ function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
         lignes: vi.fn(async () => ({ total: 0, page: 1, taille: 20, resultats: [] })),
         clients: vi.fn(async () => []),
         saisir,
+        exporter,
       },
       utilisateurs: vi.fn(async () => [
         { id: 'd1', prenom: 'Gabriel', nom: 'Sn', roles: ['delegue'] },
@@ -113,7 +115,7 @@ function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { syntheseFn, saisir };
+  return { syntheseFn, saisir, exporter };
 }
 
 describe('Ventes', () => {
@@ -183,5 +185,26 @@ describe('Ventes', () => {
     const sans = { ...perimetre(['ventes.lire']), pays_actif: null };
     rendre(sans);
     expect(screen.getByText(/Choisissez d'abord un pays/)).toBeTruthy();
+  });
+
+  it('l’encadrement exporte ce qui est affiché, avec les mêmes filtres', async () => {
+    const creerUrl = vi.fn(() => 'blob:x');
+    vi.stubGlobal('URL', { createObjectURL: creerUrl, revokeObjectURL: vi.fn() });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const { exporter } = rendre(perimetre(['ventes.lire', 'ventes.exporter'], ['df']));
+    fireEvent.click(await screen.findByRole('button', { name: 'Exporter' }));
+    expect(await screen.findByText(/Chaque export est inscrit au journal d'audit/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('menuitem', { name: /Lignes de vente.*Fichier CSV/ }));
+    await waitFor(() =>
+      expect(exporter).toHaveBeenCalledWith(
+        expect.objectContaining({ contenu: 'lignes', fichier: 'csv', annee: 2025, mois_fin: 3 }),
+      ),
+    );
+  });
+
+  it('sans le droit d’exporter, pas de bouton Exporter', async () => {
+    rendre(perimetre(['ventes.lire', 'ventes.gerer']));
+    await screen.findByText(/Cumul de l'année/);
+    expect(screen.queryByRole('button', { name: 'Exporter' })).toBeNull();
   });
 });

@@ -60,6 +60,15 @@ ATTENDU = {
         "superviseur",
     },
     Action.VENTES_GERER: {"admin_pays"},
+    # 1.6.2 : l'export des ventes suit celui du pilotage (prd.md §14.58, §14.86).
+    Action.VENTES_EXPORTER: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "df",
+        "dm",
+        "superviseur",
+    },
     # 1.6.1 : le siège seul règle les droits du DO (prd.md §14.85).
     Action.DROITS_DO_REGLER: {"admin_siege"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "superviseur"},
@@ -248,6 +257,7 @@ REQUETES = {
     Action.VENTES_LIRE: ("get", "/api/v1/ventes/synthese/", None, 200),
     # Sans corps : l'action passe, la saisie est refusée.
     Action.VENTES_GERER: ("post", "/api/v1/ventes/lignes/", {}, 400),
+    Action.VENTES_EXPORTER: ("get", "/api/v1/ventes/export/", None, 200),
     Action.DROITS_DO_REGLER: ("get", "/api/v1/droits-do/", None, 200),
 }  # fmt: skip
 

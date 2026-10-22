@@ -55,6 +55,7 @@ class Action(StrEnum):
     AUDIT_LIRE = "audit.lire"
     VENTES_LIRE = "ventes.lire"
     VENTES_GERER = "ventes.gerer"
+    VENTES_EXPORTER = "ventes.exporter"
     DROITS_DO_REGLER = "droits_do.regler"
 
 
@@ -183,6 +184,12 @@ MATRICE: dict[Action, frozenset[str]] = {
     # importe ou les saisit. Le délégué ne voit pas cette plateforme.
     Action.VENTES_LIRE: frozenset(SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}),
     Action.VENTES_GERER: frozenset({Role.ADMIN_PAYS}),
+    # 1.6.2 [D, 22 octobre 2026] : l'export des ventes suit celui du pilotage (§14.58) : le siège,
+    # le responsable pays, le DF (le DO), le DM et le superviseur dans leur périmètre, tout
+    # export audité ; pas l'administrateur pays.
+    Action.VENTES_EXPORTER: frozenset(
+        SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
+    ),
     # 1.6.1 [D, 18 octobre 2026] : le siège seul règle les droits du DO (compte au rôle DF). Ni
     # l'administrateur pays (même quand l'administrateur du siège entre dans un pays) ni la
     # direction du siège.
@@ -200,7 +207,7 @@ ACTIONS_TECHNIQUES = frozenset({Action.EXPLOITATION_LIRE})
 #: groupe donne. Tout est ouvert par défaut ; le reste du rôle (pays, organisation,
 #: notifications) ne se règle pas, l'application en a besoin pour fonctionner.
 GROUPES_DROITS_DO: dict[str, frozenset[Action]] = {
-    "ventes": frozenset({Action.VENTES_LIRE}),
+    "ventes": frozenset({Action.VENTES_LIRE, Action.VENTES_EXPORTER}),
     "pilotage": frozenset({Action.PILOTAGE_LIRE, Action.PILOTAGE_EXPORTER, Action.OBJECTIFS_LIRE}),
     "rapports": frozenset({Action.RAPPORTS_LIRE}),
     "prospects": frozenset({Action.PROSPECTS_LIRE, Action.CIBLES_LIRE}),

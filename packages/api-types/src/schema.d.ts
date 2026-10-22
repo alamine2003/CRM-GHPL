@@ -3014,6 +3014,27 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/ventes/export/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description VNT-006 (1.6.2) : exporter ce que la synthèse montre — la ventilation, les ventes
+     *     mensuelles ou les lignes du cumul — en CSV ou en classeur Excel, avec la même période, les
+     *     mêmes filtres et le même périmètre. Chaque export est inscrit au journal d'audit.
+     */
+    get: operations['ventes_export'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/ventes/import/': {
     parameters: {
       query?: never;
@@ -11642,6 +11663,62 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Client'];
+        };
+      };
+    };
+  };
+  ventes_export: {
+    parameters: {
+      query?: {
+        annee?: number;
+        classe?: string;
+        client?: string;
+        /**
+         * @description * `ventilation` - ventilation
+         *     * `mensuel` - mensuel
+         *     * `lignes` - lignes
+         */
+        contenu?: 'ventilation' | 'mensuel' | 'lignes';
+        delegue?: string;
+        /**
+         * @description * `csv` - csv
+         *     * `xlsx` - xlsx
+         */
+        fichier?: 'csv' | 'xlsx';
+        mois_fin?: number;
+        /**
+         * @description * `delegue` - delegue
+         *     * `produit` - produit
+         *     * `classe` - classe
+         *     * `reseau` - reseau
+         *     * `zone` - zone
+         *     * `client` - client
+         *     * `type_client` - type_client
+         */
+        par?: 'delegue' | 'produit' | 'classe' | 'reseau' | 'zone' | 'client' | 'type_client';
+        produit?: string;
+        reseau?: string;
+        /**
+         * @description * `pharmacie` - Pharmacie
+         *     * `parapharmacie` - Parapharmacie
+         *     * `grossiste` - Grossiste
+         */
+        type_client?: 'pharmacie' | 'parapharmacie' | 'grossiste';
+        zone?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string;
         };
       };
     };

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.6.1
+  version: 1.6.2
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5438,6 +5438,133 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Client'
+          description: ''
+  /api/v1/ventes/export/:
+    get:
+      operationId: ventes_export
+      description: |-
+        VNT-006 (1.6.2) : exporter ce que la synthèse montre — la ventilation, les ventes
+        mensuelles ou les lignes du cumul — en CSV ou en classeur Excel, avec la même période, les
+        mêmes filtres et le même périmètre. Chaque export est inscrit au journal d'audit.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: classe
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: contenu
+        schema:
+          enum:
+          - ventilation
+          - mensuel
+          - lignes
+          type: string
+          default: ventilation
+          minLength: 1
+        description: |-
+          * `ventilation` - ventilation
+          * `mensuel` - mensuel
+          * `lignes` - lignes
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: fichier
+        schema:
+          enum:
+          - csv
+          - xlsx
+          type: string
+          default: xlsx
+          minLength: 1
+        description: |-
+          * `csv` - csv
+          * `xlsx` - xlsx
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      - in: query
+        name: par
+        schema:
+          enum:
+          - delegue
+          - produit
+          - classe
+          - reseau
+          - zone
+          - client
+          - type_client
+          type: string
+          default: produit
+          minLength: 1
+        description: |-
+          * `delegue` - delegue
+          * `produit` - produit
+          * `classe` - classe
+          * `reseau` - reseau
+          * `zone` - zone
+          * `client` - client
+          * `type_client` - type_client
+      - in: query
+        name: produit
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: reseau
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: type_client
+        schema:
+          enum:
+          - pharmacie
+          - parapharmacie
+          - grossiste
+          type: string
+          minLength: 1
+        description: |-
+          * `pharmacie` - Pharmacie
+          * `parapharmacie` - Parapharmacie
+          * `grossiste` - Grossiste
+      - in: query
+        name: zone
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
           description: ''
   /api/v1/ventes/import/:
     post:

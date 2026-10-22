@@ -425,6 +425,7 @@ urlpatterns = [
     # DSH-001 : les indicateurs du délégué (cycle 0.7)
     # Suivi des ventes (1.6.0, prd.md §14.84).
     path("ventes/synthese/", ven.SyntheseVentesVue.as_view(), name="ventes-synthese"),
+    path("ventes/export/", ven.ExportVentesVue.as_view(), name="ventes-export"),
     path("ventes/options/", ven.OptionsVentesVue.as_view(), name="ventes-options"),
     path("ventes/lignes/", ven.LignesVentesVue.as_view(), name="ventes-lignes"),
     path("ventes/lignes/<uuid:id>/", ven.LigneVenteVue.as_view(), name="ventes-ligne"),

@@ -2,6 +2,19 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.6.2] — L'export des ventes
+
+### Ajouté (prd.md §14.86, VNT-006)
+
+- Un menu « Exporter » sur la page « Ventes » : les ventes éclatées, les ventes mensuelles ou les lignes de vente du cumul, en classeur Excel ou en CSV, avec l'année, le mois et les filtres affichés.
+- Réservé à l'encadrement, comme l'export du pilotage : le siège, le responsable pays, le DO (DF), le DM et le superviseur, dans leur périmètre. Pas l'administrateur pays, pas le délégué.
+- Chaque export est inscrit au journal d'audit (`export.ventes`, avec ses filtres et son nombre de lignes) ; au-delà de 50 000 lignes, il est refusé.
+- Action `ventes.exporter` dans la matrice ; le groupe de droits « ventes » du DO ferme aussi l'export.
+
+### Design
+
+Bouton « Exporter » de la page « Ventes », comme celui du pilotage.
+
 ## [1.6.1] — Les droits du DO, réglés par le siège
 
 ### Ajouté (prd.md §14.85, DOR-001, DOR-002)

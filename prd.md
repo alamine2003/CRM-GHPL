@@ -174,6 +174,7 @@ Tous les types de poste suivent **le même workflow** planning → visite → ra
 | Consulter les ventes des délégués (§14.84) | Un pays choisi, nominatif audité | Un pays choisi, nominatif audité | Pays | Pays | Oui (périm.) | Oui (périm.) | Oui (périm.) | Non |
 | Importer ou saisir les ventes (§14.84) | Un pays choisi | Non | Non | Oui | Non | Non | Non | Non |
 | Régler les droits du DO (§14.85) | Oui | Non | Non | Non | Non | Non | Non | Non |
+| Exporter les ventes (§14.86) | Oui (audité) | Oui (audité) | Oui (audité) | Non (§14.58) | Oui (audité) | Oui (audité) | Oui (audité) | Non |
 | Consulter le journal d'audit | Oui | Oui | Son pays | Son pays | Non | Non | Non | Non |
 | Exporter | Oui (audité) | Oui (audité) | Oui (audité) | Non (§14.58) | Oui (audité) | Oui (audité) | Oui (audité) | Non |
 | Effacer à distance un appareil | Oui | Non | Non | Oui | Non | Non | Non | Non |
@@ -708,12 +709,23 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.86 Export des ventes (mise en œuvre 1.6.2)
+
+- **Qui exporte** [D, 22 octobre 2026, « continue avec l'export des ventes » ; règle du pilotage, §14.58] : le siège (administrateur et direction), le responsable pays, le DF (le DO), le DM et le superviseur, chacun dans son périmètre. L'administrateur pays n'exporte pas, comme au pilotage. Le délégué non plus. Action `ventes.exporter` de la matrice (§6.3). Le groupe de droits « ventes » du DO (§14.85) ferme aussi l'export.
+- **VNT-006 — Exporter** : un menu « Exporter » sur la page « Ventes » donne, en **classeur Excel** ou en **CSV** (séparateur « ; », UTF-8 avec BOM, lisible tel quel par Excel en français) :
+  - **Ventes éclatées** : le tableau affiché (un groupe par ligne : CA TTC, part, quantités, CA TTC de l'an passé, évolution) ;
+  - **Ventes mensuelles** : les douze mois de l'année face à l'an passé ;
+  - **Lignes de vente** : toutes les lignes du cumul (janvier au mois choisi), une par mois, délégué, produit et client, avec classe thérapeutique, réseau, zone, type de client et origine.
+  *CA1* : même année, même mois de coupe, mêmes filtres et même périmètre que l'écran ; l'export ne contient jamais une ligne hors périmètre. *CA2* : chaque export crée un événement d'audit `export.ventes` (contenu, format, année, mois, regroupement, filtres, nombre de lignes). *CA3* : une cellule qui commence par `=`, `+`, `-` ou `@` est préfixée d'une apostrophe, un tableur ne l'exécute pas comme une formule. *CA4* : au-delà de 50 000 lignes, l'export est refusé (« Trop de lignes pour un export ») : on resserre les filtres ou la période.
+- **Les montants** : en nombres (le tableur peut les sommer), arrondis au centime, dans la devise du pays ; les mois s'écrivent « 2026-03 ».
+- **Ce qui reste à décider** : un export programmé ou envoyé par courriel ; une consolidation de tous les pays pour le siège (comme la vue du siège, §14.84).
+
 ### 14.85 Les droits du DO, réglés par le siège seul (mise en œuvre 1.6.1)
 
 - **Qui règle** [D, 18 octobre 2026, responsable produit] : « seulement le siège ». Dans l'application, c'est l'**administrateur du siège** (`admin_siege`). Ni la direction du siège (lecture seule), ni l'administrateur pays — y compris quand l'administrateur du siège « entre » dans un pays avec les droits de l'administrateur pays (1.2.0) — ne règlent ces droits. L'action `droits_do.regler` de la matrice (§6.3) est la sienne seule.
 - **Le DO** : un compte au rôle **DF** (1.3.1) ; aucun nouveau rôle. Le réglage porte sur **le compte**, pas sur le rôle : deux DO d'un même pays peuvent avoir des droits différents.
 - **Ce qui se règle** [H, 21 octobre 2026, à confirmer] : quatre groupes de droits, que le siège ouvre ou ferme pour chaque compte DF :
-  - **Ventes** (consulter les ventes, §14.84) ;
+  - **Ventes** (consulter les ventes, §14.84, et les exporter, §14.86) ;
   - **Pilotage et objectifs** (indicateurs du pilotage, exports du pilotage, objectifs des réseaux) ;
   - **Rapports de visite** (lire les rapports de son périmètre) ;
   - **Prospects et listes cibles** (fiches, établissements, listes cibles).
@@ -741,7 +753,7 @@ Mise en œuvre (0.3.9) :
 - **VNT-004 — Ventes éclatées et filtres** : le même cumul réparti par délégué, produit, classe thérapeutique, réseau, zone, client ou type de client, avec la part de chaque groupe et son évolution. Les filtres (délégué, produit, classe, réseau, zone, client, type de client, année, mois) se combinent ; un clic sur un groupe le prend comme filtre.
 - **VNT-005 — Périmètre et audit** : chaque réponse est limitée au périmètre de celui qui demande (isolation testée comme le reste, SEC-008) ; une route d'un objet d'un autre pays répond 404. Toute consultation **nominative** du siège (par délégué) est auditée (`ventes.consultation_nominative`), comme au pilotage (DSH-004).
 - **Démonstration** : l'instance de démonstration reçoit vingt-sept mois de ventes **fictives** par délégué (jamais de donnée réelle).
-- **Ce qui reste à construire** : l'export des ventes (audité) ; les objectifs de ventes ; la consolidation de tous les pays pour le siège ; le rapprochement des ventes et des visites (chiffre d'affaires moyen par visite). La source (fichier Excel ou saisie) pourra être remplacée plus tard par une liaison directe, sans changer les vues.
+- **Ce qui reste à construire** : les objectifs de ventes ; la consolidation de tous les pays pour le siège ; le rapprochement des ventes et des visites (chiffre d'affaires moyen par visite). La source (fichier Excel ou saisie) pourra être remplacée plus tard par une liaison directe, sans changer les vues.
 
 ### 14.83 Le DO observe et analyse les ventes (décision du 18 octobre 2026 ; construit en 1.6.0 et 1.6.1, §14.84 et §14.85)
 

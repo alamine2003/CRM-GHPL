@@ -25,7 +25,7 @@ from apps.referentiel.models import Produit
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.services import aujourdhui
 
-from . import importation, selecteurs, services, synthese
+from . import exports, importation, selecteurs, services, synthese
 from . import serializers as s
 from .models import Client, SourceVente, TypeClient, Vente
 
@@ -39,6 +39,21 @@ def _lire(serializer, request):
 def _mois(texte: str) -> date:
     annee, mois = texte.split("-")
     return date(int(annee), int(mois), 1)
+
+
+def _periode(pays, v: dict) -> tuple[int, int]:
+    """L'année choisie (par défaut celle du pays) et le mois où le cumul s'arrête (par défaut le
+    mois en cours, ou décembre pour une année passée) ; jamais un mois qui n'est pas arrivé."""
+    aujourd = aujourdhui(pays)
+    annee = v.get("annee", aujourd.year)
+    mois_fin = v.get("mois_fin") or (aujourd.month if annee == aujourd.year else 12)
+    if annee == aujourd.year and mois_fin > aujourd.month:
+        mois_fin = aujourd.month
+    return annee, mois_fin
+
+
+def _filtres(v: dict) -> dict:
+    return {k: str(x) for k, x in v.items() if k in synthese.FILTRES}
 
 
 def _avec_liens(lignes):
@@ -69,12 +84,8 @@ class SyntheseVentesVue(VueVentes):
         choix = s.ChoixSyntheseSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
         v = choix.validated_data
-        aujourd = aujourdhui(pays)
-        annee = v.get("annee", aujourd.year)
-        mois_fin = v.get("mois_fin") or (aujourd.month if annee == aujourd.year else 12)
-        if annee == aujourd.year and mois_fin > aujourd.month:
-            mois_fin = aujourd.month
-        params = {k: str(x) for k, x in v.items() if k not in ("annee", "mois_fin", "par")}
+        annee, mois_fin = _periode(pays, v)
+        params = _filtres(v)
         donnees = synthese.synthese(
             self.get_queryset(), annee=annee, mois_fin=mois_fin, par=v["par"], params=params
         )
@@ -88,6 +99,66 @@ class SyntheseVentesVue(VueVentes):
                 "filtres": params,
             })  # fmt: skip
         return Response(s.SyntheseVentesSerializer(donnees).data)
+
+
+class ExportVentesVue(VueVentes):
+    """VNT-006 (1.6.2) : exporter ce que la synthèse montre — la ventilation, les ventes
+    mensuelles ou les lignes du cumul — en CSV ou en classeur Excel, avec la même période, les
+    mêmes filtres et le même périmètre. Chaque export est inscrit au journal d'audit."""
+
+    actions = {"GET": Action.VENTES_EXPORTER}
+
+    @extend_schema(
+        parameters=[s.ChoixExportVentesSerializer],
+        responses={(200, "text/csv"): OpenApiTypes.BINARY,
+                   (200, exports.FORMATS["xlsx"][0]): OpenApiTypes.BINARY},
+        operation_id="ventes_export",
+    )  # fmt: skip
+    def get(self, request):
+        from django.http import HttpResponse
+
+        from apps.audit.services import enregistrer
+
+        pays = pays_requis(self.perimetre)
+        choix = s.ChoixExportVentesSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        v = choix.validated_data
+        annee, mois_fin = _periode(pays, v)
+        params = _filtres(v)
+        if v["contenu"] == "lignes":
+            qs = synthese.lignes_du_cumul(
+                self.get_queryset(), annee=annee, mois_fin=mois_fin, params=params
+            )
+            if qs.count() > exports.LIGNES_MAX:
+                raise ErreurMetier(
+                    "export_trop_gros",
+                    _("Trop de lignes pour un export : resserrez les filtres ou la période."),
+                )
+            entetes, rangees = exports.lignes(qs)
+        else:
+            donnees = synthese.synthese(
+                self.get_queryset(), annee=annee, mois_fin=mois_fin, par=v["par"], params=params
+            )
+            if v["contenu"] == "mensuel":
+                entetes, rangees = exports.mensuel(donnees)
+            else:
+                entetes, rangees = exports.ventilation(
+                    donnees, synthese.libelle_regroupement(v["par"])
+                )
+        titres = {"ventilation": _("Ventes éclatées"), "mensuel": _("Ventes mensuelles"),
+                  "lignes": _("Lignes de vente")}  # fmt: skip
+        type_mime, extension = exports.FORMATS[v["fichier"]]
+        contenu = (exports.en_xlsx(entetes, rangees, str(titres[v["contenu"]]))
+                   if v["fichier"] == "xlsx" else exports.en_csv(entetes, rangees))  # fmt: skip
+        enregistrer("export.ventes", pays=pays, details={
+            "contenu": v["contenu"], "format": v["fichier"], "annee": annee,
+            "mois_fin": mois_fin, "par": v["par"] if v["contenu"] == "ventilation" else "",
+            "filtres": params, "lignes": len(rangees),
+        })  # fmt: skip
+        nom = f"ventes-{v['contenu']}-{pays.code.lower()}-{annee}-{mois_fin:02d}.{extension}"
+        reponse = HttpResponse(contenu, content_type=type_mime)
+        reponse["Content-Disposition"] = f'attachment; filename="{nom}"'
+        return reponse
 
 
 class OptionsVentesVue(VueVentes):

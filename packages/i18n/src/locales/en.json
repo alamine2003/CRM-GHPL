@@ -3250,6 +3250,17 @@
       "nomClient": "Customer name",
       "sansZone": "No zone",
       "aucunClient": "No customer found"
+    },
+    "export": {
+      "bouton": "Export",
+      "enCours": "Exporting…",
+      "ventilation": "Sales breakdown",
+      "mensuel": "Monthly sales",
+      "lignes": "Sales lines",
+      "xlsx": "Excel workbook",
+      "csv": "CSV file",
+      "fait": "Export downloaded; it is recorded in the audit log.",
+      "aide": "With the year, month and filters shown. Every export is recorded in the audit log."
     }
   },
   "droitsDo": {

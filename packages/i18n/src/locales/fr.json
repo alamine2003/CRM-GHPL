@@ -3250,6 +3250,17 @@
       "nomClient": "Nom du client",
       "sansZone": "Sans zone",
       "aucunClient": "Aucun client trouvé"
+    },
+    "export": {
+      "bouton": "Exporter",
+      "enCours": "Export…",
+      "ventilation": "Ventes éclatées",
+      "mensuel": "Ventes mensuelles",
+      "lignes": "Lignes de vente",
+      "xlsx": "Classeur Excel",
+      "csv": "Fichier CSV",
+      "fait": "Export téléchargé ; il est inscrit au journal d'audit.",
+      "aide": "Avec l'année, le mois et les filtres affichés. Chaque export est inscrit au journal d'audit."
     }
   },
   "droitsDo": {

@@ -127,3 +127,5 @@ dans le journal des versions.
 - **1.6.0, page « Ventes » du portail** : cumul de l'année dans la barre de chiffres, graphique mensuel (barres de l'année, trait pointillé et losanges pour l'an passé, légende écrite, équivalent en tableau), ventilation en tableau avec part en barre fine et évolution écrite avec son signe ; les filtres tiennent sur une ligne qui passe à la suivante sur petit écran, les colonnes secondaires se masquent sur téléphone ; orange réservé aux actions.
 
 - **1.6.1, page « Droits du DO » du portail** : une carte, une ligne par compte DF (nom, identifiant, pays) et un interrupteur par groupe de droits ; sur petit écran, la ligne s'empile ; chaque interrupteur porte le nom du compte et du groupe.
+
+- **1.6.2, export des ventes** : le bouton « Exporter » (contour, icône de téléchargement) ouvre un menu de six choix — trois contenus, deux formats — avec l'avertissement d'audit en tête, comme au pilotage ; il s'affiche à gauche de « Importer un fichier » et « Saisir une vente ».

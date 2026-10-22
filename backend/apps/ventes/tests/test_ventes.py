@@ -212,3 +212,107 @@ def test_les_clients(monde, ventes):
         "/api/v1/ventes/clients/", {"nom": "pharmacie neuve", "type": "pharmacie"}, format="json"
     )
     assert doublon.json()["code"] == "client_existant"
+
+
+# --- 1.6.2 : l'export des ventes (prd.md §14.86) ------------------------------------------
+
+
+def _exporter(utilisateur, pays="SN", **params):
+    return client_de(utilisateur, pays).get(
+        "/api/v1/ventes/export/", {"annee": 2025, "mois_fin": 12, **params}
+    )
+
+
+def _lignes_csv(reponse) -> list[list[str]]:
+    texte = reponse.content.decode("utf-8-sig")
+    return [ligne.split(";") for ligne in texte.strip().split("\r\n")]
+
+
+def test_export_de_la_ventilation_en_csv(monde, ventes):
+    reponse = _exporter(monde["resp.sn"], contenu="ventilation", par="produit", fichier="csv")
+    assert reponse.status_code == 200
+    assert reponse["Content-Type"].startswith("text/csv")
+    assert "ventes-ventilation-sn-2025-12.csv" in reponse["Content-Disposition"]
+    lignes = _lignes_csv(reponse)
+    assert lignes[0] == ["Produit", "CA TTC", "Part (%)", "Quantités", "CA TTC 2024",
+                         "Évolution (%)"]  # fmt: skip
+    assert lignes[1][:2] == ["Cardiol 10 mg", "3000,00"]  # virgule décimale (Excel)
+    assert lignes[2][:2] == ["Gynopril", "600,00"]
+
+
+def test_export_mensuel_et_lignes_en_classeur(monde, ventes):
+    mensuel = _exporter(monde["admin.sn"], contenu="mensuel", fichier="xlsx")
+    # Réservé à l'encadrement : l'administrateur pays n'exporte pas (prd.md §14.58).
+    assert mensuel.status_code == 403
+    for contenu in ("mensuel", "lignes"):
+        reponse = _exporter(monde["resp.sn"], contenu=contenu, fichier="xlsx")
+        assert reponse.status_code == 200
+        assert reponse.content[:2] == b"PK"  # un classeur est une archive ZIP
+        assert reponse["Content-Type"].endswith("spreadsheetml.sheet")
+
+
+def test_export_des_lignes_du_cumul(monde, ventes):
+    lignes = _lignes_csv(_exporter(monde["resp.sn"], contenu="lignes", fichier="csv"))
+    assert lignes[0][:3] == ["Mois", "Délégué", "Produit"]
+    # Quatre lignes de 2025 ; celle de 2024 n'est pas dans le cumul de 2025.
+    assert len(lignes) == 1 + 4
+    assert {ligne[0] for ligne in lignes[1:]} == {"2025-01", "2025-02", "2025-03"}
+    assert {ligne[7] for ligne in lignes[1:]} == {"Pharmacie", "Grossiste"}
+    # Le cumul s'arrête au mois demandé.
+    janvier = _lignes_csv(_exporter(monde["resp.sn"], contenu="lignes", fichier="csv", mois_fin=1))
+    assert len(janvier) == 1 + 2
+
+
+def test_l_export_garde_les_filtres_et_le_perimetre(monde, ventes):
+    v = ventes
+    filtre = _exporter(monde["resp.sn"], contenu="lignes", fichier="csv", delegue=v["moussa"].pk)
+    assert {ligne[1] for ligne in _lignes_csv(filtre)[1:]} == {"Moussa Fall"}
+    # Le superviseur n'exporte que ses postes ; le DF, que son réseau.
+    for alias in ("sup.sn", "df.sn"):
+        lignes = _lignes_csv(_exporter(monde[alias], contenu="lignes", fichier="csv"))
+        assert {ligne[1] for ligne in lignes[1:]} == {"Gabriel Sn"}, alias
+    # Un DM sans réseau ni poste n'a rien à exporter : l'en-tête seul.
+    assert len(_lignes_csv(_exporter(monde["dm.sn"], contenu="lignes", fichier="csv"))) == 1
+
+
+def test_le_delegue_et_un_autre_pays_n_exportent_pas(monde, ventes):
+    assert _exporter(monde["deleg.sn"], contenu="lignes").status_code == 403
+    assert _exporter(monde["admin.tg"], "SN", contenu="lignes").status_code == 403
+    togo = _lignes_csv(_exporter(monde["resp.tg"], "TG", contenu="lignes", fichier="csv"))
+    assert len(togo) == 1
+
+
+def test_chaque_export_est_audite(monde, ventes):
+    avant = EvenementAudit.objects.filter(action="export.ventes").count()
+    _exporter(monde["resp.sn"], contenu="ventilation", par="reseau", fichier="csv")
+    evenement = EvenementAudit.objects.filter(action="export.ventes").latest("le")
+    assert EvenementAudit.objects.filter(action="export.ventes").count() == avant + 1
+    assert evenement.details["contenu"] == "ventilation"
+    assert evenement.details["par"] == "reseau"
+    assert evenement.details["lignes"] == 2
+    assert evenement.acteur_identifiant == monde["resp.sn"].username
+
+
+def test_une_cellule_qui_ressemble_a_une_formule_est_neutralisee(monde, ventes):
+    from apps.ventes.models import Client
+
+    Client.objects.filter(pk=ventes["pharmacie"].pk).update(nom="=2+2")
+    lignes = _lignes_csv(_exporter(monde["resp.sn"], contenu="lignes", fichier="csv"))
+    assert "'=2+2" in {ligne[6] for ligne in lignes[1:]}
+
+
+def test_le_droit_ventes_du_do_ferme_aussi_l_export(monde, ventes):
+    from apps.identite.droits_do import regler
+
+    assert _exporter(monde["df.sn"], contenu="lignes", fichier="csv").status_code == 200
+    regler(monde["df.sn"], {"ventes": False}, monde["ada.siege"])
+    assert _exporter(monde["df.sn"], contenu="lignes", fichier="csv").status_code == 403
+
+
+def test_trop_de_lignes_pour_un_export(monde, ventes, monkeypatch):
+    from apps.ventes import exports
+
+    monkeypatch.setattr(exports, "LIGNES_MAX", 2)
+    reponse = _exporter(monde["resp.sn"], contenu="lignes", fichier="csv")
+    assert reponse.status_code == 400
+    assert reponse.json()["code"] == "export_trop_gros"

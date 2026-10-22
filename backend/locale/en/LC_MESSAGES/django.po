@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-21 10:49+0000\n"
+"POT-Creation-Date: 2026-10-22 11:25+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -120,7 +120,6 @@ msgid "Ce compte n'a pas le rôle DF."
 msgstr "This account does not hold the DF role."
 
 #, python-format
-#| msgid "Produit inconnu : « %(v)s »."
 msgid "Droit inconnu : %(droit)s."
 msgstr "Unknown right: %(droit)s."
 
@@ -1331,6 +1330,60 @@ msgstr ""
 msgid "Bienvenue dans INNOV CRM."
 msgstr "Welcome to INNOV CRM."
 
+msgid "CA TTC"
+msgstr "Sales incl. tax"
+
+msgid "Part (%)"
+msgstr "Share (%)"
+
+#| msgid "Entité"
+msgid "Quantités"
+msgstr "Units"
+
+#, python-format
+msgid "CA TTC %(annee)s"
+msgstr "Sales incl. tax %(annee)s"
+
+#| msgid "Réalisation (%)"
+msgid "Évolution (%)"
+msgstr "Change (%)"
+
+msgid "Mois"
+msgstr "Month"
+
+#, python-format
+msgid "Quantités %(annee)s"
+msgstr "Units %(annee)s"
+
+#| msgid "{n} produits"
+msgid "Produit"
+msgstr "Product"
+
+#| msgid "Sans classe thérapeutique"
+msgid "Classe thérapeutique"
+msgstr "Therapeutic class"
+
+#| msgid "Sans réseau"
+msgid "Réseau"
+msgstr "Network"
+
+msgid "Zone"
+msgstr "Zone"
+
+msgid "Client"
+msgstr "Customer"
+
+#| msgid "Type de client inconnu."
+msgid "Type de client"
+msgstr "Customer type"
+
+#| msgid "Entité"
+msgid "Quantité"
+msgstr "Quantity"
+
+msgid "Origine"
+msgstr "Origin"
+
 msgid "Aucune feuille au format du fichier de ventes."
 msgstr "No sheet in the sales file format."
 
@@ -1397,6 +1450,18 @@ msgstr "Not specified"
 
 msgid "Regroupement inconnu."
 msgstr "Unknown grouping."
+
+msgid "Trop de lignes pour un export : resserrez les filtres ou la période."
+msgstr "Too many lines to export: narrow the filters or the period."
+
+msgid "Ventes éclatées"
+msgstr "Sales breakdown"
+
+msgid "Ventes mensuelles"
+msgstr "Monthly sales"
+
+msgid "Lignes de vente"
+msgstr "Sales lines"
 
 msgid "Mois illisible."
 msgstr "Unreadable month."
