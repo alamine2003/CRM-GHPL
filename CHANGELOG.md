@@ -2,6 +2,13 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.6.3] — Guide de démonstration à jour
+
+### Corrigé
+
+- `docs/demo-gratuite.md` : le guide de la démonstration gratuite (Render + Neon) décrit l'instance telle qu'elle démarre (vide, avec seulement l'administrateur du siège), cite les sept valeurs à remplir et la bonne demande de fusion, et indique comment remplir l'instance (pays, organisation, référentiels, équipe, ventes).
+- Parcours vérifié de bout en bout en local : base neuve, migrations, création du premier administrateur, démarrage du serveur (`/api/health/`), construction du portail, première connexion.
+
 ## [1.6.2] — L'export des ventes
 
 ### Ajouté (prd.md §14.86, VNT-006)

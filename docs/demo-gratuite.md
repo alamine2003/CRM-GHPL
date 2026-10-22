@@ -1,4 +1,4 @@
-# Démonstration gratuite sur Render et Neon (versions 1.0.3 et 1.0.4)
+# Démonstration gratuite sur Render et Neon (versions 1.0.3, 1.0.4 et 1.6.3)
 
 Ce guide met en ligne une **démonstration** d'INNOV CRM, sans payer : le portail web et le serveur chez Render, la base de données chez Neon, sans aucune donnée au départ (1.0.8 : plus de données fictives). Il suit le plan `render-demo.yaml`.
 
@@ -11,23 +11,23 @@ Pourquoi Neon : Render n'accepte qu'une base gratuite par compte, et l'efface au
 | Oui | Non |
 |---|---|
 | Le portail et le serveur en ligne, en HTTPS | Pas de sauvegarde |
-| Deux pays fictifs (Sénégal, Togo), une vingtaine de délégués, leurs plannings, visites et rapports | Les tâches automatiques ne tournent pas (escalades, fermeture du lundi, rappels) |
-| Tous les rôles, avec un même mot de passe choisi par vous | Les courriels ne partent pas (ils s'écrivent dans le journal du serveur) |
-| La base se remplit toute seule au premier démarrage | Un document joint est perdu au redéploiement suivant |
+| Toutes les fonctions du portail (prospects, pilotage, suivi des ventes, droits du directeur opérationnel…) | Les tâches automatiques ne tournent pas (escalades, fermeture du lundi, rappels) |
+| Le premier administrateur du siège créé tout seul au premier démarrage ; vous créez ensuite pays, comptes et données d'essai | Les courriels ne partent pas (ils s'écrivent dans le journal du serveur) |
+| Aucune donnée au départ : l'instance est vide | Un document joint est perdu au redéploiement suivant |
 
 Le serveur gratuit **s'endort** après un quart d'heure sans visite. La première page met alors environ une minute à s'afficher, le temps qu'il se réveille. C'est normal.
 
 ## Avant de commencer
 
 - Votre compte GitHub (celui du dépôt `alamine2003/CRM-GHPL`).
-- Un mot de passe pour les comptes de démonstration : **12 caractères au moins**, que vous notez dans un endroit sûr. Ne l'écrivez jamais dans le dépôt.
-- Pour les comptes d'encadrement (responsable pays, administrateur, siège), une application d'authentification sur votre téléphone (Google Authenticator, Microsoft Authenticator…). Elle sert à la double authentification, demandée à la première connexion.
+- Un mot de passe pour le compte administrateur du siège : **12 caractères au moins**, que vous notez dans un endroit sûr. Ne l'écrivez jamais dans le dépôt.
+- Pour ce compte, et pour les comptes d'encadrement que vous créerez ensuite, une application d'authentification sur votre téléphone (Google Authenticator, Microsoft Authenticator…). Elle sert à la double authentification, demandée à la première connexion.
 
 ## Étape 1 — Fusionner le travail dans la branche principale
 
 Render lit le plan dans la branche `main`.
 
-1. Ouvrez la demande de fusion sur GitHub : `https://github.com/alamine2003/CRM-GHPL/pull/1`.
+1. Ouvrez la demande de fusion en cours sur GitHub : `https://github.com/alamine2003/CRM-GHPL/pull/20` (elle contient tout le travail depuis la dernière fusion, dont le suivi des ventes).
 2. En bas, si elle est encore en brouillon, cliquez **« Ready for review »**.
 3. Cliquez **« Merge pull request »**, puis **« Confirm merge »**.
 
@@ -57,7 +57,7 @@ Render lit le plan dans la branche `main`.
 4. Donnez un nom, par exemple `innov-demo`.
 5. Render affiche ce qu'il va créer : **innov-demo-api** (serveur) et **innov-demo-portail** (portail). Vérifiez que chacun est marqué **Free**. La base n'y figure pas : elle est chez Neon.
 
-## Étape 4 — Remplir les six valeurs demandées
+## Étape 4 — Remplir les sept valeurs demandées
 
 | Valeur | Ce que vous écrivez |
 |---|---|
@@ -84,8 +84,9 @@ Si un nom est déjà pris chez Render, il ajoute un suffixe, par exemple `innov-
 
 1. Ouvrez `https://innov-demo-api.onrender.com/api/health/`. La page doit afficher `"statut": "ok"` et `"environnement": "demonstration"`. Si elle tarde, attendez une minute : le serveur se réveille.
 2. Au premier démarrage, **innov-demo-api → Logs** affiche **« Administrateur du siège créé »**.
-3. Ouvrez le portail `https://innov-demo-portail.onrender.com`. Connectez-vous, par exemple avec le compte **superviseur (SN)** ou **delegue (SN)**, et votre mot de passe de démonstration.
-4. Connectez-vous avec cet identifiant : activez la double authentification, puis créez vos pays (page **Pays**) et les comptes. La mention « Essai » rappelle qu'il n'y a pas de sauvegarde : aucune donnée réelle ici.
+3. Ouvrez le portail `https://innov-demo-portail.onrender.com`. Connectez-vous avec l'identifiant et le mot de passe d'administrateur choisis à l'étape 4. Le bandeau « Essai » rappelle qu'il n'y a pas de sauvegarde : aucune donnée réelle ici.
+4. Activez la double authentification quand le portail le demande.
+5. Remplissez l'instance dans cet ordre : **Pays** (créez un pays d'essai), **Organisation** (postes et secteurs), **Référentiels** (produits, établissements), **Équipe** (comptes des délégués et superviseurs). Pour essayer le suivi des ventes, ouvrez **Ventes** puis **Importer** (ou **Saisir une vente**).
 
 ## Limites connues des navigateurs
 
