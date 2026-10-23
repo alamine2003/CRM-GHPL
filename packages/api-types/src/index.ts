@@ -189,6 +189,13 @@ export type ClientVente = Schemas['Client'];
 export type SaisieClientVente = Schemas['SaisieClient'];
 export type TypeClientVente = Schemas['TypeClientVenteEnum'];
 export type RegroupementVentes = Schemas['SyntheseVentesParEnum'];
+/** Objectifs de ventes par réseau (1.7.0). */
+export type ObjectifsVentes = Schemas['ObjectifsVentes'];
+export type ObjectifVente = Schemas['ObjectifVenteRendu'];
+export type SaisieObjectifVente = Schemas['SaisieObjectifVente'];
+export type ModificationObjectifVente = Schemas['PatchedModificationObjectifVente'];
+export type ReseauObjectifVente = Schemas['ReseauObjectif'];
+export type EtatObjectifVente = Schemas['EtatObjectifVenteEnum'];
 export type Journee = Schemas['Journee'];
 export type VisiteJournee = Schemas['VisiteJournee'];
 export type RapportLu = Schemas['RapportLu'];

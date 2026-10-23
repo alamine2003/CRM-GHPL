@@ -25,9 +25,9 @@ from apps.referentiel.models import Produit
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.services import aujourdhui
 
-from . import exports, importation, selecteurs, services, synthese
+from . import exports, importation, objectifs, selecteurs, services, synthese
 from . import serializers as s
-from .models import Client, SourceVente, TypeClient, Vente
+from .models import Client, ObjectifVente, SourceVente, TypeClient, Vente
 
 
 def _lire(serializer, request):
@@ -350,3 +350,137 @@ class ImportVentesVue(VueVentes):
             simulation=donnees.validated_data["simulation"],
         )  # fmt: skip
         return Response(imp.DetailLotSerializer(lot).data, status=status.HTTP_201_CREATED)
+
+
+def _objectif_rendu(objectif: ObjectifVente, mois_fin: int) -> dict:
+    suivi = objectifs.suivi(objectif, mois_fin)
+
+    def element(o, champ="libelle"):
+        return None if o is None else {"id": o.pk, "libelle": getattr(o, champ)}
+
+    return {
+        "id": objectif.pk, "reseau": element(objectif.reseau), "produit": element(objectif.produit),
+        "annee": objectif.annee, **suivi, "repartition_libre": bool(objectif.mois),
+    }  # fmt: skip
+
+
+def _total_objectifs(rendus: list[dict]) -> dict | None:
+    """Le total des seuls objectifs de réseau : ceux de produit en sont le détail."""
+    reseaux = [o for o in rendus if o["produit"] is None]
+    if not reseaux:
+        return None
+    cible, attendu, realise = (sum(o[k] for o in reseaux) for k in ("cible", "attendu", "realise"))
+
+    def taux(a, b):
+        return round(float(a / b) * 100, 1) if b else None
+
+    return {"cible": cible, "attendu": attendu, "realise": realise,
+            "taux_cible": taux(realise, cible), "taux_attendu": taux(realise, attendu)}  # fmt: skip
+
+
+class VueObjectifsVentes(VuePerimetre):
+    def selection(self, perimetre):
+        return objectifs.objectifs_visibles(perimetre)
+
+
+class ObjectifsVentesVue(VueObjectifsVentes):
+    """Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+    l'attendu ; l'administrateur pays en fixe."""
+
+    actions = {"GET": Action.VENTES_OBJECTIFS_LIRE, "POST": Action.VENTES_OBJECTIFS_GERER}
+    serializer_class = s.ObjectifsVentesSerializer
+
+    @extend_schema(
+        parameters=[s.ChoixObjectifsSerializer],
+        responses=s.ObjectifsVentesSerializer,
+        operation_id="ventes_objectifs",
+    )
+    def get(self, request):
+        pays = pays_requis(self.perimetre)
+        choix = s.ChoixObjectifsSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        annee, mois_fin = _periode(pays, choix.validated_data)
+        rendus = [
+            _objectif_rendu(o, mois_fin)
+            for o in objectifs.objectifs_visibles(self.perimetre, annee).order_by(
+                "reseau__libelle", "produit__libelle"
+            )
+        ]
+        gerables = []
+        if Action.VENTES_OBJECTIFS_GERER.value in self.perimetre.actions():
+            from apps.pilotage.objectifs import reseaux_geres
+            from apps.referentiel.models import Portefeuille
+
+            for reseau in reseaux_geres(self.perimetre).order_by("libelle"):
+                produits = {
+                    lien.produit_id: lien.produit
+                    for lien in Portefeuille.objects.filter(
+                        reseau=reseau, archive_le__isnull=True
+                    ).select_related("produit")
+                }
+                gerables.append({
+                    "id": reseau.pk, "libelle": reseau.libelle,
+                    "produits": [
+                        {"id": p.pk, "libelle": p.libelle}
+                        for p in sorted(produits.values(), key=lambda p: p.libelle)
+                    ],
+                })  # fmt: skip
+        donnees = {
+            "devise": pays.devise, "annee": annee, "mois_fin": mois_fin, "objectifs": rendus,
+            "total": _total_objectifs(rendus), "reseaux_gerables": gerables,
+        }  # fmt: skip
+        return Response(s.ObjectifsVentesSerializer(donnees).data)
+
+    @extend_schema(
+        request=s.SaisieObjectifVenteSerializer,
+        responses={201: s.ObjectifVenteRenduSerializer},
+        operation_id="ventes_objectif_creer",
+    )
+    def post(self, request):
+        from apps.organisation.models import Reseau
+
+        pays = pays_requis(self.perimetre)
+        v = _lire(s.SaisieObjectifVenteSerializer, request)
+        reseau = get_object_or_404(Reseau, pk=v["reseau"], pays=pays, archive_le__isnull=True)
+        produit = (
+            get_object_or_404(Produit, pk=v["produit"], pays=pays, archive_le__isnull=True)
+            if v.get("produit") else None
+        )  # fmt: skip
+        objectif = objectifs.creer(
+            self.perimetre, reseau=reseau, annee=v["annee"], cible=v.get("cible"),
+            mois=v.get("mois"), produit=produit,
+        )  # fmt: skip
+        _annee, mois_fin = _periode(pays, {"annee": objectif.annee})
+        return Response(
+            s.ObjectifVenteRenduSerializer(_objectif_rendu(objectif, mois_fin)).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class ObjectifVenteVue(VueObjectifsVentes):
+    actions = {"PATCH": Action.VENTES_OBJECTIFS_GERER}
+    serializer_class = s.ObjectifVenteRenduSerializer
+
+    @extend_schema(
+        request=s.ModificationObjectifVenteSerializer,
+        responses=s.ObjectifVenteRenduSerializer,
+        operation_id="ventes_objectif_corriger",
+    )
+    def patch(self, request, id):
+        pays = pays_requis(self.perimetre)
+        objectif = get_object_or_404(self.get_queryset(), pk=id)
+        champs = _lire(s.ModificationObjectifVenteSerializer, request)
+        objectifs.modifier(self.perimetre, objectif, champs)
+        _annee, mois_fin = _periode(pays, {"annee": objectif.annee})
+        return Response(s.ObjectifVenteRenduSerializer(_objectif_rendu(objectif, mois_fin)).data)
+
+
+class ArchiverObjectifVenteVue(VueObjectifsVentes):
+    actions = {"POST": Action.VENTES_OBJECTIFS_GERER}
+    serializer_class = s.ObjectifVenteRenduSerializer
+
+    @extend_schema(request=None, responses={204: None}, operation_id="ventes_objectif_archiver")
+    def post(self, request, id):
+        pays_requis(self.perimetre)
+        objectifs.archiver(self.perimetre, get_object_or_404(self.get_queryset(), pk=id))
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -33,15 +33,16 @@ import {
   useTheme,
 } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import DialogueFormulaire from '../composants/Dialogue';
-import { BarreChiffres, Chiffre, EnTeteCarte, EnTetePage, EtatVide } from '../composants/Elements';
+import { Chiffre, ChiffresCles, EnTeteCarte, EnTetePage, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
 import { evolution, montant, montantCompact, nomDuMois, nombre } from '../composants/formatsVentes';
 import ExportVentes from '../composants/ExportVentes';
 import GraphiqueVentes from '../composants/GraphiqueVentes';
+import ObjectifsVentesOnglet from '../composants/ObjectifsVentes';
 import {
   ChoixClient,
   DialogueCorrectionVente,
@@ -103,7 +104,7 @@ export default function Ventes({ perimetre }: { perimetre: Perimetre }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const navigate = useNavigate();
-  const [onglet, setOnglet] = useState<'synthese' | 'lignes'>('synthese');
+  const [onglet, setOnglet] = useState<'synthese' | 'lignes' | 'objectifs'>('synthese');
   const [annee, setAnnee] = useState<number | undefined>();
   const [moisFin, setMoisFin] = useState<number | undefined>();
   const [par, setPar] = useState<RegroupementVentes>('produit');
@@ -111,6 +112,8 @@ export default function Ventes({ perimetre }: { perimetre: Perimetre }) {
   const [saisie, setSaisie] = useState(false);
   const cle = perimetre.pays_actif?.code ?? 'consolide';
   const gere = perimetre.actions.includes('ventes.gerer');
+  const voitObjectifs = perimetre.actions.includes('ventes.objectifs_lire');
+  const fixeObjectifs = perimetre.actions.includes('ventes.objectifs_gerer');
   const actif = perimetre.pays_actif !== null;
 
   const options = useQuery({
@@ -284,9 +287,15 @@ export default function Ventes({ perimetre }: { perimetre: Perimetre }) {
           </Stack>
         </Card>
       )}
-      <Tabs value={onglet} onChange={(_, v: 'synthese' | 'lignes') => setOnglet(v)}>
+      <Tabs
+        value={onglet}
+        onChange={(_, v: 'synthese' | 'lignes' | 'objectifs') => setOnglet(v)}
+        variant="scrollable"
+        scrollButtons={false}
+      >
         <Tab value="synthese" label={t('ventes.onglets.synthese')} />
         <Tab value="lignes" label={t('ventes.onglets.lignes')} />
+        {voitObjectifs && <Tab value="objectifs" label={t('ventes.onglets.objectifs')} />}
       </Tabs>
       {onglet === 'synthese' ? (
         <Synthese
@@ -301,31 +310,21 @@ export default function Ventes({ perimetre }: { perimetre: Perimetre }) {
           nominatif={perimetre.vue_consolidee || perimetre.roles.some((r) => r.endsWith('_siege'))}
           gere={gere}
         />
-      ) : (
+      ) : onglet === 'lignes' ? (
         <Lignes delegues={o?.delegues ?? []} gere={gere} cle={cle} annee={anneeActive} />
+      ) : (
+        <ObjectifsVentesOnglet
+          annee={anneeActive}
+          moisFin={synthese.data?.mois_fin ?? moisFin}
+          cle={cle}
+          gere={fixeObjectifs}
+        />
       )}
       <DialogueSaisieVente ouvert={saisie} surFermer={() => setSaisie(false)} />
     </Stack>
   );
 }
 
-/** Les chiffres clés : une rangée sur grand écran, deux par deux sur téléphone. */
-function ChiffresCles({ telephone, children }: { telephone: boolean; children: ReactNode }) {
-  if (!telephone) return <BarreChiffres>{children}</BarreChiffres>;
-  return (
-    <Card
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        '& > *': { borderLeft: 1, borderTop: 1, borderColor: 'divider', ml: '-1px', mt: '-1px' },
-      }}
-    >
-      {children}
-    </Card>
-  );
-}
-
-/** Le filtre « client » : une recherche, car un pays compte des milliers de clients. */
 function FiltreClient({
   valeur,
   surChoix,

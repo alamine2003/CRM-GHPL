@@ -50,6 +50,10 @@ import type {
   SaisieClientVente,
   TypeClientVente,
   RegroupementVentes,
+  ObjectifsVentes,
+  ObjectifVente,
+  SaisieObjectifVente,
+  ModificationObjectifVente,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -224,6 +228,12 @@ export type {
   SaisieClientVente,
   TypeClientVente,
   RegroupementVentes,
+  ObjectifsVentes,
+  ObjectifVente,
+  SaisieObjectifVente,
+  ModificationObjectifVente,
+  ReseauObjectifVente,
+  EtatObjectifVente,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -1298,6 +1308,18 @@ export function creerClient(options: OptionsClient) {
         requete<LigneVente>(`/api/v1/ventes/lignes/${id}/`, { methode: 'PATCH', corps: champs }),
       archiver: (id: string) =>
         requete<void>(`/api/v1/ventes/lignes/${id}/archiver/`, { methode: 'POST' }),
+      /** 1.7.0 : objectifs de l'année par réseau, avec le cumul (YTD) face à la cible. */
+      objectifs: (filtres: { annee?: number; mois_fin?: number } = {}) =>
+        requete<ObjectifsVentes>(`/api/v1/ventes/objectifs/${requeteVentes(filtres)}`),
+      fixerObjectif: (saisie: SaisieObjectifVente) =>
+        requete<ObjectifVente>('/api/v1/ventes/objectifs/', { methode: 'POST', corps: saisie }),
+      corrigerObjectif: (id: string, champs: ModificationObjectifVente) =>
+        requete<ObjectifVente>(`/api/v1/ventes/objectifs/${id}/`, {
+          methode: 'PATCH',
+          corps: champs,
+        }),
+      archiverObjectif: (id: string) =>
+        requete<void>(`/api/v1/ventes/objectifs/${id}/archiver/`, { methode: 'POST' }),
       clients: (q = '', type?: TypeClientVente) =>
         requete<ClientVente[]>(`/api/v1/ventes/clients/${requeteVentes({ q, type })}`),
       creerClient: (saisie: SaisieClientVente) =>

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.6.5
+  version: 1.7.0
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5708,6 +5708,113 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/ventes/objectifs/:
+    get:
+      operationId: ventes_objectifs
+      description: |-
+        Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+        l'attendu ; l'administrateur pays en fixe.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifsVentes'
+          description: ''
+    post:
+      operationId: ventes_objectif_creer
+      description: |-
+        Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+        l'attendu ; l'administrateur pays en fixe.
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifVente'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifVente'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifVente'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifVenteRendu'
+          description: ''
+  /api/v1/ventes/objectifs/{id}/:
+    patch:
+      operationId: ventes_objectif_corriger
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifVente'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifVente'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifVente'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifVenteRendu'
+          description: ''
+  /api/v1/ventes/objectifs/{id}/archiver/:
+    post:
+      operationId: ventes_objectif_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/ventes/options/:
     get:
       operationId: ventes_options
@@ -8709,6 +8816,20 @@ components:
       - role_contourne
       - tables_attendues
       - tables_protegees
+    EtatObjectifVenteEnum:
+      enum:
+      - a_venir
+      - atteint
+      - non_atteint
+      - en_avance
+      - en_retard
+      type: string
+      description: |-
+        * `a_venir` - À venir
+        * `atteint` - Atteint
+        * `non_atteint` - Non atteint
+        * `en_avance` - En avance
+        * `en_retard` - En retard
     EvenementJournal:
       type: object
       properties:
@@ -10118,6 +10239,70 @@ components:
       - produit
       - reseau
       - suivi
+    ObjectifVenteRendu:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reseau:
+          $ref: '#/components/schemas/Element'
+        produit:
+          allOf:
+          - $ref: '#/components/schemas/Element'
+          nullable: true
+        annee:
+          type: integer
+        cible:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        attendu:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        realise:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        ecart:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        taux_cible:
+          type: number
+          format: double
+          nullable: true
+        taux_attendu:
+          type: number
+          format: double
+          nullable: true
+        etat:
+          $ref: '#/components/schemas/EtatObjectifVenteEnum'
+        mois:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          description: Les douze montants de l'année, janvier à décembre.
+        repartition_libre:
+          type: boolean
+          description: 'Faux : la cible est répartie à parts égales.'
+      required:
+      - annee
+      - attendu
+      - cible
+      - ecart
+      - etat
+      - id
+      - mois
+      - produit
+      - realise
+      - repartition_libre
+      - reseau
+      - taux_attendu
+      - taux_cible
     ObjectifsReseau:
       type: object
       description: Les objectifs des réseaux visibles, et ce qu'il faut pour en fixer
@@ -10143,6 +10328,36 @@ components:
       - objectifs
       - portefeuilles
       - reseaux_geres
+    ObjectifsVentes:
+      type: object
+      properties:
+        devise:
+          type: string
+        annee:
+          type: integer
+        mois_fin:
+          type: integer
+        objectifs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectifVenteRendu'
+        total:
+          allOf:
+          - $ref: '#/components/schemas/TotalObjectifs'
+          nullable: true
+          description: Les objectifs de réseau seuls (jamais ceux de produit).
+        reseaux_gerables:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReseauObjectif'
+          description: Ce que l'administrateur pays peut viser ; vide pour les autres.
+      required:
+      - annee
+      - devise
+      - mois_fin
+      - objectifs
+      - reseaux_gerables
+      - total
     Occupation:
       type: object
       properties:
@@ -10459,6 +10674,18 @@ components:
         cible:
           type: integer
           minimum: 1
+    PatchedModificationObjectifVente:
+      type: object
+      properties:
+        cible:
+          type: string
+          nullable: true
+        mois:
+          type: array
+          items:
+            type: string
+          nullable: true
+          maxItems: 12
     PatchedModificationPoste:
       type: object
       properties:
@@ -12639,6 +12866,22 @@ components:
       - id
       - libelle
       - pays
+    ReseauObjectif:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+        produits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+      required:
+      - id
+      - libelle
+      - produits
     ReseauResume:
       type: object
       properties:
@@ -13033,6 +13276,34 @@ components:
       - debut
       - fin
       - indicateur
+      - reseau
+    SaisieObjectifVente:
+      type: object
+      description: La cible de l'année, ou ses douze mois (janvier à décembre) ; les
+        deux si la somme colle.
+      properties:
+        reseau:
+          type: string
+          format: uuid
+        produit:
+          type: string
+          format: uuid
+          nullable: true
+        annee:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+        cible:
+          type: string
+          nullable: true
+        mois:
+          type: array
+          items:
+            type: string
+          nullable: true
+          maxItems: 12
+      required:
+      - annee
       - reseau
     SaisiePiece:
       type: object
@@ -13961,6 +14232,35 @@ components:
       required:
       - cycle
       - semaine
+    TotalObjectifs:
+      type: object
+      properties:
+        cible:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        attendu:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        realise:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        taux_cible:
+          type: number
+          format: double
+          nullable: true
+        taux_attendu:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - attendu
+      - cible
+      - realise
+      - taux_attendu
+      - taux_cible
     TotauxVentes:
       type: object
       properties:

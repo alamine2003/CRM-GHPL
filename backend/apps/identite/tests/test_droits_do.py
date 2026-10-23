@@ -18,6 +18,10 @@ def _regler(utilisateur, compte, corps, pays=None):
     )
 
 
+def actions_ouvertes(df) -> set[str]:
+    return set(client_de(df, "SN").get("/api/v1/auth/perimetre/").json()["actions"])
+
+
 def test_par_defaut_tout_est_ouvert(monde):  # noqa: F811
     df = monde["df.sn"]
     assert droits_de(df) == TOUS
@@ -57,6 +61,16 @@ def test_chaque_groupe_ferme_ses_actions(monde):  # noqa: F811
         assert fermee not in actions
     # Le socle du rôle reste : pays, organisation, notifications, ventes.
     assert {"pays.lire", "organisation.lire", "notifications.lire", "ventes.lire"} <= actions
+
+
+def test_le_groupe_ventes_ferme_aussi_l_export_et_les_objectifs(monde):  # noqa: F811
+    df, siege = monde["df.sn"], monde["ada.siege"]
+    assert "ventes.objectifs_lire" in actions_ouvertes(df)
+    _regler(siege, df, {"ventes": False})
+    ouvertes = actions_ouvertes(df)
+    assert not {"ventes.lire", "ventes.exporter", "ventes.objectifs_lire"} & ouvertes
+    reponse = client_de(df, "SN").get("/api/v1/ventes/objectifs/", {"annee": 2025})
+    assert reponse.status_code == 403
 
 
 def test_le_reglage_ne_touche_pas_les_autres_roles(monde):  # noqa: F811

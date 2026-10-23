@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.7.0] — Les objectifs de ventes
+
+### Ajouté (prd.md §14.88, VNT-007, VNT-008)
+
+- Un objectif de chiffre d'affaires TTC **par réseau et par année**, avec si besoin le détail par produit du réseau. La cible se répartit à parts égales sur les douze mois, ou mois par mois.
+- L'onglet « Objectifs » de la page « Ventes » : cible, attendu à la fin du mois choisi, réalisé (cumul de l'année), pourcentage de la cible et état écrit (atteint, en avance, en retard, non atteint, à venir) ; la barre de chiffres totalise les objectifs de réseau.
+- Fixés par l'administrateur pays (et le siège dans un pays choisi) ; lus par le siège, le pays, le DF (le DO) et le DM dans leurs réseaux ; pas par le superviseur. Le groupe de droits « ventes » du DO ferme aussi cette lecture. Création, correction et archivage sont audités.
+- Actions `ventes.objectifs_lire` et `ventes.objectifs_gerer` dans la matrice ; table `ventes_objectifvente` sous sécurité de lignes par pays.
+- Démonstration : un objectif de l'année par réseau, fictif.
+
+### Design
+
+- Onglet « Objectifs » : `docs/design.md`.
+
 ## [1.6.5] — Mise à jour de sécurité de Django REST framework
 
 ### Corrigé

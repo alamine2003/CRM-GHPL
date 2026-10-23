@@ -56,6 +56,8 @@ class Action(StrEnum):
     VENTES_LIRE = "ventes.lire"
     VENTES_GERER = "ventes.gerer"
     VENTES_EXPORTER = "ventes.exporter"
+    VENTES_OBJECTIFS_LIRE = "ventes.objectifs_lire"
+    VENTES_OBJECTIFS_GERER = "ventes.objectifs_gerer"
     DROITS_DO_REGLER = "droits_do.regler"
 
 
@@ -190,6 +192,12 @@ MATRICE: dict[Action, frozenset[str]] = {
     Action.VENTES_EXPORTER: frozenset(
         SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
+    # 1.7.0 [D, 23 octobre 2026] : objectifs de ventes par réseau. Fixés comme ceux de visites
+    # (DSH-009, 1.3.0) par l'administrateur pays, et le siège dans un pays choisi ; lus par ceux
+    # qui voient tout le réseau ou le pays : le siège, le pays, le DF (le DO) et le DM. Le
+    # superviseur, qui ne voit que ses postes, n'a pas de taux de réalisation d'un réseau entier.
+    Action.VENTES_OBJECTIFS_LIRE: frozenset(SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM}),
+    Action.VENTES_OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS}),
     # 1.6.1 [D, 18 octobre 2026] : le siège seul règle les droits du DO (compte au rôle DF). Ni
     # l'administrateur pays (même quand l'administrateur du siège entre dans un pays) ni la
     # direction du siège.
@@ -207,7 +215,7 @@ ACTIONS_TECHNIQUES = frozenset({Action.EXPLOITATION_LIRE})
 #: groupe donne. Tout est ouvert par défaut ; le reste du rôle (pays, organisation,
 #: notifications) ne se règle pas, l'application en a besoin pour fonctionner.
 GROUPES_DROITS_DO: dict[str, frozenset[Action]] = {
-    "ventes": frozenset({Action.VENTES_LIRE, Action.VENTES_EXPORTER}),
+    "ventes": frozenset({Action.VENTES_LIRE, Action.VENTES_EXPORTER, Action.VENTES_OBJECTIFS_LIRE}),
     "pilotage": frozenset({Action.PILOTAGE_LIRE, Action.PILOTAGE_EXPORTER, Action.OBJECTIFS_LIRE}),
     "rapports": frozenset({Action.RAPPORTS_LIRE}),
     "prospects": frozenset({Action.PROSPECTS_LIRE, Action.CIBLES_LIRE}),

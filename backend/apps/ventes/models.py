@@ -92,3 +92,53 @@ class Vente(ModeleDePays):
             models.Index(fields=["pays", "delegue", "mois"]),
             models.Index(fields=["pays", "produit", "mois"]),
         ]
+
+
+class EtatObjectifVente(models.TextChoices):
+    """Où en est un objectif de ventes, à la fin du mois choisi."""
+
+    A_VENIR = "a_venir", "À venir"
+    ATTEINT = "atteint", "Atteint"
+    NON_ATTEINT = "non_atteint", "Non atteint"
+    EN_AVANCE = "en_avance", "En avance"
+    EN_RETARD = "en_retard", "En retard"
+
+
+class ObjectifVente(ModeleDePays):
+    """Objectif de chiffre d'affaires TTC d'une année pour un réseau, ou pour un produit de ce
+    réseau (décision du 23 octobre 2026, prd.md §14.88). `mois` répartit la cible sur les douze
+    mois ; sans lui, la cible se répartit à parts égales."""
+
+    reseau = models.ForeignKey(
+        "organisation.Reseau", on_delete=models.PROTECT, related_name="objectifs_ventes"
+    )
+    produit = models.ForeignKey(
+        "referentiel.Produit", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="objectifs_ventes",
+    )  # fmt: skip
+    annee = models.PositiveSmallIntegerField()
+    cible = models.DecimalField(max_digits=14, decimal_places=2)
+    #: Douze montants (janvier à décembre) en chaînes décimales, dont la somme est la cible.
+    mois = models.JSONField(null=True, blank=True)
+    cree_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="objectifs_ventes_crees"
+    )
+
+    class Meta:
+        ordering = ["-annee", "reseau__libelle", "produit__libelle"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["pays", "reseau", "annee"],
+                condition=Q(archive_le__isnull=True, produit__isnull=True),
+                name="objectif_vente_reseau_unique",
+            ),
+            models.UniqueConstraint(
+                fields=["pays", "reseau", "produit", "annee"],
+                condition=Q(archive_le__isnull=True, produit__isnull=False),
+                name="objectif_vente_produit_unique",
+            ),
+            models.CheckConstraint(
+                condition=Q(annee__gte=2000, annee__lte=2100), name="objectif_vente_annee"
+            ),
+            models.CheckConstraint(condition=Q(cible__gt=0), name="objectif_vente_cible_positive"),
+        ]

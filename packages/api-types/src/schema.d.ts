@@ -3102,6 +3102,62 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/ventes/objectifs/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+     *     l'attendu ; l'administrateur pays en fixe.
+     */
+    get: operations['ventes_objectifs'];
+    put?: never;
+    /**
+     * @description Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+     *     l'attendu ; l'administrateur pays en fixe.
+     */
+    post: operations['ventes_objectif_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/objectifs/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['ventes_objectif_corriger'];
+    trace?: never;
+  };
+  '/api/v1/ventes/objectifs/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ventes_objectif_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/ventes/options/': {
     parameters: {
       query?: never;
@@ -4379,6 +4435,15 @@ export interface components {
       /** @description Vrai si le rôle PostgreSQL ignore la sécurité au niveau des lignes. */
       role_contourne: boolean;
     };
+    /**
+     * @description * `a_venir` - À venir
+     *     * `atteint` - Atteint
+     *     * `non_atteint` - Non atteint
+     *     * `en_avance` - En avance
+     *     * `en_retard` - En retard
+     * @enum {string}
+     */
+    EtatObjectifVenteEnum: 'a_venir' | 'atteint' | 'non_atteint' | 'en_avance' | 'en_retard';
     EvenementJournal: {
       /** Format: uuid */
       id: string;
@@ -5000,6 +5065,30 @@ export interface components {
       gerable: boolean;
       suivi: components['schemas']['SuiviObjectifReseau'];
     };
+    ObjectifVenteRendu: {
+      /** Format: uuid */
+      id: string;
+      reseau: components['schemas']['Element'];
+      produit: components['schemas']['Element'] | null;
+      annee: number;
+      /** Format: decimal */
+      cible: string;
+      /** Format: decimal */
+      attendu: string;
+      /** Format: decimal */
+      realise: string;
+      /** Format: decimal */
+      ecart: string;
+      /** Format: double */
+      taux_cible: number | null;
+      /** Format: double */
+      taux_attendu: number | null;
+      etat: components['schemas']['EtatObjectifVenteEnum'];
+      /** @description Les douze montants de l'année, janvier à décembre. */
+      mois: string[];
+      /** @description Faux : la cible est répartie à parts égales. */
+      repartition_libre: boolean;
+    };
     /** @description Les objectifs des réseaux visibles, et ce qu'il faut pour en fixer un nouveau. */
     ObjectifsReseau: {
       /** Format: date */
@@ -5007,6 +5096,16 @@ export interface components {
       objectifs: components['schemas']['ObjectifReseau'][];
       reseaux_geres: components['schemas']['Option'][];
       portefeuilles: components['schemas']['ProduitsReseau'][];
+    };
+    ObjectifsVentes: {
+      devise: string;
+      annee: number;
+      mois_fin: number;
+      objectifs: components['schemas']['ObjectifVenteRendu'][];
+      /** @description Les objectifs de réseau seuls (jamais ceux de produit). */
+      total: components['schemas']['TotalObjectifs'] | null;
+      /** @description Ce que l'administrateur pays peut viser ; vide pour les autres. */
+      reseaux_gerables: components['schemas']['ReseauObjectif'][];
     };
     Occupation: {
       /** Format: uuid */
@@ -5133,6 +5232,10 @@ export interface components {
       /** Format: date */
       fin?: string;
       cible?: number;
+    };
+    PatchedModificationObjectifVente: {
+      cible?: string | null;
+      mois?: string[] | null;
     };
     PatchedModificationPoste: {
       libelle?: string;
@@ -5945,6 +6048,12 @@ export interface components {
       division: string;
       readonly archive: boolean;
     };
+    ReseauObjectif: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+      produits: components['schemas']['Element'][];
+    };
     ReseauResume: {
       /** Format: uuid */
       id: string;
@@ -6125,6 +6234,16 @@ export interface components {
       /** Format: date */
       fin: string;
       cible: number;
+    };
+    /** @description La cible de l'année, ou ses douze mois (janvier à décembre) ; les deux si la somme colle. */
+    SaisieObjectifVente: {
+      /** Format: uuid */
+      reseau: string;
+      /** Format: uuid */
+      produit?: string | null;
+      annee: number;
+      cible?: string | null;
+      mois?: string[] | null;
     };
     SaisiePiece: {
       /** Format: uuid */
@@ -6531,6 +6650,18 @@ export interface components {
     TotalEquipe: {
       semaine: components['schemas']['IndicateursPeriode'];
       cycle: components['schemas']['IndicateursPeriode'];
+    };
+    TotalObjectifs: {
+      /** Format: decimal */
+      cible: string;
+      /** Format: decimal */
+      attendu: string;
+      /** Format: decimal */
+      realise: string;
+      /** Format: double */
+      taux_cible: number | null;
+      /** Format: double */
+      taux_attendu: number | null;
     };
     TotauxVentes: {
       /** Format: decimal */
@@ -11826,6 +11957,100 @@ export interface operations {
     };
   };
   ventes_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ventes_objectifs: {
+    parameters: {
+      query?: {
+        annee?: number;
+        mois_fin?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifsVentes'];
+        };
+      };
+    };
+  };
+  ventes_objectif_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieObjectifVente'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieObjectifVente'];
+        'multipart/form-data': components['schemas']['SaisieObjectifVente'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifVenteRendu'];
+        };
+      };
+    };
+  };
+  ventes_objectif_corriger: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationObjectifVente'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationObjectifVente'];
+        'multipart/form-data': components['schemas']['PatchedModificationObjectifVente'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifVenteRendu'];
+        };
+      };
+    };
+  };
+  ventes_objectif_archiver: {
     parameters: {
       query?: never;
       header?: never;

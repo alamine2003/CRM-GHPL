@@ -323,6 +323,7 @@ SPECTACULAR_SETTINGS = {
         "SourceImportEnum": "apps.imports.models.Source",
         "TypeClientVenteEnum": "apps.ventes.models.TypeClient",
         "SourceVenteEnum": "apps.ventes.models.SourceVente",
+        "EtatObjectifVenteEnum": "apps.ventes.models.EtatObjectifVente",
         "TypeActiviteEnum": "apps.planning.models.TypeActivite",
         "PeriodeActiviteEnum": "apps.planning.models.Periode",
         "CodeControleEnum": "apps.planning.controles.CODES",

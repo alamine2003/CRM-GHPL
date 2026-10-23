@@ -24,7 +24,7 @@ Division (GHPL 1…) · Client (pharmacie, parapharmacie, grossiste) · Vente ·
 
 - **Dans** : `prd.md` §8.
 - **Hors** : stocks (seule la *remise* d'échantillons est saisie), notes de frais et montants (seul le *kilométrage* est affiché), commandes, facturation, paie, marketing, SMS, WhatsApp (après 1.0.0), GPS continu, signature électronique, gestion RH des congés.
-- **Ajouté après la 1.0.0** (décision du 20 octobre 2026, `prd.md` §14.84) : le **suivi des ventes** des délégués au portail (import Excel ou saisie ; YTD, mensuel, ventes éclatées). Il ne gère ni commande, ni facture, ni stock : il observe des totaux mensuels.
+- **Ajouté après la 1.0.0** (décision du 20 octobre 2026, `prd.md` §14.84) : le **suivi des ventes** des délégués au portail (import Excel ou saisie ; YTD, mensuel, ventes éclatées, objectifs par réseau). Il ne gère ni commande, ni facture, ni stock : il observe des totaux mensuels.
 
 ## 5. Règles multi-pays
 

@@ -3162,7 +3162,8 @@
     "saisir": "Enter a sale",
     "onglets": {
       "synthese": "Summary",
-      "lignes": "Lines"
+      "lignes": "Lines",
+      "objectifs": "Targets"
     },
     "filtres": {
       "annee": "Year",
@@ -3261,6 +3262,39 @@
       "csv": "CSV file",
       "fait": "Export downloaded; it is recorded in the audit log.",
       "aide": "With the year, month and filters shown. Every export is recorded in the audit log."
+    },
+    "objectifs": {
+      "titre": "Sales targets {{annee}}",
+      "fixer": "Set a target",
+      "corriger": "Edit",
+      "archiver": "Archive",
+      "enregistrer": "Save target",
+      "cible": "Year target",
+      "cibleAnnee": "Year target",
+      "cibleAnneeDevise": "Year target ({{devise}} incl. tax)",
+      "attendu": "Expected end of {{mois}}",
+      "attenduCourt": "Expected",
+      "realise": "Actual (YTD)",
+      "tauxAttendu": "Actual / expected",
+      "tauxCible": "% of target",
+      "etat": "Status",
+      "toutLeReseau": "Whole network",
+      "annee": "Year",
+      "parMois": "Split month by month",
+      "partsEgales": "Without a split, the target is divided equally over the twelve months.",
+      "sommeMois": "Sum of the months: {{somme}}",
+      "formAide": "One target per network (or product of the network) and per year, in {{devise}} incl. tax. The year to date is compared with what is expected at the end of the chosen month.",
+      "aucun": "No target for {{annee}}",
+      "aucunAide": "Set the year's target for a network, or for one of its products.",
+      "archiverAide": "The {{annee}} target for “{{reseau}} · {{produit}}” leaves the follow-up; it stays in the history.",
+      "note": "Actual is the year-to-date sales of the network (or of the product in that network), from January to the chosen month. The total only counts network targets.",
+      "etats": {
+        "a_venir": "Upcoming",
+        "atteint": "Reached",
+        "non_atteint": "Not reached",
+        "en_avance": "Ahead",
+        "en_retard": "Behind"
+      }
     }
   },
   "droitsDo": {

@@ -1,4 +1,10 @@
-import type { ClientApi, OptionsVentes, Perimetre, SyntheseVentes } from '@innov/api-client';
+import type {
+  ClientApi,
+  ObjectifsVentes,
+  OptionsVentes,
+  Perimetre,
+  SyntheseVentes,
+} from '@innov/api-client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
@@ -72,6 +78,54 @@ const OPTIONS: OptionsVentes = {
   ],
 };
 
+const OBJECTIFS: ObjectifsVentes = {
+  devise: 'XOF',
+  annee: 2025,
+  mois_fin: 3,
+  objectifs: [
+    {
+      id: 'o1',
+      reseau: { id: 'r1', libelle: 'Cardio' },
+      produit: null,
+      annee: 2025,
+      cible: '12000.00',
+      attendu: '3000.00',
+      realise: '3600.00',
+      ecart: '600.00',
+      taux_cible: 30,
+      taux_attendu: 120,
+      etat: 'en_avance',
+      mois: Array(12).fill('1000.00'),
+      repartition_libre: false,
+    },
+    {
+      id: 'o2',
+      reseau: { id: 'r1', libelle: 'Cardio' },
+      produit: { id: 'p1', libelle: 'Cardiol 10 mg' },
+      annee: 2025,
+      cible: '6000.00',
+      attendu: '1500.00',
+      realise: '900.00',
+      ecart: '-600.00',
+      taux_cible: 15,
+      taux_attendu: 60,
+      etat: 'en_retard',
+      mois: Array(12).fill('500.00'),
+      repartition_libre: false,
+    },
+  ],
+  total: {
+    cible: '12000.00',
+    attendu: '3000.00',
+    realise: '3600.00',
+    taux_cible: 30,
+    taux_attendu: 120,
+  },
+  reseaux_gerables: [
+    { id: 'r1', libelle: 'Cardio', produits: [{ id: 'p1', libelle: 'Cardiol 10 mg' }] },
+  ],
+};
+
 function perimetre(actions: string[], roles = ['admin_pays']): Perimetre {
   return {
     pays_actif: { code: 'SN', nom: 'Sénégal', fuseau: 'Africa/Dakar' },
@@ -86,6 +140,8 @@ function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
   const exporter = vi.fn(async () => new Blob(['x']));
   const syntheseFn = vi.fn(async () => synthese);
   const saisir = vi.fn(async () => ({}));
+  const fixerObjectif = vi.fn(async () => ({}));
+  const objectifs = vi.fn(async () => OBJECTIFS);
   const session = {
     etat: { statut: 'chargement' },
     client: {
@@ -96,6 +152,10 @@ function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
         clients: vi.fn(async () => []),
         saisir,
         exporter,
+        objectifs,
+        fixerObjectif,
+        corrigerObjectif: vi.fn(async () => ({})),
+        archiverObjectif: vi.fn(async () => undefined),
       },
       utilisateurs: vi.fn(async () => [
         { id: 'd1', prenom: 'Gabriel', nom: 'Sn', roles: ['delegue'] },
@@ -115,7 +175,7 @@ function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { syntheseFn, saisir, exporter };
+  return { syntheseFn, saisir, exporter, objectifs, fixerObjectif };
 }
 
 describe('Ventes', () => {
@@ -206,5 +266,65 @@ describe('Ventes', () => {
     rendre(perimetre(['ventes.lire', 'ventes.gerer']));
     await screen.findByText(/Cumul de l'année/);
     expect(screen.queryByRole('button', { name: 'Exporter' })).toBeNull();
+  });
+  it('le DO lit les objectifs de ventes : cible, attendu, réalisé et état en toutes lettres', async () => {
+    const { objectifs } = rendre(perimetre(['ventes.lire', 'ventes.objectifs_lire'], ['df']));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Objectifs' }));
+    const tableau = await screen.findByRole('table', { name: 'Objectifs de ventes 2025' });
+    expect(objectifs).toHaveBeenCalledWith(expect.objectContaining({ annee: 2025, mois_fin: 3 }));
+    expect(within(tableau).getByText('En avance')).toBeTruthy();
+    expect(within(tableau).getByText('En retard')).toBeTruthy();
+    // Le produit s'écrit deux fois : sous le réseau (téléphone) et dans sa colonne (le CSS masque l'un).
+    expect(within(tableau).getAllByText('Tout le réseau')).toHaveLength(2);
+    expect(within(tableau).getAllByText('Cardiol 10 mg').length).toBeGreaterThan(0);
+    // Le total ne compte que l'objectif de réseau ; une lecture seule ne fixe rien.
+    expect(screen.getByText('Réalisé / attendu')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Fixer un objectif' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Corriger' })).toBeNull();
+  });
+
+  it('sans le droit de lire les objectifs, pas d’onglet Objectifs', async () => {
+    rendre(perimetre(['ventes.lire'], ['superviseur']));
+    await screen.findByText(/Cumul de l'année/);
+    expect(screen.queryByRole('tab', { name: 'Objectifs' })).toBeNull();
+  });
+
+  it('l’administrateur pays fixe l’objectif de l’année d’un réseau', async () => {
+    const { fixerObjectif } = rendre(
+      perimetre(['ventes.lire', 'ventes.objectifs_lire', 'ventes.objectifs_gerer']),
+    );
+    fireEvent.click(await screen.findByRole('tab', { name: 'Objectifs' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Fixer un objectif' }));
+    const dialogue = await screen.findByRole('dialog');
+    // Sans réseau ni cible, rien ne part.
+    fireEvent.click(within(dialogue).getByRole('button', { name: "Enregistrer l'objectif" }));
+    expect(fixerObjectif).not.toHaveBeenCalled();
+    fireEvent.mouseDown(within(dialogue).getByRole('combobox', { name: /Réseau/ }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Cardio' }));
+    fireEvent.change(within(dialogue).getByLabelText(/Cible de l'année/), {
+      target: { value: '24000' },
+    });
+    fireEvent.click(within(dialogue).getByRole('button', { name: "Enregistrer l'objectif" }));
+    await waitFor(() =>
+      expect(fixerObjectif).toHaveBeenCalledWith({
+        reseau: 'r1',
+        produit: null,
+        annee: 2025,
+        cible: '24000',
+      }),
+    );
+  });
+
+  it('la répartition mois par mois part des parts égales et donne la somme', async () => {
+    rendre(perimetre(['ventes.lire', 'ventes.objectifs_lire', 'ventes.objectifs_gerer']));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Objectifs' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Fixer un objectif' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.change(within(dialogue).getByLabelText(/Cible de l'année/), {
+      target: { value: '12000' },
+    });
+    fireEvent.click(within(dialogue).getByRole('switch', { name: 'Répartir mois par mois' }));
+    expect(await within(dialogue).findByText(/Somme des mois : .*12/)).toBeTruthy();
+    expect(within(dialogue).getAllByRole('spinbutton')).toHaveLength(13); // l'année et les douze mois
   });
 });

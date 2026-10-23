@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 from apps.imports.serializers import ImportBirdNotesSerializer  # noqa: F401  (même formulaire)
 
-from .models import SourceVente, TypeClient, Vente
+from .models import EtatObjectifVente, SourceVente, TypeClient, Vente
 from .synthese import REGROUPEMENTS
 
 TYPES_CLIENT = serializers.ChoiceField(choices=TypeClient.choices)
@@ -171,3 +171,73 @@ class OptionsVentesSerializer(serializers.Serializer):
     reseaux = ElementSerializer(many=True)
     zones = ElementSerializer(many=True)
     types_client = ChoixTypeClientSerializer(many=True)
+
+
+class SaisieObjectifVenteSerializer(serializers.Serializer):
+    """La cible de l'année, ou ses douze mois (janvier à décembre) ; les deux si la somme colle."""
+
+    reseau = serializers.UUIDField()
+    produit = serializers.UUIDField(required=False, allow_null=True)
+    annee = serializers.IntegerField(min_value=2000, max_value=2100)
+    cible = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    mois = serializers.ListField(
+        child=serializers.CharField(), required=False, allow_null=True, max_length=12
+    )
+
+
+class ModificationObjectifVenteSerializer(serializers.Serializer):
+    cible = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    mois = serializers.ListField(
+        child=serializers.CharField(), required=False, allow_null=True, max_length=12
+    )
+
+
+class ChoixObjectifsSerializer(serializers.Serializer):
+    annee = serializers.IntegerField(required=False, min_value=2000, max_value=2100)
+    mois_fin = serializers.IntegerField(required=False, min_value=1, max_value=12)
+
+
+class ObjectifVenteRenduSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    reseau = ElementSerializer()
+    produit = ElementSerializer(allow_null=True)
+    annee = serializers.IntegerField()
+    cible = serializers.DecimalField(max_digits=16, decimal_places=2)
+    attendu = serializers.DecimalField(max_digits=16, decimal_places=2)
+    realise = serializers.DecimalField(max_digits=16, decimal_places=2)
+    ecart = serializers.DecimalField(max_digits=16, decimal_places=2)
+    taux_cible = serializers.FloatField(allow_null=True)
+    taux_attendu = serializers.FloatField(allow_null=True)
+    etat = serializers.ChoiceField(choices=EtatObjectifVente.choices)
+    mois = serializers.ListField(
+        child=serializers.DecimalField(max_digits=16, decimal_places=2),
+        help_text="Les douze montants de l'année, janvier à décembre.",
+    )
+    repartition_libre = serializers.BooleanField(
+        help_text="Faux : la cible est répartie à parts égales."
+    )
+
+
+class TotalObjectifsSerializer(serializers.Serializer):
+    cible = serializers.DecimalField(max_digits=16, decimal_places=2)
+    attendu = serializers.DecimalField(max_digits=16, decimal_places=2)
+    realise = serializers.DecimalField(max_digits=16, decimal_places=2)
+    taux_cible = serializers.FloatField(allow_null=True)
+    taux_attendu = serializers.FloatField(allow_null=True)
+
+
+class ReseauObjectifSerializer(ElementSerializer):
+    produits = ElementSerializer(many=True)
+
+
+class ObjectifsVentesSerializer(serializers.Serializer):
+    devise = serializers.CharField()
+    annee = serializers.IntegerField()
+    mois_fin = serializers.IntegerField()
+    objectifs = ObjectifVenteRenduSerializer(many=True)
+    total = TotalObjectifsSerializer(
+        allow_null=True, help_text="Les objectifs de réseau seuls (jamais ceux de produit)."
+    )
+    reseaux_gerables = ReseauObjectifSerializer(
+        many=True, help_text="Ce que l'administrateur pays peut viser ; vide pour les autres."
+    )

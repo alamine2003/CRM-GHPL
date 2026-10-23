@@ -3162,7 +3162,8 @@
     "saisir": "Saisir une vente",
     "onglets": {
       "synthese": "Synthèse",
-      "lignes": "Lignes"
+      "lignes": "Lignes",
+      "objectifs": "Objectifs"
     },
     "filtres": {
       "annee": "Année",
@@ -3261,6 +3262,39 @@
       "csv": "Fichier CSV",
       "fait": "Export téléchargé ; il est inscrit au journal d'audit.",
       "aide": "Avec l'année, le mois et les filtres affichés. Chaque export est inscrit au journal d'audit."
+    },
+    "objectifs": {
+      "titre": "Objectifs de ventes {{annee}}",
+      "fixer": "Fixer un objectif",
+      "corriger": "Corriger",
+      "archiver": "Archiver",
+      "enregistrer": "Enregistrer l'objectif",
+      "cible": "Cible de l'année",
+      "cibleAnnee": "Cible de l'année",
+      "cibleAnneeDevise": "Cible de l'année ({{devise}} TTC)",
+      "attendu": "Attendu fin {{mois}}",
+      "attenduCourt": "Attendu",
+      "realise": "Réalisé (YTD)",
+      "tauxAttendu": "Réalisé / attendu",
+      "tauxCible": "% de la cible",
+      "etat": "État",
+      "toutLeReseau": "Tout le réseau",
+      "annee": "Année",
+      "parMois": "Répartir mois par mois",
+      "partsEgales": "Sans répartition, la cible se divise à parts égales sur les douze mois.",
+      "sommeMois": "Somme des mois : {{somme}}",
+      "formAide": "Un objectif par réseau (ou produit du réseau) et par année, en {{devise}} TTC. Le cumul de l'année se compare à l'attendu à la fin du mois choisi.",
+      "aucun": "Aucun objectif pour {{annee}}",
+      "aucunAide": "Fixez la cible de l'année d'un réseau, ou d'un de ses produits.",
+      "archiverAide": "L'objectif {{annee}} de « {{reseau}} · {{produit}} » sort du suivi ; il reste dans l'historique.",
+      "note": "Le réalisé est le cumul de l'année des ventes du réseau (ou du produit dans ce réseau), de janvier au mois choisi. Le total ne compte que les objectifs de réseau.",
+      "etats": {
+        "a_venir": "À venir",
+        "atteint": "Atteint",
+        "non_atteint": "Non atteint",
+        "en_avance": "En avance",
+        "en_retard": "En retard"
+      }
     }
   },
   "droitsDo": {

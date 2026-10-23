@@ -69,6 +69,16 @@ ATTENDU = {
         "dm",
         "superviseur",
     },
+    # 1.7.0 : les objectifs de ventes se fixent comme ceux de visites (prd.md §14.88).
+    Action.VENTES_OBJECTIFS_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+    },
+    Action.VENTES_OBJECTIFS_GERER: {"admin_pays"},
     # 1.6.1 : le siège seul règle les droits du DO (prd.md §14.85).
     Action.DROITS_DO_REGLER: {"admin_siege"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "superviseur"},
@@ -258,6 +268,8 @@ REQUETES = {
     # Sans corps : l'action passe, la saisie est refusée.
     Action.VENTES_GERER: ("post", "/api/v1/ventes/lignes/", {}, 400),
     Action.VENTES_EXPORTER: ("get", "/api/v1/ventes/export/", None, 200),
+    Action.VENTES_OBJECTIFS_LIRE: ("get", "/api/v1/ventes/objectifs/", None, 200),
+    Action.VENTES_OBJECTIFS_GERER: ("post", "/api/v1/ventes/objectifs/", {}, 400),
     Action.DROITS_DO_REGLER: ("get", "/api/v1/droits-do/", None, 200),
 }  # fmt: skip
 

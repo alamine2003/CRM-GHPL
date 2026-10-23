@@ -434,6 +434,17 @@ urlpatterns = [
         ven.ArchiverLigneVenteVue.as_view(),
         name="ventes-ligne-archiver",
     ),
+    path("ventes/objectifs/", ven.ObjectifsVentesVue.as_view(), name="ventes-objectifs"),
+    path(
+        "ventes/objectifs/<uuid:id>/",
+        ven.ObjectifVenteVue.as_view(),
+        name="ventes-objectif",
+    ),
+    path(
+        "ventes/objectifs/<uuid:id>/archiver/",
+        ven.ArchiverObjectifVenteVue.as_view(),
+        name="ventes-objectif-archiver",
+    ),
     path("ventes/clients/", ven.ClientsVentesVue.as_view(), name="ventes-clients"),
     path("ventes/import/", ven.ImportVentesVue.as_view(), name="ventes-import"),
     path("pilotage/mes-chiffres/", pil.MesChiffresVue.as_view(), name="mes-chiffres"),

@@ -57,6 +57,10 @@ def test_le_generateur_redonne_la_meme_base(monkeypatch):
     assert Vente.objects.values("mois").distinct().count() == 27
     assert Client.objects.filter(pays__code="SN", type="grossiste").exists()
     assert not Vente.objects.filter(poste__isnull=True).exists()
+    # Un objectif de ventes de l'année par réseau (1.7.0).
+    from apps.ventes.models import ObjectifVente
+
+    assert ObjectifVente.objects.filter(pays__code="SN", produit__isnull=True).exists()
     # Calendrier des jours fériés à date certaine (ORG-012), deux années.
     from apps.planning.models import JourFerie
 
