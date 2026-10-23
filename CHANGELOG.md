@@ -2,6 +2,12 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.6.5] — Mise à jour de sécurité de Django REST framework
+
+### Corrigé
+
+- `djangorestframework` passe de 3.17.2 à 3.18.3 : trois failles venaient d'être publiées sur la 3.17.2 (CVE-2026-114136, CVE-2026-114137, CVE-2026-114138, corrigées en 3.18.2) et l'audit des dépendances de la CI les refusait. La borne de `backend/requirements.txt` devient `>=3.18.2,<3.19` ; schéma d'API inchangé.
+
 ## [1.6.4] — Le premier lieu d'exercice d'une fiche créée au téléphone
 
 ### Corrigé (prd.md §14.87, PRP-004, PRP-006, PRP-008)
