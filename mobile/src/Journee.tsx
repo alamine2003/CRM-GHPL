@@ -7,6 +7,7 @@
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { Activite, Controles, JourSemaine, Passage, Visite } from '@innov/api-client';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { LigneActivite } from './Activites';
@@ -39,6 +40,15 @@ export function unitesDuJour(visites: Visite[], passages: Passage[]): Unite[] {
 }
 
 const heureDe = (u: Unite) => (u.passage ? u.passage.heure : u.visites[0]?.heure) ?? null;
+
+/** Absent toute la journée : une absence « journée », ou matin et après-midi (un commando ou un
+ * déplacement, lui, garde ses visites). */
+export function absentToutLeJour(activites: Activite[]) {
+  const parts = activites
+    .filter((a) => !a.avec_visites)
+    .reduce((n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1), 0);
+  return parts >= 2;
+}
 
 /** Peut-on réordonner ce jour ? Au moins deux unités, dont une sans heure. */
 export function ordonnable(unites: Unite[]) {
@@ -75,6 +85,7 @@ export function Journee({
   surDissocier,
   surOrdonner,
   surReordonner,
+  ajoutAilleurs = false,
 }: {
   jour: JourSemaine;
   visites: Visite[];
@@ -100,17 +111,14 @@ export function Journee({
   surOrdonner: (visites: string[]) => void;
   /** Entre dans le réordonnancement de ce jour, ou en sort. */
   surReordonner: (actif: boolean) => void;
+  /** « Ajouter une visite » est déjà collé en bas de l'écran (téléphone, 1.4.3). */
+  ajoutAilleurs?: boolean;
 }) {
   const { t } = useTranslation();
   const p = usePalette();
   const lien = useLien();
   const unites = unitesDuJour(visites, passages);
-  // Absent toute la journée : une absence « journée », ou matin et après-midi (un commando ou un
-  // déplacement, lui, garde ses visites).
-  const parts = activites
-    .filter((a) => !a.avec_visites)
-    .reduce((n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1), 0);
-  const absentToutLeJour = parts >= 2;
+  const absent = absentToutLeJour(activites);
   // Une activité de plus ne se déclare que sur une période encore libre.
   const occupees = activites.reduce(
     (n, a) => n + ((a.periode ?? 'journee') === 'journee' ? 2 : 1),
@@ -132,139 +140,152 @@ export function Journee({
     surOrdonner(nouvel.flatMap((u) => u.visites.map((v) => v.id)));
   }
 
-  return (
-    <>
-      {activites.map((a) => (
-        <LigneActivite
-          key={a.id}
-          activite={a}
-          onPress={modifiable && !reordonner ? () => surActivite(a) : undefined}
-        />
-      ))}
-      {unites.map((u, i) => {
-        const fleches =
-          reordonner && heureDe(u) === null ? (
-            <Fleches
-              haut={i > 0 ? () => deplacer(i, -1) : undefined}
-              bas={i < unites.length - 1 ? () => deplacer(i, 1) : undefined}
-            />
-          ) : null;
-        const ouvrir = (v: Visite) => (!reordonner ? () => surVisite(v) : undefined);
-        if (!u.passage) {
-          const v = u.visites[0]!;
-          return (
-            <View key={v.id} style={styles.unite}>
-              <View style={{ flex: 1 }}>
-                <LigneVisite visite={v} onPress={ouvrir(v)} alertes={marques(v, false)} />
-              </View>
-              {fleches}
-            </View>
-          );
-        }
-        const passage = u.passage;
+  // Chaque élément est une ligne de la carte du jour (.rows), séparée de la précédente.
+  const lignes: ReactNode[] = [
+    ...activites.map((a) => (
+      <LigneActivite
+        key={a.id}
+        activite={a}
+        onPress={modifiable && !reordonner ? () => surActivite(a) : undefined}
+      />
+    )),
+    ...unites.map((u, i) => {
+      const fleches =
+        reordonner && heureDe(u) === null ? (
+          <Fleches
+            haut={i > 0 ? () => deplacer(i, -1) : undefined}
+            bas={i < unites.length - 1 ? () => deplacer(i, 1) : undefined}
+          />
+        ) : null;
+      const ouvrir = (v: Visite) => (!reordonner ? () => surVisite(v) : undefined);
+      if (!u.passage) {
+        const v = u.visites[0]!;
         return (
-          <View key={passage.id}>
-            <View style={styles.unite}>
-              <View style={{ flex: 1 }}>
-                <EnTetePassage
-                  passage={passage}
-                  nombre={u.visites.length}
-                  conflit={
-                    !!controles?.bloquants.some(
-                      (c) =>
-                        c.code === 'meme_heure' && u.visites.some((v) => c.visites.includes(v.id)),
-                    )
-                  }
-                />
-              </View>
-              {fleches}
+          <View key={v.id} style={styles.unite}>
+            <View style={{ flex: 1 }}>
+              <LigneVisite visite={v} onPress={ouvrir(v)} alertes={marques(v, false)} />
             </View>
-            {/* Un filet relie les visites du passage à sa ligne. */}
-            <View style={[styles.membres, { borderLeftColor: lien }]}>
-              {u.visites.map((v) => (
-                <LigneVisite
-                  key={v.id}
-                  visite={v}
-                  onPress={ouvrir(v)}
-                  dansPassage
-                  alertes={marques(v, true)}
-                />
-              ))}
-              {preparation && (
-                <LienAction
-                  icone="call-split"
-                  libelle={t('passages.dissocier')}
-                  description={t('passages.dissocierLieu', { lieu: passage.etablissement.nom })}
-                  couleur={p.texteSecondaire}
-                  onPress={() => surDissocier(passage)}
-                />
-              )}
-            </View>
+            {fleches}
           </View>
         );
-      })}
-      {preparation &&
-        aRegrouper(visites).map((liste) => (
-          <LienAction
-            key={liste[0]!.etablissement!.id}
-            icone="call-merge"
-            libelle={t('passages.regrouper', {
-              count: liste.length,
-              lieu: liste[0]!.etablissement!.nom,
-            })}
-            onPress={() => surRegrouper(liste)}
-          />
-        ))}
-      {reordonner && (
-        <View style={styles.reordonner}>
-          <Texte variante="discret">{t('visites.aideOrdre')}</Texte>
-          <LienAction
-            icone="check"
-            libelle={t('visites.ordreTermine')}
-            onPress={() => surReordonner(false)}
-          />
+      }
+      const passage = u.passage;
+      return (
+        <View key={passage.id}>
+          <View style={styles.unite}>
+            <View style={{ flex: 1 }}>
+              <EnTetePassage
+                passage={passage}
+                nombre={u.visites.length}
+                conflit={
+                  !!controles?.bloquants.some(
+                    (c) =>
+                      c.code === 'meme_heure' && u.visites.some((v) => c.visites.includes(v.id)),
+                  )
+                }
+              />
+            </View>
+            {fleches}
+          </View>
+          {/* Un filet relie les visites du passage à sa ligne. */}
+          <View style={[styles.membres, { borderLeftColor: lien }]}>
+            {u.visites.map((v) => (
+              <LigneVisite
+                key={v.id}
+                visite={v}
+                onPress={ouvrir(v)}
+                dansPassage
+                alertes={marques(v, true)}
+              />
+            ))}
+            {preparation && (
+              <LienAction
+                icone="call-split"
+                libelle={t('passages.dissocier')}
+                description={t('passages.dissocierLieu', { lieu: passage.etablissement.nom })}
+                couleur={p.texteSecondaire}
+                onPress={() => surDissocier(passage)}
+              />
+            )}
+          </View>
         </View>
-      )}
-      {apresApprobation && jour.planifiable && !absentToutLeJour && (
-        <View style={styles.actions}>
-          <LienAction
-            icone="add"
-            libelle={t('visites.ajouter')}
-            description={t('visites.ajouterLe', { jour: libelleJour })}
-            onPress={surAjouterVisite}
-          />
+      );
+    }),
+  ];
+  return (
+    <>
+      {lignes.map((ligne, i) => (
+        <View
+          key={i}
+          style={[styles.ligne, i > 0 && { borderTopWidth: 1, borderTopColor: p.ligne }]}
+        >
+          {ligne}
         </View>
-      )}
-      {preparation && (
-        <View style={styles.actions}>
-          {!absentToutLeJour && (
+      ))}
+      <View style={styles.pied}>
+        {preparation &&
+          aRegrouper(visites).map((liste) => (
+            <LienAction
+              key={liste[0]!.etablissement!.id}
+              icone="call-merge"
+              libelle={t('passages.regrouper', {
+                count: liste.length,
+                lieu: liste[0]!.etablissement!.nom,
+              })}
+              onPress={() => surRegrouper(liste)}
+            />
+          ))}
+        {reordonner && (
+          <View style={styles.reordonner}>
+            <Texte variante="discret">{t('visites.aideOrdre')}</Texte>
+            <LienAction
+              icone="check"
+              libelle={t('visites.ordreTermine')}
+              onPress={() => surReordonner(false)}
+            />
+          </View>
+        )}
+        {apresApprobation && jour.planifiable && !absent && !ajoutAilleurs && (
+          <View style={styles.actions}>
             <LienAction
               icone="add"
               libelle={t('visites.ajouter')}
               description={t('visites.ajouterLe', { jour: libelleJour })}
               onPress={surAjouterVisite}
             />
-          )}
-          {occupees < 2 && (
-            <LienAction
-              icone="event-busy"
-              libelle={t('activites.declarerCourt')}
-              description={t('activites.declarerLe', { jour: libelleJour })}
-              couleur={p.texteSecondaire}
-              onPress={surDeclarerActivite}
-            />
-          )}
-          {ordonnable(unites) && (
-            <LienAction
-              icone="swap-vert"
-              libelle={t('visites.reordonnerCourt')}
-              description={t('visites.reordonnerLe', { jour: libelleJour })}
-              couleur={p.texteSecondaire}
-              onPress={() => surReordonner(true)}
-            />
-          )}
-        </View>
-      )}
+          </View>
+        )}
+        {preparation && (
+          <View style={styles.actions}>
+            {!absent && !ajoutAilleurs && (
+              <LienAction
+                icone="add"
+                libelle={t('visites.ajouter')}
+                description={t('visites.ajouterLe', { jour: libelleJour })}
+                onPress={surAjouterVisite}
+              />
+            )}
+            {occupees < 2 && (
+              <LienAction
+                icone="event-busy"
+                libelle={t('activites.declarerCourt')}
+                description={t('activites.declarerLe', { jour: libelleJour })}
+                couleur={p.texteSecondaire}
+                onPress={surDeclarerActivite}
+              />
+            )}
+            {ordonnable(unites) && (
+              <LienAction
+                icone="swap-vert"
+                libelle={t('visites.reordonnerCourt')}
+                description={t('visites.reordonnerLe', { jour: libelleJour })}
+                couleur={p.texteSecondaire}
+                onPress={() => surReordonner(true)}
+              />
+            )}
+          </View>
+        )}
+      </View>
     </>
   );
 }
@@ -340,6 +361,8 @@ function Fleches({ haut, bas }: { haut?: () => void; bas?: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  ligne: { paddingHorizontal: 16 },
+  pied: { paddingHorizontal: 16 },
   unite: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   passage: {
     flexDirection: 'row',

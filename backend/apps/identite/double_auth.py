@@ -52,7 +52,9 @@ def _empreinte(code: str) -> str:
 
 def exige_double_auth(utilisateur: Utilisateur) -> bool:
     """Un rôle sensible actif, dans n'importe quel pays, rend la double authentification
-    obligatoire."""
+    obligatoire, si elle est imposée (INNOV_DOUBLE_AUTH_OBLIGATOIRE ; suspendue en 1.1.2)."""
+    if not settings.INNOV_DOUBLE_AUTH_OBLIGATOIRE:
+        return False
     maintenant = timezone.now()
     return (
         RoleUtilisateur.objects.filter(utilisateur=utilisateur, role__in=ROLES_DOUBLE_AUTH)

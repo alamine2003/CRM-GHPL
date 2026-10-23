@@ -272,7 +272,7 @@ def historique(visite: Visite, nombre: int = 3) -> list[Visite]:
             archive_le__isnull=True,
             date__lt=visite.date,
         )
-        .select_related("etablissement")
+        .select_related("etablissement", "rapport__resultat")
         .distinct()
         .order_by("-date", "-heure")[:nombre]
     )

@@ -8,7 +8,7 @@
 import type { Presentation, Rapport, Remise, RetourPrescripteur } from '@innov/api-client';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { marque, rayon } from '@innov/design';
+import { rayon } from '@innov/design';
 import { Pressable, Text, View } from 'react-native';
 import { police } from './polices';
 import { Alerte, Bouton, Champ, Texte, useLien, usePalette } from './composants';
@@ -92,8 +92,8 @@ function ChoixRetour({
               justifyContent: 'center',
               borderWidth: 1,
               borderLeftWidth: premier ? 1 : 0,
-              borderColor: actif ? marque.bleuMarine : p.ligne,
-              backgroundColor: actif ? marque.bleuMarine : p.surface,
+              borderColor: actif ? p.accentPlein : p.ligne,
+              backgroundColor: actif ? p.accentPlein : p.surface,
               borderTopLeftRadius: premier ? rayon : 0,
               borderBottomLeftRadius: premier ? rayon : 0,
               borderTopRightRadius: dernier ? rayon : 0,
@@ -102,7 +102,7 @@ function ChoixRetour({
           >
             <Text
               style={{
-                color: actif ? '#FFFFFF' : p.texte,
+                color: actif ? p.accentTexte : p.texte,
                 fontFamily: police.texteMoyen,
                 fontSize: 13,
                 textAlign: 'center',
@@ -149,7 +149,7 @@ export function ProduitsPresentes({
   return (
     <View style={{ gap: 6 }}>
       <Texte variante="sousTitre">{t('rapport.produits')}</Texte>
-      <Texte variante="discret">{t('rapport.produitsAide')}</Texte>
+      <Texte variante="libelle">{t('rapport.produitsAide')}</Texte>
       {proposes.length > SEUIL_FILTRE && (
         <Champ
           libelle={t('rapport.filtrer')}
@@ -169,7 +169,8 @@ export function ProduitsPresentes({
               return (
                 <Pilule
                   key={pr.id}
-                  libelle={rang >= 0 ? `${rang + 1}. ${pr.libelle}` : pr.libelle}
+                  libelle={pr.libelle}
+                  rang={rang >= 0 ? rang + 1 : undefined}
                   actif={rang >= 0}
                   onPress={() => basculer(pr.id, pr.libelle)}
                 />
@@ -288,7 +289,7 @@ export function Remises({
   return (
     <View style={{ gap: 6 }}>
       <Texte variante="sousTitre">{t('rapport.remises')}</Texte>
-      <Texte variante="discret">{t('rapport.remisesAide')}</Texte>
+      <Texte variante="libelle">{t('rapport.remisesAide')}</Texte>
       <View style={ligne}>
         {(['echantillon', 'cadeau'] as const).map((x) => (
           <Pilule

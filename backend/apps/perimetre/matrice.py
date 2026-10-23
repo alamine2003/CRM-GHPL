@@ -53,6 +53,12 @@ class Action(StrEnum):
     OBJECTIFS_LIRE = "objectifs.lire"
     OBJECTIFS_GERER = "objectifs.gerer"
     AUDIT_LIRE = "audit.lire"
+    VENTES_LIRE = "ventes.lire"
+    VENTES_GERER = "ventes.gerer"
+    VENTES_EXPORTER = "ventes.exporter"
+    VENTES_OBJECTIFS_LIRE = "ventes.objectifs_lire"
+    VENTES_OBJECTIFS_GERER = "ventes.objectifs_gerer"
+    DROITS_DO_REGLER = "droits_do.regler"
 
 
 SIEGE = {Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE}
@@ -129,12 +135,13 @@ MATRICE: dict[Action, frozenset[str]] = {
     # (vérifié par le service, PLN-001).
     Action.PLANNINGS_PREPARER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
     # « Approuver ou faire réviser un planning » : le superviseur, sur les postes qui lui sont
-    # rattachés (PLN-011) ; le DM sur le poste d'un superviseur-visiteur, qui lui est rattaché
-    # (PLN-017, RG-023). Escalade et remplacement en 0.3.4 et 0.3.8.
-    Action.PLANNINGS_VALIDER: frozenset({Role.DM, Role.SUPERVISEUR}),
-    # « Désigner un remplaçant de superviseur » (ORG-013) : l'administrateur pays, le DM pour
-    # les superviseurs de ses réseaux, le superviseur pour lui-même (périmètre dans la vue).
-    Action.REMPLACEMENTS_GERER: frozenset({Role.ADMIN_PAYS, Role.DM, Role.SUPERVISEUR}),
+    # rattachés (PLN-011) ; 1.3.0 [D] : l'administrateur pays (le siège au Sénégal) à la place
+    # du DM, sur le poste d'un superviseur-visiteur (PLN-017, RG-023) et en escalade (PLN-016).
+    # Le DM, comme le DF, ne fait plus que lire. Remplacement en 0.3.8.
+    Action.PLANNINGS_VALIDER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
+    # « Désigner un remplaçant de superviseur » (ORG-013) : l'administrateur pays, le
+    # superviseur pour lui-même (périmètre dans la vue).
+    Action.REMPLACEMENTS_GERER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
     # « Réaliser une visite, rédiger un rapport » : le délégué, le superviseur s'il occupe un
     # poste ; chacun ses propres visites (RPT-001).
     Action.RAPPORTS_REDIGER: frozenset({Role.SUPERVISEUR, Role.DELEGUE}),
@@ -146,9 +153,10 @@ MATRICE: dict[Action, frozenset[str]] = {
         {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
     ),
     # « Valider un rapport ou demander une correction » (RPT-012 à RPT-014) : le superviseur
-    # sur les postes rattachés, le DM pour un superviseur-visiteur (RG-023), en escalade ou en
-    # remplacement ; le périmètre est vérifié par le service.
-    Action.RAPPORTS_VALIDER: frozenset({Role.DM, Role.SUPERVISEUR}),
+    # sur les postes rattachés, l'administrateur pays (1.3.0, à la place du DM) pour un
+    # superviseur-visiteur (RG-023) et en escalade ; le remplaçant ; le périmètre est vérifié
+    # par le service.
+    Action.RAPPORTS_VALIDER: frozenset({Role.ADMIN_PAYS, Role.SUPERVISEUR}),
     # Indicateurs de pilotage (cycle 0.7) : en 0.7.1, chacun les siens (DSH-001), le délégué
     # et le superviseur qui occupe un poste ; l'encadrement s'ajoute avec ses vues (0.7.2 à
     # 0.7.4).
@@ -164,15 +172,36 @@ MATRICE: dict[Action, frozenset[str]] = {
     Action.PILOTAGE_EXPORTER: frozenset(
         SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
-    # DSH-009 : objectifs par réseau, fixés par le DM du réseau ou l'administrateur pays
+    # DSH-009 : objectifs par réseau, fixés par l'administrateur pays (1.3.0 : plus le DM)
     # (périmètre vérifié par le service) ; lus par l'encadrement de ces réseaux et le pays.
     Action.OBJECTIFS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
-    Action.OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS, Role.DM}),
+    Action.OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS}),
     # AUD-002 : « Consulter le journal d'audit » (prd.md §6.3) : le siège, tous les pays ; le
     # responsable et l'administrateur pays, leur pays seulement (filtre de la vue).
     Action.AUDIT_LIRE: frozenset(SIEGE | PAYS_CONSULTATION),
+    # 1.6.0 [D, 20 octobre 2026] Suivi des ventes : le siège, le pays, le DF (qui porte le rôle du
+    # DO), le DM et le superviseur les observent dans leur périmètre ; l'administrateur pays les
+    # importe ou les saisit. Le délégué ne voit pas cette plateforme.
+    Action.VENTES_LIRE: frozenset(SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}),
+    Action.VENTES_GERER: frozenset({Role.ADMIN_PAYS}),
+    # 1.6.2 [D, 22 octobre 2026] : l'export des ventes suit celui du pilotage (§14.58) : le siège,
+    # le responsable pays, le DF (le DO), le DM et le superviseur dans leur périmètre, tout
+    # export audité ; pas l'administrateur pays.
+    Action.VENTES_EXPORTER: frozenset(
+        SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
+    ),
+    # 1.7.0 [D, 23 octobre 2026] : objectifs de ventes par réseau. Fixés comme ceux de visites
+    # (DSH-009, 1.3.0) par l'administrateur pays, et le siège dans un pays choisi ; lus par ceux
+    # qui voient tout le réseau ou le pays : le siège, le pays, le DF (le DO) et le DM. Le
+    # superviseur, qui ne voit que ses postes, n'a pas de taux de réalisation d'un réseau entier.
+    Action.VENTES_OBJECTIFS_LIRE: frozenset(SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM}),
+    Action.VENTES_OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS}),
+    # 1.6.1 [D, 18 octobre 2026] : le siège seul règle les droits du DO (compte au rôle DF). Ni
+    # l'administrateur pays (même quand l'administrateur du siège entre dans un pays) ni la
+    # direction du siège.
+    Action.DROITS_DO_REGLER: frozenset({Role.ADMIN_SIEGE}),
     # « Recevoir et lire ses notifications » (prd.md §18) : chacun les siennes.
     Action.NOTIFICATIONS_LIRE: frozenset(
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR, Role.DELEGUE}
@@ -181,3 +210,13 @@ MATRICE: dict[Action, frozenset[str]] = {
 
 #: Actions techniques, sans donnée métier : seules permises à l'administrateur technique.
 ACTIONS_TECHNIQUES = frozenset({Action.EXPLOITATION_LIRE})
+
+#: Les droits que le siège ouvre ou ferme pour un compte DF (le DO), par groupe : ce que le
+#: groupe donne. Tout est ouvert par défaut ; le reste du rôle (pays, organisation,
+#: notifications) ne se règle pas, l'application en a besoin pour fonctionner.
+GROUPES_DROITS_DO: dict[str, frozenset[Action]] = {
+    "ventes": frozenset({Action.VENTES_LIRE, Action.VENTES_EXPORTER, Action.VENTES_OBJECTIFS_LIRE}),
+    "pilotage": frozenset({Action.PILOTAGE_LIRE, Action.PILOTAGE_EXPORTER, Action.OBJECTIFS_LIRE}),
+    "rapports": frozenset({Action.RAPPORTS_LIRE}),
+    "prospects": frozenset({Action.PROSPECTS_LIRE, Action.CIBLES_LIRE}),
+}

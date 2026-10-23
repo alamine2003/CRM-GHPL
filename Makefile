@@ -7,7 +7,7 @@ installer:
 	npm install
 
 serveur:
-	cd backend && .venv/bin/python manage.py runserver
+	cd backend && .venv/bin/python manage.py migrate --noinput && .venv/bin/python manage.py runserver
 
 portail:
 	npm run dev -w portail

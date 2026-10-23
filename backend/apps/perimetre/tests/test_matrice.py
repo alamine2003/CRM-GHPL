@@ -16,10 +16,10 @@ ATTENDU = {
     Action.PROPOSITIONS_TRANCHER: {"admin_pays", "superviseur"},
     Action.JOURS_FERIES_GERER: {"admin_pays"},
     Action.PLANNINGS_PREPARER: {"superviseur", "delegue"},
-    Action.PLANNINGS_VALIDER: {"dm", "superviseur"},
+    Action.PLANNINGS_VALIDER: {"admin_pays", "superviseur"},
     Action.RAPPORTS_REDIGER: {"superviseur", "delegue"},
     Action.RAPPORTS_LIRE: {"responsable_pays", "df", "dm", "superviseur", "delegue"},
-    Action.RAPPORTS_VALIDER: {"dm", "superviseur"},
+    Action.RAPPORTS_VALIDER: {"admin_pays", "superviseur"},
     Action.INDICATEURS_LIRE: {"superviseur", "delegue"},
     Action.PILOTAGE_LIRE: {
         "admin_siege",
@@ -46,10 +46,42 @@ ATTENDU = {
         "dm",
         "superviseur",
     },
-    Action.OBJECTIFS_GERER: {"admin_pays", "dm"},
+    Action.OBJECTIFS_GERER: {"admin_pays"},
     # prd.md §6.3, « Consulter le journal d'audit » : siège ; son pays pour le pays.
     Action.AUDIT_LIRE: {"admin_siege", "direction_siege", "responsable_pays", "admin_pays"},
-    Action.REMPLACEMENTS_GERER: {"admin_pays", "dm", "superviseur"},
+    # 1.6.0 : le suivi des ventes (prd.md §14.84).
+    Action.VENTES_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+        "superviseur",
+    },
+    Action.VENTES_GERER: {"admin_pays"},
+    # 1.6.2 : l'export des ventes suit celui du pilotage (prd.md §14.58, §14.86).
+    Action.VENTES_EXPORTER: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "df",
+        "dm",
+        "superviseur",
+    },
+    # 1.7.0 : les objectifs de ventes se fixent comme ceux de visites (prd.md §14.88).
+    Action.VENTES_OBJECTIFS_LIRE: {
+        "admin_siege",
+        "direction_siege",
+        "responsable_pays",
+        "admin_pays",
+        "df",
+        "dm",
+    },
+    Action.VENTES_OBJECTIFS_GERER: {"admin_pays"},
+    # 1.6.1 : le siège seul règle les droits du DO (prd.md §14.85).
+    Action.DROITS_DO_REGLER: {"admin_siege"},
+    Action.REMPLACEMENTS_GERER: {"admin_pays", "superviseur"},
     Action.NOTIFICATIONS_LIRE: {
         "admin_siege",
         "direction_siege",
@@ -232,6 +264,13 @@ REQUETES = {
     # Sans corps : l'action passe, la saisie est refusée.
     Action.OBJECTIFS_GERER: ("post", "/api/v1/pilotage/objectifs/", {}, 400),
     Action.AUDIT_LIRE: ("get", "/api/v1/audit/", {}, 200),
+    Action.VENTES_LIRE: ("get", "/api/v1/ventes/synthese/", None, 200),
+    # Sans corps : l'action passe, la saisie est refusée.
+    Action.VENTES_GERER: ("post", "/api/v1/ventes/lignes/", {}, 400),
+    Action.VENTES_EXPORTER: ("get", "/api/v1/ventes/export/", None, 200),
+    Action.VENTES_OBJECTIFS_LIRE: ("get", "/api/v1/ventes/objectifs/", None, 200),
+    Action.VENTES_OBJECTIFS_GERER: ("post", "/api/v1/ventes/objectifs/", {}, 400),
+    Action.DROITS_DO_REGLER: ("get", "/api/v1/droits-do/", None, 200),
 }  # fmt: skip
 
 
@@ -319,7 +358,10 @@ def test_chaque_role_chaque_action(monde, role, action):
     url = url(monde) if callable(url) else url
     corps = corps(monde) if callable(corps) else corps
     reponse = getattr(client_de(compte, pays), methode)(url, corps, format="json")
-    if role in MATRICE[action]:
+    # 1.2.0 [D] : dans un pays choisi, l'administrateur du siège a aussi les droits de
+    # l'administrateur pays.
+    effectifs = {role, "admin_pays"} if role == "admin_siege" else {role}
+    if effectifs & MATRICE[action]:
         assert reponse.status_code == succes, reponse.content
     elif isinstance(REQUETES[action][1], str):
         assert reponse.status_code == 403, (role, action, reponse.status_code)

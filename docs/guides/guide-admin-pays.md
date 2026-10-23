@@ -6,7 +6,7 @@ Version 0.9.7 (kit du pilote). Ce guide décrit le portail tel qu'il est livré.
 
 Ce guide s'adresse à l'administrateur pays, qui tient sur le portail web l'organisation, les comptes, les référentiels, les fiches prospects et les paramètres de son pays.
 
-L'administrateur pays administre : il ne pilote pas l'activité et ne lit pas les rapports de visite nominatifs. Ces tâches reviennent à l'encadrement (superviseur, DM, DF, responsable pays).
+L'administrateur pays administre son pays. Depuis la version 1.3.0, il décide aussi à la place du DM : il valide les plannings et les rapports des postes rattachés à un DM, et ceux restés trop longtemps sans décision du superviseur (« escalade »). Le DM, le DF et le DO ne font que consulter. Au Sénégal, siège sans administrateur pays, c'est l'administrateur du siège qui tient ce rôle.
 
 ## Se connecter
 
@@ -14,7 +14,7 @@ L'administrateur pays administre : il ne pilote pas l'activité et ne lit pas le
 
 1. L'administrateur du siège crée votre compte et vous désigne administrateur pays. Vous recevez par courriel un lien pour choisir votre mot de passe, valable 30 minutes.
 2. Ouvrez l'adresse du portail, choisissez la langue, tapez votre « Identifiant » (format prenom.nom) et votre « Mot de passe ». Cliquez « Se connecter ».
-3. Le portail affiche « Protégez votre compte » : la double authentification est obligatoire pour votre rôle.
+Pendant la phase d'essai, la double authentification n'est pas imposée (elle reviendra en version 2). Vous pouvez l'activer vous-même dans « Mon profil ».
 
 ### Activer la double authentification
 
@@ -137,6 +137,8 @@ Ouvrez la fiche du compte. Dans « Rôles » :
 - « Attribuer un rôle » : délégué, superviseur, DM, DF ;
 - « Retirer » un rôle.
 
+Pour un DO, qui n'a pas de rôle à lui pour l'instant, attribuez le rôle « DF » : il consulte alors, sans rien décider, les plannings, les rapports, le pilotage et les objectifs des réseaux de son périmètre.
+
 L'historique des rôles reste sur la fiche. Les rôles de responsable pays et d'administrateur pays sont attribués par le siège.
 
 N'oubliez pas : pour qu'un délégué travaille, il faut un compte, le rôle « Délégué », un poste occupé, et un superviseur rattaché à ce poste.
@@ -254,7 +256,7 @@ Une modification vaut pour la suite, jamais pour le passé. Chaque changement es
 |---|---|---|
 | « Calendrier » | « Format d'affichage des dates », « Jours ouvrés » | JJ/MM/AAAA ; lundi à vendredi |
 | « Planning » | « Fermeture de la semaine (soumettre avant) » | Lundi 0 h, semaine du planning |
-| « Planning » | « Délai avant escalade au DM (heures ouvrées) » | 24 |
+| « Planning » | « Délai avant escalade à l'administrateur (heures ouvrées) » | 24 |
 | « Visites » | « Visites par jour et par type de poste » | Par type de poste |
 | « Visites » | « Plage horaire des visites » | 8 h à 20 h |
 | « Visites » | « Visites sans GPS tolérées par jour » | 3 |
@@ -297,7 +299,7 @@ Rubrique « Remplaçants », « Désigner un remplaçant » : « Superviseur rem
 
 ### Objectifs par réseau
 
-Rubrique « Objectifs », « Nouvel objectif » : « Réseau », « Indicateur » (« Visites faites », « Couverture des potentiels A et B », « Présentations d'un produit »), « Produit » le cas échéant, « Du », « Au », « Cible ». « Modifier » et « Archiver » sont tracés au journal d'audit. Le DM du réseau peut aussi les fixer.
+Rubrique « Objectifs », « Nouvel objectif » : « Réseau », « Indicateur » (« Visites faites », « Couverture des potentiels A et B », « Présentations d'un produit »), « Produit » le cas échéant, « Du », « Au », « Cible ». « Modifier » et « Archiver » sont tracés au journal d'audit. Le DM, le DF et le superviseur les consultent sans pouvoir les modifier.
 
 ## Imports
 
@@ -378,7 +380,7 @@ Dans « Paramètres », carte « Téléphone », ligne « Masquage des données 
 |---|---|
 | Désigner un responsable ou un administrateur pays, affectation dans un autre pays, transfert, suspension du pays | L'**administrateur du siège** |
 | Votre propre double authentification perdue (téléphone et codes de secours) | L'**administrateur du siège** |
-| Une décision sur un planning ou un rapport, une liste cible d'équipe | Le **superviseur** concerné, ou son **DM** |
+| Une décision sur un planning ou un rapport, une liste cible d'équipe | Le **superviseur** concerné ; s'il ne décide pas à temps, c'est vous |
 | Un export d'indicateurs ou de rapports | Le **responsable pays** |
 | « Service injoignable », « Quelque chose s'est mal passé » avec une « Référence », un paramètre absent de l'écran, un import qui échoue | L'**administrateur technique** ; donnez-lui la référence affichée |
 

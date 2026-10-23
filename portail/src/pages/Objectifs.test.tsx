@@ -106,7 +106,7 @@ describe('Objectifs', () => {
   it('sans objectif, la page dit qui les fixe', async () => {
     rendre({ ...DONNEES, objectifs: [], reseaux_geres: [], portefeuilles: [] });
     expect(await screen.findByText('Aucun objectif en cours')).toBeTruthy();
-    expect(screen.getByText(/Le DM du réseau ou l'administrateur pays/)).toBeTruthy();
+    expect(screen.getByText(/L'administrateur pays fixe les objectifs/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Nouvel objectif' })).toBeNull();
   });
 

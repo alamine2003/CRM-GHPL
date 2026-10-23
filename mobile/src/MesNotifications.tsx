@@ -126,3 +126,24 @@ const styles = StyleSheet.create({
   },
   texte: { flex: 1, fontFamily: police.texteFort, fontSize: 15 },
 });
+
+/** 1.4.0 : nombre de notifications non lues, pour la pastille de la cloche (maquette). */
+export function useNonLues() {
+  const { client, etat } = useSession();
+  const [nombre, setNombre] = useState(0);
+  const lecteur =
+    etat.statut === 'connecte' && etat.perimetre.actions.includes('notifications.lire');
+  useEffect(() => {
+    let actif = true;
+    if (!lecteur) return;
+    client.notifications
+      .liste()
+      .then((r) => actif && setNombre(r.notifications.filter((n) => !n.lue_le).length))
+      // Sans réseau, la cloche reste sans pastille.
+      .catch(() => undefined);
+    return () => {
+      actif = false;
+    };
+  }, [lecteur, client]);
+  return nombre;
+}

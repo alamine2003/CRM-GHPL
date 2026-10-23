@@ -119,7 +119,7 @@ def test_23a_le_lot_ecarte_une_journee_dont_un_rapport_n_est_pas_soumis(
         assert r.json() == {"journees": 0, "rapports": 0}
 
 
-def test_rpt017_le_remplacant_et_le_dm_lisent_les_retards(monde, terrain, effectuee):
+def test_rpt017_le_remplacant_et_l_administrateur_lisent_les_retards(monde, terrain, effectuee):
     from apps.organisation import services as org
     from apps.organisation.services import designer_remplacant
 
@@ -129,7 +129,7 @@ def test_rpt017_le_remplacant_et_le_dm_lisent_les_retards(monde, terrain, effect
     with freeze_time("2026-10-15 08:00"):
         designer_remplacant(monde["sn"], monde["sup.sn"], remplacant, date(2026, 10, 15),
                             date(2026, 10, 17), par=monde["admin.sn"])  # fmt: skip
-        for compte in (remplacant, monde["dm.sn"]):
+        for compte in (remplacant, monde["admin.sn"]):
             r = client_de(compte).get("/api/v1/rapports/retards/")
             assert [v["visite"] for v in r.json()["rapports"]] == [str(effectuee.pk)], compte
 
@@ -183,7 +183,8 @@ def test_25a_apres_l_escalade_le_superviseur_garde_la_main(monde, terrain, effec
     rapport = soumettre(monde, effectuee, portefeuille[:1])
     org.ajouter_reseau_au_perimetre(monde["dm.sn"], terrain["cardio"], date(2026, 1, 1))
     with freeze_time("2026-10-20 08:00"):
-        (ligne,) = client_de(monde["dm.sn"]).get("/api/v1/rapports/a-traiter/").json()["delegues"]
+        admin = client_de(monde["admin.sn"])
+        (ligne,) = admin.get("/api/v1/rapports/a-traiter/").json()["delegues"]
         assert ligne["journees"][0]["escalade"] is True
         r = client_de(monde["sup.sn"]).post(f"/api/v1/rapports/{rapport.pk}/valider/")
         assert (r.status_code, r.json()["mode_validation"]) == (200, "unitaire")
@@ -202,9 +203,9 @@ def test_32a_rouvert_au_dela_de_4_semaines_la_journee_revient_dans_la_file(
         )
     org.ajouter_reseau_au_perimetre(monde["dm.sn"], terrain["cardio"], date(2026, 1, 1))
     with freeze_time("2026-11-20 08:00"):  # 5 semaines plus tard : hors de la file
-        r = client_de(monde["dm.sn"]).post(f"/api/v1/rapports/{rapport.pk}/rouvrir/",
-                                           {"motif": "Échantillons à recompter."},
-                                           format="json")  # fmt: skip
+        r = client_de(monde["admin.sn"]).post(f"/api/v1/rapports/{rapport.pk}/rouvrir/",
+                                              {"motif": "Échantillons à recompter."},
+                                              format="json")  # fmt: skip
         assert r.status_code == 200, r.content
         (ligne,) = client_de(monde["sup.sn"]).get("/api/v1/rapports/a-traiter/").json()[
             "delegues"]  # fmt: skip

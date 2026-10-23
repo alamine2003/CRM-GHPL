@@ -187,5 +187,19 @@ test('RG-053 : « Garder ma version » repart des valeurs montrées par le serve
   });
   expect(garde).not.toHaveProperty('conflit', expect.anything());
   expect(garde).not.toHaveProperty('erreur', expect.anything());
-  expect(intact).toEqual(autre);
+  expect(intact).toEqual({ ...autre, le: expect.any(String) });
+});
+
+test('1.5.1 : chaque envoi garde son heure de saisie, sans écraser celle qu’il porte', async () => {
+  await mettreEnAttente({ ...base, id: 'h1', type: 'proposition', saisie: { id: 'p' } } as Envoi);
+  await mettreEnAttente({
+    ...base,
+    id: 'h2',
+    type: 'proposition',
+    saisie: { id: 'q' },
+    le: '2026-10-15T08:50:00.000Z',
+  } as Envoi);
+  const [premier, second] = (await lireAttente()).filter((e) => e.id.startsWith('h'));
+  expect(Date.parse(premier?.le ?? '')).not.toBeNaN();
+  expect(second?.le).toBe('2026-10-15T08:50:00.000Z');
 });

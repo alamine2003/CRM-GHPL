@@ -6,7 +6,7 @@ Ce protocole vérifie, sur de vrais téléphones et de vrais réseaux, ce que le
 
 | Élément | Détail |
 |---|---|
-| Instance | Une préproduction joignable depuis Internet (0.9.5) ou, à défaut, l'instance de démonstration (`ENVIRONNEMENT=demonstration`, `reinitialiser_demo`) |
+| Instance | Une préproduction joignable depuis Internet (0.9.5) ou, à défaut, l'instance d'essai (`ENVIRONNEMENT=demonstration` ; depuis 1.0.8, elle part vide et les comptes se créent depuis le portail) |
 | Téléphones | Au moins un Android d'entrée de gamme (2 Go de mémoire, Android 10 ou plus) et un iPhone (iOS 16 ou plus), chacun avec le build `recette` (README, « Builds de test Android et iOS ») |
 | Comptes | Deux délégués de la même équipe, leur superviseur, l'administrateur pays (comptes de la démonstration ; mots de passe transmis à part, jamais par écrit dans un ticket) |
 | Lieux | Un cabinet en ville (bonne couverture), un poste de santé en zone rurale (2G/EDGE ou 3G faible), un trajet sans réseau |
@@ -40,4 +40,4 @@ Pour chaque essai, noter : date, lieu, téléphone (modèle, système), réseau 
 
 - `mesurer_synchro` pour comparer le poids mesuré sur le terrain et celui du serveur.
 - Le build `recette` des deux plateformes (EAS).
-- La réinitialisation de la démonstration après les essais (`reinitialiser_demo --oui`).
+- Le nettoyage de l'instance d'essai après les essais (base recréée chez Neon ; `reinitialiser_demo` est retirée en 1.0.8).

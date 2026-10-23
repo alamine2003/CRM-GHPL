@@ -39,6 +39,21 @@ import type {
   Prescription,
   HistoriqueSynchro,
   ModelesRapport,
+  CompteDO,
+  DroitsDO,
+  SyntheseVentes,
+  OptionsVentes,
+  LigneVente,
+  PageLignesVentes,
+  SaisieVente,
+  ClientVente,
+  SaisieClientVente,
+  TypeClientVente,
+  RegroupementVentes,
+  ObjectifsVentes,
+  ObjectifVente,
+  SaisieObjectifVente,
+  ModificationObjectifVente,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -200,6 +215,25 @@ export type {
   ModelesRapport,
   TendanceProduit,
   PointAttention,
+  CompteDO,
+  DroitsDO,
+  SyntheseVentes,
+  GroupeVentes,
+  MoisVentes,
+  OptionsVentes,
+  LigneVente,
+  PageLignesVentes,
+  SaisieVente,
+  ClientVente,
+  SaisieClientVente,
+  TypeClientVente,
+  RegroupementVentes,
+  ObjectifsVentes,
+  ObjectifVente,
+  SaisieObjectifVente,
+  ModificationObjectifVente,
+  ReseauObjectifVente,
+  EtatObjectifVente,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -494,6 +528,38 @@ interface OptionsRequete {
 
 const ORG = '/api/v1/organisation';
 const REF = '/api/v1/referentiel';
+
+/** Filtres de la synthèse des ventes (tous facultatifs ; ils se combinent). */
+export interface FiltresVentes {
+  annee?: number;
+  mois_fin?: number;
+  par?: RegroupementVentes;
+  delegue?: string;
+  produit?: string;
+  classe?: string;
+  reseau?: string;
+  zone?: string;
+  client?: string;
+  type_client?: TypeClientVente;
+}
+
+export interface FiltresLignesVentes {
+  mois?: string;
+  delegue?: string;
+  produit?: string;
+  client?: string;
+  page?: number;
+  taille?: number;
+}
+
+/** Chaîne de requête sans les valeurs vides. */
+function requeteVentes(filtres: object): string {
+  const params = new URLSearchParams();
+  for (const [cle, valeur] of Object.entries(filtres))
+    if (valeur !== undefined && valeur !== null && valeur !== '') params.set(cle, String(valeur));
+  const texte = params.toString();
+  return texte ? `?${texte}` : '';
+}
 
 export function creerClient(options: OptionsClient) {
   const base = options.baseUrl.replace(/\/$/, '');
@@ -1222,6 +1288,57 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { motif },
         }),
+    },
+    /** Droits du DO : le siège seul les ouvre ou les ferme, groupe par groupe (1.6.1). */
+    droitsDo: {
+      liste: () => requete<CompteDO[]>('/api/v1/droits-do/'),
+      regler: (id: string, droits: Partial<DroitsDO>) =>
+        requete<CompteDO>(`/api/v1/droits-do/${id}/`, { methode: 'PATCH', corps: droits }),
+    },
+    /** Suivi des ventes (1.6.0) : synthèse, lignes mensuelles, clients, import Excel. */
+    ventes: {
+      synthese: (filtres: FiltresVentes = {}) =>
+        requete<SyntheseVentes>(`/api/v1/ventes/synthese/${requeteVentes(filtres)}`),
+      options: () => requete<OptionsVentes>('/api/v1/ventes/options/'),
+      lignes: (filtres: FiltresLignesVentes = {}) =>
+        requete<PageLignesVentes>(`/api/v1/ventes/lignes/${requeteVentes(filtres)}`),
+      saisir: (saisie: SaisieVente) =>
+        requete<LigneVente>('/api/v1/ventes/lignes/', { methode: 'POST', corps: saisie }),
+      corriger: (id: string, champs: { quantite?: string; montant_ttc?: string }) =>
+        requete<LigneVente>(`/api/v1/ventes/lignes/${id}/`, { methode: 'PATCH', corps: champs }),
+      archiver: (id: string) =>
+        requete<void>(`/api/v1/ventes/lignes/${id}/archiver/`, { methode: 'POST' }),
+      /** 1.7.0 : objectifs de l'année par réseau, avec le cumul (YTD) face à la cible. */
+      objectifs: (filtres: { annee?: number; mois_fin?: number } = {}) =>
+        requete<ObjectifsVentes>(`/api/v1/ventes/objectifs/${requeteVentes(filtres)}`),
+      fixerObjectif: (saisie: SaisieObjectifVente) =>
+        requete<ObjectifVente>('/api/v1/ventes/objectifs/', { methode: 'POST', corps: saisie }),
+      corrigerObjectif: (id: string, champs: ModificationObjectifVente) =>
+        requete<ObjectifVente>(`/api/v1/ventes/objectifs/${id}/`, {
+          methode: 'PATCH',
+          corps: champs,
+        }),
+      archiverObjectif: (id: string) =>
+        requete<void>(`/api/v1/ventes/objectifs/${id}/archiver/`, { methode: 'POST' }),
+      clients: (q = '', type?: TypeClientVente) =>
+        requete<ClientVente[]>(`/api/v1/ventes/clients/${requeteVentes({ q, type })}`),
+      creerClient: (saisie: SaisieClientVente) =>
+        requete<ClientVente>('/api/v1/ventes/clients/', { methode: 'POST', corps: saisie }),
+      /**
+       * VNT-006 : ce que la synthèse montre (`contenu` : ventilation, mensuel ou lignes), en
+       * `fichier` csv ou xlsx, avec la même période et les mêmes filtres. Audité.
+       */
+      exporter: (filtres: FiltresVentes & { contenu: string; fichier: string }) =>
+        requete<Blob>(`/api/v1/ventes/export/${requeteVentes(filtres)}`, { binaire: true }),
+      importer: (fichier: Blob, nom: string, simulation: boolean) => {
+        const formulaire = new FormData();
+        formulaire.append('fichier', fichier, nom);
+        formulaire.append('simulation', simulation ? 'true' : 'false');
+        return requete<DetailLot>('/api/v1/ventes/import/', {
+          methode: 'POST',
+          corps: formulaire,
+        });
+      },
     },
     /** Imports contrôlés (PRP-013) : simulation, import, rapport d'anomalies. */
     imports: {

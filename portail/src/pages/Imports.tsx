@@ -38,6 +38,8 @@ import { depuis } from '../composants/formats';
 import { useNotifier } from '../contexteNotifications';
 import { messageErreur, useSession } from '../contexteSession';
 
+type SourceImport = 'birdnotes' | 'organisation' | 'ventes';
+
 /** Ordre d'affichage des compteurs : celui des dépendances de l'import. */
 const ENTITES = [
   'secteurs',
@@ -104,7 +106,17 @@ function ResultatLot({ lot }: { lot: DetailLot }) {
   return (
     <Stack spacing={2}>
       <BarreChiffres>
-        {lot.source === 'organisation' ? (
+        {lot.source === 'ventes' ? (
+          <>
+            <Chiffre
+              libelle={t('imports.chiffres.ventes')}
+              valeur={n('ventes', 'crees')}
+              detail={t('imports.chiffres.remplacees', { count: n('ventes', 'remplacees') })}
+            />
+            <Chiffre libelle={t('imports.chiffres.clients')} valeur={n('clients', 'crees')} />
+            <Chiffre libelle={t('imports.chiffres.rejetees')} valeur={n('ventes', 'rejetes')} />
+          </>
+        ) : lot.source === 'organisation' ? (
           <>
             <Chiffre
               libelle={t('imports.chiffres.postes')}
@@ -239,7 +251,7 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
   const notifier = useNotifier();
   const requetes = useQueryClient();
   // Deux sources : l'export BirdNotes (PRP-013) et le fichier d'organisation (ORG-014).
-  const [source, setSource] = useState<'birdnotes' | 'organisation'>('birdnotes');
+  const [source, setSource] = useState<SourceImport>('birdnotes');
   const [fichier, setFichier] = useState<File | null>(null);
   const [survol, setSurvol] = useState(false);
   const [envoi, setEnvoi] = useState<'simulation' | 'import' | null>(null);
@@ -275,13 +287,16 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
     setEnvoi(simulation ? 'simulation' : 'import');
     setConfirmation(false);
     try {
-      const lot = await client.imports[source](fichier, fichier.name, simulation);
+      const lot =
+        source === 'ventes'
+          ? await client.ventes.importer(fichier, fichier.name, simulation)
+          : await client.imports[source](fichier, fichier.name, simulation);
       setResultat(lot);
       setConsulte(null);
       notifier(simulation ? t('imports.simulationTerminee') : t('imports.importTermine'));
       void requetes.invalidateQueries({ queryKey: ['imports'] });
       if (!simulation) {
-        for (const q of ['prospects', 'etablissements', 'organisation', 'referentiel']) {
+        for (const q of ['prospects', 'etablissements', 'organisation', 'referentiel', 'ventes']) {
           void requetes.invalidateQueries({ queryKey: [q] });
         }
       }
@@ -320,7 +335,7 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
               size="small"
               exclusive
               value={source}
-              onChange={(_, v: 'birdnotes' | 'organisation' | null) => {
+              onChange={(_, v: SourceImport | null) => {
                 if (!v) return;
                 setSource(v);
                 setFichier(null);
@@ -332,6 +347,9 @@ export default function Imports({ perimetre }: { perimetre: Perimetre }) {
               <ToggleButton value="organisation">
                 {t('imports.sourcesCourtes.organisation')}
               </ToggleButton>
+              {perimetre.actions.includes('ventes.gerer') && (
+                <ToggleButton value="ventes">{t('imports.sourcesCourtes.ventes')}</ToggleButton>
+              )}
             </ToggleButtonGroup>
           }
         />

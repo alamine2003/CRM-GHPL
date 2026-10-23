@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "apps.rapports",
     "apps.notifications",
     "apps.pilotage",
+    "apps.ventes",
     "apps.demonstration",
     "apps.audit",
 ]
@@ -132,6 +133,11 @@ INNOV_AUTH = {
 # DJANGO_SECRET_KEY permet de changer l'une sans invalider l'autre ; à défaut, la clé
 # est dérivée de DJANGO_SECRET_KEY.
 INNOV_CLE_CHIFFREMENT = os.environ.get("INNOV_CLE_CHIFFREMENT", "")
+
+# 1.1.2 [D, 12 octobre 2026, responsable produit] : la double authentification n'est plus
+# imposée, dans aucun environnement, jusqu'à la version 2 (SEC-003 suspendue). Elle reste
+# possible pour qui l'active ; INNOV_DOUBLE_AUTH_OBLIGATOIRE=oui la rend de nouveau obligatoire.
+INNOV_DOUBLE_AUTH_OBLIGATOIRE = env_bool("INNOV_DOUBLE_AUTH_OBLIGATOIRE", False)
 
 MIDDLEWARE = [
     "apps.socle.journalisation.ReferenceRequete",
@@ -314,6 +320,10 @@ SPECTACULAR_SETTINGS = {
         "TypeRemiseEnum": "apps.rapports.models.TypeRemise",
         "StatutFicheEnum": "apps.prospects.models.StatutFiche",
         "StatutLotEnum": "apps.imports.models.LotImport.Statut",
+        "SourceImportEnum": "apps.imports.models.Source",
+        "TypeClientVenteEnum": "apps.ventes.models.TypeClient",
+        "SourceVenteEnum": "apps.ventes.models.SourceVente",
+        "EtatObjectifVenteEnum": "apps.ventes.models.EtatObjectifVente",
         "TypeActiviteEnum": "apps.planning.models.TypeActivite",
         "PeriodeActiviteEnum": "apps.planning.models.Periode",
         "CodeControleEnum": "apps.planning.controles.CODES",

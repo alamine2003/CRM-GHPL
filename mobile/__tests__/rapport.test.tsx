@@ -1,10 +1,11 @@
-import type { ClientApi, Rapport, VisiteProgramme } from '@innov/api-client';
+import type { ClientApi, Programme, Rapport, VisiteProgramme } from '@innov/api-client';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { lireAttente } from '../src/Brouillons';
-import { ExecutionVisite } from '../src/Execution';
 import i18n from '../src/i18n';
 import { FormulaireRapport, manquantsDe } from '../src/Rapport';
 import { ContexteSession, type Session } from '../src/session';
+import { ActionsVisite } from '../src/Visite';
+import type { ReactNode } from 'react';
 
 // RPT-001, RPT-002, RPT-008 (0.5.1) : le rapport de la visite effectuée, socle commun et
 // champs du pays ; soumis seulement une fois complet.
@@ -22,6 +23,45 @@ const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('expo-location', () => ({}));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'envoi-1' }));
+// Le gabarit (en-tête, onglets) est testé ailleurs : ici, son titre, son statut, le contenu et
+// les boutons collés en bas.
+const mockTablette = { valeur: false };
+jest.mock('../src/disposition', () => ({ useTablette: () => mockTablette.valeur }));
+jest.mock('../src/Ecran', () => ({
+  Ecran: ({
+    surTitre,
+    action,
+    enteteTablette,
+    children,
+    pied,
+    droite,
+  }: {
+    surTitre?: string;
+    action?: ReactNode;
+    enteteTablette?: { surTitre?: string; action?: ReactNode };
+    children: ReactNode;
+    pied?: ReactNode;
+    droite?: ReactNode;
+  }) => {
+    const { Text } = jest.requireActual('react-native');
+    const { useTablette } = jest.requireMock('../src/disposition');
+    return useTablette() ? (
+      <>
+        <Text>{enteteTablette?.surTitre}</Text>
+        {enteteTablette?.action}
+        {children}
+        {droite}
+      </>
+    ) : (
+      <>
+        <Text>{surTitre}</Text>
+        {action}
+        {children}
+        {pied}
+      </>
+    );
+  },
+}));
 
 const BROUILLON: Rapport = {
   id: 'r1',
@@ -56,6 +96,7 @@ const BROUILLON: Rapport = {
   echeance: '2099-01-01T00:00:00Z',
   en_retard: false,
   horodatage_douteux: false,
+  modifie_le: '2026-10-12T10:40:00.000Z',
   manquants: ['produits', 'resultat', 'resume', 'prochaine_action', 'patients'],
   produit_autre_autorise: false,
   articles_proposes: [{ id: 'stylo', libelle: 'Stylo' }],
@@ -98,6 +139,7 @@ function rendre(visites: Record<string, jest.Mock>) {
 }
 
 beforeEach(async () => {
+  mockTablette.valeur = false;
   mockMemoire.clear();
   // La visite du rapport, gardée avec le programme : les échéances partent de son jour.
   mockMemoire.set('programme.courant', {
@@ -176,9 +218,11 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   await rendre({ rapport: jest.fn(async () => BROUILLON), enregistrerRapport, soumettreRapport });
   await fireEvent.press(await screen.findByText('Produit Beta'));
   await fireEvent.press(screen.getByText('Produit Alpha'));
-  // Le rang de présentation s'affiche sur la pastille.
-  expect(screen.getAllByText('1. Produit Beta')).toHaveLength(2);
-  expect(screen.getAllByText('2. Produit Alpha')).toHaveLength(2);
+  // Le rang de présentation s'affiche sur la pastille (carré orange), puis sur la ligne du retour.
+  expect(screen.getByLabelText('1. Produit Beta')).toBeTruthy();
+  expect(screen.getByLabelText('2. Produit Alpha')).toBeTruthy();
+  expect(screen.getByText('1. Produit Beta')).toBeTruthy();
+  expect(screen.getByText('2. Produit Alpha')).toBeTruthy();
   // RPT-004 : le retour du prescripteur, produit par produit ; sans lui, pas de soumission.
   expect(screen.getByText(/retour du prescripteur sur chaque produit/)).toBeTruthy();
   await fireEvent.press(screen.getAllByLabelText('Prescrit très bien')[0]!);
@@ -222,18 +266,22 @@ test('RPT-001 : produits dans l’ordre de présentation, puis soumission', asyn
   expect(await screen.findByText('Rapport soumis à votre superviseur.')).toBeTruthy();
   // Soumis, il se lit sans se modifier.
   expect(screen.queryByText('Soumettre le rapport')).toBeNull();
-  expect(
-    screen.getByText('1. Produit Beta — Prescrit très bien\n2. Produit Alpha — Prescrit peu'),
-  ).toBeTruthy();
-  expect(screen.getByText('Échantillon · Produit Beta × 2')).toBeTruthy();
-  expect(screen.getByText('Objectif atteint\nEssai sur 5 patients')).toBeTruthy();
+  // Des cartes de lignes : chaque produit et son retour, chaque remise et sa quantité.
+  expect(screen.getByText('1. Produit Beta')).toBeTruthy();
+  expect(screen.getByText('Prescrit très bien')).toBeTruthy();
+  expect(screen.getByText('2. Produit Alpha')).toBeTruthy();
+  expect(screen.getByText('Prescrit peu')).toBeTruthy();
+  expect(screen.getByText('Échantillon · Produit Beta')).toBeTruthy();
+  expect(screen.getByText('× 2')).toBeTruthy();
+  expect(screen.getByText('Objectif atteint · Essai sur 5 patients')).toBeTruthy();
 });
 
 test('RPT-003 CA1 : l’objectif prévu en tête du rapport', async () => {
   await rendre({ rapport: jest.fn(async () => BROUILLON) });
   expect(await screen.findByText('Objectif prévu')).toBeTruthy();
   expect(screen.getByText('Présenter la nouvelle forme sirop')).toBeTruthy();
-  expect(screen.getByText("Au regard de l'objectif prévu.")).toBeTruthy();
+  // Le résultat se choisit en segments, sous l'objectif.
+  expect(screen.getByRole('radio', { name: 'Objectif atteint' })).toBeTruthy();
 });
 
 test('RPT-003 : une visite imprévue rappelle sa justification à la place', async () => {
@@ -287,11 +335,17 @@ test.each([
   mockPush.mockClear();
   await render(
     <ContexteSession.Provider value={{ client: {} } as unknown as Session}>
-      <ExecutionVisite
+      <ActionsVisite
         visite={{ ...EFFECTUEE, rapport_statut: statut }}
-        aujourdhui="2026-10-13"
-        geolocalisation={false}
-        fuseau="UTC"
+        programme={
+          {
+            aujourdhui: '2026-10-13',
+            geolocalisation: false,
+            fuseau: 'UTC',
+            attente_gps_secondes: 60,
+          } as Programme
+        }
+        surEcart={jest.fn()}
       />
     </ContexteSession.Provider>,
   );
@@ -421,7 +475,7 @@ const COMPLET: Rapport = {
 describe('RPT-010 : soumission et retard', () => {
   test('à l’heure, le délai du jour s’affiche', async () => {
     await rendre({ rapport: jest.fn(async () => COMPLET) });
-    expect(await screen.findByText(/À soumettre aujourd.hui avant minuit/)).toBeTruthy();
+    expect(await screen.findByText(/^À rendre avant /)).toBeTruthy();
   });
 
   test('RG-032 : passé minuit, le rapport non soumis est signalé en retard', async () => {
@@ -517,4 +571,86 @@ test('RPT-014 : le rapport à corriger dit qui demande quoi et les parties à re
   expect(screen.getByText(/À revoir : Résumé de l'échange, Produits présentés/)).toBeTruthy();
   // Soumis à l'heure la première fois : l'échéance passée ne le rend pas « en retard ».
   expect(screen.queryByText(/En retard : ce rapport/)).toBeNull();
+});
+
+describe('1.4.2 : les écrans du rapport selon la maquette', () => {
+  test('téléphone : l’avancement, l’échéance, et « Enregistrer » sans attendre', async () => {
+    const enregistrerRapport = jest.fn(async (_id: string, s: object) => ({ ...BROUILLON, ...s }));
+    await rendre({ rapport: jest.fn(async () => BROUILLON), enregistrerRapport });
+    // Six parties du socle et un champ obligatoire du pays ; seul « retours » est acquis.
+    expect(await screen.findByText('1 champ sur 7 rempli')).toBeTruthy();
+    expect(screen.getByText(/^À rendre avant /)).toBeTruthy();
+    expect(screen.getByText('Brouillon')).toBeTruthy();
+    // Rien de changé : rien à envoyer.
+    await fireEvent.press(screen.getByText('Enregistrer'));
+    expect(screen.getByText('Rien de nouveau : le rapport est déjà enregistré.')).toBeTruthy();
+    expect(enregistrerRapport).not.toHaveBeenCalled();
+    // Une saisie : « Enregistrer » l'envoie aussitôt.
+    await fireEvent.changeText(screen.getByLabelText("Résumé de l'échange"), 'Bon accueil');
+    await fireEvent.press(screen.getByText('Enregistrer'));
+    await waitFor(() => expect(enregistrerRapport).toHaveBeenCalledTimes(1));
+    expect(enregistrerRapport.mock.calls[0]![1]).toMatchObject({ resume: 'Bon accueil' });
+    expect(await screen.findByText('2 champs sur 7 remplis')).toBeTruthy();
+  });
+
+  test('RPT-015 : à corriger, seules les parties demandées s’écrivent ; le reste se lit', async () => {
+    const aCorriger = {
+      ...BROUILLON,
+      statut: 'a_corriger' as const,
+      soumis_le: '2026-10-13T18:00:00Z',
+      resultat: 'ok',
+      resume: 'Présentation du produit.',
+      presentations: [{ produit: 'pa', libelle: 'Produit Alpha', retour: 'peu' as const }],
+      correction: {
+        le: '2026-10-14T08:00:00Z',
+        par: 'Kossi GUEYE',
+        commentaire: 'Le résumé ne dit pas l’objection.',
+        champs: ['resume'],
+      },
+    };
+    await rendre({ rapport: jest.fn(async () => aCorriger) });
+    expect(await screen.findByText(/Correction demandée le mercredi 14 octobre/)).toBeTruthy();
+    expect(screen.getByText('À corriger')).toBeTruthy();
+    // Le résumé à revoir s'écrit ; produits et résultat ne se touchent pas.
+    expect(screen.getByDisplayValue('Présentation du produit.')).toBeTruthy();
+    expect(screen.queryByText(/Touchez les produits/)).toBeNull();
+    expect(screen.queryByRole('radio', { name: 'Objectif atteint' })).toBeNull();
+    expect(screen.getByText('Reste inchangé')).toBeTruthy();
+    expect(screen.getByText('Objectif atteint')).toBeTruthy();
+    expect(screen.getByText('Produit Alpha')).toBeTruthy();
+    expect(screen.getByText('Prescrit peu')).toBeTruthy();
+  });
+
+  test('tablette : « Avant de soumettre » coche ce qui est fait et dit ce qui manque', async () => {
+    mockTablette.valeur = true;
+    await rendre({ rapport: jest.fn(async () => BROUILLON) });
+    expect(await screen.findByText('Avant de soumettre')).toBeTruthy();
+    expect(screen.getByText('Rapport en brouillon')).toBeTruthy();
+    expect(screen.getByText('Retour sur chaque produit')).toBeTruthy();
+    expect(screen.getAllByText('Fait')).toHaveLength(1);
+    expect(screen.getAllByText('Manquant')).toHaveLength(6);
+    expect(screen.getByText(/produits présentés, résultat, résumé/)).toBeTruthy();
+    expect(screen.getByText(/Une fois soumis, il ne se modifie plus/)).toBeTruthy();
+    expect(screen.getByText('Enregistrer')).toBeTruthy();
+  });
+
+  test('tablette : soumis, le rapport se lit et sa synthèse est à droite', async () => {
+    mockTablette.valeur = true;
+    const soumis = {
+      ...BROUILLON,
+      statut: 'soumis' as const,
+      soumis_le: '2026-10-13T10:32:00Z',
+      resultat: 'ok',
+      resume: 'Intéressé par la nouvelle présentation.',
+      prochaine_action: 'Revisiter le prescripteur',
+      prochaine_action_echeance: '2026-10-26',
+    };
+    await rendre({ rapport: jest.fn(async () => soumis) });
+    expect(await screen.findByText('Soumis à 10:32')).toBeTruthy();
+    expect(screen.getByText('Intéressé par la nouvelle présentation.')).toBeTruthy();
+    expect(screen.getByText('Revisiter le prescripteur')).toBeTruthy();
+    expect(screen.getByText("d'ici le 26 octobre")).toBeTruthy();
+    expect(screen.getByText(/Une correction demandée par votre superviseur/)).toBeTruthy();
+    expect(screen.queryByText('Soumettre le rapport')).toBeNull();
+  });
 });

@@ -22,16 +22,12 @@ from .models import Indicateur, Objectif
 
 
 def reseaux_geres(perimetre, jour: date | None = None):
-    """DSH-009 : l'administrateur pays fixe les objectifs de tous les réseaux du pays, le DM
-    ceux des réseaux de son périmètre."""
+    """DSH-009 : l'administrateur pays fixe les objectifs de tous les réseaux du pays (1.3.0 :
+    le DM ne fait plus que les lire)."""
     pays = perimetre.pays_actif
     reseaux = Reseau.objects.filter(pays=pays, archive_le__isnull=True)
     if Role.ADMIN_PAYS in perimetre.roles:
         return reseaux
-    if Role.DM in perimetre.roles:
-        jour = jour or aujourdhui(pays)
-        mes = PerimetreReseau.objects.filter(actif_le(jour), utilisateur=perimetre.utilisateur)
-        return reseaux.filter(pk__in=mes.values("reseau_id"))
     return reseaux.none()
 
 
@@ -59,7 +55,7 @@ def _exiger_gestion(perimetre, reseau: Reseau) -> None:
     if not reseaux_geres(perimetre).filter(pk=reseau.pk).exists():
         raise ErreurMetier(
             "objectif_hors_perimetre",
-            _("Seuls le DM du réseau et l'administrateur pays fixent ses objectifs."),
+            _("Seul l'administrateur pays fixe ses objectifs."),
             status.HTTP_403_FORBIDDEN,
         )
 

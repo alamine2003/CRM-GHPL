@@ -66,8 +66,8 @@ def test_portail_statique_sur_render():
 
 
 def test_demonstration_gratuite_sur_render():
-    """1.0.3 : la démonstration tient dans les offres gratuites, sans secret écrit, et ne sert
-    que des données fictives (ENVIRONNEMENT=demonstration, remplissage par preparer_demo)."""
+    """1.0.3 : l'instance d'essai tient dans les offres gratuites, sans secret écrit
+    (ENVIRONNEMENT=demonstration). 1.0.8 : plus de données fictives, un premier compte seulement."""
     d = yaml.safe_load((RACINE / "render-demo.yaml").read_text(encoding="utf-8"))
     # 1.0.4 : la base gratuite est chez Neon ; son adresse se saisit, jamais écrite ici.
     assert "databases" not in d
@@ -80,7 +80,8 @@ def test_demonstration_gratuite_sur_render():
     script = (BACKEND / "demarrer_demo.sh").read_text(encoding="utf-8")
     assert "set -e" in script and "${PORT:-8000}" in script
     commande = script.split("set -e", 1)[1]  # les instructions, sans le commentaire d'en-tête
-    assert commande.index("migrate") < commande.index("preparer_demo") < commande.index("gunicorn")
+    ordre = [commande.index(etape) for etape in ("migrate", "preparer_instance", "gunicorn")]
+    assert ordre == sorted(ordre)
     assert subprocess.run(["sh", "-n", BACKEND / "demarrer_demo.sh"]).returncode == 0  # noqa: S603, S607
     v = {x["key"]: x for x in api["envVars"]}
     assert v["ENVIRONNEMENT"]["value"] == "demonstration"
@@ -88,8 +89,9 @@ def test_demonstration_gratuite_sur_render():
     assert "INNOV_STOCKAGE" not in v and "REDIS_URL" not in v
     for cle in ("DJANGO_SECRET_KEY", "JWT_SIGNING_KEY", "INNOV_CLE_CHIFFREMENT"):
         assert v[cle].get("generateValue") is True and "value" not in v[cle]
-    assert v["INNOV_DEMO_MOT_DE_PASSE"].get("sync") is False
-    assert "value" not in v["INNOV_DEMO_MOT_DE_PASSE"]
+    for cle in ("INNOV_ADMIN_IDENTIFIANT", "INNOV_ADMIN_MOT_DE_PASSE"):
+        assert v[cle].get("sync") is False and "value" not in v[cle]
+    assert not any(cle.startswith("INNOV_DEMO_") for cle in v)  # plus de données fictives
     # Mêmes en-têtes de sécurité que le portail de production.
     prod = {x["name"]: x for x in plan()["services"]}["innov-portail"]
     assert portail["headers"] == prod["headers"] and portail["routes"] == prod["routes"]

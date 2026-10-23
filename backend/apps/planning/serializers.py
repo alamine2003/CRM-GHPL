@@ -527,7 +527,8 @@ class RevisionSerializer(serializers.Serializer):
 
 
 class EscaladeSerializer(serializers.Serializer):
-    """PLN-016 : le planning est arrivé au DM faute de décision du responsable du poste."""
+    """PLN-016 : le planning est arrivé à l'administrateur faute de décision du responsable du
+    poste."""
 
     le = serializers.DateTimeField()
     responsables = DelegueSerializer(many=True)
@@ -778,6 +779,27 @@ class VisitePasseeSerializer(serializers.Serializer):
     objectif = serializers.CharField(allow_blank=True)
     etablissement = serializers.CharField(source="etablissement.nom", default=None,
                                           allow_null=True)  # fmt: skip
+    #: 1.4.0 (maquette, « Dernière visite ») : le résultat et les produits présentés, lus dans
+    #: le rapport soumis de cette visite ; rien tant qu'il est en brouillon.
+    resultat = serializers.SerializerMethodField()
+    produits = serializers.SerializerMethodField()
+
+    @staticmethod
+    def _rapport(visite):
+        from apps.rapports.models import StatutRapport
+
+        rapport = getattr(visite, "rapport", None)
+        return None if rapport is None or rapport.statut == StatutRapport.BROUILLON else rapport
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_resultat(self, visite):
+        rapport = self._rapport(visite)
+        return rapport.resultat.libelle if rapport and rapport.resultat_id else None
+
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
+    def get_produits(self, visite):
+        rapport = self._rapport(visite)
+        return [p.get("libelle", "") for p in (rapport.presentations if rapport else [])]
 
 
 class DetailVisiteSerializer(serializers.Serializer):

@@ -4,7 +4,7 @@
  * - signalés au superviseur, sans empêcher la soumission (RG-016, CA2).
  */
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import type { ControlePlanning, Controles, ObjectifJour, Semaine } from '@innov/api-client';
+import type { ControlePlanning, Controles, Semaine } from '@innov/api-client';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -61,30 +61,6 @@ export function alertesDeVisite(
     }
   }
   return alertes;
-}
-
-/** « 1 sur 6–10 » à droite du jour ; en orange hors de la fourchette. */
-export function ObjectifDuJour({ objectif }: { objectif: ObjectifJour }) {
-  const { t } = useTranslation();
-  const p = usePalette();
-  const dehors = objectif.visites < objectif.min || objectif.visites > objectif.max;
-  return (
-    <Text
-      numberOfLines={1}
-      accessibilityLabel={t('controles.objectif', {
-        count: objectif.visites,
-        min: objectif.min,
-        max: objectif.max,
-      })}
-      style={[styles.objectif, { color: dehors ? p.attention : p.texteSecondaire }]}
-    >
-      {t('controles.objectifCourt', {
-        nombre: objectif.visites,
-        min: objectif.min,
-        max: objectif.max,
-      })}
-    </Text>
-  );
 }
 
 /**
@@ -260,12 +236,6 @@ function Ligne({
 }
 
 const styles = StyleSheet.create({
-  objectif: {
-    fontFamily: police.texteFort,
-    fontSize: 13,
-    fontVariant: ['tabular-nums'],
-    flexShrink: 0,
-  },
   section: {
     fontFamily: police.texteFort,
     fontSize: 13,

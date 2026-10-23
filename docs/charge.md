@@ -17,10 +17,12 @@ Il existe deux mesures complémentaires :
 createdb innov_charge
 DATABASE_URL=postgres://…/innov_charge python manage.py migrate
 DATABASE_URL=postgres://…/innov_charge INNOV_DEMO_MOT_DE_PASSE=… \
-  python manage.py generer_charge --delegues 500 --oui
+  python manage.py generer_charge --delegues 500 --oui   # retirée en 1.0.8, voir ci-dessous
 ```
 
-`generer_charge` part de la démonstration (données fictives) aux proportions d'un vrai pays, puis donne à chaque délégué trois semaines approuvées :
+> **1.0.8** : `generer_charge` et les autres commandes de données fictives sont retirées (prd.md §14.81). Une nouvelle mesure à 500 délégués demandera une base de charge construite autrement ; les tests automatiques gardent leurs données fictives.
+
+`generer_charge` partait de la démonstration (données fictives) aux proportions d'un vrai pays, puis donne à chaque délégué trois semaines approuvées :
 
 | Élément | Volume |
 |---|---|

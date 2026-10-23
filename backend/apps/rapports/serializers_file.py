@@ -46,7 +46,7 @@ class JourneeATraiterSerializer(serializers.Serializer):
     rapports_a_corriger = serializers.IntegerField()
     #: RPT-016 : rapports validés puis rouverts, qui attendent leur nouvelle soumission.
     rapports_rouverts = serializers.IntegerField()
-    #: [H] Ouverte au DM du périmètre par escalade (0.6.3).
+    #: [H] Ouverte à l'administrateur pays par escalade (0.6.3).
     escalade = serializers.BooleanField()
     #: 23.A : conforme, complète et sans horodatage douteux ; validable avec le lot.
     eligible_lot = serializers.BooleanField()

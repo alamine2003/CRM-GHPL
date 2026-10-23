@@ -5,11 +5,13 @@ import * as Location from 'expo-location';
 import { lireAttente } from '../src/Brouillons';
 import { distanceKm } from '../src/Execution';
 import i18n from '../src/i18n';
-import { ProgrammeDuJour } from '../src/Programme';
 import { ContexteSession, type Session } from '../src/session';
+import type { ReactNode } from 'react';
+import { EcranVisite } from '../src/Visite';
 
 // VIS-003 (0.4.3) et VIS-004 (0.4.4) : démarrer puis terminer une visite — heure réelle, position si le pays l'active ; CA1 :
 // capturée hors connexion ; CA2 : sans GPS, elle démarre quand même ; CA3 : la distance au lieu.
+// Depuis 1.4.1, depuis l'écran de la visite : ses boutons collés en bas, son déroulement.
 
 const mockMemoire = new Map<string, { valeur: unknown; maj: string }>();
 jest.mock('../src/baseLocale', () => ({
@@ -21,6 +23,15 @@ jest.mock('../src/baseLocale', () => ({
   effacer: jest.fn(),
 }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+// Le gabarit (en-tête, onglets) est testé ailleurs : ici, le contenu et les boutons du bas.
+jest.mock('../src/Ecran', () => ({
+  Ecran: ({ children, pied }: { children: ReactNode; pied?: ReactNode }) => (
+    <>
+      {children}
+      {pied}
+    </>
+  ),
+}));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'envoi-1' }));
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(),
@@ -90,25 +101,38 @@ const PROGRAMME: Programme = {
 /** Le lieu de la visite, gardé avec son détail : à Dakar. */
 function lieuGarde() {
   mockMemoire.set('visite.v1', {
-    valeur: { lieu: { latitude: '14.700000', longitude: '-17.400000' } },
+    valeur: {
+      visite: VISITE,
+      prospect: null,
+      lieu: { latitude: '14.700000', longitude: '-17.400000' },
+      historique: [],
+      action_precedente: null,
+      preparation: null,
+    },
     maj: '',
   });
 }
 
-async function rendre(demarrer: jest.Mock, programme = PROGRAMME) {
+const sansReseau = () => Promise.reject(new TypeError('Network request failed'));
+
+/** L'écran de la visite v1, le programme du jour gardé sur le téléphone. */
+async function ouvrir(visites: Record<string, unknown>, programme = PROGRAMME) {
+  mockMemoire.set('programme.courant', { valeur: programme, maj: '2026-10-13T06:30:00.000Z' });
   const session = {
     etat: { statut: 'connecte' },
     client: {
-      plannings: { programme: jest.fn(async () => programme), semaine: jest.fn(async () => ({})) },
-      visites: { demarrer, detail: jest.fn(async () => Promise.reject(new TypeError('x'))) },
+      plannings: { semaine: jest.fn(sansReseau) },
+      visites: { detail: jest.fn(sansReseau), ...visites },
     } as unknown as ClientApi,
   } as unknown as Session;
   await render(
     <ContexteSession.Provider value={session}>
-      <ProgrammeDuJour />
+      <EcranVisite id="v1" jour="2026-10-13" />
     </ContexteSession.Provider>,
   );
 }
+
+const rendre = (demarrer: jest.Mock, programme = PROGRAMME) => ouvrir({ demarrer }, programme);
 
 beforeEach(async () => {
   mockMemoire.clear();
@@ -227,30 +251,11 @@ test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', asyn
     objectif_prevu: '',
   };
   const rapport = jest.fn(async () => rapportOuvert);
-  const session = {
-    etat: { statut: 'connecte' },
-    client: {
-      plannings: {
-        programme: jest.fn(async () => ({
-          ...PROGRAMME,
-          jours: [{ ...PROGRAMME.jours[0]!, visites: [EN_COURS] }],
-        })),
-        semaine: jest.fn(async () => ({})),
-      },
-      visites: {
-        demarrer,
-        terminer,
-        rapport,
-        detail: jest.fn(async () => Promise.reject(new TypeError('x'))),
-      },
-    } as unknown as ClientApi,
-  } as unknown as Session;
   jest.useFakeTimers({ doNotFake: ['setTimeout', 'setImmediate', 'nextTick'] });
   jest.setSystemTime(new Date('2026-10-13T09:27:00.000Z'));
-  await render(
-    <ContexteSession.Provider value={session}>
-      <ProgrammeDuJour />
-    </ContexteSession.Provider>,
+  await ouvrir(
+    { demarrer, terminer, rapport },
+    { ...PROGRAMME, jours: [{ ...PROGRAMME.jours[0]!, visites: [EN_COURS] }] },
   );
   expect(await screen.findByText(/^En cours depuis 09:02 · À 40 m du lieu$/)).toBeTruthy();
   await fireEvent.press(screen.getByText('Terminer la visite'));
@@ -258,14 +263,13 @@ test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', asyn
     'v1',
     expect.objectContaining({ fin_le: '2026-10-13T09:27:00.000Z', latitude: 14.701 }),
   );
-  // Terminée, elle laisse la place : le programme l'annonce, et rien ne reste à faire.
+  // Terminée : l'écran l'annonce et dit sa durée.
   expect(
     await screen.findByText('Visite de Dr Awa FICTIF terminée : 09:02 – 09:27 · 25 min.'),
   ).toBeTruthy();
-  expect(screen.getByText("Plus de visite à faire aujourd'hui.")).toBeTruthy();
-  expect(screen.getByText('Effectuée')).toBeTruthy();
+  expect(screen.getByText('Effectuée · 09:02 – 09:27 · 25 min')).toBeTruthy();
   expect(screen.queryByText('Terminer la visite')).toBeNull();
-  // Sous l'annonce, le rapport s'ouvre d'un appui ; il est déjà gardé sur le téléphone (RPT-009).
+  // En bas, le rapport s'ouvre d'un appui ; il est déjà gardé sur le téléphone (RPT-009).
   expect(screen.getByText('Rédiger le rapport')).toBeTruthy();
   await waitFor(() =>
     expect(mockMemoire.get('rapport.v1')?.valeur).toEqual(
@@ -277,21 +281,8 @@ test('VIS-004 : la visite en cours se termine, effectuée, avec sa durée', asyn
 });
 
 test('VIS-004 : démarrée puis terminée sans réseau, les deux envois attendent dans l’ordre', async () => {
-  const horsReseau = jest.fn(async () => {
-    throw new TypeError('Network request failed');
-  });
-  const session = {
-    etat: { statut: 'connecte' },
-    client: {
-      plannings: { programme: jest.fn(async () => PROGRAMME), semaine: jest.fn(async () => ({})) },
-      visites: { demarrer: horsReseau, terminer: horsReseau, detail: horsReseau },
-    } as unknown as ClientApi,
-  } as unknown as Session;
-  await render(
-    <ContexteSession.Provider value={session}>
-      <ProgrammeDuJour />
-    </ContexteSession.Provider>,
-  );
+  const horsReseau = jest.fn(sansReseau);
+  await ouvrir({ demarrer: horsReseau, terminer: horsReseau });
   await fireEvent.press(await screen.findByText('Démarrer la visite'));
   await fireEvent.press(await screen.findByText('Terminer la visite'));
   expect(await screen.findByText(/terminée : .* Sans réseau : l'envoi partira/)).toBeTruthy();

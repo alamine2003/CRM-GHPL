@@ -120,7 +120,21 @@ def senegal(monde):
     objectif = Objectif.objects.create(pays=sn, reseau=reseau, indicateur="visites",
                                        debut=date(2099, 4, 6), fin=date(2099, 6, 28), cible=100,
                                        cree_par=monde["admin.sn"])  # fmt: skip
+    from apps.ventes import models as ventes_objectifs
+    from apps.ventes import services as ventes
+
+    client_vente = ventes.creer_client(sn, "Pharmacie d'essai", "pharmacie", zone)
+    vente, _cree = ventes.enregistrer_ligne(
+        sn, monde["admin.sn"], mois=date(2099, 4, 1), delegue=monde["deleg.sn"], produit=produit,
+        client=client_vente, quantite=1, montant_ttc=1, source="saisie",
+    )  # fmt: skip
+    objectif_vente = ventes_objectifs.ObjectifVente.objects.create(
+        pays=sn, reseau=reseau, annee=2099, cible=1000, cree_par=monde["admin.sn"]
+    )
     return {
+        "ventes-objectif": objectif_vente.pk, "ventes-objectif-archiver": objectif_vente.pk,
+        "ventes-ligne": vente.pk, "ventes-ligne-archiver": vente.pk,
+        "droits-do-compte": monde["df.sn"].pk,
         "objectif": objectif.pk, "objectif-archiver": objectif.pk,
         "prospect-historique": prospect.pk, "etablissement-historique": etab.pk,
         "prospect-rapports": prospect.pk,
@@ -234,8 +248,8 @@ LISTES = ["/api/v1/utilisateurs/", "/api/v1/appareils/", "/api/v1/pays/",
           "/api/v1/imports/", "/api/v1/ciblage/postes/", "/api/v1/ciblage/moi/",
           "/api/v1/referentiel/produits/",
           "/api/v1/referentiel/portefeuilles/", "/api/v1/doublons/", "/api/v1/fusions/",
-          "/api/v1/propositions/", "/api/v1/jours-feries/"]  # fmt: skip
-PAGINEES = ["/api/v1/prospects/", "/api/v1/etablissements/"]
+          "/api/v1/propositions/", "/api/v1/jours-feries/", "/api/v1/ventes/clients/"]  # fmt: skip
+PAGINEES = ["/api/v1/prospects/", "/api/v1/etablissements/", "/api/v1/ventes/lignes/"]
 
 
 @pytest.mark.parametrize("liste", LISTES + PAGINEES)

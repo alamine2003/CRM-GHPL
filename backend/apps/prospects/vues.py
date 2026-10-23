@@ -405,7 +405,8 @@ class ExercicesProspectVue(VueExercices):
                    operation_id="prospect_exercice_creer")  # fmt: skip
     def post(self, request, id):
         prospect = get_object_or_404(services.prospects_visibles(self.perimetre), pk=id)
-        self.exiger_modification(prospect)
+        if not services.peut_poser_premier_lieu(self.perimetre, prospect):
+            self.exiger_modification(prospect)
         v = _lire(s.SaisieExerciceSerializer, request)
         etablissement = (
             services.fiches_visibles(Etablissement, self.perimetre)
@@ -463,4 +464,30 @@ class ExercicesEtablissementVue(VueExercices):
         exercices = sorted(
             exercices, key=lambda e: (e.fin is not None, e.prospect.nom, e.prospect.prenom)
         )
-        return Response(self.get_serializer(exercices, many=True).data)
+        contexte = {
+            **self.get_serializer_context(),
+            "dernieres_visites": _dernieres_visites(
+                request.user, [e.prospect_id for e in exercices]
+            ),
+        }
+        return Response(s.ExerciceSerializer(exercices, many=True, context=contexte).data)
+
+
+def _dernieres_visites(utilisateur, prospects: list) -> dict:
+    """La dernière visite effectuée par l'utilisateur chez chacun de ces prospects."""
+    from django.db.models import Max
+
+    from apps.planning.etats import StatutVisite
+    from apps.planning.models import Visite
+
+    lignes = (
+        Visite.objects.filter(
+            planning__delegue=utilisateur,
+            prospect_id__in=prospects,
+            archive_le__isnull=True,
+            statut=StatutVisite.EFFECTUEE,
+        )
+        .values("prospect_id")
+        .annotate(derniere=Max("date"))
+    )
+    return {ligne["prospect_id"]: ligne["derniere"] for ligne in lignes}
