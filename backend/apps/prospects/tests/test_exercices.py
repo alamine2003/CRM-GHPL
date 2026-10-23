@@ -110,6 +110,31 @@ def test_fin_d_un_exercice_et_historique(fiches):
     assert EvenementAudit.objects.filter(action="exercice.fin").count() == 1
 
 
+def test_l_auteur_pose_le_premier_lieu_d_une_fiche_devenue_commune(fiches):
+    """Sans doublon, le détecteur rend la fiche commune aussitôt (PRP-008) : le lieu choisi à la
+    création (mobile, « Nouveau prospect ») doit pouvoir s'y poser, une seule fois."""
+    m, deleg = fiches["medecin"], fiches["deleg.sn"]
+    fiche, decision = services.saisir_prospect(
+        m.pays, deleg, actif=False, nom="Gueye", prenom="Moussa", type=m.type,
+        specialite=m.specialite, potentiel="B",
+    )  # fmt: skip
+    assert decision.niveau == "aucun" and fiche.statut == "actif"
+    client = client_de(deleg)
+    corps = {"etablissement": str(fiches["clinique"].pk), "principal": True}
+    premier = client.post(url(fiche), corps, format="json")
+    assert premier.status_code == 201
+    # Le second lieu d'une fiche commune passe par une proposition.
+    second = client.post(url(fiche), {"etablissement": str(fiches["hopital"].pk)}, format="json")
+    assert second.status_code == 403 and second.json()["code"] == "modification_interdite"
+    # Un autre délégué n'y pose rien, pas même un premier lieu.
+    autre = services.creer_prospect(
+        m.pays, fiches["admin.sn"], actif=True, nom="Fall", type=m.type,
+        specialite=m.specialite, potentiel="C",
+    )  # fmt: skip
+    refus = client.post(url(autre), {"etablissement": str(fiches["clinique"].pk)}, format="json")
+    assert refus.status_code == 403
+
+
 def test_l_archivage_d_une_fiche_termine_ses_exercices(fiches):
     m = fiches["medecin"]
     admin = client_de(fiches["admin.sn"])

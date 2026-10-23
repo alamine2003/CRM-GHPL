@@ -2,6 +2,17 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.6.4] — Le premier lieu d'exercice d'une fiche créée au téléphone
+
+### Corrigé (prd.md §14.87, PRP-004, PRP-006, PRP-008)
+
+- Un prospect créé au téléphone sans doublon devient commun aussitôt ; le lieu d'exercice choisi à la création était alors refusé sans message, et le délégué ne pouvait plus planifier de visite chez ce prospect. L'auteur de la fiche y pose maintenant le premier lieu d'exercice ; les suivants passent par une proposition (PRP-014).
+
+### Vérifié
+
+- Essai de bout en bout, sur une base neuve, avec le client de l'application : administrateur, délégué sur son téléphone, superviseur (61 étapes).
+- `docs/demo-gratuite.md` : un compte créé sans adresse de courriel ne reçoit aucun lien de mot de passe ; sur l'instance d'essai, lui donner une adresse fictive et lire le lien dans le journal du serveur.
+
 ## [1.6.3] — Guide de démonstration à jour
 
 ### Corrigé

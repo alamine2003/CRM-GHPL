@@ -88,6 +88,8 @@ Si un nom est déjà pris chez Render, il ajoute un suffixe, par exemple `innov-
 4. Activez la double authentification quand le portail le demande.
 5. Remplissez l'instance dans cet ordre : **Pays** (créez un pays d'essai), **Organisation** (postes et secteurs), **Référentiels** (produits, établissements), **Équipe** (comptes des délégués et superviseurs). Pour essayer le suivi des ventes, ouvrez **Ventes** puis **Importer** (ou **Saisir une vente**).
 
+> **Les liens de mot de passe.** Un compte que vous créez reçoit son lien de mot de passe par courriel, et la démonstration n'envoie aucun courriel. Donnez donc à chaque compte une adresse fictive (par exemple `prenom.nom@exemple.invalid`) : le lien s'écrit alors dans le journal du serveur (**innov-demo-api → Logs**, cherchez `reinitialisation?jeton=`). Sans adresse, aucun lien n'est écrit. Le lien ne vaut que 30 minutes et ne sert qu'une fois.
+
 ## Limites connues des navigateurs
 
 Le portail et le serveur ont deux adresses différentes en `…onrender.com`. Safari, les navigateurs de l'iPhone, Brave et la navigation privée bloquent alors le cookie qui garde la session ouverte : le portail vous déconnecte à chaque rechargement de page. **Utilisez Chrome, Edge ou Firefox** pour la démonstration. Avec un nom de domaine, plus tard, ce problème disparaît (`docs/exploitation.md` §2 bis).

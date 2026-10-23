@@ -405,7 +405,8 @@ class ExercicesProspectVue(VueExercices):
                    operation_id="prospect_exercice_creer")  # fmt: skip
     def post(self, request, id):
         prospect = get_object_or_404(services.prospects_visibles(self.perimetre), pk=id)
-        self.exiger_modification(prospect)
+        if not services.peut_poser_premier_lieu(self.perimetre, prospect):
+            self.exiger_modification(prospect)
         v = _lire(s.SaisieExerciceSerializer, request)
         etablissement = (
             services.fiches_visibles(Etablissement, self.perimetre)
