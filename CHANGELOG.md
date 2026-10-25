@@ -2,6 +2,20 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.8.0] — Objectifs de ventes : délégués, courbe, export, alerte
+
+### Ajouté (prd.md §14.89, VNT-009 à VNT-011, NOT-007)
+
+- **Le DM fixe** les objectifs de ventes des réseaux de son périmètre, comme l'administrateur pays pour tout le pays [D, 25 octobre 2026]. Une ligne qu'on ne peut pas corriger n'offre ni « Corriger » ni « Archiver ».
+- **Objectif par délégué** : un objectif vise tout le réseau, un produit ou un délégué du réseau ; le réalisé du délégué est le cumul de ses ventes dans le réseau. L'objectif du réseau montre la part répartie entre ses délégués. Le superviseur lit les objectifs des délégués qui lui sont rattachés.
+- **Courbe cible / réalisé** : attendu cumulé et réalisé cumulé, mois par mois, pour le total des réseaux ou l'objectif choisi, avec un tableau équivalent pour les lecteurs d'écran.
+- **Export des objectifs** en Excel ou en CSV, audité (`export.objectifs_ventes`), avec les droits des autres exports.
+- **Alerte « objectif en retard »** : un réseau sous l'attendu de son objectif à la fin d'un mois est signalé au DM du réseau et à l'administrateur pays (à défaut, au siège), une seule fois par mois et seulement quand les ventes du mois sont arrivées. La notification ouvre l'onglet « Objectifs ».
+
+### Design
+
+- Portée, courbe et export de l'onglet « Objectifs » : `docs/design.md`.
+
 ## [1.7.0] — Les objectifs de ventes
 
 ### Ajouté (prd.md §14.88, VNT-007, VNT-008)

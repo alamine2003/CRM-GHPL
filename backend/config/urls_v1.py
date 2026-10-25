@@ -436,6 +436,11 @@ urlpatterns = [
     ),
     path("ventes/objectifs/", ven.ObjectifsVentesVue.as_view(), name="ventes-objectifs"),
     path(
+        "ventes/objectifs/export/",
+        ven.ExportObjectifsVentesVue.as_view(),
+        name="ventes-objectifs-export",
+    ),
+    path(
         "ventes/objectifs/<uuid:id>/",
         ven.ObjectifVenteVue.as_view(),
         name="ventes-objectif",

@@ -192,12 +192,15 @@ MATRICE: dict[Action, frozenset[str]] = {
     Action.VENTES_EXPORTER: frozenset(
         SIEGE | {Role.RESPONSABLE_PAYS, Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
-    # 1.7.0 [D, 23 octobre 2026] : objectifs de ventes par réseau. Fixés comme ceux de visites
-    # (DSH-009, 1.3.0) par l'administrateur pays, et le siège dans un pays choisi ; lus par ceux
-    # qui voient tout le réseau ou le pays : le siège, le pays, le DF (le DO) et le DM. Le
-    # superviseur, qui ne voit que ses postes, n'a pas de taux de réalisation d'un réseau entier.
-    Action.VENTES_OBJECTIFS_LIRE: frozenset(SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM}),
-    Action.VENTES_OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS}),
+    # 1.7.0 [D, 23 octobre 2026] : objectifs de ventes par réseau, lus par le siège, le pays, le
+    # DF (le DO) et le DM dans leurs réseaux ; 1.8.0 : le superviseur lit ceux des délégués qui
+    # lui sont rattachés. [D, 25 octobre 2026] Fixés par l'administrateur pays (et le siège dans
+    # un pays choisi) et par le DM pour les réseaux de son périmètre (périmètre vérifié par le
+    # service).
+    Action.VENTES_OBJECTIFS_LIRE: frozenset(
+        SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}
+    ),
+    Action.VENTES_OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS, Role.DM}),
     # 1.6.1 [D, 18 octobre 2026] : le siège seul règle les droits du DO (compte au rôle DF). Ni
     # l'administrateur pays (même quand l'administrateur du siège entre dans un pays) ni la
     # direction du siège.

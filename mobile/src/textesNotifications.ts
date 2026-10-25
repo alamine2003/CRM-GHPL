@@ -32,6 +32,13 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
   return t(`notifications.${n.type}`, {
     numero: n.donnees.numero_semaine,
     nom: n.donnees.nom,
+    // 1.8.0 : objectif de ventes en retard (reçu par le DM et l'administrateur pays).
+    reseau: n.donnees.reseau,
+    mois: n.donnees.mois ? date(`${n.donnees.mois}-15`, { month: 'long', year: 'numeric' }) : '',
+    taux:
+      n.donnees.taux === undefined || n.donnees.taux === null
+        ? ''
+        : new Intl.NumberFormat(langue, { maximumFractionDigits: 1 }).format(n.donnees.taux),
     debut: debut
       ? date(debut, memeMois ? { day: 'numeric' } : { day: 'numeric', month: 'long' })
       : '',
@@ -68,6 +75,8 @@ export function iconeNotification(
       return { nom: 'notification-important', couleur: p.erreur };
     case 'plannings_non_approuves':
       return { nom: 'event-busy', couleur: p.attention };
+    case 'objectif_ventes_retard':
+      return { nom: 'trending-down', couleur: p.attention };
     case 'reouverture_demandee':
       return { nom: 'lock-open', couleur: p.attention };
     case 'redaction_rouverte':
@@ -100,6 +109,7 @@ export function couleurNotification(n: Notification, p: Palette): string {
     case 'plannings_non_approuves':
     case 'reouverture_demandee':
     case 'rapport_en_retard':
+    case 'objectif_ventes_retard':
       return p.attention;
     case 'escalade':
     case 'journee_escaladee':

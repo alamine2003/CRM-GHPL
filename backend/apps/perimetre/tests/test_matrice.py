@@ -77,8 +77,10 @@ ATTENDU = {
         "admin_pays",
         "df",
         "dm",
+        "superviseur",
     },
-    Action.VENTES_OBJECTIFS_GERER: {"admin_pays"},
+    # 1.8.0 [D, 25 octobre 2026] : le DM fixe aussi ceux des réseaux de son périmètre.
+    Action.VENTES_OBJECTIFS_GERER: {"admin_pays", "dm"},
     # 1.6.1 : le siège seul règle les droits du DO (prd.md §14.85).
     Action.DROITS_DO_REGLER: {"admin_siege"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "superviseur"},

@@ -35,7 +35,7 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import DialogueFormulaire from '../composants/Dialogue';
 import { Chiffre, ChiffresCles, EnTeteCarte, EnTetePage, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
@@ -104,7 +104,11 @@ export default function Ventes({ perimetre }: { perimetre: Perimetre }) {
   const { t, i18n } = useTranslation();
   const { client } = useSession();
   const navigate = useNavigate();
-  const [onglet, setOnglet] = useState<'synthese' | 'lignes' | 'objectifs'>('synthese');
+  // 1.8.0 : une notification « objectif en retard » ouvre directement l'onglet Objectifs.
+  const [parametres] = useSearchParams();
+  const [onglet, setOnglet] = useState<'synthese' | 'lignes' | 'objectifs'>(
+    parametres.get('onglet') === 'objectifs' ? 'objectifs' : 'synthese',
+  );
   const [annee, setAnnee] = useState<number | undefined>();
   const [moisFin, setMoisFin] = useState<number | undefined>();
   const [par, setPar] = useState<RegroupementVentes>('produit');
@@ -318,6 +322,7 @@ export default function Ventes({ perimetre }: { perimetre: Perimetre }) {
           moisFin={synthese.data?.mois_fin ?? moisFin}
           cle={cle}
           gere={fixeObjectifs}
+          exporte={perimetre.actions.includes('ventes.exporter')}
         />
       )}
       <DialogueSaisieVente ouvert={saisie} surFermer={() => setSaisie(false)} />

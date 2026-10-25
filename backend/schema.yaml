@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.7.0
+  version: 1.8.0
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5815,6 +5815,53 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/ventes/objectifs/export/:
+    get:
+      operationId: ventes_objectifs_export
+      description: |-
+        1.8.0 : le tableau des objectifs (cible, attendu, réalisé, état), en CSV ou en classeur
+        Excel, pour l'année et le mois choisis, dans le périmètre. Audité comme les autres exports.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: fichier
+        schema:
+          enum:
+          - csv
+          - xlsx
+          type: string
+          default: xlsx
+          minLength: 1
+        description: |-
+          * `csv` - csv
+          * `xlsx` - xlsx
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/v1/ventes/options/:
     get:
       operationId: ventes_options
@@ -8371,6 +8418,16 @@ components:
         delegue:
           type: string
           format: uuid
+        objectif:
+          type: string
+          format: uuid
+        reseau:
+          type: string
+        mois:
+          type: string
+        taux:
+          type: number
+          format: double
     DonneesNotificationMotifEnum:
       enum:
       - soumission
@@ -10163,6 +10220,7 @@ components:
       - rapports_valides
       - rappel_rapport
       - journee_escaladee
+      - objectif_ventes_retard
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
@@ -10182,6 +10240,7 @@ components:
         * `rapports_valides` - Rapports validés
         * `rappel_rapport` - Rapport à soumettre
         * `journee_escaladee` - Journée escaladée
+        * `objectif_ventes_retard` - Objectif de ventes en retard
     NullEnum:
       enum:
       - null
@@ -10251,6 +10310,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/Element'
           nullable: true
+        delegue:
+          allOf:
+          - $ref: '#/components/schemas/DelegueVente'
+          nullable: true
         annee:
           type: integer
         cible:
@@ -10289,16 +10352,37 @@ components:
         repartition_libre:
           type: boolean
           description: 'Faux : la cible est répartie à parts égales.'
+        realise_mois:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          description: Le réalisé de chaque mois de l'année, janvier à décembre.
+        cible_deleguee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          nullable: true
+          description: 'Objectif de réseau : la somme des objectifs de ses délégués
+            ; sinon vide.'
+        modifiable:
+          type: boolean
+          description: Celui qui lit peut corriger ou archiver cet objectif.
       required:
       - annee
       - attendu
       - cible
+      - cible_deleguee
+      - delegue
       - ecart
       - etat
       - id
+      - modifiable
       - mois
       - produit
       - realise
+      - realise_mois
       - repartition_libre
       - reseau
       - taux_attendu
@@ -10345,7 +10429,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/TotalObjectifs'
           nullable: true
-          description: Les objectifs de réseau seuls (jamais ceux de produit).
+          description: Les objectifs de réseau seuls (jamais ceux de produit ou de
+            délégué).
         reseaux_gerables:
           type: array
           items:
@@ -12878,7 +12963,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Element'
+        delegues:
+          type: array
+          items:
+            $ref: '#/components/schemas/DelegueVente'
       required:
+      - delegues
       - id
       - libelle
       - produits
@@ -13289,6 +13379,11 @@ components:
           type: string
           format: uuid
           nullable: true
+        delegue:
+          type: string
+          format: uuid
+          nullable: true
+          description: '1.8.0 : l''objectif d''un délégué du réseau.'
         annee:
           type: integer
           maximum: 2100

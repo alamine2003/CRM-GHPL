@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 17:03+0000\n"
+"POT-Creation-Date: 2026-10-25 12:18+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -556,6 +556,12 @@ msgid "Une journée de rapports vous est remontée."
 msgid_plural "%(n)d journées de rapports vous sont remontées."
 msgstr[0] "A day of reports was escalated to you."
 msgstr[1] "%(n)d days of reports were escalated to you."
+
+#, python-format
+msgid "Un réseau est sous son objectif de ventes."
+msgid_plural "%(n)d réseaux sont sous leur objectif de ventes."
+msgstr[0] "A network is below its sales target."
+msgstr[1] "%(n)d networks are below their sales target."
 
 #, python-format
 msgid "Une nouvelle notification."
@@ -1377,6 +1383,44 @@ msgstr "Quantity"
 msgid "Origine"
 msgstr "Origin"
 
+msgid "Portée"
+msgstr "Scope"
+
+#, python-format
+msgid "Cible %(annee)s"
+msgstr "Target %(annee)s"
+
+#, python-format
+msgid "Attendu à fin %(mois)02d"
+msgstr "Expected at end of %(mois)02d"
+
+msgid "Réalisé (YTD)"
+msgstr "Actual (YTD)"
+
+msgid "Écart"
+msgstr "Gap"
+
+#, python-format
+msgid "% de la cible"
+msgstr "% of target"
+
+msgid "Réalisé / attendu (%)"
+msgstr "Actual / expected (%)"
+
+msgid "État"
+msgstr "Status"
+
+#, python-format
+msgid "Produit : %(nom)s"
+msgstr "Product: %(nom)s"
+
+#, python-format
+msgid "Délégué : %(nom)s"
+msgstr "Representative: %(nom)s"
+
+msgid "Tout le réseau"
+msgstr "Whole network"
+
 msgid "Aucune feuille au format du fichier de ventes."
 msgstr "No sheet in the sales file format."
 
@@ -1406,13 +1450,16 @@ msgstr "Customer missing."
 msgid "Donnez les douze mois, de janvier à décembre."
 msgstr "Give all twelve months, from January to December."
 
-#| msgid "La fin ne peut pas être dans le passé."
 msgid "Un mois ne peut pas être négatif."
 msgstr "A month cannot be negative."
 
-#| msgid "Seul l'administrateur pays fixe ses objectifs."
-msgid "Seul l'administrateur pays fixe les objectifs de ventes."
-msgstr "Only the country administrator sets sales targets."
+msgid ""
+"Vous ne fixez les objectifs de ventes que des réseaux de votre périmètre."
+msgstr "You only set sales targets for the networks in your scope."
+
+msgid "Choisissez un délégué qui occupe un poste de ce réseau cette année-là."
+msgstr ""
+"Choose a representative who holds a position in this network that year."
 
 msgid "Donnez la cible de l'année ou ses douze mois."
 msgstr "Give the year's target or its twelve months."
@@ -1420,17 +1467,20 @@ msgstr "Give the year's target or its twelve months."
 msgid "La somme des douze mois doit être la cible de l'année."
 msgstr "The twelve months must add up to the year's target."
 
-#| msgid "La cible est un nombre positif."
 msgid "La cible est un montant positif."
 msgstr "The target is a positive amount."
 
-#| msgid ""
-#| "Une ligne existe déjà pour ce mois, ce délégué, ce produit et ce client : "
-#| "modifiez-la."
 msgid ""
-"Un objectif existe déjà pour ce réseau, ce produit et cette année : "
+"Un objectif vise tout le réseau, un produit ou un délégué : un seul à la "
+"fois."
+msgstr ""
+"A target covers the whole network, a product or a representative: one at a "
+"time."
+
+msgid ""
+"Un objectif existe déjà pour ce réseau, cette portée et cette année : "
 "modifiez-le."
-msgstr "A target already exists for this network, product and year: edit it."
+msgstr "A target already exists for this network, scope and year: edit it."
 
 #, python-format
 msgid "« %(valeur)s » n'est pas un nombre."
@@ -1488,11 +1538,17 @@ msgstr "Sales lines"
 msgid "Mois illisible."
 msgstr "Unreadable month."
 
+msgid "Objectifs de ventes"
+msgstr "Sales targets"
+
 msgid "Français"
 msgstr "French"
 
 msgid "Anglais"
 msgstr "English"
+
+#~ msgid "Seul l'administrateur pays fixe les objectifs de ventes."
+#~ msgstr "Only the country administrator sets sales targets."
 
 #~ msgid ""
 #~ "Des visites sont incomplètes : complétez les champs indiqués avant de "

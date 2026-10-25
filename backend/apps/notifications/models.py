@@ -39,6 +39,8 @@ class TypeNotification(models.TextChoices):
     RAPPORTS_VALIDES = "rapports_valides", "Rapports validés"
     RAPPEL_RAPPORT = "rappel_rapport", "Rapport à soumettre"
     JOURNEE_ESCALADEE = "journee_escaladee", "Journée escaladée"
+    #: 1.8.0 : un réseau sous l'attendu de son objectif de ventes à la fin d'un mois.
+    OBJECTIF_VENTES_RETARD = "objectif_ventes_retard", "Objectif de ventes en retard"
 
 
 class Notification(ModeleDePays):

@@ -3158,6 +3158,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/ventes/objectifs/export/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description 1.8.0 : le tableau des objectifs (cible, attendu, réalisé, état), en CSV ou en classeur
+     *     Excel, pour l'année et le mois choisis, dans le périmètre. Audité comme les autres exports.
+     */
+    get: operations['ventes_objectifs_export'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/ventes/options/': {
     parameters: {
       query?: never;
@@ -4240,6 +4260,12 @@ export interface components {
       date?: string;
       /** Format: uuid */
       delegue?: string;
+      /** Format: uuid */
+      objectif?: string;
+      reseau?: string;
+      mois?: string;
+      /** Format: double */
+      taux?: number;
     };
     /**
      * @description * `soumission` - soumission
@@ -5021,6 +5047,7 @@ export interface components {
      *     * `rapports_valides` - Rapports validés
      *     * `rappel_rapport` - Rapport à soumettre
      *     * `journee_escaladee` - Journée escaladée
+     *     * `objectif_ventes_retard` - Objectif de ventes en retard
      * @enum {string}
      */
     NotificationTypeEnum:
@@ -5040,7 +5067,8 @@ export interface components {
       | 'rapports_soumis'
       | 'rapports_valides'
       | 'rappel_rapport'
-      | 'journee_escaladee';
+      | 'journee_escaladee'
+      | 'objectif_ventes_retard';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
@@ -5070,6 +5098,7 @@ export interface components {
       id: string;
       reseau: components['schemas']['Element'];
       produit: components['schemas']['Element'] | null;
+      delegue: components['schemas']['DelegueVente'] | null;
       annee: number;
       /** Format: decimal */
       cible: string;
@@ -5088,6 +5117,15 @@ export interface components {
       mois: string[];
       /** @description Faux : la cible est répartie à parts égales. */
       repartition_libre: boolean;
+      /** @description Le réalisé de chaque mois de l'année, janvier à décembre. */
+      realise_mois: string[];
+      /**
+       * Format: decimal
+       * @description Objectif de réseau : la somme des objectifs de ses délégués ; sinon vide.
+       */
+      cible_deleguee: string | null;
+      /** @description Celui qui lit peut corriger ou archiver cet objectif. */
+      modifiable: boolean;
     };
     /** @description Les objectifs des réseaux visibles, et ce qu'il faut pour en fixer un nouveau. */
     ObjectifsReseau: {
@@ -5102,7 +5140,7 @@ export interface components {
       annee: number;
       mois_fin: number;
       objectifs: components['schemas']['ObjectifVenteRendu'][];
-      /** @description Les objectifs de réseau seuls (jamais ceux de produit). */
+      /** @description Les objectifs de réseau seuls (jamais ceux de produit ou de délégué). */
       total: components['schemas']['TotalObjectifs'] | null;
       /** @description Ce que l'administrateur pays peut viser ; vide pour les autres. */
       reseaux_gerables: components['schemas']['ReseauObjectif'][];
@@ -6053,6 +6091,7 @@ export interface components {
       id: string;
       libelle: string;
       produits: components['schemas']['Element'][];
+      delegues: components['schemas']['DelegueVente'][];
     };
     ReseauResume: {
       /** Format: uuid */
@@ -6241,6 +6280,11 @@ export interface components {
       reseau: string;
       /** Format: uuid */
       produit?: string | null;
+      /**
+       * Format: uuid
+       * @description 1.8.0 : l'objectif d'un délégué du réseau.
+       */
+      delegue?: string | null;
       annee: number;
       cible?: string | null;
       mois?: string[] | null;
@@ -12067,6 +12111,34 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  ventes_objectifs_export: {
+    parameters: {
+      query?: {
+        annee?: number;
+        /**
+         * @description * `csv` - csv
+         *     * `xlsx` - xlsx
+         */
+        fichier?: 'csv' | 'xlsx';
+        mois_fin?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string;
+        };
       };
     };
   };

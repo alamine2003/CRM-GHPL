@@ -105,8 +105,9 @@ class EtatObjectifVente(models.TextChoices):
 
 
 class ObjectifVente(ModeleDePays):
-    """Objectif de chiffre d'affaires TTC d'une année pour un réseau, ou pour un produit de ce
-    réseau (décision du 23 octobre 2026, prd.md §14.88). `mois` répartit la cible sur les douze
+    """Objectif de chiffre d'affaires TTC d'une année pour un réseau, pour un produit de ce
+    réseau (décision du 23 octobre 2026, prd.md §14.88) ou pour un délégué de ce réseau (1.8.0,
+    §14.89). `mois` répartit la cible sur les douze
     mois ; sans lui, la cible se répartit à parts égales."""
 
     reseau = models.ForeignKey(
@@ -114,6 +115,11 @@ class ObjectifVente(ModeleDePays):
     )
     produit = models.ForeignKey(
         "referentiel.Produit", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="objectifs_ventes",
+    )  # fmt: skip
+    #: 1.8.0 : l'objectif d'un délégué dans ce réseau (jamais avec un produit).
+    delegue = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
         related_name="objectifs_ventes",
     )  # fmt: skip
     annee = models.PositiveSmallIntegerField()
@@ -125,12 +131,21 @@ class ObjectifVente(ModeleDePays):
     )
 
     class Meta:
-        ordering = ["-annee", "reseau__libelle", "produit__libelle"]
+        ordering = ["-annee", "reseau__libelle", "produit__libelle", "delegue__last_name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["pays", "reseau", "annee"],
-                condition=Q(archive_le__isnull=True, produit__isnull=True),
+                condition=Q(archive_le__isnull=True, produit__isnull=True, delegue__isnull=True),
                 name="objectif_vente_reseau_unique",
+            ),
+            models.UniqueConstraint(
+                fields=["pays", "reseau", "delegue", "annee"],
+                condition=Q(archive_le__isnull=True, delegue__isnull=False),
+                name="objectif_vente_delegue_unique",
+            ),
+            models.CheckConstraint(
+                condition=Q(produit__isnull=True) | Q(delegue__isnull=True),
+                name="objectif_vente_produit_ou_delegue",
             ),
             models.UniqueConstraint(
                 fields=["pays", "reseau", "produit", "annee"],

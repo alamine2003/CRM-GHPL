@@ -178,6 +178,9 @@ class SaisieObjectifVenteSerializer(serializers.Serializer):
 
     reseau = serializers.UUIDField()
     produit = serializers.UUIDField(required=False, allow_null=True)
+    delegue = serializers.UUIDField(
+        required=False, allow_null=True, help_text="1.8.0 : l'objectif d'un délégué du réseau."
+    )
     annee = serializers.IntegerField(min_value=2000, max_value=2100)
     cible = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     mois = serializers.ListField(
@@ -197,10 +200,15 @@ class ChoixObjectifsSerializer(serializers.Serializer):
     mois_fin = serializers.IntegerField(required=False, min_value=1, max_value=12)
 
 
+class ChoixExportObjectifsSerializer(ChoixObjectifsSerializer):
+    fichier = serializers.ChoiceField(choices=["csv", "xlsx"], default="xlsx")
+
+
 class ObjectifVenteRenduSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     reseau = ElementSerializer()
     produit = ElementSerializer(allow_null=True)
+    delegue = DelegueVenteSerializer(allow_null=True)
     annee = serializers.IntegerField()
     cible = serializers.DecimalField(max_digits=16, decimal_places=2)
     attendu = serializers.DecimalField(max_digits=16, decimal_places=2)
@@ -216,6 +224,17 @@ class ObjectifVenteRenduSerializer(serializers.Serializer):
     repartition_libre = serializers.BooleanField(
         help_text="Faux : la cible est répartie à parts égales."
     )
+    realise_mois = serializers.ListField(
+        child=serializers.DecimalField(max_digits=16, decimal_places=2),
+        help_text="Le réalisé de chaque mois de l'année, janvier à décembre.",
+    )
+    cible_deleguee = serializers.DecimalField(
+        max_digits=16, decimal_places=2, allow_null=True,
+        help_text="Objectif de réseau : la somme des objectifs de ses délégués ; sinon vide.",
+    )  # fmt: skip
+    modifiable = serializers.BooleanField(
+        help_text="Celui qui lit peut corriger ou archiver cet objectif."
+    )
 
 
 class TotalObjectifsSerializer(serializers.Serializer):
@@ -228,6 +247,7 @@ class TotalObjectifsSerializer(serializers.Serializer):
 
 class ReseauObjectifSerializer(ElementSerializer):
     produits = ElementSerializer(many=True)
+    delegues = DelegueVenteSerializer(many=True)
 
 
 class ObjectifsVentesSerializer(serializers.Serializer):
@@ -236,7 +256,8 @@ class ObjectifsVentesSerializer(serializers.Serializer):
     mois_fin = serializers.IntegerField()
     objectifs = ObjectifVenteRenduSerializer(many=True)
     total = TotalObjectifsSerializer(
-        allow_null=True, help_text="Les objectifs de réseau seuls (jamais ceux de produit)."
+        allow_null=True,
+        help_text="Les objectifs de réseau seuls (jamais ceux de produit ou de délégué).",
     )
     reseaux_gerables = ReseauObjectifSerializer(
         many=True, help_text="Ce que l'administrateur pays peut viser ; vide pour les autres."

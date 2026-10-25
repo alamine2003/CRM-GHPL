@@ -1055,8 +1055,8 @@ class Generateur:
         return len(lignes)
 
     def _objectifs_ventes(self, pays, admin) -> None:
-        """Un objectif de l'année par réseau (1.7.0) : 10 % de plus que l'an passé, arrondi au
-        millier. Inventé, sans rapport avec un objectif réel."""
+        """Un objectif de l'année par réseau (1.7.0) et par délégué (1.8.0) : 10 % de plus que
+        l'an passé, arrondi au millier. Inventé, sans rapport avec un objectif réel."""
         from django.db.models import Sum
 
         from apps.ventes.models import ObjectifVente, Vente
@@ -1072,6 +1072,18 @@ class Generateur:
             ObjectifVente.objects.create(
                 pays=pays, reseau_id=reseau_id, annee=annee, cible=cible, cree_par=admin
             )
+        # 1.8.0 : et un objectif par délégué de chaque réseau, sur la même règle.
+        par_delegue = (
+            Vente.objects.filter(pays=pays, mois__year=annee - 1, reseau__isnull=False)
+            .values_list("reseau_id", "delegue_id")
+            .annotate(total=Sum("montant_ttc"))
+        )
+        for reseau_id, delegue_id, total in par_delegue:
+            cible = max(1000, round(float(total) * 1.1 / 1000) * 1000)
+            ObjectifVente.objects.create(
+                pays=pays, reseau_id=reseau_id, delegue_id=delegue_id, annee=annee,
+                cible=cible, cree_par=admin,
+            )  # fmt: skip
 
     def tout(self, volumes: Volumes, pays_secondaires: tuple[str, ...] = ("TG",)) -> Bilan:
         self.premier("admin_siege", self.personne(None, Role.ADMIN_SIEGE))

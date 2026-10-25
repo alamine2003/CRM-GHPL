@@ -61,6 +61,7 @@ def test_le_generateur_redonne_la_meme_base(monkeypatch):
     from apps.ventes.models import ObjectifVente
 
     assert ObjectifVente.objects.filter(pays__code="SN", produit__isnull=True).exists()
+    assert ObjectifVente.objects.filter(pays__code="SN", delegue__isnull=False).exists()
     # Calendrier des jours fériés à date certaine (ORG-012), deux années.
     from apps.planning.models import JourFerie
 

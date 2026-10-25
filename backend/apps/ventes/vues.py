@@ -352,21 +352,33 @@ class ImportVentesVue(VueVentes):
         return Response(imp.DetailLotSerializer(lot).data, status=status.HTTP_201_CREATED)
 
 
-def _objectif_rendu(objectif: ObjectifVente, mois_fin: int) -> dict:
+def _nom(utilisateur) -> str:
+    return f"{utilisateur.first_name} {utilisateur.last_name}".strip() or utilisateur.username
+
+
+def _objectif_rendu(objectif: ObjectifVente, mois_fin: int, perimetre) -> dict:
     suivi = objectifs.suivi(objectif, mois_fin)
 
     def element(o, champ="libelle"):
         return None if o is None else {"id": o.pk, "libelle": getattr(o, champ)}
 
+    d = objectif.delegue
     return {
         "id": objectif.pk, "reseau": element(objectif.reseau), "produit": element(objectif.produit),
+        "delegue": None if d is None else {"id": d.pk, "nom": _nom(d)},
         "annee": objectif.annee, **suivi, "repartition_libre": bool(objectif.mois),
+        "cible_deleguee": None, "modifiable": objectifs.gerable(perimetre, objectif),
     }  # fmt: skip
 
 
+def _du_reseau(o: dict) -> bool:
+    return o["produit"] is None and o["delegue"] is None
+
+
 def _total_objectifs(rendus: list[dict]) -> dict | None:
-    """Le total des seuls objectifs de réseau : ceux de produit en sont le détail."""
-    reseaux = [o for o in rendus if o["produit"] is None]
+    """Le total des seuls objectifs de réseau : ceux de produit et de délégué en sont le
+    détail."""
+    reseaux = [o for o in rendus if _du_reseau(o)]
     if not reseaux:
         return None
     cible, attendu, realise = (sum(o[k] for o in reseaux) for k in ("cible", "attendu", "realise"))
@@ -376,6 +388,23 @@ def _total_objectifs(rendus: list[dict]) -> dict | None:
 
     return {"cible": cible, "attendu": attendu, "realise": realise,
             "taux_cible": taux(realise, cible), "taux_attendu": taux(realise, attendu)}  # fmt: skip
+
+
+def _objectifs_de_l_annee(perimetre, annee: int, mois_fin: int) -> list[dict]:
+    """Les objectifs visibles, rendus : chaque réseau, puis ses produits, puis ses délégués ;
+    l'objectif de réseau porte la somme des objectifs de ses délégués."""
+    rendus = [_objectif_rendu(o, mois_fin, perimetre)
+              for o in objectifs.objectifs_visibles(perimetre, annee)]  # fmt: skip
+    rendus.sort(key=lambda o: (
+        o["reseau"]["libelle"], 0 if _du_reseau(o) else 1 if o["produit"] else 2,
+        (o["produit"] or {}).get("libelle") or (o["delegue"] or {}).get("nom") or "",
+    ))  # fmt: skip
+    for o in rendus:
+        if _du_reseau(o):
+            parts = [x["cible"] for x in rendus
+                     if x["delegue"] and x["reseau"]["id"] == o["reseau"]["id"]]  # fmt: skip
+            o["cible_deleguee"] = sum(parts) if parts else None
+    return rendus
 
 
 class VueObjectifsVentes(VuePerimetre):
@@ -400,18 +429,12 @@ class ObjectifsVentesVue(VueObjectifsVentes):
         choix = s.ChoixObjectifsSerializer(data=request.query_params)
         choix.is_valid(raise_exception=True)
         annee, mois_fin = _periode(pays, choix.validated_data)
-        rendus = [
-            _objectif_rendu(o, mois_fin)
-            for o in objectifs.objectifs_visibles(self.perimetre, annee).order_by(
-                "reseau__libelle", "produit__libelle"
-            )
-        ]
+        rendus = _objectifs_de_l_annee(self.perimetre, annee, mois_fin)
         gerables = []
         if Action.VENTES_OBJECTIFS_GERER.value in self.perimetre.actions():
-            from apps.pilotage.objectifs import reseaux_geres
             from apps.referentiel.models import Portefeuille
 
-            for reseau in reseaux_geres(self.perimetre).order_by("libelle"):
+            for reseau in objectifs.reseaux_geres(self.perimetre).order_by("libelle"):
                 produits = {
                     lien.produit_id: lien.produit
                     for lien in Portefeuille.objects.filter(
@@ -423,6 +446,10 @@ class ObjectifsVentesVue(VueObjectifsVentes):
                     "produits": [
                         {"id": p.pk, "libelle": p.libelle}
                         for p in sorted(produits.values(), key=lambda p: p.libelle)
+                    ],
+                    "delegues": [
+                        {"id": u.pk, "nom": _nom(u)}
+                        for u in objectifs.delegues_du_reseau(reseau, annee)
                     ],
                 })  # fmt: skip
         donnees = {
@@ -446,13 +473,16 @@ class ObjectifsVentesVue(VueObjectifsVentes):
             get_object_or_404(Produit, pk=v["produit"], pays=pays, archive_le__isnull=True)
             if v.get("produit") else None
         )  # fmt: skip
+        delegue = get_object_or_404(Utilisateur, pk=v["delegue"]) if v.get("delegue") else None
         objectif = objectifs.creer(
             self.perimetre, reseau=reseau, annee=v["annee"], cible=v.get("cible"),
-            mois=v.get("mois"), produit=produit,
+            mois=v.get("mois"), produit=produit, delegue=delegue,
         )  # fmt: skip
         _annee, mois_fin = _periode(pays, {"annee": objectif.annee})
         return Response(
-            s.ObjectifVenteRenduSerializer(_objectif_rendu(objectif, mois_fin)).data,
+            s.ObjectifVenteRenduSerializer(
+                _objectif_rendu(objectif, mois_fin, self.perimetre)
+            ).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -472,7 +502,9 @@ class ObjectifVenteVue(VueObjectifsVentes):
         champs = _lire(s.ModificationObjectifVenteSerializer, request)
         objectifs.modifier(self.perimetre, objectif, champs)
         _annee, mois_fin = _periode(pays, {"annee": objectif.annee})
-        return Response(s.ObjectifVenteRenduSerializer(_objectif_rendu(objectif, mois_fin)).data)
+        return Response(
+            s.ObjectifVenteRenduSerializer(_objectif_rendu(objectif, mois_fin, self.perimetre)).data
+        )
 
 
 class ArchiverObjectifVenteVue(VueObjectifsVentes):
@@ -484,3 +516,41 @@ class ArchiverObjectifVenteVue(VueObjectifsVentes):
         pays_requis(self.perimetre)
         objectifs.archiver(self.perimetre, get_object_or_404(self.get_queryset(), pk=id))
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ExportObjectifsVentesVue(VueObjectifsVentes):
+    """1.8.0 : le tableau des objectifs (cible, attendu, réalisé, état), en CSV ou en classeur
+    Excel, pour l'année et le mois choisis, dans le périmètre. Audité comme les autres exports."""
+
+    actions = {"GET": Action.VENTES_EXPORTER}
+
+    @extend_schema(
+        parameters=[s.ChoixExportObjectifsSerializer],
+        responses={(200, "text/csv"): OpenApiTypes.BINARY,
+                   (200, exports.FORMATS["xlsx"][0]): OpenApiTypes.BINARY},
+        operation_id="ventes_objectifs_export",
+    )  # fmt: skip
+    def get(self, request):
+        from django.http import HttpResponse
+
+        from apps.audit.services import enregistrer
+
+        pays = pays_requis(self.perimetre)
+        choix = s.ChoixExportObjectifsSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        v = choix.validated_data
+        annee, mois_fin = _periode(pays, v)
+        rendus = _objectifs_de_l_annee(self.perimetre, annee, mois_fin)
+        entetes, rangees = exports.objectifs(rendus, annee, mois_fin)
+        type_mime, extension = exports.FORMATS[v["fichier"]]
+        contenu = (
+            exports.en_xlsx(entetes, rangees, str(_("Objectifs de ventes")))
+            if v["fichier"] == "xlsx" else exports.en_csv(entetes, rangees)
+        )  # fmt: skip
+        enregistrer("export.objectifs_ventes", pays=pays, details={
+            "format": v["fichier"], "annee": annee, "mois_fin": mois_fin, "lignes": len(rangees),
+        })  # fmt: skip
+        nom = f"objectifs-ventes-{pays.code.lower()}-{annee}-{mois_fin:02d}.{extension}"
+        reponse = HttpResponse(contenu, content_type=type_mime)
+        reponse["Content-Disposition"] = f'attachment; filename="{nom}"'
+        return reponse

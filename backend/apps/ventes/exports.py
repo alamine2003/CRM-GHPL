@@ -11,7 +11,7 @@ from django.utils.translation import gettext as _
 from apps.pilotage.exports import FORMATS, en_xlsx  # noqa: F401  (réexportés)
 from apps.pilotage.exports import en_csv as _en_csv
 
-from .models import SourceVente, TypeClient
+from .models import EtatObjectifVente, SourceVente, TypeClient
 
 #: Au-delà, on refuse : un tableur n'est pas fait pour cela, et l'export serait trop lourd.
 LIGNES_MAX = 50_000
@@ -87,3 +87,28 @@ def lignes(qs) -> tuple[list[str], list[list]]:
             _nombre(v.montant_ttc), str(origines.get(v.source, v.source)),
         ])  # fmt: skip
     return entetes, rangees
+
+
+def objectifs(rendus: list[dict], annee: int, mois_fin: int) -> tuple[list[str], list[list]]:
+    """1.8.0 : le tableau des objectifs, une ligne par objectif (réseau, produit ou délégué)."""
+
+    entetes = [
+        _("Réseau"), _("Portée"), _("Cible %(annee)s") % {"annee": annee},
+        _("Attendu à fin %(mois)02d") % {"mois": mois_fin}, _("Réalisé (YTD)"), _("Écart"),
+        _("% de la cible"), _("Réalisé / attendu (%)"), _("État"),
+    ]  # fmt: skip
+
+    def portee(o: dict) -> str:
+        if o["produit"]:
+            return _("Produit : %(nom)s") % {"nom": o["produit"]["libelle"]}
+        if o["delegue"]:
+            return _("Délégué : %(nom)s") % {"nom": o["delegue"]["nom"]}
+        return str(_("Tout le réseau"))
+
+    lignes = [
+        [o["reseau"]["libelle"], portee(o), _nombre(o["cible"]), _nombre(o["attendu"]),
+         _nombre(o["realise"]), _nombre(o["ecart"]), _pourcent(o["taux_cible"]),
+         _pourcent(o["taux_attendu"]), str(EtatObjectifVente(o["etat"]).label)]
+        for o in rendus
+    ]  # fmt: skip
+    return entetes, lignes

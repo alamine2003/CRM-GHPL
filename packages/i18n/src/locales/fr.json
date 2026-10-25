@@ -2038,7 +2038,8 @@
       "cetteSemaine": "Cette semaine",
       "semaineDerniere": "La semaine dernière",
       "plusTot": "Plus tôt"
-    }
+    },
+    "objectif_ventes_retard": "{{reseau}} : sous l'objectif de ventes à fin {{mois}} ({{taux}} % de l'attendu)"
   },
   "revision": {
     "demander": "Demander une révision",
@@ -3023,7 +3024,8 @@
       "rapports_soumis": "Rapports à valider",
       "rapports_valides": "Rapports validés",
       "rappel_rapport": "Rappel : rapport à soumettre",
-      "journee_escaladee": "Journée remontée (escalade)"
+      "journee_escaladee": "Journée remontée (escalade)",
+      "objectif_ventes_retard": "Objectif de ventes en retard"
     },
     "titreTablette": "Notifications sur cette tablette",
     "aideIci": "Choisissez ce qui arrive en notification. Tout reste visible ici."
@@ -3283,18 +3285,31 @@
       "parMois": "Répartir mois par mois",
       "partsEgales": "Sans répartition, la cible se divise à parts égales sur les douze mois.",
       "sommeMois": "Somme des mois : {{somme}}",
-      "formAide": "Un objectif par réseau (ou produit du réseau) et par année, en {{devise}} TTC. Le cumul de l'année se compare à l'attendu à la fin du mois choisi.",
+      "formAide": "Un objectif par réseau et par année, en {{devise}} TTC : pour tout le réseau, pour un de ses produits ou pour un de ses délégués. Le cumul de l'année se compare à l'attendu à la fin du mois choisi.",
       "aucun": "Aucun objectif pour {{annee}}",
       "aucunAide": "Fixez la cible de l'année d'un réseau, ou d'un de ses produits.",
       "archiverAide": "L'objectif {{annee}} de « {{reseau}} · {{produit}} » sort du suivi ; il reste dans l'historique.",
-      "note": "Le réalisé est le cumul de l'année des ventes du réseau (ou du produit dans ce réseau), de janvier au mois choisi. Le total ne compte que les objectifs de réseau.",
+      "note": "Le réalisé est le cumul de l'année des ventes du réseau (ou du produit, ou du délégué, dans ce réseau), de janvier au mois choisi. Le total ne compte que les objectifs de réseau.",
       "etats": {
         "a_venir": "À venir",
         "atteint": "Atteint",
         "non_atteint": "Non atteint",
         "en_avance": "En avance",
         "en_retard": "En retard"
-      }
+      },
+      "portee": "Portée",
+      "unProduit": "Un produit",
+      "unDelegue": "Un délégué",
+      "duDelegue": "{{nom}} (délégué)",
+      "dontDelegues": "dont {{montant}} réparti entre délégués",
+      "courbe": "Cible / réalisé",
+      "courbeDe": "Courbe de",
+      "totalReseaux": "Total des réseaux",
+      "legendeRealise": "Réalisé cumulé",
+      "legendeAttendu": "Attendu cumulé",
+      "courbeAria": "{{libelle}} : à fin {{mois}}, {{realise}} réalisés pour {{attendu}} attendus",
+      "courbeTableau": "Cible et réalisé cumulés mois par mois, {{libelle}}",
+      "exporter": "Tableau des objectifs"
     }
   },
   "droitsDo": {

@@ -8,6 +8,7 @@ import NotificationImportantRounded from '@mui/icons-material/NotificationImport
 import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
 import ScheduleRounded from '@mui/icons-material/ScheduleRounded';
 import SwapHorizRounded from '@mui/icons-material/SwapHorizRounded';
+import TrendingDownRounded from '@mui/icons-material/TrendingDownRounded';
 import type { ReactNode } from 'react';
 import type { useTranslation } from 'react-i18next';
 
@@ -31,6 +32,7 @@ export const ICONES: Record<Notification['type'], ReactNode> = {
   rapports_valides: <CheckCircleRounded color="success" fontSize="small" />,
   rappel_rapport: <ScheduleRounded color="warning" fontSize="small" />,
   journee_escaladee: <NotificationImportantRounded color="error" fontSize="small" />,
+  objectif_ventes_retard: <TrendingDownRounded color="warning" fontSize="small" />,
 };
 
 /** Texte d'une notification, composé dans la langue de l'utilisateur (prd.md §18). */
@@ -56,6 +58,17 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
   return t(`notifications.${cle}`, {
     numero: n.donnees.numero_semaine,
     nom: n.donnees.nom,
+    // 1.8.0 : objectif de ventes en retard, le mois écoulé en toutes lettres.
+    reseau: n.donnees.reseau,
+    mois: n.donnees.mois
+      ? new Intl.DateTimeFormat(langue, { month: 'long', year: 'numeric' }).format(
+          new Date(`${n.donnees.mois}-15T12:00:00`),
+        )
+      : '',
+    taux:
+      n.donnees.taux === undefined || n.donnees.taux === null
+        ? ''
+        : new Intl.NumberFormat(langue, { maximumFractionDigits: 1 }).format(n.donnees.taux),
     debut: jour(n.donnees.debut),
     fin: jour(n.donnees.fin),
     jour: jour(n.donnees.date),
@@ -76,6 +89,8 @@ export function texteNotification(n: Notification, t: Traduire, langue: string, 
  * décider, la file, ou la semaine du délégué.
  */
 export function destination(n: Notification) {
+  // 1.8.0 : l'objectif de ventes en retard s'ouvre dans l'onglet « Objectifs » des ventes.
+  if (n.type === 'objectif_ventes_retard') return '/ventes?onglet=objectifs';
   // RPT-017, 34.A : un rapport en retard s'ouvre dans l'onglet « Retards », filtré sur le délégué.
   if (n.type === 'rapport_en_retard')
     return `/a-traiter?onglet=retards${n.donnees.delegue ? `&delegue=${n.donnees.delegue}` : ''}`;

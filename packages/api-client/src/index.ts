@@ -1320,6 +1320,11 @@ export function creerClient(options: OptionsClient) {
         }),
       archiverObjectif: (id: string) =>
         requete<void>(`/api/v1/ventes/objectifs/${id}/archiver/`, { methode: 'POST' }),
+      /** 1.8.0 : le tableau des objectifs en CSV ou en classeur Excel ; audité. */
+      exporterObjectifs: (filtres: { annee?: number; mois_fin?: number; fichier: string }) =>
+        requete<Blob>(`/api/v1/ventes/objectifs/export/${requeteVentes(filtres)}`, {
+          binaire: true,
+        }),
       clients: (q = '', type?: TypeClientVente) =>
         requete<ClientVente[]>(`/api/v1/ventes/clients/${requeteVentes({ q, type })}`),
       creerClient: (saisie: SaisieClientVente) =>

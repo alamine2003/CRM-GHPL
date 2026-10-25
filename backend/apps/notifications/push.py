@@ -109,6 +109,11 @@ def texte(type: str, n: int) -> str:
             "%(n)d journées de rapports vous sont remontées.",
             n,
         ),
+        "objectif_ventes_retard": ngettext(
+            "Un réseau est sous son objectif de ventes.",
+            "%(n)d réseaux sont sous leur objectif de ventes.",
+            n,
+        ),
     }
     return phrases.get(type, ngettext("Une nouvelle notification.", "%(n)d notifications.", n)) % {
         "n": n

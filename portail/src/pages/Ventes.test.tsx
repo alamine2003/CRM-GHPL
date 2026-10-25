@@ -87,6 +87,7 @@ const OBJECTIFS: ObjectifsVentes = {
       id: 'o1',
       reseau: { id: 'r1', libelle: 'Cardio' },
       produit: null,
+      delegue: null,
       annee: 2025,
       cible: '12000.00',
       attendu: '3000.00',
@@ -97,11 +98,15 @@ const OBJECTIFS: ObjectifsVentes = {
       etat: 'en_avance',
       mois: Array(12).fill('1000.00'),
       repartition_libre: false,
+      realise_mois: ['1200.00', '1200.00', '1200.00', ...Array(9).fill('0.00')],
+      cible_deleguee: '4000.00',
+      modifiable: true,
     },
     {
       id: 'o2',
       reseau: { id: 'r1', libelle: 'Cardio' },
       produit: { id: 'p1', libelle: 'Cardiol 10 mg' },
+      delegue: null,
       annee: 2025,
       cible: '6000.00',
       attendu: '1500.00',
@@ -112,6 +117,28 @@ const OBJECTIFS: ObjectifsVentes = {
       etat: 'en_retard',
       mois: Array(12).fill('500.00'),
       repartition_libre: false,
+      realise_mois: ['300.00', '300.00', '300.00', ...Array(9).fill('0.00')],
+      cible_deleguee: null,
+      modifiable: false,
+    },
+    {
+      id: 'o3',
+      reseau: { id: 'r1', libelle: 'Cardio' },
+      produit: null,
+      delegue: { id: 'd1', nom: 'Gabriel Sn' },
+      annee: 2025,
+      cible: '4000.00',
+      attendu: '1000.00',
+      realise: '1500.00',
+      ecart: '500.00',
+      taux_cible: 37.5,
+      taux_attendu: 150,
+      etat: 'en_avance',
+      mois: Array(12).fill('333.33'),
+      repartition_libre: false,
+      realise_mois: ['500.00', '500.00', '500.00', ...Array(9).fill('0.00')],
+      cible_deleguee: null,
+      modifiable: true,
     },
   ],
   total: {
@@ -122,7 +149,12 @@ const OBJECTIFS: ObjectifsVentes = {
     taux_attendu: 120,
   },
   reseaux_gerables: [
-    { id: 'r1', libelle: 'Cardio', produits: [{ id: 'p1', libelle: 'Cardiol 10 mg' }] },
+    {
+      id: 'r1',
+      libelle: 'Cardio',
+      produits: [{ id: 'p1', libelle: 'Cardiol 10 mg' }],
+      delegues: [{ id: 'd1', nom: 'Gabriel Sn' }],
+    },
   ],
 };
 
@@ -136,12 +168,13 @@ function perimetre(actions: string[], roles = ['admin_pays']): Perimetre {
   };
 }
 
-function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
+function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE, adresse = '/ventes') {
   const exporter = vi.fn(async () => new Blob(['x']));
   const syntheseFn = vi.fn(async () => synthese);
   const saisir = vi.fn(async () => ({}));
   const fixerObjectif = vi.fn(async () => ({}));
   const objectifs = vi.fn(async () => OBJECTIFS);
+  const exporterObjectifs = vi.fn(async () => new Blob(['x']));
   const session = {
     etat: { statut: 'chargement' },
     client: {
@@ -155,6 +188,7 @@ function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
         objectifs,
         fixerObjectif,
         corrigerObjectif: vi.fn(async () => ({})),
+        exporterObjectifs,
         archiverObjectif: vi.fn(async () => undefined),
       },
       utilisateurs: vi.fn(async () => [
@@ -165,7 +199,7 @@ function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
     } as unknown as ClientApi,
   } as unknown as Session;
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[adresse]}>
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
       >
@@ -175,7 +209,7 @@ function rendre(p: Perimetre, synthese: SyntheseVentes = SYNTHESE) {
       </QueryClientProvider>
     </MemoryRouter>,
   );
-  return { syntheseFn, saisir, exporter, objectifs, fixerObjectif };
+  return { syntheseFn, saisir, exporter, objectifs, fixerObjectif, exporterObjectifs };
 }
 
 describe('Ventes', () => {
@@ -272,7 +306,7 @@ describe('Ventes', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Objectifs' }));
     const tableau = await screen.findByRole('table', { name: 'Objectifs de ventes 2025' });
     expect(objectifs).toHaveBeenCalledWith(expect.objectContaining({ annee: 2025, mois_fin: 3 }));
-    expect(within(tableau).getByText('En avance')).toBeTruthy();
+    expect(within(tableau).getAllByText('En avance')).toHaveLength(2);
     expect(within(tableau).getByText('En retard')).toBeTruthy();
     // Le produit s'écrit deux fois : sous le réseau (téléphone) et dans sa colonne (le CSS masque l'un).
     expect(within(tableau).getAllByText('Tout le réseau')).toHaveLength(2);
@@ -309,6 +343,7 @@ describe('Ventes', () => {
       expect(fixerObjectif).toHaveBeenCalledWith({
         reseau: 'r1',
         produit: null,
+        delegue: null,
         annee: 2025,
         cible: '24000',
       }),
@@ -326,5 +361,84 @@ describe('Ventes', () => {
     fireEvent.click(within(dialogue).getByRole('switch', { name: 'Répartir mois par mois' }));
     expect(await within(dialogue).findByText(/Somme des mois : .*12/)).toBeTruthy();
     expect(within(dialogue).getAllByRole('spinbutton')).toHaveLength(13); // l'année et les douze mois
+  });
+  it('1.8.0 : l’objectif d’un délégué, la part répartie, et seules ses lignes se corrigent', async () => {
+    rendre(perimetre(['ventes.lire', 'ventes.objectifs_lire', 'ventes.objectifs_gerer'], ['dm']));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Objectifs' }));
+    const tableau = await screen.findByRole('table', { name: 'Objectifs de ventes 2025' });
+    expect(within(tableau).getAllByText('Gabriel Sn (délégué)').length).toBeGreaterThan(0);
+    expect(within(tableau).getByText(/dont .*4.?000.* réparti entre délégués/)).toBeTruthy();
+    // L'objectif de produit n'est pas dans ses réseaux gérés : pas de « Corriger » sur sa ligne.
+    expect(within(tableau).getAllByRole('button', { name: 'Corriger' })).toHaveLength(2);
+  });
+
+  it('1.8.0 : la courbe cible / réalisé, du total des réseaux ou d’un objectif choisi', async () => {
+    rendre(perimetre(['ventes.lire', 'ventes.objectifs_lire'], ['df']));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Objectifs' }));
+    expect(
+      await screen.findByRole('img', { name: /Total des réseaux : à fin mars 2025, .*3.?600/ }),
+    ).toBeTruthy();
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Courbe de' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Cardio · Gabriel Sn (délégué)' }));
+    expect(
+      await screen.findByRole('img', { name: /Cardio · Gabriel Sn \(délégué\) : à fin mars/ }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('table', { name: /Cible et réalisé cumulés mois par mois/ }),
+    ).toBeTruthy();
+  });
+
+  it('1.8.0 : l’encadrement exporte le tableau des objectifs', async () => {
+    const creerUrl = vi.fn(() => 'blob:x');
+    vi.stubGlobal('URL', { createObjectURL: creerUrl, revokeObjectURL: vi.fn() });
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+    const { exporterObjectifs } = rendre(
+      perimetre(['ventes.lire', 'ventes.objectifs_lire', 'ventes.exporter'], ['df']),
+    );
+    fireEvent.click(await screen.findByRole('tab', { name: 'Objectifs' }));
+    await screen.findByRole('table', { name: 'Objectifs de ventes 2025' });
+    const boutons = screen.getAllByRole('button', { name: 'Exporter' });
+    fireEvent.click(boutons[boutons.length - 1]!);
+    fireEvent.click(await screen.findByRole('menuitem', { name: /Tableau des objectifs.*CSV/ }));
+    await waitFor(() =>
+      expect(exporterObjectifs).toHaveBeenCalledWith({ annee: 2025, mois_fin: 3, fichier: 'csv' }),
+    );
+  });
+
+  it('1.8.0 : une notification ouvre directement l’onglet Objectifs', async () => {
+    rendre(
+      perimetre(['ventes.lire', 'ventes.objectifs_lire'], ['dm']),
+      SYNTHESE,
+      '/ventes?onglet=objectifs',
+    );
+    expect(await screen.findByRole('table', { name: 'Objectifs de ventes 2025' })).toBeTruthy();
+  });
+
+  it('1.8.0 : fixer l’objectif d’un délégué du réseau', async () => {
+    const { fixerObjectif } = rendre(
+      perimetre(['ventes.lire', 'ventes.objectifs_lire', 'ventes.objectifs_gerer']),
+    );
+    fireEvent.click(await screen.findByRole('tab', { name: 'Objectifs' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Fixer un objectif' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.mouseDown(within(dialogue).getByRole('combobox', { name: /Réseau/ }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Cardio' }));
+    fireEvent.mouseDown(within(dialogue).getByRole('combobox', { name: 'Portée' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Un délégué' }));
+    fireEvent.mouseDown(within(dialogue).getByRole('combobox', { name: /Délégué/ }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Gabriel Sn' }));
+    fireEvent.change(within(dialogue).getByLabelText(/Cible de l'année/), {
+      target: { value: '5000' },
+    });
+    fireEvent.click(within(dialogue).getByRole('button', { name: "Enregistrer l'objectif" }));
+    await waitFor(() =>
+      expect(fixerObjectif).toHaveBeenCalledWith({
+        reseau: 'r1',
+        produit: null,
+        delegue: 'd1',
+        annee: 2025,
+        cible: '5000',
+      }),
+    );
   });
 });
