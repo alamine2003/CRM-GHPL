@@ -619,7 +619,8 @@
       "pays": "Country",
       "motif": "Reason",
       "debut": "Start",
-      "fin": "End (optional)"
+      "fin": "End (optional)",
+      "reseau": "Network"
     },
     "fiche": {
       "roles": "Roles",
@@ -644,7 +645,12 @@
       "fermerSessions": "Sign out everywhere",
       "sessionsFermees": "Sessions closed.",
       "reinitialiserDoubleAuth": "Reset two-step verification",
-      "doubleAuthReinitialisee": "Two-step verification reset: it will be set up again at next sign-in."
+      "doubleAuthReinitialisee": "Two-step verification reset: it will be set up again at next sign-in.",
+      "reseaux": "Followed networks",
+      "reseauxAide": "The DF and the DM read the plans, reports, dashboards and sales of these networks, and the DM sets their sales targets.",
+      "ajouterReseau": "Add a network",
+      "aucunReseau": "No followed network: this account sees nothing of the networks' activity.",
+      "tousReseauxSuivis": "Every network of the country is already followed."
     },
     "vide": "No account matches"
   },

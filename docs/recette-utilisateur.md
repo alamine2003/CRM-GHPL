@@ -1,4 +1,4 @@
-# Kit de recette utilisateur — INNOV CRM, version 1.9.1
+# Kit de recette utilisateur — INNOV CRM, version 1.9.2
 
 Ce kit sert à jouer à la main les 20 scénarios de recette obligatoires (prd.md §21.1, REC-01 à REC-20). Il répond à la condition 1 de la version 1.0.0 (prd.md §21.2) : « Les scénarios REC-01 à REC-20 sont passés en préproduction et pendant le pilote ». La section 3 ajoute quatre scénarios **complémentaires** pour le suivi des ventes et les droits du DO (versions 1.6.0 à 1.9.0) ; ils ne conditionnent pas la version 1.0.0, mais se jouent avec la même règle des défauts.
 
@@ -51,7 +51,7 @@ Tout se fait depuis le portail, avec des noms inventés de forme prénom.nom (pa
    | Cardio | le DF | le DM | le superviseur SN | POSTE NON POURVU | VM |
    | Gynéco | le DF | | le second superviseur | le délégué C | VM |
 
-   Écrivez chaque personne **exactement** comme son compte, « Prénom Nom » : l'import reprend alors le compte existant, lui donne son rôle, son poste, son superviseur, et les réseaux du DF et du DM. Donnez deux zones et un secteur par ligne, et trois produits inventés par réseau. Menu « Imports », « Organisation » : déposez le classeur, « Lancer la simulation » (« Comptes créés » doit valoir 0 ; sinon un nom est mal écrit), puis « Importer pour de bon ». Vérifiez dans « Organisation » que A, B et C occupent leur poste.
+   Écrivez chaque personne **exactement** comme son compte, « Prénom Nom » : l'import reprend alors le compte existant, lui donne son rôle, son poste, son superviseur, et les réseaux du DF et du DM. Donnez deux zones et un secteur par ligne, et trois produits inventés par réseau. Menu « Imports », « Organisation » : déposez le classeur, « Lancer la simulation » (« Comptes créés » doit valoir 0 ; sinon un nom est mal écrit), puis « Importer pour de bon ». Vérifiez dans « Organisation » que A, B et C occupent leur poste. Les réseaux du DF et du DM se lisent, et se corrigent au besoin, sur leur fiche dans « Équipe », section « Réseaux suivis » (depuis 1.9.2).
 6. **Prospects et établissements.** Menu « Imports », « BirdNotes » : déposez l'export fictif de §1.1, « Lancer la simulation », puis « Importer pour de bon ». À défaut, saisissez à la main, dans « Établissements » et « Prospects », une quinzaine de fiches avec leur lieu d'exercice dans les secteurs des délégués A et B.
 7. **Listes cibles.** Menu « Listes cibles » : au moins dix prospects pour le poste de A, dix pour celui de B, cinq pour celui de C.
 8. **Paramètres.** Menu « Paramètres » : vérifiez les repères de visites par jour, et notez le « Délai avant escalade à l'administrateur (heures ouvrées) » (24 par défaut).

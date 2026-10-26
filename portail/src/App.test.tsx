@@ -616,6 +616,66 @@ describe('portail — administration 0.0.6 (USR-003, USR-004, USR-006, ORG-011)'
     );
   });
 
+  it('ajoute un réseau suivi à un DM et en termine un (ORG-008, 1.9.2)', async () => {
+    const LIEN = {
+      id: 'l1',
+      reseau: { id: 'r1', libelle: 'Cardio' },
+      debut: '2026-01-01',
+      fin: null,
+      actif: true,
+    };
+    const organisation = {
+      reseaux: vi.fn(async () => [
+        { id: 'r1', pays: 'SN', code: 'CAR1', libelle: 'Cardio', division: 'd1', archive: false },
+        { id: 'r2', pays: 'SN', code: 'GYN1', libelle: 'Gynéco', division: 'd1', archive: false },
+      ]),
+      reseauxSuivis: vi.fn(async () => [LIEN]),
+      suivreReseau: vi.fn(async () => ({ ...LIEN, id: 'l2' })),
+      terminerReseauSuivi: vi.fn(async () => ({ ...LIEN, actif: false })),
+    };
+    const client = clientAdmin({
+      organisation: organisation as unknown as ClientApi['organisation'],
+      comptes: {
+        roles: vi.fn(async () => [
+          {
+            id: 'ro1',
+            role: 'dm',
+            libelle: 'DM',
+            pays: 'SN',
+            debut: '2026-01-01T00:00:00Z',
+            actif: true,
+          },
+        ]),
+        affectations: vi.fn(async () => []),
+        transferts: vi.fn(async () => []),
+      } as unknown as ClientApi['comptes'],
+    });
+    rendre(client, '/equipe');
+    fireEvent.click(await screen.findByText('Moussa Fall'));
+    expect(await screen.findByText('Réseaux suivis')).toBeInTheDocument();
+    expect(await screen.findByText('Cardio')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Ajouter un réseau' }));
+    const dialogue = await screen.findByRole('dialog');
+    fireEvent.mouseDown(within(dialogue).getByRole('combobox', { name: /Réseau/ }));
+    // Un réseau déjà suivi n'est pas proposé.
+    expect(screen.queryByRole('option', { name: 'Cardio' })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('option', { name: 'Gynéco' }));
+    fireEvent.click(within(dialogue).getByRole('button', { name: 'Enregistrer' }));
+    await vi.waitFor(() =>
+      expect(organisation.suivreReseau).toHaveBeenCalledWith('u1', 'r2', expect.any(String)),
+    );
+    await vi.waitFor(() => expect(screen.queryByText('Gynéco')).not.toBeInTheDocument());
+    fireEvent.click(await screen.findByRole('button', { name: 'Terminer' }));
+    await vi.waitFor(() => expect(organisation.terminerReseauSuivi).toHaveBeenCalledWith('l1'));
+  });
+
+  it('un délégué n’a pas de réseaux suivis sur sa fiche', async () => {
+    rendre(clientAdmin(), '/equipe');
+    fireEvent.click(await screen.findByText('Moussa Fall'));
+    expect(await screen.findByText('Affectations dans d’autres pays')).toBeInTheDocument();
+    expect(screen.queryByText('Réseaux suivis')).not.toBeInTheDocument();
+  });
+
   it('affiche les téléphones et en révoque un après confirmation (USR-006)', async () => {
     const client = clientAdmin();
     rendre(client, '/equipe');

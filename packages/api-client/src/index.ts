@@ -129,6 +129,7 @@ import type {
   Rattachement,
   Reseau,
   RoleAttribue,
+  PerimetreReseau,
   Secteur,
   SessionOuverte,
   StatutFiche,
@@ -321,6 +322,7 @@ export type {
   Rattachement,
   Reseau,
   RoleAttribue,
+  PerimetreReseau,
   Secteur,
   SessionOuverte,
   StatutFiche,
@@ -797,6 +799,19 @@ export function creerClient(options: OptionsClient) {
         requete<Rattachement>(`${ORG}/postes/${poste}/rattachements/`, {
           methode: 'POST',
           corps: { superviseur, ...(debut ? { debut } : {}) },
+        }),
+      /** 1.9.2 : les réseaux suivis par un DF ou un DM, datés (ORG-008). */
+      reseauxSuivis: (personne: string) =>
+        requete<PerimetreReseau[]>(`${ORG}/personnes/${personne}/reseaux/`),
+      suivreReseau: (personne: string, reseau: string, debut?: string) =>
+        requete<PerimetreReseau>(`${ORG}/personnes/${personne}/reseaux/`, {
+          methode: 'POST',
+          corps: { reseau, ...(debut ? { debut } : {}) },
+        }),
+      terminerReseauSuivi: (lien: string, fin?: string) =>
+        requete<PerimetreReseau>(`${ORG}/perimetres-reseaux/${lien}/terminer/`, {
+          methode: 'POST',
+          corps: fin ? { fin } : {},
         }),
     },
     /** Référentiels du pays (PRP-001) et portefeuilles des réseaux (ORG-004). */

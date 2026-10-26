@@ -2,6 +2,17 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.9.2] — Les réseaux suivis du DF et du DM, depuis le portail
+
+### Ajouté (prd.md §14.91, ORG-008)
+
+- Sur la fiche d'un compte DF ou DM dans « Équipe », une section « Réseaux suivis » : chaque réseau avec sa période ; « Ajouter un réseau » à partir d'une date, « Terminer » pour un réseau en cours. Réservé à l'administrateur pays (et au siège dans un pays choisi) ; chaque ajout et chaque fin sont audités. Jusqu'ici, seul l'import du fichier d'organisation réglait ces réseaux : un DF ou un DM créé à la main ne voyait rien.
+- Le kit de recette (`docs/recette-utilisateur.md` §1.2) renvoie à cette section.
+
+### Design
+
+- Section « Réseaux suivis » : `docs/design.md`.
+
 ## [1.9.1] — Le kit de recette utilisateur à jour
 
 ### Corrigé

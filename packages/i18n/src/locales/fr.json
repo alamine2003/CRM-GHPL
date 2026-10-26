@@ -619,7 +619,8 @@
       "pays": "Pays",
       "motif": "Motif",
       "debut": "Début",
-      "fin": "Fin (facultative)"
+      "fin": "Fin (facultative)",
+      "reseau": "Réseau"
     },
     "fiche": {
       "roles": "Rôles",
@@ -644,7 +645,12 @@
       "fermerSessions": "Fermer ses sessions",
       "sessionsFermees": "Sessions fermées.",
       "reinitialiserDoubleAuth": "Réinitialiser la double authentification",
-      "doubleAuthReinitialisee": "Double authentification réinitialisée : elle sera reconfigurée à la prochaine connexion."
+      "doubleAuthReinitialisee": "Double authentification réinitialisée : elle sera reconfigurée à la prochaine connexion.",
+      "reseaux": "Réseaux suivis",
+      "reseauxAide": "Le DF et le DM lisent les plannings, les rapports, le pilotage et les ventes de ces réseaux, et le DM y fixe les objectifs de ventes.",
+      "ajouterReseau": "Ajouter un réseau",
+      "aucunReseau": "Aucun réseau suivi : ce compte ne voit rien de l'activité des réseaux.",
+      "tousReseauxSuivis": "Tous les réseaux du pays sont déjà suivis."
     },
     "vide": "Aucun compte ne correspond"
   },
