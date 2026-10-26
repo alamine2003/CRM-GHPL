@@ -2,6 +2,12 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.9.3] — Vue de tous les pays : hypothèses confirmées
+
+### Décidé (prd.md §14.90, VNT-012, VNT-013)
+
+- [D, 26 octobre 2026] Un seul taux de change par monnaie et par année ; le classement de tous les pays réunit un même produit par son code. Les deux hypothèses de la 1.9.0 deviennent des décisions ; le comportement ne change pas.
+
 ## [1.9.2] — Les réseaux suivis du DF et du DM, depuis le portail
 
 ### Ajouté (prd.md §14.91, ORG-008)
