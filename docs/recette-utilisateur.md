@@ -1,8 +1,8 @@
-# Kit de recette utilisateur — INNOV CRM, version 0.9.8
+# Kit de recette utilisateur — INNOV CRM, version 1.9.2
 
-Ce kit sert à jouer à la main les 20 scénarios de recette obligatoires (prd.md §21.1, REC-01 à REC-20). Il répond à la condition 1 de la version 1.0.0 (prd.md §21.2) : « Les scénarios REC-01 à REC-20 sont passés en préproduction et pendant le pilote ».
+Ce kit sert à jouer à la main les 20 scénarios de recette obligatoires (prd.md §21.1, REC-01 à REC-20). Il répond à la condition 1 de la version 1.0.0 (prd.md §21.2) : « Les scénarios REC-01 à REC-20 sont passés en préproduction et pendant le pilote ». La section 3 ajoute quatre scénarios **complémentaires** pour le suivi des ventes et les droits du DO (versions 1.6.0 à 1.9.0) ; ils ne conditionnent pas la version 1.0.0, mais se jouent avec la même règle des défauts.
 
-Il s'adresse aux personnes de l'entreprise qui joueront les scénarios : administrateur du siège, administrateur pays, superviseur, DM, délégués, responsable pays, administrateur technique. Chaque scénario dit qui le joue, avec quel matériel, quoi faire, et ce que vous devez voir.
+Il s'adresse aux personnes de l'entreprise qui joueront les scénarios : administrateur du siège, direction du siège, administrateur pays, responsable pays, DF, DM, superviseurs, délégués, administrateur technique. Chaque scénario dit qui le joue, avec quel matériel, quoi faire, et ce que vous devez voir.
 
 Les libellés entre « … » sont ceux de l'écran, en français. Les « … » à l'intérieur d'un libellé remplacent un nom, une date ou un nombre.
 
@@ -11,6 +11,13 @@ Les libellés entre « … » sont ceux de l'écran, en français. Les « … »
 - Aucun mot de passe dans ce kit, dans un ticket ou dans un message. Les mots de passe des comptes de test se transmettent à part, depuis le coffre de l'entreprise.
 - Une capture d'écran ne montre jamais de donnée de patient.
 
+**Ce qui a changé depuis la version 0.9.8 de ce kit**
+- **L'instance part vide** (1.0.8, prd.md §14.81) : plus aucune commande ne verse de données fictives ; `reinitialiser_demo` n'existe plus. Le jeu de recette se prépare à la main, depuis le portail (§1.2).
+- **La double authentification n'est plus imposée** (1.1.2) : elle reste proposée dans « Mon profil » ; elle n'est demandée à la connexion que si l'instance tourne avec `INNOV_DOUBLE_AUTH_OBLIGATOIRE=oui`.
+- **Le Sénégal n'a pas d'administrateur pays** (1.2.0) : l'administrateur du siège, une fois le Sénégal choisi dans la liste « Pays », a ses droits.
+- **Le DM ne décide plus** (1.3.0) : l'escalade d'un planning ou d'une journée va à l'administrateur pays, et au siège pour le Sénégal (REC-16).
+- **L'application mobile a été redessinée** (1.4.0 à 1.5.8) : les libellés de ce kit sont ceux des écrans actuels.
+
 ---
 
 ## 1. Avant de commencer
@@ -18,38 +25,53 @@ Les libellés entre « … » sont ceux de l'écran, en français. Les « … »
 ### 1.1 Préparer la préproduction (administrateur technique)
 
 1. **Installer la version.** Suivez docs/mise-a-jour.md §2, étapes 1 à 4 : CI verte, étiquette, sauvegarde vérifiée, déploiement en préproduction. `/api/health/` doit afficher la version jouée.
-2. **Vérifier les services** (docs/exploitation.md §1 et §5) : API, worker, ordonnanceur, base, file. Sans worker, les rappels et escalades ne partent pas. Vous pouvez alors lancer la passe à la main : `python manage.py executer_echeances`.
-3. **Remplir la base de données fictives.** La commande `python manage.py reinitialiser_demo --oui` existe (backend/apps/demonstration/management/commands/reinitialiser_demo.py). Attention :
-   - elle **efface toute la base** ;
-   - elle **refuse** de tourner si l'instance n'est pas lancée avec `ENVIRONNEMENT` égal à `developpement`, `demonstration` ou `test`. Pour la recette, lancez donc l'instance de préproduction avec `ENVIRONNEMENT=demonstration` (un bandeau « Démonstration » s'affiche alors sur chaque écran), ou utilisez une instance de recette dédiée ;
-   - le mot de passe commun des comptes vient de la variable `INNOV_DEMO_MOT_DE_PASSE`, saisie sur le serveur. Sans elle, il est tiré au hasard et affiché une fois. Ne l'écrivez nulle part ailleurs que dans le coffre.
-4. **Noter les comptes affichés** par la commande (un par rôle, voir §1.2). Les courriels de ces comptes finissent en `@demo.invalid` : **aucun courriel ne leur parvient**. Pour les étapes qui demandent un courriel (lien de mot de passe, REC-01, REC-19), créez un compte de test avec une boîte de test de l'entreprise.
-5. **Options à vérifier, et à noter dans chaque fiche** :
+2. **Partir d'une base vide.** Au démarrage, `preparer_instance` crée **seulement** l'administrateur du siège, à partir de `INNOV_ADMIN_IDENTIFIANT` et `INNOV_ADMIN_MOT_DE_PASSE` saisis sur le serveur (jamais dans ce kit). Le journal du serveur affiche « Administrateur du siège créé ». Pour repartir de zéro après une campagne, donnez à l'instance une base neuve : au redémarrage, seul l'administrateur du siège est recréé.
+3. **Vérifier les services** (docs/exploitation.md §1 et §5) : API, worker, ordonnanceur, base, file. Sans worker, les rappels, escalades et alertes ne partent pas. Vous pouvez alors lancer la passe à la main : `python manage.py executer_echeances`.
+4. **Courriels.** Chaque compte reçoit son lien de mot de passe par courriel (valable 30 minutes, une seule fois). Créez donc chaque compte avec une **boîte de test de l'entreprise**. Sur une instance sans envoi de courriel (l'instance d'essai gratuite), donnez une adresse fictive (`prenom.nom@exemple.invalid`) : le lien s'écrit alors dans le journal du serveur (cherchez `reinitialisation?jeton=`). Un compte sans adresse ne reçoit aucun lien.
+5. **Un export BirdNotes fictif** pour les prospects : `python manage.py generer_export_birdnotes export-fictif.json --prospects 300`. Le fichier a la structure du vrai et des valeurs inventées ; remettez-le à l'administrateur qui prépare le Sénégal (§1.2, étape 6).
+6. **Options à vérifier, et à noter dans chaque fiche** :
    - notifications push : actives seulement si `PUSH_ACTIF=true` et les clés Apple et Google installées (docs/notifications-push.md) ;
    - Grafana : seulement s'il est installé (docs/grafana.md) ;
    - test de restauration : comptes R2 et phrase de chiffrement en place (docs/exploitation.md §8).
-6. **Après la campagne** : relancez `reinitialiser_demo --oui` pour repartir d'un état propre. Les pays créés en REC-01 ne se suppriment pas : seule la réinitialisation les efface.
 
-### 1.2 Comptes de test
+### 1.2 Préparer le jeu de recette (administrateur du siège, une demi-journée)
 
-`reinitialiser_demo` crée deux pays fictifs, le Sénégal (SN) et le Togo (TG, réduit). Elle affiche un compte par rôle. Tous ont le même mot de passe. Les comptes marqués `*` doivent activer la double authentification à la première connexion : prévoyez un téléphone avec une application d'authentification (Google Authenticator, Microsoft Authenticator ou équivalente).
+Tout se fait depuis le portail, avec des noms inventés de forme prénom.nom (par exemple « Aïda Fictive », identifiant `aida.fictive`). Les identifiants génériques (« admin », « test… », un nom de rôle) sont refusés. Notez chaque identifiant dans la colonne « Compte » du tableau ci-dessous : ce kit les désigne par leur nom de la première colonne.
 
-| Nom dans ce kit | Compte affiché par la commande | Double authentification |
+1. **Pays.** Connectez-vous avec l'administrateur du siège. Menu « Pays », « Ouvrir un pays » : `SN`, puis `TG`. Ne créez ni la Côte d'Ivoire ni le Bénin : REC-01 les crée.
+2. **Comptes du siège.** Gardez « Tous les pays » dans la liste « Pays » de l'en-tête. Menu « Équipe », « Nouveau compte » pour la direction du siège et l'administrateur technique, puis « Attribuer un rôle » sur chaque fiche.
+3. **Comptes du Togo.** Liste « Pays » : Togo. Créez le responsable pays et l'administrateur pays du Togo, et attribuez-leur leur rôle.
+4. **Comptes du Sénégal.** Liste « Pays » : Sénégal (vous avez alors les droits de l'administrateur pays). « Équipe », « Nouveau compte », chacun avec sa boîte de test : responsable pays (attribuez-lui son rôle), DF, DM, superviseur SN, second superviseur, délégués A, B et C. Les rôles de ces sept derniers viennent de l'import de l'étape 5.
+5. **Organisation du Sénégal, par import.** Préparez un classeur **fictif**, feuille « ORGANISATION », colonnes GAMME, RESEAUX, DF, DM, SUPERVISEUR, ZONE, SECTEUR / VILLE, NOM ET PRENOMS, FONCTION, PRODUITS DE LA GAMME, une ligne par poste :
+
+   | RESEAUX | DF | DM | SUPERVISEUR | NOM ET PRENOMS | FONCTION |
+   |---|---|---|---|---|---|
+   | Cardio | le DF | le DM | le superviseur SN | le délégué A | VM |
+   | Cardio | le DF | le DM | le superviseur SN | le délégué B | VM |
+   | Cardio | le DF | le DM | le superviseur SN | POSTE NON POURVU | VM |
+   | Gynéco | le DF | | le second superviseur | le délégué C | VM |
+
+   Écrivez chaque personne **exactement** comme son compte, « Prénom Nom » : l'import reprend alors le compte existant, lui donne son rôle, son poste, son superviseur, et les réseaux du DF et du DM. Donnez deux zones et un secteur par ligne, et trois produits inventés par réseau. Menu « Imports », « Organisation » : déposez le classeur, « Lancer la simulation » (« Comptes créés » doit valoir 0 ; sinon un nom est mal écrit), puis « Importer pour de bon ». Vérifiez dans « Organisation » que A, B et C occupent leur poste. Les réseaux du DF et du DM se lisent, et se corrigent au besoin, sur leur fiche dans « Équipe », section « Réseaux suivis » (depuis 1.9.2).
+6. **Prospects et établissements.** Menu « Imports », « BirdNotes » : déposez l'export fictif de §1.1, « Lancer la simulation », puis « Importer pour de bon ». À défaut, saisissez à la main, dans « Établissements » et « Prospects », une quinzaine de fiches avec leur lieu d'exercice dans les secteurs des délégués A et B.
+7. **Listes cibles.** Menu « Listes cibles » : au moins dix prospects pour le poste de A, dix pour celui de B, cinq pour celui de C.
+8. **Paramètres.** Menu « Paramètres » : vérifiez les repères de visites par jour, et notez le « Délai avant escalade à l'administrateur (heures ouvrées) » (24 par défaut).
+9. **Togo.** Liste « Pays » : Togo. Au moins un prospect et un établissement (REC-09).
+10. **Mots de passe.** Chaque personne choisit son mot de passe depuis le lien reçu. Un lien expiré se renvoie depuis la fiche du compte : « Envoyer un lien de mot de passe ».
+
+| Nom dans ce kit | Rôle et pays | Compte (à remplir) |
 |---|---|---|
-| Administrateur du siège | `admin_siege` | oui |
-| Direction du siège | `direction_siege` | oui |
-| Administrateur technique | `admin_technique` | oui |
-| Responsable pays SN / TG | `responsable_pays (SN)`, `responsable_pays (TG)` | oui |
-| Administrateur pays SN / TG | `admin_pays (SN)`, `admin_pays (TG)` | oui |
-| DF SN | `df (SN)` | oui |
-| DM SN | `dm (SN)` | oui |
-| Superviseur SN | `superviseur (SN)` | non |
-| Délégué A | `delegue (SN)` | non |
-| Délégué B | `delegue semaine fermee (SN)` | non |
-
-D'autres comptes fictifs existent (autres superviseurs, délégués d'autres réseaux). L'administrateur pays retrouve leur identifiant dans « Équipe » ou « Organisation ». Ils ont le même mot de passe.
-
-Pour créer un compte de test : utilisez un nom inventé de forme prénom.nom (par exemple « Aïda Fictive », identifiant `aida.fictive`). Les identifiants génériques (« admin », « test… », un nom de rôle) sont refusés.
+| Administrateur du siège | Administrateur du siège ; gère aussi le Sénégal | |
+| Direction du siège | Direction du siège | |
+| Administrateur technique | Administrateur technique | |
+| Responsable pays SN / TG | Responsable pays | |
+| Administrateur pays TG | Administrateur pays (le Sénégal n'en a pas) | |
+| DF SN | DF, premier réseau | |
+| DM SN | DM, premier réseau | |
+| Superviseur SN | Superviseur de A et B | |
+| Second superviseur | Superviseur de C ; remplaçant en REC-16 | |
+| Délégué A | Délégué, premier réseau | |
+| Délégué B | Délégué, premier réseau, même superviseur que A | |
+| Délégué C | Délégué, second réseau (REC-14) | |
 
 ### 1.3 Matériel
 
@@ -58,25 +80,28 @@ Pour créer un compte de test : utilisez un nom inventé de forme prénom.nom (p
 | Un ordinateur avec un navigateur récent (portail) | Tous sauf REC-20 |
 | Un téléphone Android (Android 10 ou plus) avec l'application de recette installée | REC-03 à REC-08, REC-11, REC-13, REC-14, REC-17, REC-19 |
 | Un iPhone (iOS 16 ou plus) avec l'application de recette installée | Au moins une fois REC-06, REC-07, REC-17 |
-| Un téléphone avec une application d'authentification | Comptes marqués `*` |
-| Une boîte de courriel de test de l'entreprise | REC-01, REC-19 |
+| Une boîte de courriel de test de l'entreprise par compte | Préparation (§1.2), REC-01, REC-19 |
 | Un classeur d'organisation **fictif** (.xlsx) | REC-02 |
-| Un accès serveur (administrateur technique) | REC-16, REC-17, REC-20 |
+| Un classeur de ventes **fictif** (.xlsx) | VNT-R1 (§3) |
+| Un accès serveur (administrateur technique) | Préparation (§1.1), REC-16, REC-17, REC-20 |
+| Un téléphone avec une application d'authentification | Seulement si l'instance impose la double authentification |
 
 L'application de recette s'installe selon le README, « Builds de test Android et iOS ». N'utilisez pas Expo Go : sa base locale n'est pas chiffrée.
 
-### 1.4 Jour et ordre de passage
+### 1.4 Calendrier et ordre de passage
 
-Les données de démonstration supposent un jour ouvré. Jouez REC-06, REC-07 et REC-11 un **mardi, mercredi ou jeudi** : la semaine en cours du délégué A a des visites du lundi au jeudi.
+Une base vide n'a ni planning ni rapport : les scénarios se suivent, chacun créant ce que le suivant lit. Comptez **deux semaines**.
 
-Ordre conseillé, sur une base fraîchement réinitialisée :
-1. REC-19 (langues) au fil de l'eau, REC-01, REC-02, REC-18, REC-09, REC-10 ;
-2. REC-03, REC-04, REC-05 (même planning, à enchaîner) ;
-3. REC-06, REC-07, REC-11 (même jour) ;
-4. REC-08, REC-15, REC-12 (validation des rapports, puis lecture de l'audit) ;
-5. REC-13, REC-14, REC-16 ;
-6. REC-17 en dernier : il révoque un téléphone ;
-7. REC-20 à part, par l'administrateur technique.
+- **Semaine 1** (la semaine N) :
+  1. préparation (§1.1, §1.2) ; REC-19 au fil de l'eau ; REC-01, REC-02, REC-18, REC-09, REC-13 ;
+  2. du mardi au jeudi : REC-03, REC-04, REC-05 (le délégué A prépare **sa semaine N+1**, à enchaîner) ; le délégué B prépare aussi sa semaine N+1, que le superviseur SN approuve.
+- **Semaine 2** (la semaine N+1, celle approuvée en REC-05) :
+  1. lundi : le délégué A fait ses visites du jour et soumet ses rapports ; il laisse **une** visite sans rien faire (elle passera « À justifier », REC-11). Le délégué B fait ses visites et ses rapports du jour, et soumet sa semaine N+2 ; le superviseur SN n'y touche pas (REC-16) ;
+  2. mardi : REC-16 partie A dès le matin ; REC-06, REC-07, puis REC-11 ;
+  3. mercredi : REC-08 et REC-15 sur les journées de lundi et mardi ; REC-16 partie B ; REC-14 ; REC-10 ; REC-12 en dernier, car il relit les décisions des autres ;
+  4. REC-17 en dernier : il révoque un téléphone ;
+  5. REC-20 à part, par l'administrateur technique ;
+  6. les scénarios complémentaires (§3) quand vous voulez, sur le portail.
 
 ### 1.5 Règle des défauts
 
@@ -118,11 +143,15 @@ Reportez le numéro du défaut dans la ligne « Défaut n° » du scénario. Un 
 | REC-13 | Fusion automatique, homonyme en file, défusion | Délégué, administrateur pays | oui | | |
 | REC-14 | Visites d'un autre réseau invisibles | Deux délégués, administrateur pays | partielle | | |
 | REC-15 | Validation par lot, journée « à vérifier » en attente | Superviseur | oui | | |
-| REC-16 | Escalade au DM, décision d'un remplaçant | Superviseur, DM, remplaçant | oui | | |
+| REC-16 | Escalade à l'administrateur, décision d'un remplaçant | Superviseur, administrateur du siège, remplaçant | oui | | |
 | REC-17 | Téléphone révoqué effacé ; 8ᵉ jour sans synchronisation | Administrateur pays, délégué | oui | | |
 | REC-18 | Affectation supplémentaire, un pays à la fois, fin datée | Administrateur du siège, DF | oui | | |
 | REC-19 | Interface et notifications en français et en anglais | Tous | oui | | |
 | REC-20 | Restauration complète dans le délai RTO | Administrateur technique | oui | | |
+| VNT-R1 | Complémentaire : import des ventes, synthèse, périmètre, export | Administrateur du siège, DF, superviseur, délégué | oui | | |
+| VNT-R2 | Complémentaire : objectifs de ventes, courbe, alerte | Administrateur du siège, DM, superviseur | oui | | |
+| VNT-R3 | Complémentaire : ventes de tous les pays, taux de change | Administrateur et direction du siège | oui | | |
+| DOR-R1 | Complémentaire : droits du DO | Administrateur du siège, DF | oui | | |
 
 ---
 
@@ -135,12 +164,12 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 **Énoncé (prd.md §21.1)** : « L'administrateur du siège crée deux pays et affecte un responsable et un administrateur différents à chacun. »
 **Exigences couvertes** : ORG-001, ORG-002.
 
-**Qui et matériel** : l'administrateur du siège, sur le portail. Un téléphone avec l'application d'authentification. Une boîte de courriel de test pour recevoir les liens.
+**Qui et matériel** : l'administrateur du siège, sur le portail. Une boîte de courriel de test par compte créé, pour recevoir les liens.
 
-**Données de départ** : compte `admin_siege`. Deux codes de pays du catalogue absents de la base, par exemple CI (Côte d'Ivoire) et BJ (Bénin). Quatre personnes inventées (par exemple « Aïda Fictive », « Koffi Exemple », « Mariam Imaginaire », « Yao Fictif »).
+**Données de départ** : le compte de l'administrateur du siège. Deux codes de pays du catalogue absents de la base, par exemple CI (Côte d'Ivoire) et BJ (Bénin). Quatre personnes inventées (par exemple « Aïda Fictive », « Koffi Exemple », « Mariam Imaginaire », « Yao Fictif »).
 
 **Étapes**
-1. Connectez-vous au portail avec `admin_siege`. Activez la double authentification si le portail affiche « Protégez votre compte ».
+1. Connectez-vous au portail avec l'administrateur du siège. Si l'instance impose la double authentification, activez-la quand le portail affiche « Protégez votre compte ».
 2. Menu « Pays ». Cliquez « Ouvrir un pays ». Dans « Code ISO du pays », tapez `CI`. Cliquez « Créer ».
 3. Recommencez avec `BJ`.
 4. Sur la carte « Côte d'Ivoire », cliquez « Travailler sur ce pays ».
@@ -173,10 +202,10 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 **Énoncé** : « L'administrateur d'un pays importe le fichier d'organisation, crée un superviseur, un délégué, un poste vacant, une zone, un secteur, un prospect et un établissement. »
 **Exigences couvertes** : ORG-003 à ORG-007, ORG-014, PRP-002, PRP-003.
 
-**Qui et matériel** : l'administrateur pays, sur le portail. Téléphone d'authentification.
+**Qui et matériel** : l'administrateur pays, sur le portail.
 
 **Données de départ**
-- Compte : l'administrateur de CI créé en REC-01 (si sa boîte de test fonctionne), sinon `admin_pays (SN)`.
+- Compte : l'administrateur de CI créé en REC-01, une fois son mot de passe choisi.
 - Un classeur Excel **fictif**, feuille « ORGANISATION », colonnes : GAMME, RESEAUX, DF, DM, SUPERVISEUR, ZONE, SECTEUR / VILLE, NOM ET PRENOMS, FONCTION, PRODUITS DE LA GAMME. Trois à cinq lignes avec des noms inventés. FONCTION vaut « VM », « VM OTC », « KAM » ou « DERMO ». Une ligne porte « POSTE NON POURVU » dans NOM ET PRENOMS.
 
 **Étapes**
@@ -221,10 +250,10 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 
 **Qui et matériel** : le délégué A sur son téléphone ; le superviseur SN sur le portail pour la vérification finale.
 
-**Données de départ** : base réinitialisée. La semaine suivante du délégué A est « En préparation », avec six visites dont une à compléter.
+**Données de départ** : le jeu de recette (§1.2), un mardi, mercredi ou jeudi de la semaine 1. La semaine suivante du délégué A est vide, « En préparation » ; sa liste cible compte au moins dix prospects.
 
 **Étapes**
-1. Sur le téléphone, connectez-vous avec le délégué A. Onglet « Semaine », « Semaine suivante ».
+1. Sur le téléphone, connectez-vous avec le délégué A. Onglet « Semaine », « Suivante ».
 2. Ajoutez des visites sur chaque jour ouvré : « Ajouter depuis ma liste cible », cochez des prospects, choisissez le jour, « Poser … visites le … ».
 3. Laissez **un seul jour** avec moins de visites que le repère affiché (« n sur min–max »).
 4. Sur un autre jour, « Ajouter une visite » : choisissez un prospect et son lieu, mais laissez « Heure » et « Objectif » vides.
@@ -330,7 +359,7 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 
 **Qui et matériel** : le délégué A, sur un téléphone Android, puis sur un iPhone. Mode avion.
 
-**Données de départ** : base réinitialisée, un mardi, mercredi ou jeudi. La semaine en cours du délégué A est approuvée et a des visites aujourd'hui.
+**Données de départ** : la semaine approuvée en REC-05 est devenue la semaine en cours (semaine 2, §1.4). Jouez un mardi, mercredi ou jeudi qui a des visites.
 
 **Étapes**
 1. Avec du réseau, connectez-vous. Onglet « Profil », « Données hors connexion », « Synchroniser maintenant ».
@@ -340,7 +369,7 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 5. Touchez « Rédiger le rapport ». Remplissez « Résultat obtenu », « Produits présentés », « Retour du prescripteur » pour chaque produit, « Résumé de l'échange », « Prochaine action ».
 6. Au milieu de la saisie, fermez complètement l'application. Rouvrez-la et revenez au rapport.
 7. Touchez « Soumettre le rapport ».
-8. Ouvrez la fiche d'un prospect de « Ma liste » : lisez « Visites précédentes ».
+8. Onglet « Prospects », « Ma liste » : ouvrez la fiche d'un prospect visité ; lisez « Historique des visites ».
 9. Gardez le mode avion pour REC-07.
 
 **Résultat attendu**
@@ -405,7 +434,7 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 
 **Qui et matériel** : le superviseur SN sur le portail ; le délégué A sur son téléphone, avec réseau.
 
-**Données de départ** : base réinitialisée. « À traiter » contient les journées passées du délégué A, avec leurs rapports soumis. Choisissez une journée avec au moins deux rapports à valider.
+**Données de départ** : les journées de lundi et mardi de la semaine 2 (§1.4) : le délégué A y a fait ses visites et soumis ses rapports. Elles sont dans « À traiter » le lendemain. Choisissez une journée avec au moins deux rapports à valider ; gardez l'autre pour REC-15.
 
 **Étapes**
 1. Portail, superviseur : « À traiter », onglet « Journées ». Sur la journée choisie, cliquez « Ouvrir la journée ».
@@ -442,13 +471,13 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 **Énoncé** : « Le responsable d'un pays ne peut ni rechercher, ni consulter, ni exporter les données d'un autre pays (API, portail, Grafana). »
 **Exigences couvertes** : USR-002, SEC-008, DSH-010.
 
-**Qui et matériel** : `responsable_pays (TG)` puis `responsable_pays (SN)`, sur le portail. Téléphone d'authentification. Pour la partie Grafana : un compte Grafana du Sénégal (créé par l'administrateur technique).
+**Qui et matériel** : le responsable pays TG puis le responsable pays SN, sur le portail. Pour la partie Grafana : un compte Grafana du Sénégal (créé par l'administrateur technique).
 
-**Données de départ** : base réinitialisée (Sénégal et Togo).
+**Données de départ** : le Sénégal et le Togo du jeu de recette, avec au moins un prospect au Togo (§1.2, étape 9).
 
 **Étapes**
-1. Connectez-vous avec `responsable_pays (TG)`. Menu « Prospects » : notez le nom d'un prospect du Togo. Déconnectez-vous.
-2. Connectez-vous avec `responsable_pays (SN)`. Ouvrez la liste « Pays » de l'en-tête.
+1. Connectez-vous avec le responsable pays TG. Menu « Prospects » : notez le nom d'un prospect du Togo. Déconnectez-vous.
+2. Connectez-vous avec le responsable pays SN. Ouvrez la liste « Pays » de l'en-tête.
 3. Menu « Prospects » : cherchez le nom noté, avec le filtre « Tout le pays ».
 4. Menu « Pilotage » : ouvrez les filtres « Zone », « Réseau », « Délégué ».
 5. « Exporter » : « Indicateurs par délégué » en « Classeur Excel », puis « Rapports de visite » en « Fichier CSV ». Ouvrez les deux fichiers.
@@ -484,17 +513,17 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 **Énoncé** : « Le siège consulte les indicateurs consolidés, filtre par pays, descend au nominatif : la consultation est auditée. »
 **Exigences couvertes** : DSH-004.
 
-**Qui et matériel** : `direction_siege` sur le portail, puis `admin_siege` pour lire le journal. Téléphone d'authentification.
+**Qui et matériel** : la direction du siège sur le portail, puis l'administrateur du siège pour lire le journal.
 
-**Données de départ** : base réinitialisée ; le worker a tourné au moins une fois (tableaux recalculés toutes les 4 minutes).
+**Données de départ** : l'activité de la semaine 2 (visites et rapports de REC-06 à REC-08) ; le worker a tourné au moins une fois (tableaux recalculés toutes les 4 minutes).
 
 **Étapes**
-1. Connectez-vous avec `direction_siege`. Dans la liste « Pays », gardez « Tous les pays » (« Vue consolidée »).
+1. Connectez-vous avec la direction du siège. Dans la liste « Pays », gardez « Tous les pays » (« Vue consolidée »).
 2. Menu « Pilotage ». Lisez le tableau par pays et la ligne de total.
 3. Changez la « Période » (par exemple « 30 derniers jours »).
 4. Sur la ligne « Sénégal », cliquez « Voir les délégués ».
 5. Lisez le bandeau en haut de la page.
-6. Déconnectez-vous. Connectez-vous avec `admin_siege`. « Journal d'audit », famille « Pilotage ».
+6. Déconnectez-vous. Connectez-vous avec l'administrateur du siège. « Journal d'audit », famille « Pilotage ».
 
 **Résultat attendu**
 - Le tableau consolidé montre les pays, sans aucun nom de délégué.
@@ -518,7 +547,7 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 
 **Qui et matériel** : le délégué A sur son téléphone, avec réseau ; le superviseur SN sur le portail.
 
-**Données de départ** : base réinitialisée, un mardi ou un mercredi. Une visite passée restée « prévue » apparaît sous « À justifier ».
+**Données de départ** : la semaine 2, un mardi ou un mercredi. La visite que le délégué A a laissée sans suite lundi (§1.4) apparaît sous « À justifier ».
 
 **Étapes**
 1. Tournée, prochaine visite du jour : touchez « Prospect absent ». Sans motif, essayez « Confirmer l'absence ». Puis choisissez un motif et confirmez.
@@ -553,7 +582,7 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 **Énoncé** : « Le journal d'audit identifie l'auteur, la date, le mode et la décision pour chaque validation. »
 **Exigences couvertes** : AUD-001, RG-034.
 
-**Qui et matériel** : `admin_pays (SN)` ou `responsable_pays (SN)`, sur le portail.
+**Qui et matériel** : l'administrateur du siège (Sénégal choisi) ou le responsable pays SN, sur le portail.
 
 **Données de départ** : REC-05, REC-08, REC-15 et REC-16 joués : il existe une approbation directe, une approbation par escalade, des validations seules, par journée, par lot et en remplacement.
 
@@ -574,7 +603,7 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 - `backend/apps/rapports/tests/test_recette_06.py::test_rg034_validations_par_journee_et_par_lot_auditees_avec_auteur_et_mode`
 - `backend/apps/rapports/tests/test_validation.py::test_rpt013_ca2_un_rapport_valide_seul_porte_validateur_date_et_mode`
 - `backend/apps/planning/tests/test_approbation.py::test_pln012_ca1_l_approbation_fige_la_version` (événement `planning.approbation`)
-- `backend/apps/planning/tests/test_echeances.py::test_pln016_ca2_la_decision_du_dm_porte_le_mode_escalade`
+- `backend/apps/planning/tests/test_echeances.py::test_pln016_ca2_la_decision_de_l_administrateur_porte_le_mode_escalade`
 - `backend/apps/planning/tests/test_remplacements.py::test_ca1_ca2_le_remplacant_decide_en_remplacement`
 - `backend/apps/audit/tests/test_audit.py::test_aucun_role_ne_peut_modifier_ni_supprimer_un_evenement`
 - `portail/src/pages/JournalAudit.test.tsx` (liste, filtres, détail)
@@ -623,15 +652,15 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 **Énoncé** : « Un délégué ne voit pas les visites d'un délégué d'un autre réseau sur le même médecin. »
 **Exigences couvertes** : RG-040.
 
-**Qui et matériel** : le délégué A ; un délégué C d'un **autre réseau** ; l'administrateur pays SN (portail). Deux téléphones, ou un téléphone utilisé l'un après l'autre.
+**Qui et matériel** : le délégué A ; le délégué C, d'un **autre réseau** ; l'administrateur du siège, Sénégal choisi (portail). Deux téléphones, ou un téléphone utilisé l'un après l'autre.
 
-**Données de départ** : un prospect P de la liste cible du délégué A, avec des visites et des rapports passés (données de démonstration). Le délégué C : dans « Organisation », onglet « Postes », trouvez un poste occupé d'un autre réseau que celui du délégué A ; notez l'identifiant de son occupant.
+**Données de départ** : un prospect P de la liste cible du délégué A, visité avec un rapport en semaine 2 (REC-06 à REC-08). Le délégué C du jeu de recette, sur un poste du second réseau (§1.2).
 
 **Étapes**
-1. Portail, administrateur pays : « Listes cibles », poste du délégué C. « Ajouter des prospects » : ajoutez P.
+1. Portail, administrateur du siège (Sénégal) : « Listes cibles », poste du délégué C. « Ajouter des prospects » : ajoutez P.
 2. Téléphone, délégué C : connectez-vous, synchronisez. Onglet « Prospects », « Ma liste » : ouvrez P.
-3. Lisez « Visites précédentes ».
-4. Onglet « Semaine », « Semaine suivante » : ajoutez une visite chez P. Ouvrez-la : lisez « Dernières visites » et « Préparer ma visite ».
+3. Lisez « Historique des visites ».
+4. Onglet « Semaine », « Suivante » : ajoutez une visite chez P. Ouvrez-la : lisez « Dernières visites » et « Préparer ma visite ».
 5. Comparez avec le téléphone du délégué A, sur la même fiche P.
 
 **Résultat attendu**
@@ -657,7 +686,7 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 
 **Qui et matériel** : le superviseur SN, sur le portail.
 
-**Données de départ** : base réinitialisée. « À traiter » contient des journées « Conforme » et au moins une « À vérifier · … écarts ».
+**Données de départ** : la semaine 2, après REC-08 et REC-11. « À traiter » contient au moins une journée « Conforme » (toutes les visites faites, rapports soumis) et la journée des écarts de REC-11, « À vérifier · … écarts ». Pour avoir plusieurs journées conformes, le délégué B peut faire et rapporter ses visites les mêmes jours.
 
 **Étapes**
 1. « À traiter », onglet « Journées ». Notez les journées « Conforme » et les journées « À vérifier ».
@@ -683,22 +712,20 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 | | Préproduction | | | |
 | | Pilote | | | |
 
-### REC-16 — Escalade au DM, décision d'un remplaçant
+### REC-16 — Escalade, décision d'un remplaçant
 
-**Énoncé** : « Sans décision 24 h ouvrées, le DM reçoit l'escalade et décide ; un remplaçant décide pendant sa période. »
+**Énoncé (prd.md §21.1, mis à jour en 1.3.0)** : « Sans décision 24 h ouvrées, l'administrateur pays (le siège pour le Sénégal) reçoit l'escalade et décide ; un remplaçant décide pendant sa période. » Avant 1.3.0, l'escalade allait au DM ; le DM ne fait plus que lire.
 **Exigences couvertes** : PLN-016, ORG-013.
 
-**Qui et matériel** : l'administrateur pays SN, le superviseur SN, `dm (SN)`, un second superviseur (le remplaçant), sur le portail. L'administrateur technique sur le serveur. Téléphone d'authentification pour le DM.
+**Qui et matériel** : l'administrateur du siège (il décide pour le Sénégal, qui n'a pas d'administrateur pays), le superviseur SN, le second superviseur (le remplaçant), sur le portail. L'administrateur technique sur le serveur.
 
-**Données de départ** : base réinitialisée, un jour ouvré. Le planning de la semaine suivante du délégué B est soumis et attend la décision du superviseur SN. Le second superviseur : son identifiant se trouve dans « Équipe ».
-
-**Vérification préalable** : l'escalade va au DM dont les réseaux couvrent le poste du délégué B. Les réseaux sont répartis entre plusieurs DM fictifs. Connectez-vous avec `dm (SN)`, menu « Pilotage », filtre « Délégué » : le délégué B doit y figurer. Sinon, cherchez avec l'administrateur pays, dans « Équipe », un autre compte au rôle DM et refaites la vérification.
+**Données de départ** : le mardi de la semaine 2 (§1.4). Le planning de la semaine suivante du délégué B, soumis la veille, attend la décision du superviseur SN, qui ne décide pas.
 
 **Partie A — escalade**
-1. Administrateur pays : « Paramètres », carte « Planning », « Délai avant escalade au DM (heures ouvrées) » : « Modifier », mettez 1. (Pour un essai fidèle, gardez 24 et attendez 24 heures ouvrées.)
+1. Administrateur du siège, Sénégal choisi : « Paramètres », carte « Planning », « Délai avant escalade à l'administrateur (heures ouvrées) » : « Modifier », mettez 1. (Pour un essai fidèle, gardez 24 et attendez 24 heures ouvrées.)
 2. Attendez au moins une heure après la soumission. Le superviseur ne décide pas.
 3. Attendez la passe du worker (15 minutes au plus), ou demandez à l'administrateur technique de lancer `python manage.py executer_echeances`.
-4. Connectez-vous avec `dm (SN)`. Ouvrez la notification « Escalade : le planning de … (semaine …) attend une décision depuis … h ouvrées ».
+4. Administrateur du siège : ouvrez la notification « Escalade : le planning de … (semaine …) attend une décision depuis … h ouvrées ».
 5. Dans « Plannings à valider », lisez la ligne, puis « Approuver » et « Approuver le planning ».
 6. Remettez le paramètre à 24.
 
@@ -710,17 +737,17 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 5. Second superviseur : rechargez « À traiter ».
 
 **Résultat attendu**
-- Le DM voit la ligne « Escaladé : sans décision de … depuis le … » et peut décider. Sa décision est inscrite « par escalade » (vérifiable en REC-12).
-- Avant l'escalade, le DM ne peut pas décider ; après, le superviseur garde la main.
+- L'administrateur voit la ligne « Escaladé : sans décision de … depuis le … » et peut décider. Sa décision est inscrite « par escalade » (vérifiable en REC-12).
+- Avant l'escalade, l'administrateur ne décide pas à la place du superviseur ; après, le superviseur garde la main.
 - Le remplaçant voit « Vous validez en remplacement du superviseur de ce délégué. » Le rapport porte « Validé en remplacement le … par … ».
 - Après « Terminer », le remplaçant ne voit plus les journées de l'équipe remplacée.
 
 **Preuve automatisée**
-- `backend/apps/planning/tests/test_echeances.py::test_pln016_ca1_sans_decision_24_h_ouvrees_le_dm_est_notifie`, `::test_heures_ouvrees_sans_le_week_end`, `::test_pln016_ca2_la_decision_du_dm_porte_le_mode_escalade`
-- `backend/apps/rapports/tests/test_validation.py::test_rpt018_le_dm_valide_par_escalade_apres_le_delai` et `::test_rpt018_le_remplacant_valide_en_mode_remplacement`
+- `backend/apps/planning/tests/test_echeances.py::test_pln016_ca1_sans_decision_24_h_ouvrees_l_administrateur_est_notifie`, `::test_heures_ouvrees_sans_le_week_end`, `::test_pln016_ca2_la_decision_de_l_administrateur_porte_le_mode_escalade`, `::test_avant_l_escalade_l_administrateur_ne_decide_pas_et_le_superviseur_garde_la_main`
+- `backend/apps/rapports/tests/test_validation.py::test_rpt018_l_administrateur_valide_par_escalade` et `::test_rpt018_le_remplacant_valide_en_mode_remplacement`
 - `backend/apps/rapports/tests/test_recette_06.py::test_25a_apres_l_escalade_le_superviseur_garde_la_main`
 - `backend/apps/planning/tests/test_remplacements.py::test_ca1_ca2_le_remplacant_decide_en_remplacement` et `::test_ca3_a_la_fin_de_la_periode_l_acces_cesse`
-- `portail/src/pages/Validation.test.tsx`, test « CA1 : le DM voit le planning escaladé et qui n’a pas décidé » ; `portail/src/pages/Remplacements.test.tsx`
+- `portail/src/pages/Validation.test.tsx`, test « CA1 : le DM voit le planning escaladé et qui n’a pas décidé » (l'écran est le même pour l'administrateur) ; `portail/src/pages/Remplacements.test.tsx`
 
 | Date | Environnement | Joué par | Résultat (conforme / non conforme) | Défaut n° |
 |---|---|---|---|---|
@@ -732,17 +759,17 @@ Chaque fiche se lit dans l'ordre : énoncé, qui, données de départ, étapes, 
 **Énoncé** : « Un téléphone révoqué efface ses données locales à la connexion suivante ; au 8ᵉ jour sans synchronisation, les données sont inaccessibles. »
 **Exigences couvertes** : SEC-006, OFF-007.
 
-**Qui et matériel** : l'administrateur pays SN sur le portail ; deux téléphones de test (un Android, un iPhone) ; un délégué par téléphone. Jouez ce scénario **en dernier** : un téléphone révoqué ne se reconnecte plus avec son enregistrement.
+**Qui et matériel** : l'administrateur du siège, Sénégal choisi, sur le portail ; deux téléphones de test (un Android, un iPhone) ; un délégué par téléphone. Jouez ce scénario **en dernier** : un téléphone révoqué ne se reconnecte plus avec son enregistrement.
 
-**Données de départ** : téléphone 1 connecté avec le délégué A, synchronisé, avec au moins un envoi en attente (faites une saisie en mode avion). Téléphone 2 connecté avec un autre délégué, synchronisé. Délai du pays : 7 jours (valeur par défaut).
+**Données de départ** : téléphone 1 connecté avec le délégué A, synchronisé, avec au moins un envoi en attente (faites une saisie en mode avion). Téléphone 2 connecté avec le délégué B, synchronisé. Délai du pays : 7 jours (valeur par défaut).
 
 **Partie A — révocation (téléphone 1)**
-1. Portail, administrateur pays : « Équipe », onglet « Téléphones ». Repérez le téléphone 1 (« Dernier contact »). Cliquez « Révoquer » et confirmez.
+1. Portail, administrateur du siège (Sénégal) : « Équipe », onglet « Téléphones ». Repérez le téléphone 1 (« Dernier contact »). Cliquez « Révoquer » et confirmez.
 2. Téléphone 1 : désactivez le mode avion. Rouvrez l'application.
 
 **Partie B — 8ᵉ jour (téléphone 2)**
 
-Variante plus simple depuis 0.9.8 : l'administrateur pays règle « Masquage des données hors ligne (jours) » à 1 (« Paramètres », carte « Téléphone »), puis le téléphone reste deux jours sans réseau. Remettre ensuite 7. Sinon :
+Variante plus simple depuis 0.9.8 : l'administrateur règle « Masquage des données hors ligne (jours) » à 1 (« Paramètres », carte « Téléphone »), puis le téléphone reste deux jours sans réseau. Remettre ensuite 7. Sinon :
 
 1. Passez le téléphone 2 en mode avion.
 2. Dans les réglages du téléphone, coupez l'heure automatique et avancez la date de 6 jours. Ouvrez l'application.
@@ -770,17 +797,17 @@ Variante plus simple depuis 0.9.8 : l'administrateur pays règle « Masquage des
 **Énoncé** : « Un utilisateur avec une affectation supplémentaire bascule de pays et ne voit jamais les deux à la fois ; l'accès cesse à la date de fin. »
 **Exigences couvertes** : ORG-009.
 
-**Qui et matériel** : `admin_siege` et `df (SN)`, sur le portail. Téléphone d'authentification pour les deux.
+**Qui et matériel** : l'administrateur du siège et le DF SN, sur le portail.
 
-**Données de départ** : base réinitialisée. Le DF SN n'a aucune affectation au Togo.
+**Données de départ** : le jeu de recette ; le DF SN n'a aucune affectation au Togo.
 
 **Étapes**
-1. `admin_siege` : « Équipe ». Ouvrez la fiche de `df (SN)`. Section « Affectations dans d’autres pays » : « Accorder une affectation ».
+1. Administrateur du siège : « Équipe ». Ouvrez la fiche du DF SN. Section « Affectations dans d’autres pays » : « Accorder une affectation ».
 2. « Pays » : Togo. « Rôle » : DF. « Motif » : par exemple « Intérim de recette ». « Début » : aujourd'hui. « Fin (facultative) » : demain. Validez.
-3. `df (SN)` : connectez-vous. Ouvrez la liste « Pays » de l'en-tête.
+3. DF SN : connectez-vous. Ouvrez la liste « Pays » de l'en-tête.
 4. Choisissez Togo. Ouvrez « Organisation » et « Pilotage ».
 5. Revenez au Sénégal. Ouvrez les mêmes pages.
-6. Le lendemain (date de fin), reconnectez-vous avec `df (SN)` et ouvrez la liste « Pays ».
+6. Le lendemain (date de fin), reconnectez-vous avec le DF SN et ouvrez la liste « Pays ».
 7. Optionnel, pour un résultat immédiat : refaites les étapes 1 et 2, puis cliquez « Terminer » sur l'affectation.
 
 **Résultat attendu**
@@ -829,7 +856,7 @@ Variante plus simple depuis 0.9.8 : l'administrateur pays règle « Masquage des
 - `backend/apps/identite/tests/test_push.py::test_not002_dans_la_langue_de_la_personne` ; `backend/apps/identite/tests/test_recuperation.py::test_demande_envoie_un_lien_dans_la_langue_de_l_utilisateur` ; `backend/apps/identite/tests/test_appareils_langue.py::test_l_utilisateur_choisit_sa_langue` ; `backend/apps/identite/tests/test_connexion.py::test_message_traduit_selon_la_langue`
 - `portail/src/App.test.tsx`, test « change la langue et la mémorise sur le compte (USR-004) »
 
-**Limites** : les comptes de démonstration (`@demo.invalid`) ne reçoivent aucun courriel ; sans push actif, l'écran verrouillé ne se vérifie pas.
+**Limites** : un compte à adresse fictive (`@exemple.invalid`) ne reçoit aucun courriel ; sans push actif, l'écran verrouillé ne se vérifie pas.
 
 | Date | Environnement | Joué par | Résultat (conforme / non conforme) | Défaut n° |
 |---|---|---|---|---|
@@ -871,7 +898,138 @@ Variante plus simple depuis 0.9.8 : l'administrateur pays règle « Masquage des
 
 ---
 
-## 3. Critères de sortie
+## 3. Scénarios complémentaires : ventes et droits du DO
+
+Ces quatre scénarios couvrent les versions 1.6.0 à 1.9.0 (prd.md §14.84 à §14.90). Ils ne font pas partie des REC obligatoires de la version 1.0.0 ; un défaut s'y consigne comme ailleurs (§1.5).
+
+### VNT-R1 — Import des ventes, synthèse, périmètre, export
+
+**Exigences couvertes** : VNT-001 à VNT-006.
+
+**Qui et matériel** : l'administrateur du siège (Sénégal choisi) ; le DF SN, le superviseur SN et le délégué A, sur le portail.
+
+**Données de départ** : le jeu de recette (§1.2). Un classeur de ventes **fictif** (.xlsx), colonnes MOIS, DELEGUE, PRODUIT, CLIENT, TYPE CLIENT, ZONE, QUANTITE, CA TTC : une vingtaine de lignes sur les mois de l'an passé et de cette année, pour les délégués A, B et C (écrits « Prénom Nom » comme leur compte) et les produits de l'import d'organisation. Ajoutez une ligne avec un produit inconnu.
+
+**Étapes**
+1. Administrateur du siège : menu « Imports », « Ventes ». Déposez le classeur, « Lancer la simulation », lisez les lignes écartées et leur motif, puis « Importer pour de bon ».
+2. Recommencez l'import avec le même fichier.
+3. Menu « Ventes », onglet « Synthèse » : lisez le cumul de l'année, la même période l'an passé, le graphique mensuel. Dans « Ventes éclatées », choisissez « Éclater par » : « Délégué », puis cliquez une ligne.
+4. « Exporter » : « Ventes éclatées » en « Classeur Excel », puis « Lignes de vente » en « Fichier CSV ». Ouvrez les deux fichiers.
+5. Le DF SN, puis le superviseur SN : menu « Ventes ».
+6. Le délégué A : cherchez le menu « Ventes ».
+
+**Résultat attendu**
+- La simulation n'enregistre rien ; la ligne au produit inconnu est écartée avec son motif ; le second import ne crée aucun doublon.
+- La synthèse donne le cumul, l'évolution face à l'an passé et les douze mois ; un clic sur une ligne filtre la page sur ce délégué.
+- Les fichiers portent l'année, le mois et les filtres affichés ; le journal d'audit montre chaque export (« export.ventes »).
+- La vue par délégué du siège s'inscrit au journal (« ventes.consultation_nominative »).
+- Le DF SN ne voit que le premier réseau ; le superviseur SN, que les délégués A et B ; le délégué A n'a pas de menu « Ventes ».
+
+**Preuve automatisée**
+- `backend/apps/ventes/tests/test_importation.py::test_une_simulation_ne_ecrit_rien`, `::test_l_import_cree_les_lignes_les_clients_et_ne_double_pas`, `::test_les_lignes_fausses_sont_rejetees_avec_leur_motif`
+- `backend/apps/ventes/tests/test_ventes.py::test_synthese_cumul_de_l_annee_face_a_l_an_passe`, `::test_le_perimetre_limite_ce_que_chacun_voit`, `::test_le_delegue_n_a_pas_acces_a_la_plateforme`, `::test_le_siege_choisit_un_pays_et_sa_consultation_nominative_est_auditee`, `::test_chaque_export_est_audite`
+
+| Date | Environnement | Joué par | Résultat (conforme / non conforme) | Défaut n° |
+|---|---|---|---|---|
+| | Préproduction | | | |
+| | Pilote | | | |
+
+### VNT-R2 — Objectifs de ventes : fixer, suivre, alerter
+
+**Exigences couvertes** : VNT-007 à VNT-011, NOT-007.
+
+**Qui et matériel** : l'administrateur du siège (Sénégal choisi), le DM SN, le superviseur SN, sur le portail. L'administrateur technique pour la passe des échéances.
+
+**Données de départ** : les ventes de VNT-R1.
+
+**Étapes**
+1. Administrateur du siège : « Ventes », onglet « Objectifs », « Fixer un objectif ». « Portée » : « Tout le réseau », premier réseau, une « Cible de l'année » un peu au-dessus des ventes de l'an passé. Enregistrez.
+2. Le DM SN : même onglet. « Fixer un objectif » : « Portée » « Un délégué », le délégué A. Activez « Répartir mois par mois » et répartissez la cible. Enregistrez. Ouvrez la liste « Réseau » du formulaire.
+3. Lisez le tableau (cible, attendu, réalisé, état), puis la carte « Cible / réalisé » : choisissez l'objectif du délégué A.
+4. « Exporter », « Tableau des objectifs », en Excel.
+5. Le superviseur SN : onglet « Objectifs ».
+6. Alerte : si le réseau est sous son attendu à la fin du mois passé, lancez la passe (`python manage.py executer_echeances`, ou attendez le worker). Le DM SN et l'administrateur du siège ouvrent la notification.
+
+**Résultat attendu**
+- L'objectif du réseau dit sa part répartie entre délégués (« dont … ») ; l'état se lit en toutes lettres (« En avance », « En retard », …).
+- Le DM ne fixe que les objectifs de son réseau : le second réseau ne lui est pas proposé.
+- La courbe montre l'attendu cumulé (pointillé) et le réalisé cumulé (trait plein).
+- Le superviseur lit l'objectif de ses délégués, sans bouton « Corriger » ni « Archiver ».
+- La notification dit « … : sous l'objectif de ventes à fin … (… % de l'attendu) » et ouvre l'onglet « Objectifs » ; une seconde passe ne la renvoie pas.
+
+**Preuve automatisée**
+- `backend/apps/ventes/tests/test_objectifs.py::test_l_administrateur_pays_fixe_une_cible_repartie_a_parts_egales`, `::test_le_dm_fixe_les_objectifs_des_reseaux_de_son_perimetre`, `::test_l_objectif_d_un_delegue_compte_ses_seules_ventes_du_reseau`, `::test_le_superviseur_lit_les_objectifs_de_ses_delegues`, `::test_l_export_des_objectifs_est_audite_et_reserve_a_l_encadrement`, `::test_un_reseau_sous_son_objectif_alerte_le_dm_et_l_administrateur`
+
+| Date | Environnement | Joué par | Résultat (conforme / non conforme) | Défaut n° |
+|---|---|---|---|---|
+| | Préproduction | | | |
+| | Pilote | | | |
+
+### VNT-R3 — Ventes de tous les pays, en francs CFA de l'Ouest
+
+**Exigences couvertes** : VNT-012 à VNT-014.
+
+**Qui et matériel** : l'administrateur du siège et la direction du siège, sur le portail.
+
+**Données de départ** : les ventes du Sénégal (VNT-R1). Pour éprouver la conversion, il faut un pays d'une **autre monnaie** avec des ventes (le Sénégal, le Togo, la Côte d'Ivoire et le Bénin sont tous en XOF) : ouvrez un pays d'essai, par exemple la Guinée (`GN`, francs guinéens), et importez-y un petit classeur d'organisation puis un classeur de ventes fictifs, comme en §1.2 et en VNT-R1.
+
+**Étapes**
+1. Administrateur du siège, liste « Pays » sur « Tous les pays » : menu « Ventes ».
+2. Lisez le bandeau des monnaies sans taux, le tableau « Par pays », le graphique, le « Classement, tous pays » (« Produit », puis « Réseau »).
+3. « Fixer les taux » (ou « Taux de change ») : donnez un taux à la monnaie manquante (« 1 GNF en XOF »). Enregistrez.
+4. « Exporter » : « Ventes par pays » en Excel.
+5. La direction du siège : même page, « Taux de change ».
+6. Choisissez le Sénégal dans la liste « Pays » : la page redevient celle du pays.
+
+**Résultat attendu**
+- Sans taux, le pays reste dans sa monnaie (« GNF, sans taux ») et hors des totaux ; le bandeau le dit.
+- Après le taux : « 1 GNF = … XOF » sous le nom du pays, le montant converti et le montant d'origine, les totaux qui l'incluent.
+- Aucun nom de délégué ni de client sur la page.
+- La direction lit les taux sans pouvoir les changer (seulement « Fermer »).
+- Le journal d'audit montre « ventes.taux_change » (ancien et nouveau taux) et « export.ventes_tous_pays ».
+
+**Preuve automatisée**
+- `backend/apps/ventes/tests/test_tous_pays.py::test_sans_taux_un_pays_reste_dans_sa_monnaie_hors_du_total`, `::test_le_taux_du_siege_convertit_l_annee_et_l_an_passe`, `::test_la_direction_lit_les_taux_sans_les_fixer`, `::test_export_par_pays_audite`, `::test_reservee_au_siege`
+- `portail/src/composants/VentesTousPays.test.tsx`
+
+| Date | Environnement | Joué par | Résultat (conforme / non conforme) | Défaut n° |
+|---|---|---|---|---|
+| | Préproduction | | | |
+| | Pilote | | | |
+
+### DOR-R1 — Droits du DO réglés par le siège
+
+**Exigences couvertes** : DOR-001, DOR-002.
+
+**Qui et matériel** : l'administrateur du siège et le DF SN (le compte du DO), sur le portail.
+
+**Données de départ** : le jeu de recette ; les ventes de VNT-R1.
+
+**Étapes**
+1. Administrateur du siège : menu « Droits du DO ». Sur la ligne du DF SN, fermez « Ventes ».
+2. Le DF SN : rechargez le portail. Cherchez le menu « Ventes ».
+3. Administrateur du siège : rouvrez « Ventes ».
+4. Le responsable pays SN : cherchez le menu « Droits du DO ».
+5. Administrateur du siège : « Journal d'audit », cherchez les réglages.
+
+**Résultat attendu**
+- Le réglage s'applique tout de suite : le DF SN n'a plus le menu « Ventes » (ni l'export, ni les objectifs de ventes) ; il le retrouve quand le siège le rouvre.
+- Les autres droits du DF SN ne changent pas.
+- Le responsable pays n'a pas la page « Droits du DO ».
+- Chaque changement s'inscrit au journal (« droits_do.modification »).
+
+**Preuve automatisée**
+- `backend/apps/identite/tests/test_droits_do.py::test_le_siege_ferme_un_droit_et_le_serveur_l_applique`, `::test_le_groupe_ventes_ferme_aussi_l_export_et_les_objectifs`, `::test_le_reglage_ne_touche_pas_les_autres_roles`, `::test_le_siege_seul_regle`, `::test_le_reglage_est_audite`
+- `portail/src/pages/DroitsDO.test.tsx`
+
+| Date | Environnement | Joué par | Résultat (conforme / non conforme) | Défaut n° |
+|---|---|---|---|---|
+| | Préproduction | | | |
+| | Pilote | | | |
+
+---
+
+## 4. Critères de sortie
 
 La recette utilisateur est terminée quand **toutes** ces conditions sont réunies :
 
@@ -881,11 +1039,12 @@ La recette utilisateur est terminée quand **toutes** ces conditions sont réuni
    - les scénarios qui touchent à la structure ou à la sécurité (REC-01, REC-02, REC-09, REC-10, REC-13, REC-14, REC-17, REC-18, REC-20) se rejouent en préproduction, à la même version, pendant la période du pilote.
 3. Aucun défaut **critique** ou **majeur** n'est ouvert. Cela vaut en particulier pour l'authentification, les permissions, l'isolation, la synchronisation, les workflows de validation et l'audit (prd.md §21.2, condition 2).
 4. Chaque défaut mineur ouvert est noté, avec sa version de correction prévue.
-5. Chaque fiche porte une date, un environnement, un nom et un résultat. Une fiche partielle (par exemple Grafana non installé, push non actif) est notée « non conforme » tant que la partie manquante n'est pas jouée.
+5. Les scénarios complémentaires (§3) ne conditionnent pas la sortie ; un défaut critique ou majeur qu'ils révèlent compte pourtant pour la condition 3.
+6. Chaque fiche porte une date, un environnement, un nom et un résultat. Une fiche partielle (par exemple Grafana non installé, push non actif) est notée « non conforme » tant que la partie manquante n'est pas jouée.
 
 ---
 
-## 4. Signatures
+## 5. Signatures
 
 | Rôle | Nom | Date | Décision (recette prononcée / refusée) | Signature |
 |---|---|---|---|---|

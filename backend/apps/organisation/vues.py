@@ -526,15 +526,12 @@ class MonOrganisationVue(APIView):
 
 def _remplacables(perimetre: Perimetre) -> set | None:
     """Superviseurs que l'utilisateur peut faire remplacer (prd.md §6.3) : tous pour
-    l'administrateur pays (None), ceux de ses réseaux pour le DM, lui-même pour le
-    superviseur."""
+    l'administrateur pays (None), lui-même pour le superviseur (1.3.0 : plus le DM)."""
     from apps.identite.models import Role
 
     if Role.ADMIN_PAYS in perimetre.roles:
         return None
     ids = set()
-    if Role.DM in perimetre.roles:
-        ids |= services.superviseurs_du_dm(perimetre.utilisateur, pays_requis(perimetre))
     if Role.SUPERVISEUR in perimetre.roles:
         ids.add(perimetre.utilisateur.pk)
     return ids

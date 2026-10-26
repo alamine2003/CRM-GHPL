@@ -10,7 +10,8 @@ const config: ExpoConfig = {
   slug: 'innov-crm',
   scheme: 'innovcrm',
   version,
-  orientation: 'portrait',
+  // 1.4.0 : la maquette prévoit la tablette à l'horizontale ; le téléphone reste en portrait.
+  orientation: 'default',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
   ios: { supportsTablet: true, bundleIdentifier: 'com.innovpharma.crm' },

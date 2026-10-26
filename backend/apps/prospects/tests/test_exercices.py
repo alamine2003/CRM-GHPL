@@ -110,6 +110,31 @@ def test_fin_d_un_exercice_et_historique(fiches):
     assert EvenementAudit.objects.filter(action="exercice.fin").count() == 1
 
 
+def test_l_auteur_pose_le_premier_lieu_d_une_fiche_devenue_commune(fiches):
+    """Sans doublon, le détecteur rend la fiche commune aussitôt (PRP-008) : le lieu choisi à la
+    création (mobile, « Nouveau prospect ») doit pouvoir s'y poser, une seule fois."""
+    m, deleg = fiches["medecin"], fiches["deleg.sn"]
+    fiche, decision = services.saisir_prospect(
+        m.pays, deleg, actif=False, nom="Gueye", prenom="Moussa", type=m.type,
+        specialite=m.specialite, potentiel="B",
+    )  # fmt: skip
+    assert decision.niveau == "aucun" and fiche.statut == "actif"
+    client = client_de(deleg)
+    corps = {"etablissement": str(fiches["clinique"].pk), "principal": True}
+    premier = client.post(url(fiche), corps, format="json")
+    assert premier.status_code == 201
+    # Le second lieu d'une fiche commune passe par une proposition.
+    second = client.post(url(fiche), {"etablissement": str(fiches["hopital"].pk)}, format="json")
+    assert second.status_code == 403 and second.json()["code"] == "modification_interdite"
+    # Un autre délégué n'y pose rien, pas même un premier lieu.
+    autre = services.creer_prospect(
+        m.pays, fiches["admin.sn"], actif=True, nom="Fall", type=m.type,
+        specialite=m.specialite, potentiel="C",
+    )  # fmt: skip
+    refus = client.post(url(autre), {"etablissement": str(fiches["clinique"].pk)}, format="json")
+    assert refus.status_code == 403
+
+
 def test_l_archivage_d_une_fiche_termine_ses_exercices(fiches):
     m = fiches["medecin"]
     admin = client_de(fiches["admin.sn"])
@@ -153,3 +178,30 @@ def test_les_prospects_qui_exercent_dans_un_etablissement(fiches):
     togo = client_de(fiches["admin.tg"])
     assert togo.get(f"/api/v1/etablissements/{clinique.pk}/exercices/").status_code == 404
     assert togo.get(url(m)).status_code == 404
+
+
+def test_qui_exerce_ici_dit_ma_derniere_visite(fiches):
+    """1.4.5 (maquette) : « Dernière visite : 12 oct. » — la dernière visite effectuée par le
+    lecteur chez chacun ; une visite prévue ou d'un autre délégué ne compte pas."""
+    from datetime import date
+
+    from apps.planning.models import Planning, Visite
+
+    m, clinique, sn = fiches["medecin"], fiches["clinique"], fiches["sn"]
+    services.creer_exercice(m, clinique, fiches["admin.sn"])
+    sien = Planning.objects.create(pays=sn, delegue=fiches["deleg.sn"], semaine=date(2026, 9, 28))
+    autre = Planning.objects.create(
+        pays=sn, delegue=fiches["sansrole.sn"], semaine=date(2026, 10, 5)
+    )
+    Visite.objects.create(pays=sn, planning=sien, prospect=m, date=date(2026, 9, 29),
+                          statut="effectuee")  # fmt: skip
+    Visite.objects.create(pays=sn, planning=sien, prospect=m, date=date(2026, 9, 30),
+                          statut="prevue")  # fmt: skip
+    Visite.objects.create(pays=sn, planning=autre, prospect=m, date=date(2026, 10, 6),
+                          statut="effectuee")  # fmt: skip
+    url_lieu = f"/api/v1/etablissements/{clinique.pk}/exercices/"
+    lue = client_de(fiches["deleg.sn"]).get(url_lieu).json()
+    assert [e["derniere_visite"] for e in lue] == ["2026-09-29"]
+    assert [e["derniere_visite"] for e in client_de(fiches["admin.sn"]).get(url_lieu).json()] == [
+        None
+    ]

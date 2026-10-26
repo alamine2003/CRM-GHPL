@@ -1,27 +1,37 @@
 /**
- * Centre de notifications au téléphone (NOT-001) : lues et non lues, les plus récentes
- * d'abord ; toucher une notification la marque lue et ouvre la semaine qu'elle concerne (CA1).
+ * Centre de notifications (NOT-001), selon la maquette 1.4.9 : lues et non lues, les plus
+ * récentes d'abord ; une non lue a son fond teinté et sa pastille pleine. Toucher une
+ * notification la marque lue et ouvre ce qu'elle attend (CA1). Sur la tablette, la liste se
+ * groupe par semaine et les réglages de ce qui arrive en notification (NOT-005) sont à droite.
  */
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import type { Notification } from '@innov/api-client';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Alerte, Bouton, Carte, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Icone, Texte, usePalette } from './composants';
+import { useTablette } from './disposition';
+import { Ecran } from './Ecran';
 import { police } from './polices';
+import { ListePreferences } from './Preferences';
 import { messageErreur, useSession } from './session';
 import {
-  iconeNotification,
+  couleurNotification,
   semaineDeNotification,
   texteNotification,
   visiteDeNotification,
 } from './textesNotifications';
 
-export function CentreNotifications() {
+/** Lundi (date locale, AAAA-MM-JJ) de la semaine d'un instant. */
+function lundiDe(d: Date) {
+  const l = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+  return `${l.getFullYear()}-${String(l.getMonth() + 1).padStart(2, '0')}-${String(l.getDate()).padStart(2, '0')}`;
+}
+
+export function EcranNotifications() {
   const { t, i18n } = useTranslation();
-  const p = usePalette();
   const routeur = useRouter();
+  const tablette = useTablette();
   const { client, etat } = useSession();
   const fuseau = etat.statut === 'connecte' ? etat.perimetre.pays_actif?.fuseau : undefined;
   const [liste, setListe] = useState<Notification[] | null>(null);
@@ -49,15 +59,22 @@ export function CentreNotifications() {
     };
   }, [charger]);
 
-  const quand = (iso: string) =>
-    new Intl.DateTimeFormat(i18n.language, {
+  // « lun. 12 octobre, 08:30 » : la date, puis l'heure, à l'heure du pays.
+  const quand = (iso: string) => {
+    const d = new Date(iso);
+    const jour = new Intl.DateTimeFormat(i18n.language, {
       weekday: 'short',
       day: 'numeric',
       month: 'long',
+      timeZone: fuseau,
+    }).format(d);
+    const heure = new Intl.DateTimeFormat(i18n.language, {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: fuseau,
-    }).format(new Date(iso));
+    }).format(d);
+    return `${jour}, ${heure}`;
+  };
 
   function ouvrir(n: Notification) {
     if (!n.lue_le) {
@@ -72,76 +89,173 @@ export function CentreNotifications() {
     else if (semaine) routeur.push({ pathname: '/semaine', params: { jour: semaine } });
   }
 
-  if (erreur) return <Alerte type="erreur">{erreur}</Alerte>;
-  if (!liste) return <Texte variante="discret">{t('session.chargement')}</Texte>;
-  if (liste.length === 0) return <Texte variante="discret">{t('notifications.aucune')}</Texte>;
-  const nonLues = liste.filter((n) => !n.lue_le).length;
-  return (
-    <View style={{ gap: 12 }}>
-      {nonLues > 0 && (
-        <Bouton
-          secondaire
-          libelle={t('notifications.toutVu')}
-          onPress={() =>
-            void client.notifications
-              .toutesLues()
-              .then((r) => setListe(r.notifications))
-              .catch(() => undefined)
-          }
+  const nonLues = liste?.filter((n) => !n.lue_le).length ?? 0;
+  const toutLu =
+    nonLues > 0 ? (
+      <Bouton
+        variante="contour"
+        petit
+        libelle={t('notifications.toutVu')}
+        onPress={() =>
+          void client.notifications
+            .toutesLues()
+            .then((r) => setListe(r.notifications))
+            .catch(() => undefined)
+        }
+        style={tablette ? undefined : { alignSelf: 'flex-start' }}
+      />
+    ) : null;
+
+  const lignes = (l: Notification[]) => (
+    <Carte marge={0} style={{ overflow: 'hidden' }}>
+      {l.map((n, i) => (
+        <Ligne
+          key={n.id}
+          notification={n}
+          texte={texteNotification(n, t, i18n.language, fuseau)}
+          quand={quand(n.cree_le)}
+          chevron={tablette}
+          derniere={i === l.length - 1}
+          surAppui={() => ouvrir(n)}
         />
-      )}
-      <Carte style={{ paddingVertical: 4 }}>
-        {liste.map((n, i) => {
-          const icone = iconeNotification(n, p);
-          return (
-            <Pressable
-              key={n.id}
-              accessibilityRole="button"
-              accessibilityState={{ selected: !n.lue_le }}
-              accessibilityHint={
-                semaineDeNotification(n) || visiteDeNotification(n)
-                  ? t('notifications.voir')
-                  : undefined
-              }
-              onPress={() => ouvrir(n)}
-              style={({ pressed }) => [
-                styles.ligne,
-                i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: p.ligne },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <MaterialIcons
-                name={icone.nom}
-                size={22}
-                color={icone.couleur}
-                style={styles.icone}
-              />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text
-                  style={[
-                    styles.texte,
-                    { color: p.texte, fontFamily: n.lue_le ? police.texte : police.texteFort },
-                  ]}
-                >
-                  {texteNotification(n, t, i18n.language, fuseau)}
-                </Text>
-                <Texte variante="discret">
-                  {quand(n.cree_le)}
-                  {n.lue_le ? '' : ` · ${t('notifications.nonLue')}`}
-                </Texte>
-              </View>
-              {!n.lue_le && <View style={[styles.point, { backgroundColor: p.info }]} />}
-            </Pressable>
-          );
-        })}
-      </Carte>
-    </View>
+      ))}
+    </Carte>
+  );
+
+  let contenu;
+  if (erreur) contenu = <Alerte type="erreur">{erreur}</Alerte>;
+  else if (!liste) contenu = <Texte variante="discret">{t('session.chargement')}</Texte>;
+  else if (liste.length === 0)
+    contenu = <Texte variante="discret">{t('notifications.aucune')}</Texte>;
+  else if (!tablette) contenu = lignes(liste);
+  else {
+    // Tablette : « Cette semaine », « La semaine dernière », « Plus tôt ».
+    const cette = lundiDe(new Date());
+    const avant = new Date(`${cette}T12:00:00`);
+    avant.setDate(avant.getDate() - 7);
+    const derniere = lundiDe(avant);
+    const groupes = [
+      { cle: 'cetteSemaine', notifs: liste.filter((n) => lundiDe(new Date(n.cree_le)) >= cette) },
+      {
+        cle: 'semaineDerniere',
+        notifs: liste.filter((n) => {
+          const l = lundiDe(new Date(n.cree_le));
+          return l < cette && l >= derniere;
+        }),
+      },
+      { cle: 'plusTot', notifs: liste.filter((n) => lundiDe(new Date(n.cree_le)) < derniere) },
+    ].filter((g) => g.notifs.length > 0);
+    contenu = (
+      <View style={styles.colonne}>
+        {groupes.map((g) => (
+          <View key={g.cle} style={{ gap: 10 }}>
+            <Texte variante="libelle" accessibilityRole="header" style={{ paddingHorizontal: 4 }}>
+              {t(`notifications.groupes.${g.cle}`)}
+            </Texte>
+            {lignes(g.notifs)}
+          </View>
+        ))}
+      </View>
+    );
+  }
+
+  return (
+    <Ecran
+      titre={t('notifications.centre')}
+      surTitre={
+        liste
+          ? nonLues > 0
+            ? t('notifications.nonLues', { count: nonLues })
+            : t('notifications.toutLu')
+          : undefined
+      }
+      retour
+      enteteTablette={{ action: toutLu }}
+      droite={
+        tablette ? (
+          <View style={{ padding: 24 }}>
+            <ListePreferences
+              titre={t('preferences.titreTablette')}
+              aide={t('preferences.aideIci')}
+            />
+          </View>
+        ) : undefined
+      }
+      largeurDroite={340}
+    >
+      {!tablette && toutLu}
+      {contenu}
+    </Ecran>
+  );
+}
+
+/** Une notification (.li) : pastille de 10 px, texte en gras tant qu'elle n'est pas lue. */
+function Ligne({
+  notification: n,
+  texte,
+  quand,
+  chevron,
+  derniere,
+  surAppui,
+}: {
+  notification: Notification;
+  texte: string;
+  quand: string;
+  chevron: boolean;
+  derniere: boolean;
+  surAppui: () => void;
+}) {
+  const { t } = useTranslation();
+  const p = usePalette();
+  const couleur = couleurNotification(n, p);
+  const lue = !!n.lue_le;
+  const destination = !!(semaineDeNotification(n) || visiteDeNotification(n));
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: !lue }}
+      accessibilityHint={destination ? t('notifications.voir') : undefined}
+      onPress={surAppui}
+      style={({ pressed }) => [
+        styles.ligne,
+        chevron && styles.ligneLarge,
+        !lue && { backgroundColor: p.surface2 },
+        !derniere && { borderBottomWidth: 1, borderBottomColor: p.ligne },
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      <View
+        style={[styles.pastille, { borderColor: couleur }, !lue && { backgroundColor: couleur }]}
+      />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text
+          style={[
+            chevron ? styles.texteLarge : styles.texte,
+            { color: p.texte, fontFamily: lue ? police.texte : police.texteFort },
+          ]}
+        >
+          {texte}
+        </Text>
+        <Texte variante="libelle" style={{ marginTop: 2 }}>
+          {lue ? quand : `${quand} · ${t('notifications.nonLue')}`}
+        </Texte>
+      </View>
+      {chevron && destination && <Icone nom="chevron-right" taille={16} couleur={p.texteDiscret} />}
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  ligne: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
-  icone: { marginTop: 1 },
-  texte: { fontSize: 15, lineHeight: 21 },
-  point: { width: 8, height: 8, borderRadius: 4, marginTop: 7 },
+  colonne: { width: '100%', maxWidth: 760, alignSelf: 'center', gap: 20 },
+  ligne: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  ligneLarge: { paddingVertical: 16, paddingHorizontal: 20 },
+  pastille: { width: 10, height: 10, marginTop: 5, borderRadius: 5, borderWidth: 2 },
+  texte: { fontSize: 14.5, lineHeight: 20 },
+  texteLarge: { fontSize: 15, lineHeight: 21 },
 });

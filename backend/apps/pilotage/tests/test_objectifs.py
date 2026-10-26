@@ -40,8 +40,10 @@ def saisie(terrain, **autres):
             "debut": "2026-10-12", "fin": "2026-10-25", "cible": 10, **autres}  # fmt: skip
 
 
-def test_dsh009_ca1_ca2_le_dm_fixe_un_objectif_et_suit_son_retard(monde, terrain, semaine, dm):
-    r = appel(monde, "dm.sn", "post", corps=saisie(terrain))
+def test_dsh009_ca1_ca2_l_administrateur_fixe_un_objectif_et_suit_son_retard(
+    monde, terrain, semaine, dm
+):
+    r = appel(monde, "admin.sn", "post", corps=saisie(terrain))
     assert r.status_code == 201, r.content
     o = r.json()
     assert (o["indicateur"], o["cible"], o["reseau"]["libelle"]) == ("visites", 10, "Cardio")
@@ -56,12 +58,13 @@ def test_dsh009_ca1_ca2_le_dm_fixe_un_objectif_et_suit_son_retard(monde, terrain
     assert appel(monde, "sup.sn", "post", corps=saisie(terrain)).status_code == 403
 
 
-def test_dsh009_seuls_le_dm_du_reseau_et_l_administrateur_pays(monde, terrain, semaine):
+def test_dsh009_seul_l_administrateur_pays_gere(monde, terrain, semaine, dm):
+    """1.3.0 [D] : le DM ne fixe plus les objectifs ; il lit ceux de ses réseaux."""
     r = appel(monde, "dm.sn", "post", corps=saisie(terrain))
-    assert (r.status_code, r.json()["code"]) == (403, "objectif_hors_perimetre")
+    assert (r.status_code, r.json()["code"]) == (403, "interdit")
     assert appel(monde, "admin.sn", "post", corps=saisie(terrain)).status_code == 201
-    # Le DM sans ce réseau ne le voit pas ; l'administrateur pays le gère.
-    assert appel(monde, "dm.sn").json()["objectifs"] == []
+    lu = appel(monde, "dm.sn").json()
+    assert lu["objectifs"][0]["gerable"] is False and lu["reseaux_geres"] == []
     assert appel(monde, "admin.sn").json()["objectifs"][0]["gerable"] is True
 
 
@@ -72,7 +75,7 @@ def test_dsh009_saisies_refusees(monde, terrain, semaine, dm):
         saisie(terrain, indicateur="presentations"),  # sans produit
     ]
     for corps in refus:
-        assert appel(monde, "dm.sn", "post", corps=corps).status_code == 400, corps
+        assert appel(monde, "admin.sn", "post", corps=corps).status_code == 400, corps
 
 
 def test_dsh009_presentations_d_un_produit(monde, terrain, semaine, dm, portefeuille):
@@ -80,7 +83,7 @@ def test_dsh009_presentations_d_un_produit(monde, terrain, semaine, dm, portefeu
     soumettre(monde, semaine["faite"], [cardiol])
     r = appel(
         monde,
-        "dm.sn",
+        "admin.sn",
         "post",
         corps=saisie(terrain, indicateur="presentations", produit=str(cardiol.pk), cible=2),
     )
@@ -90,13 +93,13 @@ def test_dsh009_presentations_d_un_produit(monde, terrain, semaine, dm, portefeu
     # Un produit hors du portefeuille du réseau est refusé.
     r = appel(
         monde,
-        "dm.sn",
+        "admin.sn",
         "post",
         corps=saisie(terrain, indicateur="presentations", produit=str(portefeuille[2].pk)),
     )
     assert r.json()["code"] == "produit_hors_portefeuille"
     # Les produits proposés à la saisie sont ceux du portefeuille.
-    (p,) = appel(monde, "dm.sn").json()["portefeuilles"]
+    (p,) = appel(monde, "admin.sn").json()["portefeuilles"]
     assert [x["libelle"] for x in p["produits"]] == ["Cardiol", "Tensio"]
 
 
@@ -120,12 +123,12 @@ def test_dsh009_etats(monde, terrain, semaine):
 
 
 def test_dsh009_modifier_et_archiver(monde, terrain, semaine, dm):
-    o = appel(monde, "dm.sn", "post", corps=saisie(terrain)).json()
+    o = appel(monde, "admin.sn", "post", corps=saisie(terrain)).json()
     url = f"{URL}{o['id']}/"
-    r = appel(monde, "dm.sn", "patch", url, {"cible": 4})
+    r = appel(monde, "admin.sn", "patch", url, {"cible": 4})
     assert (r.status_code, r.json()["cible"]) == (200, 4)
-    assert appel(monde, "dm.sn", "post", f"{url}archiver/").status_code == 204
-    assert appel(monde, "dm.sn").json()["objectifs"] == []
+    assert appel(monde, "admin.sn", "post", f"{url}archiver/").status_code == 204
+    assert appel(monde, "admin.sn").json()["objectifs"] == []
     actions = set(EvenementAudit.objects.filter(action__startswith="objectif.")
                   .values_list("action", flat=True))  # fmt: skip
     assert actions == {"objectif.creation", "objectif.modification", "objectif.archivage"}

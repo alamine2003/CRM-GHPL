@@ -2,6 +2,7 @@ import type {
   Affectation,
   Appareil,
   Perimetre,
+  PerimetreReseau,
   RoleAttribue,
   Utilisateur,
 } from '@innov/api-client';
@@ -100,15 +101,30 @@ function FicheCompte({
   const { client } = useSession();
   const requetes = useQueryClient();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; texte: string } | null>(null);
-  const [dialogue, setDialogue] = useState<'role' | 'affectation' | 'transfert' | null>(null);
+  const [dialogue, setDialogue] = useState<'role' | 'affectation' | 'transfert' | 'reseau' | null>(
+    null,
+  );
   const gerer = perimetre.actions.includes('utilisateurs.gerer');
   const attribuer = perimetre.actions.includes('roles.attribuer');
   const designer = perimetre.actions.includes('pays.designer_responsables');
   const affecter = perimetre.actions.includes('affectations.gerer');
+  const gererOrganisation = perimetre.actions.includes('organisation.gerer');
   const cle = ['equipe', perimetre.pays_actif?.code ?? 'consolide', compte.id];
   const roles = useQuery({
     queryKey: [...cle, 'roles'],
     queryFn: () => client.comptes.roles(compte.id),
+  });
+  // 1.9.2 (ORG-008) : un DF ou un DM du pays choisi suit des réseaux datés.
+  const suitDesReseaux =
+    !!perimetre.pays_actif &&
+    (roles.data ?? []).some(
+      (r) =>
+        r.actif && (r.role === 'df' || r.role === 'dm') && r.pays === perimetre.pays_actif?.code,
+    );
+  const reseauxSuivis = useQuery({
+    queryKey: [...cle, 'reseaux'],
+    queryFn: () => client.organisation.reseauxSuivis(compte.id),
+    enabled: suitDesReseaux,
   });
   const affectations = useQuery({
     queryKey: [...cle, 'affectations'],
@@ -269,6 +285,60 @@ function FicheCompte({
           </Stack>
         )}
       </Section>
+      {suitDesReseaux && (
+        <Section
+          titre={t('equipe.fiche.reseaux')}
+          action={
+            gererOrganisation && (
+              <Button size="small" onClick={() => setDialogue('reseau')}>
+                {t('equipe.fiche.ajouterReseau')}
+              </Button>
+            )
+          }
+        >
+          <Stack spacing={1}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {t('equipe.fiche.reseauxAide')}
+            </Typography>
+            {reseauxSuivis.isPending ? (
+              <Skeleton height={40} />
+            ) : (
+              (reseauxSuivis.data ?? []).map((lien: PerimetreReseau) => (
+                <Stack
+                  key={lien.id}
+                  direction="row"
+                  sx={{ alignItems: 'center', gap: 1, opacity: lien.actif ? 1 : 0.55 }}
+                >
+                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+                      {lien.reseau.libelle}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {periode(lien.debut, lien.fin)}
+                    </Typography>
+                  </Box>
+                  {gererOrganisation && lien.actif && (
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() =>
+                        void agir(() => client.organisation.terminerReseauSuivi(lien.id))
+                      }
+                    >
+                      {t('equipe.fiche.terminer')}
+                    </Button>
+                  )}
+                </Stack>
+              ))
+            )}
+            {reseauxSuivis.isSuccess && !reseauxSuivis.data.some((l) => l.actif) && (
+              <Typography variant="body2" sx={{ color: 'warning.main', fontWeight: 500 }}>
+                {t('equipe.fiche.aucunReseau')}
+              </Typography>
+            )}
+          </Stack>
+        </Section>
+      )}
       {compte.pays_principal && (
         <>
           <Section
@@ -353,6 +423,15 @@ function FicheCompte({
           pays={perimetre.pays_accessibles.filter((p) => p.code !== compte.pays_principal?.code)}
           surFermer={() => setDialogue(null)}
           surValider={(a) => client.comptes.accorderAffectation(compte.id, a).then(rafraichir)}
+        />
+      )}
+      {dialogue === 'reseau' && (
+        <DialogueReseauSuivi
+          suivis={(reseauxSuivis.data ?? []).filter((l) => l.actif).map((l) => l.reseau.id)}
+          surFermer={() => setDialogue(null)}
+          surValider={(reseau, debut) =>
+            client.organisation.suivreReseau(compte.id, reseau, debut).then(rafraichir)
+          }
         />
       )}
       {dialogue === 'transfert' && (
@@ -483,6 +562,63 @@ function DialogueAffectation({
           fullWidth
         />
       </Stack>
+    </DialogueFormulaire>
+  );
+}
+
+/** 1.9.2 (ORG-008) : ajouter un réseau aux réseaux suivis d'un DF ou d'un DM, à partir d'une date. */
+function DialogueReseauSuivi({
+  suivis,
+  surFermer,
+  surValider,
+}: {
+  suivis: string[];
+  surFermer: () => void;
+  surValider: (reseau: string, debut: string) => Promise<unknown>;
+}) {
+  const { t } = useTranslation();
+  const { client } = useSession();
+  const reseaux = useQuery({
+    queryKey: ['organisation', 'reseaux'],
+    queryFn: client.organisation.reseaux,
+  });
+  const proposes = (reseaux.data ?? []).filter((r) => !r.archive && !suivis.includes(r.id));
+  const [reseau, setReseau] = useState('');
+  const [debut, setDebut] = useState(aujourdhuiIso());
+  return (
+    <DialogueFormulaire
+      ouvert
+      titre={t('equipe.fiche.ajouterReseau')}
+      surFermer={surFermer}
+      invalide={!reseau || !debut}
+      surValider={() => surValider(reseau, debut)}
+    >
+      {reseaux.isSuccess && !proposes.length ? (
+        <Typography variant="body2">{t('equipe.fiche.tousReseauxSuivis')}</Typography>
+      ) : (
+        <>
+          <TextField
+            select
+            label={t('equipe.champs.reseau')}
+            value={reseau}
+            onChange={(e) => setReseau(e.target.value)}
+            required
+          >
+            {proposes.map((r) => (
+              <MenuItem key={r.id} value={r.id}>
+                {r.libelle}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            type="date"
+            label={t('equipe.champs.debut')}
+            value={debut}
+            onChange={(e) => setDebut(e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+        </>
+      )}
     </DialogueFormulaire>
   );
 }

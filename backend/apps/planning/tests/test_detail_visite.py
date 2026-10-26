@@ -74,6 +74,29 @@ def test_vis002_les_trois_dernieres_visites_de_la_plus_recente(monde, passe):
     assert d["historique"][0]["etablissement"] == "Clinique du Cap"
 
 
+def test_dernier_resultat_et_produits_presentes_lus_dans_le_rapport_soumis(monde, terrain, passe):
+    """1.4.0 (maquette, « Dernière visite ») : résultat et produits du rapport soumis ; rien
+    tant que le rapport est en brouillon, ni sans rapport."""
+    from apps.rapports.models import Rapport, StatutRapport
+    from apps.referentiel.models import Liste, Valeur
+
+    anciennes, actuelle = passe
+    derniere = max(anciennes, key=lambda v: v.date)
+    interessee = Valeur.objects.create(pays=monde["sn"], liste=Liste.RESULTAT_VISITE,
+                                       code="interessee", libelle="Intéressée")  # fmt: skip
+    presente = [{"produit": None, "libelle": "Produit A"}]
+    rapport = Rapport.objects.create(pays=monde["sn"], visite=derniere, delegue=monde["deleg.sn"],
+                                     resultat=interessee, presentations=presente)  # fmt: skip
+    url = f"/api/v1/visites/{actuelle.pk}/detail/"
+    with freeze_time("2026-10-13 08:00"):
+        brouillon = client_de(monde["deleg.sn"]).get(url).json()["historique"][0]
+        Rapport.objects.filter(pk=rapport.pk).update(statut=StatutRapport.SOUMIS)
+        soumis = client_de(monde["deleg.sn"]).get(url).json()["historique"]
+    assert (brouillon["resultat"], brouillon["produits"]) == (None, [])
+    assert (soumis[0]["resultat"], soumis[0]["produits"]) == ("Intéressée", ["Produit A"])
+    assert (soumis[1]["resultat"], soumis[1]["produits"]) == (None, [])
+
+
 def test_vis002_ca1_l_historique_ne_montre_que_les_visites_du_delegue(monde, terrain, passe):
     """Un collègue a vu le même médecin plus récemment : son passage n'apparaît pas."""
     _, actuelle = passe

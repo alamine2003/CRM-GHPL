@@ -18,7 +18,7 @@ import {
   type PieceEnAttente,
 } from './Brouillons';
 import { garderFichier } from './BrouillonRapport';
-import { Alerte, Bouton, Texte, useLien, usePalette } from './composants';
+import { Alerte, Bouton, Carte, Statut, Texte, useLien, usePalette } from './composants';
 import { messageErreur, useSession } from './session';
 
 export const PIECES_MAX = 3;
@@ -139,6 +139,34 @@ function Ligne({
   );
 }
 
+/** Une pièce du rapport soumis (.li) : son nom, son poids, et si elle est partie. */
+function LigneLue({ nom, octets, envoye }: { nom: string; octets: number; envoye: boolean }) {
+  const { t, i18n } = useTranslation();
+  const p = usePalette();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        minHeight: 56,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderTopWidth: 1,
+        borderTopColor: p.ligne,
+      }}
+    >
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Texte variante="fort" numberOfLines={1}>
+          {nom}
+        </Texte>
+        <Texte variante="discret">{`PDF · ${taille(octets, i18n.language)}`}</Texte>
+      </View>
+      <Statut ton={envoye ? 'ok' : 'wa'}>{t(envoye ? 'pieces.envoye' : 'pieces.enAttente')}</Statut>
+    </View>
+  );
+}
+
 export function PiecesJointes({
   rapport,
   visite,
@@ -244,6 +272,26 @@ export function PiecesJointes({
   }
 
   if (!modifiable && total === 0) return null;
+  // Rapport soumis : une carte de lignes, chacune avec son état d'envoi (maquette 1.4.2).
+  if (!modifiable)
+    return (
+      <Carte marge={0}>
+        <Texte
+          variante="sousTitre"
+          style={{ paddingTop: 14, paddingHorizontal: 16, paddingBottom: 4 }}
+        >
+          {t('pieces.titre')}
+        </Texte>
+        {[
+          ...rapport.pieces_jointes
+            .filter((x) => !enAttente.some((a) => a.id === x.id))
+            .map((x) => ({ id: x.id, nom: x.nom, octets: x.taille, envoye: !x.en_attente })),
+          ...enAttente.map((x) => ({ id: x.id, nom: x.nom, octets: x.taille, envoye: false })),
+        ].map((x) => (
+          <LigneLue key={x.id} {...x} />
+        ))}
+      </Carte>
+    );
   return (
     <View style={{ gap: 6 }}>
       <Texte variante="sousTitre">{t('pieces.titre')}</Texte>

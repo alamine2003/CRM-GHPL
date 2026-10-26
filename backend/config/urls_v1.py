@@ -7,6 +7,7 @@ from drf_spectacular.views import SpectacularAPIView
 
 from apps.audit import vues as aud
 from apps.identite import vues_comptes as comptes
+from apps.identite import vues_droits_do as droits_do
 from apps.imports import vues as imp
 from apps.notifications import vues as ntf
 from apps.organisation import vues as org
@@ -20,6 +21,7 @@ from apps.referentiel import vues as ref
 from apps.socle import vues_exploitation as exploitation
 from apps.socle import vues_pays as pays
 from apps.socle.views import InformationsView
+from apps.ventes import vues as ven
 
 urlpatterns = [
     path("auth/", include("apps.identite.urls")),
@@ -37,6 +39,12 @@ urlpatterns = [
     # Comptes et rôles (USR-003, ORG-002)
     path("utilisateurs/", comptes.UtilisateursVue.as_view(), name="utilisateurs"),
     path("utilisateurs/<uuid:id>/", comptes.UtilisateurVue.as_view(), name="utilisateur"),
+    path("droits-do/", droits_do.DroitsDOVue.as_view(), name="droits-do"),
+    path(
+        "droits-do/<uuid:id>/",
+        droits_do.DroitsDOCompteVue.as_view(),
+        name="droits-do-compte",
+    ),
     path("utilisateurs/<uuid:id>/roles/", comptes.RolesUtilisateurVue.as_view(), name="roles"),
     # Affectations multi-pays et transferts (ORG-009, ORG-010)
     path(
@@ -415,6 +423,40 @@ urlpatterns = [
     path("imports/<uuid:id>/", imp.LotVue.as_view(), name="import"),
     path("imports/<uuid:id>/rapport/", imp.RapportLotVue.as_view(), name="import-rapport"),
     # DSH-001 : les indicateurs du délégué (cycle 0.7)
+    # Suivi des ventes (1.6.0, prd.md §14.84).
+    path("ventes/synthese/", ven.SyntheseVentesVue.as_view(), name="ventes-synthese"),
+    path("ventes/export/", ven.ExportVentesVue.as_view(), name="ventes-export"),
+    path("ventes/options/", ven.OptionsVentesVue.as_view(), name="ventes-options"),
+    path("ventes/lignes/", ven.LignesVentesVue.as_view(), name="ventes-lignes"),
+    path("ventes/lignes/<uuid:id>/", ven.LigneVenteVue.as_view(), name="ventes-ligne"),
+    path(
+        "ventes/lignes/<uuid:id>/archiver/",
+        ven.ArchiverLigneVenteVue.as_view(),
+        name="ventes-ligne-archiver",
+    ),
+    path("ventes/tous-pays/", ven.VentesTousPaysVue.as_view(), name="ventes-tous-pays"),
+    path(
+        "ventes/tous-pays/export/", ven.ExportTousPaysVue.as_view(), name="ventes-tous-pays-export"
+    ),
+    path("ventes/taux/", ven.TauxChangeVue.as_view(), name="ventes-taux"),
+    path("ventes/objectifs/", ven.ObjectifsVentesVue.as_view(), name="ventes-objectifs"),
+    path(
+        "ventes/objectifs/export/",
+        ven.ExportObjectifsVentesVue.as_view(),
+        name="ventes-objectifs-export",
+    ),
+    path(
+        "ventes/objectifs/<uuid:id>/",
+        ven.ObjectifVenteVue.as_view(),
+        name="ventes-objectif",
+    ),
+    path(
+        "ventes/objectifs/<uuid:id>/archiver/",
+        ven.ArchiverObjectifVenteVue.as_view(),
+        name="ventes-objectif-archiver",
+    ),
+    path("ventes/clients/", ven.ClientsVentesVue.as_view(), name="ventes-clients"),
+    path("ventes/import/", ven.ImportVentesVue.as_view(), name="ventes-import"),
     path("pilotage/mes-chiffres/", pil.MesChiffresVue.as_view(), name="mes-chiffres"),
     # DSH-002, DSH-012 : le tableau de l'équipe du superviseur
     path("pilotage/equipe/", pil.EquipeVue.as_view(), name="pilotage-equipe"),

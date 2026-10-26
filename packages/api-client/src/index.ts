@@ -39,6 +39,25 @@ import type {
   Prescription,
   HistoriqueSynchro,
   ModelesRapport,
+  CompteDO,
+  DroitsDO,
+  SyntheseVentes,
+  OptionsVentes,
+  LigneVente,
+  PageLignesVentes,
+  SaisieVente,
+  ClientVente,
+  SaisieClientVente,
+  TypeClientVente,
+  RegroupementVentes,
+  ObjectifsVentes,
+  ObjectifVente,
+  SaisieObjectifVente,
+  ModificationObjectifVente,
+  VentesTousPays,
+  ClassementTousPays,
+  TauxDeLAnnee,
+  ReglageTaux,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -110,6 +129,7 @@ import type {
   Rattachement,
   Reseau,
   RoleAttribue,
+  PerimetreReseau,
   Secteur,
   SessionOuverte,
   StatutFiche,
@@ -200,6 +220,32 @@ export type {
   ModelesRapport,
   TendanceProduit,
   PointAttention,
+  CompteDO,
+  DroitsDO,
+  SyntheseVentes,
+  GroupeVentes,
+  MoisVentes,
+  OptionsVentes,
+  LigneVente,
+  PageLignesVentes,
+  SaisieVente,
+  ClientVente,
+  SaisieClientVente,
+  TypeClientVente,
+  RegroupementVentes,
+  ObjectifsVentes,
+  ObjectifVente,
+  SaisieObjectifVente,
+  ModificationObjectifVente,
+  ReseauObjectifVente,
+  EtatObjectifVente,
+  VentesTousPays,
+  PaysVentes,
+  ClassementVentes,
+  ClassementTousPays,
+  TauxDeLAnnee,
+  DeviseTaux,
+  ReglageTaux,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -276,6 +322,7 @@ export type {
   Rattachement,
   Reseau,
   RoleAttribue,
+  PerimetreReseau,
   Secteur,
   SessionOuverte,
   StatutFiche,
@@ -494,6 +541,38 @@ interface OptionsRequete {
 
 const ORG = '/api/v1/organisation';
 const REF = '/api/v1/referentiel';
+
+/** Filtres de la synthèse des ventes (tous facultatifs ; ils se combinent). */
+export interface FiltresVentes {
+  annee?: number;
+  mois_fin?: number;
+  par?: RegroupementVentes;
+  delegue?: string;
+  produit?: string;
+  classe?: string;
+  reseau?: string;
+  zone?: string;
+  client?: string;
+  type_client?: TypeClientVente;
+}
+
+export interface FiltresLignesVentes {
+  mois?: string;
+  delegue?: string;
+  produit?: string;
+  client?: string;
+  page?: number;
+  taille?: number;
+}
+
+/** Chaîne de requête sans les valeurs vides. */
+function requeteVentes(filtres: object): string {
+  const params = new URLSearchParams();
+  for (const [cle, valeur] of Object.entries(filtres))
+    if (valeur !== undefined && valeur !== null && valeur !== '') params.set(cle, String(valeur));
+  const texte = params.toString();
+  return texte ? `?${texte}` : '';
+}
 
 export function creerClient(options: OptionsClient) {
   const base = options.baseUrl.replace(/\/$/, '');
@@ -720,6 +799,19 @@ export function creerClient(options: OptionsClient) {
         requete<Rattachement>(`${ORG}/postes/${poste}/rattachements/`, {
           methode: 'POST',
           corps: { superviseur, ...(debut ? { debut } : {}) },
+        }),
+      /** 1.9.2 : les réseaux suivis par un DF ou un DM, datés (ORG-008). */
+      reseauxSuivis: (personne: string) =>
+        requete<PerimetreReseau[]>(`${ORG}/personnes/${personne}/reseaux/`),
+      suivreReseau: (personne: string, reseau: string, debut?: string) =>
+        requete<PerimetreReseau>(`${ORG}/personnes/${personne}/reseaux/`, {
+          methode: 'POST',
+          corps: { reseau, ...(debut ? { debut } : {}) },
+        }),
+      terminerReseauSuivi: (lien: string, fin?: string) =>
+        requete<PerimetreReseau>(`${ORG}/perimetres-reseaux/${lien}/terminer/`, {
+          methode: 'POST',
+          corps: fin ? { fin } : {},
         }),
     },
     /** Référentiels du pays (PRP-001) et portefeuilles des réseaux (ORG-004). */
@@ -1222,6 +1314,80 @@ export function creerClient(options: OptionsClient) {
           methode: 'POST',
           corps: { motif },
         }),
+    },
+    /** Droits du DO : le siège seul les ouvre ou les ferme, groupe par groupe (1.6.1). */
+    droitsDo: {
+      liste: () => requete<CompteDO[]>('/api/v1/droits-do/'),
+      regler: (id: string, droits: Partial<DroitsDO>) =>
+        requete<CompteDO>(`/api/v1/droits-do/${id}/`, { methode: 'PATCH', corps: droits }),
+    },
+    /** Suivi des ventes (1.6.0) : synthèse, lignes mensuelles, clients, import Excel. */
+    ventes: {
+      synthese: (filtres: FiltresVentes = {}) =>
+        requete<SyntheseVentes>(`/api/v1/ventes/synthese/${requeteVentes(filtres)}`),
+      options: () => requete<OptionsVentes>('/api/v1/ventes/options/'),
+      lignes: (filtres: FiltresLignesVentes = {}) =>
+        requete<PageLignesVentes>(`/api/v1/ventes/lignes/${requeteVentes(filtres)}`),
+      saisir: (saisie: SaisieVente) =>
+        requete<LigneVente>('/api/v1/ventes/lignes/', { methode: 'POST', corps: saisie }),
+      corriger: (id: string, champs: { quantite?: string; montant_ttc?: string }) =>
+        requete<LigneVente>(`/api/v1/ventes/lignes/${id}/`, { methode: 'PATCH', corps: champs }),
+      archiver: (id: string) =>
+        requete<void>(`/api/v1/ventes/lignes/${id}/archiver/`, { methode: 'POST' }),
+      /** 1.7.0 : objectifs de l'année par réseau, avec le cumul (YTD) face à la cible. */
+      objectifs: (filtres: { annee?: number; mois_fin?: number } = {}) =>
+        requete<ObjectifsVentes>(`/api/v1/ventes/objectifs/${requeteVentes(filtres)}`),
+      fixerObjectif: (saisie: SaisieObjectifVente) =>
+        requete<ObjectifVente>('/api/v1/ventes/objectifs/', { methode: 'POST', corps: saisie }),
+      corrigerObjectif: (id: string, champs: ModificationObjectifVente) =>
+        requete<ObjectifVente>(`/api/v1/ventes/objectifs/${id}/`, {
+          methode: 'PATCH',
+          corps: champs,
+        }),
+      archiverObjectif: (id: string) =>
+        requete<void>(`/api/v1/ventes/objectifs/${id}/archiver/`, { methode: 'POST' }),
+      /** 1.9.0 : tous les pays (siège, sans pays choisi), convertis en XOF à taux constant. */
+      tousPays: (filtres: { annee?: number; mois_fin?: number; par?: ClassementTousPays } = {}) =>
+        requete<VentesTousPays>(`/api/v1/ventes/tous-pays/${requeteVentes(filtres)}`),
+      exporterTousPays: (filtres: {
+        annee?: number;
+        mois_fin?: number;
+        par?: ClassementTousPays;
+        contenu: 'pays' | 'mensuel' | 'classement';
+        fichier: string;
+      }) =>
+        requete<Blob>(`/api/v1/ventes/tous-pays/export/${requeteVentes(filtres)}`, {
+          binaire: true,
+        }),
+      /** 1.9.0 : les taux de change de l'année vers le XOF, fixés par l'administrateur du siège. */
+      taux: (annee?: number) =>
+        requete<TauxDeLAnnee>(`/api/v1/ventes/taux/${requeteVentes({ annee })}`),
+      reglerTaux: (reglage: ReglageTaux) =>
+        requete<TauxDeLAnnee>('/api/v1/ventes/taux/', { methode: 'PUT', corps: reglage }),
+      /** 1.8.0 : le tableau des objectifs en CSV ou en classeur Excel ; audité. */
+      exporterObjectifs: (filtres: { annee?: number; mois_fin?: number; fichier: string }) =>
+        requete<Blob>(`/api/v1/ventes/objectifs/export/${requeteVentes(filtres)}`, {
+          binaire: true,
+        }),
+      clients: (q = '', type?: TypeClientVente) =>
+        requete<ClientVente[]>(`/api/v1/ventes/clients/${requeteVentes({ q, type })}`),
+      creerClient: (saisie: SaisieClientVente) =>
+        requete<ClientVente>('/api/v1/ventes/clients/', { methode: 'POST', corps: saisie }),
+      /**
+       * VNT-006 : ce que la synthèse montre (`contenu` : ventilation, mensuel ou lignes), en
+       * `fichier` csv ou xlsx, avec la même période et les mêmes filtres. Audité.
+       */
+      exporter: (filtres: FiltresVentes & { contenu: string; fichier: string }) =>
+        requete<Blob>(`/api/v1/ventes/export/${requeteVentes(filtres)}`, { binaire: true }),
+      importer: (fichier: Blob, nom: string, simulation: boolean) => {
+        const formulaire = new FormData();
+        formulaire.append('fichier', fichier, nom);
+        formulaire.append('simulation', simulation ? 'true' : 'false');
+        return requete<DetailLot>('/api/v1/ventes/import/', {
+          methode: 'POST',
+          corps: formulaire,
+        });
+      },
     },
     /** Imports contrôlés (PRP-013) : simulation, import, rapport d'anomalies. */
     imports: {

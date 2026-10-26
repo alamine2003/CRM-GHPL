@@ -72,7 +72,7 @@ export type Brouillon =
   | { objet: 'visite'; semaine: string; visite?: string; champs: ChampsVisite }
   | { objet: 'activite'; semaine: string; activite?: string; champs: ChampsActivite };
 
-export type Envoi =
+type EnvoiSansHeure =
   | {
       id: string;
       type: 'ajout_visite';
@@ -202,6 +202,9 @@ export type Envoi =
       erreur?: string;
     };
 
+/** Un envoi de la file ; `le` : l'heure de saisie (1.5.1), absente des files plus anciennes. */
+export type Envoi = EnvoiSansHeure & { le?: string };
+
 /** Le fichier tel que l'envoi l'attend : sur le téléphone, son adresse locale ({ uri, name,
  * type }) que React Native lit lui-même ; dans un navigateur, son contenu (Blob). */
 export async function fichierAEnvoyer(uri: string, nom: string, type: string) {
@@ -271,7 +274,29 @@ function modifierFile(changer: (envois: Envoi[]) => Envoi[]): Promise<void> {
 
 /** Ajoute un envoi à la file (après un échec de réseau). */
 export async function mettreEnAttente(envoi: Envoi) {
-  await modifierFile((envois) => [...envois, envoi]);
+  const date = { ...envoi, le: envoi.le ?? new Date().toISOString() };
+  await modifierFile((envois) => [...envois, date]);
+}
+
+/**
+ * Ce que le dernier rejeu de la file a appris du réseau (1.5.1, « Pas de réseau ») : absent
+ * quand un envoi n'a pas pu partir faute de réseau, présent quand le serveur a répondu.
+ */
+export type EtatReseau = { joignable: boolean; le: string } | null;
+let etatReseau: EtatReseau = null;
+const ecouteursReseau = new Set<(etat: EtatReseau) => void>();
+export function lireReseau() {
+  return etatReseau;
+}
+export function ecouterReseau(ecouteur: (etat: EtatReseau) => void) {
+  ecouteursReseau.add(ecouteur);
+  return () => {
+    ecouteursReseau.delete(ecouteur);
+  };
+}
+function noterReseau(joignable: boolean) {
+  etatReseau = { joignable, le: new Date().toISOString() };
+  ecouteursReseau.forEach((e) => e(etatReseau));
 }
 
 export async function abandonnerEnvoi(id: string) {
@@ -342,6 +367,7 @@ async function rejouer(client: ClientApi): Promise<number> {
   const partis = new Set<string>();
   const refus = new Map<string, string>();
   const conflits = new Map<string, ConflitVisite>();
+  let coupe = false;
   for (const envoi of envois) {
     try {
       if (envoi.type === 'ajout_visite') {
@@ -403,12 +429,17 @@ async function rejouer(client: ClientApi): Promise<number> {
       }
       partis.add(envoi.id);
     } catch (e) {
-      if (estTransitoire(e)) break;
+      if (estTransitoire(e)) {
+        coupe = true;
+        noterReseau(false);
+        break;
+      }
       refus.set(envoi.id, e instanceof Error ? e.message : String(e));
       const conflit = conflitDe(e);
       if (conflit) conflits.set(envoi.id, conflit);
     }
   }
+  if (!coupe && (partis.size || refus.size)) noterReseau(true);
   // Seuls les envois rejoués changent ; ce qui s'est ajouté entre-temps reste tel quel.
   await modifierFile((actuels) =>
     actuels

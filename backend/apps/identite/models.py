@@ -247,6 +247,27 @@ ROLES_SANS_PAYS = frozenset({Role.ADMIN_SIEGE, Role.DIRECTION_SIEGE, Role.ADMIN_
 ROLES_DESIGNES_PAR_LE_SIEGE = frozenset({Role.RESPONSABLE_PAYS, Role.ADMIN_PAYS} | ROLES_SANS_PAYS)
 
 
+class ReglageDO(models.Model):
+    """Les droits que le siège a fermés à un compte DF, le DO (1.6.1, prd.md §14.85) : les clés
+    des groupes de `perimetre.matrice.GROUPES_DROITS_DO`. Sans ligne, tout est ouvert."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    utilisateur = models.OneToOneField(
+        Utilisateur, on_delete=models.PROTECT, related_name="reglage_do"
+    )
+    desactives = models.JSONField(default=list, blank=True)
+    regle_par = models.ForeignKey(
+        Utilisateur, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    modifie_le = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        verbose_name = "réglage des droits du DO"
+
+    def __str__(self):
+        return f"droits du DO {self.utilisateur_id}"
+
+
 class RoleUtilisateur(models.Model):
     """Rôle daté d'un utilisateur dans un pays (architecture §11.2).
 

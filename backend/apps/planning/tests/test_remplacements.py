@@ -105,11 +105,10 @@ def test_perimetre_de_la_designation(monde, terrain, remplacant):
     # Le superviseur ne désigne que pour lui-même.
     r = designer(client_de(monde["sup.sn"]), autre, remplacant)
     assert r.status_code == 404
-    # Le DM pour les superviseurs de ses réseaux ; l'administrateur pays pour tous.
+    # L'administrateur pays pour tous ; 1.3.0 [D] : plus le DM, même pour ses réseaux.
     org.rattacher(terrain["poste"], monde["sup.sn"], date(2026, 1, 1))
-    assert designer(client_de(monde["dm.sn"]), monde["sup.sn"], remplacant).status_code == 404
     org.ajouter_reseau_au_perimetre(monde["dm.sn"], terrain["cardio"], date(2026, 1, 1))
-    assert designer(client_de(monde["dm.sn"]), monde["sup.sn"], remplacant).status_code == 201
+    assert designer(client_de(monde["dm.sn"]), monde["sup.sn"], remplacant).status_code == 403
     assert designer(client_de(monde["admin.sn"]), autre, remplacant).status_code == 201
     assert client_de(monde["deleg.sn"]).get(LISTE).status_code == 403
 

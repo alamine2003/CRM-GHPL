@@ -188,6 +188,7 @@ def vider() -> None:
         "prospects",
         "imports",
         "planning",
+        "ventes",
         "audit",
     ):
         for modele in apps.get_app_config(etiquette).get_models(include_auto_created=True):
@@ -256,7 +257,7 @@ class Generateur:
         pays = creer_pays(code)
         debut = aujourdhui(pays) - timedelta(days=60)
         self.premier(f"responsable_pays ({code})", self.personne(pays, Role.RESPONSABLE_PAYS))
-        self.premier(f"admin_pays ({code})", self.personne(pays, Role.ADMIN_PAYS))
+        admin = self.premier(f"admin_pays ({code})", self.personne(pays, Role.ADMIN_PAYS))
 
         reseaux_par_division = []
         for (code_div, libelle, noms), nombre in zip(
@@ -345,6 +346,7 @@ class Generateur:
         else:
             equipe = [delegues[0]]
         self.bilan.pays[code]["visites"] = self.plannings(pays, equipe)
+        self.bilan.pays[code]["ventes"] = self.ventes(pays, admin, postes, delegues)
 
     def exercices(self, pays) -> int:
         """Lieux d'exercice fictifs (PRP-004) : chaque prospect exerce dans un établissement de
@@ -994,6 +996,95 @@ class Generateur:
         return len(noms)
 
     @transaction.atomic
+    def ventes(self, pays, admin, postes, delegues) -> int:
+        """Vingt-sept mois de ventes fictives (suivi des ventes, 1.6.0) : chaque délégué vend deux
+        produits du portefeuille de son réseau à deux clients de sa zone, avec une saison et une
+        pente de croissance. Les montants sont inventés, sans rapport avec une vente réelle."""
+        from apps.referentiel.models import Portefeuille
+        from apps.ventes.models import Client, SourceVente, TypeClient, Vente
+
+        a = self.alea
+        zones = {}
+        for poste in postes:
+            secteur = poste.secteurs.select_related("zone").first()
+            if secteur:
+                zones[poste.pk] = secteur.zone
+        clients: dict = defaultdict(list)
+        modeles = ((TypeClient.PHARMACIE, "Pharmacie", 10),
+                   (TypeClient.PARAPHARMACIE, "Parapharmacie", 3),
+                   (TypeClient.GROSSISTE, "Grossiste", 2))  # fmt: skip
+        for zone in set(zones.values()):
+            nouveaux = [
+                Client(pays=pays, nom=f"{libelle} {zone.libelle} {i + 1}", type=type_, zone=zone)
+                for type_, libelle, nombre in modeles
+                for i in range(nombre)
+            ]
+            clients[zone.pk] = Client.objects.bulk_create(nouveaux)
+        jour = aujourdhui(pays).replace(day=1)
+        mois = []
+        for _ in range(27):
+            mois.append(jour)
+            jour = (jour - timedelta(days=1)).replace(day=1)
+        mois.reverse()
+        prix: dict = {}
+        lignes = []
+        for poste, delegue in zip(postes, delegues, strict=False):
+            zone = zones.get(poste.pk)
+            liens = list(Portefeuille.objects.filter(reseau__in=poste.reseaux.all())
+                         .select_related("reseau", "produit")[:12])  # fmt: skip
+            if zone is None or not liens:
+                continue
+            for lien in a.sample(liens, k=min(2, len(liens))):
+                prix.setdefault(lien.produit_id, a.randrange(8, 120) * 250)
+                for client in a.sample(clients[zone.pk], k=2):
+                    base = a.randrange(20, 220)
+                    for rang, m in enumerate(mois):
+                        saison = 1 + 0.2 * ((m.month % 12) / 6 - 1) ** 2
+                        quantite = max(1, round(base * saison * (1 + 0.012 * rang)
+                                                * a.uniform(0.85, 1.15)))  # fmt: skip
+                        lignes.append(Vente(
+                            pays=pays, mois=m, delegue=delegue, poste=poste,
+                            produit=lien.produit, client=client, reseau=lien.reseau,
+                            zone=zone, quantite=quantite,
+                            montant_ttc=round(quantite * prix[lien.produit_id]
+                                              * a.uniform(0.95, 1.05), 2),
+                            source=SourceVente.SAISIE, saisi_par=admin,
+                        ))  # fmt: skip
+        Vente.objects.bulk_create(lignes, batch_size=2000)
+        self._objectifs_ventes(pays, admin)
+        return len(lignes)
+
+    def _objectifs_ventes(self, pays, admin) -> None:
+        """Un objectif de l'année par réseau (1.7.0) et par délégué (1.8.0) : 10 % de plus que
+        l'an passé, arrondi au millier. Inventé, sans rapport avec un objectif réel."""
+        from django.db.models import Sum
+
+        from apps.ventes.models import ObjectifVente, Vente
+
+        annee = aujourdhui(pays).year
+        passe = (
+            Vente.objects.filter(pays=pays, mois__year=annee - 1, reseau__isnull=False)
+            .values_list("reseau_id")
+            .annotate(total=Sum("montant_ttc"))
+        )
+        for reseau_id, total in passe:
+            cible = max(1000, round(float(total) * 1.1 / 1000) * 1000)
+            ObjectifVente.objects.create(
+                pays=pays, reseau_id=reseau_id, annee=annee, cible=cible, cree_par=admin
+            )
+        # 1.8.0 : et un objectif par délégué de chaque réseau, sur la même règle.
+        par_delegue = (
+            Vente.objects.filter(pays=pays, mois__year=annee - 1, reseau__isnull=False)
+            .values_list("reseau_id", "delegue_id")
+            .annotate(total=Sum("montant_ttc"))
+        )
+        for reseau_id, delegue_id, total in par_delegue:
+            cible = max(1000, round(float(total) * 1.1 / 1000) * 1000)
+            ObjectifVente.objects.create(
+                pays=pays, reseau_id=reseau_id, delegue_id=delegue_id, annee=annee,
+                cible=cible, cree_par=admin,
+            )  # fmt: skip
+
     def tout(self, volumes: Volumes, pays_secondaires: tuple[str, ...] = ("TG",)) -> Bilan:
         self.premier("admin_siege", self.personne(None, Role.ADMIN_SIEGE))
         self.premier("direction_siege", self.personne(None, Role.DIRECTION_SIEGE))

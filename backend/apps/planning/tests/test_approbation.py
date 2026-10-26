@@ -1,7 +1,8 @@
 """PLN-012 : le superviseur approuve un planning complet.
 CA1 : l'approbation fige la version. CA2 : le délégué reçoit une notification.
 
-PLN-017 : le planning d'un superviseur qui occupe un poste de délégué est approuvé par son DM.
+PLN-017 : le planning d'un superviseur qui occupe un poste de délégué est approuvé par
+l'administrateur pays (1.3.0 [D], à la place de son DM).
 CA1 : il n'apparaît pas dans sa propre file.
 
 RG-037 : chaque soumission crée une version figée et consultable."""
@@ -106,7 +107,9 @@ def test_seul_le_responsable_du_poste_decide(monde, terrain, soumis):
     voisin = creer_utilisateur("ousmane.fictif", prenom="Ousmane", nom="FICTIF", pays=monde["sn"])
     attribuer_role(voisin, Role.SUPERVISEUR, monde["sn"], par=None)
     assert approuver(client_de(voisin), soumis).status_code == 404
-    assert approuver(client_de(monde["dm.sn"]), soumis).status_code == 404
+    assert approuver(client_de(monde["admin.sn"]), soumis).status_code == 404
+    # 1.3.0 [D] : le DM ne décide plus, il lit.
+    assert approuver(client_de(monde["dm.sn"]), soumis).status_code == 403
     assert approuver(client_de(monde["deleg.sn"]), soumis).status_code == 403
     soumis.refresh_from_db()
     assert soumis.statut == StatutPlanning.SOUMIS
@@ -136,20 +139,23 @@ def test_un_planning_soumis_avant_les_versions_est_fige_a_la_decision(monde, ter
     assert (version.numero, version.decision, len(version.contenu["visites"])) == (1, "approuve", 1)
 
 
-def test_pln017_le_dm_approuve_le_planning_du_superviseur_visiteur(monde, terrain):
-    sup, dm = monde["sup.sn"], monde["dm.sn"]
+def test_pln017_l_administrateur_approuve_le_planning_du_superviseur_visiteur(monde, terrain):
+    """1.3.0 [D] : le poste reste rattaché au DM, mais c'est l'administrateur pays qui décide."""
+    sup, dm, admin = monde["sup.sn"], monde["dm.sn"], monde["admin.sn"]
     poste = org.creer_poste(monde["sn"], "kam", "KAM Plateau", [terrain["cardio"]],
                             [terrain["secteur"]])  # fmt: skip
     org.occuper(poste, sup, date(2026, 1, 1))
     org.rattacher(poste, dm, date(2026, 1, 1))
     planning = soumettre(services.creer_planning(monde["sn"], sup, LUNDI), terrain)
-    # CA1 : pas dans sa propre file ; dans celle de son DM.
+    # CA1 : pas dans sa propre file ; dans celle de l'administrateur pays.
     assert client_de(sup).get(FILE).json() == []
-    assert [x["planning"]["id"] for x in client_de(dm).get(FILE).json()] == [str(planning.pk)]
+    assert [x["planning"]["id"] for x in client_de(admin).get(FILE).json()] == [str(planning.pk)]
     assert approuver(client_de(sup), planning).status_code == 404
-    r = approuver(client_de(dm), planning)
+    assert approuver(client_de(dm), planning).status_code == 403
+    r = approuver(client_de(admin), planning)
     assert r.status_code == 200, r.content
-    assert r.json()["decision"]["par"] == f"{dm.first_name} {dm.last_name}"
+    assert r.json()["decision"]["mode"] == "direct"
+    assert r.json()["decision"]["par"] == f"{admin.first_name} {admin.last_name}"
     assert client_de(sup).get("/api/v1/notifications/").json()["non_lues"] == 1
 
 

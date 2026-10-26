@@ -90,7 +90,7 @@ describe('NOT-001 : centre de notifications', () => {
       ),
     ).toBeTruthy();
     expect(
-      screen.getByText('3 plannings de la semaine 42 ne sont pas approuvés dans vos réseaux'),
+      screen.getByText('3 plannings de la semaine 42 ne sont pas approuvés dans votre pays'),
     ).toBeTruthy();
     expect(screen.getAllByText(/· Non lue/)).toHaveLength(2);
   });

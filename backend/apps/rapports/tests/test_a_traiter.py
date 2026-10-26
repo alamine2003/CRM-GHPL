@@ -82,15 +82,15 @@ def test_rpt012_ca1_une_journee_a_verifier_detaille_ses_ecarts(monde, terrain, e
 
 @freeze_time("2026-10-14 08:00")
 def test_rpt012_seul_le_responsable_du_poste(monde, effectuee):  # noqa: F811
-    # Le délégué, l'administration et le responsable pays n'ont pas cette file.
-    for compte in ("deleg.sn", "admin.sn", "resp.sn"):
+    # Le délégué, le responsable pays et, depuis 1.3.0 [D], le DM n'ont pas cette file.
+    for compte in ("deleg.sn", "resp.sn", "dm.sn"):
         assert client_de(monde[compte]).get(URL).status_code == 403
     # Un autre superviseur du pays, sans ce poste : rien.
     autre = creer_utilisateur("awa.fictive", prenom="Awa", nom="FICTIVE", pays=monde["sn"])
     attribuer_role(autre, Role.SUPERVISEUR, monde["sn"], par=None, debut=DEBUT_ROLES)
     assert file(autre)["delegues"] == []
-    # Un DM sans superviseur-visiteur rattaché : rien non plus.
-    assert file(monde["dm.sn"])["delegues"] == []
+    # L'administrateur pays, hors escalade et sans superviseur-visiteur : rien non plus.
+    assert file(monde["admin.sn"])["delegues"] == []
 
 
 def test_rpt012_le_remplacant_voit_les_journees_du_remplace(monde, effectuee):  # noqa: F811

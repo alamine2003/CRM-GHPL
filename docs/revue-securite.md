@@ -10,7 +10,7 @@ Revue de l'application avant le pilote (prd.md §21.2, condition 2 : aucun défa
 |---|---|---|
 | Mots de passe : 12 caractères, refus des mots courants, compromettants et fuités ; Argon2id | Conforme | SEC-001, `identite/tests` ; `PASSWORD_HASHERS` |
 | Verrouillage après 5 échecs, 15 minutes ; alerte par courriel | Conforme | SEC-002, NOT-004 |
-| Double authentification obligatoire pour les rôles sensibles ; codes de secours | Conforme | SEC-003, `identite/tests/test_double_auth.py` |
+| Double authentification obligatoire pour les rôles sensibles ; codes de secours | **Suspendue (1.1.2, décision du responsable produit)** : réglage `INNOV_DOUBLE_AUTH_OBLIGATOIRE` à rétablir avant la production | SEC-003, `identite/tests/test_double_auth.py` |
 | Jeton d'accès de 15 minutes ; rafraîchissement par rotation, rejeu détecté (la session est révoquée) | Conforme | `test_jeton_de_rafraichissement_rejoue_revoque_la_session` |
 | Portail : jeton de rafraîchissement en cookie httpOnly, SameSite=Strict (ou `None` et `Secure` tant que portail et API n'ont pas de domaine commun, 1.0.1, `INNOV_COOKIE_SAMESITE`), limité à `/api/v1/auth/`, lu seulement avec l'en-tête `X-Innov-Client` (requête CORS obligatoire) | Conforme | `identite/views.py` ; W003 de `check --deploy` écarté et justifié (`config/settings.py`) |
 | Changement de mot de passe, suspension du compte, révocation d'un téléphone : toutes les sessions tombent | Conforme | `test_changement_de_mot_de_passe_connecte`, `test_reinitialisation_change_le_mot_de_passe_et_ferme_les_sessions`, SEC-006 |

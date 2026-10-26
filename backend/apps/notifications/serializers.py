@@ -29,6 +29,12 @@ class DonneesNotificationSerializer(serializers.Serializer):
     date = serializers.DateField(required=False)
     #: Rapport corrigé (RPT-015) : le délégué, pour ouvrir sa journée.
     delegue = serializers.UUIDField(required=False)
+    #: Objectif de ventes en retard (1.8.0) : l'objectif, son réseau, le mois écoulé (AAAA-MM)
+    #: et le réalisé rapporté à l'attendu, en pourcentage.
+    objectif = serializers.UUIDField(required=False)
+    reseau = serializers.CharField(required=False)
+    mois = serializers.CharField(required=False)
+    taux = serializers.FloatField(required=False)
 
 
 class NotificationSerializer(serializers.Serializer):

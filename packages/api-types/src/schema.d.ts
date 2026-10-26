@@ -572,6 +572,39 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/droits-do/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Les comptes DF (les DO) avec leurs droits ; le siège sans pays choisi les voit tous. */
+    get: operations['droits_do_liste'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/droits-do/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['droits_do_detail'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['droits_do_regler'];
+    trace?: never;
+  };
   '/api/v1/erreurs-clients/': {
     parameters: {
       query?: never;
@@ -1647,14 +1680,14 @@ export interface paths {
       cookie?: never;
     };
     /**
-     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-     *     l'administrateur pays en fixent (CA1).
+     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+     *     en fixe (CA1).
      */
     get: operations['objectifs'];
     put?: never;
     /**
-     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-     *     l'administrateur pays en fixent (CA1).
+     * @description DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+     *     en fixe (CA1).
      */
     post: operations['objectif_creer'];
     delete?: never;
@@ -2352,7 +2385,7 @@ export interface paths {
     put?: never;
     /**
      * @description RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
-     *     après la validation, le DM du périmètre au-delà (CA1).
+     *     après la validation, l'administrateur pays au-delà (CA1).
      */
     post: operations['rapport_rouvrir'];
     delete?: never;
@@ -2957,6 +2990,295 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/ventes/clients/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Les clients (pharmacies, parapharmacies, grossistes) : la recherche aide à choisir celui
+     *     d'une ligne ; l'administrateur pays en crée.
+     */
+    get: operations['ventes_clients'];
+    put?: never;
+    /**
+     * @description Les clients (pharmacies, parapharmacies, grossistes) : la recherche aide à choisir celui
+     *     d'une ligne ; l'administrateur pays en crée.
+     */
+    post: operations['ventes_client_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/export/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description VNT-006 (1.6.2) : exporter ce que la synthèse montre — la ventilation, les ventes
+     *     mensuelles ou les lignes du cumul — en CSV ou en classeur Excel, avec la même période, les
+     *     mêmes filtres et le même périmètre. Chaque export est inscrit au journal d'audit.
+     */
+    get: operations['ventes_export'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/import/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description Simuler puis importer le fichier de ventes (classeur Excel). */
+    post: operations['import_ventes'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/lignes/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Les lignes mensuelles (une page à la fois) ; l'administrateur pays en saisit. */
+    get: operations['ventes_lignes'];
+    put?: never;
+    /** @description Les lignes mensuelles (une page à la fois) ; l'administrateur pays en saisit. */
+    post: operations['ventes_saisir'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/lignes/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['ventes_corriger'];
+    trace?: never;
+  };
+  '/api/v1/ventes/lignes/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ventes_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/objectifs/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+     *     l'attendu ; l'administrateur pays en fixe.
+     */
+    get: operations['ventes_objectifs'];
+    put?: never;
+    /**
+     * @description Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+     *     l'attendu ; l'administrateur pays en fixe.
+     */
+    post: operations['ventes_objectif_creer'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/objectifs/{id}/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['ventes_objectif_corriger'];
+    trace?: never;
+  };
+  '/api/v1/ventes/objectifs/{id}/archiver/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ventes_objectif_archiver'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/objectifs/export/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description 1.8.0 : le tableau des objectifs (cible, attendu, réalisé, état), en CSV ou en classeur
+     *     Excel, pour l'année et le mois choisis, dans le périmètre. Audité comme les autres exports.
+     */
+    get: operations['ventes_objectifs_export'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/options/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ventes_options'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/synthese/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Le cumul de l'année (YTD) face à l'an passé, les ventes mois par mois, et la ventilation
+     *     éclatée selon `par`, avec tous les filtres.
+     */
+    get: operations['ventes_synthese'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/taux/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+     *     siège les fixe ou les corrige (chaque changement est audité).
+     */
+    get: operations['ventes_taux'];
+    /**
+     * @description Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+     *     siège les fixe ou les corrige (chaque changement est audité).
+     */
+    put: operations['ventes_taux_regler'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/tous-pays/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Les ventes de tous les pays, converties en XOF à taux constant : un tableau par pays, les
+     *     douze mois et un classement par produit, réseau ou classe. Réservée au siège, sans pays
+     *     choisi ; aucun nom n'y figure.
+     */
+    get: operations['ventes_tous_pays'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/tous-pays/export/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Le tableau par pays, les ventes mensuelles ou le classement de la vue de tous les pays,
+     *     en CSV ou en classeur Excel ; audité comme les autres exports.
+     */
+    get: operations['ventes_tous_pays_export'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/': {
     parameters: {
       query?: never;
@@ -3439,6 +3761,10 @@ export interface components {
     ChangementPreferences: {
       coupes: string[];
     };
+    ChoixTypeClient: {
+      valeur: string;
+      libelle: string;
+    };
     Cible: {
       /** Format: uuid */
       readonly id: string;
@@ -3452,6 +3778,11 @@ export interface components {
       fin?: string | null;
       readonly en_cours: boolean;
       readonly hors_secteur: boolean;
+      /**
+       * @description Visites effectuées chez ce prospect sur le cycle en cours (« 2 / 3 », 1.4.4) ;
+       *     connues seulement de la liste du délégué lui-même.
+       */
+      readonly visites_cycle: number | null;
     };
     /**
      * @description * `dr` - Dr
@@ -3467,6 +3798,27 @@ export interface components {
      * @enum {string}
      */
     ClassementEnum: 'conforme' | 'a_verifier';
+    ClassementVentes: {
+      libelle: string;
+      /** Format: decimal */
+      montant_ttc: string;
+      quantite: number;
+      /** Format: double */
+      part: number | null;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      /** Format: double */
+      evolution: number | null;
+      /** @description Le nombre de pays qui l'ont vendu. */
+      pays: number;
+    };
+    Client: {
+      type: components['schemas']['TypeClientVenteEnum'];
+      /** Format: uuid */
+      id: string;
+      nom: string;
+      zone: components['schemas']['Element'] | null;
+    };
     /**
      * @description * `portail` - Portail web
      *     * `mobile` - Application mobile
@@ -3538,6 +3890,15 @@ export interface components {
       retirees: components['schemas']['VisiteFigee'][];
       deplacees: components['schemas']['Deplacement'][];
       modifiees: components['schemas']['Modification'][];
+    };
+    CompteDO: {
+      /** Format: uuid */
+      id: string;
+      identifiant: string;
+      prenom: string;
+      nom: string;
+      pays: components['schemas']['PaysResume'] | null;
+      droits: components['schemas']['DroitsDO'];
     };
     ComptesCouverture: {
       cibles: number;
@@ -3849,6 +4210,11 @@ export interface components {
       delegue: components['schemas']['Delegue'];
       journees: components['schemas']['JourneeATraiter'][];
     };
+    DelegueVente: {
+      /** Format: uuid */
+      id: string;
+      nom: string;
+    };
     /** @description RPT-014 CA1 : commentaire obligatoire ; champs concernés facultatifs. */
     DemandeCorrection: {
       commentaire: string;
@@ -3891,7 +4257,7 @@ export interface components {
       /** Format: uuid */
       readonly id: string;
       readonly pays: string;
-      source: components['schemas']['SourceEnum'];
+      source: components['schemas']['SourceImportEnum'];
       fichier: string;
       simulation: boolean;
       statut: components['schemas']['StatutLotEnum'];
@@ -3941,6 +4307,14 @@ export interface components {
       action_precedente: components['schemas']['ActionPrecedente'] | null;
       preparation: components['schemas']['Preparation'] | null;
     };
+    DeviseTaux: {
+      devise: string;
+      pays: string[];
+      /** Format: decimal */
+      taux: string | null;
+      /** Format: date-time */
+      modifie_le: string | null;
+    };
     Division: {
       /** Format: uuid */
       readonly id: string;
@@ -3973,6 +4347,12 @@ export interface components {
       date?: string;
       /** Format: uuid */
       delegue?: string;
+      /** Format: uuid */
+      objectif?: string;
+      reseau?: string;
+      mois?: string;
+      /** Format: double */
+      taux?: number;
     };
     /**
      * @description * `soumission` - soumission
@@ -4002,6 +4382,13 @@ export interface components {
      * @enum {string}
      */
     DoublonEnum: 'certain' | 'probable' | 'aucun';
+    /** @description Les groupes de droits d'un DO : vrai quand ils sont ouverts (1.6.1). */
+    DroitsDO: {
+      ventes: boolean;
+      pilotage: boolean;
+      rapports: boolean;
+      prospects: boolean;
+    };
     /**
      * @description Un écart déclaré par le délégué (VIS-005) : le moment, le motif obligatoire de la liste
      *     du pays, un commentaire facultatif.
@@ -4053,6 +4440,11 @@ export interface components {
       libelle: string;
       quantite: number;
     };
+    Element: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+    };
     ErreurClient: {
       client: components['schemas']['ClientEnum'];
       version: string;
@@ -4061,7 +4453,10 @@ export interface components {
       ecran?: string;
       reference?: string;
     };
-    /** @description PLN-016 : le planning est arrivé au DM faute de décision du responsable du poste. */
+    /**
+     * @description PLN-016 : le planning est arrivé à l'administrateur faute de décision du responsable du
+     *     poste.
+     */
     Escalade: {
       /** Format: date-time */
       le: string;
@@ -4153,6 +4548,15 @@ export interface components {
       /** @description Vrai si le rôle PostgreSQL ignore la sécurité au niveau des lignes. */
       role_contourne: boolean;
     };
+    /**
+     * @description * `a_venir` - À venir
+     *     * `atteint` - Atteint
+     *     * `non_atteint` - Non atteint
+     *     * `en_avance` - En avance
+     *     * `en_retard` - En retard
+     * @enum {string}
+     */
+    EtatObjectifVenteEnum: 'a_venir' | 'atteint' | 'non_atteint' | 'en_avance' | 'en_retard';
     EvenementJournal: {
       /** Format: uuid */
       id: string;
@@ -4188,6 +4592,12 @@ export interface components {
       presence?: string;
       /** Format: date-time */
       readonly cree_le: string;
+      /**
+       * Format: date
+       * @description La dernière visite effectuée par le lecteur chez ce prospect (« Qui exerce ici »,
+       *     1.4.5) ; connue seulement de la liste d'un établissement.
+       */
+      readonly derniere_visite: string | null;
     };
     Fin: {
       /** Format: date */
@@ -4229,6 +4639,21 @@ export interface components {
       libelle: string;
       delegues: string[];
       total: components['schemas']['TotalEquipe'];
+    };
+    GroupeVentes: {
+      /** Format: uuid */
+      id: string | null;
+      cle: string;
+      libelle: string;
+      /** Format: decimal */
+      montant_ttc: string;
+      quantite: number;
+      /** Format: double */
+      part: number | null;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      /** Format: double */
+      evolution: number | null;
     };
     /** @description OFF-001 : les derniers rapports d'un prospect de la liste cible. */
     HistoriqueProspect: {
@@ -4484,6 +4909,23 @@ export interface components {
       total: components['schemas']['TotalEquipe'];
       delais: components['schemas']['DelaisValidation'];
     };
+    LigneVenteRendu: {
+      /** Format: uuid */
+      id: string;
+      /** @description AAAA-MM */
+      mois: string;
+      delegue: components['schemas']['DelegueVente'];
+      produit: components['schemas']['Element'];
+      client: components['schemas']['Client'];
+      reseau: components['schemas']['Element'] | null;
+      zone: components['schemas']['Element'] | null;
+      quantite: number;
+      /** Format: decimal */
+      montant_ttc: string;
+      source: components['schemas']['SourceVenteEnum'];
+      /** Format: date-time */
+      modifie_le: string;
+    };
     ListeCible: {
       poste: components['schemas']['PosteCible'];
       cibles: components['schemas']['Cible'][];
@@ -4537,7 +4979,7 @@ export interface components {
       /** Format: uuid */
       readonly id: string;
       readonly pays: string;
-      source: components['schemas']['SourceEnum'];
+      source: components['schemas']['SourceImportEnum'];
       fichier: string;
       simulation: boolean;
       statut: components['schemas']['StatutLotEnum'];
@@ -4628,6 +5070,26 @@ export interface components {
       /** @description Rôle sensible (SEC-003) : la double authentification est obligatoire. */
       readonly double_auth_requise: boolean;
     };
+    MoisTousPays: {
+      /** @description AAAA-MM */
+      mois: string;
+      /** Format: decimal */
+      montant_ttc: string;
+      quantite: number;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      precedent_quantite: number;
+    };
+    MoisVentes: {
+      /** @description AAAA-MM */
+      mois: string;
+      /** Format: decimal */
+      montant_ttc: string;
+      quantite: number;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      precedent_quantite: number;
+    };
     Moment: {
       /** Format: date */
       date: string;
@@ -4682,6 +5144,7 @@ export interface components {
      *     * `rapports_valides` - Rapports validés
      *     * `rappel_rapport` - Rapport à soumettre
      *     * `journee_escaladee` - Journée escaladée
+     *     * `objectif_ventes_retard` - Objectif de ventes en retard
      * @enum {string}
      */
     NotificationTypeEnum:
@@ -4701,7 +5164,8 @@ export interface components {
       | 'rapports_soumis'
       | 'rapports_valides'
       | 'rappel_rapport'
-      | 'journee_escaladee';
+      | 'journee_escaladee'
+      | 'objectif_ventes_retard';
     /** @enum {unknown} */
     NullEnum: null;
     Objectif: {
@@ -4726,6 +5190,40 @@ export interface components {
       gerable: boolean;
       suivi: components['schemas']['SuiviObjectifReseau'];
     };
+    ObjectifVenteRendu: {
+      /** Format: uuid */
+      id: string;
+      reseau: components['schemas']['Element'];
+      produit: components['schemas']['Element'] | null;
+      delegue: components['schemas']['DelegueVente'] | null;
+      annee: number;
+      /** Format: decimal */
+      cible: string;
+      /** Format: decimal */
+      attendu: string;
+      /** Format: decimal */
+      realise: string;
+      /** Format: decimal */
+      ecart: string;
+      /** Format: double */
+      taux_cible: number | null;
+      /** Format: double */
+      taux_attendu: number | null;
+      etat: components['schemas']['EtatObjectifVenteEnum'];
+      /** @description Les douze montants de l'année, janvier à décembre. */
+      mois: string[];
+      /** @description Faux : la cible est répartie à parts égales. */
+      repartition_libre: boolean;
+      /** @description Le réalisé de chaque mois de l'année, janvier à décembre. */
+      realise_mois: string[];
+      /**
+       * Format: decimal
+       * @description Objectif de réseau : la somme des objectifs de ses délégués ; sinon vide.
+       */
+      cible_deleguee: string | null;
+      /** @description Celui qui lit peut corriger ou archiver cet objectif. */
+      modifiable: boolean;
+    };
     /** @description Les objectifs des réseaux visibles, et ce qu'il faut pour en fixer un nouveau. */
     ObjectifsReseau: {
       /** Format: date */
@@ -4733,6 +5231,16 @@ export interface components {
       objectifs: components['schemas']['ObjectifReseau'][];
       reseaux_geres: components['schemas']['Option'][];
       portefeuilles: components['schemas']['ProduitsReseau'][];
+    };
+    ObjectifsVentes: {
+      devise: string;
+      annee: number;
+      mois_fin: number;
+      objectifs: components['schemas']['ObjectifVenteRendu'][];
+      /** @description Les objectifs de réseau seuls (jamais ceux de produit ou de délégué). */
+      total: components['schemas']['TotalObjectifs'] | null;
+      /** @description Ce que l'administrateur pays peut viser ; vide pour les autres. */
+      reseaux_gerables: components['schemas']['ReseauObjectif'][];
     };
     Occupation: {
       /** Format: uuid */
@@ -4766,6 +5274,18 @@ export interface components {
       superviseurs: components['schemas']['Option'][];
       delegues: components['schemas']['Option'][];
     };
+    /** @description Ce que les filtres proposent : seulement ce qui apparaît dans les ventes visibles. */
+    OptionsVentes: {
+      annees: number[];
+      aujourdhui_annee: number;
+      aujourdhui_mois: number;
+      delegues: components['schemas']['DelegueVente'][];
+      produits: components['schemas']['Element'][];
+      classes: components['schemas']['Element'][];
+      reseaux: components['schemas']['Element'][];
+      zones: components['schemas']['Element'][];
+      types_client: components['schemas']['ChoixTypeClient'][];
+    };
     Ordre: {
       /** Format: date */
       date: string;
@@ -4775,14 +5295,12 @@ export interface components {
       /** @description Identifiant ou courriel. */
       identifiant: string;
     };
-    /**
-     * @description * `delegue` - delegue
-     *     * `reseau` - reseau
-     *     * `zone` - zone
-     *     * `secteur` - secteur
-     * @enum {string}
-     */
-    ParEnum: 'delegue' | 'reseau' | 'zone' | 'secteur';
+    PageLignes: {
+      total: number;
+      page: number;
+      taille: number;
+      resultats: components['schemas']['LigneVenteRendu'][];
+    };
     Parametre: {
       cle: string;
       description: string;
@@ -4827,6 +5345,12 @@ export interface components {
       obligatoire?: boolean;
       ordre?: number;
     };
+    PatchedModificationDroitsDO: {
+      ventes?: boolean;
+      pilotage?: boolean;
+      rapports?: boolean;
+      prospects?: boolean;
+    };
     PatchedModificationExercice: {
       principal?: boolean;
       presence?: string;
@@ -4843,6 +5367,10 @@ export interface components {
       /** Format: date */
       fin?: string;
       cible?: number;
+    };
+    PatchedModificationObjectifVente: {
+      cible?: string | null;
+      mois?: string[] | null;
     };
     PatchedModificationPoste: {
       libelle?: string;
@@ -4867,6 +5395,10 @@ export interface components {
       ordre?: number;
       /** Format: uuid */
       parent?: string | null;
+    };
+    PatchedModificationVente: {
+      quantite?: string;
+      montant_ttc?: string;
     };
     PatchedModificationVisite: {
       /** Format: date */
@@ -4940,6 +5472,40 @@ export interface components {
       code: string;
       nom: string;
       fuseau: string;
+    };
+    PaysVentes: {
+      code: string;
+      nom: string;
+      /** @description La monnaie du pays (ISO 4217). */
+      devise: string;
+      /**
+       * Format: decimal
+       * @description 1 unité de la monnaie du pays, en XOF ; vide quand le siège ne l'a pas fixé.
+       */
+      taux: string | null;
+      /**
+       * Format: decimal
+       * @description Dans la monnaie du pays.
+       */
+      montant_ttc: string;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      /** Format: double */
+      evolution: number | null;
+      /** Format: decimal */
+      montant_converti: string | null;
+      /** Format: decimal */
+      precedent_converti: string | null;
+      /** Format: double */
+      part: number | null;
+      /** Format: decimal */
+      objectif_cible: string | null;
+      /** Format: decimal */
+      objectif_cible_converti: string | null;
+      /** Format: double */
+      taux_cible: number | null;
+      /** Format: double */
+      taux_attendu: number | null;
     };
     Perimetre: {
       pays_actif: components['schemas']['PaysResume'] | null;
@@ -5126,6 +5692,7 @@ export interface components {
       type_poste: string;
       occupant: string | null;
       secteurs: components['schemas']['Lieu'][];
+      reseaux: string[];
       gerable: boolean;
       synthese: components['schemas']['SyntheseCible'];
     };
@@ -5422,6 +5989,8 @@ export interface components {
       readonly echeance: string;
       readonly en_retard: boolean;
       readonly horodatage_douteux: boolean;
+      /** Format: date-time */
+      readonly modifie_le: string;
       readonly manquants: string[];
       readonly produits_proposes: components['schemas']['Resume'][];
       readonly produit_autre_autorise: boolean;
@@ -5553,6 +6122,10 @@ export interface components {
       id: string;
       nom: string | null;
     };
+    ReglageTaux: {
+      annee: number;
+      taux: components['schemas']['SaisieTaux'][];
+    };
     /**
      * @description * `actions_en_retard` - actions_en_retard
      *     * `passages_prescrit` - passages_prescrit
@@ -5647,6 +6220,13 @@ export interface components {
       /** Format: uuid */
       division: string;
       readonly archive: boolean;
+    };
+    ReseauObjectif: {
+      /** Format: uuid */
+      id: string;
+      libelle: string;
+      produits: components['schemas']['Element'][];
+      delegues: components['schemas']['DelegueVente'][];
     };
     ReseauResume: {
       /** Format: uuid */
@@ -5773,6 +6353,12 @@ export interface components {
       /** @default false */
       obligatoire: boolean;
     };
+    SaisieClient: {
+      type: components['schemas']['TypeClientVenteEnum'];
+      nom: string;
+      /** Format: uuid */
+      zone?: string | null;
+    };
     SaisieEtablissement: {
       nom?: string;
       /** Format: uuid */
@@ -5822,6 +6408,21 @@ export interface components {
       /** Format: date */
       fin: string;
       cible: number;
+    };
+    /** @description La cible de l'année, ou ses douze mois (janvier à décembre) ; les deux si la somme colle. */
+    SaisieObjectifVente: {
+      /** Format: uuid */
+      reseau: string;
+      /** Format: uuid */
+      produit?: string | null;
+      /**
+       * Format: uuid
+       * @description 1.8.0 : l'objectif d'un délégué du réseau.
+       */
+      delegue?: string | null;
+      annee: number;
+      cible?: string | null;
+      mois?: string[] | null;
     };
     SaisiePiece: {
       /** Format: uuid */
@@ -5882,6 +6483,22 @@ export interface components {
       visite_proposee?: boolean;
       champs?: unknown;
       version?: number;
+    };
+    SaisieTaux: {
+      devise: string;
+      taux: string;
+    };
+    SaisieVente: {
+      /** @description AAAA-MM */
+      mois: string;
+      /** Format: uuid */
+      delegue: string;
+      /** Format: uuid */
+      produit: string;
+      /** Format: uuid */
+      client: string;
+      quantite: string;
+      montant_ttc: string;
     };
     SaisieVisite: {
       /** Format: uuid */
@@ -5990,9 +6607,16 @@ export interface components {
     /**
      * @description * `birdnotes` - BirdNotes
      *     * `organisation` - Fichier d'organisation
+     *     * `ventes` - Fichier de ventes
      * @enum {string}
      */
-    SourceEnum: 'birdnotes' | 'organisation';
+    SourceImportEnum: 'birdnotes' | 'organisation' | 'ventes';
+    /**
+     * @description * `import` - Fichier importé
+     *     * `saisie` - Saisie
+     * @enum {string}
+     */
+    SourceVenteEnum: 'import' | 'saisie';
     /**
      * @description * `actif` - Actif
      *     * `suspendu` - Suspendu
@@ -6098,6 +6722,28 @@ export interface components {
       /** @description Fiches actives sans lieu d'exercice en cours. */
       sans_lieu: number;
     };
+    SyntheseVentes: {
+      /** @description Code ISO 4217 du pays : tous les montants s'y lisent. */
+      devise: string;
+      annee: number;
+      mois_fin: number;
+      par: components['schemas']['SyntheseVentesParEnum'];
+      ytd: components['schemas']['TotauxVentes'];
+      mensuel: components['schemas']['MoisVentes'][];
+      ventilation: components['schemas']['GroupeVentes'][];
+    };
+    /**
+     * @description * `delegue` - delegue
+     *     * `produit` - produit
+     *     * `classe` - classe
+     *     * `reseau` - reseau
+     *     * `zone` - zone
+     *     * `client` - client
+     *     * `type_client` - type_client
+     * @enum {string}
+     */
+    SyntheseVentesParEnum:
+      'delegue' | 'produit' | 'classe' | 'reseau' | 'zone' | 'client' | 'type_client';
     /**
      * @description DSH-002, DSH-003, DSH-012 : les délégués pilotés côte à côte, par ordre alphabétique,
      *     regroupés au besoin, et les totaux tirés des sommes (DC-49 : aucun classement).
@@ -6113,13 +6759,21 @@ export interface components {
       fin: string;
       periode: components['schemas']['PeriodePilotageEnum'];
       cycle: components['schemas']['CyclePeriode'];
-      par: components['schemas']['ParEnum'];
+      par: components['schemas']['TableauEquipeParEnum'];
       options: components['schemas']['OptionsPilotage'];
       delegues: components['schemas']['LigneEquipe'][];
       groupes: components['schemas']['GroupeEquipe'][];
       total: components['schemas']['TotalEquipe'];
       delais: components['schemas']['DelaisValidation'];
     };
+    /**
+     * @description * `delegue` - delegue
+     *     * `reseau` - reseau
+     *     * `zone` - zone
+     *     * `secteur` - secteur
+     * @enum {string}
+     */
+    TableauEquipeParEnum: 'delegue' | 'reseau' | 'zone' | 'secteur';
     /** @description DSH-004 : la consolidation du siège, par pays, et le total de tous les pays. */
     TableauSiege: {
       /** Format: date-time */
@@ -6153,6 +6807,11 @@ export interface components {
       /** Format: double */
       part_planifiee: number | null;
     };
+    TauxDeLAnnee: {
+      annee: number;
+      devise_reference: string;
+      devises: components['schemas']['DeviseTaux'][];
+    };
     /** @description DC-53 : les retours sur un produit, agrégés, sans nom de prescripteur. */
     TendanceProduit: {
       /** Format: uuid */
@@ -6179,6 +6838,43 @@ export interface components {
     TotalEquipe: {
       semaine: components['schemas']['IndicateursPeriode'];
       cycle: components['schemas']['IndicateursPeriode'];
+    };
+    TotalObjectifs: {
+      /** Format: decimal */
+      cible: string;
+      /** Format: decimal */
+      attendu: string;
+      /** Format: decimal */
+      realise: string;
+      /** Format: double */
+      taux_cible: number | null;
+      /** Format: double */
+      taux_attendu: number | null;
+    };
+    TotalTousPays: {
+      /** Format: decimal */
+      montant_ttc: string;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      /** Format: double */
+      evolution: number | null;
+      /** Format: decimal */
+      objectif_cible: string | null;
+      /** Format: double */
+      taux_cible: number | null;
+      /** Format: double */
+      taux_attendu: number | null;
+    };
+    TotauxVentes: {
+      /** Format: decimal */
+      montant_ttc: string;
+      quantite: number;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      precedent_quantite: number;
+      lignes: number;
+      /** Format: double */
+      evolution: number | null;
     };
     Transfert: {
       /** Format: uuid */
@@ -6223,6 +6919,13 @@ export interface components {
      * @enum {string}
      */
     TypeChampEnum: 'texte' | 'nombre' | 'liste' | 'case';
+    /**
+     * @description * `pharmacie` - Pharmacie
+     *     * `parapharmacie` - Parapharmacie
+     *     * `grossiste` - Grossiste
+     * @enum {string}
+     */
+    TypeClientVenteEnum: 'pharmacie' | 'parapharmacie' | 'grossiste';
     /**
      * @description * `vm` - Visiteur médical
      *     * `vm_otc` - Visiteur médical OTC
@@ -6280,6 +6983,25 @@ export interface components {
       /** Format: double */
       longitude?: number;
     };
+    VentesTousPays: {
+      /** @description La monnaie de référence : XOF. */
+      devise: string;
+      annee: number;
+      mois_fin: number;
+      par: components['schemas']['VentesTousPaysParEnum'];
+      total: components['schemas']['TotalTousPays'];
+      devises_sans_taux: string[];
+      pays: components['schemas']['PaysVentes'][];
+      mensuel: components['schemas']['MoisTousPays'][];
+      classement: components['schemas']['ClassementVentes'][];
+    };
+    /**
+     * @description * `produit` - produit
+     *     * `reseau` - reseau
+     *     * `classe` - classe
+     * @enum {string}
+     */
+    VentesTousPaysParEnum: 'produit' | 'reseau' | 'classe';
     /** @description Une version figée et sa décision, avec le résumé de ce qui a changé (PLN-014). */
     Version: {
       numero: number;
@@ -6401,6 +7123,8 @@ export interface components {
       statut: string;
       objectif: string;
       etablissement?: string | null;
+      readonly resultat: string | null;
+      readonly produits: string[];
     };
     VisitePoint: {
       /** Format: uuid */
@@ -7363,6 +8087,73 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Doublon'];
+        };
+      };
+    };
+  };
+  droits_do_liste: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompteDO'][];
+        };
+      };
+    };
+  };
+  droits_do_detail: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompteDO'];
+        };
+      };
+    };
+  };
+  droits_do_regler: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationDroitsDO'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationDroitsDO'];
+        'multipart/form-data': components['schemas']['PatchedModificationDroitsDO'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CompteDO'];
         };
       };
     };
@@ -11177,6 +11968,530 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['Transfert'];
+        };
+      };
+    };
+  };
+  ventes_clients: {
+    parameters: {
+      query?: {
+        q?: string;
+        type?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Client'][];
+        };
+      };
+    };
+  };
+  ventes_client_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieClient'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieClient'];
+        'multipart/form-data': components['schemas']['SaisieClient'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Client'];
+        };
+      };
+    };
+  };
+  ventes_export: {
+    parameters: {
+      query?: {
+        annee?: number;
+        classe?: string;
+        client?: string;
+        /**
+         * @description * `ventilation` - ventilation
+         *     * `mensuel` - mensuel
+         *     * `lignes` - lignes
+         */
+        contenu?: 'ventilation' | 'mensuel' | 'lignes';
+        delegue?: string;
+        /**
+         * @description * `csv` - csv
+         *     * `xlsx` - xlsx
+         */
+        fichier?: 'csv' | 'xlsx';
+        mois_fin?: number;
+        /**
+         * @description * `delegue` - delegue
+         *     * `produit` - produit
+         *     * `classe` - classe
+         *     * `reseau` - reseau
+         *     * `zone` - zone
+         *     * `client` - client
+         *     * `type_client` - type_client
+         */
+        par?: 'delegue' | 'produit' | 'classe' | 'reseau' | 'zone' | 'client' | 'type_client';
+        produit?: string;
+        reseau?: string;
+        /**
+         * @description * `pharmacie` - Pharmacie
+         *     * `parapharmacie` - Parapharmacie
+         *     * `grossiste` - Grossiste
+         */
+        type_client?: 'pharmacie' | 'parapharmacie' | 'grossiste';
+        zone?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string;
+        };
+      };
+    };
+  };
+  import_ventes: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['ImportBirdNotes'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DetailLot'];
+        };
+      };
+    };
+  };
+  ventes_lignes: {
+    parameters: {
+      query?: {
+        client?: string;
+        delegue?: string;
+        /** @description AAAA-MM */
+        mois?: string;
+        page?: number;
+        produit?: string;
+        taille?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PageLignes'];
+        };
+      };
+    };
+  };
+  ventes_saisir: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieVente'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieVente'];
+        'multipart/form-data': components['schemas']['SaisieVente'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LigneVenteRendu'];
+        };
+      };
+    };
+  };
+  ventes_corriger: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationVente'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationVente'];
+        'multipart/form-data': components['schemas']['PatchedModificationVente'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LigneVenteRendu'];
+        };
+      };
+    };
+  };
+  ventes_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ventes_objectifs: {
+    parameters: {
+      query?: {
+        annee?: number;
+        mois_fin?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifsVentes'];
+        };
+      };
+    };
+  };
+  ventes_objectif_creer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SaisieObjectifVente'];
+        'application/x-www-form-urlencoded': components['schemas']['SaisieObjectifVente'];
+        'multipart/form-data': components['schemas']['SaisieObjectifVente'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifVenteRendu'];
+        };
+      };
+    };
+  };
+  ventes_objectif_corriger: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        'application/json': components['schemas']['PatchedModificationObjectifVente'];
+        'application/x-www-form-urlencoded': components['schemas']['PatchedModificationObjectifVente'];
+        'multipart/form-data': components['schemas']['PatchedModificationObjectifVente'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ObjectifVenteRendu'];
+        };
+      };
+    };
+  };
+  ventes_objectif_archiver: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ventes_objectifs_export: {
+    parameters: {
+      query?: {
+        annee?: number;
+        /**
+         * @description * `csv` - csv
+         *     * `xlsx` - xlsx
+         */
+        fichier?: 'csv' | 'xlsx';
+        mois_fin?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string;
+        };
+      };
+    };
+  };
+  ventes_options: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['OptionsVentes'];
+        };
+      };
+    };
+  };
+  ventes_synthese: {
+    parameters: {
+      query?: {
+        annee?: number;
+        classe?: string;
+        client?: string;
+        delegue?: string;
+        mois_fin?: number;
+        /**
+         * @description * `delegue` - delegue
+         *     * `produit` - produit
+         *     * `classe` - classe
+         *     * `reseau` - reseau
+         *     * `zone` - zone
+         *     * `client` - client
+         *     * `type_client` - type_client
+         */
+        par?: 'delegue' | 'produit' | 'classe' | 'reseau' | 'zone' | 'client' | 'type_client';
+        produit?: string;
+        reseau?: string;
+        /**
+         * @description * `pharmacie` - Pharmacie
+         *     * `parapharmacie` - Parapharmacie
+         *     * `grossiste` - Grossiste
+         */
+        type_client?: 'pharmacie' | 'parapharmacie' | 'grossiste';
+        zone?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SyntheseVentes'];
+        };
+      };
+    };
+  };
+  ventes_taux: {
+    parameters: {
+      query?: {
+        annee?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TauxDeLAnnee'];
+        };
+      };
+    };
+  };
+  ventes_taux_regler: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReglageTaux'];
+        'application/x-www-form-urlencoded': components['schemas']['ReglageTaux'];
+        'multipart/form-data': components['schemas']['ReglageTaux'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TauxDeLAnnee'];
+        };
+      };
+    };
+  };
+  ventes_tous_pays: {
+    parameters: {
+      query?: {
+        annee?: number;
+        mois_fin?: number;
+        /**
+         * @description * `produit` - produit
+         *     * `reseau` - reseau
+         *     * `classe` - classe
+         */
+        par?: 'produit' | 'reseau' | 'classe';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VentesTousPays'];
+        };
+      };
+    };
+  };
+  ventes_tous_pays_export: {
+    parameters: {
+      query?: {
+        annee?: number;
+        /**
+         * @description * `pays` - pays
+         *     * `mensuel` - mensuel
+         *     * `classement` - classement
+         */
+        contenu?: 'pays' | 'mensuel' | 'classement';
+        /**
+         * @description * `csv` - csv
+         *     * `xlsx` - xlsx
+         */
+        fichier?: 'csv' | 'xlsx';
+        mois_fin?: number;
+        /**
+         * @description * `produit` - produit
+         *     * `reseau` - reseau
+         *     * `classe` - classe
+         */
+        par?: 'produit' | 'reseau' | 'classe';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string;
         };
       };
     };

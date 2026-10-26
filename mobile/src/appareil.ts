@@ -49,3 +49,9 @@ export async function decrireAppareil(): Promise<DescriptionAppareil> {
     version_app: VERSION_APP,
   };
 }
+
+/** 1.4.0 (écran de connexion) : ce téléphone s'est-il déjà fait connaître du serveur ? */
+export async function installationConnue(): Promise<boolean> {
+  if (Platform.OS === 'web') return enMemoire !== null;
+  return (await SecureStore.getItemAsync(CLE).catch(() => null)) !== null;
+}

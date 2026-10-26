@@ -351,6 +351,13 @@ def peut_modifier(perimetre: Perimetre, prospect) -> bool:
     return prospect.statut == StatutFiche.A_VALIDER and auteur
 
 
+def peut_poser_premier_lieu(perimetre: Perimetre, prospect) -> bool:
+    """PRP-004, PRP-006 : l'auteur d'une fiche y pose le premier lieu d'exercice, même quand le
+    détecteur l'a déjà rendue commune (PRP-008, `aucun`). Les suivants passent par une
+    proposition (PRP-014)."""
+    return prospect.cree_par_id == perimetre.utilisateur.pk and not prospect.exercices.exists()
+
+
 def rechercher(qs: QuerySet, texte: str) -> QuerySet:
     """Recherche tolérante aux accents, à la casse et aux titres (« dr ndiaye ») ; les
     chiffres cherchent aussi dans le numéro d'ordre et les téléphones."""

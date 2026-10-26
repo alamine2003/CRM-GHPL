@@ -18,12 +18,13 @@ Matrice de référence : `prd.md` §6.3. Aucun nouveau rôle sans décision.
 
 ## 3. Vocabulaire imposé
 
-Division (GHPL 1…) · Réseau (LEAP GYN…, porte un portefeuille) · Classe thérapeutique (Cardio…) · Zone · Secteur · Poste · Occupation · Rattachement · Périmètre · Prospect · Établissement · Exercice · Liste cible · Planning · Version · Passage · Visite · Rapport · Présentation · Remise. **Ne jamais écrire « gamme » seul.** Statuts : `prd.md` §17, sans variante.
+Division (GHPL 1…) · Client (pharmacie, parapharmacie, grossiste) · Vente · Réseau (LEAP GYN…, porte un portefeuille) · Classe thérapeutique (Cardio…) · Zone · Secteur · Poste · Occupation · Rattachement · Périmètre · Prospect · Établissement · Exercice · Liste cible · Planning · Version · Passage · Visite · Rapport · Présentation · Remise. **Ne jamais écrire « gamme » seul.** Statuts : `prd.md` §17, sans variante.
 
 ## 4. Frontières fonctionnelles de la 1.0.0
 
 - **Dans** : `prd.md` §8.
 - **Hors** : stocks (seule la *remise* d'échantillons est saisie), notes de frais et montants (seul le *kilométrage* est affiché), commandes, facturation, paie, marketing, SMS, WhatsApp (après 1.0.0), GPS continu, signature électronique, gestion RH des congés.
+- **Ajouté après la 1.0.0** (décision du 20 octobre 2026, `prd.md` §14.84) : le **suivi des ventes** des délégués au portail (import Excel ou saisie ; YTD, mensuel, ventes éclatées, objectifs par réseau). Il ne gère ni commande, ni facture, ni stock : il observe des totaux mensuels.
 
 ## 5. Règles multi-pays
 
@@ -40,7 +41,7 @@ Division (GHPL 1…) · Réseau (LEAP GYN…, porte un portefeuille) · Classe t
 - [ ] Toute vue d'API hérite de la classe de base à périmètre ; tout accès passe par les `selectors`.
 - [ ] Hors périmètre → `404` (ne pas révéler l'existence).
 - [ ] Fiche prospect **commune** au pays ; visites et rapports **privés** au délégué ; superviseur = postes rattachés ; DM/DF = leurs réseaux.
-- [ ] Toute consultation nominative par le siège et tout export sont audités.
+- [ ] Toute consultation nominative par le siège (pilotage, ventes par délégué) et tout export sont audités.
 - [ ] Toute modification de la matrice commence par `prd.md` §6.3, puis les tests d'isolation.
 
 ## 7. Règles des workflows
@@ -66,7 +67,7 @@ Division (GHPL 1…) · Réseau (LEAP GYN…, porte un portefeuille) · Classe t
 | Fichiers | Cloudflare R2 privé, URL signées | Clés sans donnée personnelle |
 | BI | Grafana sur schéma `pilotage`, un rôle par pays | Agrégats, jamais de texte libre |
 
-Modules serveur : `socle`, `identite`, `organisation`, `perimetre`, `referentiel`, `prospects`, `planning`, `visites`, `rapports`, `notifications`, `pilotage`, `synchro`, `audit`, `imports`.
+Modules serveur : `socle`, `identite`, `organisation`, `perimetre`, `referentiel`, `prospects`, `planning`, `visites`, `rapports`, `notifications`, `pilotage`, `ventes`, `synchro`, `audit`, `imports`.
 
 ## 9. Séparation des responsabilités
 

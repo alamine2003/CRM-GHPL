@@ -29,7 +29,7 @@ Prérequis : Python 3.12, Node.js 22.12+, PostgreSQL 16 (ou Docker), gettext.
 ```bash
 docker compose up -d db redis     # ou un PostgreSQL local (rôle innov, base innov ; sinon DATABASE_URL)
 make installer                    # environnement Python, traductions, dépendances npm
-make serveur                      # API sur http://localhost:8000 (/api/health/)
+make serveur                      # tables de la base à jour, puis API sur http://localhost:8000 (/api/health/)
 make portail                      # portail sur http://localhost:5173
 make mobile                       # Expo : ouvrir avec Expo Go ou un émulateur
 ```
@@ -81,14 +81,37 @@ Depuis GitHub : *Actions → Builds de test mobiles → Run workflow*, après av
 
 ## Démonstration
 
-Une base de démonstration aux données **fictives** (volumes réels du Sénégal : 4 divisions, 19 réseaux, 48 secteurs, 227 postes, 207 délégués ; Togo réduit) se recrée d'une commande (DEM-001). Elle **efface toute la base** et n'est permise qu'en développement ou démonstration :
+Depuis 1.0.8, plus aucune donnée fictive n'est versée dans une instance : elle part vide (décision du 12 octobre 2026, prd.md §14.81). Le premier compte, un administrateur du siège, se crée ainsi :
 
 ```bash
 cd backend
-INNOV_DEMO_MOT_DE_PASSE='…' .venv/bin/python manage.py reinitialiser_demo --oui   # --echelle 0.2 pour une base légère
+INNOV_ADMIN_IDENTIFIANT=prenom.nom INNOV_ADMIN_MOT_DE_PASSE='…' .venv/bin/python manage.py preparer_instance
 ```
 
-La commande affiche un compte par rôle (siège, responsable et administrateur pays, DF, DM, superviseur, délégué). Sans la variable, un mot de passe est tiré au hasard et affiché une fois. Les courriels finissent en `@demo.invalid` : aucun message ne peut partir vers une vraie boîte. Les comptes marqués `*` devront activer la double authentification à leur première connexion. Une instance lancée avec `ENVIRONNEMENT=demonstration` affiche un bandeau « Démonstration » sur chaque écran.
+La commande ne fait rien si un compte existe déjà. L'administrateur du siège active la double authentification à sa première connexion, crée les pays (page **Pays**), puis les comptes. Une instance lancée avec `ENVIRONNEMENT=demonstration` affiche « Essai » sur chaque écran : sans sauvegarde, elle ne reçoit aucune donnée réelle. Les données fictives ne servent plus qu'aux tests automatiques (`apps/demonstration/generateur.py`).
+
+Les vraies données se chargent **sur un poste local seulement**, jamais dans le dépôt ni sur l'instance gratuite (formalités CDP). Le fichier d'organisation (gammes, réseaux, produits, postes, délégués) :
+
+```bash
+cd backend
+.venv/bin/python manage.py importer_organisation ~/Downloads/ORGANISATION.xlsx --pays SN --auteur prenom.nom --simulation
+.venv/bin/python manage.py importer_organisation ~/Downloads/ORGANISATION.xlsx --pays SN --auteur prenom.nom
+```
+
+La simulation n'écrit rien ; l'import crée le pays s'il manque, puis les produits, gammes, réseaux, secteurs, postes et comptes (sans mot de passe). Un second import ne crée aucun doublon.
+
+Puis l'export BirdNotes (prospects, établissements, localités). Après le fichier d'organisation, BirdNotes ne recrée pas les gammes, réseaux ni produits : l'organisation fait foi.
+
+```bash
+.venv/bin/python manage.py importer_birdnotes ~/Downloads/Export_CRM_BirdNotes.json.zip --pays SN --auteur prenom.nom --simulation
+.venv/bin/python manage.py importer_birdnotes ~/Downloads/Export_CRM_BirdNotes.json.zip --pays SN --auteur prenom.nom
+```
+
+Enfin, le modèle sénégalais pour les autres pays (gammes, réseaux, produits, portefeuilles, listes et paramètres ; ni secteurs, ni prospects, ni personnes) :
+
+```bash
+.venv/bin/python manage.py appliquer_modele_pays --depuis SN --vers CI TG
+```
 
 Scénario de démonstration de fin de cycle : [`demonstration-0.0.md`](demonstration-0.0.md). Recette du cycle (exigence → test) : [`recette-0.0.md`](recette-0.0.md).
 

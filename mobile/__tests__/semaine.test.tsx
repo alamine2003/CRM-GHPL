@@ -4,7 +4,8 @@ import type { ReactNode } from 'react';
 import EcranSemaine from '../app/semaine';
 import i18n from '../src/i18n';
 import { ContexteSession, type Session } from '../src/session';
-import { VueDetail, VueJour } from '../src/Itineraire';
+import { VueJour } from '../src/Itineraire';
+import { EcranVisite } from '../src/Visite';
 import { lireHeure } from '../src/Visites';
 
 // La base chiffrée (SQLCipher) n'existe que sur le téléphone : une mémoire la remplace ici.
@@ -28,12 +29,27 @@ jest.mock('expo-router', () => ({
 
 // Le gabarit (en-tête, onglets) est testé ailleurs : ici, le contenu de la semaine.
 jest.mock('../src/Ecran', () => ({
-  Ecran: ({ children, surTitre }: { children: ReactNode; surTitre?: string }) => {
+  Ecran: ({
+    children,
+    titre,
+    surTitre,
+    action,
+    pied,
+  }: {
+    children: ReactNode;
+    titre?: string;
+    surTitre?: string;
+    action?: ReactNode;
+    pied?: ReactNode;
+  }) => {
     const { Text } = jest.requireActual('react-native');
     return (
       <>
+        <Text>{titre}</Text>
         <Text>{surTitre}</Text>
+        {action}
         {children}
+        {pied}
       </>
     );
   },
@@ -169,17 +185,55 @@ async function rendre(
   );
 }
 
+// Les données décrivent la semaine du 26 octobre 2026, vue avant qu'elle commence : sans date
+// figée, l'écran ouvrirait le jour même dès que cette semaine devient la semaine en cours. Seule
+// l'horloge est figée ; les minuteries restent réelles.
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: new Date('2026-10-23T08:00:00.000Z'),
+    doNotFake: [
+      'hrtime',
+      'nextTick',
+      'performance',
+      'queueMicrotask',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'requestIdleCallback',
+      'cancelIdleCallback',
+      'setImmediate',
+      'clearImmediate',
+      'setInterval',
+      'clearInterval',
+      'setTimeout',
+      'clearTimeout',
+    ],
+  });
+});
+
+afterAll(() => {
+  jest.useRealTimers();
+});
+
 beforeEach(async () => {
   mockMemoire.clear();
   await i18n.changeLanguage('fr');
 });
 
+/** 1.4.3 : les jours sont des pastilles ; le jour choisi montre ses visites et ses actions. */
+async function choisirJour(debut: RegExp) {
+  await fireEvent.press(await screen.findByRole('tab', { name: debut }));
+}
+
 test('PLN-001 CA2 : la semaine affiche ses jours ouvrés et le jour férié, non planifiable', async () => {
   await rendre({ semaine: jest.fn(async () => SEMAINE) });
-  expect(await screen.findByText('Férié · Fête fictive')).toBeTruthy();
-  expect(screen.getByText('Lundi 26 oct.')).toBeTruthy();
+  // Cinq jours en pastilles, le jour férié compris : il se dit « Férié ».
+  expect(await screen.findAllByRole('tab')).toHaveLength(5);
+  expect(screen.getByText('Lun')).toBeTruthy();
+  expect(screen.getByText('Férié')).toBeTruthy();
   expect(screen.getByText(/Le jour férié ne se planifie pas/)).toBeTruthy();
-  expect(screen.getByText('Du 26 oct. au 30 oct.')).toBeTruthy();
+  expect(screen.getByText('Du 26 octobre au 1 novembre')).toBeTruthy();
+  await choisirJour(/^Vendredi 30 octobre/);
+  expect(screen.getByText('Férié · Fête fictive')).toBeTruthy();
 });
 
 test('PLN-001 CA1 : le délégué prépare sa semaine, une seule fois', async () => {
@@ -215,8 +269,10 @@ test('PLN-002 CA1 : une visite incomplète montre ce qui reste à compléter', a
   expect(screen.getByText('Clinique Fictive')).toBeTruthy();
   expect(screen.getByText('À compléter : Heure, Objectif')).toBeTruthy();
   expect(screen.getByText('1 visite planifiée, 1 à compléter.')).toBeTruthy();
-  // Quatre jours planifiables, aucun ajout sur le jour férié.
-  expect(screen.getAllByText('Ajouter une visite')).toHaveLength(4);
+  // « Ajouter une visite » est collé en bas pour le jour choisi ; aucun ajout un jour férié.
+  expect(screen.getAllByText('Ajouter une visite')).toHaveLength(1);
+  await choisirJour(/^Vendredi 30 octobre/);
+  expect(screen.queryByText('Ajouter une visite')).toBeNull();
 });
 
 test('PLN-002 : le délégué ajoute une visite depuis sa liste cible', async () => {
@@ -254,7 +310,8 @@ test('PLN-002 : le délégué ajoute une visite depuis sa liste cible', async ()
     ciblage: { mesListes },
     exercices: { duProspect },
   });
-  await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[1]!);
+  await choisirJour(/^Mardi 27 octobre/);
+  await fireEvent.press(await screen.findByText('Ajouter une visite'));
   await fireEvent.press(await screen.findByText('Dr Awa FICTIF'));
   // Un seul lieu d'exercice : il est retenu d'office.
   expect(await screen.findByText('Clinique Fictive')).toBeTruthy();
@@ -308,7 +365,8 @@ test('DC-61 : la visite proposée au dernier rapport se place d’un appui', asy
       exercices: { duProspect },
     },
   );
-  await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[1]!);
+  await choisirJour(/^Mardi 27 octobre/);
+  await fireEvent.press(await screen.findByText('Ajouter une visite'));
   expect(await screen.findByText('Proposées à votre dernière visite')).toBeTruthy();
   expect(screen.getByText(/Proposée le 13 oct\. · Revisiter le prescripteur/)).toBeTruthy();
   await fireEvent.press(screen.getByText('Dr Fatou EXEMPLE'));
@@ -411,6 +469,7 @@ test('PLN-009 : le délégué déclare une demi-journée de formation', async ()
     semaine: jest.fn(async () => EN_PREPARATION),
     declarerActivite,
   } as unknown as Partial<ClientApi['plannings']>);
+  await choisirJour(/^Jeudi 29 octobre/);
   await fireEvent.press(await screen.findByLabelText('Déclarer une activité le jeudi 29 octobre'));
   // « Autre » exige un motif ; la formation, non.
   await fireEvent.press(screen.getByText('Autre'));
@@ -445,9 +504,12 @@ test('PLN-009 : une journée entière d’absence ne propose plus d’ajouter un
       ],
     })),
   });
+  await choisirJour(/^Mercredi 28 octobre/);
   expect(await screen.findByText('Congé · Journée')).toBeTruthy();
-  // Trois jours planifiables restent ouverts aux visites (lundi, mardi, jeudi).
-  expect(screen.getAllByText('Ajouter une visite')).toHaveLength(3);
+  // Absent toute la journée : plus d'ajout ce jour-là ; les autres jours restent ouverts.
+  expect(screen.queryByText('Ajouter une visite')).toBeNull();
+  await choisirJour(/^Jeudi 29 octobre/);
+  expect(screen.getByText('Ajouter une visite')).toBeTruthy();
 });
 
 test('l’ordre : seules les visites sans heure se déplacent', async () => {
@@ -493,7 +555,7 @@ test('PLN-004 CA1 : deux visites à la même heure sont à corriger avant de sou
   expect(screen.getByText('mar. 27 : 2 visites à 10:00')).toBeTruthy();
   // Chaque visite concernée porte la marque ; le jour montre son objectif.
   expect(screen.getAllByText("Même heure qu'une autre visite")).toHaveLength(2);
-  expect(screen.getByLabelText('2 visites, objectif 6 à 10')).toBeTruthy();
+  expect(screen.getByText('2 visites · objectif 6 à 10')).toBeTruthy();
   // Toucher le point ouvre la visite à corriger.
   await fireEvent.press(screen.getByText('mar. 27 : 2 visites à 10:00'));
   expect(await screen.findByText('Modifier la visite')).toBeTruthy();
@@ -588,18 +650,18 @@ test('PLN-005 CA1 : des prospects de la liste cible se posent sur un jour', asyn
     } as unknown as Partial<ClientApi['plannings']>,
     { ciblage: { mesListes: jest.fn(async () => MES_LISTES) } },
   );
+  // Le jour choisi dans la semaine est celui de la pose (maquette 1.4.6).
+  await choisirJour(/^Jeudi 29/);
   await fireEvent.press(await screen.findByText('Ajouter depuis ma liste cible'));
-  // Awa est déjà prévue mardi : masquée tant que « Pas encore prévus » est actif.
+  // Awa est déjà prévue mardi : seuls les prospects pas encore prévus se posent d'ici.
   expect(await screen.findByText('Dr Moussa EXEMPLE')).toBeTruthy();
+  expect(screen.getByText('Pas encore prévus · 1 prospect')).toBeTruthy();
   expect(screen.queryByText('Dr Awa FICTIF')).toBeNull();
-  await fireEvent.press(screen.getByText('Pas encore prévus'));
-  expect(screen.getByText('Déjà prévu : mar. 27')).toBeTruthy();
-  await fireEvent.press(screen.getByText('jeu. 29'));
-  await fireEvent.press(screen.getByText('Dr Moussa EXEMPLE'));
-  await fireEvent.press(screen.getByText('Dr Awa FICTIF'));
-  await fireEvent.press(screen.getByText('Poser 2 visites le jeudi 29'));
-  expect(poser).toHaveBeenCalledWith('pl1', '2026-10-29', ['p2', 'p1']);
-  expect(await screen.findByText(/2 visites posées le jeudi 29/)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('checkbox', { name: /Dr Moussa EXEMPLE/ }));
+  expect(screen.getByRole('checkbox', { name: /Dr Moussa EXEMPLE/ })).toBeChecked();
+  await fireEvent.press(screen.getByText('Poser 1 visite le jeudi 29'));
+  expect(poser).toHaveBeenCalledWith('pl1', '2026-10-29', ['p2']);
+  expect(await screen.findByText(/1 visite posée le jeudi 29/)).toBeTruthy();
 });
 
 test('PLN-005 CA2 : une semaine vide reprend la précédente', async () => {
@@ -629,8 +691,7 @@ test('PLN-005 : une visite se copie sur un autre jour', async () => {
   );
   await fireEvent.press(await screen.findByText('Dr Awa FICTIF'));
   expect(await screen.findByText('Copier vers')).toBeTruthy();
-  // La première pilule « jeu. 29 » choisit le jour de la visite ; la seconde copie.
-  await fireEvent.press(screen.getAllByText('jeu. 29')[1]!);
+  await fireEvent.press(screen.getByText('jeu. 29'));
   expect(copier).toHaveBeenCalledWith('v1', '2026-10-29');
   expect(await screen.findByText('Visite copiée le jeu. 29.')).toBeTruthy();
 });
@@ -650,7 +711,7 @@ test('PLN-006 : un planning soumis s’ouvre en détail, pas en saisie', async (
     params: { id: 'v1', jour: '2026-10-27' },
   });
   // Le jour s'ouvre en vue jour.
-  await fireEvent.press(screen.getByText('Mardi'));
+  await fireEvent.press(screen.getByText('Mardi 27 octobre'));
   expect(mockPousser).toHaveBeenLastCalledWith('/jour/2026-10-27');
 });
 
@@ -696,9 +757,10 @@ test('PLN-006 : la vue jour suit l’itinéraire, arrêt par arrêt', async () =
     visites: [CONFRERE, { ...VISITE, heure: '11:00', ordre: 2 }, sansLieu],
     kilometrage: KM,
   });
-  expect(await screen.findByText('3 visites')).toBeTruthy();
-  expect(screen.getByText("≈ 63,4 km estimés, à vol d'oiseau")).toBeTruthy();
-  expect(screen.getByText('1')).toBeTruthy();
+  expect(await screen.findByText('Itinéraire')).toBeTruthy();
+  expect(screen.getAllByText('3').length).toBeGreaterThan(0);
+  expect(screen.getByText('≈ 63 km')).toBeTruthy();
+  expect(screen.getByText('Visites')).toBeTruthy();
   expect(screen.getByText('↓ 63,4 km')).toBeTruthy();
   expect(screen.getByText('↓ distance inconnue')).toBeTruthy();
   mockPousser.mockClear();
@@ -710,9 +772,9 @@ test('PLN-006 : la vue jour suit l’itinéraire, arrêt par arrêt', async () =
 });
 
 test('PLN-006 : le détail d’une visite mène à ses fiches et à sa modification', async () => {
-  await rendreVue(<VueDetail id="v1" jour="2026-10-27" />, EN_PREPARATION);
+  await rendreVue(<EcranVisite id="v1" jour="2026-10-27" />, EN_PREPARATION);
   expect(await screen.findByText('Dr Awa FICTIF')).toBeTruthy();
-  expect(screen.getByText('Cardiologie')).toBeTruthy();
+  expect(screen.getByText('Cardiologie · Réseau Cardio')).toBeTruthy();
   expect(screen.getByText('Prévue')).toBeTruthy();
   expect(screen.getByText('À compléter : Heure, Objectif')).toBeTruthy();
   mockPousser.mockClear();
@@ -740,7 +802,8 @@ test('PLN-007 : sans réseau, la visite attend sur le téléphone puis part une 
   await rendre({ semaine, ajouterVisite } as unknown as Partial<ClientApi['plannings']>, {
     ciblage: { mesListes: jest.fn(async () => []) },
   });
-  await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[1]!);
+  await choisirJour(/^Mardi 27 octobre/);
+  await fireEvent.press(await screen.findByText('Ajouter une visite'));
   await fireEvent.changeText(screen.getByLabelText('Objectif'), 'Présenter le produit');
   await fireEvent.press(screen.getByText('Enregistrer'));
   // Pas de réseau : la semaine gardée s'affiche, la visite attend.
@@ -764,7 +827,8 @@ test('PLN-007 CA1 : la saisie en cours est gardée sur le téléphone', async ()
     { semaine: jest.fn(async () => EN_PREPARATION) },
     { ciblage: { mesListes: jest.fn(async () => []) } },
   );
-  await fireEvent.press((await screen.findAllByText('Ajouter une visite'))[2]!);
+  await choisirJour(/^Mercredi 28 octobre/);
+  await fireEvent.press(await screen.findByText('Ajouter une visite'));
   await fireEvent.changeText(screen.getByLabelText('Objectif'), 'Remettre les échantillons');
   await waitFor(() =>
     expect(
@@ -994,7 +1058,7 @@ test('PLN-007 : sans réseau, la journée et le détail restent lisibles', async
   expect(screen.getByText('Dr Moussa EXEMPLE')).toBeTruthy();
   await vue.rerender(
     <ContexteSession.Provider value={horsReseau}>
-      <VueDetail id="v2" jour="2026-10-27" />
+      <EcranVisite id="v2" jour="2026-10-27" />
     </ContexteSession.Provider>,
   );
   expect(await screen.findByText('Échantillons')).toBeTruthy();
@@ -1031,6 +1095,7 @@ test('PLN-018 CA1 : un déplacement s’explique et dit qui l’a demandé', asy
     semaine: jest.fn(async () => EN_PREPARATION),
     declarerActivite,
   } as unknown as Partial<ClientApi['plannings']>);
+  await choisirJour(/^Jeudi 29 octobre/);
   await fireEvent.press(await screen.findByLabelText('Déclarer une activité le jeudi 29 octobre'));
   await fireEvent.press(screen.getByText('Déplacement'));
   // Sans explication, rien ne part.
@@ -1068,10 +1133,11 @@ test('PLN-018 CA2 : un jour de commando garde ses visites et se lit comme du tra
       ],
     })),
   });
+  await choisirJour(/^Mercredi 28 octobre/);
   expect(await screen.findByText('Commando · Journée')).toBeTruthy();
   expect(screen.getByText('Commando à Thiès, lancement produit')).toBeTruthy();
-  // Les quatre jours planifiables restent ouverts aux visites, mercredi compris.
-  expect(screen.getAllByText('Ajouter une visite')).toHaveLength(4);
+  // Un commando garde ses visites : le mercredi reste ouvert aux visites.
+  expect(screen.getByText('Ajouter une visite')).toBeTruthy();
 });
 
 test('PLN-013 CA2 : le délégué lit la révision et la remarque sur la visite concernée', async () => {
@@ -1145,7 +1211,7 @@ test('VIS-008 CA2 : la visite imprévue se lit « Imprévue » dans la semaine e
   await rendre({ semaine: jest.fn(async () => semaine) });
   expect(await screen.findByText('Imprévue')).toBeTruthy();
   expect(screen.queryByText(/À compléter/)).toBeNull();
-  await rendreVue(<VueDetail id="v9" jour="2026-10-27" />, semaine);
+  await rendreVue(<EcranVisite id="v9" jour="2026-10-27" />, semaine);
   expect(await screen.findByText('Justification de la visite imprévue')).toBeTruthy();
   expect(screen.getByText('Croisé à la pharmacie')).toBeTruthy();
 });

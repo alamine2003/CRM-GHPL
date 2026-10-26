@@ -199,8 +199,11 @@ def test_sans_planning_la_reouverture_le_cree(monde, supervise):
 
 def test_seul_le_superviseur_du_poste_rouvre(monde, supervise):
     with freeze_time(APRES):
-        r = rouvrir(client_de(monde["dm.sn"]), monde)
+        r = rouvrir(client_de(monde["admin.sn"]), monde)
         assert (r.status_code, r.json()["code"]) == (403, "non_decideur")
+        # 1.3.0 [D] : le DM ne décide plus.
+        r = rouvrir(client_de(monde["dm.sn"]), monde)
+        assert (r.status_code, r.json()["code"]) == (403, "interdit")
         # Le délégué ne se rouvre pas lui-même : la réouverture n'est pas dans ses droits.
         assert rouvrir(client_de(monde["deleg.sn"]), monde).status_code == 403
         assert services.est_ferme(supervise["planning"])

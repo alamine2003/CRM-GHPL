@@ -174,6 +174,36 @@ export type PointAttention = Schemas['PointAttention'];
 export type Objectifs = Schemas['ObjectifsReseau'];
 export type Objectif = Schemas['ObjectifReseau'];
 export type SaisieObjectif = Schemas['SaisieObjectifReseau'];
+/** Droits du DO (compte DF) réglés par le siège (1.6.1). */
+export type CompteDO = Schemas['CompteDO'];
+export type DroitsDO = Schemas['DroitsDO'];
+/** Suivi des ventes (1.6.0) : cumul de l'année, ventes mensuelles, ventilation éclatée. */
+export type SyntheseVentes = Schemas['SyntheseVentes'];
+export type GroupeVentes = Schemas['GroupeVentes'];
+export type MoisVentes = Schemas['MoisVentes'];
+export type OptionsVentes = Schemas['OptionsVentes'];
+export type LigneVente = Schemas['LigneVenteRendu'];
+export type PageLignesVentes = Schemas['PageLignes'];
+export type SaisieVente = Schemas['SaisieVente'];
+export type ClientVente = Schemas['Client'];
+export type SaisieClientVente = Schemas['SaisieClient'];
+export type TypeClientVente = Schemas['TypeClientVenteEnum'];
+export type RegroupementVentes = Schemas['SyntheseVentesParEnum'];
+/** Objectifs de ventes par réseau (1.7.0). */
+export type ObjectifsVentes = Schemas['ObjectifsVentes'];
+export type ObjectifVente = Schemas['ObjectifVenteRendu'];
+export type SaisieObjectifVente = Schemas['SaisieObjectifVente'];
+export type ModificationObjectifVente = Schemas['PatchedModificationObjectifVente'];
+export type ReseauObjectifVente = Schemas['ReseauObjectif'];
+export type EtatObjectifVente = Schemas['EtatObjectifVenteEnum'];
+/** Vue de tous les pays du siège, convertie en XOF (1.9.0). */
+export type VentesTousPays = Schemas['VentesTousPays'];
+export type PaysVentes = Schemas['PaysVentes'];
+export type ClassementVentes = Schemas['ClassementVentes'];
+export type ClassementTousPays = Schemas['VentesTousPaysParEnum'];
+export type TauxDeLAnnee = Schemas['TauxDeLAnnee'];
+export type DeviseTaux = Schemas['DeviseTaux'];
+export type ReglageTaux = Schemas['ReglageTaux'];
 export type Journee = Schemas['Journee'];
 export type VisiteJournee = Schemas['VisiteJournee'];
 export type RapportLu = Schemas['RapportLu'];

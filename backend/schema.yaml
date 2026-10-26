@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.0.6
+  version: 1.9.4
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -896,6 +896,76 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Doublon'
+          description: ''
+  /api/v1/droits-do/:
+    get:
+      operationId: droits_do_liste
+      description: Les comptes DF (les DO) avec leurs droits ; le siège sans pays
+        choisi les voit tous.
+      tags:
+      - droits-do
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CompteDO'
+          description: ''
+  /api/v1/droits-do/{id}/:
+    get:
+      operationId: droits_do_detail
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - droits-do
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompteDO'
+          description: ''
+    patch:
+      operationId: droits_do_regler
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - droits-do
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationDroitsDO'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationDroitsDO'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationDroitsDO'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompteDO'
           description: ''
   /api/v1/erreurs-clients/:
     post:
@@ -2954,8 +3024,8 @@ paths:
     get:
       operationId: objectifs
       description: |-
-        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-        l'administrateur pays en fixent (CA1).
+        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+        en fixe (CA1).
       parameters:
       - in: query
         name: tous
@@ -2975,8 +3045,8 @@ paths:
     post:
       operationId: objectif_creer
       description: |-
-        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; le DM du réseau et
-        l'administrateur pays en fixent (CA1).
+        DSH-009 : les objectifs des réseaux visibles avec leur suivi (CA2) ; l'administrateur pays
+        en fixe (CA1).
       tags:
       - pilotage
       requestBody:
@@ -4264,7 +4334,7 @@ paths:
       operationId: rapport_rouvrir
       description: |-
         RPT-016 : rouvrir un rapport validé, avec un motif ; le responsable jusqu'à 30 jours
-        après la validation, le DM du périmètre au-delà (CA1).
+        après la validation, l'administrateur pays au-delà (CA1).
       parameters:
       - in: path
         name: id
@@ -5313,6 +5383,766 @@ paths:
               schema:
                 $ref: '#/components/schemas/Transfert'
           description: ''
+  /api/v1/ventes/clients/:
+    get:
+      operationId: ventes_clients
+      description: |-
+        Les clients (pharmacies, parapharmacies, grossistes) : la recherche aide à choisir celui
+        d'une ligne ; l'administrateur pays en crée.
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+      - in: query
+        name: type
+        schema:
+          type: string
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+          description: ''
+    post:
+      operationId: ventes_client_creer
+      description: |-
+        Les clients (pharmacies, parapharmacies, grossistes) : la recherche aide à choisir celui
+        d'une ligne ; l'administrateur pays en crée.
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieClient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieClient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieClient'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+  /api/v1/ventes/export/:
+    get:
+      operationId: ventes_export
+      description: |-
+        VNT-006 (1.6.2) : exporter ce que la synthèse montre — la ventilation, les ventes
+        mensuelles ou les lignes du cumul — en CSV ou en classeur Excel, avec la même période, les
+        mêmes filtres et le même périmètre. Chaque export est inscrit au journal d'audit.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: classe
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: contenu
+        schema:
+          enum:
+          - ventilation
+          - mensuel
+          - lignes
+          type: string
+          default: ventilation
+          minLength: 1
+        description: |-
+          * `ventilation` - ventilation
+          * `mensuel` - mensuel
+          * `lignes` - lignes
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: fichier
+        schema:
+          enum:
+          - csv
+          - xlsx
+          type: string
+          default: xlsx
+          minLength: 1
+        description: |-
+          * `csv` - csv
+          * `xlsx` - xlsx
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      - in: query
+        name: par
+        schema:
+          enum:
+          - delegue
+          - produit
+          - classe
+          - reseau
+          - zone
+          - client
+          - type_client
+          type: string
+          default: produit
+          minLength: 1
+        description: |-
+          * `delegue` - delegue
+          * `produit` - produit
+          * `classe` - classe
+          * `reseau` - reseau
+          * `zone` - zone
+          * `client` - client
+          * `type_client` - type_client
+      - in: query
+        name: produit
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: reseau
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: type_client
+        schema:
+          enum:
+          - pharmacie
+          - parapharmacie
+          - grossiste
+          type: string
+          minLength: 1
+        description: |-
+          * `pharmacie` - Pharmacie
+          * `parapharmacie` - Parapharmacie
+          * `grossiste` - Grossiste
+      - in: query
+        name: zone
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/ventes/import/:
+    post:
+      operationId: import_ventes
+      description: Simuler puis importer le fichier de ventes (classeur Excel).
+      tags:
+      - ventes
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportBirdNotes'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailLot'
+          description: ''
+  /api/v1/ventes/lignes/:
+    get:
+      operationId: ventes_lignes
+      description: Les lignes mensuelles (une page à la fois) ; l'administrateur pays
+        en saisit.
+      parameters:
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: mois
+        schema:
+          type: string
+        description: AAAA-MM
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: produit
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: taille
+        schema:
+          type: integer
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageLignes'
+          description: ''
+    post:
+      operationId: ventes_saisir
+      description: Les lignes mensuelles (une page à la fois) ; l'administrateur pays
+        en saisit.
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieVente'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieVente'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieVente'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LigneVenteRendu'
+          description: ''
+  /api/v1/ventes/lignes/{id}/:
+    patch:
+      operationId: ventes_corriger
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVente'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVente'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationVente'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LigneVenteRendu'
+          description: ''
+  /api/v1/ventes/lignes/{id}/archiver/:
+    post:
+      operationId: ventes_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/ventes/objectifs/:
+    get:
+      operationId: ventes_objectifs
+      description: |-
+        Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+        l'attendu ; l'administrateur pays en fixe.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifsVentes'
+          description: ''
+    post:
+      operationId: ventes_objectif_creer
+      description: |-
+        Les objectifs de ventes de l'année, avec le cumul de l'année (YTD) face à la cible et à
+        l'attendu ; l'administrateur pays en fixe.
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifVente'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifVente'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SaisieObjectifVente'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifVenteRendu'
+          description: ''
+  /api/v1/ventes/objectifs/{id}/:
+    patch:
+      operationId: ventes_objectif_corriger
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifVente'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifVente'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedModificationObjectifVente'
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectifVenteRendu'
+          description: ''
+  /api/v1/ventes/objectifs/{id}/archiver/:
+    post:
+      operationId: ventes_objectif_archiver
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/ventes/objectifs/export/:
+    get:
+      operationId: ventes_objectifs_export
+      description: |-
+        1.8.0 : le tableau des objectifs (cible, attendu, réalisé, état), en CSV ou en classeur
+        Excel, pour l'année et le mois choisis, dans le périmètre. Audité comme les autres exports.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: fichier
+        schema:
+          enum:
+          - csv
+          - xlsx
+          type: string
+          default: xlsx
+          minLength: 1
+        description: |-
+          * `csv` - csv
+          * `xlsx` - xlsx
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/v1/ventes/options/:
+    get:
+      operationId: ventes_options
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OptionsVentes'
+          description: ''
+  /api/v1/ventes/synthese/:
+    get:
+      operationId: ventes_synthese
+      description: |-
+        Le cumul de l'année (YTD) face à l'an passé, les ventes mois par mois, et la ventilation
+        éclatée selon `par`, avec tous les filtres.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: classe
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: delegue
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      - in: query
+        name: par
+        schema:
+          enum:
+          - delegue
+          - produit
+          - classe
+          - reseau
+          - zone
+          - client
+          - type_client
+          type: string
+          default: produit
+          minLength: 1
+        description: |-
+          * `delegue` - delegue
+          * `produit` - produit
+          * `classe` - classe
+          * `reseau` - reseau
+          * `zone` - zone
+          * `client` - client
+          * `type_client` - type_client
+      - in: query
+        name: produit
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: reseau
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: type_client
+        schema:
+          enum:
+          - pharmacie
+          - parapharmacie
+          - grossiste
+          type: string
+          minLength: 1
+        description: |-
+          * `pharmacie` - Pharmacie
+          * `parapharmacie` - Parapharmacie
+          * `grossiste` - Grossiste
+      - in: query
+        name: zone
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheseVentes'
+          description: ''
+  /api/v1/ventes/taux/:
+    get:
+      operationId: ventes_taux
+      description: |-
+        Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+        siège les fixe ou les corrige (chaque changement est audité).
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TauxDeLAnnee'
+          description: ''
+    put:
+      operationId: ventes_taux_regler
+      description: |-
+        Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+        siège les fixe ou les corrige (chaque changement est audité).
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReglageTaux'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReglageTaux'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReglageTaux'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TauxDeLAnnee'
+          description: ''
+  /api/v1/ventes/tous-pays/:
+    get:
+      operationId: ventes_tous_pays
+      description: |-
+        Les ventes de tous les pays, converties en XOF à taux constant : un tableau par pays, les
+        douze mois et un classement par produit, réseau ou classe. Réservée au siège, sans pays
+        choisi ; aucun nom n'y figure.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      - in: query
+        name: par
+        schema:
+          enum:
+          - produit
+          - reseau
+          - classe
+          type: string
+          default: produit
+          minLength: 1
+        description: |-
+          * `produit` - produit
+          * `reseau` - reseau
+          * `classe` - classe
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VentesTousPays'
+          description: ''
+  /api/v1/ventes/tous-pays/export/:
+    get:
+      operationId: ventes_tous_pays_export
+      description: |-
+        Le tableau par pays, les ventes mensuelles ou le classement de la vue de tous les pays,
+        en CSV ou en classeur Excel ; audité comme les autres exports.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: contenu
+        schema:
+          enum:
+          - pays
+          - mensuel
+          - classement
+          type: string
+          default: pays
+          minLength: 1
+        description: |-
+          * `pays` - pays
+          * `mensuel` - mensuel
+          * `classement` - classement
+      - in: query
+        name: fichier
+        schema:
+          enum:
+          - csv
+          - xlsx
+          type: string
+          default: xlsx
+          minLength: 1
+        description: |-
+          * `csv` - csv
+          * `xlsx` - xlsx
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      - in: query
+        name: par
+        schema:
+          enum:
+          - produit
+          - reseau
+          - classe
+          type: string
+          default: produit
+          minLength: 1
+        description: |-
+          * `produit` - produit
+          * `reseau` - reseau
+          * `classe` - classe
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/v1/visites/{id}/:
     patch:
       operationId: visite_modifier
@@ -6335,6 +7165,16 @@ components:
           maxItems: 30
       required:
       - coupes
+    ChoixTypeClient:
+      type: object
+      properties:
+        valeur:
+          type: string
+        libelle:
+          type: string
+      required:
+      - libelle
+      - valeur
     Cible:
       type: object
       properties:
@@ -6364,6 +7204,13 @@ components:
         hors_secteur:
           type: boolean
           readOnly: true
+        visites_cycle:
+          type: integer
+          nullable: true
+          description: |-
+            Visites effectuées chez ce prospect sur le cycle en cours (« 2 / 3 », 1.4.4) ;
+            connues seulement de la liste du délégué lui-même.
+          readOnly: true
       required:
       - debut
       - en_cours
@@ -6372,6 +7219,7 @@ components:
       - id
       - poste
       - prospect
+      - visites_cycle
     CiviliteEnum:
       enum:
       - dr
@@ -6392,6 +7240,59 @@ components:
       description: |-
         * `conforme` - Conforme
         * `a_verifier` - À vérifier
+    ClassementVentes:
+      type: object
+      properties:
+        libelle:
+          type: string
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        part:
+          type: number
+          format: double
+          nullable: true
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        evolution:
+          type: number
+          format: double
+          nullable: true
+        pays:
+          type: integer
+          description: Le nombre de pays qui l'ont vendu.
+      required:
+      - evolution
+      - libelle
+      - montant_ttc
+      - part
+      - pays
+      - precedent_montant_ttc
+      - quantite
+    Client:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/TypeClientVenteEnum'
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+        zone:
+          allOf:
+          - $ref: '#/components/schemas/Element'
+          nullable: true
+      required:
+      - id
+      - nom
+      - type
+      - zone
     ClientEnum:
       enum:
       - portail
@@ -6544,6 +7445,31 @@ components:
       - deplacees
       - modifiees
       - retirees
+    CompteDO:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        identifiant:
+          type: string
+        prenom:
+          type: string
+        nom:
+          type: string
+        pays:
+          allOf:
+          - $ref: '#/components/schemas/PaysResume'
+          nullable: true
+        droits:
+          $ref: '#/components/schemas/DroitsDO'
+      required:
+      - droits
+      - id
+      - identifiant
+      - nom
+      - pays
+      - prenom
     ComptesCouverture:
       type: object
       properties:
@@ -7362,6 +8288,17 @@ components:
       required:
       - delegue
       - journees
+    DelegueVente:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nom:
+          type: string
+      required:
+      - id
+      - nom
     DemandeCorrection:
       type: object
       description: 'RPT-014 CA1 : commentaire obligatoire ; champs concernés facultatifs.'
@@ -7462,7 +8399,7 @@ components:
           type: string
           readOnly: true
         source:
-          $ref: '#/components/schemas/SourceEnum'
+          $ref: '#/components/schemas/SourceImportEnum'
         fichier:
           type: string
           maxLength: 200
@@ -7621,6 +8558,29 @@ components:
       - preparation
       - prospect
       - visite
+    DeviseTaux:
+      type: object
+      properties:
+        devise:
+          type: string
+        pays:
+          type: array
+          items:
+            type: string
+        taux:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          nullable: true
+        modifie_le:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - devise
+      - modifie_le
+      - pays
+      - taux
     Division:
       type: object
       properties:
@@ -7687,6 +8647,16 @@ components:
         delegue:
           type: string
           format: uuid
+        objectif:
+          type: string
+          format: uuid
+        reseau:
+          type: string
+        mois:
+          type: string
+        taux:
+          type: number
+          format: double
     DonneesNotificationMotifEnum:
       enum:
       - soumission
@@ -7746,6 +8716,23 @@ components:
         * `certain` - certain
         * `probable` - probable
         * `aucun` - aucun
+    DroitsDO:
+      type: object
+      description: 'Les groupes de droits d''un DO : vrai quand ils sont ouverts (1.6.1).'
+      properties:
+        ventes:
+          type: boolean
+        pilotage:
+          type: boolean
+        rapports:
+          type: boolean
+        prospects:
+          type: boolean
+      required:
+      - pilotage
+      - prospects
+      - rapports
+      - ventes
     Ecart:
       type: object
       description: |-
@@ -7836,6 +8823,17 @@ components:
       required:
       - libelle
       - quantite
+    Element:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+      required:
+      - id
+      - libelle
     ErreurClient:
       type: object
       properties:
@@ -7862,8 +8860,9 @@ components:
       - version
     Escalade:
       type: object
-      description: 'PLN-016 : le planning est arrivé au DM faute de décision du responsable
-        du poste.'
+      description: |-
+        PLN-016 : le planning est arrivé à l'administrateur faute de décision du responsable du
+        poste.
       properties:
         le:
           type: string
@@ -8103,6 +9102,20 @@ components:
       - role_contourne
       - tables_attendues
       - tables_protegees
+    EtatObjectifVenteEnum:
+      enum:
+      - a_venir
+      - atteint
+      - non_atteint
+      - en_avance
+      - en_retard
+      type: string
+      description: |-
+        * `a_venir` - À venir
+        * `atteint` - Atteint
+        * `non_atteint` - Non atteint
+        * `en_avance` - En avance
+        * `en_retard` - En retard
     EvenementJournal:
       type: object
       properties:
@@ -8191,10 +9204,19 @@ components:
           type: string
           format: date-time
           readOnly: true
+        derniere_visite:
+          type: string
+          format: date
+          nullable: true
+          description: |-
+            La dernière visite effectuée par le lecteur chez ce prospect (« Qui exerce ici »,
+            1.4.5) ; connue seulement de la liste d'un établissement.
+          readOnly: true
       required:
       - actif
       - cree_le
       - debut
+      - derniere_visite
       - etablissement
       - id
       - prospect
@@ -8290,6 +9312,44 @@ components:
       - id
       - libelle
       - total
+    GroupeVentes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+        cle:
+          type: string
+        libelle:
+          type: string
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        part:
+          type: number
+          format: double
+          nullable: true
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        evolution:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - cle
+      - evolution
+      - id
+      - libelle
+      - montant_ttc
+      - part
+      - precedent_montant_ttc
+      - quantite
     HistoriqueProspect:
       type: object
       description: 'OFF-001 : les derniers rapports d''un prospect de la liste cible.'
@@ -8891,6 +9951,52 @@ components:
       - delegues
       - pays
       - total
+    LigneVenteRendu:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mois:
+          type: string
+          description: AAAA-MM
+        delegue:
+          $ref: '#/components/schemas/DelegueVente'
+        produit:
+          $ref: '#/components/schemas/Element'
+        client:
+          $ref: '#/components/schemas/Client'
+        reseau:
+          allOf:
+          - $ref: '#/components/schemas/Element'
+          nullable: true
+        zone:
+          allOf:
+          - $ref: '#/components/schemas/Element'
+          nullable: true
+        quantite:
+          type: integer
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+        source:
+          $ref: '#/components/schemas/SourceVenteEnum'
+        modifie_le:
+          type: string
+          format: date-time
+      required:
+      - client
+      - delegue
+      - id
+      - modifie_le
+      - mois
+      - montant_ttc
+      - produit
+      - quantite
+      - reseau
+      - source
+      - zone
     ListeCible:
       type: object
       properties:
@@ -8999,7 +10105,7 @@ components:
           type: string
           readOnly: true
         source:
-          $ref: '#/components/schemas/SourceEnum'
+          $ref: '#/components/schemas/SourceImportEnum'
         fichier:
           type: string
           maxLength: 200
@@ -9207,6 +10313,54 @@ components:
       - nom
       - pays_principal
       - prenom
+    MoisTousPays:
+      type: object
+      properties:
+        mois:
+          type: string
+          description: AAAA-MM
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        precedent_quantite:
+          type: integer
+      required:
+      - mois
+      - montant_ttc
+      - precedent_montant_ttc
+      - precedent_quantite
+      - quantite
+    MoisVentes:
+      type: object
+      properties:
+        mois:
+          type: string
+          description: AAAA-MM
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        precedent_quantite:
+          type: integer
+      required:
+      - mois
+      - montant_ttc
+      - precedent_montant_ttc
+      - precedent_quantite
+      - quantite
     Moment:
       type: object
       properties:
@@ -9319,6 +10473,7 @@ components:
       - rapports_valides
       - rappel_rapport
       - journee_escaladee
+      - objectif_ventes_retard
       type: string
       description: |-
         * `planning_soumis` - Planning soumis
@@ -9338,6 +10493,7 @@ components:
         * `rapports_valides` - Rapports validés
         * `rappel_rapport` - Rapport à soumettre
         * `journee_escaladee` - Journée escaladée
+        * `objectif_ventes_retard` - Objectif de ventes en retard
     NullEnum:
       enum:
       - null
@@ -9395,6 +10551,95 @@ components:
       - produit
       - reseau
       - suivi
+    ObjectifVenteRendu:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        reseau:
+          $ref: '#/components/schemas/Element'
+        produit:
+          allOf:
+          - $ref: '#/components/schemas/Element'
+          nullable: true
+        delegue:
+          allOf:
+          - $ref: '#/components/schemas/DelegueVente'
+          nullable: true
+        annee:
+          type: integer
+        cible:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        attendu:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        realise:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        ecart:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        taux_cible:
+          type: number
+          format: double
+          nullable: true
+        taux_attendu:
+          type: number
+          format: double
+          nullable: true
+        etat:
+          $ref: '#/components/schemas/EtatObjectifVenteEnum'
+        mois:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          description: Les douze montants de l'année, janvier à décembre.
+        repartition_libre:
+          type: boolean
+          description: 'Faux : la cible est répartie à parts égales.'
+        realise_mois:
+          type: array
+          items:
+            type: string
+            format: decimal
+            pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          description: Le réalisé de chaque mois de l'année, janvier à décembre.
+        cible_deleguee:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+          nullable: true
+          description: 'Objectif de réseau : la somme des objectifs de ses délégués
+            ; sinon vide.'
+        modifiable:
+          type: boolean
+          description: Celui qui lit peut corriger ou archiver cet objectif.
+      required:
+      - annee
+      - attendu
+      - cible
+      - cible_deleguee
+      - delegue
+      - ecart
+      - etat
+      - id
+      - modifiable
+      - mois
+      - produit
+      - realise
+      - realise_mois
+      - repartition_libre
+      - reseau
+      - taux_attendu
+      - taux_cible
     ObjectifsReseau:
       type: object
       description: Les objectifs des réseaux visibles, et ce qu'il faut pour en fixer
@@ -9420,6 +10665,37 @@ components:
       - objectifs
       - portefeuilles
       - reseaux_geres
+    ObjectifsVentes:
+      type: object
+      properties:
+        devise:
+          type: string
+        annee:
+          type: integer
+        mois_fin:
+          type: integer
+        objectifs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectifVenteRendu'
+        total:
+          allOf:
+          - $ref: '#/components/schemas/TotalObjectifs'
+          nullable: true
+          description: Les objectifs de réseau seuls (jamais ceux de produit ou de
+            délégué).
+        reseaux_gerables:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReseauObjectif'
+          description: Ce que l'administrateur pays peut viser ; vide pour les autres.
+      required:
+      - annee
+      - devise
+      - mois_fin
+      - objectifs
+      - reseaux_gerables
+      - total
     Occupation:
       type: object
       properties:
@@ -9507,6 +10783,53 @@ components:
       - secteurs
       - superviseurs
       - zones
+    OptionsVentes:
+      type: object
+      description: 'Ce que les filtres proposent : seulement ce qui apparaît dans
+        les ventes visibles.'
+      properties:
+        annees:
+          type: array
+          items:
+            type: integer
+        aujourdhui_annee:
+          type: integer
+        aujourdhui_mois:
+          type: integer
+        delegues:
+          type: array
+          items:
+            $ref: '#/components/schemas/DelegueVente'
+        produits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        classes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        reseaux:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        types_client:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChoixTypeClient'
+      required:
+      - annees
+      - aujourdhui_annee
+      - aujourdhui_mois
+      - classes
+      - delegues
+      - produits
+      - reseaux
+      - types_client
+      - zones
     Ordre:
       type: object
       properties:
@@ -9530,18 +10853,24 @@ components:
           maxLength: 254
       required:
       - identifiant
-    ParEnum:
-      enum:
-      - delegue
-      - reseau
-      - zone
-      - secteur
-      type: string
-      description: |-
-        * `delegue` - delegue
-        * `reseau` - reseau
-        * `zone` - zone
-        * `secteur` - secteur
+    PageLignes:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        taille:
+          type: integer
+        resultats:
+          type: array
+          items:
+            $ref: '#/components/schemas/LigneVenteRendu'
+      required:
+      - page
+      - resultats
+      - taille
+      - total
     Parametre:
       type: object
       properties:
@@ -9641,6 +10970,17 @@ components:
         ordre:
           type: integer
           minimum: 0
+    PatchedModificationDroitsDO:
+      type: object
+      properties:
+        ventes:
+          type: boolean
+        pilotage:
+          type: boolean
+        rapports:
+          type: boolean
+        prospects:
+          type: boolean
     PatchedModificationExercice:
       type: object
       properties:
@@ -9672,6 +11012,18 @@ components:
         cible:
           type: integer
           minimum: 1
+    PatchedModificationObjectifVente:
+      type: object
+      properties:
+        cible:
+          type: string
+          nullable: true
+        mois:
+          type: array
+          items:
+            type: string
+          nullable: true
+          maxItems: 12
     PatchedModificationPoste:
       type: object
       properties:
@@ -9728,6 +11080,13 @@ components:
           type: string
           format: uuid
           nullable: true
+    PatchedModificationVente:
+      type: object
+      properties:
+        quantite:
+          type: string
+        montant_ttc:
+          type: string
     PatchedModificationVisite:
       type: object
       properties:
@@ -9911,6 +11270,83 @@ components:
       - code
       - fuseau
       - nom
+    PaysVentes:
+      type: object
+      properties:
+        code:
+          type: string
+        nom:
+          type: string
+        devise:
+          type: string
+          description: La monnaie du pays (ISO 4217).
+        taux:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          nullable: true
+          description: 1 unité de la monnaie du pays, en XOF ; vide quand le siège
+            ne l'a pas fixé.
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          description: Dans la monnaie du pays.
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        evolution:
+          type: number
+          format: double
+          nullable: true
+        montant_converti:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        precedent_converti:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        part:
+          type: number
+          format: double
+          nullable: true
+        objectif_cible:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        objectif_cible_converti:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        taux_cible:
+          type: number
+          format: double
+          nullable: true
+        taux_attendu:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - code
+      - devise
+      - evolution
+      - montant_converti
+      - montant_ttc
+      - nom
+      - objectif_cible
+      - objectif_cible_converti
+      - part
+      - precedent_converti
+      - precedent_montant_ttc
+      - taux
+      - taux_attendu
+      - taux_cible
     Perimetre:
       type: object
       properties:
@@ -10384,6 +11820,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Lieu'
+        reseaux:
+          type: array
+          items:
+            type: string
         gerable:
           type: boolean
         synthese:
@@ -10393,6 +11833,7 @@ components:
       - id
       - libelle
       - occupant
+      - reseaux
       - secteurs
       - synthese
       - type_poste
@@ -11189,6 +12630,10 @@ components:
         horodatage_douteux:
           type: boolean
           readOnly: true
+        modifie_le:
+          type: string
+          format: date-time
+          readOnly: true
         manquants:
           type: array
           items:
@@ -11240,6 +12685,7 @@ components:
       - id
       - justification
       - manquants
+      - modifie_le
       - objectif_prevu
       - pieces_jointes
       - presentations
@@ -11612,6 +13058,20 @@ components:
       required:
       - id
       - nom
+    ReglageTaux:
+      type: object
+      properties:
+        annee:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+        taux:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaisieTaux'
+      required:
+      - annee
+      - taux
     RegleEnum:
       enum:
       - actions_en_retard
@@ -11835,6 +13295,27 @@ components:
       - id
       - libelle
       - pays
+    ReseauObjectif:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        libelle:
+          type: string
+        produits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Element'
+        delegues:
+          type: array
+          items:
+            $ref: '#/components/schemas/DelegueVente'
+      required:
+      - delegues
+      - id
+      - libelle
+      - produits
     ReseauResume:
       type: object
       properties:
@@ -12107,6 +13588,21 @@ components:
       required:
       - libelle
       - type
+    SaisieClient:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/TypeClientVenteEnum'
+        nom:
+          type: string
+          maxLength: 160
+        zone:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - nom
+      - type
     SaisieEtablissement:
       type: object
       properties:
@@ -12214,6 +13710,39 @@ components:
       - debut
       - fin
       - indicateur
+      - reseau
+    SaisieObjectifVente:
+      type: object
+      description: La cible de l'année, ou ses douze mois (janvier à décembre) ; les
+        deux si la somme colle.
+      properties:
+        reseau:
+          type: string
+          format: uuid
+        produit:
+          type: string
+          format: uuid
+          nullable: true
+        delegue:
+          type: string
+          format: uuid
+          nullable: true
+          description: '1.8.0 : l''objectif d''un délégué du réseau.'
+        annee:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+        cible:
+          type: string
+          nullable: true
+        mois:
+          type: array
+          items:
+            type: string
+          nullable: true
+          maxItems: 12
+      required:
+      - annee
       - reseau
     SaisiePiece:
       type: object
@@ -12347,6 +13876,44 @@ components:
         version:
           type: integer
           minimum: 0
+    SaisieTaux:
+      type: object
+      properties:
+        devise:
+          type: string
+          maxLength: 3
+        taux:
+          type: string
+      required:
+      - devise
+      - taux
+    SaisieVente:
+      type: object
+      properties:
+        mois:
+          type: string
+          description: AAAA-MM
+          pattern: ^\d{4}-(0[1-9]|1[0-2])$
+        delegue:
+          type: string
+          format: uuid
+        produit:
+          type: string
+          format: uuid
+        client:
+          type: string
+          format: uuid
+        quantite:
+          type: string
+        montant_ttc:
+          type: string
+      required:
+      - client
+      - delegue
+      - mois
+      - montant_ttc
+      - produit
+      - quantite
     SaisieVisite:
       type: object
       properties:
@@ -12392,7 +13959,7 @@ components:
           readOnly: true
         libelle:
           type: string
-          maxLength: 120
+          maxLength: 200
         zone:
           type: string
           format: uuid
@@ -12621,14 +14188,24 @@ components:
           nullable: true
       required:
       - soumis_le
-    SourceEnum:
+    SourceImportEnum:
       enum:
       - birdnotes
       - organisation
+      - ventes
       type: string
       description: |-
         * `birdnotes` - BirdNotes
         * `organisation` - Fichier d'organisation
+        * `ventes` - Fichier de ventes
+    SourceVenteEnum:
+      enum:
+      - import
+      - saisie
+      type: string
+      description: |-
+        * `import` - Fichier importé
+        * `saisie` - Saisie
     StatutEnum:
       enum:
       - actif
@@ -12848,6 +14425,54 @@ components:
       - mes_a_valider
       - potentiels
       - sans_lieu
+    SyntheseVentes:
+      type: object
+      properties:
+        devise:
+          type: string
+          description: 'Code ISO 4217 du pays : tous les montants s''y lisent.'
+        annee:
+          type: integer
+        mois_fin:
+          type: integer
+        par:
+          $ref: '#/components/schemas/SyntheseVentesParEnum'
+        ytd:
+          $ref: '#/components/schemas/TotauxVentes'
+        mensuel:
+          type: array
+          items:
+            $ref: '#/components/schemas/MoisVentes'
+        ventilation:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupeVentes'
+      required:
+      - annee
+      - devise
+      - mensuel
+      - mois_fin
+      - par
+      - ventilation
+      - ytd
+    SyntheseVentesParEnum:
+      enum:
+      - delegue
+      - produit
+      - classe
+      - reseau
+      - zone
+      - client
+      - type_client
+      type: string
+      description: |-
+        * `delegue` - delegue
+        * `produit` - produit
+        * `classe` - classe
+        * `reseau` - reseau
+        * `zone` - zone
+        * `client` - client
+        * `type_client` - type_client
     TableauEquipe:
       type: object
       description: |-
@@ -12871,7 +14496,7 @@ components:
         cycle:
           $ref: '#/components/schemas/CyclePeriode'
         par:
-          $ref: '#/components/schemas/ParEnum'
+          $ref: '#/components/schemas/TableauEquipeParEnum'
         options:
           $ref: '#/components/schemas/OptionsPilotage'
         delegues:
@@ -12899,6 +14524,18 @@ components:
       - par
       - periode
       - total
+    TableauEquipeParEnum:
+      enum:
+      - delegue
+      - reseau
+      - zone
+      - secteur
+      type: string
+      description: |-
+        * `delegue` - delegue
+        * `reseau` - reseau
+        * `zone` - zone
+        * `secteur` - secteur
     TableauSiege:
       type: object
       description: 'DSH-004 : la consolidation du siège, par pays, et le total de
@@ -12979,6 +14616,21 @@ components:
       - part_planifiee
       - rapports_dans_delai
       - realisation
+    TauxDeLAnnee:
+      type: object
+      properties:
+        annee:
+          type: integer
+        devise_reference:
+          type: string
+        devises:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviseTaux'
+      required:
+      - annee
+      - devise_reference
+      - devises
     TendanceProduit:
       type: object
       description: 'DC-53 : les retours sur un produit, agrégés, sans nom de prescripteur.'
@@ -13045,6 +14697,98 @@ components:
       required:
       - cycle
       - semaine
+    TotalObjectifs:
+      type: object
+      properties:
+        cible:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        attendu:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        realise:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        taux_cible:
+          type: number
+          format: double
+          nullable: true
+        taux_attendu:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - attendu
+      - cible
+      - realise
+      - taux_attendu
+      - taux_cible
+    TotalTousPays:
+      type: object
+      properties:
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        evolution:
+          type: number
+          format: double
+          nullable: true
+        objectif_cible:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        taux_cible:
+          type: number
+          format: double
+          nullable: true
+        taux_attendu:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - evolution
+      - montant_ttc
+      - objectif_cible
+      - precedent_montant_ttc
+      - taux_attendu
+      - taux_cible
+    TotauxVentes:
+      type: object
+      properties:
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,14}(?:\.\d{0,2})?$
+        precedent_quantite:
+          type: integer
+        lignes:
+          type: integer
+        evolution:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - evolution
+      - lignes
+      - montant_ttc
+      - precedent_montant_ttc
+      - precedent_quantite
+      - quantite
     Transfert:
       type: object
       properties:
@@ -13115,6 +14859,16 @@ components:
         * `nombre` - Nombre
         * `liste` - Liste
         * `case` - Case à cocher
+    TypeClientVenteEnum:
+      enum:
+      - pharmacie
+      - parapharmacie
+      - grossiste
+      type: string
+      description: |-
+        * `pharmacie` - Pharmacie
+        * `parapharmacie` - Parapharmacie
+        * `grossiste` - Grossiste
     TypePosteEnum:
       enum:
       - vm
@@ -13247,6 +15001,56 @@ components:
           format: double
           maximum: 180
           minimum: -180
+    VentesTousPays:
+      type: object
+      properties:
+        devise:
+          type: string
+          description: 'La monnaie de référence : XOF.'
+        annee:
+          type: integer
+        mois_fin:
+          type: integer
+        par:
+          $ref: '#/components/schemas/VentesTousPaysParEnum'
+        total:
+          $ref: '#/components/schemas/TotalTousPays'
+        devises_sans_taux:
+          type: array
+          items:
+            type: string
+        pays:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaysVentes'
+        mensuel:
+          type: array
+          items:
+            $ref: '#/components/schemas/MoisTousPays'
+        classement:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassementVentes'
+      required:
+      - annee
+      - classement
+      - devise
+      - devises_sans_taux
+      - mensuel
+      - mois_fin
+      - par
+      - pays
+      - total
+    VentesTousPaysParEnum:
+      enum:
+      - produit
+      - reseau
+      - classe
+      type: string
+      description: |-
+        * `produit` - produit
+        * `reseau` - reseau
+        * `classe` - classe
     Version:
       type: object
       description: Une version figée et sa décision, avec le résumé de ce qui a changé
@@ -13604,11 +15408,22 @@ components:
         etablissement:
           type: string
           nullable: true
+        resultat:
+          type: string
+          nullable: true
+          readOnly: true
+        produits:
+          type: array
+          items:
+            type: string
+          readOnly: true
       required:
       - date
       - heure
       - id
       - objectif
+      - produits
+      - resultat
       - statut
     VisitePoint:
       type: object

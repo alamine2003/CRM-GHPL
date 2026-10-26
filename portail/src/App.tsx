@@ -36,6 +36,8 @@ const Validation = lazy(() => import('./pages/Validation'));
 const ATraiter = lazy(() => import('./pages/ATraiter'));
 const Pilotage = lazy(() => import('./pages/Pilotage'));
 const Objectifs = lazy(() => import('./pages/Objectifs'));
+const Ventes = lazy(() => import('./pages/Ventes'));
+const DroitsDO = lazy(() => import('./pages/DroitsDO'));
 const JourneeRapports = lazy(() => import('./pages/JourneeRapports'));
 const ConsultationPlanning = lazy(() => import('./pages/ConsultationPlanning'));
 const Remplacements = lazy(() => import('./pages/Remplacements'));
@@ -64,6 +66,8 @@ const PAGES: Record<string, { titre: string; rendu: Rendu }> = {
   '/planning': { titre: 'navigation.planning', rendu: () => <Planning /> },
   '/a-traiter': { titre: 'navigation.aTraiter', rendu: () => <ATraiter /> },
   '/objectifs': { titre: 'navigation.objectifs', rendu: () => <Objectifs /> },
+  '/droits-do': { titre: 'navigation.droitsDo', rendu: (_, p) => <DroitsDO perimetre={p} /> },
+  '/ventes': { titre: 'navigation.ventes', rendu: (_, p) => <Ventes perimetre={p} /> },
   '/pilotage': { titre: 'navigation.pilotage', rendu: (_, p) => <Pilotage perimetre={p} /> },
   '/validation': { titre: 'navigation.validation', rendu: () => <Validation /> },
   '/remplacements': { titre: 'navigation.remplacements', rendu: () => <Remplacements /> },

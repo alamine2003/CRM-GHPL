@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -236,16 +238,22 @@ class ExerciceSerializer(serializers.ModelSerializer):
     prospect = ProspectResumeSerializer()
     etablissement = EtablissementResumeSerializer()
     actif = serializers.SerializerMethodField()
+    derniere_visite = serializers.SerializerMethodField()
 
     class Meta:
         model = Exercice
         fields = ["id", "prospect", "etablissement", "debut", "fin", "actif", "principal",
-                  "presence", "cree_le"]  # fmt: skip
+                  "presence", "cree_le", "derniere_visite"]  # fmt: skip
 
     def get_actif(self, exercice) -> bool:
         from apps.socle.services import aujourdhui
 
         return exercice.actif_le(aujourdhui(exercice.pays))
+
+    def get_derniere_visite(self, exercice) -> date | None:
+        """La dernière visite effectuée par le lecteur chez ce prospect (« Qui exerce ici »,
+        1.4.5) ; connue seulement de la liste d'un établissement."""
+        return (self.context.get("dernieres_visites") or {}).get(exercice.prospect_id)
 
 
 class SaisieExerciceSerializer(serializers.Serializer):
@@ -289,11 +297,12 @@ class CibleSerializer(serializers.ModelSerializer):
     prospect = ProspectCibleSerializer()
     hors_secteur = serializers.SerializerMethodField()
     en_cours = serializers.SerializerMethodField()
+    visites_cycle = serializers.SerializerMethodField()
 
     class Meta:
         model = Cible
         fields = ["id", "poste", "prospect", "frequence", "debut", "fin", "en_cours",
-                  "hors_secteur"]  # fmt: skip
+                  "hors_secteur", "visites_cycle"]  # fmt: skip
 
     def get_hors_secteur(self, cible) -> bool:
         from .ciblage import hors_secteur
@@ -305,6 +314,12 @@ class CibleSerializer(serializers.ModelSerializer):
 
     def get_en_cours(self, cible) -> bool:
         return cible.fin is None
+
+    def get_visites_cycle(self, cible) -> int | None:
+        """Visites effectuées chez ce prospect sur le cycle en cours (« 2 / 3 », 1.4.4) ;
+        connues seulement de la liste du délégué lui-même."""
+        visites = self.context.get("visites_cycle")
+        return None if visites is None else visites.get(cible.prospect_id, 0)
 
 
 class SyntheseCibleSerializer(serializers.Serializer):
@@ -325,6 +340,7 @@ class PosteCibleSerializer(serializers.Serializer):
     type_poste = serializers.CharField()
     occupant = serializers.CharField(allow_null=True)
     secteurs = LieuSerializer(many=True)
+    reseaux = serializers.ListField(child=serializers.CharField())
     gerable = serializers.BooleanField()
     synthese = SyntheseCibleSerializer()
 

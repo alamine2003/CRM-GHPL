@@ -2,6 +2,530 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.9.4] — Guide de la démonstration gratuite à jour
+
+### Corrigé
+
+- `docs/demo-gratuite.md` demandait encore la double authentification à la première connexion (facultative depuis 1.1.2) et donnait un ordre de remplissage dépassé : il renvoie maintenant au kit de recette (`docs/recette-utilisateur.md` §1.2) et cite la vue de tous les pays.
+
+### Vérifié
+
+- Répétition locale de la démonstration sur une base vide, comme Render la lancera (`backend/demarrer_demo.sh`, `ENVIRONNEMENT=demonstration`) : migrations, « Administrateur du siège créé », `/api/health/` en 1.9.3, connexion sans double authentification, création de pays, vue de tous les pays et taux de change ; construction du portail avec `VITE_API_URL`. Base jetable supprimée ensuite.
+
+## [1.9.3] — Vue de tous les pays : hypothèses confirmées
+
+### Décidé (prd.md §14.90, VNT-012, VNT-013)
+
+- [D, 26 octobre 2026] Un seul taux de change par monnaie et par année ; le classement de tous les pays réunit un même produit par son code. Les deux hypothèses de la 1.9.0 deviennent des décisions ; le comportement ne change pas.
+
+## [1.9.2] — Les réseaux suivis du DF et du DM, depuis le portail
+
+### Ajouté (prd.md §14.91, ORG-008)
+
+- Sur la fiche d'un compte DF ou DM dans « Équipe », une section « Réseaux suivis » : chaque réseau avec sa période ; « Ajouter un réseau » à partir d'une date, « Terminer » pour un réseau en cours. Réservé à l'administrateur pays (et au siège dans un pays choisi) ; chaque ajout et chaque fin sont audités. Jusqu'ici, seul l'import du fichier d'organisation réglait ces réseaux : un DF ou un DM créé à la main ne voyait rien.
+- Le kit de recette (`docs/recette-utilisateur.md` §1.2) renvoie à cette section.
+
+### Design
+
+- Section « Réseaux suivis » : `docs/design.md`.
+
+## [1.9.1] — Le kit de recette utilisateur à jour
+
+### Corrigé
+
+- `docs/recette-utilisateur.md` (prd.md §21.1, REC-01 à REC-20) décrivait une base remplie par `reinitialiser_demo`, retirée en 1.0.8. Il explique maintenant comment préparer le jeu de recette sur une instance vide : pays, comptes avec une boîte de test, organisation par l'import d'un classeur fictif qui reprend ces comptes (rôles, postes, réseaux du DF et du DM), prospects par un export BirdNotes fictif, listes cibles ; et un calendrier sur deux semaines où chaque scénario crée ce que le suivant lit.
+- Le kit suit les décisions depuis 0.9.8 : double authentification facultative (1.1.2), Sénégal géré par le siège (1.2.0), escalade à l'administrateur pays et au siège pour le Sénégal (1.3.0, REC-16, aussi corrigé dans prd.md §21.1), libellés des écrans mobiles redessinés (« Historique des visites », « Suivante »), noms des tests cités.
+
+### Ajouté
+
+- Quatre scénarios complémentaires, hors des REC obligatoires : import et synthèse des ventes (VNT-001 à VNT-006), objectifs de ventes et alerte (VNT-007 à VNT-011, NOT-007), ventes de tous les pays (VNT-012 à VNT-014), droits du DO (DOR-001, DOR-002).
+
+## [1.9.0] — Les ventes de tous les pays, en francs CFA de l'Ouest
+
+### Ajouté (prd.md §14.90, VNT-012 à VNT-014)
+
+- **Vue de tous les pays** pour le siège : sans pays choisi, la page « Ventes » additionne les pays convertis en francs CFA de l'Ouest (XOF) — un tableau par pays (montant converti et dans la monnaie du pays, part, évolution, objectif atteint), les ventes mensuelles de tous les pays et un classement par produit, réseau ou classe thérapeutique. Aucun nom de délégué ni de client [D, 26 octobre 2026].
+- **Taux de change** fixés par l'administrateur du siège, un par monnaie et par année ; la direction du siège les lit. À taux constant : l'an passé se convertit au taux de l'année choisie. Un pays sans taux reste dans sa monnaie, hors des totaux, et un bandeau le signale. Chaque changement de taux est audité (`ventes.taux_change`).
+- **Export** du tableau par pays, des ventes mensuelles ou du classement, en Excel ou en CSV, audité (`export.ventes_tous_pays`).
+- Actions `ventes.tous_pays` (siège) et `ventes.taux_gerer` (administrateur du siège) ; table `ventes_tauxchange`.
+
+### Corrigé
+
+- Les tests de l'écran Semaine du téléphone décrivent la semaine du 26 octobre 2026 ; ils échouaient dès que cette semaine devenait la semaine en cours (l'écran ouvre alors le jour même). Leur horloge est maintenant figée ; l'application ne change pas.
+
+### Design
+
+- Vue « Tous les pays » de la page « Ventes » et fenêtre des taux : `docs/design.md`.
+
+## [1.8.0] — Objectifs de ventes : délégués, courbe, export, alerte
+
+### Ajouté (prd.md §14.89, VNT-009 à VNT-011, NOT-007)
+
+- **Le DM fixe** les objectifs de ventes des réseaux de son périmètre, comme l'administrateur pays pour tout le pays [D, 25 octobre 2026]. Une ligne qu'on ne peut pas corriger n'offre ni « Corriger » ni « Archiver ».
+- **Objectif par délégué** : un objectif vise tout le réseau, un produit ou un délégué du réseau ; le réalisé du délégué est le cumul de ses ventes dans le réseau. L'objectif du réseau montre la part répartie entre ses délégués. Le superviseur lit les objectifs des délégués qui lui sont rattachés.
+- **Courbe cible / réalisé** : attendu cumulé et réalisé cumulé, mois par mois, pour le total des réseaux ou l'objectif choisi, avec un tableau équivalent pour les lecteurs d'écran.
+- **Export des objectifs** en Excel ou en CSV, audité (`export.objectifs_ventes`), avec les droits des autres exports.
+- **Alerte « objectif en retard »** : un réseau sous l'attendu de son objectif à la fin d'un mois est signalé au DM du réseau et à l'administrateur pays (à défaut, au siège), une seule fois par mois et seulement quand les ventes du mois sont arrivées. La notification ouvre l'onglet « Objectifs ».
+
+### Design
+
+- Portée, courbe et export de l'onglet « Objectifs » : `docs/design.md`.
+
+## [1.7.0] — Les objectifs de ventes
+
+### Ajouté (prd.md §14.88, VNT-007, VNT-008)
+
+- Un objectif de chiffre d'affaires TTC **par réseau et par année**, avec si besoin le détail par produit du réseau. La cible se répartit à parts égales sur les douze mois, ou mois par mois.
+- L'onglet « Objectifs » de la page « Ventes » : cible, attendu à la fin du mois choisi, réalisé (cumul de l'année), pourcentage de la cible et état écrit (atteint, en avance, en retard, non atteint, à venir) ; la barre de chiffres totalise les objectifs de réseau.
+- Fixés par l'administrateur pays (et le siège dans un pays choisi) ; lus par le siège, le pays, le DF (le DO) et le DM dans leurs réseaux ; pas par le superviseur. Le groupe de droits « ventes » du DO ferme aussi cette lecture. Création, correction et archivage sont audités.
+- Actions `ventes.objectifs_lire` et `ventes.objectifs_gerer` dans la matrice ; table `ventes_objectifvente` sous sécurité de lignes par pays.
+- Démonstration : un objectif de l'année par réseau, fictif.
+
+### Design
+
+- Onglet « Objectifs » : `docs/design.md`.
+
+## [1.6.5] — Mise à jour de sécurité de Django REST framework
+
+### Corrigé
+
+- `djangorestframework` passe de 3.17.2 à 3.18.3 : trois failles venaient d'être publiées sur la 3.17.2 (CVE-2026-114136, CVE-2026-114137, CVE-2026-114138, corrigées en 3.18.2) et l'audit des dépendances de la CI les refusait. La borne de `backend/requirements.txt` devient `>=3.18.2,<3.19` ; schéma d'API inchangé.
+
+## [1.6.4] — Le premier lieu d'exercice d'une fiche créée au téléphone
+
+### Corrigé (prd.md §14.87, PRP-004, PRP-006, PRP-008)
+
+- Un prospect créé au téléphone sans doublon devient commun aussitôt ; le lieu d'exercice choisi à la création était alors refusé sans message, et le délégué ne pouvait plus planifier de visite chez ce prospect. L'auteur de la fiche y pose maintenant le premier lieu d'exercice ; les suivants passent par une proposition (PRP-014).
+
+### Vérifié
+
+- Essai de bout en bout, sur une base neuve, avec le client de l'application : administrateur, délégué sur son téléphone, superviseur (61 étapes).
+- `docs/demo-gratuite.md` : un compte créé sans adresse de courriel ne reçoit aucun lien de mot de passe ; sur l'instance d'essai, lui donner une adresse fictive et lire le lien dans le journal du serveur.
+
+## [1.6.3] — Guide de démonstration à jour
+
+### Corrigé
+
+- `docs/demo-gratuite.md` : le guide de la démonstration gratuite (Render + Neon) décrit l'instance telle qu'elle démarre (vide, avec seulement l'administrateur du siège), cite les sept valeurs à remplir et la bonne demande de fusion, et indique comment remplir l'instance (pays, organisation, référentiels, équipe, ventes).
+- Parcours vérifié de bout en bout en local : base neuve, migrations, création du premier administrateur, démarrage du serveur (`/api/health/`), construction du portail, première connexion.
+
+## [1.6.2] — L'export des ventes
+
+### Ajouté (prd.md §14.86, VNT-006)
+
+- Un menu « Exporter » sur la page « Ventes » : les ventes éclatées, les ventes mensuelles ou les lignes de vente du cumul, en classeur Excel ou en CSV, avec l'année, le mois et les filtres affichés.
+- Réservé à l'encadrement, comme l'export du pilotage : le siège, le responsable pays, le DO (DF), le DM et le superviseur, dans leur périmètre. Pas l'administrateur pays, pas le délégué.
+- Chaque export est inscrit au journal d'audit (`export.ventes`, avec ses filtres et son nombre de lignes) ; au-delà de 50 000 lignes, il est refusé.
+- Action `ventes.exporter` dans la matrice ; le groupe de droits « ventes » du DO ferme aussi l'export.
+
+### Design
+
+Bouton « Exporter » de la page « Ventes », comme celui du pilotage.
+
+## [1.6.1] — Les droits du DO, réglés par le siège
+
+### Ajouté (prd.md §14.85, DOR-001, DOR-002)
+
+- Le siège seul règle les droits du DO (décision du 18 octobre 2026) : la page « Droits du DO » du portail, réservée à l'administrateur du siège, liste les comptes DF et propose, pour chacun, quatre interrupteurs — ventes, pilotage et objectifs, rapports de visite, prospects et listes cibles.
+- Le serveur applique le réglage : une route fermée répond 403 et l'action disparaît des actions du compte, donc de son menu. Tout est ouvert par défaut : un compte jamais réglé ne change pas.
+- Chaque réglage qui change quelque chose est inscrit au journal d'audit (`droits_do.modification`).
+- Action `droits_do.regler` dans la matrice (administrateur du siège seulement) ; table `identite_reglagedo`.
+
+### Modifié
+
+- `prd.md` : §14.83 et §14.84 renvoient au §14.85 ; la matrice §6.3 gagne la ligne « Régler les droits du DO ».
+
+### Design
+
+Page « Droits du DO » du portail, clair et sombre.
+
+## [1.6.0] — Le suivi des ventes
+
+### Ajouté (prd.md §14.84, VNT-001 à VNT-005)
+
+- Une plateforme de suivi des ventes des délégués, dans le portail (entrée « Ventes »).
+- Les ventes entrent par un **fichier Excel** (simulation avant import, motif de chaque ligne écartée, réimport sans doublon) ou par **saisie** ; une ligne se corrige ou s'archive.
+- Le **cumul de l'année (YTD)** face à l'an passé, les **ventes mensuelles** (graphique et tableau) et les **ventes éclatées** par délégué, produit, classe thérapeutique, réseau, zone, client ou type de client, avec tous les filtres ; un clic sur un groupe le prend comme filtre.
+- Chacun ne voit que son périmètre : le pays entier (responsable et administrateur pays), les réseaux (DF, c'est-à-dire le DO, et DM), les postes rattachés (superviseur) ; le siège, un pays à la fois, avec audit de la vue par délégué. Le délégué n'y a pas accès.
+- Tables `ventes_client` et `ventes_vente` sous sécurité au niveau des lignes ; actions `ventes.lire` et `ventes.gerer` dans la matrice.
+- L'instance de démonstration reçoit vingt-sept mois de ventes fictives.
+
+### Modifié
+
+- La page Imports propose une troisième source, « Ventes », pour l'administrateur pays.
+- `prd.md` : §14.83 (le DO) renvoie au §14.84 ; le réglage des droits du DO par le siège seul reste à construire.
+
+### Design
+
+Page « Ventes » du portail, clair et sombre, téléphone et ordinateur.
+
+## [1.5.9] — Revue de l'application face à la maquette ; le DO
+
+### Modifié (prd.md §14.82, §14.83)
+
+- Revue de tous les écrans, téléphone et tablette, face à la maquette : aucun écart de mise en page trouvé ; un écran de visite ouvert par une adresse sans jour (notification, adresse tapée) plantait : il s'ouvre maintenant sur la journée d'aujourd'hui.
+- Décision du 18 octobre 2026 consignée : le siège seul règle les droits du DO, qui observe et analyse les ventes des délégués (ventes éclatées, YTD, mensuelles). La source des ventes reste à décider avant de construire (§14.83).
+
+## [1.5.8] — La maquette : le conflit
+
+### Modifié (prd.md §14.82, OFF-004)
+
+- « Ce rapport a changé ailleurs » a son écran : le prospect et le jour de la visite en sous-titre, l'encadré « Rien n'a été remplacé », puis la version du téléphone et celle du serveur, chacune avec son heure et ses champs, et le choix « Garder ma version » ou « Garder la version du serveur ».
+- Sur tablette : les deux versions côte à côte, avec aussi les champs identiques.
+- Un champ vide se lit « Non renseignée ».
+- Le rapport indique maintenant l'heure de son dernier enregistrement (`modifie_le`, lecture seule).
+- La décision du superviseur l'emporte toujours ; rien n'est remplacé en silence.
+
+### Design
+
+Écran « Ce rapport a changé ailleurs » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.5.7] — La maquette : l'activité
+
+### Modifié (prd.md §14.82, PLN-009, PLN-018)
+
+- « Nouvelle activité » (et « Modifier l'activité ») a son écran : le jour en sous-titre, le type en pastilles, la période en trois segments, le commentaire ; « Annuler » et « Enregistrer » restent collés en bas.
+- Sur tablette : une colonne centrée, le jour et la période côte à côte, les boutons dans l'en-tête et l'encadré « Les visites de ce jour restent dans le planning ».
+- Un déplacement demande toujours qui l'a décidé, en deux segments.
+- La saisie, le brouillon et l'envoi sans réseau ne changent pas.
+
+### Design
+
+Écran « Nouvelle activité » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.5.6] — La maquette : la nouvelle visite
+
+### Modifié (prd.md §14.82, PLN-002)
+
+- « Nouvelle visite » (et « Modifier la visite ») a son écran : le jour en sous-titre, la phrase « Tout peut se compléter plus tard », puis Jour, Prospect avec « Changer », Lieu, Heure et Réseau côte à côte, Objectif et Note ; « Annuler » et « Enregistrer » restent collés en bas.
+- Sur tablette : les boutons passent dans l'en-tête, et à droite la journée montre ses visites à leur heure, avec la nouvelle à sa place (« --:-- » tant qu'elle n'a pas d'heure).
+- Un lieu ou un réseau unique se lit sans liste à ouvrir.
+- La saisie, le brouillon, l'envoi sans réseau et les conflits ne changent pas.
+
+### Design
+
+Écran « Nouvelle visite » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.5.5] — La maquette : l'indisponibilité imprévue
+
+### Modifié (prd.md §14.82, PLN-009)
+
+- « Je suis indisponible aujourd'hui » ouvre un écran à part sur le téléphone, avec le jour réel en sous-titre : l'encadré « Aucun motif n'est demandé », la période à cocher, « Annuler » et « Déclarer l'indisponibilité ».
+- Chaque période dit ce qu'elle concerne : « 4 visites restantes », « 4 visites concernées », « 2 visites déjà faites : aucune concernée ».
+- Une période déjà déclarée aujourd'hui est grisée (« Déjà déclarée »).
+- Sur tablette : le même choix dans une fenêtre sur la Tournée ; la fenêtre est maintenant partagée avec la visite imprévue.
+- À la fin, la Tournée annonce l'indisponibilité ; sans réseau, elle attend dans la file comme avant.
+
+### Design
+
+Écran « Indisponibilité imprévue » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.5.4] — La maquette : la visite imprévue
+
+### Modifié (prd.md §14.82, VIS-008)
+
+- « Visite imprévue » a son écran sur le téléphone, avec le jour réel en sous-titre : l'encadré qui explique, le prospect et « Changer », le lieu, la justification, « Annuler » et « Démarrer la visite imprévue ».
+- Sur tablette : le même formulaire dans une fenêtre sur la Tournée.
+- À la fin, la Tournée annonce la visite démarrée ; sans réseau, elle attend dans la file comme avant.
+
+### Design
+
+Écran « Visite hors du planning » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.5.3] — La maquette : l'application verrouillée
+
+### Modifié (prd.md §14.82, SEC-004, DC-59)
+
+- L'écran de verrouillage suit la maquette : fond marine avec un filet orange, un cadenas, « Application verrouillée », le délai du pays, « Déverrouiller » en blanc et la phrase « Déverrouiller CRM GH avec votre code ou votre biométrie. »
+- Sur tablette : cadenas, titre et texte agrandis, sur une colonne centrée.
+- « Se déconnecter » reste, en bouton discret ; un téléphone sans code ni biométrie ne peut que se déconnecter.
+
+### Design
+
+Écran « Application verrouillée » refait selon la maquette, téléphone et tablette.
+
+## [1.5.2] — La maquette : synchronisation nécessaire
+
+### Modifié (prd.md §14.82, OFF-007)
+
+- Après trop de jours sans synchronisation, l'écran qui masque les données suit la maquette : depuis quand (« il y a 8 jours »), le délai du pays, le nombre d'envois gardés sur le téléphone et « Synchroniser maintenant ».
+- Sur tablette : la dernière synchronisation, les envois en attente et les rapports gardés en trois chiffres.
+
+### Design
+
+Écran « Synchronisation nécessaire » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.5.1] — La maquette : les envois en attente
+
+### Modifié (prd.md §14.82, OFF-003, OFF-004)
+
+- Les envois en attente ont leur écran : ce qui attend le réseau, pour qui, à quelle heure, avec « Abandonner » et « Envoyer maintenant ». On y arrive par la bande « n envois en attente » ou par le Profil.
+- Abandonner un envoi pas encore parti demande confirmation ; un envoi refusé s'abandonne d'un geste ; une visite en conflit montre les deux versions.
+- « Pas de réseau » s'affiche quand un envoi n'a pas pu partir faute de réseau. Après un envoi : « Réseau retrouvé : n envois sont partis ».
+- Sur tablette : l'heure de saisie à droite de chaque envoi, et les données hors connexion dans le volet droit.
+
+### Design
+
+Écran « Envois en attente » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.5.0] — La maquette : mon profil
+
+### Modifié (prd.md §14.82, USR-004, USR-006, OFF-001)
+
+- Mon profil suit la maquette : mes initiales, mon nom, mon rôle et mon pays ; les données gardées pour travailler sans réseau, avec l'heure de la dernière synchronisation et « Synchroniser maintenant » ; la langue en deux boutons ; ce téléphone ; « Se déconnecter ».
+- Sur tablette : le compte, la langue et la tablette à gauche, les données hors connexion à droite (dont les rapports prêts à écrire sans réseau), « Se déconnecter » en haut.
+- Mon poste, mes produits, le choix des notifications (téléphone) et le lien vers la politique de confidentialité restent au profil.
+- Les lignes « libellé — valeur » ne coupent plus leur libellé à mi-largeur.
+
+### Design
+
+Écran « Mon profil » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.4.9] — La maquette : les notifications
+
+### Modifié (prd.md §14.82, NOT-001, NOT-005)
+
+- Notifications : le nombre de non lues sous le titre, « Tout marquer comme lu », puis une ligne par notification avec une pastille de couleur (pleine et sur fond teinté tant qu'elle n'est pas lue) et sa date suivie de l'heure.
+- Sur tablette : les notifications groupées par semaine, une flèche quand elles ouvrent un écran, et à droite le choix de ce qui arrive en notification sur la tablette.
+- Les notifications vont désormais avec l'onglet Tournée. Les interrupteurs suivent la maquette, dans Profil aussi.
+- Les textes disent le jour de la semaine (« votre rapport du vendredi 9 octobre ») et « du 19 au 23 octobre ».
+
+### Design
+
+Écran « Notifications » refait selon la maquette, téléphone et tablette, clair et sombre ; interrupteur de la maquette.
+
+## [1.4.8] — La maquette : mes chiffres
+
+### Modifié (prd.md §14.82, DSH-001)
+
+- « Mes chiffres » suit la maquette : la semaine en sous-titre et les flèches dans l'en-tête ; le nombre de visites faites au-dessus des barres des jours (prévues en gris, faites en orange) ; réalisation, écarts justifiés et géolocalisation avec leur barre ; rapports dans le délai, validés, en retard.
+- Sur tablette : une synthèse en quatre chiffres, les visites par jour à côté de la qualité de l'activité, puis la liste cible sur une ligne.
+- La liste cible du cycle et la variation en points restent sur le téléphone ; le dimanche vide ne s'affiche plus.
+
+### Design
+
+Écran « Mes chiffres » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.4.7] — La maquette : proposer une correction
+
+### Modifié (prd.md §14.82, PRP-014)
+
+- « Proposer une correction » ouvre un écran à part : les champs de la fiche, préremplis (« Non renseigné » s'ils sont vides), un commentaire facultatif, puis « Envoyer la proposition ». Le champ modifié se voit à son contour.
+- Sur tablette : les champs sur deux colonnes, et à droite ce qui change (l'ancienne valeur barrée, la nouvelle en dessous). Sur la fiche d'un établissement, le bouton passe dans l'en-tête.
+- Après l'envoi, on revient à la fiche, qui dit « Proposition envoyée » ; sans réseau, la proposition attend et part seule au retour du réseau.
+
+### Design
+
+Écran « Proposer une correction » refait selon la maquette, téléphone et tablette, clair et sombre.
+
+## [1.4.6] — La maquette : depuis ma liste cible
+
+### Modifié (prd.md §14.82, PLN-005)
+
+- « Depuis ma liste cible » devient un écran entier : les prospects pas encore prévus cette semaine, à cocher, puis un seul bouton « Poser 2 visites le mardi 13 ». Sur téléphone, le jour est celui choisi dans la semaine.
+- Sur tablette : le cycle de chaque prospect (« 0 / 2 »), et à droite le choix du jour, les visites déjà prévues et après la pose, et l'objectif de la journée (ce qui manque, ou la limite haute atteinte).
+
+### Design
+
+Écran « Depuis ma liste cible » refait selon la maquette, téléphone et tablette, clair et sombre ; cases à cocher de 22 px.
+
+## [1.4.5] — La maquette : les établissements
+
+### Modifié (prd.md §14.82, PRP-003, PRP-004)
+
+- Fiche d'un établissement : son nom, son type et son adresse, s'il a une position GPS de référence, deux boutons Appeler et Itinéraire, puis qui y exerce. Sur tablette, la date de ma dernière visite chez chacun.
+- Nouvel établissement : un écran à part. Type et secteur se choisissent dans une liste ; la position du téléphone s'enregistre d'un geste (sur tablette, avec la latitude, la longitude et la précision). Depuis « Nouveau prospect », l'établissement créé revient déjà choisi.
+- Serveur : les prospects d'un établissement viennent avec la date de ma dernière visite chez eux.
+
+### Design
+
+Écrans « Établissement » et « Nouvel établissement » refaits selon la maquette, téléphone et tablette, clair et sombre ; « Proposer une correction » reste sous la fiche en attendant son propre écran.
+
+## [1.4.4] — La maquette : les prospects
+
+### Modifié (prd.md §14.82, PRP-002 à PRP-011, RPT-011)
+
+- Prospects : une recherche, puis des filtres « Ma liste », « Tous », « Établissements », le potentiel, la spécialité et la zone. Chaque prospect de ma liste dit ses visites du cycle (« 2 / 3 »). Sur tablette, un tableau : prospect, spécialité, établissement, zone, cycle.
+- Fiche d'un prospect : ses initiales, « Dans ma liste », trois boutons Appeler / Écrire / Itinéraire, ses informations, ses lieux d'exercice et l'historique des visites ; sur tablette, ma liste à gauche pour passer d'une fiche à l'autre.
+- Nouveau prospect : un écran à part, ouvert par « + ». Les fiches qui ressemblent s'affichent pendant la saisie ; l'établissement d'exercice se choisit (ou se crée) tout de suite.
+- Serveur : ma liste donne les visites du cycle de chaque prospect et le réseau du poste.
+
+### Design
+
+Écrans « Prospects », « Fiche » et « Nouveau prospect » refaits selon la maquette, téléphone et tablette, clair et sombre ; ce que la maquette ne dessine pas (établissements, propositions de correction, numéro d'ordre, détail de chaque visite) reste dans l'onglet ou sur la fiche.
+
+## [1.4.3] — La maquette : la semaine, la journée et les versions
+
+### Modifié (prd.md §14.82, PLN-001 à PLN-016)
+
+- Semaine : on passe d'une semaine à l'autre par « Précédente », « Cette semaine », « Suivante » ; les jours sont des pastilles qui disent leur nombre de visites ; le jour choisi montre ses visites. Sur téléphone, « Ajouter une visite » est collé en bas ; sur tablette, la semaine se lit en colonnes.
+- Un planning approuvé se consulte sans la carte « Planning » : son statut est en haut de l'écran.
+- Journée : ses chiffres (visites, objectif, distance), puis l'itinéraire arrêt par arrêt avec la distance de l'un à l'autre ; sur tablette, les activités et les lieux sans coordonnées à droite.
+- Semaine fermée : la carte « Demander la réouverture » en tête, les jours grisés.
+- Versions : sur téléphone, une carte par version, la plus récente ouverte ; sur tablette, la liste à gauche et la version choisie à droite, avec ses changements et, si elle attend, la version à suivre en attendant.
+
+### Design
+
+Écrans « Semaine », « Journée », « Semaine fermée » et « Versions » refaits selon la maquette, téléphone et tablette, clair et sombre ; ce que la maquette ne dessine pas (contrôles, jours fériés, règle après approbation, kilomètres de la semaine, commentaire du superviseur) reste sous la semaine ou au détail.
+
+## [1.4.2] — La maquette : les écrans du rapport
+
+### Modifié (prd.md §14.82, RPT-001 à RPT-016)
+
+- Rapport à rédiger : l'avancement (« 4 champs sur 5 remplis ») et l'heure limite en tête ; les produits en pastilles numérotées dans l'ordre de présentation ; le résultat en segments. Sur téléphone, « Enregistrer » et « Soumettre le rapport » sont collés en bas, avec ce qui manque encore ; sur tablette, « Avant de soumettre » coche ce qui est fait.
+- Nouveau bouton « Enregistrer » : il envoie tout de suite ; l'enregistrement automatique continue.
+- Rapport soumis : des cartes faciles à lire (synthèse, produits et retours, échantillons et cadeaux, documents) ; sur tablette, la synthèse à droite.
+- Rapport à corriger : la demande du superviseur en tête ; seules les parties à revoir se modifient, le reste se lit sous « Reste inchangé ».
+- Les pastilles de choix de toute l'application prennent les mesures de la maquette (44 px, texte de 14).
+
+### Design
+
+Écrans « Rapport de visite » (à rédiger, soumis, à corriger) refaits selon la maquette, téléphone et tablette, clair et sombre ; ce que la maquette ne dessine pas (objectif, retours, échéance, échantillons, documents, champs du pays) reste dans le formulaire.
+
+## [1.4.1] — La maquette : l'écran Visite et « Le prospect est absent »
+
+### Modifié (prd.md §14.82, VIS-002 à VIS-009)
+
+- Nouvel écran de la visite : le prospect et son lieu, les fiches, la dernière visite chez ce prospect (résultat, produits présentés, prochaine action) ; les actions du moment sont collées en bas (« Prospect absent » et « Démarrer la visite », puis « Terminer », puis le rapport).
+- Sur tablette : les visites du jour à gauche, la visite ouverte à droite avec ses chiffres (quand, statut, distance depuis l'arrêt précédent, dernière visite) et sa position.
+- « Le prospect est absent » a son écran : motifs à cocher, commentaire facultatif, Retour / Confirmer l'absence. Sur tablette, il s'ouvre en fenêtre. Report, annulation et justification d'une visite passent par le même écran.
+- Dans la Tournée, une visite imprévue porte l'étiquette « Imprévue » et un rapport rouvert se dit « Rapport rouvert ».
+
+### Corrigé
+
+- La Tournée proposait « Démarrer la visite » alors que le planning de la semaine n'était pas encore approuvé ; elle dit de nouveau qu'il n'y a pas de programme à suivre.
+- Un détail de visite gardé sur le téléphone par une version précédente ne fait plus échouer l'écran de la visite.
+
+### Design
+
+Écrans Visite et « Le prospect est absent » refaits à l'identique de la maquette, téléphone et tablette, clair et sombre ; ce que la maquette ne dessine pas (objectif, contrôles, coordonnées, historique) reste sous la visite.
+
+## [1.4.0] — La maquette mobile et tablette : fondations, connexion, Tournée
+
+### Modifié (prd.md §14.82, VIS-001, USR-001)
+
+- L'application suit désormais la maquette fournie par le responsable produit : nouvelles couleurs, marque « CRM » et logo GH, nouveaux en-têtes et onglets, et une vraie disposition tablette (barre latérale, deux volets).
+- Connexion avec l'adresse courriel (l'identifiant reste accepté) ; écrans « Mot de passe oublié » et « Vérification en deux étapes » refaits.
+- Tournée refaite : avancement du jour, bandeau « Prochaine visite » (démarrer, terminer, itinéraire), frise des visites ; les rapports à corriger ou en retard passent en tête. Sur tablette : chiffres du jour, dernière visite (date, résultat, prochaine action) et « À traiter ».
+- « Mon poste » et « Mes produits » sont au Profil ; les décisions sur mes propositions, à l'onglet Prospects.
+
+### Design
+
+Fondations de la maquette appliquées à tous les écrans (couleurs, boutons, champs, alertes, cartes, statuts, potentiel) ; Connexion et Tournée refaites à l'identique, téléphone et tablette. Les autres écrans suivront, un groupe par version.
+
+## [1.3.1] — Le compte du DO ; textes alignés sur 1.3.0
+
+### Modifié (prd.md §14.81)
+
+- Un DO reçoit le rôle DF : il consulte, sans rien décider. Ses droits deviendront réglables plus tard.
+- Les messages ne disent plus que le DM décide : « Délai avant escalade à l'administrateur », « seul l'administrateur peut le rouvrir », « … ne sont pas approuvés dans votre pays », journée consultée « en tant qu'administrateur ».
+- Guides de l'administrateur pays et du superviseur mis à jour (escalade à l'administrateur, double authentification facultative pendant l'essai, compte du DO).
+
+### Design
+
+Pas d'écran modifié : seuls des textes changent, en français et en anglais.
+
+## [1.3.0] — Le DM lit, l'administrateur pays décide
+
+### Modifié (prd.md §14.81, PLN-016, RG-019, RG-023, ORG-013, DSH-009)
+
+- Le DM ne valide plus rien : il lit les plannings, rapports, chiffres et objectifs de ses réseaux, comme le DF.
+- L'administrateur pays (le siège pour le Sénégal) prend sa place : il valide plannings et rapports des postes rattachés à un DM, reçoit les escalades et l'alerte du lundi, rouvre un rapport validé, désigne les remplaçants et fixe les objectifs.
+
+### Design
+
+Pas de nouvel écran : la file « À valider » s'ouvre pour l'administrateur pays ; pour le DM, les boutons de décision disparaissent.
+
+## [1.2.0] — L'administrateur du siège gère chaque pays
+
+### Modifié (prd.md §14.81)
+
+- Dans le pays qu'il choisit, l'administrateur du siège a désormais tous les droits de l'administrateur pays : imports, prospects, listes cibles, jours fériés, objectifs, utilisateurs. Il gère ainsi le Sénégal, siège sans administrateur pays, et entre dans le portail de chaque pays.
+
+### Design
+
+Pas d'écran modifié : les pages d'administration d'un pays s'ouvrent pour l'administrateur du siège.
+
+## [1.1.2] — Double authentification suspendue jusqu'à la version 2
+
+### Modifié (prd.md §14.81, SEC-003)
+
+- La double authentification n'est plus imposée, dans aucun environnement : on se connecte avec l'identifiant et le mot de passe. Chacun peut encore l'activer de lui-même. Le réglage `INNOV_DOUBLE_AUTH_OBLIGATOIRE=oui` la rendra de nouveau obligatoire, sans changer le code.
+
+### Design
+
+Pas d'écran modifié : l'écran d'activation n'apparaît plus à la connexion.
+
+## [1.1.1] — Création du premier compte sur une base neuve
+
+### Corrigé (prd.md §14.81)
+
+- `preparer_instance` crée d'abord les tables d'une base neuve ; sans `migrate` préalable, il échouait (« relation "identite_utilisateur" does not exist »).
+
+### Design
+
+Pas d'écran modifié.
+
+## [1.1.0] — Modèle sénégalais pour les autres pays ; BirdNotes après l'organisation
+
+### Ajouté (prd.md §14.81)
+
+- Commande `appliquer_modele_pays --depuis SN --vers CI TG …` : chaque pays reprend la structure commerciale du Sénégal (listes, gammes, réseaux, produits, portefeuilles, paramètres), jamais le terrain ni les personnes. Relancée, elle ne crée aucun doublon.
+
+### Modifié (PRP-013)
+
+- Après le fichier d'organisation, l'import BirdNotes ne recrée plus gammes, réseaux ni produits sous d'autres noms : il apporte secteurs, localités, établissements et prospects.
+
+### Design
+
+Pas d'écran modifié.
+
+## [1.0.9] — Import du vrai fichier d'organisation
+
+### Corrigé (prd.md §14.81, ORG-014)
+
+- L'import du fichier d'organisation réel plantait : un secteur de 160 caractères (limite portée à 200) et une référence interne trop longue (raccourcie de façon stable : un second import ne crée aucun doublon).
+
+### Modifié
+
+- Les produits cités par le fichier et absents du référentiel sont désormais créés, au lieu d'être seulement signalés.
+
+### Ajouté
+
+- Commande `importer_organisation` : charge le fichier d'organisation sur un poste local, avec une simulation d'abord. Sur le fichier réel : 156 produits, 4 gammes, 19 réseaux, 48 secteurs, 227 postes, 245 comptes.
+
+### Design
+
+Pas d'écran modifié.
+
+## [1.0.8] — Plus de données fictives
+
+### Retiré (prd.md §14.81, DEM-001)
+
+- Les commandes qui remplissaient une instance de données fictives : `reinitialiser_demo`, `preparer_demo` et `generer_charge`. Une instance part vide. Les données fictives ne servent plus qu'aux tests automatiques.
+
+### Ajouté
+
+- `preparer_instance` : au démarrage d'une base sans compte, crée un seul administrateur du siège à partir de `INNOV_ADMIN_IDENTIFIANT` et `INNOV_ADMIN_MOT_DE_PASSE` (Render : `render-demo.yaml`). Il crée ensuite les pays et les comptes depuis le portail.
+
+### Modifié
+
+- La mention « Démonstration » devient « Essai » : « Instance d'essai, sans sauvegarde : n'y saisissez aucune donnée réelle. »
+
+### Design
+
+- Seul le mot de la mention change (« Essai », mêmes couleur et place) ; pas d'autre écran modifié.
+
+## [1.0.7] — Démonstration locale sur une base neuve
+
+### Corrigé (prd.md §14.81, DEM-001)
+
+- Sur un ordinateur, `reinitialiser_demo` échouait sur une base neuve (« relation "identite_jourdecontact" does not exist ») : les tables n'étaient pas encore créées. La commande les crée désormais d'abord, et `make serveur` aussi avant de démarrer l'API.
+
+### Design
+
+Pas d'écran modifié.
+
 ## [1.0.6] — Clé secrète de Render acceptée
 
 ### Corrigé (prd.md §14.81, DEM-001)

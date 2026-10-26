@@ -1,11 +1,12 @@
-"""DEM-001 : instance de démonstration réinitialisable, aux données fictives."""
+"""Données fictives des tests automatiques (DEM-001).
+
+1.0.8 : elles ne servent plus qu'aux tests ; aucune commande ne les met dans une instance."""
 
 from datetime import timedelta
 
 import pytest
-from django.core.management import CommandError, call_command
 
-from apps.demonstration.generateur import NOMS, PRENOMS
+from apps.demonstration.generateur import NOMS, PRENOMS, Generateur, Volumes, vider
 from apps.identite.models import Utilisateur
 from apps.organisation.models import Occupation, Poste, Rattachement, Secteur
 from apps.socle.models import Pays
@@ -13,12 +14,16 @@ from apps.socle.models import Pays
 pytestmark = pytest.mark.django_db
 
 
+MOT_DE_PASSE = "Demo-" + "x9Y" * 6
+
+
 def lancer(monkeypatch, **options):
-    monkeypatch.setenv("INNOV_DEMO_MOT_DE_PASSE", "Demo-" + "x9Y" * 6)
-    call_command("reinitialiser_demo", oui=True, echelle=0.1, **options)
+    """Base fictive des tests (1.0.8 : plus de commande, le générateur ne sert qu'aux tests)."""
+    vider()
+    return Generateur(MOT_DE_PASSE, 2026).tout(Volumes().reduits(0.1))
 
 
-def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
+def test_le_generateur_redonne_la_meme_base(monkeypatch):
     """CA1 : deux lancements donnent la même base, sans doublon."""
     lancer(monkeypatch)
     premier = (Utilisateur.objects.count(), Poste.objects.count(), Secteur.objects.count())
@@ -45,6 +50,18 @@ def test_la_demonstration_se_reinitialise_par_une_commande(monkeypatch):
 
     assert DoublonProbable.objects.filter(pays__code="SN", statut="en_attente").count() >= 2
     assert Proposition.objects.filter(pays__code="SN", statut="en_attente").count() == 1
+    # Le suivi des ventes (1.6.0) : vingt-sept mois de ventes fictives, des clients par zone.
+    from apps.ventes.models import Client, Vente
+
+    assert Vente.objects.filter(pays__code="SN").count() > 100
+    assert Vente.objects.values("mois").distinct().count() == 27
+    assert Client.objects.filter(pays__code="SN", type="grossiste").exists()
+    assert not Vente.objects.filter(poste__isnull=True).exists()
+    # Un objectif de ventes de l'année par réseau (1.7.0).
+    from apps.ventes.models import ObjectifVente
+
+    assert ObjectifVente.objects.filter(pays__code="SN", produit__isnull=True).exists()
+    assert ObjectifVente.objects.filter(pays__code="SN", delegue__isnull=False).exists()
     # Calendrier des jours fériés à date certaine (ORG-012), deux années.
     from apps.planning.models import JourFerie
 
@@ -115,36 +132,4 @@ def test_les_comptes_de_demonstration_se_connectent(monkeypatch):
 
     lancer(monkeypatch)
     compte = Utilisateur.objects.filter(pays_principal__code="SN", roles__role="admin_pays").first()
-    assert connecter(compte.username, "Demo-" + "x9Y" * 6, "portail").acces
-
-
-def test_refus_hors_developpement_et_sans_confirmation(monkeypatch, settings):
-    with pytest.raises(CommandError, match="--oui"):
-        call_command("reinitialiser_demo")
-    settings.ENVIRONNEMENT = "production"
-    with pytest.raises(CommandError, match="production"):
-        call_command("reinitialiser_demo", oui=True)
-
-
-def test_preparer_demo_remplit_une_base_vide_une_seule_fois(monkeypatch, settings):
-    """1.0.3 : la démonstration gratuite se remplit d'elle-même au premier démarrage."""
-    settings.ENVIRONNEMENT = "demonstration"
-    monkeypatch.setenv("INNOV_DEMO_MOT_DE_PASSE", "Demo-" + "x9Y" * 6)
-    monkeypatch.setenv("INNOV_DEMO_ECHELLE", "0.1")
-    call_command("preparer_demo")
-    comptes = Utilisateur.objects.count()
-    assert set(Pays.objects.values_list("code", flat=True)) == {"SN", "TG"} and comptes
-    # Redémarrage : rien n'est effacé ni recréé.
-    call_command("preparer_demo")
-    assert Utilisateur.objects.count() == comptes
-
-
-def test_preparer_demo_refuse_hors_demonstration_et_sans_mot_de_passe(monkeypatch, settings):
-    settings.ENVIRONNEMENT = "production"
-    with pytest.raises(CommandError, match="production"):
-        call_command("preparer_demo")
-    settings.ENVIRONNEMENT = "demonstration"
-    monkeypatch.setenv("INNOV_DEMO_MOT_DE_PASSE", "court")
-    with pytest.raises(CommandError, match="12 caractères"):
-        call_command("preparer_demo")
-    assert not Pays.objects.exists()
+    assert connecter(compte.username, MOT_DE_PASSE, "portail").acces

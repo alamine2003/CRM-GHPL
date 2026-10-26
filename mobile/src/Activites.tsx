@@ -18,14 +18,26 @@ import {
   nouvelIdentifiant,
   oublierBrouillon,
 } from './Brouillons';
-import { Alerte, Bouton, Champ, Texte, usePalette } from './composants';
+import { Alerte, Bouton, Champ, ListeDeroulante, Segments, Texte, usePalette } from './composants';
+import { useTablette } from './disposition';
+import { Ecran } from './Ecran';
 import { Pilule } from './Etablissements';
 import { police } from './polices';
+import { jourLong } from './Semaine';
 import { messageErreur, useSession } from './session';
 
 // DC-51 : l'indisponibilité imprévue ne se planifie pas ; elle se déclare le jour même.
-const SANS_VISITE: TypeActivite[] = ['conge', 'formation', 'reunion', 'autre'];
 const AVEC_VISITES: TypeActivite[] = ['commando', 'deplacement', 'accompagnement'];
+/** Les types dans l'ordre de la maquette : « Autre » ferme la liste. */
+const TYPES: TypeActivite[] = [
+  'conge',
+  'formation',
+  'reunion',
+  'commando',
+  'deplacement',
+  'accompagnement',
+  'autre',
+];
 
 export const avecVisites = (type: TypeActivite | null) => !!type && AVEC_VISITES.includes(type);
 
@@ -187,68 +199,87 @@ export function FormulaireActivite({
     }
   }
 
-  return (
-    <View style={{ gap: 16 }}>
-      <Texte variante="sousTitre">
-        {activite ? t('activites.modifier') : t('activites.nouvelle')}
-      </Texte>
-      <Texte variante="discret">{t('activites.aide')}</Texte>
-      {erreur && <Alerte type="erreur">{erreur}</Alerte>}
+  const tablette = useTablette();
+  const titre = activite ? t('activites.modifier') : t('activites.nouvelle');
+  const jourEntier = jourLong(date, i18n.language);
+  const annuler = () => {
+    void oublierBrouillon();
+    surAnnuler();
+  };
 
-      <Groupe titre={t('activites.champs.date')}>
-        {jours.map((j) => (
-          <Pilule
-            key={j.date}
-            libelle={libelleJour(j.date)}
-            actif={date === j.date}
-            onPress={() => setDate(j.date)}
-          />
-        ))}
-      </Groupe>
-      <Groupe titre={t('activites.sansVisite')}>
-        {SANS_VISITE.map((v) => (
-          <Pilule
-            key={v}
-            libelle={t(`activites.types.${v}`)}
-            actif={type === v}
-            onPress={() => setType(v)}
-          />
-        ))}
-      </Groupe>
-      <Groupe titre={t('activites.avecVisites')}>
-        {AVEC_VISITES.map((v) => (
-          <Pilule
-            key={v}
-            libelle={t(`activites.types.${v}`)}
-            actif={type === v}
-            onPress={() => setType(v)}
-          />
-        ))}
-      </Groupe>
-      <Groupe titre={t('activites.champs.periode')}>
-        {PERIODES.map((v) => (
-          <Pilule
-            key={v}
-            libelle={t(`activites.periodes.${v}`)}
-            actif={periode === v}
-            onPress={() => setPeriode(v)}
-          />
-        ))}
-      </Groupe>
-      {type === 'deplacement' && (
-        <Groupe titre={t('activites.demande')}>
-          <Pilule
-            libelle={t('activites.demandeMoi')}
-            actif={!demandeSuperviseur}
-            onPress={() => setDemandeSuperviseur(false)}
-          />
-          <Pilule
-            libelle={t('activites.demandeSuperviseur')}
-            actif={demandeSuperviseur}
-            onPress={() => setDemandeSuperviseur(true)}
-          />
-        </Groupe>
-      )}
+  const boutons = (
+    <>
+      <Bouton
+        variante="contour"
+        petit={tablette}
+        libelle={t('commun.annuler')}
+        onPress={annuler}
+        style={tablette ? undefined : { flex: 1 }}
+      />
+      <Bouton
+        petit={tablette}
+        libelle={t('commun.enregistrer')}
+        chargement={envoi === 'enregistrer'}
+        desactive={!type || motifManquant || envoi === 'retirer'}
+        onPress={() => void enregistrer()}
+        style={tablette ? { minWidth: 140 } : { flex: 2 }}
+      />
+    </>
+  );
+
+  const optionsJours = jours.map((j) => ({ id: j.date, libelle: jourLong(j.date, i18n.language) }));
+  const champJour = (
+    <ListeDeroulante
+      libelle={t('activites.champs.date')}
+      valeur={date}
+      options={
+        optionsJours.some((o) => o.id === date)
+          ? optionsJours
+          : [{ id: date, libelle: jourEntier }, ...optionsJours]
+      }
+      surChoix={setDate}
+    />
+  );
+  const champType = (
+    <Groupe titre={t('activites.champs.type')}>
+      {TYPES.map((v) => (
+        <Pilule
+          key={v}
+          libelle={t(`activites.types.${v}`)}
+          actif={type === v}
+          onPress={() => setType(v)}
+        />
+      ))}
+    </Groupe>
+  );
+  const champPeriode = (
+    <View style={{ gap: 6, flex: tablette ? 1 : undefined, minWidth: 0 }}>
+      <Texte variante="libelle">{t('activites.champs.periode')}</Texte>
+      <Segments
+        libelle={t('activites.champs.periode')}
+        options={PERIODES.map((v) => ({ cle: v, libelle: t(`activites.periodes.${v}`) }))}
+        valeur={periode}
+        surChoix={setPeriode}
+      />
+    </View>
+  );
+  const champDemande =
+    type === 'deplacement' ? (
+      <View style={{ gap: 6 }}>
+        <Texte variante="libelle">{t('activites.demande')}</Texte>
+        <Segments
+          libelle={t('activites.demande')}
+          options={[
+            { cle: 'moi', libelle: t('activites.demandeMoi') },
+            { cle: 'superviseur', libelle: t('activites.demandeSuperviseur') },
+          ]}
+          valeur={demandeSuperviseur ? 'superviseur' : 'moi'}
+          surChoix={(c) => setDemandeSuperviseur(c === 'superviseur')}
+        />
+      </View>
+    ) : null;
+  const champCommentaire = (
+    <>
       <Champ
         libelle={
           avec
@@ -257,44 +288,74 @@ export function FormulaireActivite({
               ? t('activites.motif')
               : t('activites.commentaire')
         }
+        placeholder={t('activites.indiceCommentaire')}
         value={commentaire}
         onChangeText={setCommentaire}
         maxLength={500}
-        multiline={avec}
+        multiline
+        style={{ minHeight: tablette ? 110 : 80 }}
       />
       {motifManquant && (
         <Texte variante="discret">
           {avec ? t('activites.explicationRequise') : t('activites.motifRequis')}
         </Texte>
       )}
+    </>
+  );
+  const retrait = activite ? (
+    <Pressable
+      accessibilityRole="button"
+      disabled={envoi !== null}
+      onPress={() => void retirer()}
+      style={({ pressed }) => [styles.retirer, pressed && { opacity: 0.6 }]}
+    >
+      <Retirer libelle={envoi === 'retirer' ? t('session.chargement') : t('activites.retirer')} />
+    </Pressable>
+  ) : null;
 
-      <Bouton
-        libelle={t('commun.enregistrer')}
-        chargement={envoi === 'enregistrer'}
-        desactive={!type || motifManquant || envoi === 'retirer'}
-        onPress={() => void enregistrer()}
-      />
-      <Bouton
-        secondaire
-        libelle={t('commun.annuler')}
-        onPress={() => {
-          void oublierBrouillon();
-          surAnnuler();
-        }}
-      />
-      {activite && (
-        <Pressable
-          accessibilityRole="button"
-          disabled={envoi !== null}
-          onPress={() => void retirer()}
-          style={({ pressed }) => [styles.retirer, pressed && { opacity: 0.6 }]}
-        >
-          <Retirer
-            libelle={envoi === 'retirer' ? t('session.chargement') : t('activites.retirer')}
-          />
-        </Pressable>
-      )}
-    </View>
+  if (tablette) {
+    return (
+      <Ecran
+        titre={titre}
+        surTitre={jourEntier}
+        fermer
+        surRetour={annuler}
+        onglets={false}
+        enteteTablette={{ action: <View style={styles.actionsEntete}>{boutons}</View> }}
+      >
+        <View style={styles.colonne}>
+          {erreur && <Alerte type="erreur">{erreur}</Alerte>}
+          <View style={styles.deuxColonnes}>
+            {champJour}
+            {champPeriode}
+          </View>
+          {champType}
+          {champDemande}
+          {champCommentaire}
+          <Alerte type="info">{t('activites.visitesRestent')}</Alerte>
+          {retrait}
+        </View>
+      </Ecran>
+    );
+  }
+
+  return (
+    <Ecran
+      titre={titre}
+      surTitre={jourEntier}
+      fermer
+      surRetour={annuler}
+      onglets={false}
+      pied={boutons}
+    >
+      {erreur && <Alerte type="erreur">{erreur}</Alerte>}
+      {champJour}
+      {champType}
+      {champPeriode}
+      {champDemande}
+      {champCommentaire}
+      {retrait}
+    </Ecran>
   );
 }
 
@@ -326,5 +387,8 @@ const styles = StyleSheet.create({
   libelle: { fontFamily: police.texteFort, fontSize: 15 },
   pilules: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   retirer: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  colonne: { width: '100%', maxWidth: 680, alignSelf: 'center', gap: 22 },
+  deuxColonnes: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
+  actionsEntete: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   lien: { fontFamily: police.texteFort, fontSize: 14 },
 });

@@ -58,10 +58,13 @@ export function useDetailVisite(id: string) {
 export function CoordonneesEtHistorique({
   id,
   horsLigneDit = false,
+  allege = false,
 }: {
   id: string;
   /** L'écran dit déjà qu'il est hors ligne : pas de second bandeau. */
   horsLigneDit?: boolean;
+  /** L'écran de la visite dit déjà l'adresse et la prochaine action notée (1.4.1). */
+  allege?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const p = usePalette();
@@ -73,7 +76,7 @@ export function CoordonneesEtHistorique({
     [t('detailVisite.telephonePro'), prospect?.telephone_pro],
     [t('detailVisite.telephoneLieu'), lieu?.telephone],
   ].filter((x): x is [string, string] => !!x[1]);
-  const adresse = [lieu?.adresse, lieu?.localite].filter(Boolean).join(', ');
+  const adresse = allege ? '' : [lieu?.adresse, lieu?.localite].filter(Boolean).join(', ');
   const date = (iso: string) =>
     new Intl.DateTimeFormat(i18n.language, {
       weekday: 'short',
@@ -96,7 +99,7 @@ export function CoordonneesEtHistorique({
         </Alerte>
       )}
       <PreparerVisite preparation={detail.preparation} />
-      <ActionPrecedente action={detail.action_precedente} />
+      {!allege && <ActionPrecedente action={detail.action_precedente} />}
       <Carte style={{ gap: 10 }}>
         <Texte variante="sousTitre">{t('detailVisite.coordonnees')}</Texte>
         {telephones.length === 0 && !adresse && !prospect?.courriel ? (

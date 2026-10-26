@@ -4,9 +4,9 @@ Version 0.9.7 (kit du pilote). Ce guide décrit le portail tel qu'il est livré.
 
 ## À qui s'adresse ce guide
 
-Ce guide s'adresse au superviseur qui approuve les plannings de ses délégués et valide leurs rapports sur le portail web. Une section décrit aussi ce que voit un DM quand une décision lui remonte par escalade.
+Ce guide s'adresse au superviseur qui approuve les plannings de ses délégués et valide leurs rapports sur le portail web. Une section décrit aussi ce que voit l'administrateur pays quand une décision lui remonte par escalade.
 
-Si vous faites vous-même des visites (vous occupez un poste de délégué), suivez aussi le guide du délégué pour votre propre planning. C'est alors votre DM qui l'approuve.
+Si vous faites vous-même des visites (vous occupez un poste de délégué), suivez aussi le guide du délégué pour votre propre planning. C'est alors l'administrateur pays qui l'approuve (depuis la version 1.3.0, le DM ne fait que consulter).
 
 ## Se connecter
 
@@ -30,8 +30,6 @@ Après 5 mots de passe erronés, le compte est verrouillé 15 minutes. Un courri
 ### Double authentification
 
 Le rôle de superviseur ne l'impose pas. Vous pouvez l'activer vous-même dans « Mon profil », carte « Double authentification », « Activer la double authentification ». Il faut une application gratuite sur votre téléphone (Google Authenticator, Microsoft Authenticator ou équivalent).
-
-Le DM, lui, doit l'activer à sa première connexion (voir la section sur l'escalade).
 
 ### Mon profil
 
@@ -119,7 +117,7 @@ Sans commentaire ni remarque, la demande ne part pas. Le planning affiche « Ré
 ### Les délais
 
 - **Lundi 0 h** (heure du pays) : la semaine ferme. Un planning qui n'est pas approuvé à cette heure, même soumis, ne se décide plus. Décidez avant.
-- **24 heures ouvrées** sans décision après la soumission : le planning remonte au DM de votre périmètre (escalade). Vous gardez la main : vous pouvez toujours décider.
+- **24 heures ouvrées** sans décision après la soumission : le planning remonte à l'administrateur pays (escalade). Vous gardez la main : vous pouvez toujours décider.
 - **48 heures** sans lire la notification : un courriel vous rappelle le nombre de demandes en attente.
 
 Les heures ouvrées se comptent du lundi au vendredi, sans les jours fériés.
@@ -225,7 +223,7 @@ Une journée validée se retrouve depuis le planning de la semaine (carte « Con
 
 Le rapport revient au délégué. La journée revient dans « À traiter » avec « 1 rapport rouvert ». Son classement de conformité ne change pas.
 
-Vous pouvez rouvrir jusqu'à **30 jours** après la validation. Au-delà, seul le DM peut rouvrir.
+Vous pouvez rouvrir jusqu'à **30 jours** après la validation. Au-delà, seul l'administrateur pays peut rouvrir.
 
 ### Les retards
 
@@ -308,31 +306,31 @@ Notifications que vous recevez :
 - « … a corrigé son rapport du … » ;
 - « … : n rapports du … toujours pas soumis, 48 h après les visites » ;
 - « Vous remplacez … du … au … » ;
-- « … a rouvert un rapport validé du … » (quand le DM rouvre un rapport de votre équipe).
+- « … a rouvert un rapport validé du … » (quand l'administrateur pays rouvre un rapport de votre équipe).
 
-## Ce que voit un DM en escalade
+## Ce que voit l'administrateur pays en escalade
 
-Cette section s'adresse au DM. Le DM doit activer la double authentification à sa première connexion : le portail l'impose avant de continuer (« Protégez votre compte »).
+Cette section s'adresse à l'administrateur pays. Depuis la version 1.3.0, il décide à la place du DM, qui ne fait plus que consulter. Au Sénégal, siège sans administrateur pays, c'est l'administrateur du siège.
 
 ### Plannings escaladés
 
-Un planning soumis sans décision depuis 24 heures ouvrées remonte au DM dont le périmètre couvre les réseaux du poste. Le DM reçoit « Escalade : le planning de … (semaine …) attend une décision depuis … h ouvrées ».
+Un planning soumis sans décision depuis 24 heures ouvrées remonte à l'administrateur pays. Il reçoit « Escalade : le planning de … (semaine …) attend une décision depuis … h ouvrées ».
 
-Dans « Plannings à valider », le planning porte « Escaladé : sans décision de … depuis le … ». Le DM l'approuve ou demande une révision comme un superviseur ; la décision est inscrite « par escalade ». Le superviseur garde la main jusqu'à la décision.
+Dans « Plannings à valider », le planning porte « Escaladé : sans décision de … depuis le … ». L'administrateur l'approuve ou demande une révision comme un superviseur ; la décision est inscrite « par escalade ». Le superviseur garde la main jusqu'à la décision.
 
-À 0 h le lundi, chaque DM reçoit « n plannings de la semaine … ne sont pas approuvés dans vos réseaux ».
+À 0 h le lundi, l'administrateur reçoit « n plannings de la semaine … ne sont pas approuvés dans votre pays ».
 
 ### Journées escaladées
 
-Quand un rapport soumis attend depuis plus de 24 heures ouvrées, sa journée s'ouvre au DM. Il reçoit « …, journée du … : à valider par escalade ». Dans « À traiter », la journée est marquée « Escaladée ». Le DM la valide « par escalade ». Le superviseur garde la main.
+Quand un rapport soumis attend depuis plus de 24 heures ouvrées, sa journée s'ouvre à l'administrateur. Il reçoit « …, journée du … : à valider par escalade ». Dans « À traiter », la journée est marquée « Escaladée ». L'administrateur la valide « par escalade ». Le superviseur garde la main.
 
 ### Consulter et rouvrir
 
-Le DM peut ouvrir une journée de ses réseaux en consultation : « Vous consultez cette journée en tant que DM du périmètre : vous pouvez rouvrir un rapport validé, la validation reste au superviseur. » Il peut rouvrir un rapport validé à tout moment, y compris après 30 jours. Le superviseur en est prévenu.
+L'administrateur peut ouvrir une journée en consultation : « Vous consultez cette journée en tant qu'administrateur : vous pouvez rouvrir un rapport validé, la validation reste au superviseur. » Il peut rouvrir un rapport validé à tout moment, y compris après 30 jours. Le superviseur en est prévenu.
 
 ### Superviseur qui visite
 
-Quand un superviseur occupe un poste de délégué, c'est le DM qui approuve son planning et valide ses rapports, comme un superviseur.
+Quand un superviseur occupe un poste de délégué rattaché à un DM, c'est l'administrateur pays qui approuve son planning et valide ses rapports, comme un superviseur.
 
 ## Questions fréquentes
 

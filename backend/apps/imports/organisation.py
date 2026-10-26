@@ -15,9 +15,10 @@ poste) et PRODUITS DE LA GAMME (portefeuille du réseau, séparés par « ; »).
 Hypothèses [H] : le dernier mot de « NOM ET PRENOMS » est le nom, le reste le prénom ; une
 personne inconnue reçoit un compte sans mot de passe (lien d'activation envoyé par
 l'administrateur) ; « (assuré par les superviseurs) » désigne un superviseur occupant le poste ;
-un produit absent du référentiel est signalé, jamais créé.
+un produit absent du référentiel est créé (1.0.9 [D] ; il était signalé, jamais créé).
 """
 
+import hashlib
 import re
 import unicodedata
 from collections import Counter, defaultdict
@@ -44,7 +45,12 @@ from apps.organisation.models import (
     actif_le,
 )
 from apps.referentiel.models import Produit
-from apps.referentiel.services import code_depuis, definir_portefeuille, portefeuille_actif
+from apps.referentiel.services import (
+    code_depuis,
+    creer_produit,
+    definir_portefeuille,
+    portefeuille_actif,
+)
 from apps.socle.erreurs import ErreurMetier
 from apps.socle.models import Pays
 from apps.socle.services import aujourdhui
@@ -125,6 +131,14 @@ def lire_fichier(contenu: bytes) -> list[dict]:
                 resultat.append({"ligne": numero, **valeurs})
         return resultat
     raise FichierInvalide(_("Aucune feuille au format du fichier d'organisation."))
+
+
+def reference_courte(reference: str) -> str:
+    """Référence externe stockable (80 caractères) : au-delà, début lisible et empreinte stable,
+    pour qu'un réimport retrouve le même poste (CA4 ; 1.0.9, secteurs aux noms longs)."""
+    if len(reference) <= 80:
+        return reference
+    return f"{reference[:39]}#{hashlib.sha256(reference.encode()).hexdigest()[:40]}"
 
 
 def _scinder_nom(nom_complet: str) -> tuple[str, str]:
@@ -285,8 +299,34 @@ class ImportOrganisation:
         org.rattacher(poste, superviseur)
         self.rapport.compter("rattachements", "modifies" if en_cours else "crees")
 
+    @staticmethod
+    def libelles_produits(texte: str) -> list[str]:
+        return [p for p in (x.strip() for x in re.split(r"[;\n]", texte or "")) if p]
+
+    def creer_produits(self) -> None:
+        """1.0.9 [D] : les produits cités par le fichier et absents du référentiel sont créés
+        (le fichier d'organisation réel est la seule liste des produits du pays)."""
+        codes = set(Produit.objects.filter(pays=self.pays).values_list("code", flat=True))
+        for ligne in self.lignes:
+            for libelle in self.libelles_produits(ligne.get("produits", "")):
+                if cle(libelle) in self.catalogue or len(libelle) > 120:
+                    continue
+                base = code_depuis(libelle).upper()[:36]
+                code, n = base, 1
+                while code in codes:
+                    n += 1
+                    code = f"{base}_{n}"
+                try:
+                    with transaction.atomic():
+                        produit = creer_produit(self.pays, libelle, code)
+                except (ErreurMetier, ValidationError):
+                    continue  # signalé plus loin comme produit absent
+                codes.add(code)
+                self.catalogue[cle(libelle)] = produit
+                self.rapport.compter("produits", "crees")
+
     def portefeuille(self, reseau: Reseau, texte: str) -> None:
-        for libelle in filter(None, (p.strip() for p in re.split(r"[;\n]", texte or ""))):
+        for libelle in self.libelles_produits(texte):
             produit = self.catalogue.get(cle(libelle))
             if produit is None:
                 self.produits_inconnus[libelle] += 1
@@ -307,7 +347,7 @@ class ImportOrganisation:
         secteur = self.secteur(ligne["zone"], ligne["secteur"])
         triplet = f"{cle(ligne['reseau'])}|{cle(ligne['secteur'])}|{type_}"
         occurrences[triplet] += 1
-        reference = f"{triplet}|{occurrences[triplet]}"
+        reference = reference_courte(f"{triplet}|{occurrences[triplet]}")
         libelle = f"{LIBELLES_TYPE[type_]} {secteur.libelle} {reseau.libelle}"[:120]
         poste = self.poste(reference, type_, libelle, reseau, secteur)
         self.occupant(poste, ligne, superviseur_occupe)
@@ -318,6 +358,7 @@ class ImportOrganisation:
 
     def executer(self) -> Rapport:
         occurrences: Counter = Counter()
+        self.creer_produits()
         for ligne in self.lignes:
             try:
                 with transaction.atomic():

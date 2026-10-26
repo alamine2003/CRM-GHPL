@@ -124,8 +124,9 @@ def test_import_motifs_poste_vacant_et_reimport(monde, produit):
     assert set(rejets) == {"5", "6"}
     assert "RESEAUX" in rejets["5"] and "Fonction inconnue" in rejets["6"]
     assert lot.compteurs["lignes"] == {"importees": 4, "rejetes": 2}
-    assert any(a["entite"] == "produit" and a["identifiant"] == "Produit Inconnu"
-               for a in lot.anomalies)  # fmt: skip
+    # 1.0.9 [D] : un produit cité par le fichier et absent du référentiel est créé.
+    assert lot.compteurs["produits"] == {"crees": 1}
+    assert not any(a["entite"] == "produit" for a in lot.anomalies)
 
     alpha = Reseau.objects.get(libelle="RESEAU ALPHA")
     postes = Poste.objects.filter(reseaux=alpha)
@@ -142,8 +143,8 @@ def test_import_motifs_poste_vacant_et_reimport(monde, produit):
     kam = Poste.objects.get(type_poste="kam")
     assert Occupation.objects.get(poste=kam).utilisateur == superviseur
     assert PerimetreReseau.objects.filter(reseau=alpha, utilisateur__username="amadou.demba")
-    assert [p.produit.libelle for p in portefeuille_actif([alpha], aujourdhui(sn))] == [
-        "Fictivol 10 mg"]  # fmt: skip
+    assert {p.produit.libelle for p in portefeuille_actif([alpha], aujourdhui(sn))} == {
+        "Fictivol 10 mg", "Produit Inconnu"}  # fmt: skip
 
     # CA4 : un réimport du même fichier ne crée rien de nouveau.
     avant = (Poste.objects.count(), Utilisateur.objects.count(), Occupation.objects.count(),
@@ -182,8 +183,23 @@ def test_la_simulation_compte_les_modifications(monde, produit):
     assert not Utilisateur.objects.filter(username="dieynaba.seck").exists()
     en_cours = Rattachement.objects.filter(poste=occupe, fin__isnull=True).get()
     assert en_cours.superviseur.username == "coumba.diallo"
-    assert [p.produit.libelle for p in portefeuille_actif([alpha], aujourdhui(sn))] == [
-        "Fictivol 10 mg"]  # fmt: skip
+    assert {p.produit.libelle for p in portefeuille_actif([alpha], aujourdhui(sn))} == {
+        "Fictivol 10 mg", "Produit Inconnu"}  # fmt: skip
+
+
+def test_un_secteur_au_nom_long_s_importe_et_se_reimporte(monde):
+    """1.0.9 : le fichier réel nomme des secteurs de plus de 120 caractères (plusieurs villes) ;
+    la référence externe dépasse alors 80 caractères et reste stable au réimport (CA4)."""
+    sn = monde["sn"]
+    long = " / ".join(["QUARTIER FICTIF NUMERO " + str(i) for i in range(1, 7)])
+    assert 120 < len(long) <= 200
+    lignes = [[*LIGNES[0][:7], long, *LIGNES[0][8:]]]
+    lot = importer(sn, monde["admin.sn"], classeur(lignes), "orga.xlsx", simulation=False)
+    assert lot.compteurs["lignes"] == {"importees": 1}
+    assert Poste.objects.filter(secteurs__libelle__iexact=long).count() == 1
+    second = importer(sn, monde["admin.sn"], classeur(lignes), "orga.xlsx", simulation=False)
+    assert second.compteurs["postes"] == {"existants": 1}
+    assert Poste.objects.count() == 1
 
 
 def test_api_import_organisation(monde, produit):
@@ -206,3 +222,28 @@ def test_api_import_organisation(monde, produit):
                    {"fichier": SimpleUploadedFile("o.xlsx", classeur()), "simulation": "true"},
                    format="multipart")  # fmt: skip
     assert r.status_code == 403
+
+
+def test_commande_importer_organisation(monde, tmp_path, capsys):
+    """1.0.9 : la même importation en ligne de commande ; le pays absent est créé."""
+    from django.core.management import CommandError, call_command
+
+    from apps.socle.models import Pays
+
+    fichier = tmp_path / "orga.xlsx"
+    fichier.write_bytes(classeur())
+    auteur = monde["admin.sn"].username
+    call_command("importer_organisation", str(fichier), pays="SN", auteur=auteur,
+                 simulation=True)  # fmt: skip
+    assert "Simulation terminée" in capsys.readouterr().out
+    assert not Reseau.objects.filter(libelle="RESEAU ALPHA").exists()
+    call_command("importer_organisation", str(fichier), pays="SN", auteur=auteur)
+    assert Reseau.objects.filter(libelle="RESEAU ALPHA").exists()
+    # Un pays du catalogue pas encore créé l'est d'abord.
+    assert not Pays.objects.filter(code="CI").exists()
+    call_command("importer_organisation", str(fichier), pays="CI", auteur=auteur,
+                 simulation=True)  # fmt: skip
+    assert Pays.objects.filter(code="CI").exists()
+    with pytest.raises(CommandError, match="introuvable"):
+        call_command("importer_organisation", str(tmp_path / "absent.xlsx"), pays="SN",
+                     auteur=auteur)  # fmt: skip

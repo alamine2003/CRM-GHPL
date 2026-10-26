@@ -1,6 +1,6 @@
-# Démonstration gratuite sur Render et Neon (versions 1.0.3 et 1.0.4)
+# Démonstration gratuite sur Render et Neon (versions 1.0.3, 1.0.4, 1.6.3 et 1.9.4)
 
-Ce guide met en ligne une **démonstration** d'INNOV CRM, sans payer : le portail web et le serveur chez Render, la base de données chez Neon, avec des données fictives. Il suit le plan `render-demo.yaml`.
+Ce guide met en ligne une **démonstration** d'INNOV CRM, sans payer : le portail web et le serveur chez Render, la base de données chez Neon, sans aucune donnée au départ (1.0.8 : plus de données fictives). Il suit le plan `render-demo.yaml`.
 
 Pourquoi Neon : Render n'accepte qu'une base gratuite par compte, et l'efface au bout d'un mois. La base gratuite de Neon n'a pas cette limite.
 
@@ -11,23 +11,23 @@ Pourquoi Neon : Render n'accepte qu'une base gratuite par compte, et l'efface au
 | Oui | Non |
 |---|---|
 | Le portail et le serveur en ligne, en HTTPS | Pas de sauvegarde |
-| Deux pays fictifs (Sénégal, Togo), une vingtaine de délégués, leurs plannings, visites et rapports | Les tâches automatiques ne tournent pas (escalades, fermeture du lundi, rappels) |
-| Tous les rôles, avec un même mot de passe choisi par vous | Les courriels ne partent pas (ils s'écrivent dans le journal du serveur) |
-| La base se remplit toute seule au premier démarrage | Un document joint est perdu au redéploiement suivant |
+| Toutes les fonctions du portail (prospects, pilotage, suivi des ventes, droits du directeur opérationnel…) | Les tâches automatiques ne tournent pas (escalades, fermeture du lundi, rappels) |
+| Le premier administrateur du siège créé tout seul au premier démarrage ; vous créez ensuite pays, comptes et données d'essai | Les courriels ne partent pas (ils s'écrivent dans le journal du serveur) |
+| Aucune donnée au départ : l'instance est vide | Un document joint est perdu au redéploiement suivant |
 
 Le serveur gratuit **s'endort** après un quart d'heure sans visite. La première page met alors environ une minute à s'afficher, le temps qu'il se réveille. C'est normal.
 
 ## Avant de commencer
 
 - Votre compte GitHub (celui du dépôt `alamine2003/CRM-GHPL`).
-- Un mot de passe pour les comptes de démonstration : **12 caractères au moins**, que vous notez dans un endroit sûr. Ne l'écrivez jamais dans le dépôt.
-- Pour les comptes d'encadrement (responsable pays, administrateur, siège), une application d'authentification sur votre téléphone (Google Authenticator, Microsoft Authenticator…). Elle sert à la double authentification, demandée à la première connexion.
+- Un mot de passe pour le compte administrateur du siège : **12 caractères au moins**, que vous notez dans un endroit sûr. Ne l'écrivez jamais dans le dépôt.
+- La double authentification n'est plus demandée (1.1.2) : chacun peut l'activer dans « Mon profil », avec une application d'authentification sur son téléphone (Google Authenticator, Microsoft Authenticator…).
 
 ## Étape 1 — Fusionner le travail dans la branche principale
 
 Render lit le plan dans la branche `main`.
 
-1. Ouvrez la demande de fusion sur GitHub : `https://github.com/alamine2003/CRM-GHPL/pull/1`.
+1. Ouvrez la demande de fusion en cours sur GitHub : `https://github.com/alamine2003/CRM-GHPL/pull/20` (elle contient tout le travail depuis la dernière fusion, dont le suivi des ventes).
 2. En bas, si elle est encore en brouillon, cliquez **« Ready for review »**.
 3. Cliquez **« Merge pull request »**, puis **« Confirm merge »**.
 
@@ -57,12 +57,13 @@ Render lit le plan dans la branche `main`.
 4. Donnez un nom, par exemple `innov-demo`.
 5. Render affiche ce qu'il va créer : **innov-demo-api** (serveur) et **innov-demo-portail** (portail). Vérifiez que chacun est marqué **Free**. La base n'y figure pas : elle est chez Neon.
 
-## Étape 4 — Remplir les six valeurs demandées
+## Étape 4 — Remplir les sept valeurs demandées
 
 | Valeur | Ce que vous écrivez |
 |---|---|
 | `DATABASE_URL` | L'adresse de connexion copiée chez Neon (étape 2) |
-| `INNOV_DEMO_MOT_DE_PASSE` | Votre mot de passe de démonstration (12 caractères au moins) |
+| `INNOV_ADMIN_IDENTIFIANT` | Votre identifiant d'administrateur du siège, au format `prenom.nom` |
+| `INNOV_ADMIN_MOT_DE_PASSE` | Son mot de passe (12 caractères au moins) |
 | `CORS_ALLOWED_ORIGINS` | `https://innov-demo-portail.onrender.com` |
 | `CSRF_TRUSTED_ORIGINS` | `https://innov-demo-portail.onrender.com` |
 | `PORTAIL_URL` | `https://innov-demo-portail.onrender.com` |
@@ -82,9 +83,11 @@ Si un nom est déjà pris chez Render, il ajoute un suffixe, par exemple `innov-
 ## Étape 6 — Essayer
 
 1. Ouvrez `https://innov-demo-api.onrender.com/api/health/`. La page doit afficher `"statut": "ok"` et `"environnement": "demonstration"`. Si elle tarde, attendez une minute : le serveur se réveille.
-2. Retrouvez les comptes : **innov-demo-api → Logs**, cherchez la ligne **« Démonstration prête (données fictives) »**. En dessous, chaque rôle avec son identifiant (au format `prenom.nom`).
-3. Ouvrez le portail `https://innov-demo-portail.onrender.com`. Connectez-vous, par exemple avec le compte **superviseur (SN)** ou **delegue (SN)**, et votre mot de passe de démonstration.
-4. Un bandeau « Démonstration » rappelle que les données sont fictives.
+2. Au premier démarrage, **innov-demo-api → Logs** affiche **« Administrateur du siège créé »**.
+3. Ouvrez le portail `https://innov-demo-portail.onrender.com`. Connectez-vous avec l'identifiant et le mot de passe d'administrateur choisis à l'étape 4. Le bandeau « Essai » rappelle qu'il n'y a pas de sauvegarde : aucune donnée réelle ici.
+4. Remplissez l'instance avec des données **inventées**, dans cet ordre : **Pays** (« Ouvrir un pays »), **Équipe** (les comptes, avec une adresse fictive), **Imports** (un fichier d'organisation inventé qui nomme ces comptes : il crée réseaux, produits, secteurs et postes, et donne à chacun son rôle et ses réseaux), **Listes cibles**. Le kit de recette décrit ces étapes en détail : `docs/recette-utilisateur.md` §1.2. Pour le suivi des ventes : **Imports**, « Ventes », ou **Ventes**, « Saisir une vente ». Sans pays choisi, **Ventes** montre tous les pays en francs CFA de l'Ouest, une fois les taux de change fixés (« Taux de change »).
+
+> **Les liens de mot de passe.** Un compte que vous créez reçoit son lien de mot de passe par courriel, et la démonstration n'envoie aucun courriel. Donnez donc à chaque compte une adresse fictive (par exemple `prenom.nom@exemple.invalid`) : le lien s'écrit alors dans le journal du serveur (**innov-demo-api → Logs**, cherchez `reinitialisation?jeton=`). Sans adresse, aucun lien n'est écrit. Le lien ne vaut que 30 minutes et ne sert qu'une fois.
 
 ## Limites connues des navigateurs
 
@@ -96,7 +99,7 @@ Pour remettre la démonstration à zéro :
 
 1. Chez Neon, dans le projet `innov-demo`, supprimez la branche de données et recréez-en une (ou créez un nouveau projet), puis copiez la nouvelle adresse.
 2. Dans Render, **innov-demo-api → Environment**, remplacez `DATABASE_URL`, puis **« Save Changes »**.
-3. Au redémarrage, le serveur remplit de nouveau la base de données fictives, avec le même mot de passe.
+3. Au redémarrage, le serveur recrée seulement l'administrateur du siège, avec le même identifiant et le même mot de passe.
 
 La base gratuite de Neon s'endort quand personne ne s'en sert, et se réveille en une seconde environ.
 

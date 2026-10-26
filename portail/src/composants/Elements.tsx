@@ -132,6 +132,23 @@ export function BarreChiffres({ children }: { children: ReactNode }) {
   );
 }
 
+/** Les chiffres clés : une rangée sur grand écran, deux par deux sur téléphone. */
+export function ChiffresCles({ telephone, children }: { telephone: boolean; children: ReactNode }) {
+  if (!telephone) return <BarreChiffres>{children}</BarreChiffres>;
+  return (
+    <Card
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        '& > *': { borderLeft: 1, borderTop: 1, borderColor: 'divider', ml: '-1px', mt: '-1px' },
+      }}
+    >
+      {children}
+    </Card>
+  );
+}
+
+/** Le filtre « client » : une recherche, car un pays compte des milliers de clients. */
 /** Titre de page et actions sur une ligne ; contexte (pays, nombre) en texte discret. */
 export function EnTetePage({
   titre,

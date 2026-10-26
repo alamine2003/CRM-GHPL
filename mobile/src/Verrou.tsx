@@ -6,7 +6,8 @@ import { AppState, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Programme } from '@innov/api-client';
 import { lire } from './baseLocale';
-import { Alerte, Bouton, Logo } from './composants';
+import { Alerte, Bouton, Icone } from './composants';
+import { useTablette } from './disposition';
 import { CLE_PROGRAMME } from './Execution';
 import { police } from './polices';
 import { useSession } from './session';
@@ -31,6 +32,7 @@ export const horloge = { maintenant: () => Date.now() };
  */
 export function Verrou({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
+  const tablette = useTablette();
   const marges = useSafeAreaInsets();
   const { etat, deconnexion } = useSession();
   const connecte = etat.statut === 'connecte';
@@ -75,43 +77,55 @@ export function Verrou({ children }: { children: ReactNode }) {
   }, []);
 
   if (!verrouille || !connecte) return children;
+
+  // Maquette 1.5.3 : un écran marine plein, centré, avec le filet orange en haut.
+  const quitter = () => {
+    setVerrouille(false);
+    setSansProtection(false);
+    void deconnexion();
+  };
   return (
-    <View
-      style={[styles.ecran, { paddingTop: marges.top + 64, paddingBottom: marges.bottom + 24 }]}
-    >
-      <View style={styles.centre}>
-        <Logo taille={56} />
-        <Text accessibilityRole="header" style={styles.titre}>
-          {t('mobile.verrou.titre')}
-        </Text>
-        <Text style={styles.texte}>{t('mobile.verrou.texte', { minutes })}</Text>
-      </View>
-      <View style={{ gap: 12 }}>
+    <View style={[styles.ecran, { paddingTop: marges.top, paddingBottom: marges.bottom }]}>
+      <View style={[styles.filet, { top: marges.top }]} />
+      <View style={tablette ? styles.corpsLarge : styles.corps}>
+        <View style={[styles.icone, tablette && styles.iconeLarge]}>
+          <Icone nom="lock" taille={tablette ? 38 : 32} couleur="#FFFFFF" />
+        </View>
+        <View>
+          <Text
+            accessibilityRole="header"
+            style={[styles.titre, tablette && styles.titreLarge, { textAlign: 'center' }]}
+          >
+            {t('mobile.verrou.titre')}
+          </Text>
+          <Text style={[styles.texte, tablette && styles.texteLarge]}>
+            {t('mobile.verrou.texte', { minutes })}
+          </Text>
+        </View>
         {sansProtection ? (
-          <>
+          <View style={styles.pile}>
             <Alerte type="info">{t('mobile.verrou.sansProtection')}</Alerte>
             <Bouton
+              variante="clair"
               libelle={t('session.deconnexion')}
-              onPress={() => {
-                setVerrouille(false);
-                setSansProtection(false);
-                void deconnexion();
-              }}
+              style={tablette ? { minWidth: 280, alignSelf: 'center' } : undefined}
+              onPress={quitter}
             />
-          </>
+          </View>
         ) : (
           <>
             <Bouton
+              variante="clair"
               libelle={t('mobile.verrou.deverrouiller')}
+              style={tablette ? { minWidth: 280 } : { alignSelf: 'stretch' }}
               onPress={() => void deverrouiller()}
             />
+            <Text style={styles.note}>{t('mobile.verrou.note')}</Text>
             <Bouton
-              secondaire
+              variante="clairContour"
+              petit
               libelle={t('session.deconnexion')}
-              onPress={() => {
-                setVerrouille(false);
-                void deconnexion();
-              }}
+              onPress={quitter}
             />
           </>
         )}
@@ -124,16 +138,44 @@ const styles = StyleSheet.create({
   ecran: {
     flex: 1,
     backgroundColor: marque.bleuMarine,
-    paddingHorizontal: 24,
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  centre: { alignItems: 'center', gap: 14 },
-  titre: { color: '#FFFFFF', fontFamily: police.titreFort, fontSize: 26, textAlign: 'center' },
+  filet: { position: 'absolute', left: 0, right: 0, height: 3, backgroundColor: marque.orange },
+  corps: {
+    alignSelf: 'stretch',
+    paddingHorizontal: 28,
+    paddingBottom: 40,
+    alignItems: 'center',
+    gap: 28,
+  },
+  corpsLarge: { width: 440, maxWidth: '100%', alignItems: 'center', gap: 30 },
+  pile: { alignSelf: 'stretch', gap: 12, alignItems: 'center' },
+  icone: {
+    width: 72,
+    height: 72,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconeLarge: { width: 84, height: 84 },
+  titre: {
+    color: '#FFFFFF',
+    fontFamily: police.titreFort,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -0.6,
+  },
+  titreLarge: { fontSize: 34, lineHeight: 40, letterSpacing: -0.7 },
   texte: {
-    color: '#B9C4E8',
+    color: '#C9D2EC',
     fontFamily: police.texte,
-    fontSize: 15,
-    lineHeight: 21,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: 'center',
+    marginTop: 10,
   },
+  texteLarge: { fontSize: 17, lineHeight: 26, marginTop: 12 },
+  note: { color: '#8F9CC7', fontFamily: police.texte, fontSize: 13, textAlign: 'center' },
 });

@@ -19,6 +19,8 @@ TOUJOURS = frozenset({T.REVISION_DEMANDEE, T.CORRECTION_DEMANDEE, T.ESCALADE, T.
 
 #: Ce que chaque rôle reçoit (prd.md §18), dans l'ordre où l'écran les présente.
 #: [D, 9 octobre 2026, délégation] Les rôles du siège et l'administration ne reçoivent rien.
+#: [D, 1.3.0] Sauf les escalades : l'administrateur pays (le siège au Sénégal) les reçoit à la
+#: place du DM, qui ne décide plus.
 PAR_ROLE: dict[str, tuple[str, ...]] = {
     Role.DELEGUE: (
         T.PLANNING_APPROUVE, T.REVISION_DEMANDEE, T.REDACTION_ROUVERTE, T.RAPPEL_PLANNING,
@@ -29,8 +31,12 @@ PAR_ROLE: dict[str, tuple[str, ...]] = {
         T.PLANNING_SOUMIS, T.REOUVERTURE_DEMANDEE, T.REMPLACEMENT_ATTRIBUE, T.RAPPORTS_SOUMIS,
         T.RAPPORT_CORRIGE, T.RAPPORT_ROUVERT, T.RAPPORT_EN_RETARD,
     ),
-    Role.DM: (T.ESCALADE, T.PLANNINGS_NON_APPROUVES, T.JOURNEE_ESCALADEE),
-    Role.DF: (T.ESCALADE, T.PLANNINGS_NON_APPROUVES, T.JOURNEE_ESCALADEE),
+    Role.ADMIN_PAYS: (T.ESCALADE, T.PLANNINGS_NON_APPROUVES, T.JOURNEE_ESCALADEE,
+                      T.OBJECTIF_VENTES_RETARD),
+    Role.ADMIN_SIEGE: (T.ESCALADE, T.PLANNINGS_NON_APPROUVES, T.JOURNEE_ESCALADEE,
+                       T.OBJECTIF_VENTES_RETARD),
+    # 1.8.0 : le DM est alerté quand un réseau de son périmètre est sous son objectif de ventes.
+    Role.DM: (T.OBJECTIF_VENTES_RETARD,),
 }  # fmt: skip
 
 

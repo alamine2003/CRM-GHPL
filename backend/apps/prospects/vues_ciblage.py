@@ -69,6 +69,7 @@ def _poste(poste: Poste, ligne: dict | None, gerable: bool, cycles: dict) -> dic
         "type_poste": poste.type_poste,
         "occupant": f"{occupant.first_name} {occupant.last_name}" if occupant else None,
         "secteurs": [{"id": x.pk, "libelle": x.libelle} for x in poste.secteurs.all()],
+        "reseaux": [r.libelle for r in poste.reseaux.all()],
         "gerable": gerable,
         "synthese": {
             "total": ligne.get("total", 0),
@@ -100,19 +101,24 @@ class VueCiblage(VuePerimetre):
             .select_related("pays")
             .prefetch_related(
                 "secteurs",
+                "reseaux",
                 Prefetch("occupations", queryset=jour_occupations, to_attr="occupations_en_cours"),
             )
             .order_by("libelle")
         )
 
-    def liste(self, poste: Poste, historique: bool = False) -> dict:
+    def liste(self, poste: Poste, historique: bool = False, visites: dict | None = None) -> dict:
         cibles = _avec_prospect(Cible.objects.filter(poste=poste))
         if not historique:
             cibles = cibles.filter(fin__isnull=True)
         gerable = ciblage.postes_geres(self.perimetre).filter(pk=poste.pk).exists()
         ligne = _syntheses([poste]).get(poste.pk)
         secteurs = {x.pk for x in poste.secteurs.all()}
-        contexte = {**self.get_serializer_context(), "secteurs_poste": secteurs}
+        contexte = {
+            **self.get_serializer_context(),
+            "secteurs_poste": secteurs,
+            "visites_cycle": visites,
+        }
         return {
             "poste": s.PosteCibleSerializer(_poste(poste, ligne, gerable, {})).data,
             "cibles": s.CibleSerializer(
@@ -261,4 +267,34 @@ class MaListeCibleVue(VueCiblage):
         if pays is None:
             return Response([])
         occupes = ciblage.postes_occupes(request.user, pays).values("pk")
-        return Response([self.liste(p) for p in self.postes().filter(pk__in=occupes)])
+        visites = _visites_du_cycle(request.user, pays)
+        return Response(
+            [self.liste(p, visites=visites) for p in self.postes().filter(pk__in=occupes)]
+        )
+
+
+def _visites_du_cycle(utilisateur, pays) -> dict:
+    """Visites effectuées par le délégué, par prospect, sur le cycle qui finit aujourd'hui
+    (« 2 / 3 » de la liste, 1.4.4) : la fenêtre glissante du pilotage (DSH-001)."""
+    from datetime import timedelta
+
+    from apps.planning.etats import StatutVisite
+    from apps.planning.models import Visite
+
+    fin = aujourdhui(pays)
+    semaines = int(valeur_parametre(pays, "cycle_visite_semaines") or 4)
+    debut = fin - timedelta(weeks=semaines) + timedelta(days=1)
+    lignes = (
+        Visite.objects.filter(
+            pays=pays,
+            planning__delegue=utilisateur,
+            archive_le__isnull=True,
+            statut=StatutVisite.EFFECTUEE,
+            prospect__isnull=False,
+            date__gte=debut,
+            date__lte=fin,
+        )
+        .values("prospect_id")
+        .annotate(n=Count("id"))
+    )
+    return {ligne["prospect_id"]: ligne["n"] for ligne in lignes}
