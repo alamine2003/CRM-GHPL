@@ -1832,7 +1832,7 @@ Exports : CSV et Excel, limités au périmètre, audités ; les rapports en text
 | REC-13 | Un délégué crée un prospect déjà existant avec le même numéro d'ordre : fusion automatique ; un homonyme sans identifiant fort entre dans la file ; l'administrateur pays défusionne une fusion. | PRP-008 à PRP-010 |
 | REC-14 | Un délégué ne voit pas les visites d'un délégué d'un autre réseau sur le même médecin. | RG-040 |
 | REC-15 | Le superviseur valide par lot les journées conformes ; une journée « à vérifier » reste en attente. | RPT-013, RG-035 |
-| REC-16 | Sans décision 24 h ouvrées, le DM reçoit l'escalade et décide ; un remplaçant décide pendant sa période. | PLN-016, ORG-013 |
+| REC-16 | Sans décision 24 h ouvrées, l'administrateur pays (le siège pour le Sénégal) reçoit l'escalade et décide ; un remplaçant décide pendant sa période. (1.3.0 : à la place du DM, §14.81.) | PLN-016, ORG-013 |
 | REC-17 | Un téléphone révoqué efface ses données locales à la connexion suivante ; au 8ᵉ jour sans synchronisation, les données sont inaccessibles. | SEC-006, OFF-007 |
 | REC-18 | Un utilisateur avec une affectation supplémentaire bascule de pays et ne voit jamais les deux à la fois ; l'accès cesse à la date de fin. | ORG-009 |
 | REC-19 | Toute l'interface et les notifications existent en français et en anglais. | USR-004 |

@@ -2,6 +2,17 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.9.1] — Le kit de recette utilisateur à jour
+
+### Corrigé
+
+- `docs/recette-utilisateur.md` (prd.md §21.1, REC-01 à REC-20) décrivait une base remplie par `reinitialiser_demo`, retirée en 1.0.8. Il explique maintenant comment préparer le jeu de recette sur une instance vide : pays, comptes avec une boîte de test, organisation par l'import d'un classeur fictif qui reprend ces comptes (rôles, postes, réseaux du DF et du DM), prospects par un export BirdNotes fictif, listes cibles ; et un calendrier sur deux semaines où chaque scénario crée ce que le suivant lit.
+- Le kit suit les décisions depuis 0.9.8 : double authentification facultative (1.1.2), Sénégal géré par le siège (1.2.0), escalade à l'administrateur pays et au siège pour le Sénégal (1.3.0, REC-16, aussi corrigé dans prd.md §21.1), libellés des écrans mobiles redessinés (« Historique des visites », « Suivante »), noms des tests cités.
+
+### Ajouté
+
+- Quatre scénarios complémentaires, hors des REC obligatoires : import et synthèse des ventes (VNT-001 à VNT-006), objectifs de ventes et alerte (VNT-007 à VNT-011, NOT-007), ventes de tous les pays (VNT-012 à VNT-014), droits du DO (DOR-001, DOR-002).
+
 ## [1.9.0] — Les ventes de tous les pays, en francs CFA de l'Ouest
 
 ### Ajouté (prd.md §14.90, VNT-012 à VNT-014)
