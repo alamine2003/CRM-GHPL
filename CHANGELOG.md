@@ -2,6 +2,16 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.9.4] — Guide de la démonstration gratuite à jour
+
+### Corrigé
+
+- `docs/demo-gratuite.md` demandait encore la double authentification à la première connexion (facultative depuis 1.1.2) et donnait un ordre de remplissage dépassé : il renvoie maintenant au kit de recette (`docs/recette-utilisateur.md` §1.2) et cite la vue de tous les pays.
+
+### Vérifié
+
+- Répétition locale de la démonstration sur une base vide, comme Render la lancera (`backend/demarrer_demo.sh`, `ENVIRONNEMENT=demonstration`) : migrations, « Administrateur du siège créé », `/api/health/` en 1.9.3, connexion sans double authentification, création de pays, vue de tous les pays et taux de change ; construction du portail avec `VITE_API_URL`. Base jetable supprimée ensuite.
+
 ## [1.9.3] — Vue de tous les pays : hypothèses confirmées
 
 ### Décidé (prd.md §14.90, VNT-012, VNT-013)

@@ -1,4 +1,4 @@
-# Démonstration gratuite sur Render et Neon (versions 1.0.3, 1.0.4 et 1.6.3)
+# Démonstration gratuite sur Render et Neon (versions 1.0.3, 1.0.4, 1.6.3 et 1.9.4)
 
 Ce guide met en ligne une **démonstration** d'INNOV CRM, sans payer : le portail web et le serveur chez Render, la base de données chez Neon, sans aucune donnée au départ (1.0.8 : plus de données fictives). Il suit le plan `render-demo.yaml`.
 
@@ -21,7 +21,7 @@ Le serveur gratuit **s'endort** après un quart d'heure sans visite. La premièr
 
 - Votre compte GitHub (celui du dépôt `alamine2003/CRM-GHPL`).
 - Un mot de passe pour le compte administrateur du siège : **12 caractères au moins**, que vous notez dans un endroit sûr. Ne l'écrivez jamais dans le dépôt.
-- Pour ce compte, et pour les comptes d'encadrement que vous créerez ensuite, une application d'authentification sur votre téléphone (Google Authenticator, Microsoft Authenticator…). Elle sert à la double authentification, demandée à la première connexion.
+- La double authentification n'est plus demandée (1.1.2) : chacun peut l'activer dans « Mon profil », avec une application d'authentification sur son téléphone (Google Authenticator, Microsoft Authenticator…).
 
 ## Étape 1 — Fusionner le travail dans la branche principale
 
@@ -85,8 +85,7 @@ Si un nom est déjà pris chez Render, il ajoute un suffixe, par exemple `innov-
 1. Ouvrez `https://innov-demo-api.onrender.com/api/health/`. La page doit afficher `"statut": "ok"` et `"environnement": "demonstration"`. Si elle tarde, attendez une minute : le serveur se réveille.
 2. Au premier démarrage, **innov-demo-api → Logs** affiche **« Administrateur du siège créé »**.
 3. Ouvrez le portail `https://innov-demo-portail.onrender.com`. Connectez-vous avec l'identifiant et le mot de passe d'administrateur choisis à l'étape 4. Le bandeau « Essai » rappelle qu'il n'y a pas de sauvegarde : aucune donnée réelle ici.
-4. Activez la double authentification quand le portail le demande.
-5. Remplissez l'instance dans cet ordre : **Pays** (créez un pays d'essai), **Organisation** (postes et secteurs), **Référentiels** (produits, établissements), **Équipe** (comptes des délégués et superviseurs). Pour essayer le suivi des ventes, ouvrez **Ventes** puis **Importer** (ou **Saisir une vente**).
+4. Remplissez l'instance avec des données **inventées**, dans cet ordre : **Pays** (« Ouvrir un pays »), **Équipe** (les comptes, avec une adresse fictive), **Imports** (un fichier d'organisation inventé qui nomme ces comptes : il crée réseaux, produits, secteurs et postes, et donne à chacun son rôle et ses réseaux), **Listes cibles**. Le kit de recette décrit ces étapes en détail : `docs/recette-utilisateur.md` §1.2. Pour le suivi des ventes : **Imports**, « Ventes », ou **Ventes**, « Saisir une vente ». Sans pays choisi, **Ventes** montre tous les pays en francs CFA de l'Ouest, une fois les taux de change fixés (« Taux de change »).
 
 > **Les liens de mot de passe.** Un compte que vous créez reçoit son lien de mot de passe par courriel, et la démonstration n'envoie aucun courriel. Donnez donc à chaque compte une adresse fictive (par exemple `prenom.nom@exemple.invalid`) : le lien s'écrit alors dans le journal du serveur (**innov-demo-api → Logs**, cherchez `reinitialisation?jeton=`). Sans adresse, aucun lien n'est écrit. Le lien ne vaut que 30 minutes et ne sert qu'une fois.
 
