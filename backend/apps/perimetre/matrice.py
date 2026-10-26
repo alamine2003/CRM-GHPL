@@ -58,6 +58,8 @@ class Action(StrEnum):
     VENTES_EXPORTER = "ventes.exporter"
     VENTES_OBJECTIFS_LIRE = "ventes.objectifs_lire"
     VENTES_OBJECTIFS_GERER = "ventes.objectifs_gerer"
+    VENTES_TOUS_PAYS = "ventes.tous_pays"
+    VENTES_TAUX_GERER = "ventes.taux_gerer"
     DROITS_DO_REGLER = "droits_do.regler"
 
 
@@ -201,6 +203,10 @@ MATRICE: dict[Action, frozenset[str]] = {
         SIEGE | PAYS_CONSULTATION | {Role.DF, Role.DM, Role.SUPERVISEUR}
     ),
     Action.VENTES_OBJECTIFS_GERER: frozenset({Role.ADMIN_PAYS, Role.DM}),
+    # 1.9.0 [D, 26 octobre 2026] : la vue de tous les pays, convertie en XOF, au siège seul ;
+    # l'administrateur du siège fixe les taux de change de l'année.
+    Action.VENTES_TOUS_PAYS: frozenset(SIEGE),
+    Action.VENTES_TAUX_GERER: frozenset({Role.ADMIN_SIEGE}),
     # 1.6.1 [D, 18 octobre 2026] : le siège seul règle les droits du DO (compte au rôle DF). Ni
     # l'administrateur pays (même quand l'administrateur du siège entre dans un pays) ni la
     # direction du siège.

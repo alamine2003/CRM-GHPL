@@ -3310,6 +3310,47 @@
       "courbeAria": "{{libelle}}: at the end of {{mois}}, {{realise}} actual for {{attendu}} expected",
       "courbeTableau": "Cumulative target and actual month by month, {{libelle}}",
       "exporter": "Targets table"
+    },
+    "tousPays": {
+      "sousTitre": "All countries, in West African CFA francs",
+      "note": "Amounts converted to {{devise}} with the {{annee}} rates set by headquarters; last year is converted at the same rate, so the change measures sales only.",
+      "sansTaux_one": "No {{annee}} rate for {{devises}}: this country stays in its own currency and is left out of every total.",
+      "sansTaux_other": "No {{annee}} rate for {{devises}}: these countries stay in their own currency and are left out of every total.",
+      "vide": "No country has sales for this period.",
+      "objectifAtteint": "Yearly target achieved",
+      "duAttendu": "{{taux}} of expected",
+      "sansObjectif": "No network target",
+      "paysAvecVentes": "Countries with sales",
+      "parPays": "By country",
+      "mensuel": "Monthly sales {{annee}}, all countries",
+      "classement": "Ranking, all countries",
+      "classerPar": "Rank by",
+      "toutAfficher": "Show all ({{count}})",
+      "premiers": "Show only the top {{count}}",
+      "tauxManquant": "{{devise}}, no rate",
+      "tauxApplique": "1 {{devise}} = {{taux}} {{reference}}",
+      "colonnes": {
+        "pays": "Country",
+        "ca": "Sales incl. tax ({{devise}})",
+        "objectif": "Target",
+        "nbPays": "Countries"
+      },
+      "exportAide": "With the year and month shown, in West African CFA francs. Every export is recorded in the audit log.",
+      "export": {
+        "pays": "Sales by country",
+        "mensuel": "Monthly sales",
+        "classement": "Ranking"
+      },
+      "taux": {
+        "bouton": "Exchange rates",
+        "titre": "Exchange rates {{annee}}",
+        "fixer": "Set the rates",
+        "libelle": "1 {{devise}} in {{reference}}",
+        "aFixer": "To be set",
+        "aide": "What one unit of each currency is worth in {{reference}} for {{annee}}. The West African CFA franc is always 1. Every change is recorded in the audit log.",
+        "aideLecture": "What one unit of each currency is worth in {{reference}} for {{annee}}. The headquarters administrator sets them.",
+        "aucune": "Every country pays in {{reference}}: no rate to set."
+      }
     }
   },
   "droitsDo": {

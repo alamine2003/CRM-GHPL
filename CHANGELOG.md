@@ -2,6 +2,23 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.9.0] — Les ventes de tous les pays, en francs CFA de l'Ouest
+
+### Ajouté (prd.md §14.90, VNT-012 à VNT-014)
+
+- **Vue de tous les pays** pour le siège : sans pays choisi, la page « Ventes » additionne les pays convertis en francs CFA de l'Ouest (XOF) — un tableau par pays (montant converti et dans la monnaie du pays, part, évolution, objectif atteint), les ventes mensuelles de tous les pays et un classement par produit, réseau ou classe thérapeutique. Aucun nom de délégué ni de client [D, 26 octobre 2026].
+- **Taux de change** fixés par l'administrateur du siège, un par monnaie et par année ; la direction du siège les lit. À taux constant : l'an passé se convertit au taux de l'année choisie. Un pays sans taux reste dans sa monnaie, hors des totaux, et un bandeau le signale. Chaque changement de taux est audité (`ventes.taux_change`).
+- **Export** du tableau par pays, des ventes mensuelles ou du classement, en Excel ou en CSV, audité (`export.ventes_tous_pays`).
+- Actions `ventes.tous_pays` (siège) et `ventes.taux_gerer` (administrateur du siège) ; table `ventes_tauxchange`.
+
+### Corrigé
+
+- Les tests de l'écran Semaine du téléphone décrivent la semaine du 26 octobre 2026 ; ils échouaient dès que cette semaine devenait la semaine en cours (l'écran ouvre alors le jour même). Leur horloge est maintenant figée ; l'application ne change pas.
+
+### Design
+
+- Vue « Tous les pays » de la page « Ventes » et fenêtre des taux : `docs/design.md`.
+
 ## [1.8.0] — Objectifs de ventes : délégués, courbe, export, alerte
 
 ### Ajouté (prd.md §14.89, VNT-009 à VNT-011, NOT-007)

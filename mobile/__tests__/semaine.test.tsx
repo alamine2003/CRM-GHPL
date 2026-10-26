@@ -185,6 +185,35 @@ async function rendre(
   );
 }
 
+// Les données décrivent la semaine du 26 octobre 2026, vue avant qu'elle commence : sans date
+// figée, l'écran ouvrirait le jour même dès que cette semaine devient la semaine en cours. Seule
+// l'horloge est figée ; les minuteries restent réelles.
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: new Date('2026-10-23T08:00:00.000Z'),
+    doNotFake: [
+      'hrtime',
+      'nextTick',
+      'performance',
+      'queueMicrotask',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'requestIdleCallback',
+      'cancelIdleCallback',
+      'setImmediate',
+      'clearImmediate',
+      'setInterval',
+      'clearInterval',
+      'setTimeout',
+      'clearTimeout',
+    ],
+  });
+});
+
+afterAll(() => {
+  jest.useRealTimers();
+});
+
 beforeEach(async () => {
   mockMemoire.clear();
   await i18n.changeLanguage('fr');

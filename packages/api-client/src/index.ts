@@ -54,6 +54,10 @@ import type {
   ObjectifVente,
   SaisieObjectifVente,
   ModificationObjectifVente,
+  VentesTousPays,
+  ClassementTousPays,
+  TauxDeLAnnee,
+  ReglageTaux,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -234,6 +238,13 @@ export type {
   ModificationObjectifVente,
   ReseauObjectifVente,
   EtatObjectifVente,
+  VentesTousPays,
+  PaysVentes,
+  ClassementVentes,
+  ClassementTousPays,
+  TauxDeLAnnee,
+  DeviseTaux,
+  ReglageTaux,
   Objectifs,
   Objectif,
   SaisieObjectif,
@@ -1320,6 +1331,24 @@ export function creerClient(options: OptionsClient) {
         }),
       archiverObjectif: (id: string) =>
         requete<void>(`/api/v1/ventes/objectifs/${id}/archiver/`, { methode: 'POST' }),
+      /** 1.9.0 : tous les pays (siège, sans pays choisi), convertis en XOF à taux constant. */
+      tousPays: (filtres: { annee?: number; mois_fin?: number; par?: ClassementTousPays } = {}) =>
+        requete<VentesTousPays>(`/api/v1/ventes/tous-pays/${requeteVentes(filtres)}`),
+      exporterTousPays: (filtres: {
+        annee?: number;
+        mois_fin?: number;
+        par?: ClassementTousPays;
+        contenu: 'pays' | 'mensuel' | 'classement';
+        fichier: string;
+      }) =>
+        requete<Blob>(`/api/v1/ventes/tous-pays/export/${requeteVentes(filtres)}`, {
+          binaire: true,
+        }),
+      /** 1.9.0 : les taux de change de l'année vers le XOF, fixés par l'administrateur du siège. */
+      taux: (annee?: number) =>
+        requete<TauxDeLAnnee>(`/api/v1/ventes/taux/${requeteVentes({ annee })}`),
+      reglerTaux: (reglage: ReglageTaux) =>
+        requete<TauxDeLAnnee>('/api/v1/ventes/taux/', { methode: 'PUT', corps: reglage }),
       /** 1.8.0 : le tableau des objectifs en CSV ou en classeur Excel ; audité. */
       exporterObjectifs: (filtres: { annee?: number; mois_fin?: number; fichier: string }) =>
         requete<Blob>(`/api/v1/ventes/objectifs/export/${requeteVentes(filtres)}`, {

@@ -112,3 +112,43 @@ def objectifs(rendus: list[dict], annee: int, mois_fin: int) -> tuple[list[str],
         for o in rendus
     ]  # fmt: skip
     return entetes, lignes
+
+
+def tous_pays_par_pays(donnees: dict) -> tuple[list[str], list[list]]:
+    """1.9.0 : le tableau par pays de la vue de tous les pays, dans la monnaie du pays et en
+    XOF (à taux constant)."""
+    annee, ref = donnees["annee"], donnees["devise"]
+    entetes = [
+        _("Pays"), _("Monnaie"), _("Taux en %(ref)s") % {"ref": ref},
+        _("CA TTC (monnaie du pays)"),
+        _("CA TTC %(annee)s (monnaie du pays)") % {"annee": annee - 1},
+        _("Évolution (%)"), _("CA TTC (%(ref)s)") % {"ref": ref},
+        _("CA TTC %(annee)s (%(ref)s)") % {"annee": annee - 1, "ref": ref}, _("Part (%)"),
+        _("Objectif (%(ref)s)") % {"ref": ref}, _("Objectif atteint (%)"),
+        _("Réalisé / attendu (%)"),
+    ]  # fmt: skip
+    lignes = [
+        [p["nom"], p["devise"], "" if p["taux"] is None else float(p["taux"]),
+         _nombre(p["montant_ttc"]), _nombre(p["precedent_montant_ttc"]),
+         _pourcent(p["evolution"]), _nombre(p["montant_converti"]),
+         _nombre(p["precedent_converti"]), _pourcent(p["part"]),
+         _nombre(p["objectif_cible_converti"]), _pourcent(p["taux_cible"]),
+         _pourcent(p["taux_attendu"])]
+        for p in donnees["pays"]
+    ]  # fmt: skip
+    return entetes, lignes
+
+
+def tous_pays_classement(donnees: dict, libelle_groupe: str) -> tuple[list[str], list[list]]:
+    annee, ref = donnees["annee"], donnees["devise"]
+    entetes = [
+        libelle_groupe, _("CA TTC (%(ref)s)") % {"ref": ref}, _("Part (%)"), _("Quantités"),
+        _("CA TTC %(annee)s (%(ref)s)") % {"annee": annee - 1, "ref": ref}, _("Évolution (%)"),
+        _("Pays"),
+    ]  # fmt: skip
+    lignes = [
+        [g["libelle"], _nombre(g["montant_ttc"]), _pourcent(g["part"]), g["quantite"],
+         _nombre(g["precedent_montant_ttc"]), _pourcent(g["evolution"]), g["pays"]]
+        for g in donnees["classement"]
+    ]  # fmt: skip
+    return entetes, lignes

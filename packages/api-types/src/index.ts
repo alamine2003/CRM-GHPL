@@ -196,6 +196,14 @@ export type SaisieObjectifVente = Schemas['SaisieObjectifVente'];
 export type ModificationObjectifVente = Schemas['PatchedModificationObjectifVente'];
 export type ReseauObjectifVente = Schemas['ReseauObjectif'];
 export type EtatObjectifVente = Schemas['EtatObjectifVenteEnum'];
+/** Vue de tous les pays du siège, convertie en XOF (1.9.0). */
+export type VentesTousPays = Schemas['VentesTousPays'];
+export type PaysVentes = Schemas['PaysVentes'];
+export type ClassementVentes = Schemas['ClassementVentes'];
+export type ClassementTousPays = Schemas['VentesTousPaysParEnum'];
+export type TauxDeLAnnee = Schemas['TauxDeLAnnee'];
+export type DeviseTaux = Schemas['DeviseTaux'];
+export type ReglageTaux = Schemas['ReglageTaux'];
 export type Journee = Schemas['Journee'];
 export type VisiteJournee = Schemas['VisiteJournee'];
 export type RapportLu = Schemas['RapportLu'];

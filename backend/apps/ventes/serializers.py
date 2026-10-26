@@ -262,3 +262,101 @@ class ObjectifsVentesSerializer(serializers.Serializer):
     reseaux_gerables = ReseauObjectifSerializer(
         many=True, help_text="Ce que l'administrateur pays peut viser ; vide pour les autres."
     )
+
+
+# --- 1.9.0 : la vue de tous les pays du siège (prd.md §14.90) --------------------------------
+
+MONTANT = {"max_digits": 20, "decimal_places": 2}
+
+
+class ChoixTousPaysSerializer(serializers.Serializer):
+    annee = serializers.IntegerField(required=False, min_value=2000, max_value=2100)
+    mois_fin = serializers.IntegerField(required=False, min_value=1, max_value=12)
+    par = serializers.ChoiceField(choices=["produit", "reseau", "classe"], default="produit")
+
+
+class ChoixExportTousPaysSerializer(ChoixTousPaysSerializer):
+    contenu = serializers.ChoiceField(choices=["pays", "mensuel", "classement"], default="pays")
+    fichier = serializers.ChoiceField(choices=["csv", "xlsx"], default="xlsx")
+
+
+class PaysVentesSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    nom = serializers.CharField()
+    devise = serializers.CharField(help_text="La monnaie du pays (ISO 4217).")
+    taux = serializers.DecimalField(max_digits=18, decimal_places=6, allow_null=True,
+                                    help_text="1 unité de la monnaie du pays, en XOF ; vide "
+                                              "quand le siège ne l'a pas fixé.")  # fmt: skip
+    montant_ttc = serializers.DecimalField(**MONTANT, help_text="Dans la monnaie du pays.")
+    precedent_montant_ttc = serializers.DecimalField(**MONTANT)
+    evolution = serializers.FloatField(allow_null=True)
+    montant_converti = serializers.DecimalField(**MONTANT, allow_null=True)
+    precedent_converti = serializers.DecimalField(**MONTANT, allow_null=True)
+    part = serializers.FloatField(allow_null=True)
+    objectif_cible = serializers.DecimalField(**MONTANT, allow_null=True)
+    objectif_cible_converti = serializers.DecimalField(**MONTANT, allow_null=True)
+    taux_cible = serializers.FloatField(allow_null=True)
+    taux_attendu = serializers.FloatField(allow_null=True)
+
+
+class TotalTousPaysSerializer(serializers.Serializer):
+    montant_ttc = serializers.DecimalField(**MONTANT)
+    precedent_montant_ttc = serializers.DecimalField(**MONTANT)
+    evolution = serializers.FloatField(allow_null=True)
+    objectif_cible = serializers.DecimalField(**MONTANT, allow_null=True)
+    taux_cible = serializers.FloatField(allow_null=True)
+    taux_attendu = serializers.FloatField(allow_null=True)
+
+
+class ClassementVentesSerializer(serializers.Serializer):
+    libelle = serializers.CharField()
+    montant_ttc = serializers.DecimalField(**MONTANT)
+    quantite = serializers.IntegerField()
+    part = serializers.FloatField(allow_null=True)
+    precedent_montant_ttc = serializers.DecimalField(**MONTANT)
+    evolution = serializers.FloatField(allow_null=True)
+    pays = serializers.IntegerField(help_text="Le nombre de pays qui l'ont vendu.")
+
+
+class MoisTousPaysSerializer(MoisVentesSerializer):
+    montant_ttc = serializers.DecimalField(**MONTANT)
+    precedent_montant_ttc = serializers.DecimalField(**MONTANT)
+
+
+class VentesTousPaysSerializer(serializers.Serializer):
+    devise = serializers.CharField(help_text="La monnaie de référence : XOF.")
+    annee = serializers.IntegerField()
+    mois_fin = serializers.IntegerField()
+    par = serializers.ChoiceField(choices=["produit", "reseau", "classe"])
+    total = TotalTousPaysSerializer()
+    devises_sans_taux = serializers.ListField(child=serializers.CharField())
+    pays = PaysVentesSerializer(many=True)
+    mensuel = MoisTousPaysSerializer(many=True)
+    classement = ClassementVentesSerializer(many=True)
+
+
+class DeviseTauxSerializer(serializers.Serializer):
+    devise = serializers.CharField()
+    pays = serializers.ListField(child=serializers.CharField())
+    taux = serializers.DecimalField(max_digits=18, decimal_places=6, allow_null=True)
+    modifie_le = serializers.DateTimeField(allow_null=True)
+
+
+class TauxDeLAnneeSerializer(serializers.Serializer):
+    annee = serializers.IntegerField()
+    devise_reference = serializers.CharField()
+    devises = DeviseTauxSerializer(many=True)
+
+
+class ChoixAnneeSerializer(serializers.Serializer):
+    annee = serializers.IntegerField(required=False, min_value=2000, max_value=2100)
+
+
+class SaisieTauxSerializer(serializers.Serializer):
+    devise = serializers.CharField(max_length=3)
+    taux = serializers.CharField()
+
+
+class ReglageTauxSerializer(serializers.Serializer):
+    annee = serializers.IntegerField(min_value=2000, max_value=2100)
+    taux = SaisieTauxSerializer(many=True, allow_empty=False)

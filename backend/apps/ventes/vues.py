@@ -554,3 +554,123 @@ class ExportObjectifsVentesVue(VueObjectifsVentes):
         reponse = HttpResponse(contenu, content_type=type_mime)
         reponse["Content-Disposition"] = f'attachment; filename="{nom}"'
         return reponse
+
+
+# --- 1.9.0 : la vue de tous les pays du siège (prd.md §14.90) --------------------------------
+
+
+class VueTousPays(VuePerimetre):
+    def selection(self, perimetre):
+        return Vente.objects.none()
+
+
+class VentesTousPaysVue(VueTousPays):
+    """Les ventes de tous les pays, converties en XOF à taux constant : un tableau par pays, les
+    douze mois et un classement par produit, réseau ou classe. Réservée au siège, sans pays
+    choisi ; aucun nom n'y figure."""
+
+    actions = {"GET": Action.VENTES_TOUS_PAYS}
+    serializer_class = s.VentesTousPaysSerializer
+
+    @extend_schema(
+        parameters=[s.ChoixTousPaysSerializer], responses=s.VentesTousPaysSerializer,
+        operation_id="ventes_tous_pays",
+    )  # fmt: skip
+    def get(self, request):
+        from . import consolidation
+
+        consolidation.exiger_vue_consolidee(self.perimetre)
+        choix = s.ChoixTousPaysSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        annee, mois_fin = consolidation.periode(choix.validated_data)
+        donnees = consolidation.tous_les_pays(
+            self.perimetre, annee=annee, mois_fin=mois_fin, par=choix.validated_data["par"]
+        )
+        return Response(s.VentesTousPaysSerializer(donnees).data)
+
+
+class ExportTousPaysVue(VueTousPays):
+    """Le tableau par pays, les ventes mensuelles ou le classement de la vue de tous les pays,
+    en CSV ou en classeur Excel ; audité comme les autres exports."""
+
+    actions = {"GET": Action.VENTES_TOUS_PAYS}
+
+    @extend_schema(
+        parameters=[s.ChoixExportTousPaysSerializer],
+        responses={(200, "text/csv"): OpenApiTypes.BINARY,
+                   (200, exports.FORMATS["xlsx"][0]): OpenApiTypes.BINARY},
+        operation_id="ventes_tous_pays_export",
+    )  # fmt: skip
+    def get(self, request):
+        from django.http import HttpResponse
+
+        from apps.audit.services import enregistrer
+
+        from . import consolidation
+
+        consolidation.exiger_vue_consolidee(self.perimetre)
+        choix = s.ChoixExportTousPaysSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        v = choix.validated_data
+        annee, mois_fin = consolidation.periode(v)
+        donnees = consolidation.tous_les_pays(self.perimetre, annee=annee, mois_fin=mois_fin,
+                                              par=v["par"])  # fmt: skip
+        if v["contenu"] == "mensuel":
+            entetes, rangees = exports.mensuel(donnees)
+        elif v["contenu"] == "classement":
+            entetes, rangees = exports.tous_pays_classement(
+                donnees, synthese.libelle_regroupement(v["par"])
+            )
+        else:
+            entetes, rangees = exports.tous_pays_par_pays(donnees)
+        titres = {"pays": _("Ventes par pays"), "mensuel": _("Ventes mensuelles"),
+                  "classement": _("Classement")}  # fmt: skip
+        type_mime, extension = exports.FORMATS[v["fichier"]]
+        contenu = (exports.en_xlsx(entetes, rangees, str(titres[v["contenu"]]))
+                   if v["fichier"] == "xlsx" else exports.en_csv(entetes, rangees))  # fmt: skip
+        enregistrer("export.ventes_tous_pays", pays=None, details={
+            "contenu": v["contenu"], "format": v["fichier"], "annee": annee,
+            "mois_fin": mois_fin, "par": v["par"] if v["contenu"] == "classement" else "",
+            "lignes": len(rangees), "devises_sans_taux": donnees["devises_sans_taux"],
+        })  # fmt: skip
+        nom = f"ventes-tous-pays-{v['contenu']}-{annee}-{mois_fin:02d}.{extension}"
+        reponse = HttpResponse(contenu, content_type=type_mime)
+        reponse["Content-Disposition"] = f'attachment; filename="{nom}"'
+        return reponse
+
+
+class TauxChangeVue(VueTousPays):
+    """Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+    siège les fixe ou les corrige (chaque changement est audité)."""
+
+    actions = {"GET": Action.VENTES_TOUS_PAYS, "PUT": Action.VENTES_TAUX_GERER}
+    serializer_class = s.TauxDeLAnneeSerializer
+
+    def _rendu(self, annee: int) -> dict:
+        from . import consolidation
+
+        return {"annee": annee, "devise_reference": consolidation.DEVISE_REFERENCE,
+                "devises": consolidation.devises(self.perimetre, annee)}  # fmt: skip
+
+    @extend_schema(
+        parameters=[s.ChoixAnneeSerializer], responses=s.TauxDeLAnneeSerializer,
+        operation_id="ventes_taux",
+    )  # fmt: skip
+    def get(self, request):
+        from . import consolidation
+
+        choix = s.ChoixAnneeSerializer(data=request.query_params)
+        choix.is_valid(raise_exception=True)
+        annee, _mois = consolidation.periode(choix.validated_data)
+        return Response(s.TauxDeLAnneeSerializer(self._rendu(annee)).data)
+
+    @extend_schema(
+        request=s.ReglageTauxSerializer, responses=s.TauxDeLAnneeSerializer,
+        operation_id="ventes_taux_regler",
+    )  # fmt: skip
+    def put(self, request):
+        from . import consolidation
+
+        v = _lire(s.ReglageTauxSerializer, request)
+        consolidation.regler_taux(request.user, v["annee"], [dict(t) for t in v["taux"]])
+        return Response(s.TauxDeLAnneeSerializer(self._rendu(v["annee"])).data)

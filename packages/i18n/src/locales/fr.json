@@ -3310,6 +3310,47 @@
       "courbeAria": "{{libelle}} : à fin {{mois}}, {{realise}} réalisés pour {{attendu}} attendus",
       "courbeTableau": "Cible et réalisé cumulés mois par mois, {{libelle}}",
       "exporter": "Tableau des objectifs"
+    },
+    "tousPays": {
+      "sousTitre": "Tous les pays, en francs CFA de l'Ouest",
+      "note": "Montants convertis en {{devise}} avec les taux {{annee}} fixés par le siège ; l'an passé est converti au même taux, pour que l'évolution ne mesure que les ventes.",
+      "sansTaux_one": "Pas de taux {{annee}} pour {{devises}} : ce pays reste dans sa monnaie et ne compte dans aucun total.",
+      "sansTaux_other": "Pas de taux {{annee}} pour {{devises}} : ces pays restent dans leur monnaie et ne comptent dans aucun total.",
+      "vide": "Aucun pays n'a de ventes sur cette période.",
+      "objectifAtteint": "Objectif de l'année atteint",
+      "duAttendu": "{{taux}} de l'attendu",
+      "sansObjectif": "Aucun objectif de réseau",
+      "paysAvecVentes": "Pays avec des ventes",
+      "parPays": "Par pays",
+      "mensuel": "Ventes mensuelles {{annee}}, tous pays",
+      "classement": "Classement, tous pays",
+      "classerPar": "Classer par",
+      "toutAfficher": "Tout afficher ({{count}})",
+      "premiers": "N'afficher que les {{count}} premiers",
+      "tauxManquant": "{{devise}}, sans taux",
+      "tauxApplique": "1 {{devise}} = {{taux}} {{reference}}",
+      "colonnes": {
+        "pays": "Pays",
+        "ca": "CA TTC ({{devise}})",
+        "objectif": "Objectif",
+        "nbPays": "Pays"
+      },
+      "exportAide": "Avec l'année et le mois affichés, en francs CFA de l'Ouest. Chaque export est inscrit au journal d'audit.",
+      "export": {
+        "pays": "Ventes par pays",
+        "mensuel": "Ventes mensuelles",
+        "classement": "Classement"
+      },
+      "taux": {
+        "bouton": "Taux de change",
+        "titre": "Taux de change {{annee}}",
+        "fixer": "Fixer les taux",
+        "libelle": "1 {{devise}} en {{reference}}",
+        "aFixer": "À fixer",
+        "aide": "Combien vaut une unité de chaque monnaie en {{reference}}, pour l'année {{annee}}. Le franc CFA de l'Ouest vaut toujours 1. Chaque changement est inscrit au journal d'audit.",
+        "aideLecture": "Combien vaut une unité de chaque monnaie en {{reference}}, pour l'année {{annee}}. L'administrateur du siège les fixe.",
+        "aucune": "Tous les pays paient en {{reference}} : aucun taux à fixer."
+      }
     }
   },
   "droitsDo": {

@@ -3214,6 +3214,71 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/ventes/taux/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+     *     siège les fixe ou les corrige (chaque changement est audité).
+     */
+    get: operations['ventes_taux'];
+    /**
+     * @description Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+     *     siège les fixe ou les corrige (chaque changement est audité).
+     */
+    put: operations['ventes_taux_regler'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/tous-pays/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Les ventes de tous les pays, converties en XOF à taux constant : un tableau par pays, les
+     *     douze mois et un classement par produit, réseau ou classe. Réservée au siège, sans pays
+     *     choisi ; aucun nom n'y figure.
+     */
+    get: operations['ventes_tous_pays'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/ventes/tous-pays/export/': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * @description Le tableau par pays, les ventes mensuelles ou le classement de la vue de tous les pays,
+     *     en CSV ou en classeur Excel ; audité comme les autres exports.
+     */
+    get: operations['ventes_tous_pays_export'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/visites/{id}/': {
     parameters: {
       query?: never;
@@ -3733,6 +3798,20 @@ export interface components {
      * @enum {string}
      */
     ClassementEnum: 'conforme' | 'a_verifier';
+    ClassementVentes: {
+      libelle: string;
+      /** Format: decimal */
+      montant_ttc: string;
+      quantite: number;
+      /** Format: double */
+      part: number | null;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      /** Format: double */
+      evolution: number | null;
+      /** @description Le nombre de pays qui l'ont vendu. */
+      pays: number;
+    };
     Client: {
       type: components['schemas']['TypeClientVenteEnum'];
       /** Format: uuid */
@@ -4227,6 +4306,14 @@ export interface components {
       historique: components['schemas']['VisitePassee'][];
       action_precedente: components['schemas']['ActionPrecedente'] | null;
       preparation: components['schemas']['Preparation'] | null;
+    };
+    DeviseTaux: {
+      devise: string;
+      pays: string[];
+      /** Format: decimal */
+      taux: string | null;
+      /** Format: date-time */
+      modifie_le: string | null;
     };
     Division: {
       /** Format: uuid */
@@ -4983,6 +5070,16 @@ export interface components {
       /** @description Rôle sensible (SEC-003) : la double authentification est obligatoire. */
       readonly double_auth_requise: boolean;
     };
+    MoisTousPays: {
+      /** @description AAAA-MM */
+      mois: string;
+      /** Format: decimal */
+      montant_ttc: string;
+      quantite: number;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      precedent_quantite: number;
+    };
     MoisVentes: {
       /** @description AAAA-MM */
       mois: string;
@@ -5375,6 +5472,40 @@ export interface components {
       code: string;
       nom: string;
       fuseau: string;
+    };
+    PaysVentes: {
+      code: string;
+      nom: string;
+      /** @description La monnaie du pays (ISO 4217). */
+      devise: string;
+      /**
+       * Format: decimal
+       * @description 1 unité de la monnaie du pays, en XOF ; vide quand le siège ne l'a pas fixé.
+       */
+      taux: string | null;
+      /**
+       * Format: decimal
+       * @description Dans la monnaie du pays.
+       */
+      montant_ttc: string;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      /** Format: double */
+      evolution: number | null;
+      /** Format: decimal */
+      montant_converti: string | null;
+      /** Format: decimal */
+      precedent_converti: string | null;
+      /** Format: double */
+      part: number | null;
+      /** Format: decimal */
+      objectif_cible: string | null;
+      /** Format: decimal */
+      objectif_cible_converti: string | null;
+      /** Format: double */
+      taux_cible: number | null;
+      /** Format: double */
+      taux_attendu: number | null;
     };
     Perimetre: {
       pays_actif: components['schemas']['PaysResume'] | null;
@@ -5991,6 +6122,10 @@ export interface components {
       id: string;
       nom: string | null;
     };
+    ReglageTaux: {
+      annee: number;
+      taux: components['schemas']['SaisieTaux'][];
+    };
     /**
      * @description * `actions_en_retard` - actions_en_retard
      *     * `passages_prescrit` - passages_prescrit
@@ -6349,6 +6484,10 @@ export interface components {
       champs?: unknown;
       version?: number;
     };
+    SaisieTaux: {
+      devise: string;
+      taux: string;
+    };
     SaisieVente: {
       /** @description AAAA-MM */
       mois: string;
@@ -6668,6 +6807,11 @@ export interface components {
       /** Format: double */
       part_planifiee: number | null;
     };
+    TauxDeLAnnee: {
+      annee: number;
+      devise_reference: string;
+      devises: components['schemas']['DeviseTaux'][];
+    };
     /** @description DC-53 : les retours sur un produit, agrégés, sans nom de prescripteur. */
     TendanceProduit: {
       /** Format: uuid */
@@ -6702,6 +6846,20 @@ export interface components {
       attendu: string;
       /** Format: decimal */
       realise: string;
+      /** Format: double */
+      taux_cible: number | null;
+      /** Format: double */
+      taux_attendu: number | null;
+    };
+    TotalTousPays: {
+      /** Format: decimal */
+      montant_ttc: string;
+      /** Format: decimal */
+      precedent_montant_ttc: string;
+      /** Format: double */
+      evolution: number | null;
+      /** Format: decimal */
+      objectif_cible: string | null;
       /** Format: double */
       taux_cible: number | null;
       /** Format: double */
@@ -6825,6 +6983,25 @@ export interface components {
       /** Format: double */
       longitude?: number;
     };
+    VentesTousPays: {
+      /** @description La monnaie de référence : XOF. */
+      devise: string;
+      annee: number;
+      mois_fin: number;
+      par: components['schemas']['VentesTousPaysParEnum'];
+      total: components['schemas']['TotalTousPays'];
+      devises_sans_taux: string[];
+      pays: components['schemas']['PaysVentes'][];
+      mensuel: components['schemas']['MoisTousPays'][];
+      classement: components['schemas']['ClassementVentes'][];
+    };
+    /**
+     * @description * `produit` - produit
+     *     * `reseau` - reseau
+     *     * `classe` - classe
+     * @enum {string}
+     */
+    VentesTousPaysParEnum: 'produit' | 'reseau' | 'classe';
     /** @description Une version figée et sa décision, avec le résumé de ce qui a changé (PLN-014). */
     Version: {
       numero: number;
@@ -12201,6 +12378,120 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['SyntheseVentes'];
+        };
+      };
+    };
+  };
+  ventes_taux: {
+    parameters: {
+      query?: {
+        annee?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TauxDeLAnnee'];
+        };
+      };
+    };
+  };
+  ventes_taux_regler: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReglageTaux'];
+        'application/x-www-form-urlencoded': components['schemas']['ReglageTaux'];
+        'multipart/form-data': components['schemas']['ReglageTaux'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TauxDeLAnnee'];
+        };
+      };
+    };
+  };
+  ventes_tous_pays: {
+    parameters: {
+      query?: {
+        annee?: number;
+        mois_fin?: number;
+        /**
+         * @description * `produit` - produit
+         *     * `reseau` - reseau
+         *     * `classe` - classe
+         */
+        par?: 'produit' | 'reseau' | 'classe';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['VentesTousPays'];
+        };
+      };
+    };
+  };
+  ventes_tous_pays_export: {
+    parameters: {
+      query?: {
+        annee?: number;
+        /**
+         * @description * `pays` - pays
+         *     * `mensuel` - mensuel
+         *     * `classement` - classement
+         */
+        contenu?: 'pays' | 'mensuel' | 'classement';
+        /**
+         * @description * `csv` - csv
+         *     * `xlsx` - xlsx
+         */
+        fichier?: 'csv' | 'xlsx';
+        mois_fin?: number;
+        /**
+         * @description * `produit` - produit
+         *     * `reseau` - reseau
+         *     * `classe` - classe
+         */
+        par?: 'produit' | 'reseau' | 'classe';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': string;
         };
       };
     };

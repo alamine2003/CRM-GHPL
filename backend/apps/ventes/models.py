@@ -9,7 +9,9 @@ la zone par le client) : un changement d'organisation ensuite ne réécrit pas l
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
+from apps.socle.identifiants import uuid7
 from apps.socle.modeles_base import ModeleDePays
 
 
@@ -157,3 +159,36 @@ class ObjectifVente(ModeleDePays):
             ),
             models.CheckConstraint(condition=Q(cible__gt=0), name="objectif_vente_cible_positive"),
         ]
+
+
+#: La monnaie de la vue de tous les pays (décision du 26 octobre 2026, prd.md §14.90).
+DEVISE_REFERENCE = "XOF"
+
+
+class TauxChange(models.Model):
+    """Le taux d'une monnaie vers le franc CFA de l'Ouest pour une année, fixé par le siège
+    (1.9.0, prd.md §14.90) : 1 unité de `devise` vaut `taux` XOF. Il sert à la vue de tous les
+    pays, à taux constant (l'an passé se convertit au taux de l'année choisie). Une table du
+    siège, sans pays : elle ne contient aucune donnée d'un pays."""
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    annee = models.PositiveSmallIntegerField()
+    devise = models.CharField(max_length=3)
+    taux = models.DecimalField(max_digits=18, decimal_places=6)
+    regle_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    modifie_le = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-annee", "devise"]
+        constraints = [
+            models.UniqueConstraint(fields=["annee", "devise"], name="taux_change_unique"),
+            models.CheckConstraint(condition=Q(taux__gt=0), name="taux_change_positif"),
+            models.CheckConstraint(
+                condition=Q(annee__gte=2000, annee__lte=2100), name="taux_change_annee"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.annee} 1 {self.devise} = {self.taux} {DEVISE_REFERENCE}"

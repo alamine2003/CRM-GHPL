@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: INNOV CRM
-  version: 1.8.0
+  version: 1.9.0
   description: API du CRM multi-pays des délégués médicaux.
 paths:
   /api/v1/activites/{id}/:
@@ -5971,6 +5971,178 @@ paths:
               schema:
                 $ref: '#/components/schemas/SyntheseVentes'
           description: ''
+  /api/v1/ventes/taux/:
+    get:
+      operationId: ventes_taux
+      description: |-
+        Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+        siège les fixe ou les corrige (chaque changement est audité).
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TauxDeLAnnee'
+          description: ''
+    put:
+      operationId: ventes_taux_regler
+      description: |-
+        Les taux de l'année vers le XOF, une ligne par monnaie des pays ; l'administrateur du
+        siège les fixe ou les corrige (chaque changement est audité).
+      tags:
+      - ventes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReglageTaux'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReglageTaux'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReglageTaux'
+        required: true
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TauxDeLAnnee'
+          description: ''
+  /api/v1/ventes/tous-pays/:
+    get:
+      operationId: ventes_tous_pays
+      description: |-
+        Les ventes de tous les pays, converties en XOF à taux constant : un tableau par pays, les
+        douze mois et un classement par produit, réseau ou classe. Réservée au siège, sans pays
+        choisi ; aucun nom n'y figure.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      - in: query
+        name: par
+        schema:
+          enum:
+          - produit
+          - reseau
+          - classe
+          type: string
+          default: produit
+          minLength: 1
+        description: |-
+          * `produit` - produit
+          * `reseau` - reseau
+          * `classe` - classe
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VentesTousPays'
+          description: ''
+  /api/v1/ventes/tous-pays/export/:
+    get:
+      operationId: ventes_tous_pays_export
+      description: |-
+        Le tableau par pays, les ventes mensuelles ou le classement de la vue de tous les pays,
+        en CSV ou en classeur Excel ; audité comme les autres exports.
+      parameters:
+      - in: query
+        name: annee
+        schema:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+      - in: query
+        name: contenu
+        schema:
+          enum:
+          - pays
+          - mensuel
+          - classement
+          type: string
+          default: pays
+          minLength: 1
+        description: |-
+          * `pays` - pays
+          * `mensuel` - mensuel
+          * `classement` - classement
+      - in: query
+        name: fichier
+        schema:
+          enum:
+          - csv
+          - xlsx
+          type: string
+          default: xlsx
+          minLength: 1
+        description: |-
+          * `csv` - csv
+          * `xlsx` - xlsx
+      - in: query
+        name: mois_fin
+        schema:
+          type: integer
+          maximum: 12
+          minimum: 1
+      - in: query
+        name: par
+        schema:
+          enum:
+          - produit
+          - reseau
+          - classe
+          type: string
+          default: produit
+          minLength: 1
+        description: |-
+          * `produit` - produit
+          * `reseau` - reseau
+          * `classe` - classe
+      tags:
+      - ventes
+      security:
+      - jetonAcces: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+          description: ''
   /api/v1/visites/{id}/:
     patch:
       operationId: visite_modifier
@@ -7068,6 +7240,40 @@ components:
       description: |-
         * `conforme` - Conforme
         * `a_verifier` - À vérifier
+    ClassementVentes:
+      type: object
+      properties:
+        libelle:
+          type: string
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        part:
+          type: number
+          format: double
+          nullable: true
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        evolution:
+          type: number
+          format: double
+          nullable: true
+        pays:
+          type: integer
+          description: Le nombre de pays qui l'ont vendu.
+      required:
+      - evolution
+      - libelle
+      - montant_ttc
+      - part
+      - pays
+      - precedent_montant_ttc
+      - quantite
     Client:
       type: object
       properties:
@@ -8352,6 +8558,29 @@ components:
       - preparation
       - prospect
       - visite
+    DeviseTaux:
+      type: object
+      properties:
+        devise:
+          type: string
+        pays:
+          type: array
+          items:
+            type: string
+        taux:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          nullable: true
+        modifie_le:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - devise
+      - modifie_le
+      - pays
+      - taux
     Division:
       type: object
       properties:
@@ -10084,6 +10313,30 @@ components:
       - nom
       - pays_principal
       - prenom
+    MoisTousPays:
+      type: object
+      properties:
+        mois:
+          type: string
+          description: AAAA-MM
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        quantite:
+          type: integer
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        precedent_quantite:
+          type: integer
+      required:
+      - mois
+      - montant_ttc
+      - precedent_montant_ttc
+      - precedent_quantite
+      - quantite
     MoisVentes:
       type: object
       properties:
@@ -11017,6 +11270,83 @@ components:
       - code
       - fuseau
       - nom
+    PaysVentes:
+      type: object
+      properties:
+        code:
+          type: string
+        nom:
+          type: string
+        devise:
+          type: string
+          description: La monnaie du pays (ISO 4217).
+        taux:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,6})?$
+          nullable: true
+          description: 1 unité de la monnaie du pays, en XOF ; vide quand le siège
+            ne l'a pas fixé.
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          description: Dans la monnaie du pays.
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        evolution:
+          type: number
+          format: double
+          nullable: true
+        montant_converti:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        precedent_converti:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        part:
+          type: number
+          format: double
+          nullable: true
+        objectif_cible:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        objectif_cible_converti:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        taux_cible:
+          type: number
+          format: double
+          nullable: true
+        taux_attendu:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - code
+      - devise
+      - evolution
+      - montant_converti
+      - montant_ttc
+      - nom
+      - objectif_cible
+      - objectif_cible_converti
+      - part
+      - precedent_converti
+      - precedent_montant_ttc
+      - taux
+      - taux_attendu
+      - taux_cible
     Perimetre:
       type: object
       properties:
@@ -12728,6 +13058,20 @@ components:
       required:
       - id
       - nom
+    ReglageTaux:
+      type: object
+      properties:
+        annee:
+          type: integer
+          maximum: 2100
+          minimum: 2000
+        taux:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaisieTaux'
+      required:
+      - annee
+      - taux
     RegleEnum:
       enum:
       - actions_en_retard
@@ -13532,6 +13876,17 @@ components:
         version:
           type: integer
           minimum: 0
+    SaisieTaux:
+      type: object
+      properties:
+        devise:
+          type: string
+          maxLength: 3
+        taux:
+          type: string
+      required:
+      - devise
+      - taux
     SaisieVente:
       type: object
       properties:
@@ -14261,6 +14616,21 @@ components:
       - part_planifiee
       - rapports_dans_delai
       - realisation
+    TauxDeLAnnee:
+      type: object
+      properties:
+        annee:
+          type: integer
+        devise_reference:
+          type: string
+        devises:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviseTaux'
+      required:
+      - annee
+      - devise_reference
+      - devises
     TendanceProduit:
       type: object
       description: 'DC-53 : les retours sur un produit, agrégés, sans nom de prescripteur.'
@@ -14354,6 +14724,41 @@ components:
       - attendu
       - cible
       - realise
+      - taux_attendu
+      - taux_cible
+    TotalTousPays:
+      type: object
+      properties:
+        montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        precedent_montant_ttc:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+        evolution:
+          type: number
+          format: double
+          nullable: true
+        objectif_cible:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,18}(?:\.\d{0,2})?$
+          nullable: true
+        taux_cible:
+          type: number
+          format: double
+          nullable: true
+        taux_attendu:
+          type: number
+          format: double
+          nullable: true
+      required:
+      - evolution
+      - montant_ttc
+      - objectif_cible
+      - precedent_montant_ttc
       - taux_attendu
       - taux_cible
     TotauxVentes:
@@ -14596,6 +15001,56 @@ components:
           format: double
           maximum: 180
           minimum: -180
+    VentesTousPays:
+      type: object
+      properties:
+        devise:
+          type: string
+          description: 'La monnaie de référence : XOF.'
+        annee:
+          type: integer
+        mois_fin:
+          type: integer
+        par:
+          $ref: '#/components/schemas/VentesTousPaysParEnum'
+        total:
+          $ref: '#/components/schemas/TotalTousPays'
+        devises_sans_taux:
+          type: array
+          items:
+            type: string
+        pays:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaysVentes'
+        mensuel:
+          type: array
+          items:
+            $ref: '#/components/schemas/MoisTousPays'
+        classement:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassementVentes'
+      required:
+      - annee
+      - classement
+      - devise
+      - devises_sans_taux
+      - mensuel
+      - mois_fin
+      - par
+      - pays
+      - total
+    VentesTousPaysParEnum:
+      enum:
+      - produit
+      - reseau
+      - classe
+      type: string
+      description: |-
+        * `produit` - produit
+        * `reseau` - reseau
+        * `classe` - classe
     Version:
       type: object
       description: Une version figée et sa décision, avec le résumé de ce qui a changé

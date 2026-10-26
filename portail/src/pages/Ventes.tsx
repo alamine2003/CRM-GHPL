@@ -39,10 +39,12 @@ import { useNavigate, useSearchParams } from 'react-router';
 import DialogueFormulaire from '../composants/Dialogue';
 import { Chiffre, ChiffresCles, EnTeteCarte, EnTetePage, EtatVide } from '../composants/Elements';
 import { ErreurChargement } from '../composants/Erreurs';
+import { Evolution, Part } from '../composants/ElementsVentes';
 import { evolution, montant, montantCompact, nomDuMois, nombre } from '../composants/formatsVentes';
 import ExportVentes from '../composants/ExportVentes';
 import GraphiqueVentes from '../composants/GraphiqueVentes';
 import ObjectifsVentesOnglet from '../composants/ObjectifsVentes';
+import VentesTousPaysPage from '../composants/VentesTousPays';
 import {
   ChoixClient,
   DialogueCorrectionVente,
@@ -50,6 +52,8 @@ import {
 } from '../composants/SaisieVente';
 import { useSession } from '../contexteSession';
 
+/** Cellules plus serrées sur téléphone : rien ne doit déborder du cadre. */
+const SERRE = { '& .MuiTableCell-root': { px: { xs: 1, sm: 2 } } };
 const REGROUPEMENTS: RegroupementVentes[] = [
   'delegue',
   'produit',
@@ -59,8 +63,6 @@ const REGROUPEMENTS: RegroupementVentes[] = [
   'client',
   'type_client',
 ];
-/** Cellules plus serrées sur téléphone : rien ne doit déborder du cadre. */
-const SERRE = { '& .MuiTableCell-root': { px: { xs: 1, sm: 2 } } };
 const TYPES: TypeClientVente[] = ['pharmacie', 'parapharmacie', 'grossiste'];
 /** Les filtres qui désignent un identifiant, dans l'ordre où la barre les affiche. */
 const FILTRES_ID = ['delegue', 'produit', 'classe', 'reseau', 'zone'] as const;
@@ -69,29 +71,6 @@ type Filtres = Pick<
   FiltresVentes,
   'delegue' | 'produit' | 'classe' | 'reseau' | 'zone' | 'client' | 'type_client'
 >;
-
-/** L'évolution face à l'an passé, en toutes lettres par son signe (jamais par la couleur seule). */
-function Evolution({ valeur }: { valeur: number | null }) {
-  const { i18n } = useTranslation();
-  return (
-    <Typography
-      component="span"
-      variant="body2"
-      sx={{
-        fontWeight: 600,
-        whiteSpace: 'nowrap',
-        color:
-          valeur === null || valeur === 0
-            ? 'text.secondary'
-            : valeur > 0
-              ? 'success.main'
-              : 'error.main',
-      }}
-    >
-      {evolution(valeur, i18n.language)}
-    </Typography>
-  );
-}
 
 /**
  * « Ventes » (1.6.0, prd.md §14.84) : le DO, le siège, le pays, le DM et le superviseur
@@ -134,6 +113,9 @@ export default function Ventes({ perimetre }: { perimetre: Perimetre }) {
   });
 
   const titre = t('navigation.ventes');
+  // 1.9.0 : le siège sans pays choisi lit tous les pays, convertis en XOF.
+  if (!perimetre.pays_actif && perimetre.actions.includes('ventes.tous_pays'))
+    return <VentesTousPaysPage perimetre={perimetre} />;
   if (!perimetre.pays_actif)
     return (
       <Stack spacing={2}>
@@ -558,19 +540,7 @@ function Synthese({
                         </TableCell>
                         <TableCell align="right">{m(g.montant_ttc)}</TableCell>
                         <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                            <LinearProgress
-                              variant="determinate"
-                              value={Math.min(100, g.part ?? 0)}
-                              aria-hidden
-                              sx={{ flex: 1, height: 6, borderRadius: 3 }}
-                            />
-                            <Typography variant="caption" sx={{ minWidth: 40, textAlign: 'right' }}>
-                              {g.part === null
-                                ? '—'
-                                : `${new Intl.NumberFormat(langue, { maximumFractionDigits: 1 }).format(g.part)} %`}
-                            </Typography>
-                          </Stack>
+                          <Part valeur={g.part} />
                         </TableCell>
                         <TableCell align="right" sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                           {nombre(g.quantite, langue)}

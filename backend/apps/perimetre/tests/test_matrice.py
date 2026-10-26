@@ -81,6 +81,9 @@ ATTENDU = {
     },
     # 1.8.0 [D, 25 octobre 2026] : le DM fixe aussi ceux des réseaux de son périmètre.
     Action.VENTES_OBJECTIFS_GERER: {"admin_pays", "dm"},
+    # 1.9.0 : la vue de tous les pays et ses taux de change, au siège (prd.md §14.90).
+    Action.VENTES_TOUS_PAYS: {"admin_siege", "direction_siege"},
+    Action.VENTES_TAUX_GERER: {"admin_siege"},
     # 1.6.1 : le siège seul règle les droits du DO (prd.md §14.85).
     Action.DROITS_DO_REGLER: {"admin_siege"},
     Action.REMPLACEMENTS_GERER: {"admin_pays", "superviseur"},
@@ -272,6 +275,9 @@ REQUETES = {
     Action.VENTES_EXPORTER: ("get", "/api/v1/ventes/export/", None, 200),
     Action.VENTES_OBJECTIFS_LIRE: ("get", "/api/v1/ventes/objectifs/", None, 200),
     Action.VENTES_OBJECTIFS_GERER: ("post", "/api/v1/ventes/objectifs/", {}, 400),
+    # La vue elle-même se lit sans pays choisi ; ses taux, dans tous les cas.
+    Action.VENTES_TOUS_PAYS: ("get", "/api/v1/ventes/taux/", None, 200),
+    Action.VENTES_TAUX_GERER: ("put", "/api/v1/ventes/taux/", {}, 400),
     Action.DROITS_DO_REGLER: ("get", "/api/v1/droits-do/", None, 200),
 }  # fmt: skip
 

@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: INNOV CRM\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-25 12:18+0000\n"
+"POT-Creation-Date: 2026-10-26 10:30+0000\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1336,6 +1336,40 @@ msgstr ""
 msgid "Bienvenue dans INNOV CRM."
 msgstr "Welcome to INNOV CRM."
 
+msgid ""
+"La vue de tous les pays se lit sans pays choisi : revenez à « Tous les pays "
+"»."
+msgstr ""
+"The all-countries view is read with no country selected: go back to “All "
+"countries”."
+
+msgid "Un taux est un nombre plus grand que zéro."
+msgstr "A rate is a number greater than zero."
+
+msgid "Ce taux est trop grand."
+msgstr "This rate is too large."
+
+msgid "Une monnaie s'écrit en trois lettres."
+msgstr "A currency is written with three letters."
+
+msgid ""
+"Le franc CFA de l'Ouest est la monnaie de référence : son taux vaut toujours"
+" 1."
+msgstr ""
+"The West African CFA franc is the reference currency: its rate is always 1."
+
+msgid "Classement inconnu."
+msgstr "Unknown ranking."
+
+msgid "Non renseigné"
+msgstr "Not specified"
+
+msgid "Sans réseau"
+msgstr "No network"
+
+msgid "Sans classe thérapeutique"
+msgstr "No therapeutic class"
+
 msgid "CA TTC"
 msgstr "Sales incl. tax"
 
@@ -1420,6 +1454,38 @@ msgstr "Representative: %(nom)s"
 
 msgid "Tout le réseau"
 msgstr "Whole network"
+
+msgid "Pays"
+msgstr "Country"
+
+msgid "Monnaie"
+msgstr "Currency"
+
+#, python-format
+msgid "Taux en %(ref)s"
+msgstr "Rate in %(ref)s"
+
+msgid "CA TTC (monnaie du pays)"
+msgstr "Sales incl. tax (country currency)"
+
+#, python-format
+msgid "CA TTC %(annee)s (monnaie du pays)"
+msgstr "Sales incl. tax %(annee)s (country currency)"
+
+#, python-format
+msgid "CA TTC (%(ref)s)"
+msgstr "Sales incl. tax (%(ref)s)"
+
+#, python-format
+msgid "CA TTC %(annee)s (%(ref)s)"
+msgstr "Sales incl. tax %(annee)s (%(ref)s)"
+
+#, python-format
+msgid "Objectif (%(ref)s)"
+msgstr "Target (%(ref)s)"
+
+msgid "Objectif atteint (%)"
+msgstr "Target achieved (%)"
 
 msgid "Aucune feuille au format du fichier de ventes."
 msgstr "No sheet in the sales file format."
@@ -1508,17 +1574,8 @@ msgstr ""
 "A line already exists for this month, representative, product and customer: "
 "edit it."
 
-msgid "Sans classe thérapeutique"
-msgstr "No therapeutic class"
-
-msgid "Sans réseau"
-msgstr "No network"
-
 msgid "Sans zone"
 msgstr "No zone"
-
-msgid "Non renseigné"
-msgstr "Not specified"
 
 msgid "Regroupement inconnu."
 msgstr "Unknown grouping."
@@ -1540,6 +1597,12 @@ msgstr "Unreadable month."
 
 msgid "Objectifs de ventes"
 msgstr "Sales targets"
+
+msgid "Ventes par pays"
+msgstr "Sales by country"
+
+msgid "Classement"
+msgstr "Ranking"
 
 msgid "Français"
 msgstr "French"

@@ -175,6 +175,8 @@ Tous les types de poste suivent **le même workflow** planning → visite → ra
 | Importer ou saisir les ventes (§14.84) | Un pays choisi | Non | Non | Oui | Non | Non | Non | Non |
 | Consulter les objectifs de ventes (§14.88, §14.89) | Un pays choisi | Un pays choisi | Pays | Pays | Oui (ses réseaux) | Oui (ses réseaux) | Ses délégués (1.8.0) | Non |
 | Fixer les objectifs de ventes (§14.88, §14.89) | Un pays choisi | Non | Non | Oui | Non | Ses réseaux (1.8.0) | Non | Non |
+| Consulter les ventes de tous les pays, en XOF (§14.90) | Oui, sans nom | Oui, sans nom | Non | Non | Non | Non | Non | Non |
+| Fixer les taux de change (§14.90) | Oui | Lecture | Non | Non | Non | Non | Non | Non |
 | Régler les droits du DO (§14.85) | Oui | Non | Non | Non | Non | Non | Non | Non |
 | Exporter les ventes (§14.86) | Oui (audité) | Oui (audité) | Oui (audité) | Non (§14.58) | Oui (audité) | Oui (audité) | Oui (audité) | Non |
 | Consulter le journal d'audit | Oui | Oui | Son pays | Son pays | Non | Non | Non | Non |
@@ -711,6 +713,14 @@ Mise en œuvre (0.3.9) :
 - **Visite proposée** : un interrupteur « Proposer une nouvelle visite ». Depuis 0.5.9 (DC-61), la visite proposée apparaît dans la préparation de la semaine suivante, à placer d'un appui.
 - **CA1** : à la visite suivante du **même prospect** par le **même délégué**, la prochaine action notée la dernière fois est rappelée dans un cadre « Action prévue à la visite du … » : sur le détail de la visite (gardé sur le téléphone, lisible sans réseau) et en tête du rapport. Seule l'action d'un rapport soumis est rappelée, jamais celle d'un collègue.
 
+### 14.90 Ventes de tous les pays pour le siège (décision du 26 octobre 2026 ; mise en œuvre 1.9.0)
+
+- **La monnaie** [D, 26 octobre 2026, responsable produit : « Convertir avec des taux du siège », « Franc CFA de l'Ouest (XOF) »] : les pays n'ont pas tous la même monnaie (franc CFA de l'Ouest et du Centre, ariary, franc guinéen, ouguiya, dalasi, franc de Djibouti, franc congolais). La vue de tous les pays convertit chaque pays en **francs CFA de l'Ouest (XOF)** avec un **taux par monnaie et par année** que fixe le siège. Le XOF vaut toujours 1.
+- **VNT-012 — Taux de change** : une fenêtre « Taux de change » liste les monnaies des pays (hors XOF) avec le taux de l'année : « 1 GNF en XOF ». *CA1* : l'**administrateur du siège** les fixe ou les corrige ; la **direction du siège** les lit. *CA2* : un taux est un nombre plus grand que zéro ; il se corrige, il ne s'efface pas. *CA3* : chaque changement est inscrit au journal d'audit (`ventes.taux_change`, avec l'ancien et le nouveau taux).
+- **VNT-013 — Vue de tous les pays** : la page « Ventes » du siège, **sans pays choisi** (« Tous les pays »), montre pour l'année et le mois choisis : le cumul de l'année face à l'an passé, la part de l'objectif de l'année atteinte (somme des objectifs de réseau de chaque pays, §14.88), le nombre de pays avec des ventes ; un **tableau par pays** (chiffre d'affaires converti et dans la monnaie du pays, taux appliqué, part, évolution, objectif atteint et réalisé face à l'attendu) ; les **ventes mensuelles** de tous les pays face à l'an passé ; un **classement** par produit, réseau ou classe thérapeutique, tous pays confondus (un même produit se reconnaît à son code, repris du modèle sénégalais, §14.81), avec le nombre de pays qui le vendent. *CA1* : **à taux constant** — l'an passé se convertit au taux de l'année choisie, pour que l'évolution ne mesure que les ventes. *CA2* : un pays **sans taux** pour l'année reste dans le tableau, dans sa monnaie, mais n'entre dans **aucun total** (ni la courbe ni le classement) ; un bandeau le dit et l'administrateur du siège peut fixer le taux d'un clic. *CA3* : **aucun nom** — ni délégué ni client, comme la consolidation du pilotage (DSH-004) ; le détail nominatif passe par le choix d'un pays. *CA4* : réservée au siège (`ventes.tous_pays`) ; avec un pays choisi, la page reste celle du pays.
+- **VNT-014 — Export de tous les pays** : le tableau par pays, les ventes mensuelles ou le classement, en **Excel** ou en **CSV**, convertis en XOF ; chaque export est audité (`export.ventes_tous_pays`, avec les monnaies restées sans taux).
+- **Hypothèses à confirmer** [H] : un seul taux par année (pas de taux mensuel) ; les montants du pays sont ceux importés ou saisis, dans sa monnaie.
+
 ### 14.89 Objectifs de ventes : DM, délégués, courbe, export et alerte (décision du 25 octobre 2026 ; mise en œuvre 1.8.0)
 
 - **Qui fixe** [D, 25 octobre 2026, responsable produit : « l'administrateur pays et le DM »] : l'administrateur pays (et le siège dans un pays choisi) fixe les objectifs de tous les réseaux du pays ; le **DM**, ceux des réseaux de son périmètre (ORG-008). Le DF (le DO) et le responsable pays lisent ; une ligne qu'on ne peut pas corriger n'offre ni « Corriger » ni « Archiver » (`modifiable`). Cette règle vaut pour les seuls objectifs de **ventes** : les objectifs de visites restent fixés par l'administrateur pays (1.3.0).
@@ -718,7 +728,7 @@ Mise en œuvre (0.3.9) :
 - **VNT-010 — Courbe cible / réalisé** [D, 25 octobre 2026] : sous le tableau, une courbe de l'**attendu cumulé** (pointillé, douze mois) et du **réalisé cumulé** (trait plein, jusqu'au mois choisi), pour le total des réseaux ou l'objectif choisi. Un tableau équivalent, lu par les lecteurs d'écran, porte les mêmes chiffres ; la légende est écrite.
 - **VNT-011 — Export des objectifs** [D, 25 octobre 2026] : le tableau des objectifs (réseau, portée, cible, attendu, réalisé, écart, pourcentages, état) en **Excel** ou en **CSV**, pour l'année et le mois choisis, dans le périmètre. Mêmes droits que les autres exports (`ventes.exporter`, §14.58, §14.86 : pas l'administrateur pays) ; chaque export est audité (`export.objectifs_ventes`).
 - **NOT-007 — Alerte « objectif en retard »** [D, 25 octobre 2026] : quand, à la fin d'un mois, le cumul de l'année d'un réseau est **sous l'attendu** de son objectif, une notification part au **DM** du réseau et à l'**administrateur pays** (à défaut, au siège, comme les escalades). *CA1* : elle ne part qu'une fois les ventes de ce mois arrivées dans le pays (import ou saisie), pour ne pas alerter sur un mois vide. *CA2* : une seule fois par objectif et par mois. *CA3* : elle ouvre l'onglet « Objectifs » de la page « Ventes ». Elle passe avec les autres échéances (tâche périodique, ou `executer_echeances`) ; l'instance de démonstration gratuite, sans tâche périodique, ne l'envoie pas d'elle-même. Les objectifs de produit et de délégué n'alertent pas [H].
-- **Ce qui reste à décider** : l'alerte sur les objectifs de délégués (au superviseur) ; la consolidation de tous les pays pour le siège.
+- **Ce qui reste à décider** : l'alerte sur les objectifs de délégués (au superviseur) ; (la consolidation de tous les pays pour le siège est livrée en 1.9.0, §14.90).
 
 ### 14.88 Objectifs de ventes par réseau (décision du 23 octobre 2026 ; mise en œuvre 1.7.0)
 
@@ -745,7 +755,7 @@ Mise en œuvre (0.3.9) :
   - **Lignes de vente** : toutes les lignes du cumul (janvier au mois choisi), une par mois, délégué, produit et client, avec classe thérapeutique, réseau, zone, type de client et origine.
   *CA1* : même année, même mois de coupe, mêmes filtres et même périmètre que l'écran ; l'export ne contient jamais une ligne hors périmètre. *CA2* : chaque export crée un événement d'audit `export.ventes` (contenu, format, année, mois, regroupement, filtres, nombre de lignes). *CA3* : une cellule qui commence par `=`, `+`, `-` ou `@` est préfixée d'une apostrophe, un tableur ne l'exécute pas comme une formule. *CA4* : au-delà de 50 000 lignes, l'export est refusé (« Trop de lignes pour un export ») : on resserre les filtres ou la période.
 - **Les montants** : en nombres (le tableur peut les sommer), arrondis au centime, dans la devise du pays ; les mois s'écrivent « 2026-03 ».
-- **Ce qui reste à décider** : un export programmé ou envoyé par courriel ; une consolidation de tous les pays pour le siège (comme la vue du siège, §14.84).
+- **Ce qui reste à décider** : un export programmé ou envoyé par courriel ; (la consolidation de tous les pays et son export sont livrés en 1.9.0, §14.90).
 
 ### 14.85 Les droits du DO, réglés par le siège seul (mise en œuvre 1.6.1)
 
@@ -780,7 +790,7 @@ Mise en œuvre (0.3.9) :
 - **VNT-004 — Ventes éclatées et filtres** : le même cumul réparti par délégué, produit, classe thérapeutique, réseau, zone, client ou type de client, avec la part de chaque groupe et son évolution. Les filtres (délégué, produit, classe, réseau, zone, client, type de client, année, mois) se combinent ; un clic sur un groupe le prend comme filtre.
 - **VNT-005 — Périmètre et audit** : chaque réponse est limitée au périmètre de celui qui demande (isolation testée comme le reste, SEC-008) ; une route d'un objet d'un autre pays répond 404. Toute consultation **nominative** du siège (par délégué) est auditée (`ventes.consultation_nominative`), comme au pilotage (DSH-004).
 - **Démonstration** : l'instance de démonstration reçoit vingt-sept mois de ventes **fictives** par délégué (jamais de donnée réelle).
-- **Ce qui reste à construire** : (objectifs de ventes livrés en 1.7.0, §14.88) ; la consolidation de tous les pays pour le siège ; le rapprochement des ventes et des visites (chiffre d'affaires moyen par visite). La source (fichier Excel ou saisie) pourra être remplacée plus tard par une liaison directe, sans changer les vues.
+- **Ce qui reste à construire** : (objectifs de ventes livrés en 1.7.0, §14.88 ; vue de tous les pays en 1.9.0, §14.90) ; le rapprochement des ventes et des visites (chiffre d'affaires moyen par visite). La source (fichier Excel ou saisie) pourra être remplacée plus tard par une liaison directe, sans changer les vues.
 
 ### 14.83 Le DO observe et analyse les ventes (décision du 18 octobre 2026 ; construit en 1.6.0 et 1.6.1, §14.84 et §14.85)
 
