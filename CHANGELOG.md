@@ -2,6 +2,27 @@
 
 Toutes les versions d'INNOV CRM sont consignées ici. Convention : `0.0.1` … `0.0.9`, `0.1.1` … `0.9.9`, puis `1.0.0` (ADR-018). Chaque section cite les exigences livrées par leur identifiant (`prd.md`).
 
+## [1.9.5] — Portail sur Cloudflare Pages ; l'import BirdNotes au volume réel n'est plus coupé
+
+### Décidé (prd.md §14.92)
+
+- [D, 3 novembre 2026] Revue d'ensemble des 47 fonctions : 21 gardées, 22 à simplifier, 4 à retirer. La version simplifiée (2.0) se construit par étapes ; cette version en est la première (hébergement).
+- [D, 3 novembre 2026] Le portail est servi par Cloudflare Pages ; l'API, les tâches de fond et la base restent chez Render. Pas encore de nom de domaine.
+
+### Modifié
+
+- `render.yaml` ne crée plus le portail. Ses en-têtes de sécurité et sa réécriture vers `index.html` passent dans `portail/public/_headers` et `portail/public/_redirects`, lus par Cloudflare Pages ; la démonstration gratuite garde les mêmes valeurs (test).
+- `docs/exploitation.md` §2 : réglages du projet Cloudflare Pages, case par case ; §2 bis : adresses `pages.dev` et `onrender.com`. `docs/mise-a-jour.md` : publication et retour arrière du portail dans Cloudflare.
+
+### Corrigé (prd.md §14.7, PRP-013)
+
+- L'import BirdNotes depuis le portail s'arrêtait au bout de 30 secondes, le délai par défaut du serveur web : un export au volume réel (9 715 prospects, 2 427 établissements) prend 80 secondes sur un ordinateur récent, bien plus sur l'offre gratuite. Le serveur accorde maintenant 30 minutes par requête à la démonstration (`backend/demarrer_demo.sh`) et 10 minutes à la production (`backend/Dockerfile`), réglables par `GUNICORN_TIMEOUT`. `docs/demo-gratuite.md` : garder la page ouverte pendant un gros import.
+
+### Vérifié
+
+- Export fictif au volume réel envoyé à l'API comme le portail (28 octobre) : avec l'ancien réglage, « WORKER TIMEOUT » et erreur 500 au bout de 31 secondes ; avec le nouveau, simulation menée à terme en 73 secondes. En ligne de commande : 174 Mo de mémoire au plus (l'offre gratuite en donne 512).
+- Construction du portail : `_headers` et `_redirects` sont copiés dans `portail/dist`.
+
 ## [1.9.4] — Guide de la démonstration gratuite à jour
 
 ### Corrigé

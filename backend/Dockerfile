@@ -15,5 +15,6 @@ RUN useradd --create-home innov
 RUN mkdir -p /app/backend/fichiers && chown innov /app/backend/fichiers
 USER innov
 EXPOSE 8000
-# Render donne le port dans PORT (0.9.5) ; 8000 en local.
-CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-3}"]
+# Render donne le port dans PORT (0.9.5) ; 8000 en local. 1.9.5 : 10 minutes par requête au plus,
+# pour l'import BirdNotes, traité pendant la requête (30 s par défaut chez gunicorn).
+CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-3} --timeout ${GUNICORN_TIMEOUT:-600}"]
