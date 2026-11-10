@@ -44,23 +44,38 @@ def test_render_offres_payantes_a_francfort_sans_secret_ecrit():
     assert noms["innov-file"]["maxmemoryPolicy"] == "noeviction"
 
 
-def test_portail_statique_sur_render():
-    """1.0.1 : le portail est servi par Render, avec les en-têtes de sécurité de la revue 0.9.3."""
-    s = {x["name"]: x for x in plan()["services"]}
-    p = s["innov-portail"]
-    assert p["type"] == "web" and p["runtime"] == "static"
-    assert p["staticPublishPath"] == "portail/dist" and "build -w portail" in p["buildCommand"]
-    assert {"type": "rewrite", "source": "/*", "destination": "/index.html"} in p["routes"]
-    e = {h["name"]: h["value"] for h in p["headers"] if h["path"] == "/*"}
+def entetes_du_portail() -> dict[str, dict[str, str]]:
+    """Les en-têtes de `portail/public/_headers`, au format de Cloudflare Pages :
+    {chemin: {nom: valeur}}."""
+    entetes: dict[str, dict[str, str]] = {}
+    chemin = None
+    for ligne in (RACINE / "portail/public/_headers").read_text(encoding="utf-8").splitlines():
+        if not ligne.strip() or ligne.lstrip().startswith("#"):
+            continue
+        if not ligne.startswith(" "):
+            chemin = ligne.strip()
+            entetes[chemin] = {}
+        else:
+            nom, _, valeur = ligne.strip().partition(":")
+            entetes[chemin][nom.strip()] = valeur.strip()
+    return entetes
+
+
+def test_portail_sur_cloudflare_pages():
+    """1.9.5 : le portail est servi par Cloudflare Pages, avec les en-têtes de sécurité de la
+    revue 0.9.3 ; le plan Render ne garde que l'API, les tâches de fond et la base."""
+    assert not any(s.get("runtime") == "static" for s in plan()["services"])
+    e = entetes_du_portail()
+    tout = e["/*"]
     for directive in ("default-src 'self'", "script-src 'self'", "frame-ancestors 'none'",
                       "object-src 'none'", "base-uri 'self'"):  # fmt: skip
-        assert directive in e["Content-Security-Policy"]
-    assert e["X-Frame-Options"] == "DENY" and e["X-Content-Type-Options"] == "nosniff"
-    assert e["Strict-Transport-Security"].startswith("max-age=31536000")
-    v = {x["key"]: x for x in p["envVars"]}
-    assert v["VITE_API_URL"].get("sync") is False and "value" not in v["VITE_API_URL"]
-    assert v["VITE_CONTACT_DONNEES"].get("sync") is False
-    api = {x["key"]: x for x in s["innov-api"]["envVars"]}
+        assert directive in tout["Content-Security-Policy"]
+    assert tout["X-Frame-Options"] == "DENY" and tout["X-Content-Type-Options"] == "nosniff"
+    assert tout["Strict-Transport-Security"].startswith("max-age=31536000")
+    assert e["/assets/*"]["Cache-Control"] == "public, max-age=31536000, immutable"
+    redirections = (RACINE / "portail/public/_redirects").read_text(encoding="utf-8")
+    assert "/* /index.html 200" in redirections.splitlines()
+    api = {x["key"]: x for x in {s["name"]: s for s in plan()["services"]}["innov-api"]["envVars"]}
     # « None » n'est jamais écrit en dur : il se saisit tant qu'il n'y a pas de domaine.
     assert "value" not in api["INNOV_COOKIE_SAMESITE"]
 
@@ -83,6 +98,11 @@ def test_demonstration_gratuite_sur_render():
     ordre = [commande.index(etape) for etape in ("migrate", "preparer_instance", "gunicorn")]
     assert ordre == sorted(ordre)
     assert subprocess.run(["sh", "-n", BACKEND / "demarrer_demo.sh"]).returncode == 0  # noqa: S603, S607
+    # 1.9.5 : l'import BirdNotes au volume réel dure plusieurs minutes, traité pendant la requête ;
+    # gunicorn coupait au bout de 30 s. L'API de production a la même marge, plus courte.
+    assert '--timeout "${GUNICORN_TIMEOUT:-1800}"' in commande
+    dockerfile = (BACKEND / "Dockerfile").read_text(encoding="utf-8")
+    assert "--timeout ${GUNICORN_TIMEOUT:-600}" in dockerfile
     v = {x["key"]: x for x in api["envVars"]}
     assert v["ENVIRONNEMENT"]["value"] == "demonstration"
     assert v["DATABASE_URL"].get("sync") is False and "value" not in v["DATABASE_URL"]
@@ -92,9 +112,12 @@ def test_demonstration_gratuite_sur_render():
     for cle in ("INNOV_ADMIN_IDENTIFIANT", "INNOV_ADMIN_MOT_DE_PASSE"):
         assert v[cle].get("sync") is False and "value" not in v[cle]
     assert not any(cle.startswith("INNOV_DEMO_") for cle in v)  # plus de données fictives
-    # Mêmes en-têtes de sécurité que le portail de production.
-    prod = {x["name"]: x for x in plan()["services"]}["innov-portail"]
-    assert portail["headers"] == prod["headers"] and portail["routes"] == prod["routes"]
+    # Mêmes en-têtes de sécurité que le portail de production (Cloudflare Pages, 1.9.5).
+    demo = {}
+    for h in portail["headers"]:
+        demo.setdefault(h["path"], {})[h["name"]] = h["value"]
+    assert demo == entetes_du_portail()
+    assert portail["routes"] == [{"type": "rewrite", "source": "/*", "destination": "/index.html"}]
 
 
 def test_le_stockage_r2_est_choisi_en_hebergement():
