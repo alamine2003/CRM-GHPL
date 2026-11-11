@@ -44,7 +44,7 @@ jobs:
           else
             echo "present=oui" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: steps.secrets.outputs.present == 'oui'
       - name: Outils
         if: steps.secrets.outputs.present == 'oui'
